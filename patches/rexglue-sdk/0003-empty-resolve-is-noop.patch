@@ -1,0 +1,57 @@
+Fix: "Resolve region is empty" logged as an error ~240 times a second (tiled games)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0003-empty-resolve-is-noop.patch
+Status:     local patch, not upstream yet (worth reporting; Xenia has the same message)
+
+WHAT BROKE
+  Nothing visible. But every frame of the title screen, menus and gameplay
+  logged 6-8 pairs of
+    [error] [gpu] Resolve region is empty
+    [error] [gpu] PM4_DRAW_INDX_2(3, 8, 2): Failed in backend (... edram_mode=6)
+  i.e. ~40,000 error lines for 2 minutes of play (~99% of the log), which
+  buries any real error a playtest might hit.
+
+WHY
+  Crash renders 720p in 3 vertical strips ("predicated tiling", strips
+  x 0-448 / 416-864 / 832-1280). In each strip's pass the game issues the
+  resolve (EDRAM -> RAM copy) for all three strips' rectangles; the strip's
+  scissor clips the other rectangles to nothing. draw_util::GetResolveInfo()
+  treated a clipped-to-nothing rectangle as a failure: it logged an error
+  and returned false, so IssueDraw() reported "Failed in backend" too. Yet
+  both backends' Resolve() already handle width/height 0 as "nothing to
+  copy/clear, success" right after calling it. The early error return just
+  got there first.
+
+THE FIX (src/graphics/util/draw.cpp)
+  An empty rectangle returns true with width/height 0 (info_out is zeroed
+  at the top of the function), so Resolve() takes its existing no-op path.
+  The message is kept as a noisy-trace line (--log_level=trace
+  --log_noisy=true) and the debug-build assert on it is removed, since
+  empty is legitimate. Nothing else changes: an empty resolve copies and
+  clears nothing either way.
+
+HOW WE FOUND IT: docs/findings/06-black-screens-render-target-path.md (Part 1)
+
+diff --git a/src/graphics/util/draw.cpp b/src/graphics/util/draw.cpp
+index 305380e..33b615b 100644
+--- a/src/graphics/util/draw.cpp
++++ b/src/graphics/util/draw.cpp
+@@ -882,10 +882,14 @@ bool GetResolveInfo(const RegisterFile& regs, const memory::Memory& memory,
+     y1 = y0 + int32_t(xenos::kMaxResolveSize);
+   }
+ 
+-  assert_true(x0 < x1 && y0 < y1);
+   if (x0 >= x1 || y0 >= y1) {
+-    REXGPU_ERROR("Resolve region is empty");
+-    return false;
++    // Legitimately empty: with predicated tiling, games issue every tile's
++    // resolve in every tile pass, and the scissor clips the other tiles'
++    // rectangles to nothing. That's a successful no-op, not a failure:
++    // info_out already says width/height 0 (set at the top), which both
++    // backends' Resolve() treat as "nothing to copy/clear".
++    REXGPU_NOISY_TRACE("Resolve region is empty (clipped away by the scissor)");
++    return true;
+   }
+ 
+   info_out.coordinate_info.width_div_8 = uint32_t(x1 - x0) >> xenos::kResolveAlignmentPixelsLog2;

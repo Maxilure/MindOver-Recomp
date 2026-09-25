@@ -1,0 +1,88 @@
+Fix: closing a finished thread's handle wiped the caller's current fiber (freeze after the intro movies)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0002-fiber-destroy-wrong-thread.patch
+Status:     local patch, not upstream yet (worth reporting)
+
+WHAT BROKE
+  After the intro movies ended (or were skipped), Crash froze on a still
+  "Loading" frame. The game's main thread sat at 100% CPU in a fault that
+  repeated forever: swapcontext() storing registers into address 0x80, i.e.
+  into nullptr->context_. The SDK's SIGSEGV handler (installed for guest
+  memory tricks) returned without fixing anything, so the same store ran
+  again and again. No crash, no log line, just a frozen picture.
+
+WHY
+  rex::thread::Fiber keeps "the fiber running on this host thread" in a
+  thread_local, tls_current_. Every XThread owns a host "main fiber"
+  (XThread::Execute calls Fiber::ConvertCurrentThread), and ~XThread()
+  destroys it. But ~XThread() runs on whichever thread drops the LAST
+  reference to the XThread. Here that's the game's main thread: when a movie
+  finishes, it NtClose()s the handles of 4 helper threads that have already
+  exited. Fiber::Destroy() on a thread fiber did `tls_current_ = nullptr`
+  unconditionally, clearing the *main* thread's pointer, not the dead
+  thread's. The main thread's next SwitchToFiber (its task scheduler does
+  one every frame) then read from = nullptr and swapcontext() faulted.
+
+  The Win32 backend has the same flaw in a different shape: it calls
+  ::ConvertFiberToThread(), which also acts on the calling thread.
+
+THE FIX (src/core/fiber_posix.cpp, src/core/fiber_win32.cpp)
+  Fiber::Destroy() only clears tls_current_ (and, on Win32, only calls
+  ::ConvertFiberToThread()) when this fiber is the one currently running on
+  the calling thread. Destroying another thread's fiber is then just a
+  delete, which is all it needs: that thread has exited, and a thread fiber
+  owns no stack. The Win32 half is untested (we only build Linux so far).
+
+HOW WE FOUND IT: docs/findings/05-post-intro-freeze-fibers.md
+
+diff --git a/src/core/fiber_posix.cpp b/src/core/fiber_posix.cpp
+index 4fe1ca6..f8f139c 100644
+--- a/src/core/fiber_posix.cpp
++++ b/src/core/fiber_posix.cpp
+@@ -69,11 +69,17 @@ void Fiber::SwitchTo(Fiber* target) {
+ }
+ 
+ void Fiber::Destroy() {
+-  // Thread fibers are destroyed from the owning thread itself.
+-  if (is_thread_fiber_) {
++  // tls_current_ belongs to the *calling* thread, which is not always the
++  // fiber's owner: ~XThread() destroys a thread's main fiber on whichever
++  // thread drops the last reference, typically one that NtClose()s the handle
++  // of a finished thread. Clearing the pointer unconditionally then wiped the
++  // closer's own current fiber, and its next SwitchTo() ran swapcontext() on
++  // nullptr->context_, a fault that retries forever (Crash: Mind over Mutant
++  // froze on "Loading" right after its intro movies). Only clear it when this
++  // fiber really is the one running on this thread.
++  if (tls_current_ == this) {
++    assert(is_thread_fiber_ && "Destroy called on the currently running fiber");
+     tls_current_ = nullptr;
+-  } else {
+-    assert(this != tls_current_ && "Destroy called on the currently running fiber");
+   }
+   // No POSIX equivalent of ConvertFiberToThread; stack_ is freed by the vector destructor.
+   delete this;
+diff --git a/src/core/fiber_win32.cpp b/src/core/fiber_win32.cpp
+index 5744a90..2bc679f 100644
+--- a/src/core/fiber_win32.cpp
++++ b/src/core/fiber_win32.cpp
+@@ -48,10 +48,16 @@ void Fiber::SwitchTo(Fiber* target) {
+ }
+ 
+ void Fiber::Destroy() {
+-  // Thread fibers are destroyed from the owning thread itself.
++  // Thread fibers are usually destroyed by their owning thread, but ~XThread()
++  // can also run on another thread (the one that NtClose()s the last handle of
++  // a finished thread). ::ConvertFiberToThread() and tls_current_ both act on
++  // the *calling* thread, so only touch them when this fiber is the one
++  // running here; otherwise we'd tear down the closer's own fiber state.
+   if (is_thread_fiber_) {
+-    ::ConvertFiberToThread();
+-    tls_current_ = nullptr;
++    if (tls_current_ == this) {
++      ::ConvertFiberToThread();
++      tls_current_ = nullptr;
++    }
+   } else {
+     assert(this != tls_current_ && "Destroy called on the currently running fiber");
+     ::DeleteFiber(handle_);

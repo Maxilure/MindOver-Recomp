@@ -1,0 +1,294 @@
+# CLAUDE.md: Mind over Recomp (Crash: Mind over Mutant native PC port)
+
+Notes for Claude, loaded every session. Keep this file current: when the
+status, a command, or a hard-won lesson changes, update it before the
+session ends.
+
+## What this project is
+
+A native PC (Linux first, Windows later) port of **Crash: Mind over Mutant**
+(Xbox 360, Radical Entertainment, 2008). We **statically recompile** the
+game's `default.xex` (PowerPC) into C++ with **ReXGlue** (a Xenia-derived
+runtime: kernel, fibers, Vulkan GPU emulation, audio, input), then fix the
+analysis and progressively replace parts with native code.
+
+The user owns the disc. They want to learn and have fun; they're not a
+recompilation expert, so explain what's going on in plain terms.
+
+## Rules (non-negotiable)
+
+1. **Never commit game-derived data**: `*.iso`, `*.xex`, `game/`,
+   `generated/default/`, `out/` (including `out/default_image.bin`), and
+   `logs/` are gitignored and must stay that way. Never copy game content
+   (e.g. the HLSL source in `game/shaders/*.updb`) into the repo. Describe
+   it, don't paste it.
+2. **Annotate everything.** The user explicitly wants heavy comments: file
+   header docstrings explaining purpose and formats, comments on
+   non-obvious lines, and a *why + how we found it* comment on every
+   manifest fix. Record discoveries in `docs/findings/` as you go.
+3. **Verify before fixing.** Disassemble with `xexdis` before adding any
+   `[entrypoint.functions]` entry. A wrong entry splits a real function
+   and corrupts it silently.
+4. Don't commit or push unless asked. Public repo:
+   https://github.com/Maxilure/Mind-over-Recomp (remote `origin`, branch
+   `main`, license GPL-3.0; SDK patches stay BSD-3-Clause). Before any
+   commit, check `git diff --cached --name-only` for game-derived files, and
+   inspect new patch files for stray `.orig`/`.rej` sections (one slipped in
+   once).
+
+## Layout
+
+```
+crash_mom_manifest.toml   recompiler config: every analysis fix lives here, commented
+CMakeLists.txt            game exe + xexdis tool + Linux .so staging
+src/crash_mom_app.h       ReXApp subclass (OnPreSetup: gpu_plugin="xenos", render_target_path_vulkan="fsi")
+src/main.cpp              REX_DEFINE_APP entry
+src/debug_frame_capture.* --debug_capture_dir: periodic screenshots (.ppm) of the guest output
+src/debug_input_script.*  fake controller: --debug_input_script (timeline) / --debug_input_fifo (live)
+src/frame_rate.cpp        --fps_cap=60: midasm hooks on the renderer vsync mode + main-loop limiter
+tools/xiso_extract.py     XDVDFS disc extractor (XGD2 partition @ 0xFD90000)
+tools/xex_info.py         XEX2 header dump (no decryption); importable module
+tools/xexdis/xexdis.cpp   disassembler + image dumper built on ReXGlue libs
+tools/find_missing_functions.py  finds pointer-only functions codegen missed
+tools/guest_stacks.sh     run under gdb, pause after N s, print every thread's game call stack
+tools/play.sh             playtest launcher: one logs/play-<date_time>.log per session, reports crashes
+docs/01-building.md       build steps + ReXGlue gotchas + SDK patch list
+docs/02-how-the-port-works.md    big-picture explainer for the user
+docs/03-roadmap.md        phases 0-7: stabilize, understand, PC input, fps, native renderer, mods, netplay, Windows
+docs/04-native-renderer.md  kickoff for the native Vulkan renderer (phase 4): the CURRENT focus
+docs/playtest-notes.md    the user's bug notebook + test checklist: READ IT at session start
+docs/findings/            01 disc+xex, 02 recompilation, 03 first boot, 04 loading hang (XMA),
+                          05 post-intro freeze (fibers), 06 black movies/title = FBO render-target path,
+                          07 frame rate: the 30 fps pacing (PDDI vsync mode) + --fps_cap=60 (current)
+patches/rexglue-sdk/      our SDK fixes, applied to the submodule working tree (NOT committed into it)
+patches/rexglue-sdk/debug/  optional debug patches (not matched by *.patch): 0100 = per-draw GPU log
+thirdparty/rexglue-sdk    submodule, pinned to tag nightly-20260921-923c1a59 (+ our patches applied)
+thirdparty/rexglue-install  local SDK install prefix (gitignored)
+```
+
+## Commands
+
+```bash
+# one-time: extract disc, build + install SDK (Release is REQUIRED, it has the rexglue CLI)
+python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
+cd thirdparty/rexglue-sdk && git apply ../../patches/rexglue-sdk/*.patch
+cmake --preset linux-amd64 -DCMAKE_INSTALL_PREFIX=$PWD/../rexglue-install
+cmake --build out/build/linux-amd64 --config Release --target install
+cmake --build out/build/linux-amd64 --config RelWithDebInfo --target install && cd ../..
+
+# configure (re-run once after the FIRST codegen, or the generated sources aren't included)
+cmake --preset linux-amd64-relwithdebinfo
+
+# recompile (~12 s) -- ALWAYS read logs/codegen.log for "Unresolved" lines
+cmake --build --preset linux-amd64-relwithdebinfo --target crash_mom_codegen > logs/codegen.log 2>&1
+
+# build (-j 6: generated files need 1-2 GB RAM each, machine has 16 GB)
+cmake --build --preset linux-amd64-relwithdebinfo -j 6 > logs/build.log 2>&1
+
+# run (opens a window on the user's desktop; use a timeout when testing)
+timeout -s INT 60 out/build/linux-amd64-relwithdebinfo/crash_mom --game_data_root=$PWD/game --log_file=logs/run.log
+#   kernel-call trace needs BOTH: --log_level=trace --log_noisy=true (debug alone hides them!)
+#   --log_file APPENDS: rm the old log first. SDK caps some diag logs at 10 lines (audio).
+
+# fast test run: skip intros (title at ~16 s), screenshot every 500 ms into the scratchpad
+timeout -s INT 30 out/build/linux-amd64-relwithdebinfo/crash_mom --game_data_root=$PWD/game --log_file=logs/run.log \
+  --debug_capture_dir=<scratchpad>/cap --debug_capture_interval_ms=500 \
+  --debug_input_script="8000:start,9500:start,11000:start,12500:start,14000:start"
+#   add 17000:start to go on into the main menu. Black frames are logged, not saved.
+#   PPM -> contact sheet with PIL (see docs/findings/06). Captures are game content: never in the repo.
+#   LIVE control: add --debug_input_fifo=<scratchpad>/input.fifo, run in the background, then
+#   `echo "down" > .../input.fifo` (or "lsright 2000" = hold 2 s); look at the newest capture.
+#   Menus ignore presses while they animate in: wait ~5 s after START before navigating.
+#   Loading the user's save: ALWAYS on a copy (cp -a ~/.local/share/crash_mom <scratchpad>/userdata,
+#   then --user_data_root=<scratchpad>/userdata). Check `pgrep -x crash_mom` first: never test
+#   while the user is playing. Stop test instances by PID (pkill -f matches its own shell!).
+
+# hangs: which game function is every thread in?
+tools/guest_stacks.sh 30
+
+# after editing SDK source: rebuild both configs (incremental), then the game
+# (the always-run crash_mom_stage_libs target copies the .so files, GPU plugin included)
+cd thirdparty/rexglue-sdk && cmake --build out/build/linux-amd64 --config RelWithDebInfo --target install
+cmake --build out/build/linux-amd64 --config Release --target install && cd ../..
+git -C thirdparty/rexglue-sdk diff   # -> refresh the matching patches/rexglue-sdk/*.patch (keep its header)
+
+# inspect code
+cmake --build --preset linux-amd64-relwithdebinfo --target xexdis
+out/build/linux-amd64-relwithdebinfo/xexdis game 0x82300BA0 0x82300C00
+out/build/linux-amd64-relwithdebinfo/xexdis game --dump out/default_image.bin
+python3 tools/find_missing_functions.py out/default_image.bin generated/default/crash_mom_init.cpp game/default.xex
+```
+
+Shell quirks seen here: commands behave like zsh (errors look like
+`(eval):1: ...`), so quote globs such as `--include='*.cpp'`. There's no
+`/usr/bin/time`, and `ninja` is aliased to `ninja -j12`.
+
+## Workflow for recompilation problems
+
+- **Codegen error "target not in any function"**: usually a tiny function
+  reached only by a tail call (`b`). Disassemble, then add `0xADDR = { size = N }`.
+  Fixing one can expose its target on the next run.
+- **Write-phase "Unresolved conditional branch"**: the output compiles to
+  `REX_FATAL` and crashes at runtime. Check with
+  `grep -c 'Unresolved branch' generated/default/*.cpp`. Usually a merged
+  or mis-split function; pin its extent with `{ end = ... }`.
+- **Runtime "Call to invalid or unregistered function at 0x..."**: a
+  function reachable only through a pointer (vtable without RTTI,
+  callback). Re-dump the image and run `find_missing_functions.py`.
+  Its filters for known false positives (computed switch bases, SEH scope
+  labels, resource bytes, unwind resume labels) are documented in its
+  header.
+- Generated code: `DEFINE_REX_FUNC(sub_XXXXXXXX)` with the original asm
+  as `//` comments; function table in `generated/default/crash_mom_init.cpp`.
+- Overrides: `REX_HOOK(sub_X, NativeFn)`, `REX_HOOK_RAW(sub_X){...}`,
+  `REX_STUB*` from `<rex/hook.h>`. CRT/XAPI natives go in `[entrypoint.rexcrt]`.
+
+## Workflow for rendering bugs (black / wrong picture)
+
+- See it first: `--debug_capture_dir` + `--debug_input_script` (commands above).
+  Pure 0 pixels = picture lost on the GPU side; check with a contact sheet.
+- Compare `--render_target_path_vulkan=fbo` vs `fsi` early: FBO (SDK default)
+  lost whole frames in this game; FSI is our default now.
+- Per-draw detail: apply `patches/rexglue-sdk/debug/0100-*`, rebuild the SDK,
+  run with `CRASHMOM_DIAG_FRAMES=ms,ms,...`; diff a good and a bad frame.
+  Its env switches can skip suspect draws. Remove it (`git apply -R`) after.
+- "Resolve region is empty" was harmless tiling noise (docs/findings/06);
+  patch 0003 made it a silent no-op, so [error] lines in logs matter again.
+
+## Workflow for runtime hangs / wrong behavior
+
+- `tools/guest_stacks.sh`: threads idle in `NtWaitForSingleObjectEx` are
+  normal; one *running* inside `sub_...` code is the suspect (busy-wait).
+- gdb must launch the game (`ptrace_scope=1`, no attaching). Pass
+  SIGSEGV/SIGBUS/SIGUSR1/2 **and SIG32-SIG40** silently (the runtime sends SIG35).
+  Game functions are `__imp__sub_X`;
+  break on `*__imp__sub_X`, then `((PPCContext*)$rdi)->r3.u32` is guest r3
+  and `->lr` the return address. Guest address A is host `0x100000000 + A`
+  (no +0x1000 for 0xE0000000+ on Linux); guest *physical* P (GPU texture
+  bases) is host `0x200000000 + P`. SDK classes have full symbols.
+- gdb Python breakpoints (`stop()` returning False) log without pausing.
+  Scripts used for the XMA hunt are summarized in docs/findings/04; the
+  fiber/Destroy tracer and frame dumper in docs/findings/05.
+- **Fault loop** = a thread at 100% CPU with the identical frame #0 in every
+  sample: the SDK's SIGSEGV handler swallows an unknown fault and the
+  instruction retries forever. Once stuck, `handle SIGSEGV stop print` in gdb
+  shows the instruction; `$_siginfo._sifields._sigfault.si_addr` the address.
+- Per-thread CPU: `/proc/<pid>/task/<tid>/stat`, but parse after the LAST `)`
+  (names like `Main XThread (F` contain spaces). No `perf` on this machine.
+- Don't sample one moment and conclude: a single frame dump caught a gap
+  between movies and looked "broken". Take a series over time.
+- Hardware registers (MMIO `0x7FC8xxxx` GPU, `0x7FEAxxxx` XMA) only reach the
+  SDK where the recompiler emitted `REX_MM_LOAD/STORE`. Its heuristic: a
+  `lis 0x7FEA`-style base in the same function, or any `stwbrx`. Check with
+  `grep -n 'REX_MM_' generated/default/*.cpp` if a hardware write seems lost.
+- Bugs in the SDK itself: fix in `thirdparty/rexglue-sdk`, then save a patch
+  with a header (what broke / why / fix / how found) in `patches/rexglue-sdk/`
+  and list it in docs/01-building.md.
+
+## Key facts about the game
+
+- Title ID `565507FA`, internal name `Crash008f.exe`, XDK 2.0.6995,
+  AES-encrypted with basic compression. Image `0x82000000` (6.3 MB), code
+  `0x820B0000-0x824D0000`, entry `0x82300BA0`.
+- Engine: Radical **Pure3D/Titanium**, renderer "PDDI". Data lives in
+  `.rcf` archives (magic `ATG CORE CEMENT LIBRARY`, big-endian).
+  `script/*.blua` is encrypted Lua (the decrypt routine hasn't been found).
+- **Uses XAPI fibers** for a cooperative task system (`sub_8235B218` = resume task,
+  `sub_82356138` = yield, `sub_823567D8` = per-frame pump, scheduler global `0x8256D17C`;
+  table in docs/findings/05). The main thread fiber-switches every frame.
+  The fiber functions at `0x82473E08`–`0x82474028` are mapped to ReXGlue natives.
+- Movies: **Bink 1** (`.bik`) inside `movie1.rcf`/`movie2.rcf`. Boot plays
+  sierra, radical, dolby, crash_mom_attract (all in movie2.rcf, ~100 s total).
+  Decoded Y plane at physical `0x1F5BF000`/`0x1F72B000` (1280x720 k_8); guest
+  physical P = host `0x200000000 + P`.
+- Landmarks: `0x8245C120-0x8245C17C` save/restore helpers,
+  `0x824BBxxx-0x824CC51C` kernel import thunks, `0x823048E8` SetLastError,
+  `0x8227A500`/`0x8227A508` tagged alloc/free.
+- Frame pacing (findings/07): the 30 fps cap is PDDI's swap `sub_82433510`,
+  vsync mode at this+1660 (1 = two vblanks per frame, 0 = one); vblank count
+  global `0x8258E460` (written by the game's D3D vblank callback 0x82433380).
+  Main loop `sub_8227AEE0`: REAL delta time (`sub_8235AAE0` = QPC in us,
+  x1e-6), plus a 33333 us limiter on its loading/movie path (0x8227B0DC).
+  D3D: vblank ISR `0x82310628`, flip target `0x82310728`, swap `0x82310DA8`.
+  Game logic is time-based: 60 fps moves at the same speed (verified).
+- Overriding a game function: define `extern "C" REX_FUNC(sub_X)` in src/;
+  the generated `sub_X` is a weak alias, the original stays callable as
+  `__imp__sub_X`. Changing registers mid-function: `[[entrypoint.midasm_hook]]`
+  (address, name, registers = ["r10"]) -> codegen calls
+  `void Name(PPCRegister& r10)` before that instruction; define it in src/.
+- Lua is embedded, so `setjmp`/`longjmp` probably exist. Find them and set
+  `setjmp_address`/`longjmp_address` in the manifest if Lua errors misbehave.
+- Audio: Radical audio engine + XDK XMA helper library. `0x8234C580` decodes
+  an XMA sound to memory and busy-waits for its exact sample count;
+  XMA lock/unlock/kick helpers live at `0x8247D4D8`–`0x8247E540` (full table
+  in docs/findings/04). `0x824731D8` = QueryPerformanceCounter.
+- Rendering: 1280x720, 3-strip predicated tiling (x 0-448, 416-864, 832-1280;
+  pitch 480, 2x MSAA). Frontbuffers `0x16860000`/`0x16BF8000` (alternating).
+  Title/menu: 3D pass in strips -> colour `0x15D96000` -> full-screen passes
+  -> `0x164C6000` -> sprites -> frontbuffer. Logo sprites = 8-bit texture +
+  256x1 palette (PS `28DB7E4D9D1CB9CF`). Movies resolve straight to the frontbuffer.
+- Boot file order: `D:\shaders\*.out` (15), `default.rcf` (~10 s of reads),
+  `movie1/movie2/english.rcf` opened; `movie2.rcf` then streams (intro movie).
+
+## ReXGlue quirks (nightly 0.10.0.9; its wiki is outdated)
+
+- `rexglue init` flags are `--project-name/--xex-path/--game-root`; the
+  config is `<name>_manifest.toml` with per-exe tables under `[entrypoint.*]`.
+- The CLI is installed only from the Release config; libraries carry an `rd` suffix in RelWithDebInfo.
+- On Linux with an installed SDK, the `.so` files aren't staged next to the
+  exe (we do it in `CMakeLists.txt`).
+- No GPU plugin loads by default (we default to `xenos`).
+- A conditional branch to an absorbed label can emit `REX_FATAL` even
+  though the label exists (worth reporting upstream).
+- XMA decoder (since SDK f24299f) outputs each frame one decode late and
+  dropped the last frame of every stream; the consume-only path never flagged
+  a full output ring. Fixed by `patches/rexglue-sdk/0001-*` (report upstream).
+- GPU plugin flags (e.g. `render_target_path_vulkan`) only exist once the
+  plugin is loaded, which happens right AFTER `OnPreSetup`: `SetFlagByName`
+  on them fails silently there. We load the plugin ourselves in `OnPreSetup`.
+- Empty resolves (predicated tiling) were logged as errors + "Failed in
+  backend", ~240 lines/s. Fixed by `patches/rexglue-sdk/0003-*`.
+- The default FBO render-target path blacks out the Bink movies and the idle
+  title (depth-only clears on a 640-wide 4x MSAA surface before the final
+  resolve). FSI path is correct, same 30 fps. Report upstream (findings/06).
+- `Fiber::Destroy()` nulled the *calling* thread's `tls_current_`; `~XThread()`
+  runs on whoever NtClose()s the last handle, so closing finished threads broke
+  the main thread's next fiber switch (fault loop). Fixed by
+  `patches/rexglue-sdk/0002-*` (report upstream; Win32 half untested).
+
+## Current status and next steps
+
+As of 2026-09-25 (end of 4th session), see `docs/findings/06-black-screens-render-target-path.md`:
+boot, loading, the **intro movies (picture + 5.1 audio)**, the Sierra copyright
+card, the **title screen** (logo stays up, "Press START") and the **main menu**
+(New Game / Load Game / Credits / Calibration) all render, at 30 fps, thanks
+to the FSI render-target path (our default now). **Gameplay works**: the user
+played New Game into the first level (Crash + HUD rendering, in-game menus
+and cutscenes fixed by the same FSI switch). The user's long-term wishlist
+(native renderer, 60+/uncapped fps, any resolution/aspect, KB+M remapping,
+mods, online co-op) is discussed in the 2026-09-25 session; nothing started.
+Saves: `~/.local/share/crash_mom/B13EBABEBABEBABE/565507FA/00000001/`.
+The user wants the full PC-port vision (docs/03-roadmap.md): our own remap
+overlay + KB/M prompt icons, 60 then uncapped fps, native Vulkan renderer,
+mods, and TRUE online netplay (deterministic lockstep, not streaming).
+Performance (2026-09-25): in the first hub the host GPU is at 89-96% while
+CPU threads have headroom; the cost is FSI's EDRAM emulation + 3-strip
+tiling. The user DECIDED: no FBO/FSI performance work; go straight to a
+native Vulkan renderer (FBO and FSI both disappear then).
+Next steps:
+1. **Native renderer, milestone 1 (research): read docs/04-native-renderer.md
+   first.** Map PDDI (Radical's renderer, "pure3d/pddi/src/xenon") and the
+   D3D calls per frame, decide where to cut in. The emulated path stays as
+   the fallback (planned `--renderer=emulated|native`).
+1b. In parallel the user playtests with `tools/play.sh` and writes
+   docs/playtest-notes.md. Start each session by reading it and the newest
+   logs/play-*.log; fix what they found.
+2. 60 fps works (`--fps_cap=60`, findings/07): title ~59, gameplay ~56 fps,
+   same movement speed. The user should play with it and report what breaks
+   (cutscenes, physics, animations). Later: why gameplay frames exceed 16.7 ms
+   (profile CPU vs FSI GPU), then >60 fps.
+3. Phase 1 groundwork: input path, camera code; start a named-function list.
+4. Report SDK bugs upstream (rexglue-sdk): XMA (findings/04), fibers
+   (findings/05), empty resolves + FBO black frames (findings/06).
+5. Watch FSI performance in real levels (only menus measured so far).
+6. Script decryption (`script/*.blua`) is still unexplored.

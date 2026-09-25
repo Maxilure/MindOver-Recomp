@@ -1,0 +1,244 @@
+# =============================================================================
+# crash_mom_manifest.toml -- recompiler configuration for `rexglue codegen`
+# =============================================================================
+#
+# This file tells ReXGlue WHAT to recompile and HOW. It's where we fix
+# anything the automatic analysis gets wrong: function boundaries, switch
+# jump tables, special functions like setjmp/longjmp, native hooks...
+#
+# Every fix added here should have a comment saying WHY it's needed and
+# how we found it, so the next person doesn't have to re-discover it.
+#
+# Run it with:   cmake --build --preset linux-amd64-relwithdebinfo --target crash_mom_codegen
+# (it also re-runs automatically on a normal build whenever this file changes)
+#
+# Output goes to generated/default/ (gitignored: it IS the game's code,
+# just translated to C++, so it never gets committed).
+#
+# Scaffolded by: rexglue init (ReXGlue v0.10.0.9-dev.g923c1a5, 2026-09-25)
+# =============================================================================
+
+[project]
+name = "crash_mom"
+sdk_version = "0.10.0"
+# Root of the extracted disc (tools/xiso_extract.py writes it here).
+# At runtime this folder becomes the game's "game:\" and "d:\" drives.
+game_root = "game"
+
+[entrypoint]
+# The executable to recompile: Crash008f.exe inside its XEX2 wrapper.
+# Encrypted + "basic" compressed; ReXGlue unpacks it itself.
+# See docs/findings/01-disc-and-executable.md for the full header dump.
+file_path = "game/default.xex"
+# Where the generated C++ goes.
+out_directory_path = "generated/default"
+# Extra headers to #include into every generated file (none yet).
+includes = []
+
+# -----------------------------------------------------------------------------
+# Function boundary fixes
+# -----------------------------------------------------------------------------
+# The analyzer finds functions by following `bl` (call) instructions,
+# exception tables and vtables. A tiny function that is ONLY ever reached by
+# a tail call (`b` = plain jump, no link) gets missed, and codegen then
+# fails with "UnresolvedCall ... target not in any function".
+#
+# Fix: declare the function here with its exact size. To investigate a new
+# one, disassemble around it:
+#   out/build/linux-amd64-relwithdebinfo/xexdis game <addr-0x20> <addr+0x30>
+# If the target sits between a `blr`/`b` and the next function's prologue
+# (`mflr r12`), it's its own function. Size = bytes up to and including its
+# final `b`/`blr`.
+#
+# Found 2026-09-25 on the first codegen run (these were the only 4 errors):
+[entrypoint.functions]
+# `li r5,1 ; b 0x82170370`: sets a default argument, then forwards.
+# Tail-called from the similar wrapper at 0x82170058 (`li r4,1 ; b here`).
+0x82170160 = { size = 8 }
+
+# `lwz r3,40(r3) ; b 0x820C0AC8`: forwards to a member object
+# (`return this->m_28->Method()`). Identical siblings at 0x8213EA40/48.
+# Tail-called from the 1-instruction thunk at 0x8213E6F0.
+0x8213EA50 = { size = 8 }
+
+# Loads two float args (f1 = this+0x198, f2 = a constant), then jumps to the
+# shared function at 0x8212D648 placed immediately after it. Sibling of
+# 0x8212D628 (same thing with this+0x194). Tail-called from 0x8212C570.
+0x8212D638 = { size = 0x10 }
+
+# C++ "this-adjustor thunk" (`this += 4`, then jump to the real method).
+# These exist because of multiple inheritance. Sibling at 0x8248BA48.
+# Tail-called from another adjustor thunk at 0x82489A40 (`this -= 4`).
+0x8248BA50 = { size = 8 }
+
+# --- Round 2: the targets of the functions above ----------------------------
+
+# The shared function that 0x8212D628 / 0x8212D638 fall into:
+#   this->f440 = f1; this->f448 = (f1 - this->f444) / f2
+# (6 instructions ending in blr). Declaring 0x8212D638 with exact bounds
+# left this one without an owner, so it gets its own entry.
+0x8212D648 = { size = 0x18 }
+
+# Next hop of the forwarder chain from 0x8213EA50:
+# `lwz r3,20(r3) ; b 0x82401D30` (siblings at 0x820C0AB8/C0 do the same).
+0x820C0AC8 = { size = 8 }
+
+# ...and the hop after that: a 1-instruction thunk `b 0x82406DA0`,
+# zero-padded on both sides.
+0x82401D30 = { size = 4 }
+
+# --- Round 3: codegen succeeded, but printed write-phase warnings ----------
+# These are nastier than errors: the output COMPILES, but the bad branch is
+# emitted as REX_FATAL("Unresolved branch ...") and crashes at runtime.
+# Always read the codegen log for "Unresolved" lines!
+
+# Game event handler: `switch (event->type - 2)` over 46 cases, jump table
+# at 0x8212C458. Every case is a small block that tail-jumps elsewhere.
+# The analyzer absorbed the tail of the function (0x8212C548..) by linear
+# sweep instead of following branches, so the conditional branches at
+# 0x8212C550/58 to the case blocks at 0x8212C570/74 came out as REX_FATAL.
+# Pinning the exact extent makes it walk the whole range properly.
+0x8212C430 = { end = 0x8212C57C }
+
+# XAPI fiber internals (see [entrypoint.rexcrt] below for the full story).
+# The analyzer doesn't know the call at 0x8247603C never returns, so it
+# merged the fiber-start trampoline with the SwitchToFiber body after it.
+0x82476030 = { name = "XapiFiberStartTrampoline", size = 0x10 }
+0x82476040 = { name = "XapiSwitchToFiberBody", size = 0x40C }
+
+# --- Round 4: functions only reachable through POINTERS --------------------
+# Found by tools/find_missing_functions.py (see its header for the method).
+# First symptom, at runtime (2026-09-25):
+#   [FATAL] Call to invalid or unregistered function at guest address 0x82480008
+# 0x82480008 is a COM-style AddRef (`return ++this->refCount;`), called only
+# through a vtable. That class has no RTTI, so the vtable scanner skipped it
+# and it got glued onto the end of the function before it.
+# All entries below were reviewed with xexdis. The scanner filters out the
+# known false positives (switch bases, SEH scope labels, resource bytes).
+# Empty {} = "a function starts here", and the analyzer finds the extent.
+
+# Vtable slots without RTTI (13), all in the XAudio (XAUD) library code:
+0x82480008 = {}  # 10 data refs (e.g. 0x8201BB38); was inside sub_8247FFE8
+0x82481A18 = {}  # 1 data ref (e.g. 0x8201BA64); was inside sub_82481A10
+0x824872B8 = {}  # 4 data refs (e.g. 0x8201BC50); was inside sub_82487270
+0x82487300 = {}  # 4 data refs (e.g. 0x8201BC44); was inside sub_824872DC
+0x824899F8 = {}  # 1 data ref (e.g. 0x8201CD88); was inside sub_824899F0
+0x82489A28 = {}  # 2 data refs (e.g. 0x8201CD84); was inside sub_82489A20
+0x82489A30 = {}  # 2 data refs (e.g. 0x8201CD5C); was inside sub_82489A20
+0x82489A38 = {}  # 1 data ref (e.g. 0x8201CD78); was inside sub_82489A20
+0x8248AAB0 = {}  # 1 data ref (e.g. 0x8201CD68); was inside sub_8248AAA8
+0x8248BE10 = {}  # 1 data ref (e.g. 0x8201CE4C); was inside sub_8248BE08
+0x8248BE18 = {}  # 1 data ref (e.g. 0x8201CE90); was inside sub_8248BE08
+0x8248BE38 = {}  # 1 data ref (e.g. 0x8201CE78); was inside sub_8248BE30
+0x8248BE50 = {}  # 1 data ref (e.g. 0x8201CE80); was inside sub_8248BE48
+
+# Small wrappers / thunks whose address is taken (29): passed as
+# callbacks or used as member-function pointers. E.g. 0x820E9570/80/90 are
+# vcall thunks (`return this->vtbl[N](...)`), and 0x82148DE8 is a wrapper
+# that fills in default arguments.
+0x820E9570 = {}  # 16 code refs (e.g. 0x820E8530); was inside sub_820E9560
+0x820E9580 = {}  # 16 code refs (e.g. 0x820E84BC); was inside sub_820E9560
+0x820E9590 = {}  # 16 code refs (e.g. 0x820E84AC); was inside sub_820E9560
+0x82148DE8 = {}  # 1 code ref (e.g. 0x82148B40); was inside sub_82148DD8
+0x82148DF8 = {}  # 1 code ref (e.g. 0x82148B60); was inside sub_82148DD8
+0x82148E18 = {}  # 1 code ref (e.g. 0x82148BA0); was inside sub_82148E08
+0x82148E28 = {}  # 1 code ref (e.g. 0x82148BC0); was inside sub_82148E08
+0x82148E48 = {}  # 1 code ref (e.g. 0x82148C00); was inside sub_82148E38
+0x82148E58 = {}  # 1 code ref (e.g. 0x82148C24); was inside sub_82148E38
+0x82148E78 = {}  # 1 code ref (e.g. 0x82148C60); was inside sub_82148E68
+0x82148E88 = {}  # 1 code ref (e.g. 0x82148C80); was inside sub_82148E68
+0x8215F8E8 = {}  # 1 code ref (e.g. 0x8215F4FC); was inside sub_8215F8E0
+0x8215F8F0 = {}  # 1 code ref (e.g. 0x8215F55C); was inside sub_8215F8E0
+0x8216C2E8 = {}  # 1 code ref (e.g. 0x8216C460); was inside sub_8216C2E0
+0x82176608 = {}  # 1 code ref (e.g. 0x82176780); was inside sub_82176600
+0x82178640 = {}  # 1 code ref (e.g. 0x82178334); was inside sub_82178638
+0x82178668 = {}  # 1 code ref (e.g. 0x82178394); was inside sub_82178660
+0x82178690 = {}  # 1 code ref (e.g. 0x821783F4); was inside sub_82178688
+0x821786B8 = {}  # 1 code ref (e.g. 0x82178454); was inside sub_821786B0
+0x821BC868 = {}  # 2 code refs (e.g. 0x821BB11C); was inside sub_821BC858
+0x82261A40 = {}  # 1 code ref (e.g. 0x82263FD4); was inside sub_82261A38
+0x82261A48 = {}  # 1 code ref (e.g. 0x82263FF8); was inside sub_82261A38
+0x822F9468 = {}  # 1 code ref (e.g. 0x822F9C28); was inside sub_822F9460
+0x822FA1C0 = {}  # 2 code refs (e.g. 0x822F9B08); was inside sub_822FA1B8
+0x822FA1C8 = {}  # 1 code ref (e.g. 0x822F9B20); was inside sub_822FA1B8
+0x822FA500 = {}  # 1 code ref (e.g. 0x822F9BA0); was inside sub_822FA4F8
+0x82356798 = {}  # 1 code ref (e.g. 0x82356A68); was inside sub_82356538
+0x8242A7D0 = {}  # 1 code ref (e.g. 0x8242B144); was inside sub_8242A738
+0x82456650 = {}  # 1 code ref (e.g. 0x82456E24); was inside sub_82456628
+
+# NOT added (reviewed): 0x8245B790 is a function epilogue whose address is
+# handed to an unwind routine as a resume point. It's a label, not a function.
+
+# -----------------------------------------------------------------------------
+# Native replacements for C runtime / XAPI functions ("ReXCRT")
+# -----------------------------------------------------------------------------
+# Maps a function name to its address in THIS game's exe. Codegen then emits
+# `rexcrt_<Name>` for it, and the SDK supplies a native implementation.
+[entrypoint.rexcrt]
+
+# FIBERS. The game runs cooperative tasks on fibers: sub_8235B218 is its
+# "resume task" routine (sets the current task at scheduler+0x2C, then
+# SwitchToFiber(task->fiber at +0x14)). A fiber switch swaps the whole CPU
+# state including the stack pointer. Recompiled C++ can't do that on its
+# own, because each guest fiber also needs its own HOST stack. The SDK's
+# versions run every guest fiber on a real host fiber (ucontext on Linux).
+#
+# Identified 2026-09-25 from behavior, in XAPILIB (statically linked):
+#   thread = *(r13 + 0x100); thread->fiber = *(thread + 0x164)
+ConvertThreadToFiber = 0x82473E08  # err 0x500 ALREADY_FIBER; allocs 0xA50 ctx
+ConvertFiberToThread = 0x82473E98  # clears thread+0x164; err 0x501 ALREADY_THREAD
+CreateFiber          = 0x82473EE8  # stack: round to 4K, min 16K; LR = trampoline
+DeleteFiber          = 0x82473FC8  # frees stack + ctx; exits thread if current
+SwitchToFiber        = 0x82474028  # thunk -> XapiSwitchToFiberBody
+
+# -----------------------------------------------------------------------------
+# Mid-function hooks ("midasm"): a call to OUR C++ inserted at one instruction
+# -----------------------------------------------------------------------------
+# Codegen emits `extern void <name>(PPCRegister& rN, ...);` and calls it right
+# before the instruction at `address` (after it with after_instruction = true),
+# passing the listed guest registers by reference so the hook can read or
+# change them. Implementations live in src/ with plain C++ linkage.
+
+# FRAME LIMITER (src/frame_rate.cpp, docs/findings/07). The game's main loop
+# (sub_8227AEE0) caps itself at 30 fps: r29 = microseconds since the last
+# frame, and
+#   0x8227B0DC  cmplwi cr6,r29,33333    ; 1/30 s
+#   0x8227B0E0  ble    0x8227AFC0       ; not yet: spin and re-read the clock
+# otherwise it runs one frame (vtable slot 44) with the real delta time.
+# The hook sees r29 first and, when --fps_cap asks for another rate, replaces
+# it with "past the threshold" or "not yet" for OUR frame time. Safe because
+# r29 is only this comparison's input: every other read in the loop comes
+# after it's recomputed (subf r29,r11,r30 at 0x8227B030, mr r29,r3 at
+# 0x8227AF78).
+# Found by disassembly: D3D's presentation interval was the first suspect,
+# but logging showed the game already asks for interval 1 (60 Hz).
+[[entrypoint.midasm_hook]]
+address = 0x8227B0DC
+name = "CrashMomFrameLimiter"
+registers = ["r29"]
+
+# RENDERER VSYNC MODE (src/frame_rate.cpp, docs/findings/07). This is what
+# actually holds title, menus and gameplay at 30 fps. Radical's renderer
+# (PDDI) "swap buffers" routine sub_82433510 reads a vsync mode from
+# this+1660 and:
+#   mode 1: waits until the vblank count (a global at 0x8258E460, copied by
+#           the game's D3D vblank callback 0x82433380) moves past `last`;
+#           if exactly one vblank passed, sets last = count + 1, so the NEXT
+#           frame waits two vblanks: a 30 fps pace with catch-up. Then D3D
+#           presentation interval ONE.
+#   mode 0: no extra wait, interval ONE: plain 60 Hz vsync.
+#   other : interval IMMEDIATE (0x80000000), used by loading screens.
+#     0x8243352C  lwz    r10,1660(r31)   ; mode
+#     0x82433534  cmpwi  cr6,r10,1
+#     0x82433544  bne    cr6,0x82433598  ; -> cmpwi r10,0 / li r29,1 (mode 0)
+# The hook sees r10 before the compare and, when --fps_cap isn't 30, turns
+# mode 1 into mode 0, so the game takes its own 60 fps path. r10 is only
+# read by these two compares before being overwritten.
+# Found by: guest vblanks at 1000 Hz (--vsync=false) lifted the title from
+# 30 to 59 fps, so something counted vblanks; the vblank callback registered
+# via D3D's SetVerticalBlankCallback (sub_82311388, called from PDDI init
+# sub_82433B00) led to the only reader of its global, this function.
+[[entrypoint.midasm_hook]]
+address = 0x82433534
+name = "CrashMomVsyncMode"
+registers = ["r10"]

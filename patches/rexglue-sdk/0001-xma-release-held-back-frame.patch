@@ -1,0 +1,151 @@
+Fix: XMA decoder output ended one frame short, hanging the loading screen
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0001-xma-release-held-back-frame.patch
+Status:     local patch, not upstream yet (worth reporting)
+
+WHAT BROKE
+  Crash's first loading screen froze forever with no sound. Its audio load
+  task decodes a 30,208-sample XMA sound effect into memory and busy-waits
+  (sub_8234C580, a 50 us poll loop) until it has every sample. The SDK's
+  XMA decoder only ever produced 29,824.
+
+WHY
+  Since commit f24299f ("XMA loop wraps silenced the loop's last 192
+  samples"), XmaContext::Decode() emits every frame one decode late: it holds
+  the decoded frame in carry_frame_ and completes it with the head of the
+  next decoded block, to line FFmpeg's 192-sample-early output up with the
+  bitstream. When the input runs dry, no next block ever arrives, so the
+  last frame of every stream is never output. Real hardware has no such lag.
+
+  A second, older bug surfaced once the frame was released: the
+  "consume-only" path in Work() (no input left, just draining) never cleared
+  output_buffer_valid when it filled the output ring exactly. write == read
+  then looked *empty* to the game instead of *full*, and a whole buffer of
+  samples (1,024 here) vanished.
+
+THE FIX (src/audio/xma_context.cpp, include/rex/audio/xma/context.h)
+  1. New XmaContext::FlushCarry(): when no input buffer is valid and nothing
+     is pending, output the held-back frame (its 320 decoded samples + 192
+     samples of silence standing in for a block that doesn't exist).
+  2. Work() calls it before the consume-only path, and that path now waits
+     for output room like the decode loop does (RingBuffer::Write doesn't
+     clamp to free space).
+  3. The consume-only path drops output_buffer_valid when the ring is full.
+
+  Trade-off: if a game is merely *late* with its next input buffer (an
+  underrun), 192 samples at that seam become silence. The sample count
+  still matches hardware, which is what games synchronize on.
+
+HOW WE FOUND IT: docs/findings/04-loading-hang-xma.md
+
+diff --git a/include/rex/audio/xma/context.h b/include/rex/audio/xma/context.h
+index 8426798..7751886 100644
+--- a/include/rex/audio/xma/context.h
++++ b/include/rex/audio/xma/context.h
+@@ -251,6 +251,7 @@ class XmaContext {
+   uint8_t* GetCurrentInputBuffer(XMA_CONTEXT_DATA* data);
+ 
+   void Decode(XMA_CONTEXT_DATA* data);
++  bool FlushCarry(const XMA_CONTEXT_DATA* data);
+   void Consume(memory::RingBuffer* output_rb, const XMA_CONTEXT_DATA* data);
+   void UpdateLoopStatus(XMA_CONTEXT_DATA* data);
+   void ClearLocked(XMA_CONTEXT_DATA* data);
+diff --git a/src/audio/xma_context.cpp b/src/audio/xma_context.cpp
+index 11b83be..8b6f862 100644
+--- a/src/audio/xma_context.cpp
++++ b/src/audio/xma_context.cpp
+@@ -110,23 +110,39 @@ bool XmaContext::Work() {
+ 
+   memory::RingBuffer output_rb = PrepareOutputRingBuffer(&data);
+ 
++  // Minimum free blocks needed before attempting a decode.
++  // Use subframe_decode_count (clamped to 1) instead of full frame size.
++  const uint32_t effective_sdc = std::max(static_cast<uint32_t>(1), data.subframe_decode_count);
++  const int32_t minimum_subframe_decode_count =
++      static_cast<int32_t>(effective_sdc) + data.output_buffer_padding;
++
++  // The input has run dry: release the frame the start-padding realignment is
++  // still holding back, or the stream ends one frame short (see FlushCarry).
++  if (!data.IsAnyInputBufferValid() && current_frame_remaining_subframes_ == 0) {
++    FlushCarry(&data);
++  }
++
+   // Consume-only context: no input, just drain remaining subframes.
+   if (data.IsConsumeOnlyContext()) {
+-    if (current_frame_remaining_subframes_ == 0) {
++    // RingBuffer::Write does not clamp to free space, so draining into a full
++    // buffer would overwrite samples the guest has not read yet. Wait for room
++    // like the decode loop below does.
++    if (current_frame_remaining_subframes_ == 0 ||
++        minimum_subframe_decode_count > remaining_subframe_blocks_in_output_buffer_) {
+       return true;
+     }
+     Consume(&output_rb, &data);
+     data.output_buffer_write_offset = output_rb.write_offset() / kOutputBytesPerBlock;
++    // A drain that fills the buffer exactly leaves write == read, which the
++    // guest reads as empty unless output_buffer_valid is dropped, as the decode
++    // path below does. Without it a whole buffer of samples went missing.
++    if (output_rb.empty()) {
++      data.output_buffer_valid = 0;
++    }
+     StoreContextMerged(data, initial_data, context_ptr);
+     return true;
+   }
+ 
+-  // Minimum free blocks needed before attempting a decode.
+-  // Use subframe_decode_count (clamped to 1) instead of full frame size.
+-  const uint32_t effective_sdc = std::max(static_cast<uint32_t>(1), data.subframe_decode_count);
+-  const int32_t minimum_subframe_decode_count =
+-      static_cast<int32_t>(effective_sdc) + data.output_buffer_padding;
+-
+   if (minimum_subframe_decode_count > remaining_subframe_blocks_in_output_buffer_) {
+     StoreContextMerged(data, initial_data, context_ptr);
+     return true;
+@@ -422,6 +438,46 @@ void XmaContext::StoreContextMerged(const XMA_CONTEXT_DATA& data,
+   fresh.Store(context_ptr);
+ }
+ 
++// Releases the frame that the start-padding realignment in Decode() is still
++// holding in carry_frame_.
++//
++// Decode() emits every frame one decode late: FFmpeg's samples run
++// kDecoderStartPadding ahead of the bitstream's numbering, so a frame is only
++// complete once the head of the next decoded block arrives. The hardware has no
++// such lag and writes every frame of the stream, the last one included. When
++// the input runs dry nothing completes the final frame, so a stream of N frames
++// came out N-1 frames long, and a guest that decodes a whole wave into memory
++// and waits for its full sample count spun forever. 565507FA hangs on its first
++// loading screen this way: it wants 30208 samples, the decoder delivered 29824.
++//
++// The missing kDecoderStartPadding samples would be the head of a block that
++// does not exist (the codec's overlap-add tail, which ff_xmaframes offers no
++// flush for), so they are written as silence. If the guest was only late with
++// its next buffer (an underrun), those padding samples become silence at the
++// seam, but the sample count still matches what the hardware produces.
++bool XmaContext::FlushCarry(const XMA_CONTEXT_DATA* data) {
++  if (!carry_valid_ || current_frame_remaining_subframes_ > 0) {
++    return false;
++  }
++
++  const size_t pad_bytes = kDecoderStartPadding * kBytesPerSample << data->is_stereo;
++  const size_t carry_bytes = (kBytesPerFrameChannel << data->is_stereo) - pad_bytes;
++  std::memcpy(raw_frame_.data(), carry_frame_.data(), carry_bytes);
++  std::memset(raw_frame_.data() + carry_bytes, 0, pad_bytes);
++
++  // Same bookkeeping as the carry branch in Decode(): the loop-end limit and
++  // loop-start skip recorded for this frame apply now that it is output.
++  current_frame_remaining_subframes_ = 4 << data->is_stereo;
++  loop_frame_output_limit_ = pending_output_limit_;
++  current_frame_remaining_subframes_ -=
++      std::min(pending_start_skip_, current_frame_remaining_subframes_);
++
++  carry_valid_ = false;
++  pending_output_limit_ = 0;
++  pending_start_skip_ = 0;
++  return true;
++}
++
+ void XmaContext::Consume(memory::RingBuffer* output_rb, const XMA_CONTEXT_DATA* data) {
+   if (!current_frame_remaining_subframes_) {
+     return;
