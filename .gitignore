@@ -29,3 +29,8 @@ __pycache__/
 
 # Locally-built SDK install prefix (see docs/01-building.md)
 /thirdparty/rexglue-install/
+
+# Private working notes, kept on the maintainer's machine only:
+# CLAUDE.md (the AI assistant's project notes) and notes/ (private plans).
+/CLAUDE.md
+/notes/

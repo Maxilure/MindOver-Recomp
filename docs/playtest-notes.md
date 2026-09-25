@@ -68,8 +68,7 @@ Kinds of problems to watch for:
 - [ ] Boss fights
 - [ ] Jacking (taking control of) each kind of mutant
 - [ ] Main menu extras: Load Game, Credits, Calibration
-- [ ] **Two controllers**: does player 2 drop in? (matters for online
-      multiplayer later)
+- [ ] **Two controllers**: does player 2 drop in?
 - [ ] A long session (an hour+): does it slow down or get unstable?
 
 ## Findings

@@ -16,11 +16,10 @@ alongside the others rather than strictly before them.
 
 ```
  0 Stabilize ──┬─> 2 PC input (remap menu, KB+M icons)
-               ├─> 3 Frame rate (60, then uncapped) ──┐
- 1 Understand ─┼─> 4 Native renderer (any res/aspect) ┤
-   the game    ├─> 5 Mods (files, Lua, C++)           │
-               └─> 6 Online multiplayer <─────────────┘ (needs 1 + 3's timing work)
- 7 Windows build + packaging: any time after 0
+               ├─> 3 Frame rate (60, then uncapped)
+ 1 Understand ─┼─> 4 Native renderer (any res/aspect)
+   the game    └─> 5 Mods (files, Lua, C++)
+ 6 Windows build + packaging: any time after 0
 ```
 
 Difficulty legend: 🟢 days · 🟡 weeks · 🔴 a big project · 🔬 research first.
@@ -48,13 +47,12 @@ and no structure. Most features need us to know *where* things happen:
 
 | Find | Unlocks |
 |---|---|
-| ✅ The main loop and its **frame timing** (the 30 fps cap, delta time): [findings/07](findings/07-frame-rate.md) | Phase 3, Phase 6 |
-| The **input path** (where XInput state becomes game actions) | Phase 2, Phase 6 |
+| ✅ The main loop and its **frame timing** (the 30 fps cap, delta time): [findings/07](findings/07-frame-rate.md) | Phase 3 |
+| The **input path** (where XInput state becomes game actions) | Phase 2 |
 | The **camera / projection** code (field of view, aspect ratio) | ultrawide (Phase 4) |
 | The **UI system** (menus, button-prompt textures and font glyphs) | Phase 2 icons, a menu entry |
 | The **Lua VM** and the `.blua` decryption | Phase 5 scripts, UI menus |
 | 🟡 Radical's **PDDI** renderer interface: classes, vtables and a frame's recipe mapped, [findings/08](findings/08-renderer-map.md); individual methods still being named | Phase 4 |
-| The **random number generator(s)** and every time source | Phase 6 |
 
 Method: name functions as we identify them (a symbol list in `docs/`),
 record each discovery in `docs/findings/`. Tools we have: `xexdis`, gdb
@@ -129,42 +127,7 @@ resolution (`draw_resolution_scale_x/y`, still to test with FSI).
    (`REX_HOOK`). A small plugin API makes that available to modders.
 4. Later: a mod manager (enable/disable, load order).
 
-## Phase 6: online multiplayer (true netplay) 🔴🔬
-
-The ambitious version: two PCs each run the game, kept in sync.
-
-The key idea is **deterministic lockstep**. We don't send positions or
-enemies over the network, only **each player's controller input**. Both
-games start in the same state and advance frame by frame with the same
-inputs for both players, so they compute the same result. The game already
-supports two local players (to confirm in the port), so netplay is
-"stretching player 2's controller cable over the internet."
-
-Steps, each a milestone:
-
-1. 🟢 Confirm **local 2-player** works in the port (two controllers).
-2. 🟡 **Take control of time.** Every clock the game reads (performance
-   counter, system time, vblank count) must come from us, advancing exactly
-   one frame's worth per frame, never from the real wall clock. Phase 3's
-   timing work is the same code.
-3. 🔬 **Determinism test**: run two copies with the *same scripted input*
-   (our `--debug_input_script` is the seed of this) and compare a hash of
-   the game's memory every frame. Wherever they diverge (background loading
-   threads, uninitialized memory, audio-driven timing), fix it until they
-   don't. This is the hard, research-heavy part.
-4. 🟡 **Lockstep over the network**: UDP, a few frames of input delay to
-   hide latency, desync detection with automatic hashes. Direct IP first.
-5. 🟡 **Sessions**: invites, lobbies, NAT traversal or a relay server so
-   players don't have to open ports.
-6. 🔬 Stretch: **rollback** (GGPO-style) removes the input delay, but needs
-   saving and restoring the whole game state many times per second.
-   Research once lockstep works.
-
-Honest note: steps 2–3 decide whether this is feasible, and they can take
-a long time. The upside is that step 3's tools (virtual clock, state
-hashing) also give us replays and automated testing for free.
-
-## Phase 7: Windows build and packaging 🟢 → 🟡
+## Phase 6: Windows build and packaging 🟢 → 🟡
 
 * The SDK supports Windows (Vulkan and D3D12): mostly build work and
   testing (the Win32 half of patch 0002 is untested).

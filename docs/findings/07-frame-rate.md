@@ -113,5 +113,6 @@ main 94% (mostly the spin), GPU command thread 22%, host present 62%).
   a higher guest refresh rate (with `--vsync=false` the SDK ticks at 1000 Hz
   and the title ran at the host monitor's ~59), or the "immediate" mode.
   Anything else in the game that counts vblanks would then need checking.
-* For netplay (phase 6): `sub_8235AAE0` / `0x824731D8` (QPC) and the vblank
-  counter `0x8258E460` are time sources a virtual clock must control.
+* Time sources worth knowing for any later timing work (replays, a
+  controlled clock): `sub_8235AAE0` / `0x824731D8` (QPC) and the vblank
+  counter `0x8258E460`.

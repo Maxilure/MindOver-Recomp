@@ -30,7 +30,7 @@ planned.
 | Playable (first level reached, saves load) | ✅ first look, playtesting in progress |
 | 60+ fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)) |
 | Native Vulkan renderer | 🔧 in progress: renderer mapped ([findings](docs/findings/08-renderer-map.md)), our Vulkan output reaches the window (F9 switches); drawing the game's own frames is next ([plan](docs/04-native-renderer.md)) |
-| Windows build, mods, remappable KB+M, online co-op | planned ([roadmap](docs/03-roadmap.md)) |
+| Windows build, mods, remappable KB+M | planned ([roadmap](docs/03-roadmap.md)) |
 
 ## Requirements
 
