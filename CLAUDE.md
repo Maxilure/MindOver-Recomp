@@ -30,7 +30,7 @@ recompilation expert, so explain what's going on in plain terms.
    `[entrypoint.functions]` entry. A wrong entry splits a real function
    and corrupts it silently.
 4. Don't commit or push unless asked. Public repo:
-   https://github.com/Maxilure/Mind-over-Recomp (remote `origin`, branch
+   https://github.com/Maxilure/MindOver-Recomp (remote `origin`, branch
    `main`, license GPL-3.0; SDK patches stay BSD-3-Clause). Before any
    commit, check `git diff --cached --name-only` for game-derived files, and
    inspect new patch files for stray `.orig`/`.rej` sections (one slipped in
