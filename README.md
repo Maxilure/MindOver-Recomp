@@ -6,40 +6,14 @@ original Xbox 360 executable into C++ with
 [ReXGlue](https://github.com/rexglue/rexglue-sdk). Linux today, Windows
 planned.
 
+**Note:** developed with extensive AI assistance, see
+[Development approach](#development-approach).
+
 > **No game files are included, and none ever will be.** You need your own
 > copy of the Xbox 360 disc, dumped to an `.iso`. This repo contains only
 > our tools, notes, and native code. Everything derived from the game
 > (extracted files and the generated C++) stays on your machine and is
 > blocked by `.gitignore`.
-
-## How this project is made (please read)
-
-To be honest and fair up front: **this project is almost entirely
-AI-assisted ("vibe-coded").** The code, the reverse-engineering notes in
-[`docs/findings/`](docs/findings/) and the documentation were written by an
-AI coding assistant (Claude, through Claude Code), with me directing it,
-testing, and playing the game.
-
-From my own point of view: I'm not a recompilation or reverse-engineering
-expert, and a lot of what happens here honestly goes over my head. I'm
-learning as I go. What I bring is the goal, the testing, and a lot of love
-for this game. It's a big part of my childhood, and I want it preserved
-properly.
-
-What that means if you're reading or using this:
-
-* **The findings are useful, but not expert-verified.** Everything was
-  checked by actually running the game (screenshots, logs, measurements),
-  but there can still be mistakes, wrong guesses or poor explanations. If
-  you spot one, please open an issue.
-* **Human expertise is the most valuable thing you can bring.** If you know
-  Xbox 360 internals, Radical's Pure3D engine, ReXGlue/Xenia, or Vulkan, a
-  review, a correction or a fix means a lot.
-* **Real work is heavily appreciated and will be credited.** See
-  [Credits](#credits). Work done with little or no AI is legendary, and
-  will be credited as such.
-
-— Maxilure
 
 ## Status
 
@@ -57,6 +31,20 @@ What that means if you're reading or using this:
 | 60+ fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)) |
 | Native Vulkan renderer | 🔧 next ([plan](docs/04-native-renderer.md)) |
 | Windows build, mods, remappable KB+M, online co-op | planned ([roadmap](docs/03-roadmap.md)) |
+
+## Requirements
+
+* **Your own copy** of the Xbox 360 game, dumped to an `.iso`.
+* **Linux** (developed on an Arch-based distro, Wayland). Windows is planned.
+* **A Vulkan GPU with `VK_EXT_fragment_shader_interlock`**, which the current
+  rendering mode needs (tested on an NVIDIA GTX 1660 SUPER). Without it the
+  port falls back to a mode where the movies and some screens render black.
+* **Build tools:** clang, CMake 3.25+, git, Python 3.
+* **16 GB RAM** for building (the recompiled game is ~140 large C++ files;
+  `-j 6` keeps memory in check). About **16 GB of disk**: the ISO (7.8 GB,
+  removable after extraction), the extracted game (6 GB) and builds (~2 GB).
+* A controller (anything SDL recognizes as a gamepad). Basic keyboard/mouse
+  also works (`--mnk_mode=true`); a proper remapping menu is planned.
 
 ## Quick start (Linux)
 
@@ -120,6 +108,27 @@ out/, logs/                build output, run logs
 3. [Findings](docs/findings/): everything we've learned about the game's internals
 4. [Roadmap](docs/03-roadmap.md): what's next
 
+## Development approach
+
+This project is developed with extensive AI assistance (Claude, via
+Claude Code). The code, the reverse-engineering notes and the documentation
+were largely written by the AI. The maintainer sets direction, tests every
+change on the real game and reviews the results, but isn't a specialist in
+recompilation or reverse engineering.
+
+* Findings are verified against the running game (logs, screenshots,
+  measurements), but have **not been reviewed by domain experts**. Treat
+  them as working notes, and please report errors.
+* Reviews from people experienced with Xbox 360 internals, Radical's
+  engine, ReXGlue/Xenia or Vulkan are especially valuable.
+
+## Contributing
+
+Contributions of any kind (code, reverse engineering, testing, bug reports,
+corrections) are welcome and will be credited by name in [Credits](#credits).
+Hand-written, expert work is especially valued. For bug reports, the
+session log from `tools/play.sh` (in `logs/`) helps a lot.
+
 ## Credits
 
 * **Maxilure**: project lead, direction, playtesting.
@@ -128,9 +137,15 @@ out/, logs/                build output, run logs
 * **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator
   that ReXGlue's runtime and GPU emulation build on.
 * **Claude** (Anthropic): AI assistant that wrote most of the code and
-  documentation, as described [above](#how-this-project-is-made-please-read).
+  documentation (see [Development approach](#development-approach)).
 * **You?** Every human contribution (code, reverse engineering, testing,
   bug reports, corrections to our notes) gets listed here by name.
+
+## Why this project exists
+
+*Crash: Mind over Mutant* divided fans, but for many players, the maintainer
+included, it's a big part of their childhood. This project aims to preserve
+it as a native PC game.
 
 ## License
 

@@ -3,9 +3,9 @@
 Reverse-engineering notes about *Crash: Mind over Mutant* and the port,
 one file per investigation, in the order they happened.
 
-**About these notes:** like the rest of the project, they were written by an
-AI coding assistant working with the project lead (see
-[How this project is made](../../README.md#how-this-project-is-made-please-read)).
+**About these notes:** like most of the project, they were written with an
+AI coding assistant working with the maintainer (see
+[Development approach](../../README.md#development-approach)).
 Every conclusion was tested against the running game (logs, screenshots,
 debugger sessions, measurements), and wrong turns are kept in the text
 because they're part of how the answer was found. They have not been
