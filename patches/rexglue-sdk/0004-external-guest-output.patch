@@ -1,0 +1,101 @@
+Feature: let the application own the guest output (native renderer hand-off)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0004-external-guest-output.patch
+Status:     local patch, not upstream yet (small, generic: worth proposing)
+
+WHAT WAS MISSING
+  The port is growing its own Vulkan renderer (docs/04-native-renderer.md,
+  docs/findings/08). Its frames reach the window the same way the emulated
+  GPU's do: Presenter::RefreshGuestOutput(), which hands a callback the
+  "guest output" image. But the emulated GPU keeps running during
+  development ("shadow mode": the game's original renderer runs, ours
+  mirrors it), and every one of its swaps refreshes the guest output too.
+  Two producers, one image: the picture would flicker between both.
+
+THE CHANGE
+  * Presenter::SetGuestOutputExternal(bool) / IsGuestOutputExternal()
+    (include/rex/ui/presenter.h): an atomic flag, set by the application
+    while its own renderer provides the picture.
+  * Vulkan and D3D12 IssueSwap (src/graphics/*/command_processor.cpp): when
+    the flag is set, end the frame right after BeginSubmission, without
+    refreshing the guest output. This is the same early exit the Vulkan
+    backend already takes for frames it chooses not to present (the async
+    shader placeholder path), so per-frame bookkeeping is unchanged.
+  Flag off (the default) = exactly the old behavior.
+
+HOW IT'S USED
+  src/native/native_renderer.cpp: F9 (bind_renderer) switches the window
+  between the emulated picture and the native one; the flag follows it.
+---
+diff --git a/include/rex/ui/presenter.h b/include/rex/ui/presenter.h
+index afb4a30..3326c93 100644
+--- a/include/rex/ui/presenter.h
++++ b/include/rex/ui/presenter.h
+@@ -358,6 +358,18 @@ class Presenter {
+   bool RefreshGuestOutput(uint32_t frontbuffer_width, uint32_t frontbuffer_height,
+                           uint32_t display_aspect_ratio_x, uint32_t display_aspect_ratio_y,
+                           std::function<bool(GuestOutputRefreshContext& context)> refresher);
++  // External guest output: an application with its own host renderer (a
++  // native port replacing the emulated GPU's picture) sets this while its own
++  // RefreshGuestOutput calls provide the picture. GPU emulation then skips
++  // refreshing the guest output on its swaps (it still ends the frame as
++  // usual), so the two producers don't overwrite each other. Any thread.
++  void SetGuestOutputExternal(bool external) {
++    guest_output_external_.store(external, std::memory_order_relaxed);
++  }
++  bool IsGuestOutputExternal() const {
++    return guest_output_external_.load(std::memory_order_relaxed);
++  }
++
+   // The implementation must be callable from any thread, including from
+   // multiple at the same time, and it should acquire the latest guest output
+   // image via ConsumeGuestOutput.
+@@ -937,6 +949,9 @@ class Presenter {
+   // UI thread: writable, guest output thread: read-only.
+   GuestOutputPaintConfig guest_output_paint_config_;
+ 
++  // See SetGuestOutputExternal.
++  std::atomic<bool> guest_output_external_{false};
++
+   // Single-producer-multiple-consumers (lock-free SPSC + consumer lock) mailbox
+   // for presenting of the most up-to-date guest output image without long
+   // interlocking between guest output refreshing and painting.
+diff --git a/src/graphics/d3d12/command_processor.cpp b/src/graphics/d3d12/command_processor.cpp
+index 19874a5..7f51e19 100644
+--- a/src/graphics/d3d12/command_processor.cpp
++++ b/src/graphics/d3d12/command_processor.cpp
+@@ -1911,6 +1911,14 @@ void D3D12CommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontbu
+     return;
+   }
+ 
++  // The application's own renderer provides the picture right now: end the
++  // frame without refreshing the guest output (see
++  // Presenter::SetGuestOutputExternal).
++  if (presenter->IsGuestOutputExternal()) {
++    EndSubmission(true);
++    return;
++  }
++
+   // Obtain the actual swap source texture size (resolution-scaled if it's a
+   // resolve destination, or not otherwise).
+   D3D12_SHADER_RESOURCE_VIEW_DESC swap_texture_srv_desc;
+diff --git a/src/graphics/vulkan/command_processor.cpp b/src/graphics/vulkan/command_processor.cpp
+index 001f36b..1f459cb 100644
+--- a/src/graphics/vulkan/command_processor.cpp
++++ b/src/graphics/vulkan/command_processor.cpp
+@@ -2289,6 +2289,14 @@ void VulkanCommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontb
+     return;
+   }
+ 
++  // The application's own renderer provides the picture right now: end the
++  // frame like the other skipped-presentation path below, without refreshing
++  // the guest output.
++  if (presenter->IsGuestOutputExternal()) {
++    EndSubmission(true);
++    return;
++  }
++
+   bool skip_present_due_async_placeholder = REXCVAR_GET(async_shader_compilation) &&
+                                             REXCVAR_GET(vulkan_async_skip_incomplete_frames) &&
+                                             frame_used_async_placeholder_pipeline_;

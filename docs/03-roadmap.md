@@ -53,7 +53,7 @@ and no structure. Most features need us to know *where* things happen:
 | The **camera / projection** code (field of view, aspect ratio) | ultrawide (Phase 4) |
 | The **UI system** (menus, button-prompt textures and font glyphs) | Phase 2 icons, a menu entry |
 | The **Lua VM** and the `.blua` decryption | Phase 5 scripts, UI menus |
-| Radical's **PDDI** renderer interface (the engine's graphics API) | Phase 4 |
+| 🟡 Radical's **PDDI** renderer interface: classes, vtables and a frame's recipe mapped, [findings/08](findings/08-renderer-map.md); individual methods still being named | Phase 4 |
 | The **random number generator(s)** and every time source | Phase 6 |
 
 Method: name functions as we identify them (a symbol list in `docs/`),

@@ -33,6 +33,7 @@
 
 #include "debug_frame_capture.h"
 #include "debug_input_script.h"
+#include "native/native_renderer.h"
 
 class CrashMomApp : public rex::ReXApp {
  public:
@@ -111,6 +112,13 @@ class CrashMomApp : public rex::ReXApp {
     // the final picture the emulated GPU sends to the "TV".
     if (auto* gfx = runtime() ? runtime()->graphics_system() : nullptr) {
       frame_capture_.Start(gfx->presenter());
+      // Our own Vulkan renderer (roadmap phase 4, native/native_renderer.h).
+      // Draws next to the emulated GPU; F9 switches which picture is shown.
+      // Null if the presenter isn't Vulkan: then the game just stays on the
+      // emulated picture.
+      if (gfx->presenter()) {
+        native_renderer_ = NativeRenderer::Create(gfx->presenter());
+      }
     }
   }
 
@@ -126,7 +134,12 @@ class CrashMomApp : public rex::ReXApp {
     }
   }
 
-  void OnShutdown() override { frame_capture_.Stop(); }
+  // First thing on shutdown, while the presenter still exists (the game's
+  // main thread may still be running: the renderer unhooks itself safely).
+  void OnShutdown() override {
+    native_renderer_.reset();
+    frame_capture_.Stop();
+  }
 
   // Other hooks we can override (uncomment + implement as needed):
   // void OnConfigurePaths(rex::PathConfig& paths) override {}
@@ -137,4 +150,5 @@ class CrashMomApp : public rex::ReXApp {
 
  private:
   DebugFrameCapture frame_capture_;
+  std::unique_ptr<NativeRenderer> native_renderer_;
 };

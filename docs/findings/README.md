@@ -21,3 +21,4 @@ and will be credited.
 | [05](05-post-intro-freeze-fibers.md) | The freeze after the intro movies: a fiber bug in the SDK |
 | [06](06-black-screens-render-target-path.md) | Black movies and the vanishing title logo: the render-target path |
 | [07](07-frame-rate.md) | The 30 fps cap and the 60 fps option |
+| [08](08-renderer-map.md) | How the game draws: Radical's renderer (PDDI) mapped, where the native renderer cuts in |

@@ -12,13 +12,15 @@ should work with the `win-amd64-*` presets but hasn't been tested yet.
 | CMake | 3.25+ | Build system |
 | Ninja | any | Build backend used by the presets |
 | Python | 3.8+ | Our tools in `tools/` |
+| glslc (shaderc) | any | Compiles the native renderer's shaders at build time |
 | GTK3 dev headers | 3.x | ReXGlue's Linux file dialogs |
 | Vulkan driver | 1.3 | Rendering (any recent NVIDIA/AMD/Intel driver works) |
 | Disk space | ~15 GB | ISO (7.3) + extracted game (6.0) + build (~2) |
 | RAM | 16 GB recommended | Generated C++ files are huge; see step 4 |
 
-Arch/CachyOS: `sudo pacman -S clang cmake ninja gtk3 vulkan-icd-loader`
-Debian/Ubuntu: `sudo apt install clang-20 cmake ninja-build libgtk-3-dev libvulkan-dev`
+Arch/CachyOS: `sudo pacman -S clang cmake ninja gtk3 vulkan-icd-loader shaderc`
+Debian/Ubuntu: `sudo apt install clang-20 cmake ninja-build libgtk-3-dev libvulkan-dev glslc`
+(Optional, for renderer work: the Vulkan validation layer, `vulkan-validation-layers`.)
 
 You also need **your own dump** of the Xbox 360 disc as an `.iso` (a full
 XGD2 dump is 7,835,492,352 bytes). Put it in the repo root.
@@ -71,6 +73,7 @@ About 90–100 s per configuration on a 12-thread CPU.
   | `0001-xma-release-held-back-frame` | XMA decoder output ended one frame short, so the first loading screen hung with no sound ([findings/04](findings/04-loading-hang-xma.md)) |
   | `0002-fiber-destroy-wrong-thread` | Closing a finished thread's handle wiped the *closing* thread's current fiber, so the game froze on "Loading" after the intro movies ([findings/05](findings/05-post-intro-freeze-fibers.md)) |
   | `0003-empty-resolve-is-noop` | Tiled rendering's clipped-away resolves were logged as errors, ~240 lines per second, burying real errors ([findings/06](findings/06-black-screens-render-target-path.md)) |
+  | `0004-external-guest-output` | Not a fix, a feature: `Presenter::SetGuestOutputExternal()` lets our native renderer own the window's picture; the emulated GPU then skips refreshing it ([04-native-renderer.md](04-native-renderer.md), milestone 2) |
 
   `patches/rexglue-sdk/debug/` holds **optional debugging patches** that
   the `*.patch` glob above deliberately skips. Apply one by hand when

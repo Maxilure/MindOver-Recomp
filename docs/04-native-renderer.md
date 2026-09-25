@@ -48,6 +48,15 @@ Suggested first step: **research both D3D and PDDI for a few sessions,
 then decide**. Likely outcome: PDDI, falling back to D3D-level hooks for any
 direct D3D use by the game.
 
+**Update 2026-09-25 (milestone 1 done, [findings/08](findings/08-renderer-map.md)):**
+the class names survived in the exe, so PDDI's Xbox backend is fully mapped
+(`xnContext`, `xnDisplay`, `xnDevice`, `xnTexture`, `xnPrimBuffer`,
+`xnPrimBufferStream`, 18 `xn*Shader` classes; 298 functions of their own).
+D3D has **no callers outside that backend**, so there's no "direct D3D use"
+to fall back on. Recommendation: cut in at the `xn*` backend, with host
+objects keyed by the guest `this`, in "shadow mode" first (details in
+findings/08, sections 5 and 6).
+
 ## What we already know
 
 Addresses (all in `default.xex`, image `0x82000000`):
@@ -107,14 +116,44 @@ textures for effects, render-to-texture for post-processing).
 
 ## Milestones (proposal)
 
-1. **Map it.** PDDI classes and vtables, the D3D functions the game calls
+1. ✅ **Map it.** PDDI classes and vtables, the D3D functions the game calls
    per frame, which shaders and textures each draw uses (diag patch + gdb).
    Decide the layer. Output: findings/08 and a named-function list.
-2. **Stand up our own Vulkan path next to ReXGlue's.** Either share the SDK's
+   Done 2026-09-25 with new tools instead of gdb: `tools/rtti_vtables.py`,
+   `tools/callgraph.py` and the frame tracer `--debug_pddi_trace_dir`.
+2. ✅ **Stand up our own Vulkan path next to ReXGlue's.** Either share the SDK's
    Vulkan device and presenter or run our own and hand over the final
    image. Show one native-drawn thing (a clear colour, then a test quad)
    in the game window.
-3. **First real screen, natively:** the loading screen or title (few
+   Plan from findings/08: share the SDK's `VulkanDevice` (from the
+   presenter), draw into our own image, hand it over with
+   `Presenter::RefreshGuestOutput` (any size), a hotkey to switch the window
+   between the emulated and the native picture, and a small SDK patch so the
+   emulated command processor stops presenting while the native picture is
+   on. Hook point for "a frame is done": `xnDisplay::SwapBuffers`
+   (`0x82433510`).
+   **Done 2026-09-25**, exactly that way:
+   * `src/pddi/intercept.*`: one strong wrapper per renderer function
+     (same table as the tracer), with a per-function **handler** slot
+     (`pddi::SetHandler`: a handler gets the original and may call it =
+     shadow mode, or not = replacement) and **end-of-frame listeners**
+     (after `SwapBuffers`, on the game's main thread). The tracer
+     (`src/pddi/trace.cpp`) now sits on the same layer.
+   * `src/native/native_renderer.*`: shares the SDK's `VulkanDevice` (from
+     the presenter), draws its own 1280×720 RGBA8 frame (for now a test
+     picture: a checkerboard quad rotating with the game's frame counter),
+     then a "present" pass samples it into the presenter's guest-output
+     image (that image can be drawn into but not copied into). Submits on
+     graphics queue 0 through `AcquireQueue`, 3 command buffers in flight
+     tracked by the SDK's `VulkanSubmissionTracker`.
+   * **F9** (`bind_renderer`, rebindable in F4) switches the window between
+     the emulated and the native picture; `--renderer=native` starts on the
+     native one. SDK patch `0004-external-guest-output` makes the emulated
+     GPU skip refreshing the window while ours is shown. The game keeps
+     running on the emulated GPU underneath either way.
+   * Shaders are GLSL in `src/native/shaders/`, compiled by `glslc` at
+     build time into headers.
+3. **First real screen, natively (next):** the loading screen or title (few
    draws): texture upload with untiling, the palette shader, vertex data
    byte-swapping, alpha blending. Compare side by side with the emulated
    path using the capture tool.

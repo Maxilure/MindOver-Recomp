@@ -29,7 +29,7 @@ planned.
 | Intro movies with picture, title screen, menus, cutscenes | ✅ done ([findings](docs/findings/06-black-screens-render-target-path.md)) |
 | Playable (first level reached, saves load) | ✅ first look, playtesting in progress |
 | 60+ fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)) |
-| Native Vulkan renderer | 🔧 next ([plan](docs/04-native-renderer.md)) |
+| Native Vulkan renderer | 🔧 in progress: renderer mapped ([findings](docs/findings/08-renderer-map.md)), our Vulkan output reaches the window (F9 switches); drawing the game's own frames is next ([plan](docs/04-native-renderer.md)) |
 | Windows build, mods, remappable KB+M, online co-op | planned ([roadmap](docs/03-roadmap.md)) |
 
 ## Requirements
@@ -39,7 +39,7 @@ planned.
 * **A Vulkan GPU with `VK_EXT_fragment_shader_interlock`**, which the current
   rendering mode needs (tested on an NVIDIA GTX 1660 SUPER). Without it the
   port falls back to a mode where the movies and some screens render black.
-* **Build tools:** clang, CMake 3.25+, git, Python 3.
+* **Build tools:** clang, CMake 3.25+, git, Python 3, `glslc` (shaderc; compiles our shaders).
 * **16 GB RAM** for building (the recompiled game is ~140 large C++ files;
   `-j 6` keeps memory in check). About **16 GB of disk**: the ISO (7.8 GB,
   removable after extraction), the extracted game (6 GB) and builds (~2 GB).
@@ -83,6 +83,8 @@ LICENSE                    GPL-3.0 (see "License" below)
 crash_mom_manifest.toml    recompiler config: every analysis fix and hook, commented
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       OUR native code: app setup, hooks, fixes, debug tools
+  pddi/                    interception of the game's renderer calls + the frame tracer
+  native/                  our Vulkan renderer (in development)
 tools/                     disc extraction, xex inspection, disassembler, play/debug scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
 docs/                      how everything works + everything we've found

@@ -30,6 +30,9 @@ set(CRASHMOM_SOURCES
     src/debug_frame_capture.cpp  # --debug_capture_dir: periodic screenshots for debugging
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing (midasm hooks)
+    src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
+    src/pddi/trace.cpp           # --debug_pddi_trace_dir: log every renderer call of chosen frames
+    src/native/native_renderer.cpp  # our Vulkan renderer (F9: emulated <-> native picture)
 )
 
 if(WIN32)
@@ -40,6 +43,43 @@ endif()
 
 # Links the generated code + runtime, adds the codegen dependency.
 rexglue_setup_target(crash_mom)
+
+# -----------------------------------------------------------------------------
+# Shaders of the native renderer (src/native/shaders/*.vert / *.frag)
+# -----------------------------------------------------------------------------
+# GLSL is compiled to SPIR-V at build time by glslc (from shaderc; on Linux
+# the "shaderc" package, on Windows it ships with the Vulkan SDK). Each
+# shader becomes <build>/shaders/<name>.h holding "{0x07230203,...}", which
+# native_renderer.cpp #includes into a uint32_t array.
+find_program(GLSLC_EXECUTABLE glslc REQUIRED)
+set(CRASHMOM_SHADERS
+    src/native/shaders/test_scene.vert   # milestone 2 test picture
+    src/native/shaders/test_scene.frag
+    src/native/shaders/present.vert      # our frame -> the window's picture
+    src/native/shaders/present.frag
+)
+set(_shader_headers)
+foreach(_shader ${CRASHMOM_SHADERS})
+    get_filename_component(_name ${_shader} NAME)
+    set(_out ${CMAKE_CURRENT_BINARY_DIR}/shaders/${_name}.h)
+    add_custom_command(
+        OUTPUT ${_out}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/shaders
+        COMMAND ${GLSLC_EXECUTABLE} --target-env=vulkan1.0 -O -mfmt=c
+                -o ${_out} ${CMAKE_CURRENT_SOURCE_DIR}/${_shader}
+        DEPENDS ${_shader}
+        COMMENT "glslc ${_name}"
+        VERBATIM)
+    list(APPEND _shader_headers ${_out})
+endforeach()
+# Listing the headers as sources makes the build generate them first.
+target_sources(crash_mom PRIVATE ${_shader_headers})
+target_include_directories(crash_mom PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+
+# The SDK's <rex/ui/vulkan/presenter.h> (used by the native renderer) includes
+# RenderDoc's API header, which the SDK doesn't install: take it from the SDK
+# source tree, like xexdis does for the disassembler headers.
+target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/renderdoc)
 
 # Copy ReXGlue's shared libraries next to the executable on Linux.
 # The SDK already sets the executable's library search path to its own
