@@ -12,6 +12,35 @@ planned.
 > (extracted files and the generated C++) stays on your machine and is
 > blocked by `.gitignore`.
 
+## How this project is made (please read)
+
+To be honest and fair up front: **this project is almost entirely
+AI-assisted ("vibe-coded").** The code, the reverse-engineering notes in
+[`docs/findings/`](docs/findings/) and the documentation were written by an
+AI coding assistant (Claude, through Claude Code), with me directing it,
+testing, and playing the game.
+
+From my own point of view: I'm not a recompilation or reverse-engineering
+expert, and a lot of what happens here honestly goes over my head. I'm
+learning as I go. What I bring is the goal, the testing, and a lot of love
+for this game. It's a big part of my childhood, and I want it preserved
+properly.
+
+What that means if you're reading or using this:
+
+* **The findings are useful, but not expert-verified.** Everything was
+  checked by actually running the game (screenshots, logs, measurements),
+  but there can still be mistakes, wrong guesses or poor explanations. If
+  you spot one, please open an issue.
+* **Human expertise is the most valuable thing you can bring.** If you know
+  Xbox 360 internals, Radical's Pure3D engine, ReXGlue/Xenia, or Vulkan, a
+  review, a correction or a fix means a lot.
+* **Real work is heavily appreciated and will be credited.** See
+  [Credits](#credits). Work done with little or no AI is legendary, and
+  will be credited as such.
+
+— Maxilure
+
 ## Status
 
 | Milestone | State |
@@ -90,6 +119,18 @@ out/, logs/                build output, run logs
 2. [Building](docs/01-building.md): get it running on your machine
 3. [Findings](docs/findings/): everything we've learned about the game's internals
 4. [Roadmap](docs/03-roadmap.md): what's next
+
+## Credits
+
+* **Maxilure**: project lead, direction, playtesting.
+* **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static
+  recompiler and runtime that make this possible.
+* **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator
+  that ReXGlue's runtime and GPU emulation build on.
+* **Claude** (Anthropic): AI assistant that wrote most of the code and
+  documentation, as described [above](#how-this-project-is-made-please-read).
+* **You?** Every human contribution (code, reverse engineering, testing,
+  bug reports, corrections to our notes) gets listed here by name.
 
 ## License
 
