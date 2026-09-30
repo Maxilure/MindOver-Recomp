@@ -1,0 +1,52 @@
+Fix: guest memory leaked in /dev/shm by every run that didn't shut down cleanly
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0005-shm-unlink-at-create.patch
+Status:     local patch, not upstream yet (one line, POSIX only: worth proposing)
+
+WHAT BROKE
+  On Linux the 4 GB guest address space is a POSIX shared-memory object,
+  /dev/shm/xenia_memory_<tick count>, created by Memory::Initialize through
+  CreateFileMappingHandle (src/core/memory_posix.cpp). Its name was only
+  removed (shm_unlink) in CloseFileMappingHandle, i.e. when Memory is
+  destroyed. A run that crashed, was killed (timeout, Ctrl+C, a debugger),
+  or exited without destroying Memory left the object behind, and with it
+  every page of guest RAM the game had touched (~200 MB per run on the
+  menus, more in levels). /dev/shm is a RAM-backed tmpfs: those pages stay
+  in RAM (or swap) until reboot.
+
+HOW WE FOUND IT (2026-09-25)
+  After a day of test runs, launching the game died at once with SIGBUS,
+  and other programs on the machine started crashing. RAM: 11 of 15 GB used
+  plus 10 GB of swap, with no game running. /dev/shm held 83
+  xenia_memory_* files (6.1 GB); no process mapped any of them
+  (grep /proc/*/maps). The SIGBUS itself: touching a page of a tmpfs-backed
+  mapping when the kernel can't provide one. Even a normally closed run
+  after a reboot left its file behind.
+
+THE FIX
+  shm_unlink the name right after shm_open + ftruncate succeed. The object
+  stays alive through the returned fd and the views mapped from it, and the
+  kernel frees it when the process ends, however it ends. Nothing reopens
+  it by name (MapFileView takes the fd; checked with grep over the SDK), and
+  the later shm_unlink in CloseFileMappingHandle becomes a harmless no-op.
+---
+diff --git a/src/core/memory_posix.cpp b/src/core/memory_posix.cpp
+index b52bf39..03c96a8 100644
+--- a/src/core/memory_posix.cpp
++++ b/src/core/memory_posix.cpp
+@@ -483,6 +483,14 @@ FileMappingHandle CreateFileMappingHandle(const std::filesystem::path& path, siz
+     shm_unlink(full_path.c_str());
+     return kFileMappingHandleInvalid;
+   }
++  // Remove the name right away: the object stays alive through this fd and
++  // the views mapped from it, and the kernel frees it when the process ends,
++  // however it ends. Nothing reopens it by name (MapFileView takes the fd).
++  // Before, the name was only removed in CloseFileMappingHandle, so every
++  // run that crashed, was killed, or exited without destroying Memory left a
++  // /dev/shm/xenia_memory_* file behind, holding the guest RAM it had touched
++  // (RAM-backed tmpfs, hundreds of MB each) until reboot.
++  shm_unlink(full_path.c_str());
+   return static_cast<FileMappingHandle>(ret);
+ #endif
+ }

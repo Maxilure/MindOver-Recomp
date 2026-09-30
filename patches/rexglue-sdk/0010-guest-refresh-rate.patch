@@ -1,0 +1,67 @@
+Feature: GPU flag "guest_refresh_hz" (the guest's vblank rate, for frame rates above 60)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0010-guest-refresh-rate.patch
+Status:     local patch (a feature for our port, not a bug fix)
+
+WHY
+  A game that presents with vsync (D3D interval 1, or Crash's PDDI "one
+  vblank per frame" mode) waits for the next guest vblank every frame. The
+  SDK fires vblanks at the video mode's refresh rate (video_mode_refresh_rate,
+  60 Hz), so such a game can never pass 60 fps, however fast the host.
+
+WHAT
+  A hot-reloadable int flag guest_refresh_hz (default 0 = the video mode's
+  rate, range 0-1000). The vblank thread reads it on every iteration, so it
+  can change while running. Only the vblank rate changes: the video mode the
+  game queries still reports 60 Hz.
+
+HOW WE FOUND / CHECKED IT (2026-09-30)
+  Crash: Mind over Mutant with --fps_cap=144 (our frame_rate.cpp sets this
+  flag to the cap, and lifts the game's own 1/60 s minimum frame step with a
+  midasm hook): 142 fps in gameplay. Same run with --guest_refresh_hz=60 given
+  explicitly: 60.0 fps. Both limits have to go.
+
+diff --git a/src/graphics/graphics_system.cpp b/src/graphics/graphics_system.cpp
+index 8f2fcb0..88d4d43 100644
+--- a/src/graphics/graphics_system.cpp
++++ b/src/graphics/graphics_system.cpp
+@@ -35,6 +35,17 @@ REXCVAR_DEFINE_STRING(swap_post_effect, "none", "GPU", "Swap post effect: none,
+     .allowed({"none", "fxaa", "fxaa_extreme"})
+     .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+ 
++// Mind over Recomp: the guest's vblank rate. The game's frames wait for the
++// next vblank (D3D's flip queue, PDDI's swap), so the 60 Hz of the NTSC video
++// mode capped it at 60 fps however fast the host is. A higher rate here lets
++// such a game present more often; the host's own display rate is separate
++// (the presenter). Read every iteration of the vblank thread, so it can
++// change while running.
++REXCVAR_DEFINE_INT32(guest_refresh_hz, 0, "GPU",
++                     "Guest vblank rate in Hz (0 = the video mode's, 60 for NTSC). Higher lets "
++                     "games that wait for vblank run faster")
++    .range(0, 1000)
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ REXCVAR_DEFINE_BOOL(store_shaders, true, "GPU",
+                     "Store shaders persistently and load them when loading games to avoid "
+                     "runtime spikes and freezes when playing the game not for the first time.");
+@@ -152,14 +163,17 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
+       new system::XHostThread(kernel_state_, 128 * 1024, 0, [this]() {
+         system::X_VIDEO_MODE video_mode;
+         kernel::xboxkrnl::VdQueryVideoMode(&video_mode);
+-        double refresh_rate_hz = std::max(1.0, double(float(video_mode.refresh_rate)));
++        const double mode_rate_hz = std::max(1.0, double(float(video_mode.refresh_rate)));
+         uint64_t guest_tick_frequency = chrono::Clock::guest_tick_frequency();
+-        uint64_t vsync_interval_ticks =
+-            std::max(uint64_t(1), uint64_t(double(guest_tick_frequency) / refresh_rate_hz));
+         uint64_t no_vsync_interval_ticks = std::max(uint64_t(1), guest_tick_frequency / 1000);
+         uint64_t last_frame_time = chrono::Clock::QueryGuestTickCount();
+         while (vsync_worker_running_) {
+           uint64_t current_time = chrono::Clock::QueryGuestTickCount();
++          // guest_refresh_hz overrides the video mode's rate (0 = keep it).
++          const int32_t override_hz = REXCVAR_GET(guest_refresh_hz);
++          const double refresh_rate_hz = override_hz > 0 ? double(override_hz) : mode_rate_hz;
++          const uint64_t vsync_interval_ticks =
++              std::max(uint64_t(1), uint64_t(double(guest_tick_frequency) / refresh_rate_hz));
+           uint64_t interval_ticks =
+               REXCVAR_GET(vsync) ? vsync_interval_ticks : no_vsync_interval_ticks;
+           while (current_time - last_frame_time >= interval_ticks) {

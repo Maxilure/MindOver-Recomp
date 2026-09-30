@@ -1,0 +1,62 @@
+Feature: GPU flag "skip_draws" (the emulated GPU draws nothing while a host renderer shows the game)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0009-skip-draws-flag.patch
+Status:     local patch (a feature for our port, not a bug fix)
+
+WHY
+  Our native renderer draws the game itself, but the emulated GPU kept
+  drawing every frame too, even while nobody saw its picture: the native
+  picture paid for BOTH renderers, and with the host GPU at ~97% busy the
+  game waited on it (SwapBuffers ~15 ms/frame in busy scenes). The finished
+  port turns the emulated GPU off; this flag lets us try that today.
+
+WHAT
+  A hot-reloadable bool flag skip_draws (default false) in the generic
+  command processor: every draw packet (resolves are draws in "copy" EDRAM
+  mode, so they're included) is still parsed and consumed, then skipped
+  before IssueDraw. Everything else in the command stream keeps running
+  (register writes, fences, interrupts, swaps), so the game never waits.
+  The emulated picture then freezes / goes stale, and nothing is resolved
+  back into guest memory.
+
+HOW WE MEASURED IT (2026-09-30)
+  Same save, jungle area of Wumpa Island, 60 fps cap: emulated picture
+  only 69-96% GPU busy; native picture (both renderers) 97%, 56-57 fps;
+  --native_only (this flag set while the native picture is shown) 15-20%
+  busy, with the GPU clocking itself down (it has so little to do), 59 fps.
+  Set by the game side through rex::cvar::SetFlagByName("skip_draws", ...)
+  (src/native/native_renderer.cpp, UpdateEmulatedDrawing).
+
+diff --git a/src/graphics/command_processor.cpp b/src/graphics/command_processor.cpp
+index a744375..e85c0d0 100644
+--- a/src/graphics/command_processor.cpp
++++ b/src/graphics/command_processor.cpp
+@@ -45,6 +45,16 @@ REXCVAR_DEFINE_BOOL(clear_memory_page_state, true, "GPU",
+ REXCVAR_DEFINE_BOOL(occlusion_query_enable, true, "GPU", "Enable host occlusion query handling")
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ 
++// Mind over Recomp: lets a host renderer that draws the game by itself (the
++// port's native renderer) switch the emulated GPU's drawing off while its own
++// picture is on screen. Draw packets (and the resolves, which are draws in
++// copy mode) are still parsed and counted as done, so fences, interrupts and
++// swaps carry on and the game never waits; only the host GPU work is skipped.
++REXCVAR_DEFINE_BOOL(skip_draws, false, "GPU",
++                    "Skip every draw and resolve (the emulated picture freezes / goes stale). "
++                    "For host renderers that draw the game themselves")
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
++
+ REXCVAR_DEFINE_STRING(readback_resolve, "none", "GPU",
+                       "Controls CPU readback of render-to-texture resolve results.\n"
+                       " none: Disable readback (default)\n"
+@@ -1378,6 +1388,10 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
+ 
+       bool major_mode_explicit =
+           xenos::IsMajorModeExplicit(vgt_draw_initiator.major_mode, vgt_draw_initiator.prim_type);
++      if (REXCVAR_GET(skip_draws)) {
++        // Nothing drawn, nothing resolved; the packet itself is consumed.
++        return true;
++      }
+       draw_succeeded = IssueDraw(vgt_draw_initiator.prim_type, vgt_draw_initiator.num_indices,
+                                  is_indexed ? &index_buffer_info : nullptr, major_mode_explicit);
+       if (!draw_succeeded) {

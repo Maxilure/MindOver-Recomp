@@ -1,0 +1,90 @@
+Fix: "BaseHeap::Release failed because address is not a region start" (race in PhysicalHeap::Release)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0008-physical-release-order.patch
+Status:     local patch, not upstream yet (same code in Xenia: worth reporting)
+
+WHAT BROKE
+  Physical memory (the 0xA0000000 / 0xC0000000 / 0xE0000000 windows) is
+  bookkept twice: once in the shared "parent" heap of physical pages, once
+  in the window's own page table. PhysicalHeap::Release freed the PARENT
+  pages first and the window's entry second, with the global lock dropped
+  in between (TriggerCallbacks takes it by value). PhysicalHeap::Alloc on
+  another thread could land in that gap: the parent handed it the pages that
+  had just been freed, and BaseHeap::AllocFixed pinned them in the window
+  on top of the old, not-yet-released entry (a reserve+commit request is
+  allowed over reserved pages). The first thread's BaseHeap::Release then
+  wiped the entry, which by now belonged to the NEW allocation. When that
+  allocation was freed later, the window had no record of it: "address is
+  not a region start" (the physical pages were still freed, so no leak, but
+  in between the window's bookkeeping lied about memory that was in use:
+  anything asking the page table, e.g. a readability check, saw it as free).
+
+HOW WE FOUND IT (2026-09-30)
+  Crash: Mind over Mutant logged 1-7 of these errors per play session, on
+  the main thread, when a new part of a level streamed in or when quitting
+  a level to the menu. A temporary diagnostic (freed address, the window's
+  page entry, guest call stacks, plus a history of every physical alloc and
+  free keyed by physical address) showed, for every failing address: D3D
+  created a texture there (XMemAlloc -> XPhysicalAlloc), and the very next
+  release in the history was the XMA audio library (0x8247D730) freeing its
+  OWN old buffer at that same address on another thread; the texture's
+  destroy (0x823069BC/C8, D3D resource release -> XMemFree) then failed.
+  Reproduced by loading a Ratcicle Kingdom save and quitting to the menu (6
+  errors, all texture base / mip addresses, all with that pattern).
+
+THE FIX
+  Invalidate (callbacks) while the region is still whole, release the
+  window's own entry FIRST, then the parent's pages. While the parent still
+  holds the pages, no Alloc can be given them, so there's no gap left. As a
+  side effect a free of an address the window doesn't know is refused
+  before it can release parent pages that might belong to someone else.
+  out_region_size still reports the parent's size, as before.
+
+diff --git a/src/system/xmemory.cpp b/src/system/xmemory.cpp
+index 76cc877..6643479 100644
+--- a/src/system/xmemory.cpp
++++ b/src/system/xmemory.cpp
+@@ -2023,10 +2023,6 @@ bool PhysicalHeap::Release(uint32_t base_address, uint32_t* out_region_size) {
+   auto global_lock = global_critical_region_.Acquire();
+ 
+   uint32_t parent_base_address = GetPhysicalAddress(base_address);
+-  if (!parent_heap_->Release(parent_base_address, out_region_size)) {
+-    REXSYS_ERROR("PhysicalHeap::Release failed due to parent heap failure");
+-    return false;
+-  }
+ 
+   // Must invalidate here because the range being released may be reused in
+   // another mapping of physical memory - but callback flags are set in each
+@@ -2036,12 +2032,30 @@ bool PhysicalHeap::Release(uint32_t base_address, uint32_t* out_region_size) {
+   // state of the allocator as of February 24th, 2020). If memory is invalidated
+   // in Alloc instead, Alloc won't be aware of callbacks enabled in other heaps,
+   // thus callback handlers will keep considering this range valid forever.
++  // Done while the region is still whole (the callbacks read its protection),
++  // and before the physical pages can go to anyone else.
+   uint32_t region_size;
+   if (QuerySize(base_address, &region_size)) {
+     TriggerCallbacks(std::move(global_lock), base_address, region_size, true, true);
+   }
+ 
+-  return BaseHeap::Release(base_address, out_region_size);
++  // Release THIS view's pages first, the parent (physical) pages second. The
++  // old order (parent first) left a window in which another thread's Alloc got
++  // the same physical pages from the parent and pinned them here on top of our
++  // not-yet-released entry (AllocFixed accepts a commit over reserved pages);
++  // our BaseHeap::Release then wiped the NEW owner's entry, and its own free
++  // later failed with "address is not a region start". While the parent still
++  // holds the pages nobody can be handed them, so this order has no window.
++  // Bonus: a free of an address this view doesn't know no longer releases
++  // physical pages that may belong to someone else.
++  if (!BaseHeap::Release(base_address, nullptr)) {
++    return false;
++  }
++  if (!parent_heap_->Release(parent_base_address, out_region_size)) {
++    REXSYS_ERROR("PhysicalHeap::Release failed due to parent heap failure");
++    return false;
++  }
++  return true;
+ }
+ 
+ bool PhysicalHeap::Protect(uint32_t address, uint32_t size, uint32_t protect,

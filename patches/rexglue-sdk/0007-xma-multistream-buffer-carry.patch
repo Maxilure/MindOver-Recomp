@@ -1,0 +1,110 @@
+Fix: 5.1 XMA sounds lost their centre / rear channels after the first buffer
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk),
+            on top of 0001 (same file)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0007-xma-multistream-buffer-carry.patch
+Status:     local patch, not upstream yet (worth reporting; Xenia has the
+            same code)
+
+WHAT BROKE
+  In Crash: Mind over Mutant's NV cutscene (internal name nvmail: a box of
+  NVs arrives at Crash's house on Wumpa Island), Coco's line "Oh my god, somebody sent us NVs!" was
+  never heard: the scene's dialogue stopped after about 3.4 seconds and the
+  rest of the scene was silent, although the game kept playing it.
+
+WHY
+  Cutscene dialogue is a 5.1 XMA sound. On the Xbox 360 a 5.1 XMA sound is
+  THREE stereo streams (front L/R, centre + LFE, rear L/R), each decoded by
+  its own XMA context, all reading the same input buffers: the streams'
+  2 KB packets are interleaved, and each packet's "skip count" says how many
+  packets to jump to reach that stream's next one. Every buffer (64 KB
+  blocks here) starts with one packet per stream, in stream order, so the
+  jump at the end of a buffer lands INSIDE the next one: stream 1 goes from
+  packet 30 of a 32-packet buffer to packet 1 of the next.
+  XmaContext::Decode (and GetNextPacket, for a frame split across the
+  boundary) always restarted at the next buffer's packet 0. For stream 0
+  that is right; streams 1 and 2 went on decoding stream 0's packets. The
+  dialogue sits in the centre channel (stream 1), so from the second buffer
+  on the centre channel played the front channels' near-silence.
+  Single-stream sounds (mono / stereo: all music, effects, in-game voices)
+  always jump to packet 0 and never saw it.
+
+THE FIX (src/audio/xma_context.cpp)
+  1. GetNextPacket: a packet index past the end of the current buffer is
+     counted into the next buffer (index - packet count), not packet 0.
+  2. End of Decode: when the stream continues in the next buffer, start at
+     that same carried packet (its first frame); if the next buffer isn't
+     valid yet, point the read offset at that packet anyway.
+  A carry of 0 (every single-stream sound) behaves exactly as before.
+
+HOW WE FOUND IT (docs/findings/19-missing-dialogue-5-1-xma.md)
+  A new log of every sound the game asks for (--debug_audio_trace) named
+  the scene's dialogue track (nis\6ch\l1_r1_sc4_nvmail_ch*.wav, 3 streams,
+  11.04 s); decoded from the disc with ffmpeg it is all centre channel,
+  speech until 9.7 s. A recording of the game's own output (the new
+  --debug_audio_dump) had the centre channel go silent at 3.4 s, exactly
+  where the file's first 64 KB block ends (sample 161,792), and the packet
+  headers showed each stream crossing into the next block at packet 0 / 1 /
+  2. After the fix the output's centre channel follows the disc decode for
+  all 11 s (20 ms loudness curves correlate 1.000).
+
+--- a/src/audio/xma_context.cpp
++++ b/src/audio/xma_context.cpp
+@@ -320,7 +320,16 @@
+     return nullptr;
+   }
+ 
+-  return memory()->TranslatePhysical(next_buffer_address);
++  // The packet is in the NEXT buffer, as many packets in as the skip count
++  // reached past the end of this one. In a multi-stream sound (5.1 = three
++  // stereo streams sharing each buffer) that is not its first packet, which
++  // belongs to stream 0 (see the end of Decode). Single-stream sounds always
++  // land on packet 0 here, as before.
++  const uint32_t next_buffer_packet = next_packet_index - current_input_packet_count;
++  if (next_buffer_packet >= data->GetInputBufferPacketCount(next_buffer_index)) {
++    return nullptr;
++  }
++  return memory()->TranslatePhysical(next_buffer_address) + next_buffer_packet * kBytesPerPacket;
+ }
+ 
+ uint32_t XmaContext::GetNextPacketReadOffset(uint8_t* buffer, uint32_t next_packet_index,
+@@ -782,15 +791,36 @@
+       GetNextPacketReadOffset(current_input_buffer, next_packet_index, current_input_packet_count);
+ 
+   if (next_input_offset == kBitsPerPacketHeader) {
++    // This stream continues in the next buffer, at the packet its skip count
++    // points past the end of this one. A multi-stream sound (5.1 XMA = three
++    // stereo streams, each on its own context) interleaves the streams'
++    // packets in every buffer, each buffer starting with one packet per
++    // stream in stream order: stream 1 (centre + LFE) goes from packet 30 of
++    // a 32-packet buffer to packet 1 of the next. Restarting every stream at
++    // packet 0 made streams 1 and 2 play stream 0's packets from the second
++    // buffer on: a cutscene's dialogue (centre channel) went silent after its
++    // first 64 KB block (Crash: Mind over Mutant, the NV-mail scene).
++    // Single-stream sounds always land on packet 0 (carry 0), as before.
++    const uint32_t carry = next_packet_index > current_input_packet_count
++                               ? next_packet_index - current_input_packet_count
++                               : 0;
+     SwapInputBuffer(data);
+     if (data->IsAnyInputBufferValid()) {
+-      next_input_offset = xma::GetPacketFrameOffset(
+-          memory()->TranslatePhysical(data->GetCurrentInputBufferAddress()));
++      const uint32_t packet_count = data->GetCurrentInputBufferPacketCount();
++      const uint32_t packet = carry < packet_count ? carry : 0;
++      const uint32_t frame_offset = xma::GetPacketFrameOffset(
++          memory()->TranslatePhysical(data->GetCurrentInputBufferAddress()) +
++          packet * kBytesPerPacket);
+ 
+-      if (next_input_offset > kMaxFrameSizeinBits) {
++      if (frame_offset > kMaxFrameSizeinBits) {
+         SwapInputBuffer(data);
+         return;
+       }
++      next_input_offset = packet * kBitsPerPacket + frame_offset;
++    } else {
++      // The next buffer isn't there yet: point at the packet anyway (Decode
++      // moves to its first frame once the buffer is valid).
++      next_input_offset = carry * kBitsPerPacket + kBitsPerPacketHeader;
+     }
+   }
+   data->input_buffer_read_offset = next_input_offset;
