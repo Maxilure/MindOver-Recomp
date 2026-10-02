@@ -15,6 +15,17 @@ planned.
 > (extracted files and the generated C++) stays on your machine and is
 > blocked by `.gitignore`.
 
+## Enhancements
+
+Beyond what a PC port is expected to do (the [status](#status) below), the
+port adds things the Xbox 360 game never had:
+
+* **More saves, with names** (planned, research done): as many saves as you
+  like in the game's own Load Game screen, renamed and deleted from there
+* **Up to four players** (planned): the original's co-op is for two
+
+Details: **[Enhancements](docs/05-enhancements.md)**.
+
 ## Status
 
 | Milestone | State |
@@ -119,6 +130,7 @@ docs/                      how everything works + everything we've found
   02-how-the-port-works.md the big picture: static recompilation explained
   03-roadmap.md            where the project is going
   04-native-renderer.md    the native Vulkan renderer: plan and progress
+  05-enhancements.md       big additions unique to this port (more saves, more players)
   findings/                reverse-engineering notes about the game itself
   images/                  a few screenshots of the port's progress (used by the docs)
 thirdparty/rexglue-sdk     the recompiler + runtime (git submodule, pinned)
@@ -136,6 +148,7 @@ out/, logs/                build output, run logs
 2. [Building](docs/01-building.md): get it running on your machine
 3. [Findings](docs/findings/): everything we've learned about the game's internals
 4. [Roadmap](docs/03-roadmap.md): what's next
+5. [Enhancements](docs/05-enhancements.md): what only this port adds to the game
 
 ## Development approach
 
