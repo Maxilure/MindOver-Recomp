@@ -101,6 +101,14 @@ void RestoreReadback() {
   }
 }
 
+// The emulated GPU draws nothing right now (--native_only with our picture
+// in the main window: NativeRenderer::UpdateEmulatedDrawing sets the GPU
+// plugin's "skip_draws", SDK patch 0009). Its frontbuffer then never gets a
+// new picture, so a marker would never be overwritten (ab_capture.h,
+// NATIVE ONLY). Read by name like readback_resolve; only called while a
+// capture is wanted (Active()), so the registry lookup costs nothing in play.
+bool EmulatedGpuIdle() { return rex::cvar::Query<bool>("skip_draws"); }
+
 // photos/photo_<date>_<time>_<which>.png (local time, with milliseconds so
 // two quick presses don't collide), creating the folder if needed.
 std::filesystem::path PhotoPath(const std::string& stamp, const char* which) {
@@ -255,6 +263,18 @@ const TextureCache* g_textures = nullptr;
 
 void BeforeFrontbufferResolve(uint8_t* base, const GuestTexture& frontbuffer) {
   if (!Active() || !g_textures) {
+    return;
+  }
+  if (EmulatedGpuIdle()) {
+    // Nothing of the emulated GPU's will land: no marker, no waiting.
+    // AfterPresent takes a pending photo with our picture alone. A capture
+    // already under way (F9 into native-only between its two frames) can't
+    // finish: drop it.
+    if (g.stage != Stage::kIdle) {
+      g.stage = Stage::kIdle;
+      g.photo = false;
+      RestoreReadback();
+    }
     return;
   }
   Region region;
@@ -433,6 +453,33 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
   std::fclose(file);
 }
 
+namespace {
+
+// A photo while the emulated GPU draws nothing (EmulatedGpuIdle): our
+// picture, as the window shows it, and its draw list; no emulated half.
+void SaveNativeOnlyPhoto(rex::ui::Presenter* presenter, const TextureCache& textures,
+                         const Frame& frame, const char* (*material_name)(Material)) {
+  rex::ui::RawImage image;
+  if (!presenter->CaptureGuestOutput(image)) {
+    REXLOG_WARN("Photo (F10): couldn't capture the native picture");
+    return;
+  }
+  const std::string stamp = PhotoStamp();
+  const std::filesystem::path path = PhotoPath(stamp, "native");
+  if (!WritePng(path, image.data.data(), image.width, image.height, image.stride)) {
+    REXLOG_WARN("Photo (F10): can't write {}", path.string());
+    return;
+  }
+  std::filesystem::path list = PhotoPath(stamp, "draws");
+  list.replace_extension(".txt");
+  WriteDrawList(frame, list, material_name, textures);
+  REXLOG_INFO("Photo (F10): {} (native only: the emulated GPU is off, so there is no "
+              "emulated picture to pair it with)",
+              path.string());
+}
+
+}  // namespace
+
 void AfterPresent(rex::ui::Presenter* presenter, const TextureCache& textures,
                   const std::array<uint32_t, 256>& gamma_ramp, const Frame& frame,
                   const char* (*material_name)(Material)) {
@@ -441,7 +488,24 @@ void AfterPresent(rex::ui::Presenter* presenter, const TextureCache& textures,
   // both pictures can be had.
   int screen = kPhotoScreen;
   g_photo_request.compare_exchange_strong(screen, kPhotoPair);
-  if (!Active() || g.stage != Stage::kMarkedTarget) {
+  if (!Active()) {
+    return;
+  }
+  if (EmulatedGpuIdle()) {
+    // --native_only (ab_capture.h, NATIVE ONLY): BeforeFrontbufferResolve
+    // left the request alone; take it here with our picture only.
+    int pair = kPhotoPair;
+    if (g_photo_request.compare_exchange_strong(pair, 0)) {
+      SaveNativeOnlyPhoto(presenter, textures, frame, material_name);
+    }
+    // A debug A/B capture that came due has nothing to pair with: use it up.
+    if ((!g.times.empty() && NowMs() >= g.times.front()) || Triggered()) {
+      REXLOG_WARN("ab_capture: skipped (--native_only: the emulated GPU draws nothing)");
+      FinishOne();
+    }
+    return;
+  }
+  if (g.stage != Stage::kMarkedTarget) {
     return;
   }
   FinishOne();

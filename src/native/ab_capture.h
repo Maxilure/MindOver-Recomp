@@ -42,6 +42,14 @@
 // slows every frame down (each resolve waits for the GPU). So a photo
 // switches it on for the two frames it takes and back afterwards (the SDK
 // reads that flag at every resolve): playing costs nothing until F10.
+//
+// NATIVE ONLY (--native_only, native_renderer.cpp): the emulated GPU skips
+// every draw and resolve (SDK patch 0009, GPU flag "skip_draws"), so the
+// marker is never overwritten. Until 2026-10-01 each photo then waited out
+// AwaitMarker's 3 s timeout ("the emulated frontbuffer never arrived"): a
+// 3 s freeze per F10 press or spotter photo, and no photo at all. Now a
+// photo taken while the emulated GPU is idle saves our picture and its draw
+// list right away (photo_<stamp>_native.png + _draws.txt, no _emulated.png).
 // =============================================================================
 
 #pragma once
@@ -97,8 +105,9 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
                    const char* (*material_name)(Material), const TextureCache& textures);
 
 // F10 (any thread): take a photo of the next frame. `native_shown`: our
-// picture is on screen (then both pictures of one frame are saved; else
-// only the screen).
+// picture is on screen (then both pictures of one frame are saved, or only
+// ours while the emulated GPU draws nothing (--native_only); else only the
+// screen).
 void RequestPhoto(bool native_shown);
 
 // Main thread, at every frame end while the EMULATED picture is on screen

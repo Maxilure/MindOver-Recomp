@@ -36,8 +36,10 @@ REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
 // "skip_draws") whenever the main window shows our picture; F9 back to the
 // emulated picture turns it on again (its first frame or two can show stale
 // leftovers). Dual mode keeps it on (its picture is in the main window).
-// Known gaps: an F10 photo's emulated half is stale/black, and anything the
-// game READS BACK from an emulated resolve (none known) would go stale.
+// Known gaps: an F10 photo holds our picture only (ab_capture.h, NATIVE
+// ONLY; until 2026-10-01 it froze the game 3 s waiting for the emulated
+// one), and anything the game READS BACK from an emulated resolve (none
+// known) would go stale.
 REXCVAR_DEFINE_BOOL(native_only, false, "CrashMoM",
                     "Start on the native picture and stop the emulated GPU's drawing while "
                     "the native picture is in the main window (F9 back turns it on again)");
