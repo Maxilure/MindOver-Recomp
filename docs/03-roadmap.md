@@ -92,7 +92,10 @@ emulation with a config screen for developers. The goal:
 2. 🧪 **Above 60 / uncapped** (work in progress): `--fps_cap=144`, or
    `--fps_cap=0` for no cap ([findings/07](findings/07-frame-rate.md)).
    Two more limits had to go: the game's own 1/60 s minimum frame step and
-   the emulated 60 Hz vblank. With the native renderer alone
+   the emulated 60 Hz vblank. Every cap other than 30 is now paced by the
+   clock (frames shown right away, a frame every 1/cap s, the main thread
+   asleep in between): any cap is hit exactly and a slow frame no longer
+   halves the rate. With the native renderer alone
    (`--native_only`) gameplay runs at 140-160 fps. Playtesting so far found
    nothing broken, but it isn't confirmed stable yet: anything that counts
    frames or vblanks instead of time could still misbehave. Frame

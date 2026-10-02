@@ -8,16 +8,20 @@
 //    (PDDI). Its "swap buffers" routine sub_82433510 reads a mode from
 //    this+1660. Mode 1 waits on a vblank counter so each frame spans TWO
 //    vblanks (30 fps, with catch-up when a frame runs late); mode 0 is plain
-//    vsync, one vblank per frame (60 fps). The game uses mode 1 for title,
-//    menus and gameplay.
+//    vsync, one vblank per frame (60 fps); mode 2 presents right away (no
+//    vsync; loading screens). The game uses mode 1 for title, menus and
+//    gameplay.
 //    -> CrashMomVsyncMode: a "midasm" hook (crash_mom_manifest.toml,
 //       [[entrypoint.midasm_hook]] at 0x82433534) that codegen calls right
 //       before `cmpwi cr6,r10,1`, passing r10 (the mode) by reference. With
-//       --fps_cap other than 30 it turns 1 into 0: the game's own 60 fps path.
+//       --fps_cap other than 30 it turns 1 into 2: each frame is shown the
+//       moment it's done, and the CLOCK PACER (1b) decides when frames start.
 //
 // 1b. THE GAME'S MINIMUM FRAME STEP, the real 60 fps ceiling: the frame
 //    function sub_8227C5D8 skips frames until 1/60 s has passed (2026-09-30).
-//    -> CrashMomFrameStep: midasm hook at 0x8227C670 lowers it above 60.
+//    -> CrashMomFrameStep: midasm hook at 0x8227C670, where OUR CLOCK PACER
+//       decides instead: a frame every 1/fps_cap s, by the clock, sleeping
+//       in between (section 1b below).
 //
 // 2. THE MAIN-LOOP LIMITER, on the loop's other path (loading screens,
 //    movies). The main loop (sub_8227AEE0) reads a microsecond clock
@@ -28,15 +32,16 @@
 //    Each frame gets the real elapsed time as its delta (x 1e-6 -> seconds),
 //    so game logic is time-based: moving at 60 fps covers the same distance
 //    per second as at 30 (verified with the same inputs on the same save).
-//    The spin is why the main thread always shows ~100% CPU (findings/05).
+//    The spin is why the main thread showed ~100% CPU (findings/05); with
+//    --fps_cap the clock pacer sleeps instead (section 1b).
 //    -> CrashMomFrameLimiter: midasm hook at 0x8227B0DC that replaces r29 by
 //       a verdict for OUR frame time: 33334 ("late enough") or 0 ("too soon").
 //
 // 3. D3D's VBLANK FLIP QUEUE (Microsoft's library, linked into the game):
 //    sub_82310728 picks the vblank each presented frame may appear at. The
-//    game already asks for interval 1 (60 Hz), so nothing to change there.
-//    We wrap it only to LOG its settings (--debug_log_fps; it used to count
-//    frames too, before section 4 measured each one). The
+//    game asks for interval 1 (60 Hz), or 0 (immediate) in mode 2; nothing
+//    to change there. We wrap it only to LOG its settings (--debug_log_fps;
+//    it used to count frames too, before section 4 measured each one). The
 //    generated code declares every `sub_X` as a *weak* alias of the original
 //    `__imp__sub_X`, so our `sub_82310728` overrides it everywhere
 //    (including the function-pointer call) and still calls the original.
@@ -50,28 +55,31 @@
 //    times per second, each showing the same frame (fixed by SDK patch 0006).
 //
 // Flags:
-//   --fps_cap=30       original pacing (default; every hook is a no-op)
-//   --fps_cap=60       60 fps: renderer mode 0 + main-loop limiter at 60.
-//                      Gameplay can't go faster at the standard refresh: its
-//                      frames wait for the emulated 60 Hz vblank.
-//   --fps_cap=120/144  EXPERIMENTAL (2026-09-30): as 60, plus the emulated
-//                      vblank at that rate (SDK patch 0010, SyncGuestRefresh
-//                      below), so gameplay can reach it too.
-//   --fps_cap=0        no main-loop limiter, vblank at 1000 Hz: as fast as
+//   --fps_cap=30       original pacing (default; the hooks change nothing)
+//   --fps_cap=N        any other rate (60, 144, 165, 45, ...): renderer mode 2
+//                      (present right away) and our clock pacer (section 1b)
+//                      starting a frame every 1/N s, asleep in between.
+//                      Main-loop limiter (loading, movies) at N too.
+//                      Above 60 is EXPERIMENTAL (anything in the game that
+//                      counts frames instead of time could misbehave).
+//   --fps_cap=0        no limit: every main-loop pass runs a frame, as fast as
 //                      the game and the PC can go
+//   Any cap: the virtual Xbox screen stays at the standard 60 Hz
+//   (SyncGuestRefresh, SDK patch 0010), whatever video_mode_refresh_rate says.
 //   --debug_log_fps    every 5 s: average fps, 1% / 0.1% lows and the worst
 //                      frame, for those 5 s and for the whole session so far;
 //                      plus pacing details (main-loop timing, D3D settings)
 //                      and a second line: the main thread's average frame cut
-//                      at SwapBuffers (game / frame-end work / SwapBuffers,
-//                      pddi::FrameTiming)
+//                      at SwapBuffers (game / waiting for its start time /
+//                      frame-end work / SwapBuffers, pddi::FrameTiming)
 //   --debug_fps_csv=<file>  every frame's time, one line each, for graphs
-//                      (with the same three parts; frame_end_ms is the
-//                      PREVIOUS frame's)
+//                      (with the same parts; frame_end_ms is the
+//                      PREVIOUS frame's; pace_wait_ms = the clock pacer's
+//                      wait before this frame, included in game_ms)
 //
-// Measured: title ~59 fps, gameplay ~56 fps (some frames miss a vblank).
-// What 60 fps does to physics, animation and cutscenes is for playtesting to
-// tell (docs/03-roadmap.md phase 3).
+// Measured: see docs/findings/07 (tables for 60, 144, uncapped, and the clock
+// pacer). What high frame rates do to physics, animation and cutscenes is for
+// playtesting to tell (docs/03-roadmap.md phase 3).
 // =============================================================================
 
 #include "frame_rate.h"
@@ -84,7 +92,12 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <thread>
 #include <vector>
+
+#if defined(__x86_64__) || defined(_M_X64)
+#include <immintrin.h>  // _mm_pause (CpuRelax)
+#endif
 
 #include <fmt/format.h>
 
@@ -96,85 +109,112 @@
 #include "pddi/intercept.h"
 
 REXCVAR_DEFINE_INT32(fps_cap, 30, "CrashMoM",
-                     "Frame-rate cap: 30 = original, 60 = 60 fps, above 60 (e.g. 120, 144) = "
-                     "EXPERIMENTAL: the virtual Xbox screen refreshes that often so gameplay can "
-                     "follow, 0 = as fast as possible (1000 Hz refresh, no limiter)")
+                     "Frame-rate cap: 30 = original, any other rate (60, 144, 165, ...) = a frame "
+                     "every 1/rate s by the clock (above 60 EXPERIMENTAL), 0 = as fast as possible")
     .range(0, 1000);
 REXCVAR_DEFINE_BOOL(debug_log_fps, false, "CrashMoM",
                     "Log the frame rate every 5 s: average, 1% / 0.1% lows, worst frame "
                     "(last 5 s and whole session), plus pacing details");
 REXCVAR_DEFINE_STRING(debug_fps_csv, "", "CrashMoM",
-                      "Write every game frame's time to this CSV file (seconds, frame ms, game / swap / frame-end ms)");
+                      "Write every game frame's time to this CSV file (seconds, frame ms, game / swap / "
+                      "frame-end ms, clock pacer's wait)");
 
 // -----------------------------------------------------------------------------
 // 1. The renderer's vsync mode (midasm hook at 0x82433534)
 // -----------------------------------------------------------------------------
 
-// ABOVE 60 FPS (2026-09-30, work in progress): in mode 0 every frame waits for the next vblank, and the SDK
-// fires the guest's vblanks at the video mode's 60 Hz: one of TWO 60 fps
-// walls (the other is the game's minimum frame step, section 1b; checked: with
-// 1b lifted but --guest_refresh_hz=60, gameplay stays at 60.0).
-// SDK patch 0010 adds the GPU flag guest_refresh_hz; with --fps_cap above 60
-// we set it to the cap, so the virtual Xbox "screen" refreshes 120 / 144 /
-// ... times a second and the game's own vsync paces it there. --fps_cap=0 =
-// 1000 Hz (as fast as the game can go). 30 / 60 leave the SDK at 60 Hz.
-// Checked every swap (cheap: only a change calls into the flag registry), so
-// changing --fps_cap in the F4 settings applies right away. Left alone when
-// the user set --guest_refresh_hz themselves.
+// WHY MODE 2 ABOVE 30 (the clock pacer, 2026-09-30). In modes 0 and 1 D3D
+// shows a finished frame only at the next vblank (the virtual Xbox screen's
+// refresh), and the SDK fires vblanks at the video mode's rate, 60 Hz. The
+// history of getting past that:
+// * First, mode 1 -> 0 (plain vsync): 60 fps, one of TWO 60 fps walls (the
+//   other is the game's minimum frame step, section 1b). Gameplay ~56-59:
+//   a frame that took 17 ms waited for the vblank after next = 33 ms.
+// * Then a faster virtual screen (SDK patch 0010, guest_refresh_hz = the
+//   cap). Flaw, found in a playtest at --fps_cap=180 on Wumpa Island: stuck at
+//   exactly 90. A frame there needed ~5.6 ms, a hair over one 180 Hz tick
+//   (5.56 ms), so each frame waited for the NEXT tick: 2 ticks per frame =
+//   half the cap. Uncapped, the same place ran at 120-200 fps. Any rate paced
+//   by ticks falls to rate/2 the moment a frame runs a little long.
+// * Even at 1000 Hz a frame waits up to 1 ms for its tick: measured on the
+//   title with only our renderer drawing, uncapped: 597 fps, 1.2 ms of every
+//   frame inside SwapBuffers (the game's own work: 0.3 ms).
+// * Now: mode 2, "present right away" (D3D interval IMMEDIATE). No ticks to
+//   wait for at all; WHEN frames start is the clock pacer's job (section
+//   1b). Same title: 1736 fps, SwapBuffers 0.1 ms; the rate of the virtual
+//   screen no longer matters (1705 fps at 60 Hz). With the emulated GPU
+//   drawing, nothing changed that its own speed doesn't already limit.
+// Mode 2 is the game's own path: its loading screens use it, and its mode 1
+// shows a frame that finished LATE the same way (sub_82433510: the late
+// branch at 0x82433594 skips `li r29,1`, leaving r29 = 0x80000000 =
+// IMMEDIATE). r10 is only read by the mode compares at 0x82433534 (== 1) and
+// 0x82433598 (== 0), so 2 simply takes neither branch.
 // Why this is safe for the game's speed: its logic uses the REAL time between
-// frames (section 2), not vblank counts. What else might count vblanks
-// (animations? audio?) is exactly what playtesting above 60 is for.
+// frames (sections 1b and 2), not vblank counts. The only vblank counter the
+// game reads is this mode 1 wait, which mode 2 skips.
 // The host window shows the frames at the MONITOR's rate: on a 60 Hz monitor
 // 144 game fps still look like 60 (smoother input, some tearing).
+//
+// THE VIRTUAL SCREEN stays at the standard 60 Hz for every cap: mode 1's "2
+// vblanks per frame" IS the original 30 fps pacing, and the game's own mode 0
+// (used around the intro movies) is plain 60 Hz vsync. Pinned with patch
+// 0010's flag, because the SDK's display setting video_mode_refresh_rate
+// (what the game is told its TV runs at) also sets the vblank rate: 180 there
+// would turn the original pacing into 90 fps. Left alone when the player set
+// --guest_refresh_hz themselves.
 static void SyncGuestRefresh() {
-  static int32_t applied_cap = -1;
-  const int32_t cap = REXCVAR_GET(fps_cap);
-  if (cap == applied_cap) {
+  static bool pinned = false;  // main thread only (SwapBuffers)
+  if (pinned) {
     return;
   }
-  applied_cap = cap;
+  pinned = true;
   if (rex::cvar::GetFlagSource("guest_refresh_hz") != rex::cvar::Source::kDefault &&
       rex::cvar::GetFlagSource("guest_refresh_hz") != rex::cvar::Source::kRuntime) {
-    return;  // the user chose a rate on the command line / config: theirs
+    return;  // the player chose a rate on the command line / config: theirs
   }
-  const int32_t hz = cap == 0 ? 1000 : cap > 60 ? cap : 0;  // 0 = the SDK's 60 Hz
-  if (!rex::cvar::SetFlagByName("guest_refresh_hz", std::to_string(hz))) {
-    if (hz) {
-      REXLOG_WARN("frame_rate: --fps_cap={} needs SDK patch 0010 (guest_refresh_hz); "
-                  "gameplay stays at 60",
-                  cap);
-    }
-    return;
+  if (!rex::cvar::SetFlagByName("guest_refresh_hz", "60")) {
+    REXLOG_WARN("frame_rate: can't hold the virtual Xbox screen at 60 Hz (needs SDK patch "
+                "0010): the original 30 fps pacing follows video_mode_refresh_rate");
   }
-  REXLOG_INFO("frame_rate: virtual Xbox screen refresh {} (--fps_cap={})",
-              hz ? std::to_string(hz) + " Hz" : std::string("60 Hz (standard)"), cap);
 }
 
 // Plain C++ linkage and this exact signature: codegen declares
 // `extern void CrashMomVsyncMode(PPCRegister& r10);` in the generated file.
 void CrashMomVsyncMode(PPCRegister& r10) {
   const int32_t mode = r10.s32;
+  const int32_t cap = REXCVAR_GET(fps_cap);
+  SyncGuestRefresh();
 
-  // Log the game's mode whenever it changes (menus, gameplay, loading...).
-  // Only the main thread presents, so a plain static is enough.
+  // Log the cap whenever it changes (start, or the F4 settings), and the
+  // game's mode whenever it changes (menus, gameplay, loading...). Only the
+  // main thread presents, so plain statics are enough.
+  static int32_t last_cap = -1;
+  if (cap != last_cap) {
+    REXLOG_INFO("frame_rate: --fps_cap={}: {}", cap,
+                cap == 30  ? "the original pacing (2 screen refreshes per frame)"
+                : cap == 0 ? "no limit, frames shown right away"
+                           : fmt::format("a frame every {:.2f} ms by the clock, shown right away",
+                                         1000.0 / cap));
+    last_cap = cap;
+  }
   static int32_t last_mode = -12345;
   if (mode != last_mode) {
     REXLOG_INFO("frame_rate: renderer vsync mode {} ({}){}", mode,
                 mode == 1   ? "2 vblanks per frame = 30 fps"
                 : mode == 0 ? "1 vblank per frame = 60 fps"
                             : "no vsync",
-                mode == 1 && REXCVAR_GET(fps_cap) != 30 ? ", using mode 0 (--fps_cap)" : "");
+                mode == 1 && cap != 30 ? ", using mode 2 (--fps_cap: the clock paces)" : "");
     last_mode = mode;
   }
 
-  if (mode == 1 && REXCVAR_GET(fps_cap) != 30) {
-    r10.u64 = 0;
+  if (mode == 1 && cap != 30) {
+    r10.u64 = 2;
   }
-  SyncGuestRefresh();
 }
 
 // -----------------------------------------------------------------------------
-// 1b. The game's minimum frame step (midasm hook at 0x8227C670)
+// 1b. When a frame may start: the game's minimum frame step, and our clock
+//     pacer (midasm hook at 0x8227C670)
 // -----------------------------------------------------------------------------
 //
 // ABOVE 60 FPS, the real wall (found 2026-09-30, manifest comment): the game's
@@ -182,19 +222,124 @@ void CrashMomVsyncMode(PPCRegister& r10) {
 // the frame until at least 1/60 s has built up (f30 = the constant at
 // 0x8201FB80). The main loop meanwhile spins (clock reads, subsystem
 // updates). So the game itself never runs more than 60 frames a second,
-// whatever the vsync mode or refresh rate. With --fps_cap above 60 we lower
-// that minimum to 1/fps_cap (0 for fps_cap=0 = every pass of the main loop).
-// The frame then gets the real, smaller time step (the game's logic is
-// time-based; each step stays clamped to 0.1 s by the game).
+// whatever the vsync mode or refresh rate.
 //
+// How the game keeps time there (disassembly of sub_8227C5D8):
+//   0x8227C658  lfs  f0,160(r31)   ; the time added up since the last frame
+//   0x8227C65C  fadds f0,f31,f0    ;   + this main-loop pass's real delta
+//   0x8227C664  stfs f0,160(r31)   ;   (kept, frame or not)
+//   0x8227C670  fcmpu cr6,f0,f30   ; <- this hook runs right before
+//   0x8227C674  blt  -> return     ; too soon: no frame this pass
+//   ...the frame runs with f0 (clamped to 0.1 s) as its time step...
+//   0x8227C7DC  stfs 0.0 -> 160(r31) ; reset AFTER the frame
+// So whenever a frame runs, its step is exactly the real time since the
+// previous frame started. That's what lets us choose freely WHEN frames run
+// (the game's speed stays right) by setting f30 to 0 ("run now": f0 >= 0
+// always) or to something huge ("not yet"). f30 isn't used again in the
+// function (only restored at exit).
+//
+// THE CLOCK PACER (--fps_cap other than 30 and 0): frame k may start at
+// start_0 + k/fps_cap. On the time, not "1/fps_cap after the last frame", so the
+// average is exactly the cap: a frame that started a little late leaves the
+// next one a little less wait. A frame that ran over a whole period is
+// forgiven (the schedule restarts from now) rather than followed by a burst.
+// There are no ticks to miss (frames are shown right away: mode 2, section 1):
+// a frame that takes 5.8 ms at a 180 cap (5.56 ms) runs at 1/5.8 ms = 172 fps,
+// where the old tick pacing fell to 90.
+//
+// Between frames the main thread SLEEPS until 1 ms before the next start, then
+// spins the last millisecond in a tight clock loop, all inside the first "not
+// yet" pass after a frame. The very next main-loop pass then reads the game's
+// clock right at the start time and runs the frame, so every frame's time
+// step is measured from the same moment. (First try: return "not yet" after
+// the sleep and let the game's own loop spin the last millisecond. Frame
+// starts then wandered by up to one pass, ~1 ms: each pass also updates the
+// engine's subsystems before asking again. Title at 144, only our renderer:
+// start-to-start 5.8-8.0 ms for 1-99% of frames.) The original game doesn't spin between
+// frames either: at 30 fps it waits inside SwapBuffers (Sleep(0) until the
+// vblank), one main-loop pass per frame. Before this, the main thread burned
+// a whole CPU core at any cap. Measured on Linux (2026-09-30): a sleep wakes
+// ~6 us late (99% within 40 us, rare outliers up to 0.8 ms), so 1 ms of spin
+// keeps frame starts exact. (Windows port: plain Sleep() is coarse there;
+// needs a high-resolution waitable timer or a bigger spin margin.)
+//
+// Where the wait happens matters for input lag: here, BEFORE the frame reads
+// the controller, so a frame's input is as fresh as it can be; a wait at
+// SwapBuffers (like the original's) would sit between input and picture.
+//
+// --fps_cap=0: f30 = 0, every pass runs a frame, no sleeping.
+// --fps_cap=30: untouched (the game's 1/60 s minimum; mode 1 makes it 30).
+namespace {
+
+using PaceClock = std::chrono::steady_clock;
+
+// Spin (don't sleep) this close to a frame's start time.
+constexpr auto kPacerSpin = std::chrono::milliseconds(1);
+
+struct Pacer {
+  int32_t cap = -1;            // the --fps_cap the schedule is for (F4 can change it)
+  PaceClock::time_point next;  // when the next frame may start
+  bool waiting = false;        // a "not yet" pass happened since the last frame
+  PaceClock::time_point wait_start;
+  double last_wait_ms = 0;     // how long the latest frame waited for its start time
+};
+Pacer g_pacer;  // the game's main thread only (the frame function runs there)
+
+// Inside a spin-wait: tell the CPU we're waiting (lets the other hyperthread
+// of the core run faster, saves a little power).
+inline void CpuRelax() {
+#if defined(__x86_64__) || defined(_M_X64)
+  _mm_pause();
+#endif
+}
+
+// One main-loop pass asks: may a frame run now? Sleeps when there's time.
+bool PacerAllowsFrame(int32_t cap) {
+  PaceClock::time_point now = PaceClock::now();
+  if (cap != g_pacer.cap) {  // a new cap: start the schedule now
+    g_pacer.cap = cap;
+    g_pacer.next = now;
+    g_pacer.waiting = false;
+  }
+  if (now < g_pacer.next) {
+    if (!g_pacer.waiting) {
+      g_pacer.waiting = true;
+      g_pacer.wait_start = now;
+    }
+    if (g_pacer.next - now > kPacerSpin) {
+      std::this_thread::sleep_until(g_pacer.next - kPacerSpin);
+    }
+    while (PaceClock::now() < g_pacer.next) {
+      CpuRelax();
+    }
+    return false;  // the next pass reads the game's clock now, and runs the frame
+  }
+  g_pacer.last_wait_ms =
+      g_pacer.waiting ? std::chrono::duration<double, std::milli>(now - g_pacer.wait_start).count()
+                      : 0.0;
+  g_pacer.waiting = false;
+  const auto period = std::chrono::duration_cast<PaceClock::duration>(
+      std::chrono::duration<double>(1.0 / double(cap)));
+  g_pacer.next += period;
+  if (g_pacer.next <= now) {
+    g_pacer.next = now + period;  // over a whole period late: forgive, no burst
+  }
+  return true;
+}
+
+}  // namespace
+
 // Codegen declares `extern void CrashMomFrameStep(PPCRegister& f30);`.
 void CrashMomFrameStep(PPCRegister& f30) {
   const int32_t cap = REXCVAR_GET(fps_cap);
-  if (cap > 60) {
-    f30.f64 = 1.0 / double(cap);
-  } else if (cap == 0) {
-    f30.f64 = 0.0;
+  if (cap == 30) {
+    return;  // the original: the game's 1/60 s minimum stands
   }
+  if (cap == 0) {
+    f30.f64 = 0.0;  // no limit: this pass runs a frame
+    return;
+  }
+  f30.f64 = PacerAllowsFrame(cap) ? 0.0 : 1e30;
 }
 
 // -----------------------------------------------------------------------------
@@ -306,8 +451,11 @@ struct Stats {
   std::vector<float> window;  // frame times (ms) of the current 5 s
   double window_ms = 0;
   // The same 5 s, split the way pddi::FrameTiming cuts the main thread:
-  // sums (for averages) and the worst frame-end work.
+  // sums (for averages) and the worst frame-end work. pace_wait = the clock
+  // pacer's wait before each frame (section 1b), which FrameTiming counts as
+  // "game" (it happens in the main loop): taken out of it for the log.
   double window_game_ms = 0, window_swap_ms = 0, window_listeners_ms = 0;
+  double window_pace_wait_ms = 0;
   double window_worst_listeners_ms = 0;
   std::array<uint32_t, kBuckets + 1> histogram{};
   uint64_t session_frames = 0;
@@ -364,19 +512,24 @@ void OnFrameEnd(void*) {
   g_stats.session_worst_ms = std::max(g_stats.session_worst_ms, ms);
   ++g_stats.histogram[std::min(size_t(ms / kBucketMs), kBuckets)];
 
-  // Where the main thread's time went (pddi/intercept.h, FrameTiming).
+  // Where the main thread's time went (pddi/intercept.h, FrameTiming), and
+  // how much of its "game" part was the pacer waiting for this frame's start
+  // time (read once: frames that don't come through the pacer count 0).
   const pddi::FrameTiming& timing = pddi::LastFrameTiming();
+  const double pace_wait_ms = std::min(g_pacer.last_wait_ms, timing.game_ms);
+  g_pacer.last_wait_ms = 0;
 
   if (g_stats.csv) {
-    std::fprintf(g_stats.csv, "%.4f,%.3f,%.3f,%.3f,%.3f\n",
+    std::fprintf(g_stats.csv, "%.4f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                  std::chrono::duration<double>(now - g_stats.first).count(), ms, timing.game_ms,
-                 timing.swap_ms, timing.listeners_ms);
+                 timing.swap_ms, timing.listeners_ms, pace_wait_ms);
   }
 
   if (g_stats.log) {
     g_stats.window.push_back(float(ms));
     g_stats.window_ms += ms;
-    g_stats.window_game_ms += timing.game_ms;
+    g_stats.window_game_ms += timing.game_ms - pace_wait_ms;
+    g_stats.window_pace_wait_ms += pace_wait_ms;
     g_stats.window_swap_ms += timing.swap_ms;
     g_stats.window_listeners_ms += timing.listeners_ms;
     g_stats.window_worst_listeners_ms =
@@ -388,21 +541,25 @@ void OnFrameEnd(void*) {
                           WindowPercentile(g_stats.window, 0.99),
                           WindowPercentile(g_stats.window, 0.999), worst),
                   SessionSummary());
-      // A second line: the average frame's main thread, cut in three. "game"
+      // A second line: the average frame's main thread, cut in four. "game"
       // high = the game (or the recorder, or D3D waiting for the emulated
-      // GPU) is the limit; "frame-end work" = our renderer's OnFrameEnd
-      // (its own breakdown: the NativeRenderer lines); "SwapBuffers" = time
-      // left over, spent waiting for the next screen refresh.
+      // GPU) is the limit; "waiting for its start time" = the clock pacer
+      // (--fps_cap, section 1b): spare time, mostly asleep; "frame-end work"
+      // = our renderer's OnFrameEnd (its own breakdown: the NativeRenderer
+      // lines); "SwapBuffers" = presenting: at the original 30 fps mostly
+      // waiting for the next screen refresh; with --fps_cap (shown right
+      // away) ~0, unless D3D waits for the emulated GPU to free a buffer.
       const double n = double(g_stats.window.size());
-      REXLOG_INFO("frame_rate: last {:.1f} s, main thread per frame: game {:.1f} ms, frame-end "
-                  "work {:.1f} ms (worst {:.1f}), SwapBuffers (mostly waiting for the screen) "
-                  "{:.1f} ms",
+      REXLOG_INFO("frame_rate: last {:.1f} s, main thread per frame: game {:.1f} ms, waiting "
+                  "for its start time {:.1f} ms, frame-end work {:.1f} ms (worst {:.1f}), "
+                  "SwapBuffers (waiting for the screen or the GPU) {:.1f} ms",
                   g_stats.window_ms / 1000.0, g_stats.window_game_ms / n,
-                  g_stats.window_listeners_ms / n, g_stats.window_worst_listeners_ms,
-                  g_stats.window_swap_ms / n);
+                  g_stats.window_pace_wait_ms / n, g_stats.window_listeners_ms / n,
+                  g_stats.window_worst_listeners_ms, g_stats.window_swap_ms / n);
       g_stats.window.clear();
       g_stats.window_ms = 0;
       g_stats.window_game_ms = g_stats.window_swap_ms = g_stats.window_listeners_ms = 0;
+      g_stats.window_pace_wait_ms = 0;
       g_stats.window_worst_listeners_ms = 0;
     }
   }
@@ -416,7 +573,7 @@ void StartFrameStats() {
   if (!csv_path.empty()) {
     g_stats.csv = std::fopen(csv_path.c_str(), "w");
     if (g_stats.csv) {
-      std::fputs("seconds,frame_ms,game_ms,swap_ms,frame_end_ms\n", g_stats.csv);
+      std::fputs("seconds,frame_ms,game_ms,swap_ms,frame_end_ms,pace_wait_ms\n", g_stats.csv);
     } else {
       REXLOG_WARN("frame_rate: can't write {}", csv_path);
     }

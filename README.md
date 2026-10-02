@@ -29,7 +29,7 @@ planned.
 | Intro movies with picture, title screen, menus, cutscenes | ✅ done ([findings](docs/findings/06-black-screens-render-target-path.md)) |
 | Playable (first level reached, saves load) | ✅ first look, playtesting in progress |
 | 60 fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)) |
-| Above 60 fps (`--fps_cap=144`, `--fps_cap=0` = no cap) | 🧪 work in progress: runs at 140-160 fps with the native renderer; no problems found in playtesting so far, but not yet confirmed stable ([findings](docs/findings/07-frame-rate.md#above-60-fps-two-more-walls-2026-09-30)) |
+| Above 60 fps (`--fps_cap=144`, `--fps_cap=0` = no cap) | 🧪 work in progress: any cap is paced exactly by the clock; 140-160 fps uncapped in gameplay with the native renderer; no problems found in playtesting so far, but not yet confirmed stable ([findings](docs/findings/07-frame-rate.md#pacing-by-the-clock-2026-09-30)) |
 | Native Vulkan renderer | 🔧 in progress: the menus and every area playtested so far are drawn by our own Vulkan code (world, characters, shadows, reflections, water, particles, depth of field, 2x MSAA, mipmaps, lights). F9 switches pictures, F8 shows both side by side in two windows, F10 saves a photo from both, `--native_only` turns the emulated GPU's drawing off ([plan](docs/04-native-renderer.md), findings [09](docs/findings/09-native-first-screens.md) to [21](docs/findings/21-motion-blur-cut.md)) |
 | Windows build, mods, remappable KB+M | planned ([roadmap](docs/03-roadmap.md)) |
 

@@ -22,6 +22,14 @@ HOW WE FOUND / CHECKED IT (2026-09-30)
   midasm hook): 142 fps in gameplay. Same run with --guest_refresh_hz=60 given
   explicitly: 60.0 fps. Both limits have to go.
 
+UPDATE (same day): paced by ticks, a cap falls to half as soon as frames run
+  slightly long (180 -> exactly 90 in a heavy scene). The game now presents
+  right away above 30 fps (PDDI mode 2) and our own clock paces it, so the
+  vblank rate stopped mattering for speed. frame_rate.cpp now uses this flag
+  the other way round: it HOLDS the vblank at 60 Hz, because the SDK's
+  video_mode_refresh_rate setting also sets the vblank rate and 180 there
+  turns the game's original 30 fps pacing (2 vblanks per frame) into 90.
+
 diff --git a/src/graphics/graphics_system.cpp b/src/graphics/graphics_system.cpp
 index 8f2fcb0..88d4d43 100644
 --- a/src/graphics/graphics_system.cpp

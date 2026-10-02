@@ -232,8 +232,11 @@ registers = ["r29"]
 #     0x82433534  cmpwi  cr6,r10,1
 #     0x82433544  bne    cr6,0x82433598  ; -> cmpwi r10,0 / li r29,1 (mode 0)
 # The hook sees r10 before the compare and, when --fps_cap isn't 30, turns
-# mode 1 into mode 0, so the game takes its own 60 fps path. r10 is only
-# read by these two compares before being overwritten.
+# mode 1 into mode 2 (first version: 0, the game's own 60 fps path; since the
+# clock pacer, 2026-09-30: 2 = present right away, the path its loading
+# screens take and its mode 1 takes for a LATE frame, 0x82433594 skipping
+# `li r29,1`; the clock decides when frames start, frame_rate.cpp section 1b).
+# r10 is only read by these two compares before being overwritten.
 # Found by: guest vblanks at 1000 Hz (--vsync=false) lifted the title from
 # 30 to 59 fps, so something counted vblanks; the vblank callback registered
 # via D3D's SetVerticalBlankCallback (sub_82311388, called from PDDI init
@@ -256,8 +259,12 @@ registers = ["r10"]
 #   0x8227C670  fcmpu  cr6,f0,f30       ; less than 1/60 s so far?
 #   0x8227C674  blt    cr6,0x8227c7e4   ;   -> no frame this pass
 # (and clamps one step to 0.1 s, the constant at 0x8201FB64). The hook runs
-# right before the compare and lowers f30 to 1/fps_cap above 60 (0 for
-# fps_cap=0). f30 isn't used again in the function (only restored at exit).
+# right before the compare. First version: f30 = 1/fps_cap above 60. Since
+# the clock pacer (same day, frame_rate.cpp section 1b): for any cap but 30,
+# f30 = 0 ("run now") or 1e30 ("not yet") as OUR clock decides, sleeping
+# in between; the accumulated time (reset to 0.0 after each frame, at
+# 0x8227C7DC) stays the frame's real step. f30 isn't used again in the
+# function (only restored at exit).
 [[entrypoint.midasm_hook]]
 address = 0x8227C670
 name = "CrashMomFrameStep"

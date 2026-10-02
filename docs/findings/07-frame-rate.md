@@ -5,7 +5,8 @@
 game moves at the same speed as at 30 (same inputs on the same save end in
 the same place). Default stays 30 (original behavior, every hook a no-op).
 Code: `src/frame_rate.cpp`, two `[[entrypoint.midasm_hook]]` entries in
-`crash_mom_manifest.toml`.
+`crash_mom_manifest.toml`. (Later the same week: above 60, and every cap
+paced by the clock: the last two sections.)
 
 The cap turned out to be three layers deep. Two wrong guesses first, since
 they're instructive.
@@ -203,13 +204,98 @@ cutscenes), and input feels more responsive than at 60, but it isn't
 confirmed stable yet: anything in the game that counts frames or vblanks
 instead of time could still misbehave somewhere not yet played.
 
+(Superseded the same day by the clock pacer, next section: the "virtual
+screen at the cap" part had a flaw.)
+
+## Pacing by the clock (2026-09-30)
+
+**The flaw.** A playtest at `--fps_cap=180` (virtual screen at 180 Hz) sat
+at **exactly 90 fps** in one part of Wumpa Island, 150-160 elsewhere; the
+same spot uncapped ran at 120-200. 90 = 180 / 2. A frame there needed about
+5.6 ms of main-thread work (game 4.5 + our renderer's frame end 1.1), a
+hair over one 180 Hz tick (5.56 ms). A finished frame is shown only at the
+next vblank, so every frame waited for the tick after the one it just
+missed: two ticks per frame, half the cap. Any rate paced by ticks drops to
+half the moment frames run slightly long, and 60 had the same problem in a
+milder form (a 17 ms frame lasted 33 ms: the old ~56-59 fps in gameplay).
+
+**Even 1000 Hz ticks cost time.** With only the native renderer drawing,
+uncapped, the title ran at 597 fps and spent 1.2 ms of every frame inside
+SwapBuffers waiting for its tick, four times the game's own work (0.3 ms).
+
+**The fix: two parts** (`src/frame_rate.cpp` sections 1 and 1b).
+
+1. **Present right away.** PDDI's swap (`sub_82433510`) has a third mode:
+   2 = D3D presentation interval IMMEDIATE, used by the loading screens. Its
+   30 fps mode 1 already takes that path for a frame that finished late
+   (the late branch at `0x82433594` skips `li r29,1`, leaving
+   `r29 = 0x80000000` = IMMEDIATE). With `--fps_cap` other than 30 the vsync
+   hook now turns mode 1 into 2 instead of 0. Uncapped title, native only:
+   597 → **1736 fps**, SwapBuffers 1.2 → 0.1 ms. The virtual screen's rate
+   stops mattering (1705 fps with it at 60 Hz), so it stays at the standard
+   60 Hz for every cap, pinned with patch 0010's flag (the SDK's display
+   setting `video_mode_refresh_rate` also sets the vblank rate; 180 there
+   would make the original 30 fps pacing run at 90).
+2. **A clock pacer at the frame step.** With nothing waiting for ticks, the
+   frame function's gate (`0x8227C670`, previous section) decides when
+   frames start. How the game keeps time there: each main-loop pass adds its
+   real delta to an accumulator at `160(r31)`; a frame runs with the
+   accumulator (clamped to 0.1 s) as its time step, then it's reset to 0.0
+   (`0x8227C7DC`, the float at `0x82046720`). So a frame's step is always
+   the real time since the previous frame started, and the hook can choose
+   *when* frames run without changing the game's speed: `f30 = 0` runs one,
+   `f30 = 1e30` skips the pass. The pacer schedules frame *k* at
+   `start + k / cap` (on the clock, so the average is exact; a slightly late
+   frame gives the next one a little less wait; one over a whole period late
+   restarts the schedule instead of bursting). A frame too slow for the cap
+   just runs at its own speed: no halving.
+
+**Sleeping instead of spinning.** Between frames the main thread sleeps
+until 1 ms before the next start, spins that last millisecond in a tight
+clock loop, then lets the next main-loop pass read the game's clock right
+at the start time. Linux sleeps here wake ~6 µs late (99% within 40 µs,
+rare outliers up to 0.8 ms), so the spin margin keeps starts exact. The
+original game doesn't spin between frames either: at 30 fps it waits inside
+SwapBuffers, one main-loop pass per frame. A first version let the game's
+own loop spin the last millisecond; frame starts then wandered by a pass
+(each pass also updates the engine's subsystems): at 144, 98% of frames
+took 6.41-7.49 ms; waiting inside the hook tightened that to 6.83-7.07 ms.
+Waiting *before* the frame (rather than at SwapBuffers, like the original)
+also keeps input fresh: the frame reads the controller right after the
+wait, not before it. (A Windows port needs a high-resolution waitable
+timer here: plain `Sleep()` is coarse.)
+
+**Measured** (title screen, 20-30 s after boot; main-thread CPU from
+`/proc`):
+
+| `--fps_cap` | picture | fps | 1% low | main thread CPU |
+|---|---|---|---|---|
+| 30 (original) | emulated | 30.0 | 29.1 | 5% |
+| 60 | emulated | 60.0 | 59.8 | 11% (was ~100%: the spin) |
+| 144 | emulated | 144.0 | 143.6 | 26% |
+| 144 | native only | 144.0 | 141.2 | 22% |
+| 165 | native only | 165.0 | 162.0 | 27% |
+| 180 | emulated | 180.0 | 178.9 | 32% |
+| 0 (no cap) | emulated | ~300 (the emulated GPU's limit) | 221 | 98% |
+| 0 (no cap) | native only | 1642 | 681 | 90% |
+
+The log's second statistics line now reads *game / waiting for its start
+time / frame-end work / SwapBuffers*; the wait is taken out of "game" (it
+happens in the main loop, where the old split counted it) and the CSV has
+it as `pace_wait_ms`. The intro movies (the game's own mode 0, on the
+loading/movie path) are unchanged: at 30 and at 144 alike they run at
+30 fps, then 38.0 during the attract movie, and the title appears at the
+same moment (~1:55 after boot). Gameplay under load (the spot that was
+stuck at 90) is for the next playtest.
+
 ## Open questions
 
 * Physics, animation blending, particles, cutscenes (in-engine and Bink) and
   audio sync at 60: playtesting (`tools/play.sh --fps_cap=60`).
 * Why gameplay frames sometimes exceed 16.7 ms: CPU (recompiled code) or
-  GPU (FSI render-target path)? Needs profiling. Frame pacing may feel
-  uneven when frames alternate between 16.7 and 33.3 ms.
+  GPU (FSI render-target path)? Needs profiling. (With the clock pacer a
+  long frame no longer turns into 33.3 ms; it just takes as long as it
+  takes.)
 * Above 60 fps: done (section above). Still open: does anything in the game
   misbehave at 120+ (anything that counts frames or vblanks instead of time)?
 * Time sources worth knowing for any later timing work (replays, a
