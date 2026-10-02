@@ -43,6 +43,11 @@
 #                                        (tools/mangohud/: Right Shift + F1 hide,
 #                                        + F2 next layout, + F5 record a log)
 #   tools/play.sh --fps_cap=144          above 60 fps (EXPERIMENTAL; 0 = no cap)
+#   tools/play.sh --ground-trace         record when the physics thinks each
+#                                        character is on the ground, and when
+#                                        the game logic hears "not on ground",
+#                                        into logs/ground-<date_time>.csv
+#                                        (src/ground_physics.cpp; ~3 MB/min)
 #   tools/play.sh --quiet                don't show the game's log live in
 #                                        this terminal (it's still written)
 #   tools/play.sh --mnk_mode=true        extra game flags are passed through
@@ -85,6 +90,7 @@ stamp=$(date +%Y-%m-%d_%H%M)
 
 # Our own shorthands, turned into game flags; everything else passes through.
 trace=""
+ground=""
 live=1
 args=()
 for arg in "$@"; do
@@ -95,6 +101,9 @@ for arg in "$@"; do
       args+=(--debug_pddi_trace_dir="$PWD/$trace" --debug_pddi_trace_frames=2
              --dump_shaders="$PWD/$trace/shaders") ;;
     --native-only) args+=(--native_only=true) ;;  # src/native/native_renderer.cpp, SDK 0009
+    --ground-trace)                               # src/ground_physics.cpp
+      ground="logs/ground-${stamp}.csv"
+      args+=(--debug_ground_trace="$PWD/$ground") ;;
     --emulated-only) args+=(--emulated_only=true) ;;  # src/native/native_renderer.cpp
     --mangohud) export MANGOHUD=1 ;;  # MangoHud's Vulkan layer switches on by this
     --quiet) live=0 ;;
@@ -119,6 +128,7 @@ echo "Session ${stamp}"
 echo "  game log:   ${log}"
 echo "  terminal:   ${out}"
 echo "  photos:     photos/ (press F10 in the game)"
+[ -n "$ground" ] && echo "  ground:     ${ground}"
 [ -n "$trace" ] && mkdir -p "$trace" && echo "  traces:     ${trace}/ (F10, and automatically where something isn't drawn natively yet)"
 
 # The live console (see the header): follow the log file from its first line

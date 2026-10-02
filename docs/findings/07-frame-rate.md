@@ -291,7 +291,10 @@ stuck at 90) is for the next playtest.
 ## Open questions
 
 * Physics, animation blending, particles, cutscenes (in-engine and Bink) and
-  audio sync at 60: playtesting (`tools/play.sh --fps_cap=60`).
+  audio sync at 60: playtesting (`tools/play.sh --fps_cap=60`). Found so
+  far: Crash "falling" for a split second stepping down (the move logic
+  saw brief ground losses that 30 fps frames hid), fixed in
+  [findings/22](22-ground-contact-high-fps.md).
 * Why gameplay frames sometimes exceed 16.7 ms: CPU (recompiled code) or
   GPU (FSI render-target path)? Needs profiling. (With the clock pacer a
   long frame no longer turns into 33.3 ms; it just takes as long as it

@@ -88,7 +88,11 @@ emulation with a config screen for developers. The goal:
 
 1. ✅ **60 fps**: `--fps_cap=60` ([findings/07](findings/07-frame-rate.md)).
    The cap was the renderer's vsync mode; game logic is time-based, so
-   movement speed matches 30 fps.
+   movement speed matches 30 fps. One detail depended on the frame rate:
+   above 30 fps the move logic noticed brief ground losses (stepping down)
+   that 30 fps frames hid, and Crash "fell" for a split second; a lost
+   ground contact is now hidden from it for 40 ms, a little more than one
+   original frame ([findings/22](findings/22-ground-contact-high-fps.md)).
 2. 🧪 **Above 60 / uncapped** (work in progress): `--fps_cap=144`, or
    `--fps_cap=0` for no cap ([findings/07](findings/07-frame-rate.md)).
    Two more limits had to go: the game's own 1/60 s minimum frame step and
@@ -96,8 +100,9 @@ emulation with a config screen for developers. The goal:
    clock (frames shown right away, a frame every 1/cap s, the main thread
    asleep in between): any cap is hit exactly and a slow frame no longer
    halves the rate. With the native renderer alone
-   (`--native_only`) gameplay runs at 140-160 fps. Playtesting so far found
-   nothing broken, but it isn't confirmed stable yet: anything that counts
+   (`--native_only`) gameplay runs at 140-160 fps. Playtesting found one
+   frame-rate dependency so far, the ground contact above (fixed for every
+   rate), but it isn't confirmed stable yet: anything that counts
    frames or vblanks instead of time could still misbehave. Frame
    interpolation (Phase 4) stays the fallback if some system turns out to be
    frame-rate dependent.

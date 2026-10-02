@@ -31,6 +31,7 @@ set(CRASHMOM_SOURCES
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
+    src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
