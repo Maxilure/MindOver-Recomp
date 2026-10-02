@@ -31,7 +31,8 @@ planned.
 | 60 fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)); no split-second "falls" when stepping down ([findings](docs/findings/22-ground-contact-high-fps.md)) |
 | Above 60 fps (`--fps_cap=144`, `--fps_cap=0` = no cap) | 🧪 work in progress: any cap is paced exactly by the clock; 140-160 fps uncapped in gameplay with the native renderer; one frame-rate dependency found in playtesting so far (Crash briefly "falling" when stepping down, fixed), but not yet confirmed stable ([findings](docs/findings/07-frame-rate.md#pacing-by-the-clock-2026-09-30)) |
 | Native Vulkan renderer | 🔧 in progress: the menus and every area playtested so far are drawn by our own Vulkan code (world, characters, shadows, reflections, water, particles, depth of field, 2x MSAA, mipmaps, lights). F9 switches pictures, F8 shows both side by side in two windows, F10 saves a photo from both, `--native_only` turns the emulated GPU's drawing off ([plan](docs/04-native-renderer.md), findings [09](docs/findings/09-native-first-screens.md) to [21](docs/findings/21-motion-blur-cut.md)) |
-| Windows build, mods, remappable KB+M | planned ([roadmap](docs/03-roadmap.md)) |
+| Keyboard and mouse, two players | ✅ works (playtested): WASD + mouse by default, Spin on a key (it draws circles with the virtual stick, as the game wants), every key rebindable in the Controls menu (**F6**), a controller works at the same time or as player 2 for the game's co-op ([findings](docs/findings/23-keyboard-and-mouse.md)); keyboard pictures in the game's button prompts are next |
+| Windows build, mods | planned ([roadmap](docs/03-roadmap.md)) |
 
 ## Screenshots
 
@@ -63,8 +64,12 @@ owners (see [Disclaimer](#disclaimer)).
 * **16 GB RAM** for building (the recompiled game is ~140 large C++ files;
   `-j 6` keeps memory in check). About **16 GB of disk**: the ISO (7.8 GB,
   removable after extraction), the extracted game (6 GB) and builds (~2 GB).
-* A controller (anything SDL recognizes as a gamepad). Basic keyboard/mouse
-  also works (`--mnk_mode=true`); a proper remapping menu is planned.
+* A controller (anything SDL recognizes as a gamepad), or keyboard and mouse:
+  WASD to move, Space to jump, the mouse buttons to attack, Q to spin, Shift
+  to block, E to jack; **F6** opens the Controls menu to see and change every
+  key and to pick which device plays as which player (two-player co-op:
+  keyboard + a controller, or two controllers;
+  [findings/23](docs/findings/23-keyboard-and-mouse.md) has the full table).
 
 ## Quick start (Linux)
 
@@ -104,6 +109,7 @@ LICENSE                    GPL-3.0 (see "License" below)
 crash_mom_manifest.toml    recompiler config: every analysis fix and hook, commented
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       OUR native code: app setup, hooks, fixes, debug tools
+  input/                   keyboard + mouse as a virtual controller, the Controls menu (F6)
   pddi/                    interception of the game's renderer calls + the frame tracer
   native/                  our Vulkan renderer (in development)
 tools/                     disc extraction, xex inspection, disassembler, play/debug scripts

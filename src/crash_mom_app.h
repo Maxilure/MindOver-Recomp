@@ -19,14 +19,17 @@
 //   OnShutdown          cleanup
 //
 // Built-in debug overlays: F3 = perf/threads, ` (backtick) = log console,
-// F4 = settings (CVars). Ours: F8 = the native renderer's picture in a
-// second window (native/native_window.h), F9 = emulated <-> native picture,
+// F4 = settings (CVars). Ours: F6 = Controls menu (keyboard + mouse keys,
+// input/controls_menu.h), F8 = the native renderer's picture in a second
+// window (native/native_window.h), F9 = emulated <-> native picture,
 // F10 = photo (native/ab_capture.h).
 // =============================================================================
 
 #pragma once
 
 #include <atomic>
+#include <map>
+#include <string>
 
 #include <rex/graphics/graphics_system.h>
 #include <rex/input/input_system.h>
@@ -42,6 +45,9 @@
 #include "debug_frame_capture.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "input/controls_menu.h"
+#include "input/keyboard_mouse.h"
+#include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
 #include "native/native_window.h"
@@ -148,6 +154,10 @@ class CrashMomApp : public rex::ReXApp {
         }
       }
     }
+    // F6: the Controls menu (input/controls_menu.h), keyboard + mouse keys.
+    rex::ui::RegisterBind("bind_controls_menu", "F6",
+                          "Open / close the Controls menu (keyboard and mouse keys)",
+                          [] { controls_menu::Toggle(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).
@@ -163,6 +173,22 @@ class CrashMomApp : public rex::ReXApp {
     auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system());
     if (auto driver = ScriptedInputDriver::CreateFromCvars(); driver && input) {
       input->AddDriver(std::move(driver));
+    }
+    // Keyboard + mouse as a virtual controller (input/keyboard_mouse.h), on
+    // unless --keyboard_mouse=false. Merged with a real pad into player 1.
+    if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {
+      kbm_driver->SetPausedCheck([this] { return KeyboardInputPaused(); });
+      kbm_driver->Attach(window());
+      // Which device plays as which player (input/players.h; the Controls
+      // menu's Players tab), replacing the SDK's fixed rule (keyboard + first
+      // pad = player 1). Before the game's first poll, as the SDK asks.
+      std::map<std::string, int> choices;
+      for (const auto& [key, choice] : kbm_driver->bindings().players) {
+        choices[key] = choice.player;
+      }
+      input->SetDeviceAssignment(
+          std::make_unique<kbm::PlayerAssignment>(kbm::KeyboardMouseDriver::kDeviceId, choices));
+      input->AddDriver(std::move(kbm_driver));
     }
   }
 
@@ -184,6 +210,8 @@ class CrashMomApp : public rex::ReXApp {
   void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override {
     // The short message shown when F9 / F8 switch pictures (overlay_banner.h).
     overlay_banner::Create(drawer);
+    // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.
+    controls_menu::Create(drawer);
   }
 
   // Other hooks we can override (uncomment + implement as needed):
@@ -216,6 +244,34 @@ class CrashMomApp : public rex::ReXApp {
       UseEitherWindowForInput();
     }
     native_window_->Toggle();
+    // Keys typed into the second window play too. Closing it detaches the
+    // keyboard driver by itself (KeyboardMouseDriver::OnClosing), so attach
+    // again on every opening (twice = once).
+    if (auto* kbm_driver = kbm::KeyboardMouseDriver::Get(); kbm_driver && native_window_->is_open()) {
+      kbm_driver->Attach(native_window_->window());
+    }
+  }
+
+  // Keyboard + mouse give the game a neutral pad while no game window has the
+  // focus, or while an ImGui overlay (F4 settings, the console) is using the
+  // keyboard. While ImGui only wants the mouse (pointer over an overlay or a
+  // pop-up), just the mouse buttons stop counting: an achievement pop-up
+  // under the pointer mustn't freeze a keyboard player mid-fight. Asked from
+  // the game's threads at every poll (reading ImGui's flags there is what the
+  // SDK's own check does too).
+  uint32_t KeyboardInputPaused() {
+    using Driver = kbm::KeyboardMouseDriver;
+    const bool focused = (window() && window()->HasFocus()) ||
+                         native_window_focused_.load(std::memory_order_relaxed);
+    if (!focused) {
+      return Driver::kPauseAll;
+    }
+    rex::ui::ImGuiDrawer* drawer = imgui_drawer();
+    if (!drawer) {
+      return 0;
+    }
+    return (drawer->GetIO().WantCaptureKeyboard ? Driver::kPauseAll : 0) |
+           (drawer->GetIO().WantCaptureMouse ? Driver::kPauseMouse : 0);
   }
 
   // The SDK feeds the game NO controller input while its window isn't

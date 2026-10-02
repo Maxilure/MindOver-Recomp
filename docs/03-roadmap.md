@@ -48,9 +48,9 @@ and no structure. Most features need us to know *where* things happen:
 | Find | Unlocks |
 |---|---|
 | ✅ The main loop and its **frame timing** (the 30 fps cap, delta time): [findings/07](findings/07-frame-rate.md) | Phase 3 |
-| The **input path** (where XInput state becomes game actions) | Phase 2 |
+| 🟡 The **input path** (where XInput state becomes game actions): Radical's input manager polls the pad once per frame (`sub_8235D188`), an input map script turns buttons into game events, a stick-circle detector counts spins ([findings/23](findings/23-keyboard-and-mouse.md)) | Phase 2 |
 | The **projection** code (field of view, aspect ratio) | ultrawide (Phase 4) |
-| The **UI system** (menus, button-prompt textures and font glyphs) | Phase 2 icons, a menu entry |
+| 🟡 The **UI system** (menus, button-prompt textures and font glyphs): the prompts' button pictures found in the font ([findings/23](findings/23-keyboard-and-mouse.md) section 1.2); the menus (Radical's Scrooby pages) not yet | Phase 2 icons, a menu entry |
 | The **Lua scripts**: the 239 in `default.rcf` are plain Lua 5.1 bytecode, not encrypted ([findings/19](findings/19-missing-dialogue-5-1-xma.md) section 1; only the loose `script/ahoy.blua` is). Next: decompile them, find the Lua VM in the exe | Phase 5 scripts, UI menus |
 | 🟡 Radical's **PDDI** renderer interface: classes, vtables and a frame's recipe mapped, [findings/08](findings/08-renderer-map.md); the 2D path, [findings/09](findings/09-native-first-screens.md), and the 3D world, characters and effects of every area playtested so far ([findings/10](findings/10-native-3d-world.md) to [21](findings/21-motion-blur-cut.md)) understood and redrawn natively; later areas' materials as they come up | Phase 4 |
 
@@ -64,22 +64,32 @@ No mouse look: the game's camera is fixed. It follows Crash on its own and
 the player can't turn it (not with a stick either), so the mouse is only
 useful for its buttons and wheel.
 
-Keyboard and mouse already work at a basic level (`--mnk_mode=true
---mnk_mouse=true`, `--keybind_*` flags, F4 settings), but it's controller
-emulation with a config screen for developers. The goal:
+Step 1 is in testing ([findings/23](findings/23-keyboard-and-mouse.md)):
+the game's own data told us what every button does (its input map script
+and the button pictures of its prompt font), and our own keyboard / mouse
+driver replaces the SDK's generic one.
 
-1. 🟢–🟡 **An in-game remap menu of our own**: an overlay (ImGui, which
-   the SDK already draws with) styled to fit the game, opened with a key.
-   "Press a key to bind", mouse buttons and wheel, per-device profiles,
-   saved to a config file. This needs **no** game modding: it feeds the
-   input layer we already control.
-2. 🟡 **Keyboard/mouse icons in the game's prompts.** The prompts are
-   textures (or font glyphs) in the game's data. We find them once
-   (Phase 1), then swap their pixels in memory at runtime: keyboard icons
-   when the last input came from the keyboard, controller icons when it
-   came from a pad. The GPU emulation re-reads textures the CPU changes, so
-   no file edits and no Lua decryption are needed. Dynamic key names
-   ("[E]" for whatever is bound) mean drawing those images ourselves.
+1. 🧪 **Keyboard and mouse with a remap menu of our own**: WASD + mouse
+   by default; **Spin** on a key (the game's spin is "rotate the left
+   stick", so the key draws circles with the virtual stick); any key
+   combination (block while moving), mouse buttons, side buttons and the
+   wheel as keys; a controller at the same time. **F6** opens the Controls
+   menu (ImGui): every action by section with the 360 button it presses,
+   "click, then press the new key", spin speed and walk sliders, saved at
+   once to `controls.toml` next to the exe. Its Players tab picks which
+   device plays as which player (the game's two-player co-op). Still open:
+   remapping a controller's buttons, Spin without drawing stick circles
+   (triggering the game's spin directly), and the menu's look (the SDK's
+   overlay style, not the game's).
+2. 🟡 **Keyboard/mouse icons in the game's prompts.** Found: the prompt
+   font draws each button as a picture of its own (A, B, X, Y, RT, RB, LT,
+   LB, Back, Start, the sticks, a "rotate" arrow;
+   [findings/23](findings/23-keyboard-and-mouse.md) section 1.2). Next:
+   swap those pictures at runtime for key pictures when the last input came
+   from the keyboard (the native renderer can recognize them by content),
+   showing whatever key is bound. No file edits and no Lua decryption
+   needed. Dynamic key names ("[E]" for whatever is bound) mean drawing
+   those images ourselves.
 3. 🔬 Optional: an entry for our remap menu inside the game's own options
    menu. That's the part that needs the UI system understood, likely
    through the Lua scripts.

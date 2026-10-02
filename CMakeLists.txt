@@ -34,6 +34,10 @@ set(CRASHMOM_SOURCES
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
+    src/input/bindings.cpp       # keyboard + mouse: the actions, their keys, controls.toml
+    src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
+    src/input/players.cpp        # which device plays as which player (local co-op)
+    src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
     src/pddi/trace.cpp           # --debug_pddi_trace_dir: log every renderer call of chosen frames
     src/native/native_renderer.cpp  # our Vulkan renderer (F9: emulated <-> native picture)

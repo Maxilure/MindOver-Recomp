@@ -91,6 +91,8 @@ class NativeWindow : public rex::ui::WindowListener, public rex::ui::WindowInput
   // UI thread. Opens the window if it's closed, closes it if it's open.
   void Toggle();
   bool is_open() const { return window_->phase() == rex::ui::Window::Phase::kOpen; }
+  // The window itself (the keyboard driver listens to its keys too).
+  rex::ui::Window* window() const { return window_.get(); }
 
  private:
   // Draws nothing: its presence makes the presenter paint on the UI thread

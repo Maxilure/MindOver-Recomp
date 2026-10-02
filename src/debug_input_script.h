@@ -31,6 +31,10 @@
 //    per line, applied the moment it arrives: "<inputs> [<hold_ms>]".
 //      echo "down" > /path/to/fifo
 //      echo "lsright 2000" > /path/to/fifo
+//    "key <Name> [<hold_ms>]" presses a KEYBOARD / MOUSE key instead, through
+//    the keyboard driver and the player's bindings (input/keyboard_mouse.h),
+//    exactly as if typed (names as in controls.toml: Space, LMB, WheelUp...):
+//      echo "key Q 1000" > /path/to/fifo     (hold Spin for a second)
 // =============================================================================
 
 #pragma once

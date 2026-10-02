@@ -18,6 +18,8 @@
 
 #include <rex/logging.h>
 
+#include "input/keyboard_mouse.h"
+
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
                       "Debug: timed input taps, e.g. \"8000:start,30000:lsright:2000\" "
                       "(ms since launch[:hold ms, default 150]; empty = off)");
@@ -172,8 +174,25 @@ void ScriptedInputDriver::FifoThread(std::string path) {
     while ((eol = pending.find('\n')) != std::string::npos) {
       std::string line = pending.substr(0, eol);
       pending.erase(0, eol + 1);
-      // "<inputs> [<hold_ms>]"
       std::string_view view(line);
+      // "key <Name> [<hold_ms>]": a keyboard / mouse key, through the
+      // keyboard driver's bindings (input/keyboard_mouse.h), as if typed.
+      if (view.substr(0, 4) == "key ") {
+        std::string_view rest = view.substr(4);
+        size_t space = rest.find(' ');
+        int64_t hold_ms = kDefaultHoldMs;
+        if (space != std::string_view::npos) {
+          std::from_chars(rest.data() + space + 1, rest.data() + rest.size(), hold_ms);
+        }
+        if (hold_ms > 0 && kbm::KeyboardMouseDriver::DebugTap(rest.substr(0, space), hold_ms)) {
+          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+        } else {
+          REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown key, or no keyboard driver)",
+                      line);
+        }
+        continue;
+      }
+      // "<inputs> [<hold_ms>]"
       size_t space = view.find(' ');
       uint32_t inputs = ParseInputs(view.substr(0, space));
       int64_t hold_ms = kDefaultHoldMs;
