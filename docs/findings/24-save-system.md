@@ -392,11 +392,11 @@ The front end's screens and their order are the fight tree
 `fighttrees/Frontend.bfig` (default.rcf): a Lua chunk, then the binary tree
 ("fig0"). Its node records (state 0x83A93633, exit 0xBC27359D, and others)
 hold a name, the number of their PARENT node, and for exits the TARGET
-state; nodes are numbered in file order. Each state's compiled decision
-function (a table of 2,161 function pointers at 0x82503030, indexed by node
-number; 0x821174B0 = none) returns the number of the exit to take, -1 to
-stay. The engine follows the target of whatever exit comes back, child of
-the current state or not. The nodes used:
+state; nodes are numbered in file order (section 7.2 has the format). Each
+state's compiled decision function (a table of function pointers at
+0x82503030, indexed by node number; 0x821174B0 = none) returns the number of
+the exit to take, -1 to stay. The engine follows the target of whatever
+exit comes back, child of the current state or not. The nodes used:
 
 | Node | What | Target |
 |---|---|---|
@@ -412,16 +412,21 @@ the current state or not. The nodes used:
 | 394, 395 | in game: the same (decision 0x8211DD28: 399 No, 400 Yes) | 395 |
 | 399, 400 | its ExitCancel, ExitOverWrite | 386, 326 |
 
-X on a save: the list's decision returns 112 (the only way into the name
-screen that doesn't start a new game: the difficulty screen's Easy / Normal
-/ Hard exits call ResetSaveFileHeader), with the save's name written into
-the name screen's text buffer (0x825A06F8, 32 UTF-16 characters = 64 bytes
-up to the next global). The player edits it with the game's on-screen
-keyboard. The name screen's decision is wrapped: Done or Back return 159
-(or 385 when it came from the in-game list) instead of 94 / 95, Done after
-renaming the save (6.6). The buffer's earlier content is put back
-afterwards: it holds New Game's typed name until the difficulty screen
-copies it, and Back from the slot list leads there.
+X on a save: the list's decision returns ExitRenameMenu (995) or, in game,
+ExitRenameInGame (1000): exits the port adds to the tree, into a rename
+state of its own (section 7), with the save's name written into the name
+screen's text buffer (0x825A06F8, 32 UTF-16 characters = 64 bytes up to the
+next global). The player edits it with the game's on-screen keyboard; the
+rename state's decision (written in C++) takes its ExitDone or ExitBack back
+to the list, Done after renaming the save (6.6). The buffer's earlier
+content is put back afterwards: it holds New Game's typed name until the
+difficulty screen copies it, and Back from the slot list leads there.
+
+A first version had no route of its own: it returned 112 (the difficulty
+screen's Back, the only exit into the New Game name screen 93 that doesn't
+start a new game) and rewrote the name screen's Done / Back into 159 / 385
+(exits into the list). It worked, but the screen came with the menu's
+frame and background in game too (section 7.1).
 
 **16 characters.** The screen's "type the selected key" (`sub_820D6618`)
 refuses a character once the name has 9: `0x820D663C cmpwi r11,9` (r11 =
@@ -431,11 +436,10 @@ hook right before that `bge` (`CrashMomNameEntryRoom`, `jump_address_on_true
 beside a save's picture and in the screen's name field; New Game's copy of
 the name, ResetSaveFileHeader `sub_82259408`, keeps 32).
 
-**Where the screen exists.** If its page (`GameStart_NameEntry`) isn't
-loaded, X opens our rename box instead (the jump would make the screen's
-Enter look up elements of a missing page). The page is in the front end's
-menu package, which the game keeps loaded in game only in level L0 (Crash's
-house), so outside it X opens the box.
+**Where the screen exists.** If the rename route isn't there (the tree
+couldn't be changed, section 7) or the keyboard's page isn't in the front
+end's page lookup, X opens our rename box instead (the screen's Enter would
+look up elements of a page that isn't there).
 
 **Delete asks the game's own question.** Y on a save: the list's decision
 returns 170 (394 in game), slot 1's "slot not empty" exit into the overwrite
@@ -492,7 +496,233 @@ renamed "Save A" to "Save E" and given file times in that order):
 
 All runs: 0 errors in the log.
 
-## 7. Tools
+## 7. A rename screen of its own, in the menus and every level
+
+X opens the game's own name screen (6.5). In game that screen only existed
+in level L0 (Crash's house), and it was reached by borrowing New Game's
+route. The port now changes two of the game's data files at run time (from
+the player's own disc data, never shipped): the front end's tree gets a
+rename route (`src/saves/rename_screen.*`, `src/data/fight_tree.*`), the
+in-game menus get the keyboard's page (`src/data/data_patcher.*`).
+
+![The rename screen in game: the save list over the level, X, the same keyboard over the level](../images/save-library-rename-in-game.jpg)
+
+### 7.1 Where the screen lives
+
+* **Packages.** `levels/GlobalPackages.p3d` (default.rcf) lists the game's
+  packages: records 0xD8532100 (index, the package's file name = 8 hex
+  digits, a category: 5 "frontend", 9 "joined_assets", ...) and named
+  groups 0xD8532102 (a group's packages and the groups it needs). The menus
+  are group **Fe_Frontend** = `package\cdd70a8c.p3d` (3.6 MB) + group
+  Fe_Persistent (`b4c85fe7`: the save list, the button prompts, the Titans
+  texture fonts). The in-game menus (pause, map, messages, the HUD's
+  counters) are **Fe_InGame** plus one package per language
+  (Fe_InGameA ... Z; English = Fe_InGameE = `7a8185b0`).
+* **Inside a package** (Pure3D, little-endian chunks: id, header + data
+  size, total size): the menu package holds 89 pictures (0x19005, PNG
+  inside: ~10x bigger once unpacked), a font (0x1800D "frontend": glyph
+  tables per language, 504 glyphs, drawn from the Titans texture fonts) and
+  the Scrooby project `GameStart.prj` (0x18000) with 21 pages (0x18002,
+  `.pag`: groups 0x18020 of pictures 0x18022 and texts 0x18023) and 17
+  screens (0x18001, `.scr`: a name and a list of pages). The in-game menu
+  package has the project `InGame.prj` and a font "ingame".
+* **Sections.** Loaded packages live in inventory sections named after the
+  group (keys = hashed names: Fe_Frontend 0xD6AEA592 at global 0x825A5944,
+  HUDAssets 0x825A596C, ...). The front end's state code loads them
+  (`sub_82260FF0(state)`: 0 boot, 4 menus, 5 in game) and attaches them to
+  the page lookup of layer 4 (`sub_82260D68`, `sub_82355420`) or detaches
+  them (`sub_82261170`, `sub_823553A0`). In game, Fe_Frontend is added only
+  if `sub_8227BA28(game, "L0")` (the index of level "L0") equals the
+  current level (byte +18 of the game object): in Crash's house.
+* **The keyboard page and the frame are separate.** `GameStart_NameEntry.pag`
+  is two groups: `Keyboard` (the panel, its hinge, the caps / character set
+  keys, `Key_<row>_<column>`, Enter, Backspace, a cog) and `NameEntry` (the
+  name field, its panel and hinge, a cog). No backdrop. The name screen's
+  Enter (`CNameEntryScreenAction`, `sub_820D5488`) finds that screen and
+  page by hashed name (keys hashed at startup, `sub_8236ACB8`, 0x824A2944
+  ...) and binds only their elements.
+* **The purple frame and the blue swirl** belong to another action of the
+  same state: `CNVBackgroundAction` (vtable 0x82024374, Enter `sub_820D7960`).
+  It binds page `FE_NV_Frame` (the frame's border pieces, cogs, lights) and
+  registers itself in global 0x8259AD84, which the front end updates and
+  draws every frame (`sub_820D7F50`, `sub_820D7FE8`, both skipped while the
+  global is null). Every menu state carries this action; no in-game state
+  does. That is why the first version (section 6.5), which entered the New
+  Game name state in game, needed `FE_NV_Frame` copied into the in-game
+  menus (without it: a read through a null pointer, +0x74, as the state
+  opened) and showed the menu's frame and swirl over the level.
+
+### 7.2 The front end's tree as data
+
+`fighttrees/Frontend.bfig`, big-endian: a u32-size-prefixed Lua chunk (the
+tree's scripts), then the node records one after another, no gaps:
+
+* **A record**: u32 type (0x83A93633 state, 0xBC27359D exit, 0xE056B923
+  root, 0xE8CB721B platform branch), u32 name length, the name (padded to 4
+  bytes; no NUL when the length is a multiple of 4), u32 parent node, u32
+  number of children; exits then hold 0, -1.0f, 0, -1.0f, the u32 TARGET
+  state (-1 for a group of exits) and 0. Then lists: u32 kind, u32 byte size,
+  a float count and the items. 0x04F3A980 (states) and 0x0A870F46 (both)
+  run scripts (items 0xAE6D7C53 naming a function of the Lua chunk);
+  0x27DE7629 is a state's actions.
+* **Actions seen** (hashes of their factory names; the classes by
+  elimination): 0x861F0934 `CNameEntryScreenAction` (no parameters, only in
+  NameEntryScreen), 0x90548355 `CNVBackgroundAction` (no parameters, every
+  menu state, no in-game state), 0x7B641ABE `CGameSlotScreenAction` (screen,
+  page and menu names), 0x03221AF6 the button prompts' texts and pictures,
+  0x3CEAEA0B a screen by name, 0x4DD31C3D a message text ID, 0x7E4393B4 a
+  message page and its menu, 0x45FB1C3B (no parameters, in-game and message
+  states).
+* **The file is the tree in pre-order**, 994 nodes, the root "Frontend" (1)
+  with two children: "Root" (2, 46 screens) and "EndOfTree" (992, a sound
+  test). The loader (`sub_82401F28`, one node per record, numbered by a
+  counter that starts at 1 for every tree file) reads each record, finds
+  the parent by its number and attaches the node to it (`sub_82402560`).
+* **Siblings need different names**: the attach looks the new child's name
+  up among the parent's children (`sub_824024C8`) and refuses a duplicate.
+  The node then hangs loose: no parent, its exits' targets never resolved.
+* **Room for the nodes** is made before the tree is read, from
+  `fighttrees/branchcount.txt` ("fighttrees/Frontend.bfig 1004"; 16 trees),
+  looked up BY THE FILE'S PATH (`sub_820C27A8`: a table of 36-byte entries,
+  32-byte path + count, at 0x82597DA0, how many at 0x8259AD74; 0 = unknown).
+* **Decisions**: the front end's dispatcher `sub_8211AF40` reads the state's
+  number (s16 at +30 of its node object; +28 is its type) and jumps through
+  the table at 0x82503030; past node 994 the table says "none". Each tree
+  has its own dispatcher and table.
+* **Taking an exit** (`sub_820C12B0`): the executor finds the exit by its
+  number, then its target node; a target that is itself an exit (checked by
+  a dynamic cast to `ExitCondition`) counts as none.
+
+### 7.3 The rename route
+
+The data patch appends 10 nodes after node 994, as children of EndOfTree
+(the last subtree, so no existing number moves; the compiled decisions
+return exit numbers as constants):
+
+| Node | Record copied from | Changed |
+|---|---|---|
+| 995 ExitRenameMenu | 112 (the difficulty screen's Back, its transition script) | parent 992, 1 child, target 996 |
+| 996 RenameScreen | 93 (NameEntryScreen: keyboard, frame + background, prompts, its script) | parent 995 |
+| 997 ExitDone, 998 ExitBack | 159 (no scripts) | parent 996, no children, target 160 |
+| 999 ExitSave | 185 (slot 1's ExitAvailableSlot: its script saves slot 0) | parent 996, target SaveGameScreen 289 kept |
+| 1000 ExitRenameInGame | 112 | parent 992, 1 child, target 1001 |
+| 1001 RenameScreen | 93 without `CNVBackgroundAction` | parent 1000 |
+| 1002 ExitDone, 1003 ExitBack | 385 (no scripts) | parent 1001, no children, target 386 |
+| 1004 ExitSave | 408 (slot 1's ExitAvailableSlot in game, script "71" like the overwrite's 400) | parent 1001, target AutoSaveGameScreen 326 kept |
+
+EndOfTree gets two more children, each RenameScreen three. The list's
+decisions (wrapped) return 995 / 1000 on X; the two RenameScreen states get
+decisions written in C++, registered with a wrapper of the dispatcher: the
+front end's result flags (`*(0x8259B190)+52` -> +8593) bit 3 (the
+keyboard's Done) -> ExitDone (ExitSave when naming a new save, 7.4), bit 2
+(Cancel) -> ExitBack, as New Game's name state does (`sub_8211B7D8`). The
+loader gets room for one more node than the count (numbers start at 1).
+The patch checks the tree first (994 nodes; the names and targets of the
+nodes it copies or relies on) and leaves another tree alone.
+
+### 7.4 Naming a new save, and X = Backspace
+
+![Save Game: Create New Save, then the keyboard to name it, X erasing a letter](../images/save-library-name-new-save.jpg)
+
+* **"Create New Save" asks for a name.** Picking it made the list's
+  decision take slot 1's ExitAvailableSlot (185 menu, 408 in game: the new
+  save is always panel 1) straight into saving, under the game in
+  progress's name. That exit is now replaced by the rename route's entry,
+  with the game in progress's name in the keyboard's text. Done writes the
+  typed name into the manager's current header (+36: SaveGame writes that
+  header into the file) and returns the route's ExitSave, a copy of that
+  same exit with its script: the save happens as before, into a new file.
+  Back returns to the list and forgets the pick: nothing is saved. New
+  Game's own save is untouched (named on its own name screen already,
+  saved without the list).
+* **Overwriting keeps the overwritten save's name.** The game writes the
+  game in progress's name into whatever file it saves. When the pick is an
+  existing save, its own name (block +20) goes into the manager's header
+  first, so the file keeps it, and the game in progress carries that name
+  from then on (it lives in that file now).
+* **X erases a letter** on the name screen (New Game's and the rename
+  screen): a wrapper of its Update (`sub_820D58B8`, state +216 = 3 typing)
+  calls the screen's own backspace (`sub_820D66E0`: last character off,
+  field refreshed, the erase sound; the error sound when empty) on each new
+  X press. "Backspace X" shows in the free upper-left prompt spot of
+  FE_Buttons, set at the first typing update (after the state's prompts
+  action), until the screen's Exit (`sub_820D5958`).
+
+### 7.5 The page in game
+
+When the game builds the path of a menus package whose file holds the
+project `InGame.prj` (category 6; English `7a8185b0`), the port gives it a
+copy with `GameStart_NameEntry.pag` and `.scr` appended to that project,
+plus the pictures and fonts the page names that the package lacks, taken
+out of the menu package: the Enter / Backspace keys, their highlights, the
+small key button and the "frontend" font (the glass panels, hinge and cog
+are in the in-game package already). The English package grows from
+388,701 to 884,837 bytes. No frame: nothing in the in-game state asks for
+it.
+
+Cost: with the frame (the first version), the keyboard took 3.3 MB of
+graphics memory in the Ratcicle Kingdom (52,524 instead of 53,380 free 4 KB
+pages); keeping the whole menu package there instead (answering "yes" to
+the L0 checks, an experiment) took 34 MB (208 -> 175 MB free; the game's
+heaps, allocator table 0x82506CF0, `sub_8227F130(index, &used, &total,
+&peak)`, are not the limit: the Level heap used 2.4 of 93 MB). Without the
+frame's pictures it is less; not measured again.
+
+### 7.6 Serving changed files
+
+* **The path.** `sub_822E3828(category, name, buffer)` builds the path of
+  every package and fight tree the game loads ("package/<name>.p3d",
+  "fighttrees/<name>.bfig"; its category numbers are one higher than
+  GlobalPackages': frontend 6, joined_assets 10, fighttree 12). Wrapped: for
+  a file with a patch, the original is read out of default.rcf, changed, and
+  written to `<user data>/cache/patched_data/<file>`; the path becomes
+  `crashmom/<file>`.
+* **The loose file.** The game's own file layer knows only its drives: a
+  path on a drive of ours (`crashmom:\...`) made it read through a null
+  pointer (+0x98) as soon as a level used the file. A relative path that
+  isn't in its archives is opened as a loose file on D: instead (as
+  `D:\levels\L0\objectives_era1.blua`, a file of another release, is),
+  here `D:\crashmom\<file>`. The cache folder is mounted there as a host
+  folder device at `\Device\Harddisk0\Partition1\crashmom`, inside the
+  game drive's tree: SDK patch 0012 makes the file system pick the device
+  with the longest matching mount path (it took the first registered, the
+  game folder). The folder's file list is read when it is mounted, so each
+  new file is looked up once by its full path (which adds it). The player's
+  game folder is never written to.
+* **Keyed by path.** The node count lookup (`sub_820C27A8`) is replaced by
+  the same lookup in C++ that treats a served path as the game's own and
+  never gives a patched tree less room than its nodes.
+
+### 7.7 Dead ends on the way
+
+| Tried | What happened |
+|---|---|
+| A path on a drive of ours (`crashmom:\`) | the game read through a null pointer (+0x98) once a level used the file |
+| Answering "yes" to the L0 checks | the whole menu package stays loaded in game: 34 MB |
+| Only the keyboard page, entering New Game's name state | null pointer (+0x74) at the state's Enter: its `CNVBackgroundAction` needs `FE_NV_Frame` |
+| That page + `FE_NV_Frame` (the first version) | worked, with the menu's frame and swirl over the level |
+| Patched tree at `crashmom/Frontend.bfig` | no node count for that path -> no room -> a write through a null pointer at 0x820C25B0 |
+| Both entry exits named "ExitRename" | the second refused by the attach; taking it read a null target (+0x1C, `sub_820C1578`) |
+
+### 7.8 Tests (on copies of a profile: a save in the Ratcicle Kingdom, one at the start in Crash's house)
+
+| Test | Result |
+|---|---|
+| Menu: Load Game, X, one letter, Start | the name screen as before (frame, background); the name plus that letter in the file; back to the list |
+| Menu: X, B | back to the list, name kept |
+| Ratcicle Kingdom: pause, Save Game, X | the keyboard over the level (picture above), no frame, no swirl |
+| There: one letter, Start; then X, B; then B, B | renamed; name kept; back in the level with the HUD |
+| Pause, Quit Game, Load Game, X | the menu's rename screen as before |
+| Main menu, New Game | its name screen as before: typing, Done -> difficulty, Back -> name, Back -> menu |
+| Crash's house (L0: the menu package is loaded there too): pause, Save Game, X, B | the keyboard over the room, back to the list |
+| Crash's house: Save Game, Create New Save, X X, one letter, Done | the keyboard with the game's name and "Backspace X"; two letters erased; "Saving content", a new file with the typed name |
+| Save Game, Create New Save, B | back to the list, nothing saved |
+| Save Game, another existing save, overwrite Yes | saved into it; the file keeps its own name |
+| Wumpa Island outside: Save Game, Create New Save | the keyboard over the island (picture above) |
+
+All runs: 0 errors in the log.
+
+## 8. Tools
 
 - Strings (`"%s GameSlot %d"`, `Slot%d_Name`, the script method names) ->
   code addresses with a `lis`/`addi` cross-reference search -> RTTI vtables

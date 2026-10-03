@@ -33,6 +33,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../overlay_banner.h"
+#include "rename_screen.h"
 #include "save_files.h"
 
 // The originals of the functions we override, and the ones we call.
@@ -48,7 +49,6 @@ extern "C" REX_FUNC(__imp__sub_820CCB08);  // CGameSlotScreenAction::Exit
 extern "C" REX_FUNC(__imp__sub_821239C8);  // GetMenuIndex(_, page name, menu name)
 extern "C" REX_FUNC(__imp__sub_8211BF88);  // front end: the Load / Save list's decision (menu)
 extern "C" REX_FUNC(__imp__sub_8211DAC0);  // front end: the Save list's decision (in game)
-extern "C" REX_FUNC(__imp__sub_8211B7D8);  // front end: the name entry screen's decision
 extern "C" REX_FUNC(__imp__sub_8211B8E8);  // front end: the difficulty screen's decision
 extern "C" REX_FUNC(__imp__sub_8211BE58);  // front end: ReadingCard's decision (menu)
 extern "C" REX_FUNC(__imp__sub_8211C2D8);  // front end: slot 1's overwrite question (menu)
@@ -67,6 +67,9 @@ extern "C" REX_FUNC(__imp__sub_8237A550);  // Scrooby Menu::MovePrevious (up)
 extern "C" REX_FUNC(__imp__sub_8237A668);  // Scrooby Menu::MoveNext (down)
 extern "C" REX_FUNC(__imp__sub_82261800);  // front end: play a sound (bank, name)
 extern "C" REX_FUNC(__imp__sub_824742F0);  // the game's XInputGetState wrapper
+extern "C" REX_FUNC(__imp__sub_820D58B8);  // CNameEntryScreenAction::Update (the keyboard)
+extern "C" REX_FUNC(__imp__sub_820D5958);  // CNameEntryScreenAction::Exit
+extern "C" REX_FUNC(__imp__sub_820D66E0);  // the keyboard's backspace (erase the last letter)
 
 REXCVAR_DEFINE_BOOL(save_library, true, "CrashMoM",
                     "The Load / Save Game screen as one scrolling list of any number of saves "
@@ -164,14 +167,12 @@ constexpr uint8_t kFlagScreenReady = 0x40;
 constexpr int kPanels = 3;
 
 // The front end's fight tree (fighttrees/Frontend.bfig, findings/24 section
-// 6.4): nodes are numbered in file order, each record starts with its
-// parent's number, exits name a target state. A state's compiled decision
-// function returns the exit to take. The nodes we use:
-constexpr int32_t kExitIntoNameEntry = 112;  // DifficultyScreen's ExitBack -> NameEntryScreen (93)
+// 6.4; data/fight_tree.h): nodes are numbered in file order, each record
+// starts with its parent's number, exits name a target state. A state's
+// compiled decision function returns the exit to take. The nodes we use
+// (the rename screen's own are added by saves/rename_screen.h):
+constexpr int32_t kDifficultyBack = 112;     // DifficultyScreen's ExitBack -> NameEntryScreen (93)
 constexpr int32_t kExitIntoSlotList = 159;   // ReadingCard's ExitHasValidSaveFiles -> GameSlotScreen (160)
-constexpr int32_t kExitIntoGameSlotList = 385;  // in game: ReadingCard's ExitOperationDone -> GameSlotScreen (386)
-constexpr int32_t kNameEntryDone = 94;       // NameEntryScreen's ExitDone (-> difficulty)
-constexpr int32_t kNameEntryBack = 95;       // NameEntryScreen's ExitBack (-> main menu)
 constexpr int32_t kDifficultyFirst = 109;    // DifficultyScreen's ExitEasy / ExitNormal / ExitHard:
 constexpr int32_t kDifficultyLast = 111;     //   ResetSaveFileHeader, the difficulty, save mode, -> 113
 constexpr int32_t kReadingNoSaves = 155;     // ReadingCard (153): ExitNoValidSaveFiles
@@ -179,6 +180,8 @@ constexpr int32_t kReadingNoSaves = 155;     // ReadingCard (153): ExitNoValidSa
 // SetAutoSaveGame(true); SaveGame(0). New Game's own save takes it straight
 // from ReadingCard, the list never showing.
 constexpr int32_t kExitSaveSlot1 = 185;
+// In game the same: slot 1's ExitAvailableSlot -> AutoSaveGameScreen (326).
+constexpr int32_t kGameExitSaveSlot1 = 408;
 // The overwrite question (OverWriteMessage: page FE_TRG_Message_Frontend /
 // _InGame, text "ConfirmOverwrite_", a No / Yes menu with No first), reused
 // to ask about deleting. Entered through slot 1's save branch (the question
@@ -373,12 +376,12 @@ struct GameState {
   // New Game: the difficulty was picked, its save is still to be created.
   bool new_game = false;
   // Renaming with the game's own name entry screen (X): asked by Update,
-  // taken by the list's decision (into the name screen), finished by the
-  // name screen's decision (back to the list).
+  // taken by the list's decision (into the rename screen), finished by the
+  // rename screen's decision (back to the list; saves/rename_screen.h).
   struct {
-    bool requested = false;   // take the exit into the name screen next
-    bool active = false;      // the name screen is renaming this save
-    int32_t way_back = 0;     // the exit back to the list it came from (159 / 385)
+    bool requested = false;   // take the exit into the rename screen next
+    bool active = false;      // the rename screen is renaming this save
+    bool create = false;      // ... or naming the new save of "Create New Save"
     // What the name buffer held before (New Game's typed name, kept there
     // until the difficulty screen copies it into the new game).
     std::u16string buffer_before;
@@ -884,24 +887,23 @@ void OpenDialog(const uint8_t* base, uint32_t manager, int panel) {
   REXLOG_INFO("Saves: rename box for save {} ({})", number, ToUtf8(name));
 }
 
-// X on a save: rename it with the game's own name entry screen. The list's
-// decision takes the jump at its next run (sub_8211BF88 / sub_8211DAC0
-// below). If the screen's page isn't loaded, our own box instead: jumping
-// there would make its Enter look up elements of a page that isn't there.
-// The page (GameStart_NameEntry) is in the front end's package
-// (package/cdd70a8c.p3d, the "Fe_Frontend" inventory section): loaded in the
-// menus, and in game ONLY in level L0 (Crash's house): the front end's
-// section setup for gameplay (sub_82260FF0, state 5) adds Fe_Frontend only
-// when the current level is "L0" (traced 2026-10-03: renaming in the house
-// works, outside on Wumpa Island the page is gone).
+// X on a save: rename it with the game's own name entry screen, through
+// the rename screen the port adds to the front end's tree
+// (saves/rename_screen.h). The list's decision takes the exit at its next
+// run (sub_8211BF88 / sub_8211DAC0 below). Our own box instead if that
+// route isn't there (the tree wasn't patched: another release of the game,
+// --save_library off at startup) or the keyboard page isn't in the front
+// end's page lookup (in the menus it's the menu package's; in game the
+// in-game menus' copy, saves/rename_screen.h): the screen's Enter would
+// look up elements of a page that isn't there.
 void RequestGameRename(PPCContext& ctx, uint8_t* base, uint32_t manager, int panel) {
   std::u16string name;
   const int number = SaveInPanel(base, manager, panel, &name);
   if (!number) {
     return;
   }
-  if (!FindPage(ctx, base, "GameStart_NameEntry")) {
-    REXLOG_INFO("Saves: the name entry page isn't loaded here (in game it is only in Crash's house): our rename box instead");
+  if (!rename_screen::Available(false) || !FindPage(ctx, base, "GameStart_NameEntry")) {
+    REXLOG_INFO("Saves: no rename screen here: our rename box instead");
     OpenDialog(base, manager, panel);
     return;
   }
@@ -912,22 +914,52 @@ void RequestGameRename(PPCContext& ctx, uint8_t* base, uint32_t manager, int pan
 }
 
 // In a list's decision (r3 = its choice): X was pressed on a save, and the
-// list has nothing else to do this frame -> into the game's name entry
-// screen, with the save's name in its text. The exit taken is the
-// difficulty screen's Back, the only way into the name screen that doesn't
-// start a new game; the engine follows any exit's target, child of the
-// current state or not (tested 2026-10-02). `way_back` = the exit into the
-// list it came from.
-void TakeGameRenameJump(PPCContext& ctx, uint8_t* base, int32_t way_back) {
+// list has nothing else to do this frame -> its ExitRename..., into the rename
+// screen, with the save's name in the keyboard's text.
+void TakeGameRenameJump(PPCContext& ctx, uint8_t* base, bool in_game) {
   if (!g.game_rename.requested || int32_t(ctx.r3.u32) != -1) {
     return;
   }
   g.game_rename.requested = false;
+  const int32_t exit = rename_screen::EntryExit(in_game);
+  if (!exit || (in_game && !rename_screen::Available(true))) {
+    return;
+  }
   g.game_rename.active = true;
-  g.game_rename.way_back = way_back;
+  g.game_rename.create = false;
   g.game_rename.buffer_before = ReadName(base, kNameEntryBuffer);
   WriteName(base, kNameEntryBuffer, g.game_rename.name);
-  ctx.r3.u64 = uint32_t(kExitIntoNameEntry);
+  ctx.r3.u64 = uint32_t(exit);
+}
+
+// In a list's decision (r3 = its choice): "Create New Save" was picked and
+// the game takes slot 1's "available slot" exit straight into saving (185 in
+// the menus, 408 in game: the new save is always panel 1). Instead: the
+// rename screen first, with the game in progress's name in the keyboard's
+// text; its Done names the new save and goes on to save through the rename
+// screen's own copy of that exit (ExitSave, saves/rename_screen.h), its
+// Back returns to the list. Without the rename screen (or its page), the
+// game's way: the new save gets the game's name.
+void TakeCreateJump(PPCContext& ctx, uint8_t* base, bool in_game) {
+  const int32_t save_exit = in_game ? kGameExitSaveSlot1 : kExitSaveSlot1;
+  if (int32_t(ctx.r3.u32) != save_exit || !g.save_mode || !g.picked || g.picked_slot != 0 ||
+      g.picked_number != g.new_number || PanelItem(0) != kCreateNew) {
+    return;
+  }
+  const uint32_t manager = Manager(base);
+  const int32_t exit = rename_screen::EntryExit(in_game);
+  if (!manager || !exit || !rename_screen::Available(in_game) ||
+      !FindPage(ctx, base, "GameStart_NameEntry")) {
+    return;
+  }
+  g.game_rename.active = true;
+  g.game_rename.create = true;
+  g.game_rename.number = g.new_number;
+  g.game_rename.name = ReadName(base, manager + kMgrHeaderName);
+  g.game_rename.buffer_before = ReadName(base, kNameEntryBuffer);
+  WriteName(base, kNameEntryBuffer, g.game_rename.name);
+  REXLOG_INFO("Saves: naming the new save {} first ({})", g.new_number, ToUtf8(g.game_rename.name));
+  ctx.r3.u64 = uint32_t(exit);
 }
 
 // A new name for save `number`: the file, the slot table's entry (if that
@@ -1204,6 +1236,44 @@ void RequestDialog(bool delete_save) {
   }
 }
 
+// The rename screen was left (saves/rename_screen.h, its decision; both
+// exits lead back to the list it came from, whose slot table still holds
+// the window: nothing frees it on the way). Done renames the save. The
+// keyboard's text buffer gets back what it held (New Game's typed name
+// until the difficulty screen copies it: Back from the slot list leads
+// there).
+bool OnGameRenameFinished(uint8_t* base, bool done) {
+  if (!g.game_rename.active) {
+    return false;
+  }
+  g.game_rename.active = false;
+  if (g.game_rename.create) {
+    // Naming a new save: Done = the game in progress takes the typed name
+    // (SaveGame writes the manager's header into the new file) and saves;
+    // Back = no save, the pick is forgotten.
+    g.game_rename.create = false;
+    const std::u16string name = ReadName(base, kNameEntryBuffer);
+    const uint32_t manager = Manager(base);
+    WriteName(base, kNameEntryBuffer, g.game_rename.buffer_before);
+    if (!done || !manager || name.empty()) {
+      g.picked = false;
+      return false;
+    }
+    WriteName(base, manager + kMgrHeaderName, name);
+    REXLOG_INFO("Saves: the new save will be \"{}\"", ToUtf8(name));
+    return true;
+  }
+  if (done) {
+    const std::u16string name = ReadName(base, kNameEntryBuffer);
+    const uint32_t manager = Manager(base);
+    if (manager && !name.empty() && name != g.game_rename.name) {
+      RenameSave(base, manager, g.game_rename.number, name);
+    }
+  }
+  WriteName(base, kNameEntryBuffer, g.game_rename.buffer_before);
+  return false;
+}
+
 }  // namespace save_library
 
 // -----------------------------------------------------------------------------
@@ -1261,6 +1331,23 @@ extern "C" REX_FUNC(sub_822598D8) {
     if (!g.in_autosave && g.picked && g.picked_slot == slot) {
       g.op_number = g.picked_number;
       g.game_number = g.op_number;
+      // Overwriting an existing save keeps that save's name: the game
+      // writes the manager's header (the game in progress's name) into the
+      // file, so that name becomes the overwritten save's own. (A new save
+      // was named on the rename screen already.)
+      std::array<uint8_t, kEntrySize> block{};
+      if (g.op_number != g.new_number &&
+          save_files::ReadBlockStart(g.op_number, block.data(), block.size())) {
+        std::u16string name;
+        for (size_t i = 0; i < 32; ++i) {
+          const char16_t c = char16_t(block[kEntryName + 2 * i] << 8 | block[kEntryName + 2 * i + 1]);
+          if (!c) break;
+          name.push_back(c);
+        }
+        if (!name.empty()) {
+          WriteName(base, ctx.r3.u32 + kMgrHeaderName, name);
+        }
+      }
     } else {
       g.op_number = g.game_number ? g.game_number : PanelFile(slot);
     }
@@ -1486,7 +1573,8 @@ extern "C" REX_FUNC(sub_8211BF88) {
   if (exit == 235 || exit == 236) {
     ctx.r3.u64 = uint32_t(-1);
   }
-  TakeGameRenameJump(ctx, base, kExitIntoSlotList);
+  TakeGameRenameJump(ctx, base, false);
+  TakeCreateJump(ctx, base, false);
   TakeDeleteJump(ctx, kExitIntoQuestion);
 }
 extern "C" REX_FUNC(sub_8211DAC0) {
@@ -1499,7 +1587,8 @@ extern "C" REX_FUNC(sub_8211DAC0) {
   if (int32_t(ctx.r3.u32) == 444) {
     ctx.r3.u64 = uint32_t(-1);
   }
-  TakeGameRenameJump(ctx, base, kExitIntoGameSlotList);
+  TakeGameRenameJump(ctx, base, true);
+  TakeCreateJump(ctx, base, true);
   TakeDeleteJump(ctx, kExitIntoGameQuestion);
 }
 
@@ -1524,7 +1613,7 @@ extern "C" REX_FUNC(sub_8211B8E8) {
   const int32_t exit = int32_t(ctx.r3.u32);
   if (exit >= kDifficultyFirst && exit <= kDifficultyLast) {
     g.new_game = true;
-  } else if (exit == kExitIntoNameEntry) {
+  } else if (exit == kDifficultyBack) {
     g.new_game = false;
   }
 }
@@ -1567,32 +1656,6 @@ extern "C" REX_FUNC(sub_824742F0) {
   }
 }
 
-// The name entry screen's decision (node 93): 94 = Done, 95 = Back, -1 =
-// stay. While it renames a save, both lead back to the list it came from
-// (exit 159 / 385; the slot table still holds the window: nothing frees it
-// on the way), Done after renaming the save.
-extern "C" REX_FUNC(sub_8211B7D8) {
-  using namespace save_library;
-  __imp__sub_8211B7D8(ctx, base);
-  if (!g.game_rename.active) {
-    return;
-  }
-  const int32_t exit = int32_t(ctx.r3.u32);
-  if (exit != kNameEntryDone && exit != kNameEntryBack) {
-    return;
-  }
-  g.game_rename.active = false;
-  if (exit == kNameEntryDone) {
-    const std::u16string name = ReadName(base, kNameEntryBuffer);
-    const uint32_t manager = Manager(base);
-    if (manager && !name.empty() && name != g.game_rename.name) {
-      RenameSave(base, manager, g.game_rename.number, name);
-    }
-  }
-  WriteName(base, kNameEntryBuffer, g.game_rename.buffer_before);
-  ctx.r3.u64 = uint32_t(g.game_rename.way_back);
-}
-
 // The overwrite question's decision for slot 1 (the one the delete jump
 // enters): menu 171 (175 No, 176 Yes, 173 card gone), in game 395 (399, 400,
 // 397).
@@ -1605,6 +1668,53 @@ extern "C" REX_FUNC(sub_8211DD28) {
   using namespace save_library;
   __imp__sub_8211DD28(ctx, base);
   HandleDeleteQuestion(ctx, base, kGameQuestionNo, kGameQuestionYes, true);
+}
+
+// The game's name entry screen (New Game's name, the rename screen): X
+// erases the last letter, as the on-screen Backspace key does, and the
+// prompt says so ("Backspace X" in the free upper-left spot of FE_Buttons,
+// above "Back"). Update = sub_820D58B8 (r3 = the CNameEntryScreenAction; its
+// state at +216: 2 opening, 3 typing, 4/5 closing); the backspace
+// sub_820D66E0 removes the buffer's last character, refreshes the name
+// field and plays the erase sound (the error sound when it's empty). The
+// prompt is set at the first typing update (the state's prompts action has
+// set its own texts by then) and the flag cleared by the screen's Exit.
+namespace save_library {
+namespace {
+constexpr uint32_t kNameScreenState = 216;
+constexpr uint32_t kNameScreenTyping = 3;
+bool g_backspace_prompt = false;
+uint16_t g_name_buttons_down = 0;  // X held at the last update (an edge per press)
+}  // namespace
+}  // namespace save_library
+extern "C" REX_FUNC(sub_820D58B8) {
+  using namespace save_library;
+  const uint32_t self = ctx.r3.u32;
+  if (REXCVAR_GET(save_library) && Read32(base, self + kNameScreenState) == kNameScreenTyping) {
+    if (!g_backspace_prompt) {
+      g_backspace_prompt = true;
+      SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", u"Backspace");
+      SetPromptText(ctx, base, "FE_Buttons", "UpperLeftButton", u"³");
+    }
+    auto* input =
+        static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
+    rex::input::X_INPUT_STATE state{};
+    if (input) {
+      input->GetState(0, &state);
+    }
+    const uint16_t down = uint16_t(state.gamepad.buttons) & rex::input::X_INPUT_GAMEPAD_X;
+    const bool pressed = down && !g_name_buttons_down;
+    g_name_buttons_down = down;
+    if (pressed) {
+      CallGame(__imp__sub_820D66E0, ctx, base, self);
+    }
+  }
+  __imp__sub_820D58B8(ctx, base);
+}
+extern "C" REX_FUNC(sub_820D5958) {
+  using namespace save_library;
+  g_backspace_prompt = false;
+  __imp__sub_820D5958(ctx, base);
 }
 
 // The game's name entry screen: room for one more character? Its "type the

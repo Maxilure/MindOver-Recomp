@@ -51,6 +51,8 @@
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
+#include "data/data_patcher.h"
+#include "saves/rename_screen.h"
 #include "saves/save_library.h"
 #include "native/native_window.h"
 
@@ -168,6 +170,14 @@ class CrashMomApp : public rex::ReXApp {
     rex::ui::RegisterBind("bind_save_delete", "Delete",
                           "On the Load / Save Game screen: delete the save under the cursor",
                           [] { save_library::RequestDialog(true); });
+    // Changed copies of game data files (data/data_patcher.h), mounted before
+    // the game starts loading anything: the rename screen's route in the
+    // front end's tree and its keyboard page in the in-game menus
+    // (saves/rename_screen.h).
+    if (REXCVAR_GET(save_library)) {
+      rename_screen::Register();
+    }
+    data_patcher::Install();
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).

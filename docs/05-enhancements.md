@@ -31,14 +31,20 @@ Game. In the port:
   slides up. With one or two saves, they sit in the middle of the screen.
 * **Saving**: "Create New Save" comes first and previews the new save
   (today's date, your play time, %, difficulty and the picture of where you
-  are); the cursor starts on the save you're playing. **New Game** creates
-  its own save at once, named what you typed: no slot to pick, nothing to
-  forget.
+  are); the cursor starts on the save you're playing. Picking it opens the
+  name screen first, with your game's name in it to keep or change (Back =
+  don't save). Overwriting a save keeps that save's name. **New Game**
+  creates its own save at once, named what you typed: no slot to pick,
+  nothing to forget.
 * **Rename**: on a save, press **X**: the game's own name screen opens
   (the on-screen keyboard of New Game) with the save's name in it, up to
-  16 letters, so a controller can type too. In a level the game only has that
-  screen in Crash's house; elsewhere X opens the quick box. On a keyboard, **F2** opens a
-  quick box to type a name instead.
+  16 letters, so a controller can type too. It works in every level too:
+  there the keyboard shows over the level, like the in-game save list (the
+  game keeps that screen only in its menus and in Crash's house; the port
+  adds a rename screen of its own to the game's menu logic and the keyboard
+  to the in-game menus, built from your own game files at startup). On the
+  name screen, **X** erases a letter. On a keyboard, **F2** opens a quick
+  box to type a name instead.
 * **Delete**: press **Y** (or the Delete key) and answer the game's own
   question ("Are you sure you wish to delete this save file?"). The save isn't
   destroyed: it moves to a "Deleted saves" folder next to the saves, out of
@@ -50,6 +56,10 @@ Game. In the port:
 ![The save list: five saves, after sliding down, and "Create New Save" with its preview](images/save-library-list.jpg)
 
 ![The new prompts, and the game's own name screen opened by X](images/save-library-rename.jpg)
+
+![In game: the same keyboard over the level](images/save-library-rename-in-game.jpg)
+
+![Create New Save: name it first, X erases a letter](images/save-library-name-new-save.jpg)
 
 Why it was possible without rebuilding the screen: the game only ever
 thinks in slots 1-3, but a slot becomes a file in a single small function,

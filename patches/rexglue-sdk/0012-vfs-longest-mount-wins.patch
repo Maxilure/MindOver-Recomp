@@ -1,0 +1,54 @@
+Feature: the VFS picks the device with the LONGEST matching mount path (nested mounts)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0012-vfs-longest-mount-wins.patch
+Status:     local patch (a small feature; without nested mounts nothing changes)
+
+WHY
+  VirtualFileSystem::ResolvePath took the FIRST registered device whose
+  mount path the (symlink-resolved) path starts with. A device mounted
+  inside another one's tree, e.g. a host folder at
+  \Device\Harddisk0\Partition1\crashmom inside the game's drive
+  (\Device\Harddisk0\Partition1, registered first by Runtime::SetupVfs),
+  was never reached: D:\crashmom\x went to the game folder.
+
+WHAT
+  ResolvePath scans all devices and keeps the one with the longest mount
+  path that matches (same prefix rule as before; ties keep the first
+  registered). Without nested mounts it is the same device as before.
+
+HOW WE FOUND / CHECKED IT (2026-10-03)
+  The port serves changed copies of game data files (src/data/data_patcher.h:
+  the in-game menus package with the name entry keyboard, the front end's
+  tree) as loose files the game opens as D:\crashmom\<file>. With the first-match rule the open of that
+  path failed (NtCreateFile ... 0xc000000f, looked up in the game folder);
+  with this patch the host folder device answers and the game loads the
+  file. Boot, menus and a level load unchanged otherwise (0 errors).
+
+diff --git a/src/filesystem/virtual_file_system.cpp b/src/filesystem/virtual_file_system.cpp
+index 682b23d..584db74 100644
+--- a/src/filesystem/virtual_file_system.cpp
++++ b/src/filesystem/virtual_file_system.cpp
+@@ -115,10 +115,18 @@ Entry* VirtualFileSystem::ResolvePath(const std::string_view path) {
+     normalized_path = resolved_path;
+   }
+ 
+-  // Find the device.
+-  auto it = std::find_if(devices_.cbegin(), devices_.cend(), [&](const auto& d) {
+-    return rex::string::utf8_starts_with_case(normalized_path, d->mount_path());
+-  });
++  // Find the device: the one with the LONGEST mount path the path starts
++  // with, so a device can be mounted inside another one's tree (e.g. a host
++  // folder at \Device\Harddisk0\Partition1\crashmom inside the game's drive).
++  // Without nested mounts this is the same device as before (the first
++  // match); ties keep the first registered.
++  auto it = devices_.cend();
++  for (auto d = devices_.cbegin(); d != devices_.cend(); ++d) {
++    if (rex::string::utf8_starts_with_case(normalized_path, (*d)->mount_path()) &&
++        (it == devices_.cend() || (*d)->mount_path().size() > (*it)->mount_path().size())) {
++      it = d;
++    }
++  }
+   if (it == devices_.cend()) {
+     REXFS_WARN("VFS: '{}' -> [no device]", path);
+     // Supress logging the error for ShaderDumpxe:\CompareBackEnds as this is

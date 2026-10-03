@@ -51,9 +51,11 @@
 // =============================================================================
 #pragma once
 
+#include <cstdint>
+
 #include <rex/cvar.h>
 
-// --save_library (on): the list, rename, delete, the keyboard package.
+// --save_library (on): the list, rename, delete, the rename screen (saves/rename_screen.h).
 REXCVAR_DECLARE(bool, save_library);
 
 namespace rex::ui {
@@ -70,5 +72,11 @@ void Create(rex::ui::ImGuiDrawer* drawer);
 // screen is showing. (X, the game's name screen, and Y are read from the
 // controller state by the screen's update.)
 void RequestDialog(bool delete_save);
+
+// The game's name screen, opened by X to rename a save or by "Create New
+// Save" to name the new one, was left (game thread: the rename screen's
+// decision, saves/rename_screen.h): `done` = its Done or its Cancel.
+// Returns true when Done should go on to save (a new save, named).
+bool OnGameRenameFinished(uint8_t* base, bool done);
 
 }  // namespace save_library
