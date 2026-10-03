@@ -38,6 +38,8 @@ set(CRASHMOM_SOURCES
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
     src/input/players.cpp        # which device plays as which player (local co-op)
     src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
+    src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
+    src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
     src/pddi/trace.cpp           # --debug_pddi_trace_dir: log every renderer call of chosen frames
     src/native/native_renderer.cpp  # our Vulkan renderer (F9: emulated <-> native picture)

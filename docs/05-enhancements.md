@@ -10,34 +10,54 @@ This page is for the rest: **big additions the Xbox 360 game never had**,
 unique to this port. Each one is optional; the game still plays as the
 original if you don't use it.
 
-Status: ✅ done · 🔧 in progress · 📋 planned
+Status: ✅ done · 🧪 in testing · 🔧 in progress · 📋 planned
 
 | Enhancement | Original game | This port | Status |
 |---|---|---|---|
-| [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load Game screen; rename and delete | 📋 research done |
+| [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load / Save Game screen; rename and delete | 🧪 in testing |
 | [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC | 📋 |
 
 ## More saves, with names
 
-📋 Planned; the research is done ([findings/24](findings/24-save-system.md)).
+🧪 Built, in testing ([findings/24](findings/24-save-system.md) section 6).
 
 The original Load Game / Save Game screen shows three slots, and a save's
 name (shown at the top of its slot) is the name typed when starting a New
-Game. The plan:
+Game. In the port:
 
-* **As many saves as you like.** The screen keeps its three slots, but
-  they become pages: moving down past the last slot shows the next three
-  saves, moving up past the first shows the previous three. Today's three
-  saves are the first page, untouched.
-* **Rename** a save from the Load Game screen: first with a text box of the
-  port's own, later with the game's own name-entry screen (the on-screen
-  keyboard of New Game).
-* **Delete** a save, with a confirmation.
+* **As many saves as you like, in one list.** The screen keeps its three
+  panels, but they are a window onto a list of every save, the one played
+  most recently on top: move down past the bottom panel and the list
+  slides up. With one or two saves, they sit in the middle of the screen.
+* **Saving**: "Create New Save" comes first and previews the new save
+  (today's date, your play time, %, difficulty and the picture of where you
+  are); the cursor starts on the save you're playing. **New Game** creates
+  its own save at once, named what you typed: no slot to pick, nothing to
+  forget.
+* **Rename**: on a save, press **X**: the game's own name screen opens
+  (the on-screen keyboard of New Game) with the save's name in it, up to
+  16 letters, so a controller can type too. In a level the game only has that
+  screen in Crash's house; elsewhere X opens the quick box. On a keyboard, **F2** opens a
+  quick box to type a name instead.
+* **Delete**: press **Y** (or the Delete key) and answer the game's own
+  question ("Are you sure you wish to delete this save file?"). The save isn't
+  destroyed: it moves to a "Deleted saves" folder next to the saves, out of
+  the game's sight, and can be moved back by hand.
+* The screen's button prompts say so: "Rename X" replaces the Xbox's
+  "Storage Device", which means nothing on a PC, and "Delete Y" fills the
+  empty spot above "Back".
 
-Why it's possible without rebuilding the screen: the game only ever thinks
-in slots 1-3, but a slot becomes a file in a single small function, and the
-screen re-reads its three files every time it opens. Changing which files
-sit behind the three slots is enough.
+![The save list: five saves, after sliding down, and "Create New Save" with its preview](images/save-library-list.jpg)
+
+![The new prompts, and the game's own name screen opened by X](images/save-library-rename.jpg)
+
+Why it was possible without rebuilding the screen: the game only ever
+thinks in slots 1-3, but a slot becomes a file in a single small function,
+and the screen re-reads its three files every time it opens. Changing which
+files sit behind the three slots is enough; the list slides by changing
+them and redrawing the panels.
+
+Off: `--save_library=false` (the game's own three slots).
 
 ## Up to four players
 

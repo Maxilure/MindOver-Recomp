@@ -285,3 +285,21 @@ registers = ["f30"]
 address = 0x824819F0
 name = "CrashMomAudioFrame"
 registers = ["r4"]
+
+# SAVE NAMES UP TO 16 CHARACTERS IN THE GAME'S NAME SCREEN (src/saves/
+# save_library.cpp, findings/24 section 6). The name entry screen's "type the
+# selected key" (CNameEntryScreenAction, sub_820D6618) stops at 9:
+#   0x820D6634  bl     0x82375938       ; r3 = wcslen(name buffer 0x825A06F8)
+#   0x820D663C  cmpwi  cr6,r11,9        ; (r11 = r3)
+#   0x820D6640  bge    cr6,0x820d66a4   ; full -> the error sound
+# The hook runs right before the bge and returns true while the name is
+# shorter than our 16 (the rename box's limit): the jump then skips the bge
+# and the character is added. 16 still fits beside a save's picture on the
+# Load Game screen; New Game's copy of the name (ResetSaveFileHeader,
+# sub_82259408) keeps 32 characters.
+# Found 2026-10-03 by disassembly (the function's only length check).
+[[entrypoint.midasm_hook]]
+address = 0x820D6640
+name = "CrashMomNameEntryRoom"
+registers = ["r11"]
+jump_address_on_true = 0x820D6644

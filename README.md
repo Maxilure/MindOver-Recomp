@@ -20,8 +20,10 @@ planned.
 Beyond what a PC port is expected to do (the [status](#status) below), the
 port adds things the Xbox 360 game never had:
 
-* **More saves, with names** (planned, research done): as many saves as you
-  like in the game's own Load Game screen, renamed and deleted from there
+* **More saves, with names** (in testing): as many saves as you like, in
+  one scrolling list in the game's own Load / Save Game screen (most
+  recently played first), renamed with the game's own name screen (X) and
+  deleted (Y) from there
 * **Up to four players** (planned): the original's co-op is for two
 
 Details: **[Enhancements](docs/05-enhancements.md)**.
@@ -121,6 +123,7 @@ crash_mom_manifest.toml    recompiler config: every analysis fix and hook, comme
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       OUR native code: app setup, hooks, fixes, debug tools
   input/                   keyboard + mouse as a virtual controller, the Controls menu (F6)
+  saves/                   the save library: a list of any number of saves, rename / delete
   pddi/                    interception of the game's renderer calls + the frame tracer
   native/                  our Vulkan renderer (in development)
 tools/                     disc extraction, xex inspection, disassembler, play/debug scripts

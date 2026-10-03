@@ -19,7 +19,8 @@
 //   OnShutdown          cleanup
 //
 // Built-in debug overlays: F3 = perf/threads, ` (backtick) = log console,
-// F4 = settings (CVars). Ours: F6 = Controls menu (keyboard + mouse keys,
+// F4 = settings (CVars). Ours: F2 / Delete = rename / delete a save on the Load /
+// Save Game screen (saves/save_library.h), F6 = Controls menu (keyboard + mouse keys,
 // input/controls_menu.h), F8 = the native renderer's picture in a second
 // window (native/native_window.h), F9 = emulated <-> native picture,
 // F10 = photo (native/ab_capture.h).
@@ -50,6 +51,7 @@
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
+#include "saves/save_library.h"
 #include "native/native_window.h"
 
 class CrashMomApp : public rex::ReXApp {
@@ -158,6 +160,14 @@ class CrashMomApp : public rex::ReXApp {
     rex::ui::RegisterBind("bind_controls_menu", "F6",
                           "Open / close the Controls menu (keyboard and mouse keys)",
                           [] { controls_menu::Toggle(); });
+    // F2 / Delete on the Load / Save Game screen: rename / delete the save
+    // under the cursor (saves/save_library.h; X / Y do the same).
+    rex::ui::RegisterBind("bind_save_rename", "F2",
+                          "On the Load / Save Game screen: rename the save under the cursor",
+                          [] { save_library::RequestDialog(false); });
+    rex::ui::RegisterBind("bind_save_delete", "Delete",
+                          "On the Load / Save Game screen: delete the save under the cursor",
+                          [] { save_library::RequestDialog(true); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).
@@ -212,6 +222,8 @@ class CrashMomApp : public rex::ReXApp {
     overlay_banner::Create(drawer);
     // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.
     controls_menu::Create(drawer);
+    // The save library's rename / delete box (saves/save_library.h).
+    save_library::Create(drawer);
   }
 
   // Other hooks we can override (uncomment + implement as needed):
