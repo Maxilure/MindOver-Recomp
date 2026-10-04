@@ -9,6 +9,8 @@
 #include <map>
 #include <mutex>
 
+#include <rex/cvar.h>
+#include <rex/logging.h>
 #include <rex/ppc/func.h>
 
 #include "data_patcher.h"
@@ -183,6 +185,10 @@ void SetFrontEndDecision(int32_t number, Decision decision) {
 
 }  // namespace fight_tree
 
+REXCVAR_DEFINE_BOOL(debug_frontend_trace, false, "CrashMoM",
+                    "Debug: log every exit the front end's screen tree takes (state number -> "
+                    "exit number; names: notes/scratch-tools/fig_tree.py)");
+
 // The front end's decision dispatcher (r4 = the current state's node; its
 // number = s16 at +30, read as the low half of the word at +28): a node
 // with a decision of ours runs it, the others the game's compiled table
@@ -202,8 +208,14 @@ extern "C" REX_FUNC(sub_8211AF40) {
     }
     if (decision) {
       ctx.r3.u64 = uint32_t(decision(ctx, base));
-      return;
+    } else {
+      __imp__sub_8211AF40(ctx, base);
     }
+    // --debug_frontend_trace: one line per exit taken (-1 = stay, not logged).
+    if (REXCVAR_GET(debug_frontend_trace) && int32_t(ctx.r3.u32) >= 0) {
+      REXLOG_INFO("Front end: state {} -> exit {}", number, int32_t(ctx.r3.u32));
+    }
+    return;
   }
   __imp__sub_8211AF40(ctx, base);
 }

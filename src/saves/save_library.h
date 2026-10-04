@@ -79,4 +79,9 @@ void RequestDialog(bool delete_save);
 // Returns true when Done should go on to save (a new save, named).
 bool OnGameRenameFinished(uint8_t* base, bool done);
 
+// --load_save (saves/quick_load.h, game thread): makes save file `number`
+// the pick for slot 0, so the next LoadGame(0) loads it. False when the
+// save library is off (slot 0 is then always "GameSlot 1").
+bool PickForQuickLoad(int number);
+
 }  // namespace save_library

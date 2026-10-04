@@ -41,6 +41,7 @@ set(CRASHMOM_SOURCES
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
     src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete
     src/saves/rename_screen.cpp  # X on a save: a rename screen of its own in the front end (menus + in game)
+    src/saves/quick_load.cpp     # --load_save: start straight into a save (no intros, title, menus)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/data/fight_tree.cpp      # fight trees (.bfig): new nodes, C++ decisions for new front end states
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D

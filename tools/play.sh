@@ -46,6 +46,10 @@
 #                                        (tools/mangohud/: Right Shift + F1 hide,
 #                                        + F2 next layout, + F5 record a log)
 #   tools/play.sh --fps_cap=144          above 60 fps (EXPERIMENTAL; 0 = no cap)
+#   tools/play.sh --load_save=prison     start straight in a save: no movies,
+#                                        title or menus (~20 s to gameplay). By
+#                                        number (7), name or a part of it only
+#                                        one save has, or "last" (src/saves/quick_load.h)
 #   tools/play.sh --ground-trace         record when the physics thinks each
 #                                        character is on the ground, and when
 #                                        the game logic hears "not on ground",

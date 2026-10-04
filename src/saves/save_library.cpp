@@ -33,6 +33,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../overlay_banner.h"
+#include "quick_load.h"
 #include "rename_screen.h"
 #include "save_files.h"
 
@@ -1274,6 +1275,19 @@ bool OnGameRenameFinished(uint8_t* base, bool done) {
   return false;
 }
 
+// --load_save (saves/quick_load.h): save `number` stands picked in slot 0,
+// as if chosen on the list, so the LoadGame(0) that comes next reads it
+// (the LoadGame hook below takes a pick whose slot matches).
+bool PickForQuickLoad(int number) {
+  if (!REXCVAR_GET(save_library)) {
+    return false;
+  }
+  g.picked = true;
+  g.picked_number = number;
+  g.picked_slot = 0;
+  return true;
+}
+
 }  // namespace save_library
 
 // -----------------------------------------------------------------------------
@@ -1622,11 +1636,17 @@ extern "C" REX_FUNC(sub_8211B8E8) {
 // opens the list (159) or says there are no saves (155). For a new game it
 // creates the save instead: slot 1's "available slot" exit (185, whose
 // script saves slot 0) with slot 0 = "Create New Save" = a new file. The
-// list never shows.
+// list never shows. With --load_save the chosen save is loaded instead
+// (saves/quick_load.h).
 extern "C" REX_FUNC(sub_8211BE58) {
   using namespace save_library;
   __imp__sub_8211BE58(ctx, base);
   const int32_t exit = int32_t(ctx.r3.u32);
+  // --load_save: straight into the chosen save instead of the list.
+  if (const int32_t quick = quick_load::OnReadingCard(exit); quick >= 0) {
+    ctx.r3.u64 = uint32_t(quick);
+    return;
+  }
   if (!REXCVAR_GET(save_library) || !g.new_game ||
       (exit != kExitIntoSlotList && exit != kReadingNoSaves)) {
     return;
