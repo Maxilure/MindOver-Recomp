@@ -110,6 +110,10 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
 // screen).
 void RequestPhoto(bool native_shown);
 
+// A capture is between its two frames (the emulated GPU must draw every
+// frame meanwhile: NativeRenderer::UpdateEmulatedFrameRate).
+bool CaptureUnderway();
+
 // Main thread, at every frame end while the EMULATED picture is on screen
 // (AfterPresent doesn't run then): takes a pending photo of the screen, and
 // drops a two-picture photo the switch to the emulated picture interrupted.

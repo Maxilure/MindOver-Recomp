@@ -20,7 +20,10 @@
 #   tools/play.sh --dual                 two windows: emulated picture in the
 #                                        main one, our native renderer's in a
 #                                        second one (= --native_window; F8 in
-#                                        the game opens/closes it any time)
+#                                        the game opens/closes it any time).
+#                                        The emulated window then moves at half
+#                                        rate (--emulated_draw_every=2, ~40%
+#                                        less GPU work; =1 = every frame)
 #   tools/play.sh --trace                for hunting a picture bug: each F10
 #                                        photo also records every renderer call
 #                                        of its frame (2 frames), and the game's

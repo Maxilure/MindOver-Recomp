@@ -1,0 +1,128 @@
+Feature: GPU flag "draw_every_nth_frame" (the emulated GPU draws only every Nth frame)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk),
+            AFTER 0004 and 0009 (its draw check extends 0009's skip_draws line)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0013-draw-every-nth-frame.patch
+Status:     local patch (a feature for our port, not a bug fix)
+
+WHY
+  Dual mode runs both renderers: the emulated picture in the main window,
+  our native one in a second window. Both draw every frame on one host GPU.
+  Measured 2026-10-03 (Ice Prison save, standing still, 60 fps cap): GPU
+  94% busy for the emulated picture alone, 97% in dual mode. 60 fps held
+  there, but busier scenes (fights, effects) dropped frames, which made
+  side-by-side testing painful. Lowering the emulated GPU's quality would
+  change the picture we compare against, so instead it draws fewer frames,
+  each one complete and exact.
+
+WHAT
+  A hot-reloadable int flag draw_every_nth_frame (default 1 = unchanged,
+  range 1-4) in the generic command processor. Frames are counted at the
+  swap packet (frame_cycle_); frame k is drawn when k % N == 0. In the
+  other frames every draw packet (resolves included) is parsed and skipped,
+  like 0009's skip_draws, and the Vulkan IssueSwap ends the frame WITHOUT
+  presenting it: the game alternates two frontbuffers, so the skipped
+  frame's one still holds an older picture, and showing it would make the
+  window jump back in time. The window keeps the last drawn frame.
+  The flag is read at every draw (CurrentFrameSkipped), not latched per
+  frame: the port switches it to 1 at the moment an A/B photo starts (in
+  the middle of a frame), and the rest of that frame plus the captured
+  next one must be drawn.
+  The D3D12 backend is not changed (draws are skipped there too, but its
+  swap still presents: not used by the port on Linux).
+
+HOW WE MEASURED IT (2026-10-03)
+  Same save and spot, dual mode, 60 fps cap: N = 1 GPU 96-97% busy,
+  N = 2 GPU 60% busy, 60.0 fps in both. Same-frame A/B captures
+  (--debug_native_ab_ms, three of them) still pair up: 0.53/255 as before.
+  Set by the game side (src/native/native_renderer.cpp,
+  UpdateEmulatedFrameRate; flag --emulated_draw_every, default 2).
+
+--- a/include/rex/graphics/command_processor.h
++++ b/include/rex/graphics/command_processor.h
+@@ -166,6 +166,11 @@
+   virtual void OnGammaRampPWLValueWritten() {}
+ 
+   virtual void MakeCoherent();
++  // Mind over Recomp (patch 0013): true while the current frame's draws are
++  // skipped because of the GPU flag draw_every_nth_frame. Read per draw (and
++  // at the swap), so a change of the flag takes effect at once.
++  bool CurrentFrameSkipped() const;
++
+   virtual void PrepareForWait();
+   virtual void ReturnFromWait();
+ 
+@@ -244,6 +249,9 @@
+   std::vector<uint32_t> me_bin_;
+ 
+   uint32_t counter_ = 0;
++  // Mind over Recomp (patch 0013): frames (swaps) seen, for
++  // draw_every_nth_frame: frame k is drawn when k % N == 0.
++  uint64_t frame_cycle_ = 0;
+ 
+   uint32_t primary_buffer_ptr_ = 0;
+   uint32_t primary_buffer_size_ = 0;
+--- a/src/graphics/command_processor.cpp
++++ b/src/graphics/command_processor.cpp
+@@ -55,6 +55,19 @@
+                     "For host renderers that draw the game themselves")
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ 
++// Mind over Recomp (patch 0013): next to a host renderer that draws the game
++// too (the port's dual mode), the emulated GPU can draw only every Nth frame:
++// the frames it draws are complete and exact, the ones in between are parsed
++// but neither drawn nor presented (the window keeps the last picture). The
++// emulated picture then moves at 1/N of the game's frame rate for 1/N of the
++// host GPU work. Read at every draw, so the port sets it back to 1 for the
++// frames an A/B photo captures.
++REXCVAR_DEFINE_INT32(draw_every_nth_frame, 1, "GPU",
++                     "Draw (and present) only every Nth frame: 1 = every frame, 2 = every "
++                     "second one (half the GPU work, the picture moves at half rate)")
++    .range(1, 4)
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
++
+ REXCVAR_DEFINE_STRING(readback_resolve, "none", "GPU",
+                       "Controls CPU readback of render-to-texture resolve results.\n"
+                       " none: Disable readback (default)\n"
+@@ -971,9 +984,15 @@
+   IssueSwap(frontbuffer_ptr, frontbuffer_width, frontbuffer_height);
+ 
+   ++counter_;
++  ++frame_cycle_;  // patch 0013: the next frame
+   return true;
+ }
+ 
++bool CommandProcessor::CurrentFrameSkipped() const {
++  const int32_t every = REXCVAR_GET(draw_every_nth_frame);
++  return every > 1 && (frame_cycle_ % uint64_t(every)) != 0;
++}
++
+ bool CommandProcessor::ExecutePacketType3_INDIRECT_BUFFER(memory::RingBuffer* reader,
+                                                           uint32_t packet, uint32_t count) {
+   // indirect buffer dispatch
+@@ -1388,7 +1407,7 @@
+ 
+       bool major_mode_explicit =
+           xenos::IsMajorModeExplicit(vgt_draw_initiator.major_mode, vgt_draw_initiator.prim_type);
+-      if (REXCVAR_GET(skip_draws)) {
++      if (REXCVAR_GET(skip_draws) || CurrentFrameSkipped()) {
+         // Nothing drawn, nothing resolved; the packet itself is consumed.
+         return true;
+       }
+--- a/src/graphics/vulkan/command_processor.cpp
++++ b/src/graphics/vulkan/command_processor.cpp
+@@ -2297,6 +2297,14 @@
+     return;
+   }
+ 
++  // A frame whose draws draw_every_nth_frame skipped (patch 0013): its
++  // frontbuffer holds an older picture (the game alternates two), so it isn't
++  // presented either; the window keeps the last drawn frame.
++  if (CurrentFrameSkipped()) {
++    EndSubmission(true);
++    return;
++  }
++
+   bool skip_present_due_async_placeholder = REXCVAR_GET(async_shader_compilation) &&
+                                             REXCVAR_GET(vulkan_async_skip_incomplete_frames) &&
+                                             frame_used_async_placeholder_pipeline_;

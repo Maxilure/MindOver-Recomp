@@ -109,6 +109,20 @@ void RestoreReadback() {
 // capture is wanted (Active()), so the registry lookup costs nothing in play.
 bool EmulatedGpuIdle() { return rex::cvar::Query<bool>("skip_draws"); }
 
+// --emulated_draw_every (native_renderer.cpp): the emulated GPU may skip
+// every other frame, and a skipped frame never lands its marker. A capture
+// starts mid-frame (at the frontbuffer resolve, before the GPU gets there),
+// so it switches the GPU back to every frame right now: the SDK reads the
+// flag at every draw, so the rest of this frame and the captured next one
+// are drawn. NativeRenderer::UpdateEmulatedFrameRate puts it back once
+// CaptureUnderway() is false. (The frame the switch lands in may show its
+// first half stale in the emulated window: one frame, never in a photo.)
+void HoldEmulatedEveryFrame() {
+  if (rex::cvar::Query<int32_t>("draw_every_nth_frame") > 1) {
+    rex::cvar::SetFlagByName("draw_every_nth_frame", "1");
+  }
+}
+
 // photos/photo_<date>_<time>_<which>.png (local time, with milliseconds so
 // two quick presses don't collide), creating the folder if needed.
 std::filesystem::path PhotoPath(const std::string& stamp, const char* which) {
@@ -293,6 +307,7 @@ void BeforeFrontbufferResolve(uint8_t* base, const GuestTexture& frontbuffer) {
           SwitchReadbackOn();
         }
         // This frame's frontbuffer gets a marker; the NEXT frame is captured.
+        HoldEmulatedEveryFrame();
         WriteMarker(base, region);
         g.previous = region;
         g.stage = Stage::kMarkedPrevious;
@@ -571,6 +586,8 @@ void AfterPresent(rex::ui::Presenter* presenter, const TextureCache& textures,
   WritePpm(dir / name, rgba.data(), width, height, size_t(width) * 4);
   REXLOG_INFO("ab_capture: saved frame at {} ms (native + emulated)", g.target_ms);
 }
+
+bool CaptureUnderway() { return g.stage != Stage::kIdle; }
 
 void RequestPhoto(bool native_shown) {
   g_photo_request.store(native_shown ? kPhotoPair : kPhotoScreen);

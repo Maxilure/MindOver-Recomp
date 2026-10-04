@@ -158,6 +158,11 @@ class NativeRenderer {
   // on no screen, on again when it is (SDK patch 0009). No-op without the flag.
   void UpdateEmulatedDrawing();
 
+  // --emulated_draw_every: the emulated GPU draws every Nth frame while our
+  // picture is drawn too (native_drawn), every frame otherwise or while a
+  // photo is taken (SDK patch 0013). Called every frame.
+  void UpdateEmulatedFrameRate(bool native_drawn);
+
   // --emulated_only: F9 and F8 are locked on the emulated picture.
   bool emulated_only() const;
 

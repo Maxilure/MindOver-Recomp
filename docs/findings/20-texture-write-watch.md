@@ -118,6 +118,24 @@ mode need the emulated picture. *Later (2026-09-30):* done as
 only our picture is shown, and GPU use in the same area dropped from ~97%
 to 15-20%.
 
+*Later (2026-10-03):* dual mode (both pictures side by side) still pays for
+both renderers. In a quiet spot of the Ice Prison at 60 fps the GPU was 94%
+busy for the emulated picture alone and 97% in dual mode: 60 fps held there,
+busier scenes dropped frames. Cheapening the emulation's quality would change
+the picture we compare against, so the emulated GPU now draws only **every
+second frame** while our renderer draws too (`--emulated_draw_every=2`, the
+default; SDK patch 0013, GPU flag `draw_every_nth_frame`). Each frame it draws
+is complete and exact; the frames in between are neither drawn nor presented
+(the game alternates two frontbuffers, so showing a skipped frame would jump
+back in time). The emulated window moves at half the game's frame rate. Same
+spot, dual mode: GPU 97% -> 60%, 60.0 fps. A/B photos switch it back to every
+frame while they run, so a pair is still one frame from both renderers
+(0.53/255, unchanged). The emulated picture on its own still draws every frame.
+Ruled out along the way: occlusion queries. The SDK drains the whole GPU for
+each one (a cost worth fixing for other games), but this game issued none in
+that scene. Switching to the FBO render-target path was slower, and texture
+filtering made no measurable difference.
+
 ## 6. The bump material, seen at last: the TK blocks
 
 `xnBumpMegaShader` was written for the native renderer on 2026-09-27

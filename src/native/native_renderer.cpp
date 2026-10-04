@@ -53,6 +53,23 @@ REXCVAR_DEFINE_BOOL(native_only, false, "CrashMoM",
 REXCVAR_DEFINE_BOOL(emulated_only, false, "CrashMoM",
                     "Only the emulated GPU's picture: F9 / F8 locked, the native renderer never "
                     "draws. The baseline to compare --native_only with");
+// EMULATED EVERY NTH FRAME (2026-10-03): with both renderers drawing (dual
+// mode, or our picture in the main window without --native_only), the host
+// GPU was ~97% busy at 60 fps in a quiet spot of the Ice Prison and busier
+// scenes dropped frames, which made dual-mode testing painful. The emulated
+// GPU now draws (and presents) only every Nth frame (SDK patch 0013, GPU flag
+// draw_every_nth_frame): each frame it does draw is complete and exactly the
+// original look, its window just moves at 1/N of the game's frame rate. The
+// game and our picture are untouched. Photos (F10) and A/B captures put it
+// back to every frame while they run (ab_capture::HoldEmulatedEveryFrame),
+// so a pair is always the same frame from both renderers. 1 = old behaviour.
+// The emulated picture alone (no native picture anywhere) always draws
+// every frame.
+REXCVAR_DEFINE_INT32(emulated_draw_every, 2, "CrashMoM",
+                     "While our renderer draws too (dual mode, or the native picture): the "
+                     "emulated GPU draws every Nth frame (1 = every frame, 2 = half the work)")
+    .range(1, 4)
+    .lifecycle(rex::cvar::Lifecycle::kHotReload);
 // How we found the 25% darkening of the hub (docs/findings/10): with the
 // emulated GPU's own resolves (the scene it rendered) fed into our later
 // passes, our picture matched the emulated one exactly, which pinned the
@@ -1336,6 +1353,31 @@ void NativeRenderer::UpdateEmulatedDrawing() {
               skip ? "OFF: only our renderer draws" : "ON");
 }
 
+void NativeRenderer::UpdateEmulatedFrameRate(bool native_drawn) {
+  // Every frame unless our renderer draws too (see emulated_draw_every), and
+  // always while a photo / A/B capture is under way.
+  int32_t every = native_drawn ? REXCVAR_GET(emulated_draw_every) : 1;
+  if (native::ab_capture::CaptureUnderway()) {
+    every = 1;
+  }
+  // A GPU-plugin flag (SDK patch 0013), set by name like skip_draws; only
+  // when it changes (setting a flag isn't free, this runs every frame).
+  if (rex::cvar::Query<int32_t>("draw_every_nth_frame") == every) {
+    return;
+  }
+  if (!rex::cvar::SetFlagByName("draw_every_nth_frame", std::to_string(every))) {
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      REXLOG_WARN("NativeRenderer: --emulated_draw_every needs SDK patch 0013 (GPU flag "
+                  "draw_every_nth_frame)");
+    }
+    return;
+  }
+  REXLOG_INFO("NativeRenderer: the emulated GPU draws 1 frame in {} (--emulated_draw_every)",
+              every);
+}
+
 void NativeRenderer::SetWindowPresenter(rex::ui::Presenter* presenter) {
   // The native window's presenter comes from the same Vulkan provider as the
   // main one (same device), so it's a VulkanPresenter too.
@@ -1366,6 +1408,8 @@ void NativeRenderer::OnFrameEnd() {
   if (!target && show_native()) {
     target = presenter_;
   }
+  // How often the emulated GPU draws from the next frame on.
+  UpdateEmulatedFrameRate(target != nullptr);
   // Take what the game just drew; record the next frame only while our
   // picture is on screen somewhere.
   native::recorder::TakeFrame(frame_, target != nullptr);
