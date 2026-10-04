@@ -55,6 +55,7 @@
 #include "saves/rename_screen.h"
 #include "saves/save_library.h"
 #include "native/native_window.h"
+#include "players/more_players.h"
 
 class CrashMomApp : public rex::ReXApp {
  public:
@@ -186,6 +187,9 @@ class CrashMomApp : public rex::ReXApp {
 
   // Last hook before the game's main thread starts running.
   void OnPreLaunchModule() override {
+    // Room for four players in the game's co-op tables (players/more_players.h):
+    // the tables move before any game code runs.
+    more_players::Install();
     // Debug fake controller, only with --debug_input_script and/or
     // --debug_input_fifo (see debug_input_script.h). Created here so its
     // timeline starts at launch. ReXApp's own code casts input_system() the

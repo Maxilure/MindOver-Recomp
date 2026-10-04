@@ -35,6 +35,16 @@
 //    the keyboard driver and the player's bindings (input/keyboard_mouse.h),
 //    exactly as if typed (names as in controls.toml: Space, LMB, WheelUp...):
 //      echo "key Q 1000" > /path/to/fifo     (hold Spin for a second)
+//
+// 3) MORE FAKE CONTROLLERS (local multiplayer tests): --debug_fake_pads=N
+//    (1-3) adds N more fake controllers, "Debug fake controller 2..N+1", which
+//    play as players 2..N+1 by default (input/players.h; the Players tab can
+//    move them like any controller). A "p<N>." prefix sends a command to fake
+//    controller N instead of the first one (p1 = the first, the default),
+//    in the timeline and the FIFO alike:
+//      --debug_input_script="30000:p2.start,32000:p3.lsup+a:1000"
+//      echo "p3.lsup 2000" > /path/to/fifo
+//    Why: testing 3-4 players needs 3-4 controllers; nobody has to own them.
 // =============================================================================
 
 #pragma once
@@ -53,6 +63,7 @@
 
 REXCVAR_DECLARE(std::string, debug_input_script);
 REXCVAR_DECLARE(std::string, debug_input_fifo);
+REXCVAR_DECLARE(int32_t, debug_fake_pads);
 
 class ScriptedInputDriver final : public rex::input::InputDriver {
  public:
@@ -81,19 +92,24 @@ class ScriptedInputDriver final : public rex::input::InputDriver {
     int64_t start_ms;
     int64_t hold_ms;
     Inputs inputs;
+    int pad;  // 0 = the first fake controller, 1-3 = --debug_fake_pads' extra ones
   };
   static constexpr int64_t kDefaultHoldMs = 150;
+  static constexpr int kMaxPads = 4;  // the first + up to 3 extra
 
-  explicit ScriptedInputDriver(std::vector<Tap> taps);
+  ScriptedInputDriver(std::vector<Tap> taps, int pads);
+  // Which of our pads a device id is (-1: not ours).
+  int PadOf(rex::input::DeviceId id) const;
   int64_t NowMs() const;
   void FifoThread(std::string path);
 
   const std::chrono::steady_clock::time_point start_;
 
   std::mutex mutex_;       // guards everything below
+  const int pads_;          // how many fake controllers (1 + --debug_fake_pads)
   std::vector<Tap> taps_;  // timeline taps + live taps (appended by the FIFO)
-  Inputs last_inputs_ = 0;
-  uint32_t packet_number_ = 1;  // must change whenever the state changes
+  Inputs last_inputs_[kMaxPads] = {};
+  uint32_t packet_number_[kMaxPads] = {1, 1, 1, 1};  // must change whenever the state changes
 
   std::thread fifo_thread_;
   std::atomic<bool> stop_{false};

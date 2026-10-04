@@ -89,6 +89,8 @@ void PlayerAssignment::UpdateDevices(const std::vector<DeviceInfo>& devices) {
     Known d{info.id, "", info.name, info.synthetic, info.id == keyboard_id_, info.ordinal};
     if (d.keyboard) {
       d.key = "keyboard";
+    } else if (info.guid.rfind("debug-pad-", 0) == 0) {
+      d.key = info.guid;  // --debug_fake_pads' extra fake controllers (debug_input_script.h)
     } else if (!d.synthetic) {
       const int n = ++seen_guids[info.guid];
       d.key = "pad:" + info.guid + (n > 1 ? ":" + std::to_string(n) : "");
@@ -106,11 +108,15 @@ void PlayerAssignment::UpdateDevices(const std::vector<DeviceInfo>& devices) {
 }
 
 int PlayerAssignment::PlayerOf(const Known& d) const {
-  if (d.synthetic && !d.keyboard) {
+  const bool fake_pad = d.key.rfind("debug-pad-", 0) == 0;
+  if (d.synthetic && !d.keyboard && !fake_pad) {
     return 0;  // the SDK's "None" stand-in, the debug script: player 1
   }
   auto it = choices_.find(d.key);
   int choice = it != choices_.end() ? it->second : kPlayerAuto;
+  if (fake_pad && choice == kPlayerAuto) {
+    return d.key.back() - '1';  // "debug-pad-3" = player 3
+  }
   if (choice == kPlayerAuto) {
     // Keyboard: player 1. Controllers: the SDK's rule, Nth connected = player N.
     return d.keyboard ? 0 : (d.ordinal < rex::input::kMaxGuestUsers ? int(d.ordinal) : kPlayerOff);

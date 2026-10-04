@@ -25,7 +25,9 @@ port adds things the Xbox 360 game never had:
   recently played first), named when created and renamed with the game's
   own on-screen keyboard (in the menus and over the level in game), deleted
   (Y) from there
-* **Up to four players** (planned): the original's co-op is for two
+* **Up to four players** (in progress): the original's co-op is for two;
+  four players can already join, run around together or ride along as
+  masks (up to three on one Crash)
 
 Details: **[Enhancements](docs/05-enhancements.md)**.
 

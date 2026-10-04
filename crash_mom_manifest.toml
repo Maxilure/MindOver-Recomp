@@ -303,3 +303,1061 @@ address = 0x820D6640
 name = "CrashMomNameEntryRoom"
 registers = ["r11"]
 jump_address_on_true = 0x820D6644
+
+# =============================================================================
+# FOUR PLAYERS' ROOM IN THE CO-OP TABLES (src/players/more_players.cpp,
+# docs/findings/26). The game keeps each player's co-op state in global
+# tables with TWO entries. The state table (0x8259B11C, 37 code sites) and
+# the starting sub-state table (0x824F3C38, 24 sites) GROW IN PLACE to four
+# entries; what sat right after them moves to a block of ours, and so does
+# the starting-state table (0x824F3C30, 5 sites). Tiny getters/setters are
+# rewritten in C++; every other reference gets one of the hooks below, which
+# point the register holding the old address at the new place (each hook runs
+# right BEFORE its instruction). Found 2026-10-04: every lis/lo reference to
+# the area listed by a scratch scanner (lis + addi/lwz/stw/... with the same
+# register, function and owning class from the RTTI vtables; EVERY access through
+# a lis base until the register is overwritten), each one read in
+# xexdis; no stored pointers to these areas exist in the image. Always on:
+# nothing changes for players 1-2.
+# =============================================================================
+
+# the per-player flag bytes (were 0x8259B124)
+#   sub_8210E260 (CControllerDigBehaviour): addi r8 = &flags at 0x8210E2D8, stbx at 0x8210E2EC
+[[entrypoint.midasm_hook]]
+address = 0x8210E2DC
+name = "MorePlayersFlagsBase"
+registers = ["r8"]
+#   sub_8210E310 (CControllerDigBehaviour): addi r7 = &flags at 0x8210E348
+[[entrypoint.midasm_hook]]
+address = 0x8210E34C
+name = "MorePlayersFlagsBase"
+registers = ["r7"]
+#   sub_821B9D48: addi r10 = &flags at 0x821B9E10, lbzx right here
+[[entrypoint.midasm_hook]]
+address = 0x821B9E14
+name = "MorePlayersFlagsBase"
+registers = ["r10"]
+#   sub_822225D8 (TurretProp): addi r10 = &flags at 0x82222714, lbzx right here
+[[entrypoint.midasm_hook]]
+address = 0x82222718
+name = "MorePlayersFlagsBase"
+registers = ["r10"]
+#   sub_82234AE0 (co-op): addi r10 = &flags at 0x82234AF4, lbzx right here
+[[entrypoint.midasm_hook]]
+address = 0x82234AF8
+name = "MorePlayersFlagsBase"
+registers = ["r10"]
+#   sub_82235258 (co-op): addi r5 = &flags at 0x822352F4, lbzx right here
+[[entrypoint.midasm_hook]]
+address = 0x822352F8
+name = "MorePlayersFlagsBase"
+registers = ["r5"]
+
+# the pointer that was at 0x8259B128: its one store
+#   sub_82235DC8: addi r31 = &ptr (0x82235E24), stw r30,-20184(r11) right here; r11 is reloaded by mr r11,r3 at 0x82235E30
+[[entrypoint.midasm_hook]]
+address = 0x82235E28
+name = "MorePlayersPointer128Store"
+registers = ["r11", "r31"]
+
+# the pointer that was at 0x8259B128: its loads (r11 is the lis base, dead after: a call follows)
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x8223624C
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x822362F4
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x822363CC
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x822364BC
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x82236594
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x8223663C
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+#   lwz rD,-20184(r11) in a co-op script helper
+[[entrypoint.midasm_hook]]
+address = 0x822366E4
+name = "MorePlayersPointer128Load"
+registers = ["r11"]
+
+# byte 0x8259B127: its one store (sub_82270608; the reader sub_82270678 is rewritten in C++)
+#   stb r11,-20185(r10); the function returns right after
+[[entrypoint.midasm_hook]]
+address = 0x8227065C
+name = "MorePlayersByte127Store"
+registers = ["r10"]
+
+# the starting-state array (was 0x824F3C30): right after its address is computed
+#   sub_82234C80: addi r8 at 0x82234CB4, stwx right here
+[[entrypoint.midasm_hook]]
+address = 0x82234CB8
+name = "MorePlayersStartStateBase"
+registers = ["r8"]
+#   sub_82234C80: addi r8 at 0x82234CC8, stwx right here
+[[entrypoint.midasm_hook]]
+address = 0x82234CCC
+name = "MorePlayersStartStateBase"
+registers = ["r8"]
+#   sub_82235C30: addi r9 at 0x82235C48, lwzx at 0x82235C50
+[[entrypoint.midasm_hook]]
+address = 0x82235C4C
+name = "MorePlayersStartStateBase"
+registers = ["r9"]
+
+# the float that was at 0x824F3C44 (sub-state[3] now): its 2 users, base register
+# pointed at our block before the first access (r30 serves the lfs AND the stfs at
+# 0x821AD9B4, and nothing else in the function; restored from the stack at exit).
+# A first version treated it as a constant: the first scan missed the stfs (it
+# stopped at a lis base's first use) -> Crash lay on the ground, respawning.
+#   sub_821AD970: lfs f0,15428(r30) right here, stfs f0,15428(r30) at 0x821AD9B4
+[[entrypoint.midasm_hook]]
+address = 0x821AD994
+name = "MorePlayersFloatBase"
+registers = ["r30"]
+#   sub_821AE1A0: lfs f13,15428(r9) right here
+[[entrypoint.midasm_hook]]
+address = 0x821AE1D4
+name = "MorePlayersFloatBase"
+registers = ["r9"]
+
+# players 3-4's per-player lists in the spawn (sub_8229C6F8): lwzx count, list base + p*1028
+#   list A (0x825A6280): lwzx r6,r7,r11 right here; r11 + 4 + r10 later = the items
+[[entrypoint.midasm_hook]]
+address = 0x8229C798
+name = "MorePlayersListA"
+registers = ["r7", "r11"]
+
+# (same, list B)
+#   list B (0x825A6A88): lwzx r9,r10,r11 right here
+[[entrypoint.midasm_hook]]
+address = 0x8229CA80
+name = "MorePlayersListB"
+registers = ["r10", "r11"]
+
+# =============================================================================
+# THE GAME OBJECT'S PLAYER CHARACTERS FOR PLAYERS 3-4 (src/players/more_players.cpp,
+# docs/findings/26 section 10). The game object (singleton 0x825B0008, returned by
+# sub_82270608) keeps the players' characters at +16 / +20; code that looks one up
+# by player number checks "player < 2" first:
+#     cmpwi cr6,rP,2 ; bge cr6,<no character> ; addi r11,rP,4 ; rlwinm r10,r11,2 ;
+#     lwzx rD,r10,r3            (r3 = the game object, r10 = (p + 4) * 4)
+# Players 3-4's characters live in our block instead (the next words of the object
+# are a second per-player list). Per site, two hooks:
+#   MorePlayersActorGuard right before the bge: returns true (= jump to the next
+#     instruction, skipping the bge) for players 1-2 as before, and for players 3-4
+#     once they JOINED (co-op state not 0): the original never shows anyone a
+#     player 3; when every guard let a not-joined player 3 through, player 2's mask
+#     flew to player 3's hidden Crash at the spawn point and stayed there (tested);
+#   MorePlayersActorGuardAlways (the join's own 2 lookups in the front end, the
+#     writer below, and Crash's constructor sub_821AC378 at 0x821AC490, which numbers
+#     a new Crash as the FIRST player without a character yet: with the joined-only
+#     guard player 4's Crash stopped at player 3's number, player 4's slot stayed
+#     empty and its join sent a message to a null character, a fault loop; tested):
+#     every player of --local_players, joined or not;
+#   MorePlayersActorRead right after the lwzx: players 3-4 get our entry.
+# Found 2026-10-04: every "addi rX,rP,4" within 24 instructions after a call to
+# sub_82270608 whose lwzx uses (rX * 4, r3) (scratch actor_sites.py), 30 sites, all
+# of exactly this shape; the read hook's instruction is never the guard's target.
+# =============================================================================
+# sub_820C0EF0
+[[entrypoint.midasm_hook]]
+address = 0x820C105C
+name = "MorePlayersActorGuard"
+registers = ["r29"]
+jump_address_on_true = 0x820C1060
+[[entrypoint.midasm_hook]]
+address = 0x820C106C
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_820CA548
+[[entrypoint.midasm_hook]]
+address = 0x820CA850
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x820CA854
+[[entrypoint.midasm_hook]]
+address = 0x820CA860
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# sub_820FC2E0
+[[entrypoint.midasm_hook]]
+address = 0x820FC5AC
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x820FC5B0
+[[entrypoint.midasm_hook]]
+address = 0x820FC5BC
+name = "MorePlayersActorRead"
+registers = ["r10", "r4"]
+# sub_82109770
+[[entrypoint.midasm_hook]]
+address = 0x821097EC
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x821097F0
+[[entrypoint.midasm_hook]]
+address = 0x821097FC
+name = "MorePlayersActorRead"
+registers = ["r10", "r9"]
+# sub_82123880
+[[entrypoint.midasm_hook]]
+address = 0x821238B8
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x821238BC
+[[entrypoint.midasm_hook]]
+address = 0x821238C8
+name = "MorePlayersActorRead"
+registers = ["r10", "r29"]
+# sub_821AC378
+[[entrypoint.midasm_hook]]
+address = 0x821AC490
+name = "MorePlayersActorGuardAlways"
+registers = ["r30"]
+jump_address_on_true = 0x821AC494
+[[entrypoint.midasm_hook]]
+address = 0x821AC4A0
+name = "MorePlayersActorRead"
+registers = ["r10", "r9"]
+# sub_821AC768
+[[entrypoint.midasm_hook]]
+address = 0x821AC7C8
+name = "MorePlayersActorGuardAlways"
+registers = ["r30"]
+jump_address_on_true = 0x821AC7CC
+[[entrypoint.midasm_hook]]
+address = 0x821AC7D8
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# sub_821AC768
+[[entrypoint.midasm_hook]]
+address = 0x821AC7FC
+name = "MorePlayersActorGuardAlways"
+registers = ["r30"]
+jump_address_on_true = 0x821AC800
+[[entrypoint.midasm_hook]]
+address = 0x821AC80C
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# sub_82234E60
+[[entrypoint.midasm_hook]]
+address = 0x82234EB0
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x82234EB4
+[[entrypoint.midasm_hook]]
+address = 0x82234EC0
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# sub_82234F40
+[[entrypoint.midasm_hook]]
+address = 0x82234F70
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x82234F74
+[[entrypoint.midasm_hook]]
+address = 0x82234F80
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_822420D8
+[[entrypoint.midasm_hook]]
+address = 0x822420FC
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x82242100
+[[entrypoint.midasm_hook]]
+address = 0x8224210C
+name = "MorePlayersActorRead"
+registers = ["r10", "r30"]
+# sub_82264988
+[[entrypoint.midasm_hook]]
+address = 0x82265114
+name = "MorePlayersActorGuardAlways"
+registers = ["r31"]
+jump_address_on_true = 0x82265118
+[[entrypoint.midasm_hook]]
+address = 0x82265124
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_82264988
+[[entrypoint.midasm_hook]]
+address = 0x82265164
+name = "MorePlayersActorGuardAlways"
+registers = ["r31"]
+jump_address_on_true = 0x82265168
+[[entrypoint.midasm_hook]]
+address = 0x82265174
+name = "MorePlayersActorRead"
+registers = ["r10", "r31"]
+# sub_82266040
+[[entrypoint.midasm_hook]]
+address = 0x82266078
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x8226607C
+[[entrypoint.midasm_hook]]
+address = 0x82266088
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_82268888
+[[entrypoint.midasm_hook]]
+address = 0x822688BC
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x822688C0
+[[entrypoint.midasm_hook]]
+address = 0x822688CC
+name = "MorePlayersActorRead"
+registers = ["r10", "r29"]
+# sub_82268D60
+[[entrypoint.midasm_hook]]
+address = 0x82268D8C
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x82268D90
+[[entrypoint.midasm_hook]]
+address = 0x82268D9C
+name = "MorePlayersActorRead"
+registers = ["r10", "r29"]
+# sub_82269480
+[[entrypoint.midasm_hook]]
+address = 0x82269604
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x82269608
+[[entrypoint.midasm_hook]]
+address = 0x82269614
+name = "MorePlayersActorRead"
+registers = ["r10", "r30"]
+# sub_8226DBE0
+[[entrypoint.midasm_hook]]
+address = 0x8226DC2C
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x8226DC30
+[[entrypoint.midasm_hook]]
+address = 0x8226DC3C
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_82284788
+[[entrypoint.midasm_hook]]
+address = 0x822847B8
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822847BC
+[[entrypoint.midasm_hook]]
+address = 0x822847C8
+name = "MorePlayersActorRead"
+registers = ["r10", "r30"]
+# sub_82297928
+[[entrypoint.midasm_hook]]
+address = 0x82297954
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x82297958
+[[entrypoint.midasm_hook]]
+address = 0x82297964
+name = "MorePlayersActorRead"
+registers = ["r10", "r30"]
+# sub_8229B598
+[[entrypoint.midasm_hook]]
+address = 0x8229B604
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229B608
+[[entrypoint.midasm_hook]]
+address = 0x8229B614
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# sub_8229B9B8
+[[entrypoint.midasm_hook]]
+address = 0x8229B9E8
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229B9EC
+[[entrypoint.midasm_hook]]
+address = 0x8229B9F8
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_822A1340
+[[entrypoint.midasm_hook]]
+address = 0x822A136C
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A1370
+[[entrypoint.midasm_hook]]
+address = 0x822A137C
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_822A2198
+[[entrypoint.midasm_hook]]
+address = 0x822A21C4
+name = "MorePlayersActorGuard"
+registers = ["r30"]
+jump_address_on_true = 0x822A21C8
+[[entrypoint.midasm_hook]]
+address = 0x822A21D4
+name = "MorePlayersActorRead"
+registers = ["r10", "r3"]
+# sub_822A2B48
+[[entrypoint.midasm_hook]]
+address = 0x822A2B74
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A2B78
+[[entrypoint.midasm_hook]]
+address = 0x822A2B84
+name = "MorePlayersActorRead"
+registers = ["r10", "r31"]
+# sub_822A3988
+[[entrypoint.midasm_hook]]
+address = 0x822A39B4
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A39B8
+[[entrypoint.midasm_hook]]
+address = 0x822A39C4
+name = "MorePlayersActorRead"
+registers = ["r10", "r31"]
+# sub_822A4DA8
+[[entrypoint.midasm_hook]]
+address = 0x822A4DCC
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A4DD0
+[[entrypoint.midasm_hook]]
+address = 0x822A4DDC
+name = "MorePlayersActorRead"
+registers = ["r10", "r31"]
+# sub_822A6188
+[[entrypoint.midasm_hook]]
+address = 0x822A622C
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A6230
+[[entrypoint.midasm_hook]]
+address = 0x822A623C
+name = "MorePlayersActorRead"
+registers = ["r10", "r30"]
+# sub_822E76D0
+[[entrypoint.midasm_hook]]
+address = 0x822E7740
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822E7744
+[[entrypoint.midasm_hook]]
+address = 0x822E7750
+name = "MorePlayersActorRead"
+registers = ["r10", "r4"]
+# sub_822E7A70
+[[entrypoint.midasm_hook]]
+address = 0x822E7ACC
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822E7AD0
+[[entrypoint.midasm_hook]]
+address = 0x822E7ADC
+name = "MorePlayersActorRead"
+registers = ["r10", "r11"]
+# The WRITER, sub_821AD9E0 (a player character's setup; found with a gdb watch on
+# +16..+31 during a level load): same guard, then r3 = object + (p + 4) * 4 is the
+# slot handed to the reference-counted store sub_820B1D10 -> players 3-4: ours.
+[[entrypoint.midasm_hook]]
+address = 0x821ADA1C
+name = "MorePlayersActorGuardAlways"
+registers = ["r29"]
+jump_address_on_true = 0x821ADA20
+[[entrypoint.midasm_hook]]
+address = 0x821ADA30
+name = "MorePlayersActorSlot"
+registers = ["r11", "r3"]
+
+# THE JOIN (front end input, sub_82264988, docs/findings/26 section 9): a free
+# controller's START during play joins player 2 if player 2 isn't joined
+# (0x822650E4-0x822650F4 leave the player in r31). Right after: r31 = the first
+# player (2..--local_players) not joined; a controller that already plays as
+# player 3-4 is skipped (true = jump to the loop's next controller, 0x8226521C).
+[[entrypoint.midasm_hook]]
+address = 0x822650F8
+name = "MorePlayersJoinPick"
+registers = ["r18", "r31"]
+jump_address_on_true = 0x8226521C
+
+# DEBUG (--debug_coop_trace, src/players/more_players.cpp): CMaskAttachableBehaviour's update
+# sub_82237778 right after it read the co-op state of its owner's player (r3 = player index,
+# r8 = state, r30 = actor, r31 = this). Only logs; reached only while the mask is attached.
+[[entrypoint.midasm_hook]]
+address = 0x822377EC
+name = "MorePlayersDebugMaskState"
+registers = ["r3", "r8", "r30", "r31"]
+
+# MASKS: WHICH RIDER LEAVES (src/players/more_players.cpp, findings/26 section 12). Crash's
+# message handler sub_821ACAD8 acts on mask messages (+16 = 4 attach / 5 detach, +20 = the
+# host Crash, +24 = the rider): attach puts the rider on this Crash's holder (+260,
+# CMaskAttacherBehaviour) via sub_822392A0, detach (0x821AD898) lets go of the holder's
+# rider WITHOUT saying which one (one rider per holder in the original). With up to three
+# riders the detach must know: the hook before the detach call remembers message +24.
+# Found 2026-10-04 by logging both branches (a third player's leave-mask B detached
+# player 2's... the other way round: player 2's B detached player 3's mask).
+#   attach branch (log only, --debug_coop_trace)
+[[entrypoint.midasm_hook]]
+address = 0x821AD864
+name = "MorePlayersMaskMessage"
+registers = ["r28", "r31"]
+#   detach branch: remembers the leaving rider
+[[entrypoint.midasm_hook]]
+address = 0x821AD890
+name = "MorePlayersMaskMessage"
+registers = ["r28", "r31"]
+
+# A CRASH LEAVING THE LEVEL (sub_821AC768: level end, quit) clears its own slot in the game
+# object's character list: "stwx r28(=0),r10,r3" at 0x821AC814 (r10 = (p + 4) * 4) and
+# releases the character. For players 3-4 the read before it is redirected to our block, the
+# WRITE was not: it zeroed the object's +24 list and released player 3's character while our
+# block still pointed at it -> after a level change or Quit Game + loading a save, a call
+# through the freed object ("Call to invalid or unregistered function at guest address
+# 0x00000040"). Found 2026-10-04: a gdb watch on the list during Quit Game (the clearing came
+# from here) and a scan for indexed WRITES into the list (the read scan had missed them).
+# The function's two guards (0x821AC7C8, 0x821AC7FC above) let every local player through,
+# joined or not (a not-joined player 3 must be cleared too).
+# (MorePlayersActorClearBase sets the BASE register: the store adds the index itself. A first
+# version reused the writer's hook, which sets the full slot address: the zero went 24 bytes
+# past the slot and the freed character stayed in it -> the same fatal error at the next level.)
+[[entrypoint.midasm_hook]]
+address = 0x821AC814
+name = "MorePlayersActorClearBase"
+registers = ["r10", "r3"]
+
+# =============================================================================
+# THE GAME OBJECT'S JACKED TITANS FOR PLAYERS 3-4 (src/players/more_players.cpp,
+# docs/findings/26 section 15). The object's +24 / +28 hold the titan each player
+# rides (0 = on foot; CJackingBehaviour writes them). Same shape as the character
+# list above, with (p + 6) * 4:
+#     cmpwi cr6,rP,2 ; bge cr6,<no titan> ; addi r11,rP,6 ; rlwinm r10,r11,2 ;
+#     lwzx rD,r10,r3
+# Found 2026-10-04: a level change with player 3 or 4 ON FOOT faulted, and
+# sub_822420D8 (its guard opened by the character-list hooks) read player 4's
+# "titan" from the object's +36 = the per-player bytes 01010101. Players 3-4's
+# titans live in our block. Hooks per site:
+#   MorePlayersTitanGuard before the bge: every local player passes (an empty slot
+#     takes the same path as a failed guard at every site: checked by hand);
+#   MorePlayersTitanRead after the lwzx: players 3-4 get our entry.
+# Generated and checked by the scratch scan (13 sites of exactly this shape; no
+# hook instruction is a branch target), plus the writers and one unguarded read.
+# =============================================================================
+# sub_82109770
+[[entrypoint.midasm_hook]]
+address = 0x821097C4
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x821097C8
+[[entrypoint.midasm_hook]]
+address = 0x821097D4
+name = "MorePlayersTitanRead"
+registers = ["r10", "r29"]
+# sub_8214D778
+[[entrypoint.midasm_hook]]
+address = 0x8214D8C8
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x8214D8CC
+[[entrypoint.midasm_hook]]
+address = 0x8214D8D8
+name = "MorePlayersTitanRead"
+registers = ["r10", "r11"]
+# sub_8217D0A0
+[[entrypoint.midasm_hook]]
+address = 0x8217D4E8
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8217D4EC
+[[entrypoint.midasm_hook]]
+address = 0x8217D4F8
+name = "MorePlayersTitanRead"
+registers = ["r10", "r9"]
+# sub_821AC768
+[[entrypoint.midasm_hook]]
+address = 0x821AC840
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x821AC844
+[[entrypoint.midasm_hook]]
+address = 0x821AC850
+name = "MorePlayersTitanRead"
+registers = ["r10", "r11"]
+# sub_821AC888
+[[entrypoint.midasm_hook]]
+address = 0x821AC9D4
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x821AC9D8
+[[entrypoint.midasm_hook]]
+address = 0x821AC9E4
+name = "MorePlayersTitanRead"
+registers = ["r10", "r11"]
+# sub_821ACAD8
+[[entrypoint.midasm_hook]]
+address = 0x821ACE28
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x821ACE2C
+[[entrypoint.midasm_hook]]
+address = 0x821ACE38
+name = "MorePlayersTitanRead"
+registers = ["r10", "r3"]
+# sub_821ACAD8
+[[entrypoint.midasm_hook]]
+address = 0x821ACEB0
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x821ACEB4
+[[entrypoint.midasm_hook]]
+address = 0x821ACEC0
+name = "MorePlayersTitanRead"
+registers = ["r10", "r9"]
+# sub_82268888
+[[entrypoint.midasm_hook]]
+address = 0x822688E8
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x822688EC
+[[entrypoint.midasm_hook]]
+address = 0x822688F8
+name = "MorePlayersTitanRead"
+registers = ["r10", "r26"]
+# sub_82268D60
+[[entrypoint.midasm_hook]]
+address = 0x82268DB8
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x82268DBC
+[[entrypoint.midasm_hook]]
+address = 0x82268DC8
+name = "MorePlayersTitanRead"
+registers = ["r10", "r27"]
+# sub_8226DBE0
+[[entrypoint.midasm_hook]]
+address = 0x8226DC04
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x8226DC08
+[[entrypoint.midasm_hook]]
+address = 0x8226DC14
+name = "MorePlayersTitanRead"
+registers = ["r10", "r3"]
+# sub_82275128
+[[entrypoint.midasm_hook]]
+address = 0x822751A4
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x822751A8
+[[entrypoint.midasm_hook]]
+address = 0x822751B4
+name = "MorePlayersTitanRead"
+registers = ["r10", "r31"]
+# sub_82297928
+[[entrypoint.midasm_hook]]
+address = 0x822979C8
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822979CC
+[[entrypoint.midasm_hook]]
+address = 0x822979D8
+name = "MorePlayersTitanRead"
+registers = ["r10", "r31"]
+# sub_822A6188
+[[entrypoint.midasm_hook]]
+address = 0x822A6254
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A6258
+[[entrypoint.midasm_hook]]
+address = 0x822A6264
+name = "MorePlayersTitanRead"
+registers = ["r10", "r8"]
+# The two writers that CLEAR a slot ("stwx rS,r10,r3": CJackingBehaviour letting go of its
+# titan, sub_8214D778; Crash leaving the level, sub_821AC768): players 3-4's store goes to our
+# block (the hook sets the BASE register, dead after the store; the store adds the index).
+[[entrypoint.midasm_hook]]
+address = 0x8214D8E0
+name = "MorePlayersTitanStoreBase"
+registers = ["r10", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x821AC858
+name = "MorePlayersTitanStoreBase"
+registers = ["r10", "r3"]
+# The writer that SETS a slot (CJackingBehaviour jacking, sub_8214D660): its guard, then
+# "add r3,r11,r3 ; bl sub_820B1D10" (reference-counted store, r3 = the slot): before the call,
+# players 3-4's slot = ours.
+[[entrypoint.midasm_hook]]
+address = 0x8214D6D8
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x8214D6DC
+[[entrypoint.midasm_hook]]
+address = 0x8214D6EC
+name = "MorePlayersTitanSlot"
+registers = ["r11", "r3"]
+# sub_822420D8 (a message to player p's titan, else its character): its guard is the
+# character list's (above), its titan read "lwzx r31,r9,r10" (index r9) has none of its own.
+[[entrypoint.midasm_hook]]
+address = 0x82242138
+name = "MorePlayersTitanRead"
+registers = ["r9", "r31"]
+
+# =============================================================================
+# "FOR EACH PLAYER" LOOPS (src/players/more_players.cpp, docs/findings/26 section 16).
+# Found 2026-10-04 by an audit of every "compare with 2" in functions that touch players
+# (scratch audit.py + loops.py): 20 loops walk the game object's characters (+16) and
+# titans (+24) with a counter rO = 16 + 4p or 24 + 4p, a "player < 2" guard inside, and
+# "cmpwi rO,24|32 ; blt top" at the end. 17 of them now run for every local player:
+#   MorePlayersTitanGuard at each guard (every local player passes),
+#   MorePlayersLoopChar16/Titan16/Char24/Titan24 right after each list read (players 3-4
+#     get our block's entry),
+#   MorePlayersLoopEnd16/24 at the end compare: true = back to the top while players remain.
+# The loops' owners: cutscenes (CMasterCinematicAction / CAmbientActorAction /
+# CMovieScreenAction: a message to every player and titan), CProximityVibrationEmitter-
+# Behaviour (rumble), CUpgradeableBehaviour, CCinematicKillActorAction, the front end,
+# CActionKillJackedActor, CActionSetMIPUnStoreActive, CActionSpawnLauncher (nearest player),
+# CActionUnlockMove (x3), CRequirementJack, CRequirementTriggerVolume ("any / every player
+# inside"), the reticle's ray (players to ignore; its list keeps 4), sub_822F3978 (owner TBD).
+# Generated and checked by scratch gen_loops.py: each read's shape asserted, no hook
+# instruction is a branch target, none collides with an earlier hook. NOT extended (comments).
+# =============================================================================
+# sub_820B3430: player loop 820B3454-820B34B4 (r31 = 24 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x820B3464
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x820B3468
+[[entrypoint.midasm_hook]]
+address = 0x820B3470
+name = "MorePlayersLoopChar24"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x820B3490
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x820B3494
+[[entrypoint.midasm_hook]]
+address = 0x820B3498
+name = "MorePlayersLoopTitan24"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x820B34B0
+name = "MorePlayersLoopEnd24"
+registers = ["r31"]
+jump_address_on_true = 0x820B3454
+# sub_82160DE8: player loop 82160E44-82160EE0 (r30 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82160E60
+name = "MorePlayersTitanGuard"
+registers = ["r28"]
+jump_address_on_true = 0x82160E64
+[[entrypoint.midasm_hook]]
+address = 0x82160E68
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x82160EDC
+name = "MorePlayersLoopEnd16"
+registers = ["r30"]
+jump_address_on_true = 0x82160E44
+# sub_82161B40: NOT extended (reticle registry: writes a 3-entry table)
+# sub_82177BD0: player loop 82177CA8-82177D08 (r31 = 24 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82177CB8
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x82177CBC
+[[entrypoint.midasm_hook]]
+address = 0x82177CC4
+name = "MorePlayersLoopChar24"
+registers = ["r31", "r30"]
+[[entrypoint.midasm_hook]]
+address = 0x82177CDC
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x82177CE0
+[[entrypoint.midasm_hook]]
+address = 0x82177CE4
+name = "MorePlayersLoopTitan24"
+registers = ["r31", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x82177D04
+name = "MorePlayersLoopEnd24"
+registers = ["r31"]
+jump_address_on_true = 0x82177CA8
+# sub_82235D70: NOT extended (character count: 4 stopped the level-start mask setup)
+# sub_82240368: player loop 822403B8-82240460 (r29 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822403C8
+name = "MorePlayersTitanGuard"
+registers = ["r28"]
+jump_address_on_true = 0x822403CC
+[[entrypoint.midasm_hook]]
+address = 0x822403D4
+name = "MorePlayersLoopTitan16"
+registers = ["r29", "r30"]
+[[entrypoint.midasm_hook]]
+address = 0x822403F4
+name = "MorePlayersTitanGuard"
+registers = ["r28"]
+jump_address_on_true = 0x822403F8
+[[entrypoint.midasm_hook]]
+address = 0x822403FC
+name = "MorePlayersLoopChar16"
+registers = ["r29", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x8224045C
+name = "MorePlayersLoopEnd16"
+registers = ["r29"]
+jump_address_on_true = 0x822403B8
+# sub_82242B78: player loop 82242BAC-82242C6C (r30 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82242BE4
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x82242BE8
+[[entrypoint.midasm_hook]]
+address = 0x82242BEC
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x82242C00
+name = "MorePlayersLoopTitan16"
+registers = ["r30", "r10"]
+[[entrypoint.midasm_hook]]
+address = 0x82242C68
+name = "MorePlayersLoopEnd16"
+registers = ["r30"]
+jump_address_on_true = 0x82242BAC
+# sub_82264988: player loop 82264E90-82264F84 (r28 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82264EA0
+name = "MorePlayersTitanGuard"
+registers = ["r27"]
+jump_address_on_true = 0x82264EA4
+[[entrypoint.midasm_hook]]
+address = 0x82264EA8
+name = "MorePlayersLoopChar16"
+registers = ["r28", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x82264F80
+name = "MorePlayersLoopEnd16"
+registers = ["r28"]
+jump_address_on_true = 0x82264E90
+# sub_82295F28: player loop 82295F3C-82295FD4 (r30 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82295F4C
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x82295F50
+[[entrypoint.midasm_hook]]
+address = 0x82295F58
+name = "MorePlayersLoopTitan16"
+registers = ["r30", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x82295F78
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r28"]
+[[entrypoint.midasm_hook]]
+address = 0x82295FD0
+name = "MorePlayersLoopEnd16"
+registers = ["r30"]
+jump_address_on_true = 0x82295F3C
+# sub_82299540: player loop 822995AC-822995E0 (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822995BC
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x822995C0
+[[entrypoint.midasm_hook]]
+address = 0x822995C4
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x822995DC
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x822995AC
+# sub_82299610: player loop 82299678-822996AC (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x82299688
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229968C
+[[entrypoint.midasm_hook]]
+address = 0x82299690
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x822996A8
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x82299678
+# sub_8229C210: player loop 8229C260-8229C310 (r30 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x8229C27C
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x8229C280
+[[entrypoint.midasm_hook]]
+address = 0x8229C284
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x8229C30C
+name = "MorePlayersLoopEnd16"
+registers = ["r30"]
+jump_address_on_true = 0x8229C260
+# sub_8229CB78: NOT extended (save before a level change: per-player 1,028-byte lists)
+# sub_8229F160: player loop 8229F268-8229F298 (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x8229F278
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229F27C
+[[entrypoint.midasm_hook]]
+address = 0x8229F280
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x8229F294
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x8229F268
+# sub_8229F160: player loop 8229F2C0-8229F2F0 (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x8229F2D0
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229F2D4
+[[entrypoint.midasm_hook]]
+address = 0x8229F2D8
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x8229F2EC
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x8229F2C0
+# sub_8229F160: player loop 8229F318-8229F348 (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x8229F328
+name = "MorePlayersTitanGuard"
+registers = ["r30"]
+jump_address_on_true = 0x8229F32C
+[[entrypoint.midasm_hook]]
+address = 0x8229F330
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x8229F344
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x8229F318
+# sub_822A27F0: player loop 822A280C-822A288C (r30 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822A2828
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x822A282C
+[[entrypoint.midasm_hook]]
+address = 0x822A2830
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x822A2888
+name = "MorePlayersLoopEnd16"
+registers = ["r30"]
+jump_address_on_true = 0x822A280C
+# sub_822A6188: player loop 822A62D0-822A6370 (r31 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822A62EC
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x822A62F0
+[[entrypoint.midasm_hook]]
+address = 0x822A62F4
+name = "MorePlayersLoopChar16"
+registers = ["r31", "r30"]
+[[entrypoint.midasm_hook]]
+address = 0x822A630C
+name = "MorePlayersTitanGuard"
+registers = ["r29"]
+jump_address_on_true = 0x822A6310
+[[entrypoint.midasm_hook]]
+address = 0x822A6318
+name = "MorePlayersLoopTitan16"
+registers = ["r31", "r8"]
+[[entrypoint.midasm_hook]]
+address = 0x822A636C
+name = "MorePlayersLoopEnd16"
+registers = ["r31"]
+jump_address_on_true = 0x822A62D0
+# sub_822AC668: player loop 822AC8B0-822AC968 (r30 = 24 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822AC8C8
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822AC8CC
+[[entrypoint.midasm_hook]]
+address = 0x822AC8D4
+name = "MorePlayersLoopChar24"
+registers = ["r30", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822AC91C
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822AC920
+[[entrypoint.midasm_hook]]
+address = 0x822AC924
+name = "MorePlayersLoopTitan24"
+registers = ["r30", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822AC964
+name = "MorePlayersLoopEnd24"
+registers = ["r30"]
+jump_address_on_true = 0x822AC8B0
+# sub_822F3978: player loop 822F39DC-822F3AA8 (r26 = 16 + 4p)
+[[entrypoint.midasm_hook]]
+address = 0x822F3A00
+name = "MorePlayersTitanGuard"
+registers = ["r28"]
+jump_address_on_true = 0x822F3A04
+[[entrypoint.midasm_hook]]
+address = 0x822F3A0C
+name = "MorePlayersLoopTitan16"
+registers = ["r26", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x822F3A28
+name = "MorePlayersTitanGuard"
+registers = ["r28"]
+jump_address_on_true = 0x822F3A2C
+[[entrypoint.midasm_hook]]
+address = 0x822F3A30
+name = "MorePlayersLoopChar16"
+registers = ["r26", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x822F3AA4
+name = "MorePlayersLoopEnd16"
+registers = ["r26"]
+jump_address_on_true = 0x822F39DC

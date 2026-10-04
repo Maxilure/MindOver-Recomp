@@ -21,6 +21,8 @@
 //     (the Nth controller connected = player N), the default.
 //   * Other synthetic devices (the SDK's "None" stand-in that keeps player 1
 //     connected, the debug input script): always player 1.
+//   * --debug_fake_pads' extra fake controllers ("debug-pad-2".."-4",
+//     debug_input_script.h): player 2-4 by default, or the chosen player.
 // Several devices on one player are merged (buttons OR'ed, the bigger stick
 // push wins), as before.
 //

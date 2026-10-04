@@ -15,7 +15,7 @@ Status: ✅ done · 🧪 in testing · 🔧 in progress · 📋 planned
 | Enhancement | Original game | This port | Status |
 |---|---|---|---|
 | [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load / Save Game screen; rename and delete | 🧪 in testing |
-| [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC | 📋 |
+| [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC | 🔧 in progress |
 
 ## More saves, with names
 
@@ -71,14 +71,30 @@ Off: `--save_library=false` (the game's own three slots).
 
 ## Up to four players
 
-📋 Planned.
+🔧 In progress: research done, a first experiment
+([findings/26](findings/26-more-local-players.md)).
 
-The original has drop-in co-op for two: a second player joins from the
-pause menu (Join Game) and leaves again (Drop Out). The goal is four
-players together on one PC, whenever the game can be taught to handle them.
+The original has drop-in co-op for two: a second player presses START to
+join, as the mask floating next to Crash, and leaves again from their pause
+menu (Drop Out). The goal is four players together on one PC.
 
 What's already in place: the Controls menu (**F6**, Players tab) decides
 which device plays as which player, and players 2-4 share player 1's
-profile ([findings/23](findings/23-keyboard-and-mouse.md) section 5). Not
-studied yet: how much of the game is built for exactly two players (who
-can join, the HUD, the camera, the co-op rules).
+profile ([findings/23](findings/23-keyboard-and-mouse.md) section 5).
+
+What's known now: the game keeps each player's state and controller in
+small tables built for exactly two, read in a few dozen places (joining,
+the mask, spawning, the HUD, gameplay). An experiment spawned a third player
+character into a level, drawn and stable, but not yet answering to a
+controller. Since then the co-op tables have room for four players, and
+`--local_players=3` (or 4) gives every level a third (and fourth) player,
+who joins with START like player 2. Three players can already run around
+together on foot ([findings/26](findings/26-more-local-players.md) section
+11). Masks work for more than two: a player turning into a mask rides the
+nearest Crash on foot, and one Crash carries up to three masks (section
+12). Level changes work with four players; masks follow their host when it
+turns into a mask, return to the same player in the next level, and any
+player can turn into a mask while another one already is (section 15). An
+audit opened 17 "for each player" loops (cutscenes, trigger volumes,
+rumble, unlocks) to all four players (section 16). Next: the camera, the
+HUD and markers for players 3 and 4.

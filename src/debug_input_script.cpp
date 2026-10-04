@@ -26,6 +26,9 @@ REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
 REXCVAR_DEFINE_STRING(debug_input_fifo, "", "CrashMoM",
                       "Debug: named pipe to read live input commands from, one per "
                       "line: \"<inputs> [hold ms]\" (Linux; empty = off)");
+REXCVAR_DEFINE_INT32(debug_fake_pads, 0, "CrashMoM",
+                     "Debug: 1-3 more fake controllers (players 2-4 by default), driven by "
+                     "\"p<N>.\" commands in --debug_input_script / --debug_input_fifo (0 = off)");
 
 // Xbox types (X_RESULT, X_ERROR_*, X_INPUT_STATE...) live in these.
 using namespace rex;
@@ -35,7 +38,9 @@ namespace {
 
 // Any value no other driver uses. The SDK's own synthetic devices use ASCII
 // tags ("NOP\0", "MNK\0"); this is "SCR\0". SDL pads count up from small ints.
+// The extra fake controllers are "SCR\1".."SCR\3".
 constexpr DeviceId kScriptDevice = static_cast<DeviceId>(0x53435200);
+DeviceId PadDevice(int pad) { return static_cast<DeviceId>(0x53435200 + pad); }
 
 // Stick directions, above the 16 XInput button bits.
 constexpr uint32_t kStickLUp = 1u << 16, kStickLDown = 1u << 17;
@@ -81,6 +86,18 @@ uint32_t ParseInputs(std::string_view names) {
   return inputs;
 }
 
+// "p3.lsup+a" -> pad 2 (zero-based) and "lsup+a"; no prefix = pad 0. -1 if
+// the prefix names a pad that doesn't exist (pads = how many there are).
+int SplitPad(std::string_view& command, int pads) {
+  if (command.size() >= 3 && command[0] == 'p' && command[2] == '.' && command[1] >= '1' &&
+      command[1] <= '9') {
+    const int pad = command[1] - '1';
+    command.remove_prefix(3);
+    return pad < pads ? pad : -1;
+  }
+  return 0;
+}
+
 // Stick axis from two opposite directions: full tilt one way, the other, or 0.
 int16_t Axis(uint32_t inputs, uint32_t negative, uint32_t positive) {
   if (inputs & positive) return 32767;
@@ -93,7 +110,8 @@ int16_t Axis(uint32_t inputs, uint32_t negative, uint32_t positive) {
 std::unique_ptr<ScriptedInputDriver> ScriptedInputDriver::CreateFromCvars() {
   std::string_view rest = REXCVAR_GET(debug_input_script);
   const std::string& fifo = REXCVAR_GET(debug_input_fifo);
-  if (rest.empty() && fifo.empty()) {
+  const int pads = 1 + std::clamp(REXCVAR_GET(debug_fake_pads), 0, kMaxPads - 1);
+  if (rest.empty() && fifo.empty() && pads == 1) {
     return nullptr;
   }
   std::vector<Tap> taps;
@@ -107,9 +125,12 @@ std::unique_ptr<ScriptedInputDriver> ScriptedInputDriver::CreateFromCvars() {
     size_t colon2 = colon1 == std::string_view::npos ? colon1 : token.find(':', colon1 + 1);
     int64_t time_ms = -1, hold_ms = kDefaultHoldMs;
     uint32_t inputs = 0;
+    int pad = 0;
     if (colon1 != std::string_view::npos) {
       std::from_chars(token.data(), token.data() + colon1, time_ms);
-      inputs = ParseInputs(token.substr(colon1 + 1, colon2 - colon1 - 1));
+      std::string_view names = token.substr(colon1 + 1, colon2 - colon1 - 1);
+      pad = SplitPad(names, pads);
+      inputs = pad < 0 ? 0 : ParseInputs(names);
       if (colon2 != std::string_view::npos) {
         std::from_chars(token.data() + colon2 + 1, token.data() + token.size(), hold_ms);
       }
@@ -118,11 +139,12 @@ std::unique_ptr<ScriptedInputDriver> ScriptedInputDriver::CreateFromCvars() {
       REXLOG_ERROR("debug_input_script: can't parse \"{}\", script ignored", token);
       return nullptr;
     }
-    taps.push_back({time_ms, hold_ms, inputs});
+    taps.push_back({time_ms, hold_ms, inputs, pad});
   }
-  REXLOG_INFO("debug_input_script: {} scripted taps{}", taps.size(),
+  REXLOG_INFO("debug_input_script: {} scripted taps, {} fake controller{}{}", taps.size(), pads,
+              pads == 1 ? "" : "s",
               fifo.empty() ? std::string() : ", live commands from " + fifo);
-  std::unique_ptr<ScriptedInputDriver> driver(new ScriptedInputDriver(std::move(taps)));
+  std::unique_ptr<ScriptedInputDriver> driver(new ScriptedInputDriver(std::move(taps), pads));
   if (!fifo.empty()) {
     driver->fifo_thread_ = std::thread([d = driver.get(), fifo] { d->FifoThread(fifo); });
   }
@@ -131,8 +153,18 @@ std::unique_ptr<ScriptedInputDriver> ScriptedInputDriver::CreateFromCvars() {
 
 // InputDriver's constructor wants a window + z-order for drivers that read
 // window events. We read none, so null / 0.
-ScriptedInputDriver::ScriptedInputDriver(std::vector<Tap> taps)
-    : InputDriver(nullptr, 0), start_(std::chrono::steady_clock::now()), taps_(std::move(taps)) {}
+ScriptedInputDriver::ScriptedInputDriver(std::vector<Tap> taps, int pads)
+    : InputDriver(nullptr, 0),
+      start_(std::chrono::steady_clock::now()),
+      pads_(pads),
+      taps_(std::move(taps)) {}
+
+int ScriptedInputDriver::PadOf(DeviceId id) const {
+  for (int pad = 0; pad < pads_; ++pad) {
+    if (id == PadDevice(pad)) return pad;
+  }
+  return -1;
+}
 
 ScriptedInputDriver::~ScriptedInputDriver() {
   stop_ = true;
@@ -192,21 +224,22 @@ void ScriptedInputDriver::FifoThread(std::string path) {
         }
         continue;
       }
-      // "<inputs> [<hold_ms>]"
+      // "[p<N>.]<inputs> [<hold_ms>]"
+      const int pad = SplitPad(view, pads_);
       size_t space = view.find(' ');
       uint32_t inputs = ParseInputs(view.substr(0, space));
       int64_t hold_ms = kDefaultHoldMs;
       if (space != std::string_view::npos) {
         std::from_chars(view.data() + space + 1, view.data() + view.size(), hold_ms);
       }
-      if (!inputs || hold_ms <= 0) {
+      if (pad < 0 || !inputs || hold_ms <= 0) {
         REXLOG_WARN("debug_input_fifo: ignoring \"{}\"", line);
         continue;
       }
       int64_t now = NowMs();
       REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", now, line);
       std::lock_guard<std::mutex> lock(mutex_);
-      taps_.push_back({now, hold_ms, inputs});
+      taps_.push_back({now, hold_ms, inputs, pad});
     }
   }
   close(fd);
@@ -223,33 +256,44 @@ void ScriptedInputDriver::EnumerateDevices(std::vector<DeviceInfo>& out) {
   DeviceInfo info;
   info.id = kScriptDevice;
   info.name = "Debug input script";
-  info.synthetic = true;  // -> merged into guest player 1 (SlotAssignment)
+  info.synthetic = true;  // -> merged into guest player 1 (input/players.h)
   out.push_back(info);
+  // The extra fake controllers: synthetic too, told apart by their guid
+  // "debug-pad-<N>" (N = 2-4), which input/players.h turns into player N.
+  for (int pad = 1; pad < pads_; ++pad) {
+    DeviceInfo extra;
+    extra.id = PadDevice(pad);
+    extra.name = "Debug fake controller " + std::to_string(pad + 1);
+    extra.guid = "debug-pad-" + std::to_string(pad + 1);
+    extra.synthetic = true;
+    out.push_back(extra);
+  }
 }
 
 X_RESULT ScriptedInputDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_state) {
-  if (id != kScriptDevice) {
+  const int pad = PadOf(id);
+  if (pad < 0) {
     return X_ERROR_DEVICE_NOT_CONNECTED;
   }
   const int64_t now_ms = NowMs();
   std::lock_guard<std::mutex> lock(mutex_);
   Inputs inputs = 0;
   for (const Tap& tap : taps_) {
-    if (now_ms >= tap.start_ms && now_ms < tap.start_ms + tap.hold_ms) {
+    if (tap.pad == pad && now_ms >= tap.start_ms && now_ms < tap.start_ms + tap.hold_ms) {
       inputs |= tap.inputs;
     }
   }
-  if (inputs != last_inputs_) {
+  if (inputs != last_inputs_[pad]) {
     // XInput games compare packet_number to spot a new state.
-    ++packet_number_;
+    ++packet_number_[pad];
     if (inputs) {
-      REXLOG_INFO("debug_input_script: t={} ms inputs={:06X}", now_ms, inputs);
+      REXLOG_INFO("debug_input_script: t={} ms pad {} inputs={:06X}", now_ms, pad + 1, inputs);
     }
-    last_inputs_ = inputs;
+    last_inputs_[pad] = inputs;
   }
   if (out_state) {
     std::memset(out_state, 0, sizeof(*out_state));
-    out_state->packet_number = packet_number_;
+    out_state->packet_number = packet_number_[pad];
     out_state->gamepad.buttons = uint16_t(inputs & 0xFFFF);
     // XInput sticks: +y is up, +x is right.
     out_state->gamepad.thumb_lx = Axis(inputs, kStickLLeft, kStickLRight);
@@ -262,7 +306,7 @@ X_RESULT ScriptedInputDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
 
 X_RESULT ScriptedInputDriver::GetDeviceCapabilities(DeviceId id, uint32_t flags,
                                                     X_INPUT_CAPABILITIES* out_caps) {
-  if (id != kScriptDevice) {
+  if (PadOf(id) < 0) {
     return X_ERROR_DEVICE_NOT_CONNECTED;
   }
   if (out_caps) {
@@ -284,10 +328,10 @@ X_RESULT ScriptedInputDriver::GetDeviceCapabilities(DeviceId id, uint32_t flags,
 }
 
 X_RESULT ScriptedInputDriver::SetDeviceVibration(DeviceId id, X_INPUT_VIBRATION*) {
-  return id == kScriptDevice ? X_ERROR_SUCCESS : X_ERROR_DEVICE_NOT_CONNECTED;
+  return PadOf(id) >= 0 ? X_ERROR_SUCCESS : X_ERROR_DEVICE_NOT_CONNECTED;
 }
 
 X_RESULT ScriptedInputDriver::GetDeviceKeystroke(DeviceId id, uint32_t, X_INPUT_KEYSTROKE*) {
   // No keystroke events: games that poll XInputGetKeystroke see "empty".
-  return id == kScriptDevice ? X_ERROR_EMPTY : X_ERROR_DEVICE_NOT_CONNECTED;
+  return PadOf(id) >= 0 ? X_ERROR_EMPTY : X_ERROR_DEVICE_NOT_CONNECTED;
 }
