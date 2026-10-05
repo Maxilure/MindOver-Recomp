@@ -96,5 +96,8 @@ nearest Crash on foot, and one Crash carries up to three masks (section
 turns into a mask, return to the same player in the next level, and any
 player can turn into a mask while another one already is (section 15). An
 audit opened 17 "for each player" loops (cutscenes, trigger volumes,
-rumble, unlocks) to all four players (section 16). Next: the camera, the
-HUD and markers for players 3 and 4.
+rumble, unlocks) to all four players (section 16). Players 3 and 4 have
+their own HUD in the bottom corners (portrait, bars, mojo count, combo
+multiplier, "Join Game"; nothing changes with two players), their own combo
+meters, lock-on arrows, counter prompts and aiming reticles (sections
+17-19). Next: the markers over their heads and the camera.

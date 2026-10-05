@@ -17,6 +17,7 @@
 #include <rex/ui/imgui_drawer.h>
 
 #include "../overlay_banner.h"
+#include "../players/more_players.h"
 #include "bindings.h"
 #include "keyboard_mouse.h"
 #include "players.h"
@@ -186,8 +187,9 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     ImGui::TextWrapped(
         "Which device plays as which player. For two players: keyboard and mouse on "
         "Player 1, a controller on Player 2. In a level, press Start on the second "
-        "device: the game's pause menu offers Join Game (and Drop Out). Changes apply at "
-        "once and are remembered.");
+        "device to join (the pause menu also offers Join Game and Drop Out). Moving a "
+        "device onto a player swaps it with the device that was there. In the title "
+        "and main menus every device works. Changes apply at once and are remembered.");
     ImGui::Spacing();
 
     const auto devices = players->Devices();  // refreshed every frame: plug in a pad any time
@@ -233,20 +235,31 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     if (!ImGui::BeginCombo("##player", text(shown).c_str())) {
       return;
     }
+    // Players 1 to --local_players (levels make room for that many), plus
+    // whatever is chosen now (a choice from a run with more players stays).
     std::vector<int> options;
     if (!dev.keyboard) options.push_back(kbm::kPlayerAuto);
-    for (int p = 0; p < 4; ++p) options.push_back(p);
+    for (int p = 0; p < 4; ++p) {
+      if (p < more_players::LocalPlayerCount() || p == shown) options.push_back(p);
+    }
     options.push_back(kbm::kPlayerOff);
     for (int option : options) {
       if (ImGui::Selectable(text(option).c_str(), option == shown) && option != shown) {
-        players->SetChoice(dev.key, option);
-        if (option == kbm::kPlayerAuto) {
-          edit_.players.erase(dev.key);
-        } else {
-          edit_.players[dev.key] = kbm::PlayerChoice{option, dev.name};
+        // Moving onto a player swaps with the devices there: remember them all.
+        std::string message;
+        for (const auto& change : players->SetChoice(dev.key, option)) {
+          if (change.choice == kbm::kPlayerAuto) {
+            edit_.players.erase(change.key);
+          } else {
+            edit_.players[change.key] = kbm::PlayerChoice{change.choice, change.name};
+          }
+          message += (message.empty() ? "" : " ") + change.name + ": " +
+                     (change.key == dev.key ? text(option)
+                                            : "Player " + std::to_string(change.choice + 1)) +
+                     ".";
         }
         driver->SetBindings(edit_);
-        Save(dev.name + ": " + text(option) + ".");
+        Save(message);
       }
     }
     ImGui::EndCombo();

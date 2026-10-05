@@ -81,13 +81,15 @@ constexpr uint32_t kListBytes = 1028;             // one per-player list (count 
 // +28 the float that was at 0x824F3C44, +32 players 3-4's characters (u32 x2,
 // reference-counted like the game object's +16 list), +40 players 3-4's jacked
 // titans (u32 x2, reference-counted like the object's +24 list), +48 players
-// 3-4's carried-actor names (64 bytes x2, like the object's +108), +256 the
+// 3-4's carried-actor names (64 bytes x2, like the object's +108), +176 players
+// 3-4's mojo multipliers (u32 x2, like front end +8572), +256 the
 // per-player lists of players 3-4: list A (was 0x825A6280) x2, then list B (was
 // 0x825A6A88) x2.
 constexpr uint32_t kBlockFlags = 0, kBlockByte126 = 4, kBlockByte127 = 5;
 constexpr uint32_t kBlockPointer128 = 8, kBlockStartState = 12, kBlockFloat = 28;
 constexpr uint32_t kBlockActors = 32, kBlockTitans = 40, kBlockNames = 48, kBlockListA = 256;
 constexpr uint32_t kNameBytes = 64;               // game object +108 + 64 * p
+constexpr uint32_t kBlockMultipliers = 176;       // players 3-4's mojo multipliers (u32 x2)
 constexpr uint32_t kBlockListB = kBlockListA + 2 * kListBytes;
 constexpr uint32_t kBlockSize = kBlockListB + 2 * kListBytes;
 
@@ -126,6 +128,8 @@ void Write32(uint32_t address, uint32_t value) {
 
 int LocalPlayers() { return std::clamp(REXCVAR_GET(local_players), 2, kMaxPlayers); }
 
+void TracePositions();  // (below: needs the characters)
+
 // --debug_coop_trace: logs the four co-op states whenever one changed. Called
 // from hooks the game runs often (the character-list guards).
 void TraceStates() {
@@ -141,6 +145,7 @@ void TraceStates() {
   std::memcpy(last, now, sizeof(last));
   REXLOG_INFO("Co-op: states {} {} {} {} (0 not joined, 1 mask, 2 in game, 3 entering mask)",
               now[0], now[1], now[2], now[3]);
+  TracePositions();
 }
 
 uint32_t FrontEnd() { return Read32(Read32(kGameGlobal) + kGameFrontEnd); }
@@ -186,6 +191,9 @@ void Install() {
                         kBlockListB + kListBytes}) {
     Write32(g_block + list, 0xFFFFFFFF);
   }
+  // Players 3-4's mojo multipliers start at 1 (the game's reset value).
+  Write32(g_block + kBlockMultipliers + 0, 1);
+  Write32(g_block + kBlockMultipliers + 4, 1);
   // What grows in place: players 3-4's entries start like player 2's.
   Write32(kState + 8, 0);
   Write32(kState + 12, 0);
@@ -193,6 +201,16 @@ void Install() {
   Write32(kSubState + 12, Read32(kSubState + 4));
   REXLOG_INFO("More players: co-op tables have room for 4 players (moved to {:08X}); "
               "local players: {}", g_block, LocalPlayers());
+}
+
+int LocalPlayerCount() { return LocalPlayers(); }
+
+bool InPlay() {
+  // Game state (the game global's +8, sub_82248EA8): 5 = a level is played
+  // (its pause and in-game menus included). Read from input threads too: a
+  // plain read of guest memory, 0 before the game made its global.
+  const uint32_t game = Read32(kGameGlobal);
+  return game != 0 && Read32(game + 8) == 5;
 }
 
 }  // namespace more_players
@@ -351,23 +369,27 @@ bool MorePlayersLoopEnd24(PPCRegister& o) { return o.u32 < 24 + 4u * uint32_t(Lo
 
 // The join (front end): r18 = the controller that pressed START, r31 = the
 // player it joins as (the game picked 1 = player 2 if free). Returns true to
-// skip this controller (it already plays as player 3-4).
+// skip this controller.
+// SOCKET N = PLAYER N (2026-10-04, findings/26 s.21): the controller in socket
+// N joins as player N, never as "the first free player". The original took
+// any free socket for player 2 (and ours for players 3-4 the first free one),
+// so the game's player 2 could be socket 4: the Controls menu's "Player 2"
+// (input/players.h) then drove someone else, and moving devices there
+// "didn't work reliably". A socket beyond --local_players, or whose player
+// already plays, is skipped.
 bool MorePlayersJoinPick(PPCRegister& controller, PPCRegister& player) {
-  const int n = LocalPlayers();
-  if (n <= 2) return false;
-  for (int p = 2; p < n; ++p) {
-    if (ControllerOf(p) == int32_t(controller.u32)) return true;
-  }
-  for (int p = 1; p < n; ++p) {
-    if (Read32(kState + 4 * p) == 0) {  // not joined
-      player.u64 = uint32_t(p);
-      break;
+  const int c = int(int32_t(controller.u32));
+  const bool can_join = c >= 1 && c < LocalPlayers() && Read32(kState + 4 * c) == 0;
+  if (REXCVAR_GET(debug_coop_trace)) {
+    if (can_join) {
+      REXLOG_INFO("Co-op: controller {} pressed START: joins as player {}", c, c + 1);
+    } else {
+      REXLOG_INFO("Co-op: controller {} pressed START: no join (player {} {})", c, c + 1,
+                  c >= LocalPlayers() ? "is beyond --local_players" : "already plays");
     }
   }
-  if (REXCVAR_GET(debug_coop_trace)) {
-    REXLOG_INFO("Co-op: controller {} pressed START: joins as player {}", controller.u32,
-                player.u32 + 1);
-  }
+  if (!can_join) return true;
+  player.u64 = uint32_t(c);
   return false;
 }
 
@@ -415,6 +437,8 @@ extern "C" REX_FUNC(sub_82234B58) {
   }
   *Guest(kResetByte) = 1;
   std::fill(std::begin(g_host_player), std::end(g_host_player), -1);  // nobody rides anyone
+  Write32(g_block + kBlockMultipliers + 0, 1);  // mojo multipliers back to 1
+  Write32(g_block + kBlockMultipliers + 4, 1);
   g_orphans.clear();
 }
 
@@ -436,6 +460,16 @@ extern "C" REX_FUNC(sub_82266130) {
 }
 extern "C" REX_FUNC(sub_82266150) {
   const int32_t player = int32_t(ctx.r4.u32);
+  // Socket N = player N (see MorePlayersJoinPick): the title's START makes the
+  // socket that pressed it player 1's; outside play every device answers on
+  // socket 1 (input/players.h), so that's socket 1 already, and this keeps it
+  // so if anything else asks for another one.
+  if (player >= 0 && player < kMaxPlayers && int32_t(ctx.r5.u32) >= 0 &&
+      int32_t(ctx.r5.u32) != player) {
+    REXLOG_INFO("Co-op: player {} was given controller {}: socket {} instead (socket N = player N)",
+                player + 1, int32_t(ctx.r5.u32), player);
+    ctx.r5.u64 = uint32_t(player);
+  }
   if (REXCVAR_GET(debug_coop_trace)) {
     REXLOG_INFO("Co-op: player {} controller = {}", player + 1, int32_t(ctx.r5.u32));
   }
@@ -1046,5 +1080,108 @@ extern "C" REX_FUNC(sub_82235CB8) {
       REXLOG_INFO("Co-op: may player {} turn into a mask (host {:08X})? {}", my_player + 1, host,
                   may ? "yes" : "no");
     }
+  }
+}
+
+// The HUD controller's three "flash" methods with a player number
+// (sub_8226AB18 / AB78 / ABD8): more_players_hud.cpp (players 3-4's displays). Found
+// 2026-10-04: for player 3 the original used the controller's +20 (0 / 1) as
+// the display: a mojo froze the game ("write of guest 0x00000110").
+
+// THE COMBO METERS (CComboCounter, front end +1852 + 3152 * p, two of them):
+// players 3-4's are in more_players_frontend.cpp (with the lock-on arrows,
+// counter prompts and reticles). Found 2026-10-04: a mojo collected by player 3
+// or 4 updated "player 3's meter" = other front end fields.
+
+// THE MOJO MULTIPLIERS (findings/26 s.17): front end +8572 + 4p (index (2143 +
+// p) * 4), two of them; +8580.. are other front end fields (bytes at +8580,
+// +8584.., +8588.., flags +8592). Crash's collect code (sub_821ACAD8) multiplies
+// every mojo by its player's multiplier: for player 3 it read +8580 as one.
+// That was the 50 / 100 million mojos and the endless "Level Up!" screens
+// (found 2026-10-04 after the tracker skip above did not stop them). Players
+// 3-4's multipliers live in our block; the 4 sites: raise (sub_82263690,
+// then the game's sub_822E1010 as the original), reset to 1 (sub_822636B8),
+// Crash's collect read and the HUD display's read (hooks).
+constexpr uint32_t kMultiplierIndexBase = 2143 * 4;  // byte offset of player 1's
+extern "C" REX_FUNC(__imp__sub_82263690);
+extern "C" REX_FUNC(__imp__sub_822E1010);
+extern "C" REX_FUNC(sub_82263690) {  // r3 = front end, r4 = player: multiplier + 1
+  const int32_t p = int32_t(ctx.r4.u32);
+  if (p < 2 || p >= kMaxPlayers) {
+    __imp__sub_82263690(ctx, base);
+    return;
+  }
+  const uint32_t slot = g_block + kBlockMultipliers + 4 * (p - 2);
+  Write32(slot, Read32(slot) + 1);
+  // as the original's tail call: r3 = *(game + 96), r4 = 0
+  ctx.r3.u64 = Read32(Read32(kGameGlobal) + 96);
+  ctx.r4.u64 = 0;
+  __imp__sub_822E1010(ctx, base);
+}
+extern "C" REX_FUNC(__imp__sub_822636B8);
+extern "C" REX_FUNC(sub_822636B8) {  // r3 = front end, r4 = player: multiplier = 1
+  const int32_t p = int32_t(ctx.r4.u32);
+  if (p < 2 || p >= kMaxPlayers) {
+    __imp__sub_822636B8(ctx, base);
+    return;
+  }
+  Write32(g_block + kBlockMultipliers + 4 * (p - 2), 1);
+}
+// ... a read "lwzx rD,index,front end" just happened (index = (2143 + p) * 4).
+void MorePlayersMultiplierRead(PPCRegister& index, PPCRegister& value) {
+  if (index.u32 >= kMultiplierIndexBase + 8 && index.u32 < kMultiplierIndexBase + 16) {
+    value.u64 = Read32(g_block + kBlockMultipliers + index.u32 - kMultiplierIndexBase - 8);
+  }
+}
+
+// Player p's character, for the other modules (more_players.h).
+uint32_t more_players::CharacterOfPlayer(int p) {
+  return p >= 0 && p < kMaxPlayers ? CharacterOf(p) : 0;
+}
+
+// --debug_coop_trace: where every player's Crash is (with each state change).
+// Found the NaN position of the safety net above this way.
+namespace more_players {
+namespace {
+void TracePositions() {
+  std::string line;
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    float at[3];
+    if (PositionOf(CharacterOf(p), at)) line += fmt::format("  P{} ({:.1f}, {:.1f}, {:.1f})", p + 1, at[0], at[1], at[2]);
+    else line += fmt::format("  P{} -", p + 1);
+  }
+  REXLOG_INFO("Co-op: positions{}", line);
+}
+}  // namespace
+}  // namespace more_players
+
+// SAFETY NET: a character's "set position" (physics behaviour, sub_8217F528:
+// r3 = the physics behaviour, r5 = the message, position at message +68,
+// snapped by the world sub_822E6AA0) that ends with a NaN position keeps the
+// previous one. Found 2026-10-04 (cause TBD): at the save totem in the first
+// level after Crash's house, player 3's hidden Crash, riding as a mask, got a
+// NaN position this way; leaving the mask it stayed NaN (invisible, picking up
+// mission items, holding the co-op camera so player 1 couldn't walk).
+extern "C" REX_FUNC(__imp__sub_8217F528);
+extern "C" REX_FUNC(sub_8217F528) {
+  using namespace more_players;
+  const uint32_t physics = ctx.r3.u32;
+  const uint32_t actor = Read32(physics + 88);
+  const uint32_t matrix = actor ? Read32(actor + 44) : 0;
+  uint8_t before[64], fields[12];
+  const bool ok = matrix >= 0x40000000;
+  if (ok) {
+    std::memcpy(before, Guest(matrix), 64);
+    std::memcpy(fields, Guest(physics + 128), 12);
+  }
+  __imp__sub_8217F528(ctx, base);
+  if (!ok) return;
+  bool bad = false;
+  for (uint32_t o = 48; o < 60 && !bad; o += 4) bad = (Read32(matrix + o) & 0x7F800000) == 0x7F800000;
+  if (bad) {
+    std::memcpy(Guest(matrix), before, 64);
+    std::memcpy(Guest(physics + 128), fields, 12);
+    static int logged = 0;
+    if (logged++ < 10) REXLOG_WARN("Co-op: character {:08X} was set to a NaN position: kept the previous one", actor);
   }
 }

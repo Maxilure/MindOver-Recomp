@@ -43,6 +43,9 @@ set(CRASHMOM_SOURCES
     src/saves/rename_screen.cpp  # X on a save: a rename screen of its own in the front end (menus + in game)
     src/saves/quick_load.cpp     # --load_save: start straight into a save (no intros, title, menus)
     src/players/more_players.cpp  # room for 4 players in the co-op tables, --local_players (findings/26)
+    src/players/more_players_hud.cpp  # players 3-4's HUD in the bottom corners (findings/26)
+    src/players/more_players_frontend.cpp  # players 3-4's combo meters, lock-on arrows, counter prompts, reticles
+    src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/data/fight_tree.cpp      # fight trees (.bfig): new nodes, C++ decisions for new front end states
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D

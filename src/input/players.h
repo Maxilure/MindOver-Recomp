@@ -26,6 +26,19 @@
 // Several devices on one player are merged (buttons OR'ed, the bigger stick
 // push wins), as before.
 //
+// ONE MEANING OF "PLAYER N" (2026-10-04, findings/26 s.21): the 360 game has
+// four controller SOCKETS (XInput user 0-3) and decides by itself which socket
+// belongs to which of its players (whoever presses START). Our choice used to
+// pick a SOCKET, so "Player 2" here and the game's player 2 could differ, and
+// moving one device could leave a player with an empty socket. Now:
+//   * socket N = the game's player N, always (players/more_players.cpp: a
+//     device on socket N joins as player N, player 1 is socket 1);
+//   * moving a device to a player SWAPS: the devices that were on that player
+//     take the moved device's old player (SetChoice reports every change);
+//   * outside play (title, main menu, loading: --in-play check) every device
+//     also answers as player 1, so any device can start the game and use the
+//     main menu, which listens to player 1 only.
+//
 // Controllers are remembered by their SDL GUID (the model; it's the same
 // for two identical pads, so the 2nd one connected gets ":2"), keyboard and
 // mouse as "keyboard". A choice for a pad that isn't connected stays in the
@@ -43,6 +56,7 @@
 // =============================================================================
 #pragma once
 
+#include <functional>
 #include <map>
 #include <mutex>
 #include <string>
@@ -79,8 +93,18 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
     int player = kPlayerOff;   // what it plays as right now (0-3 / kPlayerOff)
   };
   std::vector<Device> Devices() const;
-  // Changes one device's choice (takes effect at the next poll).
-  void SetChoice(const std::string& key, int choice);
+  // Changes one device's choice (takes effect at the next poll). A device
+  // moved onto a player swaps with the devices already there (they take its
+  // old player). Returns every device whose choice changed, the moved one
+  // first, for the caller to remember (controls.toml).
+  struct Change {
+    std::string key, name;
+    int choice;
+  };
+  std::vector<Change> SetChoice(const std::string& key, int choice);
+  // "Is a level being played?" (game thread safe). While it says no, every
+  // device also plays as player 1 (see above). Unset = always in play.
+  void SetInPlayCheck(std::function<bool()> in_play);
 
  private:
   struct Known {
@@ -104,6 +128,7 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   mutable std::mutex mutex_;
   std::vector<Known> devices_;     // connected, in connection order
   std::map<std::string, int> choices_;
+  std::function<bool()> in_play_;  // set once at start, before the game polls
   uint32_t announced_mask_ = 1;  // what the game was last told (boot: player 1)
 };
 

@@ -618,8 +618,10 @@ name = "MorePlayersActorRead"
 registers = ["r10", "r3"]
 # sub_82268888
 [[entrypoint.midasm_hook]]
+# CHealthDisplay (the HUD): binds to its player's character joined or not, like player 2's
+# hidden display (with the joined-only guard players 3-4's bound to nothing: null read, 2026-10-04)
 address = 0x822688BC
-name = "MorePlayersActorGuard"
+name = "MorePlayersActorGuardAlways"
 registers = ["r30"]
 jump_address_on_true = 0x822688C0
 [[entrypoint.midasm_hook]]
@@ -628,8 +630,10 @@ name = "MorePlayersActorRead"
 registers = ["r10", "r29"]
 # sub_82268D60
 [[entrypoint.midasm_hook]]
+# CHealthDisplay (the HUD): binds to its player's character joined or not, like player 2's
+# hidden display (with the joined-only guard players 3-4's bound to nothing: null read, 2026-10-04)
 address = 0x82268D8C
-name = "MorePlayersActorGuard"
+name = "MorePlayersActorGuardAlways"
 registers = ["r30"]
 jump_address_on_true = 0x82268D90
 [[entrypoint.midasm_hook]]
@@ -648,8 +652,10 @@ name = "MorePlayersActorRead"
 registers = ["r10", "r30"]
 # sub_8226DBE0
 [[entrypoint.midasm_hook]]
+# The marker over a head (sub_8226DBE0, its player's body): every local player, joined or not,
+# like player 2's hidden marker (joined-only: a not-joined player 3's update read null + 0x2C)
 address = 0x8226DC2C
-name = "MorePlayersActorGuard"
+name = "MorePlayersActorGuardAlways"
 registers = ["r31"]
 jump_address_on_true = 0x8226DC30
 [[entrypoint.midasm_hook]]
@@ -791,14 +797,38 @@ registers = ["r11", "r3"]
 
 # THE JOIN (front end input, sub_82264988, docs/findings/26 section 9): a free
 # controller's START during play joins player 2 if player 2 isn't joined
-# (0x822650E4-0x822650F4 leave the player in r31). Right after: r31 = the first
-# player (2..--local_players) not joined; a controller that already plays as
-# player 3-4 is skipped (true = jump to the loop's next controller, 0x8226521C).
+# (0x822650E4-0x822650F4 leave the player in r31). Right after: SOCKET N = PLAYER N
+# (section 21): controller N joins as player N, if N < --local_players and player N
+# isn't playing; else it's skipped (true = jump to the loop's next controller, 0x8226521C).
 [[entrypoint.midasm_hook]]
 address = 0x822650F8
 name = "MorePlayersJoinPick"
 registers = ["r18", "r31"]
 jump_address_on_true = 0x8226521C
+
+# MENUS HEAR EVERY PLAYER (src/players/menu_input.cpp, docs/findings/26 section 21): the
+# front end's IsButtonPressed (sub_822652B0) has three "for each player" loops that stop at 2
+# ("addi r28,r28,1 ; cmpwi cr6,r28,2 ; blt top"): 0x822655A0-0x822655C8 records who pressed
+# START in play (sub_82265978: the next pause menu is theirs), 0x82265670-0x822656A4 and
+# 0x82265710-0x82265744 answer "did anyone press B?". Found 2026-10-04 by tracing the save
+# totem's question with fake controllers: player 2's A was heard, player 3's never; player 3's
+# START never paused. Hooked on each blt (verified with xexdis; no branch lands on them): true =
+# back to the top while r28 < --local_players.
+[[entrypoint.midasm_hook]]
+address = 0x822655C8
+name = "MenuInputPlayerLoop"
+registers = ["r28"]
+jump_address_on_true = 0x822655A0
+[[entrypoint.midasm_hook]]
+address = 0x822656A4
+name = "MenuInputPlayerLoop"
+registers = ["r28"]
+jump_address_on_true = 0x82265670
+[[entrypoint.midasm_hook]]
+address = 0x82265744
+name = "MenuInputPlayerLoop"
+registers = ["r28"]
+jump_address_on_true = 0x82265710
 
 # DEBUG (--debug_coop_trace, src/players/more_players.cpp): CMaskAttachableBehaviour's update
 # sub_82237778 right after it read the co-op state of its owner's player (r3 = player index,
@@ -1361,3 +1391,128 @@ address = 0x822F3AA4
 name = "MorePlayersLoopEnd16"
 registers = ["r26"]
 jump_address_on_true = 0x822F39DC
+
+# MOJO MULTIPLIERS OF PLAYERS 3-4 (src/players/more_players.cpp, findings/26 s.17): front end
+# +8572 + 4p, two entries; player 3's read landed on other front end fields: a mojo worth
+# millions. The two readers (index register, value register), right after their lwzx:
+#   Crash's collect (sub_821ACAD8): "lwzx r4,r6,r10" at 0x821ACDC4;
+#   the HUD display (sub_82269118): "lwzx r29,r9,r8" at 0x822691CC.
+[[entrypoint.midasm_hook]]
+address = 0x821ACDC8
+name = "MorePlayersMultiplierRead"
+registers = ["r6", "r4"]
+[[entrypoint.midasm_hook]]
+address = 0x822691D0
+name = "MorePlayersMultiplierRead"
+registers = ["r9", "r29"]
+
+# =============================================================================
+# PLAYERS 3-4'S HUD (src/players/more_players_hud.cpp, docs/findings/26 section 18).
+# A CHealthDisplay's set-up (sub_82267B18) finds its parts by name from two-entry tables
+# indexed by its player (+144): "rlwinm r10,rP,3 ; addi r11,table ; add r3,r10,r11" then the
+# name object r3 is used. Before that use, players 3-4 get our ...Player3 / 4 name objects:
+# the "Join Game" page, the multiplier text, its effect text, the mojo count text.
+# =============================================================================
+[[entrypoint.midasm_hook]]
+address = 0x82267D48
+name = "MorePlayersHudNameCoOp"
+registers = ["r10", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x82267EA8
+name = "MorePlayersHudNameMultiplier"
+registers = ["r10", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x82267F08
+name = "MorePlayersHudNameMultiplierFx"
+registers = ["r10", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x82267F68
+name = "MorePlayersHudNameCount"
+registers = ["r10", "r3"]
+# The base position (x +252, y +256, mirror +260) is set; next the texts are placed from it
+# (0x8226802C, reached from both branches): players 3-4 move to the bottom corners.
+[[entrypoint.midasm_hook]]
+address = 0x8226802C
+name = "MorePlayersHudPosition"
+registers = ["r31"]
+
+# =============================================================================
+# THE FRONT END'S PER-PLAYER OBJECTS FOR PLAYERS 3-4 (src/players/more_players_frontend.cpp,
+# docs/findings/26 section 19): combo meters, lock-on arrows, counter prompts, reticles live in
+# arrays of two inside the front end; players 3-4's are ours. Lookups by player number:
+# Crash's collect: "mulli r11,r25,3152 ; add ; addi r3,r11,1852" then bl: r3 = player p's meter.
+[[entrypoint.midasm_hook]]
+address = 0x82199120
+name = "MorePlayersComboMeterOf"
+registers = ["r25", "r3"]
+# The reticle of player r3 (sub_822661B8's answer): "mulli r11,r3,52 ; add r11,r11,r8" then
+# r11 + 8420 / +8468 = the reticle: players 3-4's base = ours - 8420.
+[[entrypoint.midasm_hook]]
+address = 0x822ACE80
+name = "MorePlayersReticleBase"
+registers = ["r3", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822AD384
+name = "MorePlayersReticleBase"
+registers = ["r3", "r11"]
+# "addi r11,r3,162 ; mulli r11,r11,52 ; add r4,r11,r8" = the reticle + 4.
+[[entrypoint.midasm_hook]]
+address = 0x822AD124
+name = "MorePlayersReticlePlus4"
+registers = ["r3", "r4"]
+# sub_82140038 (r4 -> r30 = a character): compares with players 1-2's characters; a player 3-4
+# character continues at 0x8214007C with r6 = its player; then its reticle base, reticle + 4,
+# and the base again from r30 = p * 52.
+[[entrypoint.midasm_hook]]
+address = 0x82140074
+name = "MorePlayersReticleCharacter"
+registers = ["r30", "r6"]
+jump_address_on_true = 0x8214007C
+[[entrypoint.midasm_hook]]
+address = 0x82140090
+name = "MorePlayersReticleBase"
+registers = ["r6", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x8214010C
+name = "MorePlayersReticlePlus4"
+registers = ["r6", "r4"]
+[[entrypoint.midasm_hook]]
+address = 0x8214015C
+name = "MorePlayersReticleBaseFrom52"
+registers = ["r30", "r11"]
+# The counter prompt's set-up (sub_8225E3E8): its text's name object (r10 = player * 8, r3 = table
+# + player * 8) right before use, and its base position once both paths meet (r31 = the prompt).
+[[entrypoint.midasm_hook]]
+address = 0x8225E438
+name = "MorePlayersHudNameCounter"
+registers = ["r10", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x8225E4E4
+name = "MorePlayersCounterPosition"
+registers = ["r31"]
+# The markers over the heads (CPlayerIdentifierArrow): the set-up's picture name (r11 = player *
+# 8, r3 = table + player * 8, right before use) and the draw's colour (r10 = player * 4, r9 = the
+# colour just read from the two-entry table at 0x825B0120).
+[[entrypoint.midasm_hook]]
+address = 0x8226CF3C
+name = "MorePlayersMarkerPicture"
+registers = ["r11", "r3"]
+[[entrypoint.midasm_hook]]
+address = 0x8226D7F0
+name = "MorePlayersMarkerColour"
+registers = ["r10", "r9"]
+# The reticle's colours by player (r_index = player * 4, the colour just read by "lwzx"):
+# sub_822AE000 (0x822AE028 -> r7, either table), sub_822AE410 (0x822AE450 -> r11 normal table;
+# 0x822AE460 -> r7 flashing table). Players 3-4: their marker colours.
+[[entrypoint.midasm_hook]]
+address = 0x822AE02C
+name = "MorePlayersReticleColour"
+registers = ["r9", "r7"]
+[[entrypoint.midasm_hook]]
+address = 0x822AE454
+name = "MorePlayersReticleColour"
+registers = ["r10", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822AE464
+name = "MorePlayersReticleFlashColour"
+registers = ["r10", "r7"]

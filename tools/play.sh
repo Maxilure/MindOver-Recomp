@@ -55,6 +55,13 @@
 #                                        the game logic hears "not on ground",
 #                                        into logs/ground-<date_time>.csv
 #                                        (src/ground_physics.cpp; ~3 MB/min)
+#   tools/play.sh --catch                run under gdb: the first time the game
+#                                        reads or writes through a null pointer
+#                                        (the "Unhandled guest access violation"
+#                                        freeze), the game functions on the stack
+#                                        go to logs/fault-<date_time>.txt and the
+#                                        game ends (tools/gdb/catch_fault.py).
+#                                        Starts a few seconds slower.
 #   tools/play.sh --quiet                don't show the game's log live in
 #                                        this terminal (it's still written)
 #   tools/play.sh --mnk_mode=true        extra game flags are passed through
@@ -98,6 +105,7 @@ stamp=$(date +%Y-%m-%d_%H%M)
 # Our own shorthands, turned into game flags; everything else passes through.
 trace=""
 ground=""
+catch=()
 live=1
 args=()
 for arg in "$@"; do
@@ -113,6 +121,9 @@ for arg in "$@"; do
       args+=(--debug_ground_trace="$PWD/$ground") ;;
     --emulated-only) args+=(--emulated_only=true) ;;  # src/native/native_renderer.cpp
     --mangohud) export MANGOHUD=1 ;;  # MangoHud's Vulkan layer switches on by this
+    --catch)                                       # tools/gdb/catch_fault.py
+      export CRASHMOM_FAULT_FILE="$PWD/logs/fault-${stamp}.txt"
+      catch=(gdb -q -batch -x tools/gdb/catch_fault.gdb --args) ;;
     --quiet) live=0 ;;
     *) args+=("$arg") ;;
   esac
@@ -152,7 +163,7 @@ if [ "$live" -eq 1 ]; then
   tail_pid=$!
 fi
 
-out/build/linux-amd64-relwithdebinfo/crash_mom \
+"${catch[@]}" out/build/linux-amd64-relwithdebinfo/crash_mom \
   --game_data_root="$PWD/game" --log_file="$log" --debug_log_fps --debug_audio_trace \
   --photo_dir="$PWD/photos" "${args[@]}" 2>&1 | tee "$out"
 status=${PIPESTATUS[0]}
@@ -171,6 +182,9 @@ elif [ "$status" -gt 128 ]; then
   echo "Game was killed by signal ${sig} ($(kill -l "$sig" 2>/dev/null || echo '?')): probably a crash."
 else
   echo "Game exited with status ${status}."
+fi
+if [ -n "${CRASHMOM_FAULT_FILE:-}" ] && [ -s "$CRASHMOM_FAULT_FILE" ]; then
+  echo "Null-pointer access caught: ${CRASHMOM_FAULT_FILE#$PWD/} (the game functions on the stack)."
 fi
 errors=$(grep -c '\[error\]' "$log" 2>/dev/null || true)
 warnings=$(grep -c '\[warning\]' "$log" 2>/dev/null || true)

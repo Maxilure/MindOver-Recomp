@@ -124,11 +124,22 @@ int PlayerAssignment::PlayerOf(const Known& d) const {
   return choice;
 }
 
+void PlayerAssignment::SetInPlayCheck(std::function<bool()> in_play) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  in_play_ = std::move(in_play);
+}
+
 void PlayerAssignment::DevicesForUser(uint32_t user_index, std::vector<DeviceId>& out) const {
   out.clear();
   std::lock_guard<std::mutex> lock(mutex_);
+  // Outside play every real device also answers on player 1's socket: the
+  // title takes START from any socket but makes that socket player 1, and the
+  // main menu then listens to player 1 only. With this, whatever pressed
+  // START, player 1 is socket 1 and every device can work the menus.
+  const bool everyone_is_player_one = user_index == 0 && in_play_ && !in_play_();
   for (const Known& d : devices_) {
-    if (PlayerOf(d) == int(user_index)) {
+    const int player = PlayerOf(d);
+    if (player == int(user_index) || (everyone_is_player_one && player >= 0 && !d.key.empty())) {
       out.push_back(d.id);
     }
   }
@@ -155,21 +166,49 @@ std::vector<PlayerAssignment::Device> PlayerAssignment::Devices() const {
   return out;
 }
 
-void PlayerAssignment::SetChoice(const std::string& key, int choice) {
+std::vector<PlayerAssignment::Change> PlayerAssignment::SetChoice(const std::string& key,
+                                                                  int choice) {
+  std::vector<Change> changes;
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    // What the moved device plays as BEFORE the change (its old player).
+    int old_player = kPlayerOff;
+    std::string name = key;
+    for (const Known& d : devices_) {
+      if (d.key == key) {
+        old_player = PlayerOf(d);
+        name = d.name;
+      }
+    }
+    // Who is on the target player now (connected devices other than this one).
+    std::vector<const Known*> displaced;
+    if (choice >= 0 && old_player >= 0 && old_player != choice) {
+      for (const Known& d : devices_) {
+        if (!d.key.empty() && d.key != key && PlayerOf(d) == choice) displaced.push_back(&d);
+      }
+    }
     if (choice == kPlayerAuto) {
       choices_.erase(key);
     } else {
       choices_[key] = choice;
     }
+    changes.push_back({key, name, choice});
+    // The swap: they take the moved device's old player, so no player is
+    // left without its device and none ends up with two by accident.
+    for (const Known* d : displaced) {
+      choices_[d->key] = old_player;
+      changes.push_back({d->key, d->name, old_player});
+    }
     for (const Known& d : devices_) {
-      if (d.key == key) {
-        REXLOG_INFO("Players: {} now = {}", d.name, PlayerText(PlayerOf(d)));
+      for (const Change& c : changes) {
+        if (d.key == c.key) {
+          REXLOG_INFO("Players: {} now = {}", d.name, PlayerText(PlayerOf(d)));
+        }
       }
     }
   }
   AnnounceIfChanged();
+  return changes;
 }
 
 }  // namespace kbm

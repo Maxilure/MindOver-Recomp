@@ -545,3 +545,229 @@ don't bring a titan into the next level yet) and the character count
 
 Tested: four players, three level changes, masks moving between hosts:
 no errors; two-player co-op behaves as in the original.
+
+## 17. Mojos collected by players 3-4 (two crashes)
+
+**A freeze**: a mojo collected by player 3 or 4 looped on "write of guest
+0x00000110". The HUD controller (constructor `sub_8226A690`) keeps one
+display per player at `+12` / `+16`, and `+20` is a 0/1 setting. Three of its
+methods take a player number and use the display at `+12 + 4p`
+(`sub_8226AB18` / `AB78` / `ABD8`, each setting a "flash" timer at display
+`+268` / `+272` / `+276`). For player 3 that is `+20`, read as display 0 or 1,
+and `0 + 272` is the address in the error. Found with the new
+`tools/play.sh --catch` (below).
+
+**50 or 100 million mojos and endless "Level Up!" screens**: Crash's
+collect code (`sub_821ACAD8`) multiplies each mojo by the collector's
+**mojo multiplier**, front end `+8572 + 4p` (two entries; `+8580` onwards
+are other front-end fields). For player 3 the multiplier was whatever word
+followed. Players 3-4's multipliers now live in our block (starting at 1),
+and the four users are redirected: raise (`sub_82263690`), reset to 1
+(`sub_822636B8`), the collect and the HUD display (hooks).
+
+Mojos themselves are one shared total (the count beside each portrait is
+that total), so players 3-4 add to the same count as players 1-2.
+
+`tools/play.sh --catch` runs the game under gdb with
+`tools/gdb/catch_fault.py`: at the first read or write through a null
+pointer (guest address below `0x10000`; the SDK's access-violation callback
+also serves page-protection watches, which are skipped) it writes the game
+functions on the stack to `logs/fault-<date_time>.txt` and ends the game.
+
+## 18. A HUD for players 3 and 4
+
+![Players 3 and 4's HUD in the bottom corners](../images/four-player-hud.jpg)
+
+Player 3's HUD sits in the bottom-left corner and player 4's in the
+bottom-right, with player 1 / 2's set: portrait, health and special bars,
+mojo count, combo multiplier, and "Join Game" while the player isn't in.
+With two players nothing changes.
+
+How the original builds it: the HUD controller makes one `CHealthDisplay`
+(vtable `0x8203AFC4`, 284 bytes, constructor `sub_822678F8(this, player)`,
+player at `+144`) per player and loops over the two in every method. A
+display's set-up (`sub_82267B18`) finds its parts by name from two-entry
+tables indexed by its player: the "Join Game" page `InGame_CoOp_PlayerN`
+(texts Message and Button) and the texts `MojoMultiplierPlayerN`,
+`MojoMultiplierFXPlayerN` and `MojoCountPlayerN` of the page `InGame`. Then
+it sets a **base position**: x at `+252` (player 1 left, player 2 right,
+from the screen width), y at `+256` (456: y counts up from the bottom of a
+640 x 480 screen) and a mirror factor at `+260` (+1 player 1, -1 player 2).
+Every bar, picture and text it draws is placed from these three numbers.
+
+What the port adds (`src/players/more_players_hud.cpp`):
+
+* a data patch for every in-game menus package (each holds `InGame.prj`):
+  copies of player 1's texts named `...Player3` and of player 2's named
+  `...Player4`, the pages `InGame_CoOp_Player3` / `4` (copies of 1 / 2 with
+  the texts moved down), both pages added to the screen `InGame.scr`. A copy
+  changes one digit of a name, so every size stays the same;
+* displays for players 3-4, run by every controller method;
+* their names (four midasm hooks in the set-up) and their base position:
+  player 3 takes player 1's x and mirror, player 4 player 2's, and y =
+  `--hud_bottom_y` (130). Since the HUD sits at the bottom, two parts swap
+  sides vertically: the bars are drawn `--hud_bottom_bar_shift` (40) lower,
+  and the mojo count and multiplier texts move `--hud_bottom_text_shift`
+  (100) up, above the portrait;
+* the display's two character lookups now take every local player, joined
+  or not, like player 2's hidden display (with the joined-only guard a
+  display of a player not yet joined bound to nothing and read null).
+
+Portraits: player 2's look (Carbon Crash) has no portrait of its own in the
+game's files; players 3-4 show the same portraits as player 2 would.
+
+## 19. The front end's per-player objects
+
+The front end keeps five kinds of per-player HUD objects in arrays of two:
+
+| Offset | Size | Class | What |
+|---|---|---|---|
+| `+1720` | 32 | `CPlayerIdentifierArrow` | the "1" / "2" marker over a player |
+| `+1852` | 3,152 | `CComboCounter` | the combo meter (its player at `+3148`) |
+| `+8156` | 92 | `CPlayerLockOnArrow` | the lock-on arrow |
+| `+8340` | 40 | `CCounterOpportunityDisplay` | the "counter now" prompt (player at `+8`) |
+| `+8420` | 52 | `CReticleController` | the aiming reticle (player at `+44`) |
+
+Four of them now exist for players 3-4 too (`src/players/more_players_frontend.cpp`):
+built with the front end, run by its loops (set-up, update, draw, the
+reticles' update, the destructor), and found by every "object of player p"
+lookup: the combo meter's script helpers and Crash's collect, the counter
+prompt, the lock-on arrow, and the reticle, by controller (`sub_822661B8`,
+rewritten for four) and by character (`sub_8213FF18` / `sub_8213FFA8` /
+`sub_82140038`, which compared with players 1-2 only). Without a reticle
+controller, masked players 3-4 could shoot but not move their reticle. The
+counter prompt also places itself like the HUD (x `+24`, y `+28`, mirror
+`+32`) and finds its text `CounterButtonPlayerN` by name; the front end
+sets these objects up at boot, before any in-game package is loaded, so
+players 3-4's prompts are set up with the in-game HUD instead.
+
+The markers over the players' heads: players 3-4 get their own too, set
+up, updated and drawn like the others (the original's group draw, which
+sorts players 1-2's two by distance, stays as it is; ours are drawn after).
+A marker takes its picture by name from a two-entry table (`0x825A5B20`,
+`HUD_coop_player_one` / `two`) and its tint from a two-entry colour table
+(`0x825B0120`: for player 3 the next word, an init flag, a black see-through
+marker). Until players 3-4 have pictures of their own they show player 1 /
+2's banner in a colour of their own (`--marker_colour_player3` green,
+`--marker_colour_player4` purple). The marker's character lookup, like the
+HUD's, takes every local player, joined or not.
+
+The reticles' draw list: `CReticleAimingBehaviour` registers each masked
+player's reticle in a global table `0x8259AFAC` of three (player 1's,
+player 2's, one shared, drawn in player 1's colours), so with players 3 and
+4 both masks only one of their reticles was drawn. The original's update
+still registers; right after it the reticle moves to a table of ours (one
+entry per player plus the shared one) and the draw (`sub_82162540`) is
+rewritten over ours. The reticle's colours come from two-entry tables by
+player (`0x825A72FC`, and `0x82507760` for its flashing variant: player 1
+red, player 2 green): players 3-4 use their marker colours.
+
+## 20. A NaN position (safety net)
+
+At the save totem in the first level after Crash's house, player 3's
+hidden Crash, riding as a mask, was given a NaN position: leaving the mask
+it stayed invisible, picked up mission items and mojos it never touched
+(the optional missions ticked, the shared mojo count jumped) and held the
+co-op camera, so player 1 couldn't walk away. Found by adding positions to
+`--debug_coop_trace`, then a gdb watch on that Crash's position: the NaN
+came from the physics behaviour's "set position" (`sub_8217F528`, which
+snaps the position from the mask's message to the world with
+`sub_822E6AA0`). The exact cause is still unknown: the mask's matrices were
+valid, and it only happens at that spot. A "set position" that ends at a
+NaN now keeps the previous position (logged), which removes every symptom.
+
+## 21. Who controls what: devices, players and menus
+
+Three problems showed up once three and four players could play together:
+a device moved to another player in the Controls menu (F6) often did nothing
+or drove someone else, players 3-4 couldn't use menus at all, and a menu
+opened by one player (the save totem, an upgrade, the name screen) was
+worked by another.
+
+**Sockets and players.** The 360 game asks for four controller *sockets*
+(XInput users 0-3) and decides by itself which socket belongs to which of
+its players: the title screen gives player 1 the socket that pressed START,
+and a START on a free socket in play joins as "the first free player". The
+Controls menu's choice picked a *socket*, so "Player 2" there and the game's
+player 2 could be different people, and moving one device could leave a
+player with an empty socket. Now one meaning everywhere: **socket N = the
+game's player N**.
+
+| Where | What |
+|---|---|
+| the join (`sub_82264988`, hook `MorePlayersJoinPick`) | the controller in socket N joins as player N (if N < `--local_players` and player N isn't playing), never as "the first free player" |
+| the controller setter (`sub_82266150`) | player p is always given socket p (the title tried to give player 1 the keyboard's own socket when the keyboard was set to player 4) |
+| `input/players.cpp` | outside play (game state != 5: title, main menus, loading) every device also answers on socket 1, so any device can start the game and work the main menu (which listens to player 1 only) |
+| the Controls menu | moving a device onto a player **swaps**: the devices that were there take the moved device's old player; the list offers players 1 to `--local_players` |
+
+**How the menus read buttons.** Every front-end screen asks "was button B
+pressed?" through one script method, `IsButtonPressed` (`sub_822652B0`;
+`r4` button, `r6` a player or -1). The front end's script methods were
+listed from their registration function `sub_822636D8` (names next to
+addresses: `StoreWhoPausedGame` 0x82265968, `ResetPlayerWhoPausedGame`
+0x82266120, `GetPlayersControllerNum` 0x82266130, `SetInMainMenuFE`
+0x8225F870, `ShowSavePrompt` 0x8225F718, `HasUpgradeToPresent` 0x822635E8
+...). With `r6` = -1 the answer comes from:
+
+* the menu owner, front end `+8536` ("PlayerWhoPausedGame"), while the game
+  global's byte 168 bit 0x10 is set (on in the pause menu and the level-up
+  screen); in that mode a question naming another player is refused too;
+* player 1 only in the main menus (`+8594` bit 0x20, `SetInMainMenuFE`);
+* otherwise a loop over the players (**0..1**) or over every controller
+  (0..3), by button.
+
+The owner is `+8540` (who last pressed START in play, recorded by
+`sub_82265978` inside the 0..1 player loop) copied by `StoreWhoPausedGame`
+when a pause menu opens. The level-up screen (`CUpgradeScreenAction`,
+vtable `0x82025AA4`: slot 4 Enter, 5 Update, 6 Exit) goes through the same
+step, so it belonged to whoever last pressed START, usually player 1: only
+that player could close it. The totem's menus run with no owner. Front
+end flags found on the way: `+8592` 0x20 map, 0x08 tutorial, 0x04 save
+prompt (set the moment Crash uses the totem), 0x02 mini-game menu, 0x01
+game complete; `+8594` bit 0x80 = a menu is on screen in play (the totem's
+question, the pause menu, the whole save-list flow); the confirm box at
+`+172` (its byte `+4`: 0x80 enabled, 0x40 showing; update `sub_8225DE68`
+asks for left 27, right 40, A 1).
+
+Traced with fake controllers at the save totem: player 2's A answered the
+totem's question, player 3's never did; player 3's START never paused.
+
+**The rule now** (`src/players/menu_input.cpp`), while a level is played:
+
+* the three player loops of `IsButtonPressed` cover every local player
+  (manifest hooks `MenuInputPlayerLoop`), so players 3-4 can pause and use
+  menus;
+* a question for "anyone" goes to the menu's owner only, when there is one:
+  1. a pause menu: who paused (`+8536`);
+  2. the player who last used an object (`CInteractorBehaviour`
+     `sub_8214A9A8` sends the object nearby message 2 with its own
+     character at `+28`): the totem's question if it appears within 8 s,
+     then the whole flow behind it (save list, overwrite question, name
+     screen) while `+8594` bit 0x80 stays set; also the save prompt and
+     mini-game menu flags.
+* the level-up screen answers to every player: upgrades are shared, like
+  mojos. Between its Enter and Exit each playing player is asked in turn,
+  each one as the stored owner for the length of its own question (the
+  game's owner check refuses anyone else), and the owner is put back;
+* anything else (tutorials, the map) and every question naming a player
+  stay as they were.
+
+Tested with fake controllers: player 3 uses the totem, players 1 and 2 press
+A, Down and Right throughout: only player 3 answers the question, moves in
+the save list, opens the overwrite question and types in the name screen.
+Player 3 pauses: player 1's Down and START are ignored, player 3 scrolls and
+unpauses (the title then reads "Paused": the game only has "Player 1/2
+paused" texts). Two players: after the totem, player 2 pauses and owns the
+pause menu. Keyboard set to player 4: Enter leaves the title, the arrows
+move the main menu, and in a level its START joins as player 4. The
+level-up rule was tested by applying it to a pause menu (a temporary
+switch): player 2 paused, players 1 and 3 moved the cursor and player 3
+closed it. A real level-up couldn't be set off by a script: calling the
+upgrade check directly (`sub_82177D38` with "present" = 1, as the
+behaviour's message handler `sub_82177AA8` does) opens the screen but its
+reveal (`sub_820E57A0` -> `sub_820E5E08`) reads a null pointer, for player 1
+as much as player 2: something a real mojo pickup prepares is missing.
+
+`--debug_menu_input_trace` logs every press a menu hears (button, the player
+asked, who it was answered for and why, the caller), START presses, owner
+changes, interactions, game state and flag changes.

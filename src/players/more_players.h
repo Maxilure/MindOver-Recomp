@@ -72,4 +72,20 @@ namespace more_players {
 // (CrashMomApp::OnPreLaunchModule).
 void Install();
 
+// How many local players levels make room for (--local_players, 2-4).
+int LocalPlayerCount();
+
+// Is a level being played (game state 5, its pause and menus included)?
+// Safe from any thread.
+bool InPlay();
+
+// Player p's character (Crash), 0 if none (the game object's list / ours).
+uint32_t CharacterOfPlayer(int p);
+
 }  // namespace more_players
+
+struct PPCContext;
+namespace more_players_frontend {
+// Sets up players 3-4's counter prompts (call once the in-game HUD is set up).
+void SetUpInGame(PPCContext& ctx, uint8_t* base);
+}  // namespace more_players_frontend

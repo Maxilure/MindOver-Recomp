@@ -56,6 +56,7 @@
 #include "saves/save_library.h"
 #include "native/native_window.h"
 #include "players/more_players.h"
+#include "players/more_players_hud.h"
 
 class CrashMomApp : public rex::ReXApp {
  public:
@@ -178,6 +179,8 @@ class CrashMomApp : public rex::ReXApp {
     if (REXCVAR_GET(save_library)) {
       rename_screen::Register();
     }
+    // Players 3-4's HUD (players/more_players_hud.h), with --local_players 3 or 4.
+    more_players_hud::Register();
     data_patcher::Install();
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
@@ -210,8 +213,11 @@ class CrashMomApp : public rex::ReXApp {
       for (const auto& [key, choice] : kbm_driver->bindings().players) {
         choices[key] = choice.player;
       }
-      input->SetDeviceAssignment(
-          std::make_unique<kbm::PlayerAssignment>(kbm::KeyboardMouseDriver::kDeviceId, choices));
+      auto assignment =
+          std::make_unique<kbm::PlayerAssignment>(kbm::KeyboardMouseDriver::kDeviceId, choices);
+      // Outside play every device also answers as player 1 (title, menus).
+      assignment->SetInPlayCheck([] { return more_players::InPlay(); });
+      input->SetDeviceAssignment(std::move(assignment));
       input->AddDriver(std::move(kbm_driver));
     }
   }
