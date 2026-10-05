@@ -65,6 +65,8 @@
 #   tools/play.sh --quiet                don't show the game's log live in
 #                                        this terminal (it's still written)
 #   tools/play.sh --mnk_mode=true        extra game flags are passed through
+#   tools/play.sh -h  (or --help)        a cheat sheet: these options, the most
+#                                        useful game flags, the in-game F-keys
 #
 # Live console: while the game runs, this terminal shows the game's log as it
 # is written, shortened and coloured by tools/play_console.awk (errors red,
@@ -101,6 +103,52 @@ set -uo pipefail  # no -e: we want to report the game's exit status ourselves
 
 cd "$(dirname "$0")/.."
 stamp=$(date +%Y-%m-%d_%H%M)
+
+# -h / --help: a short cheat sheet of this script's options, the game's most
+# useful flags and the in-game keys, then exit without starting the game.
+# (The game exe's own --help doesn't work: the SDK's flag parser fails on it.)
+# Keep it in sync with the header above and the binds in src/.
+if [[ " $* " == *" -h "* || " $* " == *" --help "* ]]; then
+  cat <<'EOF'
+tools/play.sh: play the game with a fresh log per session (logs/play-<date>_<time>.log)
+
+LAUNCHER OPTIONS (combine freely)
+  --dual             two windows: emulated picture + our native renderer's (F8 toggles)
+  --native-only      only our renderer draws (the emulated GPU rests): best fps
+  --emulated-only    only the emulated picture (F9/F8 locked)
+  --trace            F10 photos also record the frame's renderer calls (logs/trace-*/)
+                     + automatic photo the first time something isn't drawn natively
+  --mangohud         MangoHud overlay (Right Shift + F1 hide, F2 next layout, F5 log)
+  --ground-trace     record ground contact per character (logs/ground-*.csv)
+  --catch            run under gdb; a null-pointer freeze writes logs/fault-*.txt
+  --quiet            don't show the live log in this terminal
+  -h, --help         this text
+
+GAME FLAGS (passed straight through, write them as --name=value)
+  --load_save=last   start straight in a save: number (7), name, part of a name, or "last"
+  --fps_cap=60       frame rate cap: 30 = original, 60, 144, 180..., 0 = no cap
+  --renderer=native  start on our picture (default: emulated; F9 switches)
+  --local_players=4  co-op for 3 or 4 local players
+  --emulated_draw_every=2   in dual mode the emulated window draws every Nth frame (1 = all)
+  --ground_grace_ms=40      above 30 fps: how long a lost ground contact is forgiven (0 = off)
+  --keyboard_mouse=false    turn our keyboard + mouse controls off
+  --save_library=false      the game's original 3 save slots instead of our save list
+  --debug_log_fps=false     / --debug_audio_trace=false: turn off the default log lines
+
+IN-GAME KEYS
+  F2   rename / delete box (Load Game or Save Game screen)
+  F3   SDK debug overlay        F4   SDK settings (writes crash_mom.toml next to the exe!)
+  F5   cheats: level up, god mode, speed, freeze, free camera, spawn
+  F6   controls: rebind keys, choose which device is which player
+  F7   achievements             `    SDK console
+  F8   second window with our native picture (dual mode) on / off
+  F9   switch the picture: emulated <-> native
+  F10  photo into photos/ (both renderers' pictures when native is on)
+  F11  highlight cycle: off -> bump material -> particles (magenta)
+  F12  particle experiments (debug)
+EOF
+  exit 0
+fi
 
 # Our own shorthands, turned into game flags; everything else passes through.
 trace=""
