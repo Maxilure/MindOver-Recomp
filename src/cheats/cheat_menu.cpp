@@ -232,12 +232,11 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::SliderInt("How many", &spawn_count_, 1, 5);
     ImGui::SameLine();
     ImGui::BeginDisabled(!entry.titan);
-    ImGui::Checkbox("Knocked out (one hit, then jack)", &knocked_out_);
-    ImGui::EndDisabled();
+    ImGui::Checkbox("Ready to jack", &knocked_out_);
     ImGui::SetItemTooltip(
-        "Arrives one hit away from down: hit it once, it falls with stars,\n"
-        "then B jacks it (it gets up again after a while).\n"
+        "Arrives already down, ready to jack: walk up and press B.\n"
         "Off: a normal titan, ready to fight. Or use Free jack (Character).");
+    ImGui::EndDisabled();
     const bool can = snap.in_level && snap.players[player_].present && !snap.players[player_].mask;
     ImGui::BeginDisabled(!can);
     const std::string button = "Spawn in front of player " + std::to_string(player_ + 1);

@@ -5,7 +5,7 @@
 //
 // WHAT: pick a titan from the list (or type a template name), pick how many,
 // and it appears beyond the chosen player (seen from the camera). Titans can
-// come KNOCKED OUT: one hit puts them down, ready to jack (B). What the level
+// come KNOCKED OUT (down from the start, ready to jack with B). What the level
 // hasn't loaded is loaded first (its package group, well under a second);
 // villagers are refused (they crash this way); other templates by name are an
 // experiment.
@@ -20,13 +20,12 @@
 //     sub_8229C6F8 at 0x8229CA40). The actor is NAMED by the hash of the
 //     template name (sub_82357020), like all of the game's: the name picks the
 //     inventory section with its assets (see Spawn in spawn.cpp).
-//   * KNOCKED OUT = ONE HIT AWAY FROM DOWN: a titan's CJackingBehaviour
-//     (vtable 0x8202EF0C) keeps a stun meter (float at *(+40), maximum *(+44);
-//     state +1104, 2 = stunned). After the titan's arrival we hold the meter at
-//     0.5: the first hit knocks it down the game's own way (stars, the jack
-//     prompt B). Putting it straight into the stunned state didn't work: its
-//     AI only goes down from a hit (spawn.cpp, StunPending, has the tries).
-//     Like a titan beaten in a fight, it gets up again after a while.
+//   * KNOCKED OUT = THE LEVELS' "READY TO JACK" SPAWN: the titan's fight tree
+//     starts in StartJackable (the bosses' trees: Stunned), as the level
+//     scripts' DO_SpawnEnemy does for a titan they bring back (the start-state
+//     global 0x825A4FB8, set by sub_8213E6D0 around the creation). An earlier
+//     version held the stun meter at 0.5 ("one hit away from down"); it stays
+//     as a fallback (StunPending in spawn.cpp, with the tries).
 //   * The new actor needs its template's inventory section LOADED (spawning
 //     without it crashed the game). Every template has one (a package group
 //     of the same name); a section that isn't loaded in this level is loaded
@@ -58,7 +57,8 @@ struct Category {
 const std::vector<Category>& Catalogue();
 
 // Queue a spawn (any thread): `count` of `template_name` in front of player
-// `player` (0-3), titans stunned when `knocked_out`. Done at the next frame.
+// `player` (0-3), titans down and ready to jack when `knocked_out` (their
+// fight tree starts in StartJackable / Stunned). Done at the next frame.
 void Request(const std::string& template_name, int player, int count, bool knocked_out);
 
 // The last spawn's outcome for the menu ("2 Ratcicle spawned", "... not in

@@ -303,6 +303,20 @@ tree's set-up, `sub_820C1578`): the level's own spawn events give them
 something this route doesn't, so they are refused. Pickups are not offered
 (in tests their pools were all in use).
 
+**Boss titans.** Crunch and Cortex are in the Titans list as their boss
+templates, `Characters:CrunchBoss` and `Characters:CortexBoss` (their own
+groups in `GlobalPackages`; `Characters:Cortex` is his on-foot form). Outside
+their boss levels, both crashed the game in their `CSoundDialogueBehaviour`
+(vtable `0x820370A4`, the voice lines), whose sounds live in the boss level:
+the set-up (`sub_8222CBB8`) links to up to four objects by name without
+checking that the lookup found them (`sub_822D9D20` with null, then
+`sub_822D9F48` read null + 0xC), and the update read a null sound object
+at +136 (`sub_8222CFC8`, null + 8) as soon as the boss was jacked. Both now
+skip what isn't there (`spawn.cpp`); the original could only crash at
+those two points. Outside their arena the bosses are silent. Tested on
+Wumpa Island: both spawn and fight (Cortex flies and shoots); jacking them:
+below ("Ready to jack from the start").
+
 **Placement.** Beyond the player as the camera sees it (the game camera's
 direction, level, from the free camera's record of it), 10 units for a
 knocked-out titan, 6 for other characters, side by side 5 units apart. The
@@ -331,6 +345,32 @@ down**. The cheat follows the titan until it is down (then the game takes
 over: like any beaten titan it gets up after a while), for 60 s at most, and
 lets go at once if a player jacked it (a jacked titan's meter is its health)
 or the actor is gone.
+
+**Ready to jack from the start (what the cheat does now).** The levels
+spawn titans that are already down, ready to jack, for example the
+Phantoms that come back in L7's first room (`L7_R1_PhantomRespawn1A`):
+their objective `DO_SpawnEnemy` (`CActionSpawnEnemy`, vtable `0x82040300`,
+spawn `sub_8229BF40`) names a fight-tree state, **`StartJackable`**. Before
+creating the actor it hands that name to `sub_8213E6D0`, which only copies it
+into the global `0x825A4FB8` ("the next fight tree starts in this state"),
+and puts an empty name back after the creation (the player spawn
+`sub_8229C6F8` does the same). The fight tree built in between starts in
+that state instead of its root. The knocked-out spawn now does exactly this
+(name object from `sub_8236ACB8`), and the meter route above stays only for a
+template without such a state. `StartJackable` exists in the four titan
+trees, `Strong`, `Bear`, `Captain` and `Projectile`. Tested on Wumpa Island:
+Ratcicle, Yuktopus, Stinky, Roller and Scorporilla spawn calm with the jack
+prompt over them (their jacking state reads 1), and Crash jacks them with B.
+
+The boss trees have no `StartJackable`, but both have a `Stunned` state,
+used as theirs: Crunch and Cortex spawn with the jack prompt too and are
+jacked with B (Crunch 125 health, Cortex 250). That matters because they
+can't be beaten into it: Crunch takes no damage at all (in the story he
+ends up ready to jack without a meter), and Cortex's damage and stun follow
+his boss fight's stages (`CBossFightBehaviour`, vtable `0x8202BDFC`, stage
+at `+92`: -1, advanced 0 -> 1 -> 2 by `0x821296B8`; level scripts ask it
+through `CActionBossFight`, kind 58). In one test, B presses kept going after
+the jack made Crash leave Crunch again.
 
 **Free jack.** The game's own power-up (the `Collectables:c_freeJack` pickup):
 jack a titan without beating it. Crash's message handler (`sub_821ACAD8`,

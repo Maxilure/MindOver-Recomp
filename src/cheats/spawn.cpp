@@ -28,6 +28,8 @@ extern "C" REX_FUNC(__imp__sub_822E3FC8);  // inventory: does the section named 
 extern "C" REX_FUNC(__imp__sub_822E4D88);  // inventory: is that (existing) section ready (loaded)
 extern "C" REX_FUNC(__imp__sub_822E44B8);  // inventory: take a reference on a section (loads it if needed)
 extern "C" REX_FUNC(__imp__sub_822E4650);  // inventory: give the reference back (unloads at 0)
+extern "C" REX_FUNC(__imp__sub_8213E6D0);  // the next fight tree's START STATE (r3 = name object)
+extern "C" REX_FUNC(__imp__sub_8236ACB8);  // name object (r3 = 8 bytes) from a C string (r4)
 
 namespace spawn {
 namespace {
@@ -100,7 +102,8 @@ uint32_t CallGame(GuestFunction function, PPCContext& ctx, uint8_t* base, uint32
 // +0 template name (128 bytes), +192 the actor's name object (the template
 // name's hash, 4 bytes), +208 position (4 floats).
 constexpr uint32_t kScratchTemplate = 0, kScratchNameObject = 192,
-                   kScratchPosition = 208, kScratchSize = 256;
+                   kScratchPosition = 208, kScratchStartState = 224, kScratchStartText = 232,
+                   kScratchSize = 256;
 uint32_t g_scratch = 0;
 
 // --- State --------------------------------------------------------------------
@@ -130,7 +133,6 @@ std::vector<Pending> g_pending;
 std::string g_result;
 std::vector<ToStun> g_to_stun;  // game thread only
 std::vector<Loading> g_loading;  // game thread only
-
 void SetResult(std::string text) {
   REXLOG_INFO("Cheats: spawn: {}", text);
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -146,6 +148,13 @@ uint32_t FindMember(uint32_t object, uint32_t size, uint32_t vtable) {
     if (p >= 0x40000000 && Readable(p, 4) && Read32(p) == vtable) return p;
   }
   return 0;
+}
+
+// The fight-tree state a "knocked out" spawn starts in (see START STATE in
+// Spawn).
+std::string KnockedOutState(const std::string& template_name) {
+  const bool boss = template_name.find("Boss") != std::string::npos;
+  return boss ? "Stunned" : "StartJackable";
 }
 
 // A titan's jacking behaviour: among the actor's members, or its AI
@@ -288,12 +297,30 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
                  position[k] + forward[k] * ahead + right[k] * side + (k == 1 ? 0.5f : 0.0f));
     }
     WriteFloat(g_scratch + kScratchPosition + 12, 1.0f);
+    // START STATE: a "knocked out" titan is created already down, ready to
+    // jack, the way the levels respawn one (DO_SpawnEnemy's "StartJackable",
+    // CActionSpawnEnemy sub_8229BF40): sub_8213E6D0 copies a state name into
+    // the global 0x825A4FB8, the fight tree built during the creation starts
+    // in that state, and an empty name is put back right after.
+    const std::string start_state = request.knocked_out ? KnockedOutState(request.template_name) : "";
+    if (!start_state.empty()) {
+      std::memcpy(Guest(g_scratch + kScratchStartText), start_state.c_str(), start_state.size() + 1);
+      CallGame(__imp__sub_8236ACB8, ctx, base, g_scratch + kScratchStartState, g_scratch + kScratchStartText);
+      CallGame(__imp__sub_8213E6D0, ctx, base, g_scratch + kScratchStartState);
+    }
     const uint32_t actor = CallGame(__imp__sub_82168620, ctx, base, g_scratch + kScratchTemplate,
                                     g_scratch + kScratchNameObject, 0, g_scratch + kScratchPosition,
                                     0, 8);
+    if (!start_state.empty()) {  // back to "no start state", as the level scripts do
+      Write32(g_scratch + kScratchStartState, 0);
+      Write32(g_scratch + kScratchStartState + 4, 0);
+      CallGame(__imp__sub_8213E6D0, ctx, base, g_scratch + kScratchStartState);
+    }
     if (!actor) break;
     ++made;
-    if (request.knocked_out) g_to_stun.push_back({actor, 0, 0});
+    // (The start state does it now; the meter route below stays for a
+    // template without a start state.)
+    if (request.knocked_out && start_state.empty()) g_to_stun.push_back({actor, 0, 0});
   }
   if (!made) {
     SetResult(fmt::format("{} can't be spawned here (not in the game's packages, or it didn't load)",
@@ -396,6 +423,10 @@ void ReleaseLoading(PPCContext& ctx, uint8_t* base, const char* why) {
 
 std::vector<Category> MakeCatalogue() {
   auto titan = [](const char* name) { return Entry{name, std::string("Characters:") + name, true}; };
+  // a titan whose template name isn't the one players know
+  auto titan_as = [](const char* label, const char* name) {
+    return Entry{label, std::string("Characters:") + name, true};
+  };
   auto character = [](const char* label, const char* name) {
     return Entry{label, std::string("Characters:") + name, false};
   };
@@ -405,7 +436,10 @@ std::vector<Category> MakeCatalogue() {
         titan("Shurtle"), titan("Scorporilla"), titan("Phantom"), titan("Stinky"),
         titan("Parafox"), titan("Sludge"), titan("Yuktopus"), titan("RatcicleHero"),
         titan("SpikeHero"), titan("ShurtleHero"), titan("SludgeHero"), titan("PhantomHero"),
-        titan("ParafoxHero")}},
+        titan("ParafoxHero"),
+        // the two boss titans (their upgrade levels are stats 104 / 105, so
+        // they're jackable titans like the others; names from default.rcf)
+        titan_as("Crunch (boss)", "CrunchBoss"), titan_as("Cortex (boss)", "CortexBoss")}},
       {"Enemies",
        {character("Znu", "Znu"), character("Slappy (Slap-E)", "Slappy"),
         character("Bratgirl", "Bratgirl"), character("Monkey", "Monkey"),
@@ -469,3 +503,38 @@ bool DebugCommand(std::string_view arguments) {
 }
 
 }  // namespace spawn
+
+// -----------------------------------------------------------------------------
+// BOSS TITANS OUTSIDE THEIR ARENA (Crunch, Cortex: Characters:CrunchBoss /
+// CortexBoss). Both faults below are in CSoundDialogueBehaviour (vtable
+// 0x820370A4: the boss's voice lines), whose sounds live in the boss level:
+// outside it the boss is simply silent.
+// 1. While such an actor is built, its set-up (slot 7, sub_8222CBB8) walks
+// up to four object NAMES of its own (+72, 8 bytes each; empty = the name at
+// 0x825A7564), looks each one up in the level's named-object registry
+// (sub_822DB870 -> registry 0x825A7574) and links to what it finds
+// (sub_822D9D20(this +104, object), from 0x8222CC20). It never checks the
+// lookup: outside the boss's own level those objects don't exist, the link
+// was made to null and sub_822D9F48 read null + 0xC (a fault loop; caught
+// with tools/gdb/catch_fault on a cheat spawn, 2026-10-05). A link to
+// nothing is now skipped (the original could only crash there).
+// -----------------------------------------------------------------------------
+extern "C" REX_FUNC(__imp__sub_822D9D20);
+extern "C" REX_FUNC(sub_822D9D20) {
+  if (ctx.r4.u32 == 0) {
+    REXLOG_INFO("Cheats: spawn: a named object the actor links to isn't in this level (skipped)");
+    return;
+  }
+  __imp__sub_822D9D20(ctx, base);
+}
+
+// 2. The same set-up stores another lookup at +136 (0x8222CC84), null there
+// too; the update (slot 4, sub_8222CD80, at 0x8222CEEC) then calls
+// sub_8222CFC8, the only reader of +136, which read null + 8 as soon as the
+// boss was jacked (caught the same way). Nothing to play: nothing done.
+extern "C" REX_FUNC(__imp__sub_8222CFC8);
+extern "C" REX_FUNC(sub_8222CFC8) {
+  const uint8_t* p = base + ctx.r3.u32 + 136;
+  if ((uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3]) == 0) return;
+  __imp__sub_8222CFC8(ctx, base);
+}
