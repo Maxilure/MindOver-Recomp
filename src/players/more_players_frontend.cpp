@@ -34,11 +34,14 @@
 
 #include <cstring>
 
+#include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
+
+REXCVAR_DECLARE(bool, debug_coop_trace);
 
 extern "C" REX_FUNC(__imp__sub_8225CA98);  // CComboCounter constructor
 extern "C" REX_FUNC(__imp__sub_8226DC68);  // CPlayerLockOnArrow constructor
@@ -204,14 +207,18 @@ extern "C" REX_FUNC(sub_82261F90) {
 // "begin 2D" sub_82262FA8(fe, 1, 0, 1) and "end 2D" sub_82263198(fe); drawn
 // after the end, players 3-4's meters and prompts never showed (found
 // 2026-10-05: their meters counted hits and said "draw", nothing on screen).
+// And BEFORE the original: inside its block the meters and prompts come first
+// (loop 0x822634E0-0x82263560), then the in-game page (bctrl 0x82263580),
+// which holds every player's prompt TEXT (the Y: CounterButtonPlayerN). Drawn
+// after the original, players 3-4's red star covered their own Y (found
+// 2026-10-06 from a screenshot); drawn first, the page's Y lands on top, as
+// for players 1-2.
 extern "C" REX_FUNC(__imp__sub_82263328);
 extern "C" REX_FUNC(__imp__sub_82262FA8);
 extern "C" REX_FUNC(__imp__sub_82263198);
 extern "C" REX_FUNC(sub_82263328) {
   const uint32_t fe = ctx.r3.u32;
-  __imp__sub_82263328(ctx, base);
-  if (fe != g_front_end) return;
-  if (*Guest(fe + 8593) & 0x10) {
+  if (fe == g_front_end && (*Guest(fe + 8593) & 0x10)) {
     CallGame(__imp__sub_82262FA8, ctx, base, fe, 1, 0, 1);
     for (int i = 0; i < Extra(); ++i) {
       for (int k : {kCombo, kCounter}) {
@@ -220,6 +227,8 @@ extern "C" REX_FUNC(sub_82263328) {
     }
     CallGame(__imp__sub_82263198, ctx, base, fe);
   }
+  __imp__sub_82263328(ctx, base);
+  if (fe != g_front_end) return;
   // The markers over the heads, when the front end draws players 1-2's
   // (+8594 bit 0x08, then sub_8226D958): each one that wants to (slot 6) and
   // whose player has joined. (The original also sorts players 1-2's two by
@@ -305,6 +314,23 @@ void AddComboHit(PPCContext& ctx, uint8_t* base, int player) {
   const uint32_t fe = Read32(Read32(0x8259B190) + 52);
   if (const uint32_t meter = ObjectOf(kCombo, fe, player)) CallGame(__imp__sub_8225D840, ctx, base, meter);
 }
+// Debug FIFO "cheat counter <player>" (cheats.cpp): show a player's "counter
+// now" prompt (the Y of a titan's dodge-counter) for 4 s, to see the four
+// prompts' places without a titan fight. The game's show (sub_8225E760(prompt,
+// 1), called by sub_822664F8) sets the prompt's timer +36 to 0.1 s and calls
+// it again every frame while a titan winds up; the update (slot 3) counts the
+// timer down and the prompt shows while it's >= 0. Here: the timer set to 4 s
+// directly. Game thread.
+void ShowCounterPrompt(PPCContext& ctx, uint8_t* base, int player) {
+  (void)ctx; (void)base;
+  const uint32_t fe = Read32(Read32(0x8259B190) + 52);
+  if (const uint32_t prompt = ObjectOf(kCounter, fe, player)) {
+    const float seconds = 4.0f;
+    uint32_t bits;
+    std::memcpy(&bits, &seconds, 4);
+    Write32(prompt + 36, bits);
+  }
+}
 }  // namespace more_players_frontend
 
 // Crash's collect (sub_82198738): "mulli r11,r25,3152 ; add r11,r11,r8 ; addi
@@ -327,13 +353,22 @@ void MorePlayersComboMeterOf(PPCRegister& player, PPCRegister& meter) {
 // Counter prompt (sub_822664F8: r3 = front end, r5 = actor): show it.
 extern "C" REX_FUNC(__imp__sub_822664F8);
 extern "C" REX_FUNC(__imp__sub_8225E760);
+// --debug_coop_trace: "player N's counter prompt shown" when its timer (+36,
+// shown while >= 0) starts (the game renews it every frame of the wind-up).
 extern "C" REX_FUNC(sub_822664F8) {
   const uint32_t fe = ctx.r3.u32;
   const int p = PlayerOfActor(ctx, base, ctx.r5.u32);
-  if (p < 2) { __imp__sub_822664F8(ctx, base); return; }
   const uint32_t prompt = ObjectOf(kCounter, fe, p);
-  if (prompt) CallGame(__imp__sub_8225E760, ctx, base, prompt, 1);
-  ctx.r3.u64 = prompt ? 1 : 0;
+  const bool was_shown = prompt && int32_t(Read32(prompt + 36)) >= 0;  // float sign bit
+  if (p < 2) {
+    __imp__sub_822664F8(ctx, base);
+  } else {
+    if (prompt) CallGame(__imp__sub_8225E760, ctx, base, prompt, 1);
+    ctx.r3.u64 = prompt ? 1 : 0;
+  }
+  if (REXCVAR_GET(debug_coop_trace) && prompt && !was_shown && int32_t(Read32(prompt + 36)) >= 0) {
+    REXLOG_INFO("Co-op: player {}'s counter prompt shown (a titan winds up a heavy attack)", p + 1);
+  }
 }
 
 // Lock-on arrow (sub_82262150: r3 = front end, r4 = player, r5 / r6 passed on).

@@ -100,4 +100,10 @@ rumble, unlocks) to all four players (section 16). Players 3 and 4 have
 their own HUD in the bottom corners (portrait, bars, mojo count, combo
 multiplier, "Join Game"; nothing changes with two players), their own combo
 meters, lock-on arrows, counter prompts and aiming reticles (sections
-17-19). Next: the markers over their heads and the camera.
+17-19). With three or four players, each player's "counter now" Y (a
+titan's heavy attack) stands beside that player's own HUD, a little smaller;
+the pause menu says "P3 Paused" / "P4 Paused"; players 3-4's "Please Wait"
+countdown shows in their corner (sections 26-27). Next: the markers over
+their heads and the camera.
+
+![Four players, each "counter now" Y beside its own HUD](images/four-players-counter-prompts.jpg)

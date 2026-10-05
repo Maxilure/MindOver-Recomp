@@ -1031,3 +1031,46 @@ counter prompt (`CounterButtonPlayer4`: a text in the button-glyph font
 `Titans_Small`, normally the Y of a titan's dodge-counter) was never set up
 and kept its authored state: shown, with a crossed-out B glyph. Copies are now made only for the players there
 are. Tested with three and four local players: no icon.
+
+## 27. The "counter now" Y with four players
+
+When a titan winds up a heavy attack, a Y in a red star invites a
+dodge-counter (dodge + heavy attack). The prompt is `CCounterOpportunityDisplay`
+(vtable `0x82039F00`): its set-up `sub_8225E3E8` places it at the BOTTOM
+corners (x from `sub_82265AE8` left / `sub_82265B48` right, y 24 from
+`sub_82265BC0`, mirror +1 / -1; its text then goes to x + 50 x mirror,
+y + 55). The game shows it with `sub_8225E760(prompt, 1)`: a 0.1 s timer at
+`+36`, renewed every frame while the titan winds up; the update counts it
+down and the prompt shows while it is >= 0.
+
+With three or four players the bottom corners belong to players 3-4's HUD:
+players 1-2's stars covered players 3-4's portraits, and players 3-4's,
+moved like their HUD (24 - 349), stood 325 units below the screen. Also,
+players 3-4's prompts are set up BEFORE players 1-2's, so player 4's copy
+of player 2's x read 0 (its star went bottom left).
+
+Now, with 3-4 players, every prompt stands beside its own HUD toward the
+screen's centre: past the end of the health bar, level with the portrait's
+centre; players 3-4 mirrored top to bottom like the rest of their HUD.
+Player 4's right-side x comes from the corner helpers' symmetry (left x +
+right x = the float at `0x82046F34`, 640). HUD units are 1.5 px at 1280 x
+720 in both directions, the 640-unit width centred (origin 160 px). Two
+players: the game's own place.
+
+With 3-4 players the prompt is also 0.75 x its size: two hooks scale the Y
+text's scale (1.2 from `0x82020C28`, before `sub_82371198` at `0x8225E52C`)
+and the star's half size (35 from `0x8201F5A0`, in the draw `sub_8225E658`
+at `0x8225E6A4`; the star is one quad around x + 50 x mirror, y + 60).
+
+**Layering.** Inside the front end's draw (`sub_82263328`) the meters and
+prompts come first (loop `0x822634E0`-`0x82263560`), then the in-game page
+(`0x82263580`), which holds every prompt's Y. Players 3-4's stars were drawn
+after the whole function, over their own Y. They are now drawn before it,
+in a 2D block of their own: the page's Y lands on top for all four.
+
+Test without a titan: the debug FIFO command `cheat counter <player>` sets
+the prompt's timer to 4 s. `--debug_coop_trace` logs "player N's counter
+prompt shown" when a titan's wind-up starts one. Tested in play with four
+players: players 3 and 4 get theirs.
+
+![Four players' counter prompts beside their HUDs](../images/four-players-counter-prompts.jpg)

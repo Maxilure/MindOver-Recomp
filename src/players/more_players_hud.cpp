@@ -643,24 +643,69 @@ extern "C" REX_FUNC(sub_82267B18) {
 }
 
 // =============================================================================
-// 5. Players 3-4's "counter now" prompt (CCounterOpportunityDisplay, made by
-//    more_players_frontend.cpp). Its set-up (slot 1, sub_8225E3E8) finds its
-//    text CounterButtonPlayerN from a two-entry name table (0x825A58A0) by its
-//    player (+8), then places itself like the HUD: x +24 (player 1's left, player
-//    2's right), y +28, mirror +32 (both paths meet at 0x8225E4E4). Without the
-//    name, player 3's prompt found no text: null + 0x74 (2026-10-04).
+// 5. The "counter now" prompt (CCounterOpportunityDisplay; players 3-4's are
+//    made by more_players_frontend.cpp): the Y in a red star shown while a
+//    titan winds up a heavy attack (Y = dodge + heavy attack). Its set-up
+//    (slot 1, sub_8225E3E8) finds its text CounterButtonPlayerN from a
+//    two-entry name table (0x825A58A0) by its player (+8), then places itself
+//    like the HUD: x +24 (sub_82265AE8 player 1's left / sub_82265B48 player
+//    2's right), y +28 (sub_82265BC0: 24, the BOTTOM of the screen), mirror
+//    +32 (+1 / -1); both paths meet at 0x8225E4E4. Its text then goes to
+//    (x + 50 x mirror, y + 50 + 5) (0x8201FEA8 = 50); the star's centre sits
+//    58 units above y (measured on a capture). Without the name, player 3's
+//    prompt found no text: null + 0x74 (2026-10-04).
+//
+//    WITH 3-4 PLAYERS the game's bottom corners are players 3-4's HUD: players
+//    1-2's prompts stood on players 3-4's portraits, and players 3-4's (moved
+//    like their HUD, 24 - 349) were 325 units below the screen, never seen
+//    (2026-10-06, `cheat counter <p>`). Now EVERY player's prompt stands BESIDE
+//    ITS OWN HUD, toward the screen's centre: just past the end of the health
+//    bar, level with the portrait's centre; players 3-4 mirrored top to bottom
+//    like the rest of their HUD, and 0.75 x the size (Y and star). With two
+//    players nothing changes (the game's own place and size). Later (a
+//    planned step): resize the whole HUD for 4 players.
 // =============================================================================
+// From the corner x to the star's centre past the health bar, in HUD units
+// (1 unit = 1.5 px at 1280 x 720, horizontally too), measured on a capture of
+// player 1's: the star's centre at the corner 140 px, the bar's end 402 px
+// (262 px = 174.7 units further), then a gap of 5 and the star's half width
+// (100 px / 2 = 33.3 units).
+// With 3-4 players the prompt is also SMALLER (the four HUDs
+// are cramped): its Y text and red star scaled by this (two hooks below).
+constexpr float kCounterScale = 0.75f;
+// (the star's half width: 35 units at full size, 33.3 measured)
+constexpr float kCounterBesideBar = 174.7f + 5.0f + 33.3f * kCounterScale;
+// The corner helpers mirror each other: left x (sub_82265AE8) + right x
+// (sub_82265B48) = the float at 0x82046F34 (640).
+constexpr uint32_t kCornerXSum = 0x82046F34;
+constexpr float kCounterCentreAboveY = 58.0f;  // the star's centre above the prompt's y
+
 void MorePlayersHudNameCounter(PPCRegister& o, PPCRegister& n) { NameFor(kCounterButton, o, n); }
+// The prompt's size with 3-4 players: the Y text's scale (set-up, before
+// sub_82371198) and the red star's half size (its draw). Two players: as is.
+void MorePlayersCounterTextScale(PPCRegister& scale) {
+  if (more_players::LocalPlayerCount() > 2) scale.f64 *= kCounterScale;
+}
+void MorePlayersCounterStarSize(PPCRegister& half_size) {
+  if (more_players::LocalPlayerCount() > 2) half_size.f64 *= kCounterScale;
+}
 void MorePlayersCounterPosition(PPCRegister& prompt) {
+  if (more_players::LocalPlayerCount() <= 2) return;  // the game's own place
   const uint32_t d = prompt.u32;
   const uint32_t player = Read32(d + 8);
-  if (player < 2 || player >= 4) return;
-  const uint32_t front_end = Read32(Read32(0x8259B190) + 52);
-  if (player == 3) {  // player 2's x and mirror (its prompt, front end +8340 + 40, is set up first)
-    const uint32_t p2 = front_end + 8340 + 40;
-    WriteFloat(d + 24, ReadFloat(p2 + 24));
-    WriteFloat(d + 32, ReadFloat(p2 + 32));
+  if (player >= 4) return;
+  if (player == 3) {
+    // player 2's side: the set-up gave player 4 the LEFT corner (only player
+    // number 1 takes the right path). Not copied from player 2's prompt:
+    // players 3-4's prompts are set up BEFORE players 1-2's (2026-10-06: a
+    // copy read player 2's x = 0, mirror 1, and player 4's star stood bottom
+    // LEFT).
+    WriteFloat(d + 24, ReadFloat(kCornerXSum) - ReadFloat(d + 24));
+    WriteFloat(d + 32, -1.0f);
   }
-  // as far below the top as the HUD moves: y' = y - (456 - bottom)
-  WriteFloat(d + 28, ReadFloat(d + 28) - (TopBaseY() - BottomBaseY()));
+  WriteFloat(d + 24, ReadFloat(d + 24) + ReadFloat(d + 32) * kCounterBesideBar);
+  // the portrait's centre: players 1-2 under the top, players 3-4 mirrored
+  const float top_centre = TopBaseY() - (kPortraitTop + kPortraitBottom) / 2.0f;
+  const float centre = player < 2 ? top_centre : kScreenHeight - top_centre;
+  WriteFloat(d + 28, centre - kCounterCentreAboveY);
 }

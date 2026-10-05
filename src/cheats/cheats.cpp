@@ -163,6 +163,7 @@ struct Requests {
   bool kill[kPlayers] = {};
   float hurt[kPlayers] = {};  // debug FIFO only: damage through the game's own path
   int combo[kPlayers] = {};   // debug FIFO only: hits on the combo meter (findings/26 s.25)
+  bool counter[kPlayers] = {};  // debug FIFO only: show the "counter now" prompt (findings/26 s.27)
   bool free_jack[kPlayers] = {};
   bool step = false;
 };
@@ -491,6 +492,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
       if (requests.kill[p] && body) Kill(ctx, base, p, body, titan != 0);
       if (requests.free_jack[p]) GiveFreeJack(ctx, base, p, titan);
       for (int i = 0; i < requests.combo[p]; ++i) more_players_frontend::AddComboHit(ctx, base, p);
+      if (requests.counter[p]) more_players_frontend::ShowCounterPrompt(ctx, base, p);
       if (requests.hurt[p] > 0.0f && body) {
         if (const uint32_t dmg = DamageableOf(body)) {
           CallGame(sub_821349E0, ctx, base, dmg, 0, 0, 0, -double(requests.hurt[p]));
@@ -627,6 +629,10 @@ bool DebugCommand(std::string_view command) {
   else if (verb == "combo" && player_ok) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.combo[player] += count > 2 ? std::atoi(std::string(words[2]).c_str()) : 1;
+  }
+  else if (verb == "counter" && player_ok) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_requests.counter[player] = true;
   }
   else if (verb == "freecam") free_camera::SetEnabled(on);
   else if (verb == "freecam_keys") free_camera::SetKeysMoveCamera(on);

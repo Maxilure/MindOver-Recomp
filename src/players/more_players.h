@@ -102,4 +102,6 @@ namespace more_players_frontend {
 void SetUpInGame(PPCContext& ctx, uint8_t* base);
 // One hit on player p's (0-3) combo meter, like a landed hit (debug FIFO).
 void AddComboHit(PPCContext& ctx, uint8_t* base, int player);
+// Shows player p's (0-3) "counter now" prompt, as a titan's heavy attack does (debug FIFO).
+void ShowCounterPrompt(PPCContext& ctx, uint8_t* base, int player);
 }  // namespace more_players_frontend

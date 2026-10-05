@@ -1550,6 +1550,18 @@ registers = ["r10", "r3"]
 address = 0x8225E4E4
 name = "MorePlayersCounterPosition"
 registers = ["r31"]
+# The "counter now" prompt SMALLER with 3-4 players (findings/26 s.27): its Y text's scale (the
+# set-up's sub_82371198 call, f1 = 1.2 just loaded from 0x82020C28; r31 = the prompt) and its red
+# star's half size (the draw sub_8225E658, f12 = 35 just loaded from 0x8201F5A0; r3 = the prompt).
+# Found 2026-10-06 reading both functions: the star is one quad around (x + 50 m, y + 60).
+[[entrypoint.midasm_hook]]
+address = 0x8225E52C
+name = "MorePlayersCounterTextScale"
+registers = ["f1"]
+[[entrypoint.midasm_hook]]
+address = 0x8225E6A4
+name = "MorePlayersCounterStarSize"
+registers = ["f12"]
 # The markers over the heads (CPlayerIdentifierArrow): the set-up's picture name (r11 = player *
 # 8, r3 = table + player * 8, right before use) and the draw's colour (r10 = player * 4, r9 = the
 # colour just read from the two-entry table at 0x825B0120).
