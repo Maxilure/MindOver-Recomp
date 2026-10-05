@@ -108,6 +108,11 @@ void RequestStepFrame();           // with Freeze on: one 1/60 s step
 // Switches (any thread).
 void SetGodMode(bool on);
 bool GodMode();
+// NO AI: enemies (and enemy titans) stop thinking: the AI manager's per-frame
+// update (CAIManager slot 10, sub_820B8688) is skipped, as the game itself
+// skips it while frozen. Not a progress cheat (beating idle enemies counts).
+void SetNoAi(bool on);
+bool NoAi();
 void SetGameSpeed(float speed);  // 1 = normal; 0.1 - 4
 float GameSpeed();
 void SetFrozen(bool on);

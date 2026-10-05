@@ -162,6 +162,7 @@ struct Requests {
   bool refill[kPlayers] = {};
   bool kill[kPlayers] = {};
   float hurt[kPlayers] = {};  // debug FIFO only: damage through the game's own path
+  int combo[kPlayers] = {};   // debug FIFO only: hits on the combo meter (findings/26 s.25)
   bool free_jack[kPlayers] = {};
   bool step = false;
 };
@@ -170,6 +171,7 @@ std::mutex g_mutex;          // guards g_requests and g_snapshot
 Requests g_requests;
 Snapshot g_snapshot;
 std::atomic<bool> g_god{false};
+std::atomic<bool> g_no_ai{false};
 std::atomic<bool> g_frozen{false};
 std::atomic<float> g_speed{1.0f};
 std::atomic<bool> g_hud_hidden{false};
@@ -488,6 +490,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
       if (requests.refill[p] && body) Refill(ctx, base, body);
       if (requests.kill[p] && body) Kill(ctx, base, p, body, titan != 0);
       if (requests.free_jack[p]) GiveFreeJack(ctx, base, p, titan);
+      for (int i = 0; i < requests.combo[p]; ++i) more_players_frontend::AddComboHit(ctx, base, p);
       if (requests.hurt[p] > 0.0f && body) {
         if (const uint32_t dmg = DamageableOf(body)) {
           CallGame(sub_821349E0, ctx, base, dmg, 0, 0, 0, -double(requests.hurt[p]));
@@ -573,6 +576,11 @@ void SetGodMode(bool on) {
   REXLOG_INFO("Cheats: god mode {}", on ? "on" : "off");
 }
 bool GodMode() { return g_god.load(); }
+void SetNoAi(bool on) {
+  g_no_ai = on;
+  REXLOG_INFO("Cheats: enemy AI {}", on ? "off" : "on");
+}
+bool NoAi() { return g_no_ai.load(); }
 void SetGameSpeed(float speed) { g_speed = std::clamp(speed, 0.1f, 4.0f); }
 float GameSpeed() { return g_speed.load(); }
 void SetFrozen(bool on) {
@@ -600,6 +608,7 @@ bool DebugCommand(std::string_view command) {
   const int player = count > 1 ? std::atoi(std::string(words[1]).c_str()) - 1 : 0;
   const bool player_ok = player >= 0 && player < kPlayers;
   if (verb == "god") SetGodMode(on);
+  else if (verb == "noai") SetNoAi(on);
   else if (verb == "freeze") SetFrozen(on);
   else if (verb == "step") RequestStepFrame();
   else if (verb == "speed" && count > 1) SetGameSpeed(std::strtof(std::string(words[1]).c_str(), nullptr));
@@ -614,6 +623,10 @@ bool DebugCommand(std::string_view command) {
   else if (verb == "hurt" && player_ok && count > 2) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.hurt[player] += std::strtof(std::string(words[2]).c_str(), nullptr);
+  }
+  else if (verb == "combo" && player_ok) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_requests.combo[player] += count > 2 ? std::atoi(std::string(words[2]).c_str()) : 1;
   }
   else if (verb == "freecam") free_camera::SetEnabled(on);
   else if (verb == "freecam_keys") free_camera::SetKeysMoveCamera(on);
@@ -645,6 +658,18 @@ bool DebugCommand(std::string_view command) {
 // -----------------------------------------------------------------------------
 // The wrapped game functions (strong definitions of the generated weak ones)
 // -----------------------------------------------------------------------------
+
+// CAIManager's per-frame update (vtable 0x82021948 slot 10, r3 = manager, f1
+// = frame time): skipped while NO AI is on. The original returns at once when
+// the game is frozen (uber +168 bits 0x20 / 0x10), then runs the AI's timers
+// (sub_820B8700), its actors' decisions (sub_820B8790, sub_820B8830) and
+// tasks (sub_820B9860: approach, attack, block, dodge, ...). Skipping it
+// leaves every AI character where its last decision put it.
+extern "C" REX_FUNC(__imp__sub_820B8688);
+extern "C" REX_FUNC(sub_820B8688) {
+  if (cheats::g_no_ai.load()) return;
+  __imp__sub_820B8688(ctx, base);
+}
 
 // CTimeManager::GetScale (r3 = time manager, returns f1): times our speed.
 // Called by the frame function once per frame (and by five others, which then

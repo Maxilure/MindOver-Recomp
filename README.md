@@ -87,8 +87,8 @@ owners (see [Disclaimer](#disclaimer)).
   key and to pick which device plays as which player (two-player co-op:
   keyboard + a controller, or two controllers;
   [findings/23](docs/findings/23-keyboard-and-mouse.md) has the full table).
-  **F5** opens a Cheats menu for testing: level ups, mojo, god mode, game
-  speed, freeze, a free camera, spawning titans (knocked out or ready to fight)
+  **F5** opens a Cheats menu for testing: level ups, mojo, god mode, no enemy AI,
+  game speed, freeze, a free camera, spawning titans (knocked out or ready to fight)
   ([findings/27](docs/findings/27-cheat-menu.md)); after a cheat that changes
   progress, achievements stay off until the game restarts.
 

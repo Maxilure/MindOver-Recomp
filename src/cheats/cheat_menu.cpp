@@ -99,6 +99,10 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::SetItemTooltip(
         "Every player's Crash and titan loses no health (and refills).\n"
         "Deaths that skip health (pits?) may still happen.");
+    bool no_ai = cheats::NoAi();
+    if (ImGui::Checkbox("No AI", &no_ai)) cheats::SetNoAi(no_ai);
+    ImGui::SetItemTooltip("Enemies and enemy titans stop thinking: no attacks, no moving.\n"
+                          "They can still be hit and beaten.");
 
     DrawTime();
     DrawCamera();

@@ -20,7 +20,7 @@ the game's own upgrade screen, started by its level script.*
 |---|---|
 | Character (player 1-4) | Shows what the player is (on foot, in a titan with its name, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Kill**, **Free jack** |
 | Spawn | A titan or an enemy from a list (or any template by name, experimental), 1-5 of them, beyond the chosen player as the camera sees it, loaded first if the level doesn't have it; titans optionally **knocked out** (one hit puts them down, ready to jack) |
-| Everyone | **God mode**: no player's Crash or titan loses health |
+| Everyone | **God mode**: no player's Crash or titan loses health; **No AI**: enemies stop thinking |
 | Time | **Game speed** 0.1x to 4x, **Freeze**, **Step one frame** |
 | Camera | **Free camera**: fly the view with W A S D, E / Q (up / down), Shift (fast), Ctrl (slow), right mouse button held or arrow keys to look; "Keys move the camera" off leaves the view in place and gives the keys back to the game |
 | Screen | **Hide the HUD** |
@@ -154,6 +154,23 @@ on, in Ratcicle Kingdom.
 Tested with a test command that deals damage through the same function
 (`cheat hurt`): a Ratcicle at 66 / 70 went to 16 / 70 without god mode;
 with it, the hit was dropped and the health refilled to 70.
+
+### No AI
+
+Enemies and enemy titans are run by the AI manager (`CAIManager`, vtable
+`0x82021948`). Its per-frame update (slot 10, `sub_820B8688`, f1 = frame
+time) returns at once while the game is frozen (uber `+168` bits `0x20` /
+`0x10`), else runs the AI's timers (`sub_820B8700`), its characters'
+decisions (`sub_820B8790`, `sub_820B8830`) and their tasks (`sub_820B9860`;
+the task classes `CAITaskApproachTargetActor`, `CAITaskAttack`,
+`CAITaskBlock`, `CAITaskDodge`, ...). **No AI** skips that update: every AI
+character keeps standing where its last decision left it, still animated,
+still hittable. Players are not AI-driven, so they keep moving.
+
+Tested on Wumpa Island with an enemy Ratcicle spawned next to Crash, who
+stood still: AI on, Crash's health 90 -> 80 -> 57 -> 16 in 16 s; No AI, 90
+the whole time and the titan idle in place; No AI switched off again, the
+titan attacked (90 -> 60). Not a progress cheat: achievements stay on.
 
 ## 4. Time: speed, freeze, one step
 
@@ -388,9 +405,10 @@ Spawning and free jack count as progress cheats (achievements off).
 
 For runs without clicking, `--debug_input_fifo` takes `cheat <command>`:
 `god on|off`, `freeze on|off`, `step`, `speed <x>`, `hud on|off`,
-`levelup <player>`, `maxlevel <player>`, `mojo <player> <amount>`,
+`noai on|off`, `levelup <player>`, `maxlevel <player>`, `mojo <player> <amount>`,
 `refill <player>`, `kill <player>`, `freejack <player>`, `hurt <player> <amount>` (damage
-through the game's own path), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `freecam_keys on|off`, `freecam_reset`, `info` (the
+through the game's own path), `combo <player> [hits]` (hits on a combo meter,
+findings/26 s.25), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `freecam_keys on|off`, `freecam_reset`, `info` (the
 menu's numbers in the log), `menu` (opens / closes the window). The free
 camera flies with `key W 1000` and the like, but note that debug key taps also
 reach the game (they bypass the keyboard pause by design).
