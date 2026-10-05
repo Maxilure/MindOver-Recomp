@@ -464,8 +464,8 @@ read player 4's titan from `+36` = the bytes `01010101`. Players 3-4's titans
 now live in our block (guards open for every local player, reads and
 writes redirected; manifest), and the helpers `sub_8226FC88` (a player's
 titan, else character) and `sub_8226FD60` (whose titan is this) cover four
-players. Titans are not yet carried into the next level for players 3-4
-(the save loop in `sub_8229CB78` handles players 1-2).
+players. Players 3-4 carry their titan into the next level since
+section 22.
 
 **"May I turn into a mask?"** (`sub_82235CB8`): the original says yes only
 when nobody is entering a mask and **players 1 and 2 are both on foot**. With
@@ -537,10 +537,9 @@ volume), `CRequirementJack`, rumble (`CProximityVibrationEmitterBehaviour`),
 the front end, the aiming reticle's ray (players it ignores) and one
 function whose owner is TBD (`sub_822F3978`).
 
-Three stay two-player for now: the reticle registry (`sub_82161B40`,
+Three stayed two-player at first: the reticle registry (`sub_82161B40`,
 writes a three-entry table), the save before a level change
-(`sub_8229CB78`, writes the per-player 1,028-byte lists: players 3-4
-don't bring a titan into the next level yet) and the character count
+(`sub_8229CB78`, extended in section 22) and the character count
 (`sub_82235D70`, section 15).
 
 Tested: four players, three level changes, masks moving between hosts:
@@ -771,3 +770,34 @@ as much as player 2: something a real mojo pickup prepares is missing.
 `--debug_menu_input_trace` logs every press a menu hears (button, the player
 asked, who it was answered for and why, the caller), START presses, owner
 changes, interactions, game state and flag changes.
+
+## 22. Titans carried into the next level by players 3 and 4
+
+A player 3 or 4 riding a titan into a level change arrived on foot, the
+titan gone. Carrying a titan takes three steps, and two of them stopped
+at player 2:
+
+1. **Before the level change**, `sub_8229CB78` walks the players
+   (`r19 = p`, `r22 = 24 + 4p`, `r28 = 1028p`): the character's state goes
+   into list A (`0x825A6280 + 1028p`), the ridden titan's template name
+   into the game object's carried-actor name (`sub_822705D0`) and its state
+   into list B (`0x825A6A88 + 1028p`). The loop had a "player < 2" guard
+   and ended at `r22 = 32`. It now runs for every local player with the
+   section 16 hooks (guard, character and titan reads, loop end) plus the
+   list A/B base hooks of section 10. Players 3-4's lists and names live in
+   our block.
+2. **While the next level loads**, the level loader `sub_822E5E00` (mode
+   3, `0x822E606C`-`0x822E60B8`) hashes each player's carried name and
+   references its inventory section (`sub_822E44B8`), which loads the
+   titan's package. Its counter stopped at 2. With step 1 fixed but not
+   this one, player 3's titan was created without its assets: the physics
+   set-up (`sub_8217F808`) looked up the titan's `EllipsoidShape`, got
+   null, and `sub_822531E8` read `null + 0x1C` (fault loop, caught with
+   `tools/play.sh --catch`'s gdb script). A new loop-end hook
+   (`MorePlayersLoopEndPlayer`) runs it for every local player.
+3. **At the spawn**, `sub_8229C6F8` reads the name and lists back (4-player
+   since sections 10 and 15) and puts the player in the titan.
+
+Tested with three players: player 3 takes a pocketed Roller out (RB),
+player 1 walks into the next level, and player 3 starts that level on the
+Roller with its level, mojo and health unchanged, without errors.

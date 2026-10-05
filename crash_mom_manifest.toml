@@ -1392,6 +1392,60 @@ name = "MorePlayersLoopEnd16"
 registers = ["r26"]
 jump_address_on_true = 0x822F39DC
 
+# TITANS CARRIED INTO THE NEXT LEVEL BY PLAYERS 3-4 (findings/26 s.22). sub_8229CB78 runs
+# before a level change: for each player (r19 = p, r22 = 24 + 4p, r28 = 1028p) it saves the
+# character's state into list A (0x825A6280 + 1028p), and the titan the player rides
+# (object +24 list) as its NAME (sub_822705D0, already 4-player) + its state in list B
+# (0x825A6A88 + 1028p). The next level's spawn (sub_8229C6F8, hooked above for 4 players)
+# reads them back and puts the player in that titan. This WRITER stopped at player 2
+# ("cmpwi r19,2 ; bge" + "cmpwi r22,32 ; blt"), so players 3-4's entries stayed empty and
+# they arrived on foot, their titan gone (found 2026-10-05 from a playtest report; the gap
+# was on the "still 2-player" list since the 25th session). Same treatment as the loops
+# above; checked with xexdis: no hook instruction is a branch target. r20 / r26 (list
+# bases) stay redirected once p >= 2: only players 3-4 follow in the loop.
+[[entrypoint.midasm_hook]]
+address = 0x8229CC0C
+name = "MorePlayersTitanGuard"
+registers = ["r19"]
+jump_address_on_true = 0x8229CC10
+#   "lwz r30,-8(r11)" (r11 = object + r22): the character
+[[entrypoint.midasm_hook]]
+address = 0x8229CC18
+name = "MorePlayersLoopChar24"
+registers = ["r22", "r30"]
+#   "addi r11,r20,4 ; add r4,r28,r11": list A of players 3-4 = ours
+[[entrypoint.midasm_hook]]
+address = 0x8229CC28
+name = "MorePlayersListA"
+registers = ["r28", "r20"]
+#   "stwx r21,r28,r26" (count -1) and the later list B stores: ours
+[[entrypoint.midasm_hook]]
+address = 0x8229CC50
+name = "MorePlayersListB"
+registers = ["r28", "r26"]
+#   "lwzx r31,r22,r3": the titan
+[[entrypoint.midasm_hook]]
+address = 0x8229CC5C
+name = "MorePlayersLoopTitan24"
+registers = ["r22", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x8229CE50
+name = "MorePlayersLoopEnd24"
+registers = ["r22"]
+jump_address_on_true = 0x8229CBFC
+# ... and the next level LOADS each carried titan's package before anything spawns: the
+# level loader sub_822E5E00 (mode 3, 0x822E606C-0x822E60B8) takes each player's carried
+# name (sub_822705F0, 4-player), hashes it and references its inventory section
+# (sub_822E44B8 = load). The loop "cmpwi r31,2 ; blt" stopped at player 2: player 3's
+# titan was then created WITHOUT its assets; its physics set-up (sub_8217F808) looked up
+# its "EllipsoidShape", got null and sub_822531E8 read null+0x1C (fault loop; found
+# 2026-10-05 with tools/gdb/catch_fault right after the writer fix above).
+[[entrypoint.midasm_hook]]
+address = 0x822E60B4
+name = "MorePlayersLoopEndPlayer"
+registers = ["r31"]
+jump_address_on_true = 0x822E6070
+
 # MOJO MULTIPLIERS OF PLAYERS 3-4 (src/players/more_players.cpp, findings/26 s.17): front end
 # +8572 + 4p, two entries; player 3's read landed on other front end fields: a mojo worth
 # millions. The two readers (index register, value register), right after their lwzx:

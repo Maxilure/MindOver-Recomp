@@ -366,6 +366,10 @@ void MorePlayersLoopTitan24(PPCRegister& o, PPCRegister& v) { v.u64 = OurCharact
 // round again (for players 1-2 exactly what the original does).
 bool MorePlayersLoopEnd16(PPCRegister& o) { return o.u32 < 16 + 4u * uint32_t(LocalPlayers()); }
 bool MorePlayersLoopEnd24(PPCRegister& o) { return o.u32 < 24 + 4u * uint32_t(LocalPlayers()); }
+// A loop whose counter IS the player number ("cmpwi rP,2 ; blt top"): true =
+// back to the top while players remain (the level loader's carried-titan
+// packages, sub_822E5E00: findings/26 s.22).
+bool MorePlayersLoopEndPlayer(PPCRegister& p) { return int32_t(p.u32) < LocalPlayers(); }
 
 // The join (front end): r18 = the controller that pressed START, r31 = the
 // player it joins as (the game picked 1 = player 2 if free). Returns true to
