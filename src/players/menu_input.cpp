@@ -199,6 +199,18 @@ int MenuOwner(PPCContext& ctx, uint8_t* base, uint32_t fe, const char** why) {
 
 }  // namespace
 
+namespace menu_input {
+int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
+  const uint32_t game = Read32(kGameGlobal);
+  if (!game) return -1;
+  const uint32_t fe = Read32(game + 52);
+  if (!fe) return -1;
+  const char* why = "";
+  return MenuOwner(ctx, base, fe, &why);
+}
+bool PlayerPlays(int p) { return Plays(p); }
+}  // namespace menu_input
+
 // IsButtonPressed: a question for "anyone" goes to the menu's owner.
 extern "C" REX_FUNC(sub_822652B0) {
   const uint32_t fe = ctx.r3.u32, button = ctx.r4.u32, lr = uint32_t(ctx.lr);

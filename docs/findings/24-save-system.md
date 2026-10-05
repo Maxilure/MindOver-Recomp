@@ -647,6 +647,14 @@ nodes it copies or relies on) and leaves another tree alone.
   X press. "Backspace X" shows in the free upper-left prompt spot of
   FE_Buttons, set at the first typing update (after the state's prompts
   action), until the screen's Exit (`sub_820D5958`).
+* **Whose X / Y.** The list's X / Y and the name screen's X are read from
+  the input system, not through the game's IsButtonPressed. They follow
+  the same owner rule as the menu's other buttons (findings/26 s.21): in
+  play, the menu's owner (who paused, who used the totem), or every
+  playing player when it has none; outside play, controller 1 (where every
+  device plays). At first only controller 1 was read, so players 2-4
+  could open the in-game save list but not rename, delete or erase a
+  letter.
 
 ### 7.5 The page in game
 

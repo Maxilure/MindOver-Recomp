@@ -33,6 +33,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../overlay_banner.h"
+#include "../players/more_players.h"
 #include "quick_load.h"
 #include "rename_screen.h"
 #include "save_files.h"
@@ -833,22 +834,42 @@ void SetPrompts(PPCContext& ctx, uint8_t* base, bool on) {
   g.prompts_shown = on ? 1 : 0;
 }
 
-// A, B, X and Y pressed since the last update (player 1's controller, or the
-// keys bound to them: the prompts show the controller's buttons, as the
-// game's own do). Read from the input system directly, so the game's muted
-// view of the controller (g_block_game_input) doesn't hide them.
-uint16_t ButtonsPressed() {
+// The buttons in `mask` held on the controllers of whoever may work the menu
+// on screen: in play, its owner (menu_input.h: who paused / who used the
+// totem), or every playing player when it has none; outside play controller
+// 1, where every device also plays (players.cpp). Player 1's controller only,
+// at first: players 2-4 couldn't rename / delete / erase a letter with X / Y
+// in the in-game save list and name screen (playtest, 2026-10-05). Read from
+// the input system directly, so the game's muted view of the controller
+// (g_block_game_input) doesn't hide them.
+uint16_t MenuButtonsDown(PPCContext& ctx, uint8_t* base, uint16_t mask) {
   auto* input =
       static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
   if (!input) {
     return 0;
   }
-  rex::input::X_INPUT_STATE state{};
-  input->GetState(0, &state);
-  const uint16_t down =
-      uint16_t(state.gamepad.buttons) &
-      (rex::input::X_INPUT_GAMEPAD_A | rex::input::X_INPUT_GAMEPAD_B |
-       rex::input::X_INPUT_GAMEPAD_X | rex::input::X_INPUT_GAMEPAD_Y);
+  const int owner = more_players::InPlay() ? menu_input::CurrentMenuOwner(ctx, base) : 0;
+  const int players = more_players::InPlay() ? more_players::LocalPlayerCount() : 1;
+  uint16_t down = 0;
+  for (int p = 0; p < players; ++p) {
+    if (owner >= 0 ? p != owner : !menu_input::PlayerPlays(p)) {
+      continue;
+    }
+    rex::input::X_INPUT_STATE state{};
+    input->GetState(uint32_t(p), &state);
+    down |= uint16_t(state.gamepad.buttons) & mask;
+  }
+  return down;
+}
+
+// A, B, X and Y pressed since the last update (MenuButtonsDown's players, or
+// the keys bound to them: the prompts show the controller's buttons, as the
+// game's own do).
+uint16_t ButtonsPressed(PPCContext& ctx, uint8_t* base) {
+  const uint16_t down = MenuButtonsDown(
+      ctx, base,
+      rex::input::X_INPUT_GAMEPAD_A | rex::input::X_INPUT_GAMEPAD_B |
+          rex::input::X_INPUT_GAMEPAD_X | rex::input::X_INPUT_GAMEPAD_Y);
   const uint16_t pressed = down & ~g.buttons_down;
   g.buttons_down = down;
   return pressed;
@@ -1452,7 +1473,7 @@ extern "C" REX_FUNC(sub_820CCA38) {
     }
     const bool busy = !idle || DialogBusy() || !list_active || g.scroll_pending ||
                       g.refresh_pending;
-    const uint16_t pressed = ButtonsPressed();
+    const uint16_t pressed = ButtonsPressed(ctx, base);
     const bool dialog = DialogBusy();
     if (dialog) {
       const int command = (pressed & rex::input::X_INPUT_GAMEPAD_A)   ? kPadConfirm
@@ -1716,13 +1737,7 @@ extern "C" REX_FUNC(sub_820D58B8) {
       SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", u"Backspace");
       SetPromptText(ctx, base, "FE_Buttons", "UpperLeftButton", u"³");
     }
-    auto* input =
-        static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
-    rex::input::X_INPUT_STATE state{};
-    if (input) {
-      input->GetState(0, &state);
-    }
-    const uint16_t down = uint16_t(state.gamepad.buttons) & rex::input::X_INPUT_GAMEPAD_X;
+    const uint16_t down = MenuButtonsDown(ctx, base, rex::input::X_INPUT_GAMEPAD_X);
     const bool pressed = down && !g_name_buttons_down;
     g_name_buttons_down = down;
     if (pressed) {

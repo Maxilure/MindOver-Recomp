@@ -88,6 +88,15 @@ uint32_t TitanOfPlayer(int p);
 }  // namespace more_players
 
 struct PPCContext;
+namespace menu_input {
+// The player whose menu is on screen (menu_input.cpp's rules: who paused, who
+// interacted with the totem, ...), -1 = anyone (also outside play). For menu
+// buttons we read ourselves (the save list's X / Y, the name screen's X).
+int CurrentMenuOwner(PPCContext& ctx, uint8_t* base);
+// Does player p (0-3) play right now? (Player 1 always does.)
+bool PlayerPlays(int p);
+}  // namespace menu_input
+
 namespace more_players_frontend {
 // Sets up players 3-4's counter prompts (call once the in-game HUD is set up).
 void SetUpInGame(PPCContext& ctx, uint8_t* base);
