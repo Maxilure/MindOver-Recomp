@@ -642,8 +642,14 @@ name = "MorePlayersActorRead"
 registers = ["r10", "r29"]
 # sub_82269480
 [[entrypoint.midasm_hook]]
+# The HUD display's "Join Game" / "Please Wait N" corner (sub_82269480) asks its player's
+# Crash for the drop-out countdown (messages 48/14 running?, 48/15 seconds left). Player 2's
+# hidden Crash always answers; with the joined-only guard a dead player 3-4 (state 0 again)
+# had no Crash here, so its corner skipped the countdown and showed "Join Game" at once.
+# Found 2026-10-05 (findings/26 s.24): both countdowns started (Crash.bfig's death node calls
+# StartCountDown(5) on every dying Crash), only player 2's corner showed it. Every local player.
 address = 0x82269604
-name = "MorePlayersActorGuard"
+name = "MorePlayersActorGuardAlways"
 registers = ["r30"]
 jump_address_on_true = 0x82269608
 [[entrypoint.midasm_hook]]
@@ -1570,3 +1576,19 @@ registers = ["r10", "r11"]
 address = 0x822AE464
 name = "MorePlayersReticleFlashColour"
 registers = ["r10", "r7"]
+# =============================================================================
+# DROP OUT for more players (findings/26 s.24; src/players/more_players.cpp, sub_822357B0).
+# CCoOpBehaviour's Drop Out handler (front end message 48/7, pause menu "Drop Out") picks
+# its path by "players 1 AND 2 both in game" (lwz r11,0(r9) / lwz r11,4(r9), r9 = the state
+# table): before each "cmpwi r11,2", r11 = 2 when nobody rides the one dropping out and
+# someone else plays, else 0 (path B frees its riders). Found 2026-10-05: player 3 dropping
+# out with player 2 a mask took path B and set PLAYER 1's sub-state to 4 (verified with
+# xexdis: 0x822357EC..0x82235800, r31 = the behaviour from 0x822357C4).
+[[entrypoint.midasm_hook]]
+address = 0x822357F0
+name = "MorePlayersDropOutPath"
+registers = ["r11", "r31"]
+[[entrypoint.midasm_hook]]
+address = 0x822357FC
+name = "MorePlayersDropOutPath"
+registers = ["r11", "r31"]

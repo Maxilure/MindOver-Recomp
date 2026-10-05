@@ -1087,6 +1087,147 @@ extern "C" REX_FUNC(sub_82235CB8) {
   }
 }
 
+// =============================================================================
+// "THE OTHER PLAYER" BY NUMBER (findings/26 s.24). CCoOpBehaviour (r3 = it, my
+// player at +36, my Crash at +32) asks sub_82235B00 for the other player's
+// NUMBER: "1 if I'm player 1, else 0" -- player 2 for player 1, player 1 for
+// everyone else. Found 2026-10-05 while giving players 3-4 their own drop-out
+// countdown: four script-reachable co-op functions still tied players 3-4 to
+// player 1 or 2 through it (method names from the registration at 0x82235E70..):
+//   IsOtherPlayerDigging          sub_82234AE0  digging byte of "the other"
+//   DeatchFromOtherPlayerAndUnhide sub_82235258 leave a mask: at the host's
+//                                               height if the host digs
+//   IsOkayToLeaveMaskState        sub_82235A80  no while "the other" is DYING (7)
+//   Drop Out (front end 48/7)     sub_822357B0  below
+//   ForceOtherPlayerToBecomeMask  sub_82235B70  below (rewritten)
+// With more than two players "the other" = my partner by sub_82235B10: the
+// Crash carrying me if I'm a mask, else the nearest Crash on foot -- the same
+// partner the mask code already uses. Inside Drop Out it is one of my riders.
+// =============================================================================
+extern "C" REX_FUNC(__imp__sub_82235B00);
+extern "C" REX_FUNC(__imp__sub_822357B0);
+extern "C" REX_FUNC(__imp__sub_82235B70);
+
+namespace more_players {
+namespace {
+constexpr uint32_t kBehaviourCrash = 32, kBehaviourPlayer = 36;  // CCoOpBehaviour
+// Sub-states (registration at 0x8223619C): 0 JOINING_GAME, 1 DEAD, 2 DISPLAYING_NO_EXIT_ERROR,
+// 3 LEAVING_MASK, 5 BEING_FORCED_INTO_MASK, 7 DYING; unnamed: 4 (forced out of the mask: Drop
+// Out's rider), 6 (dropped out), 8 (a mask dropping out), 9 (nothing going on).
+constexpr uint32_t kSubForcedOutOfMask = 4, kSubForcedIntoMask = 5, kSubDroppedOut = 6;
+uint32_t g_dropping_out = 0;  // the CCoOpBehaviour inside its Drop Out (sub_822357B0)
+
+// The players riding Crash `crash` as masks (state 1 mask / 3 entering one).
+std::vector<int> RidersOf(uint32_t crash) {
+  std::vector<int> riders;
+  const uint32_t holder = HolderOf(crash);
+  if (!holder) return riders;
+  for (int q = 0; q < LocalPlayers(); ++q) {
+    const uint32_t c = CharacterOf(q), s = Read32(kState + 4 * q);
+    if (!c || c == crash || (s != 1 && s != 3)) continue;
+    auto it = g_host_of.find(c);
+    if ((it != g_host_of.end() && it->second == holder) || Read32(holder + kHolderRider) == c) riders.push_back(q);
+  }
+  return riders;
+}
+}  // namespace
+}  // namespace more_players
+
+extern "C" REX_FUNC(sub_82235B00) {
+  if (LocalPlayers() <= 2) {
+    __imp__sub_82235B00(ctx, base);
+    return;
+  }
+  const uint32_t behaviour = ctx.r3.u32;
+  const int me = int(Read32(behaviour + kBehaviourPlayer));
+  int other = -1;
+  if (g_dropping_out == behaviour) {
+    // Drop Out's "the other" (only on its "someone rides me / nobody else plays"
+    // path): my first rider, else a player not in the game (= nothing to do).
+    const std::vector<int> riders = RidersOf(Read32(behaviour + kBehaviourCrash));
+    if (!riders.empty()) other = riders.front();
+    for (int q = 0; q < LocalPlayers() && other < 0; ++q) {
+      if (q != me && Read32(kState + 4 * q) == 0) other = q;
+    }
+  } else {
+    other = PlayerOf(CallGame(sub_82235B10, ctx, base, behaviour, Read32(behaviour + kBehaviourCrash)));
+  }
+  if (other < 0 || other == me) {
+    __imp__sub_82235B00(ctx, base);
+  } else {
+    ctx.r3.u64 = uint32_t(other);
+  }
+}
+
+// DROP OUT (pause menu; the front end sends 48/7 to the player's Crash,
+// sub_82266040; CCoOpBehaviour's handler sub_822357B0). The original: a mask (or
+// one entering) -> sub-state 8. On foot: if players 1 AND 2 are both in game ->
+// path A (my partner gets a "where to stand" message if needed, I leave: state 0,
+// sub-state 5); else path B: "the other" (it rides me) is forced out of its mask
+// (sub-state 4), then I leave the same way. For more players (midasm hooks on
+// the two state reads at 0x822357EC / 0x822357F8 + this wrapper): path A when
+// nobody rides me and someone else is in game, path B otherwise; path B's
+// "other" = my first rider (sub_82235B00 above), the remaining riders get
+// sub-state 4 here. Before: player 3 dropping out with player 2 a mask set
+// PLAYER 1's sub-state to 4 and left player 3's own riders on a vanished Crash.
+extern "C" REX_FUNC(sub_822357B0) {
+  const uint32_t behaviour = ctx.r3.u32;
+  const int me = int(Read32(behaviour + kBehaviourPlayer));
+  const uint32_t my_state = me >= 0 && me < kMaxPlayers ? Read32(kState + 4 * me) : 0;
+  if (LocalPlayers() <= 2 || my_state == 1 || my_state == 3) {
+    __imp__sub_822357B0(ctx, base);
+    return;
+  }
+  const std::vector<int> riders = RidersOf(Read32(behaviour + kBehaviourCrash));
+  g_dropping_out = behaviour;
+  __imp__sub_822357B0(ctx, base);
+  g_dropping_out = 0;
+  for (int q : riders) {  // path B freed the first; every rider of mine leaves its mask
+    if (Read32(kSubState + 4 * q) != kSubForcedOutOfMask) Write32(kSubState + 4 * q, kSubForcedOutOfMask);
+  }
+  if (REXCVAR_GET(debug_coop_trace)) {
+    REXLOG_INFO("Co-op: player {} drops out ({} rider(s) forced out of their masks)", me + 1, riders.size());
+  }
+}
+
+// Midasm hooks before "cmpwi r11,2" at 0x822357F0 / 0x822357FC (r11 = player 1's
+// / player 2's state just read; r31 = the behaviour): with more players both
+// answer "in game" (2) for path A, else 0 (path B).
+void MorePlayersDropOutPath(PPCRegister& r11, PPCRegister& r31) {
+  if (LocalPlayers() <= 2) return;
+  const uint32_t behaviour = r31.u32;
+  const int me = int(Read32(behaviour + kBehaviourPlayer));
+  bool someone_else_plays = false;
+  for (int q = 0; q < LocalPlayers(); ++q) someone_else_plays |= q != me && Read32(kState + 4 * q) == 2;
+  const bool path_a = someone_else_plays && RidersOf(Read32(behaviour + kBehaviourCrash)).empty();
+  r11.u64 = path_a ? 2 : 0;
+}
+
+// ForceOtherPlayerToBecomeMask (script method; Crash.bfig calls it right before
+// InteractWithInteractable). The original: when players 1 AND 2 are both in game
+// and neither is being forced into a mask / dropped out (sub-states 5 / 6), "the
+// other" gets sub-state 5 (its Crash turns into a mask on the caller). For more
+// players: when I'm in game and not 5 / 6, EVERY other player in game who isn't
+// 5 / 6 gets 5 (three masks fit on one Crash).
+extern "C" REX_FUNC(sub_82235B70) {
+  if (LocalPlayers() <= 2) {
+    __imp__sub_82235B70(ctx, base);
+    return;
+  }
+  const int me = int(Read32(ctx.r3.u32 + kBehaviourPlayer));
+  if (me < 0 || me >= kMaxPlayers || Read32(kState + 4 * me) != 2) return;
+  auto busy = [](int q) {
+    const uint32_t s = Read32(kSubState + 4 * q);
+    return s == kSubForcedIntoMask || s == kSubDroppedOut;
+  };
+  if (busy(me)) return;
+  for (int q = 0; q < LocalPlayers(); ++q) {
+    if (q == me || Read32(kState + 4 * q) != 2 || busy(q)) continue;
+    Write32(kSubState + 4 * q, kSubForcedIntoMask);
+    if (REXCVAR_GET(debug_coop_trace)) REXLOG_INFO("Co-op: player {} forces player {} into a mask", me + 1, q + 1);
+  }
+}
+
 // The HUD controller's three "flash" methods with a player number
 // (sub_8226AB18 / AB78 / ABD8): more_players_hud.cpp (players 3-4's displays). Found
 // 2026-10-04: for player 3 the original used the controller's +20 (0 / 1) as
@@ -1277,3 +1418,4 @@ extern "C" REX_FUNC(sub_8217F528) {
     if (logged++ < 10) REXLOG_WARN("Co-op: character {:08X} was set to a NaN position: kept the previous one", actor);
   }
 }
+

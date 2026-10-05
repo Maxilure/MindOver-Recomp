@@ -850,7 +850,71 @@ the state table (two players: the drop-out came from `sub_82234DC8` <-
 Tested with four players on foot, with and without god mode: players 2, 3
 and 4 killed one after another each drop out (states 2 0 2 2 -> 2 0 0 2 ->
 2 0 0 0); player 2 gets its "Please Wait" countdown, players 3-4 "Join Game"
-in their corners right away (the countdown is player 2's own HUD element);
+in their corners right away (cause and fix: section 24);
 players 3-4 rejoin with START and leave the mask with B, with full health.
 Player 1 dying while the others play drops out too, as with two players.
 Two players: unchanged.
+
+## 24. Players 3-4 on their own: countdown, drop out, "the other player"
+
+**The countdown.** A player who drops out after a death sees "Please Wait
+5.. 1" in its HUD corner, then "Join Game"; START is refused until then.
+It is per player, kept by the dying Crash itself:
+
+* `CCoOpCountdownBehaviour` (vtable `0x82037E6C`, field
+  `m_CoOpCountdownBehaviour` of every Crash): seconds left at `+28`, counted
+  down by its update (slot 4); script methods `StartCountDown` (`sub_82236EF0`,
+  f1 = seconds), `StopCountDown`, `IsACountDownActive`; messages 48/14
+  (running?) and 48/15 (whole seconds left + 1) answer the HUD.
+* Started from data, not code: `fighttrees/Crash.bfig`'s death node runs
+  `SetPlayerCoOpSubState(DEAD)`, `HideAndAttachToOtherPlayer`,
+  `m_CoOpCountdownBehaviour:StartCountDown(5)`, then
+  `SetPlayerCoOpState(NOT_JOINED_GAME)`. Caught with a temporary hook on
+  `sub_82236EF0` (guest stack: the Lua VM `0x8240xxxx` called from Crash's
+  message handler `0x821AD8BC`): it ran for players 2, 3 and 4 alike.
+* Crash's compiled fight tree asks `IsACountDownActive` before a join, so a
+  START during the countdown is refused for every player.
+* The HUD display's corner (`sub_82269480`): while the player is out and its
+  sub-state is DEAD (1), it asks **its player's Crash** (game object list,
+  `0x822695EC`) whether a countdown runs and shows "Please Wait N", else
+  "Join Game".
+
+Players 3-4 showed "Join Game" at once because that lookup went through the
+port's "joined players only" guard (section 10): a dropped-out player 3 is
+"not joined", so its corner found no Crash and never asked. Player 2's
+hidden Crash always answers. The site now lets every local player through,
+like the display's other lookups (section 18). Tested with four players:
+players 3, 4 and 2 killed (2 and 4 in the same frame): each corner counts
+down from 5 on its own clock, then "Join Game"; player 3's START during its
+countdown is refused, after it player 3 joins; two players unchanged.
+
+**"The other player" by number.** `CCoOpBehaviour`'s helper `sub_82235B00`
+answers "player 2 for player 1, player 1 for everyone else". Its users, by
+the script names registered at `0x82235E70`..:
+
+| Function | What "the other" was used for |
+|---|---|
+| `IsOtherPlayerDigging` `sub_82234AE0` | the other's digging flag |
+| `DeatchFromOtherPlayerAndUnhide` `sub_82235258` | leaving a mask at the host's height while it digs |
+| `IsOkayToLeaveMaskState` `sub_82235A80` | no while the other is DYING |
+| Drop Out (`sub_822357B0`, front end message 48/7) | the rider forced out of its mask |
+| `ForceOtherPlayerToBecomeMask` `sub_82235B70` | the one forced into a mask (Crash.bfig, before `InteractWithInteractable`) |
+
+With more than two players "the other" is now the partner the mask code
+already uses (`sub_82235B10`: the Crash carrying me if I am a mask, else the
+nearest Crash on foot). Sub-state numbers (registration at `0x8223619C`):
+0 joining, 1 dead, 2 no-exit message, 3 leaving the mask, 5 forced into a
+mask, 7 dying; unnamed 4 (forced out of the mask), 6 (dropped out), 8 (a
+mask dropping out), 9 (nothing going on).
+
+* **Drop Out** chose its path by "players 1 and 2 both in game": player 3
+  dropping out while player 2 was a mask set player 1's sub-state to 4. Now
+  (two midasm hooks on its state reads + a wrapper): the "on foot, someone
+  else plays" path when nobody rides the player, else the "free my riders"
+  path, which frees every rider. Tested: player 3 drops out with players 2
+  and 4 as masks on player 1; player 1 untouched.
+* **ForceOtherPlayerToBecomeMask** worked only with players 1 and 2 both on
+  foot and forced one of them; now every other player on foot is forced
+  (three masks fit on one Crash). Not tested in play yet (it needs the
+  interaction that calls it).
+
