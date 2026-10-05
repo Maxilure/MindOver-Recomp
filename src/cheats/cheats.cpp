@@ -293,7 +293,7 @@ PlayerInfo Describe(uint32_t stats, int p) {
   } else if (titan) {
     info.name = "Titan (no upgrades)";
   } else {
-    info.name = "Crash";
+    info.name = "on foot";  // (no character name: players look different, findings/27)
     info.level = ReadStat(stats, kStatCrashLevel);
     info.mojo = ReadStat(stats, kStatCrashMojo);
     info.next_price = int32_t(Read32(kCrashNextPrice));

@@ -18,7 +18,7 @@ the game's own upgrade screen, started by its level script.*
 
 | Section | What it does |
 |---|---|
-| Character (player 1-4) | Shows what the player is (Crash, a titan, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Free jack** |
+| Character (player 1-4) | Shows what the player is (on foot, in a titan with its name, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Free jack** |
 | Spawn | A titan or an enemy from a list (or any template by name, experimental), 1-5 of them, beyond the chosen player as the camera sees it, loaded first if the level doesn't have it; titans optionally **knocked out** (one hit puts them down, ready to jack) |
 | Everyone | **God mode**: no player's Crash or titan loses health |
 | Time | **Game speed** 0.1x to 4x, **Freeze**, **Step one frame** |

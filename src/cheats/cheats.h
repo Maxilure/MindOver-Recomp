@@ -72,7 +72,7 @@ struct PlayerInfo {
   bool present = false;     // joined the level (co-op state not 0)
   bool mask = false;        // rides another player as a mask (no body of its own)
   bool titan = false;       // rides a jacked titan (else on foot = Crash)
-  std::string name;         // "Crash" or the titan's internal name ("Roller")
+  std::string name;         // the titan's internal name ("Roller"), "Mask" or "on foot"
   int level = 0;            // 0 = not upgraded yet
   int max_level = 0;        // 5 for titans; 0 = unknown (Crash: his scripts decide)
   int mojo = 0;             // mojo collected toward this character's upgrades

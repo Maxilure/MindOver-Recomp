@@ -133,8 +133,16 @@ class CheatDialog : public rex::ui::ImGuiDialog {
       ImGui::TextDisabled("Player %d isn't in the level.", player_ + 1);
       return;
     }
-    ImGui::Text("Playing as: %s%s", info.name.c_str(),
-                info.titan ? "  (titan)" : info.mask ? "  (rides another player; acts on Crash's upgrades)" : "");
+    // No character name on foot: each player's look differs (Crash, Coco,
+    // Carbon Crash...) and we don't read which one it is. A titan's name comes
+    // from its upgrade data, so that one is right.
+    if (info.titan) {
+      ImGui::Text("In a titan: %s", info.name.c_str());
+    } else if (info.mask) {
+      ImGui::Text("Riding another player as a mask (cheats act on the shared upgrades)");
+    } else {
+      ImGui::Text("On foot");
+    }
     if (info.max_level > 0) {
       ImGui::Text("Level: %d of %d%s", info.level, info.max_level,
                   info.fully_upgraded ? "  (fully upgraded)" : "");
