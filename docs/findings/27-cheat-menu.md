@@ -18,7 +18,7 @@ the game's own upgrade screen, started by its level script.*
 
 | Section | What it does |
 |---|---|
-| Character (player 1-4) | Shows what the player is (on foot, in a titan with its name, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Free jack** |
+| Character (player 1-4) | Shows what the player is (on foot, in a titan with its name, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Kill**, **Free jack** |
 | Spawn | A titan or an enemy from a list (or any template by name, experimental), 1-5 of them, beyond the chosen player as the camera sees it, loaded first if the level doesn't have it; titans optionally **knocked out** (one hit puts them down, ready to jack) |
 | Everyone | **God mode**: no player's Crash or titan loses health |
 | Time | **Game speed** 0.1x to 4x, **Freeze**, **Step one frame** |
@@ -142,6 +142,14 @@ CharacterOfPlayer(p)` or `TitanOfPlayer(p)` (the game object's `+16` / `+24`
 lists, ours for players 3-4). With god mode on, losses on players' damageables
 are dropped and their updates refill them. Deaths that don't go through
 hitpoints (pits, if they kill directly) aren't covered: not tested yet.
+
+**Kill** sets the body's hitpoints to 0 through the same function (its
+original, so god mode doesn't block it, and god mode's refill leaves that
+damageable alone for 3 s); the game does the rest as for any death. On foot
+Crash plays his death, the screen fades and he is back at the checkpoint with
+full health; in a titan the titan dies the game's way (it collapses, Crash is
+thrown out, mojo drops) and Crash goes on on foot. Tested both, with god mode
+on, in Ratcicle Kingdom.
 
 Tested with a test command that deals damage through the same function
 (`cheat hurt`): a Ratcicle at 66 / 70 went to 16 / 70 without god mode;
@@ -341,7 +349,7 @@ Spawning and free jack count as progress cheats (achievements off).
 For runs without clicking, `--debug_input_fifo` takes `cheat <command>`:
 `god on|off`, `freeze on|off`, `step`, `speed <x>`, `hud on|off`,
 `levelup <player>`, `maxlevel <player>`, `mojo <player> <amount>`,
-`refill <player>`, `freejack <player>`, `hurt <player> <amount>` (damage
+`refill <player>`, `kill <player>`, `freejack <player>`, `hurt <player> <amount>` (damage
 through the game's own path), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `freecam_keys on|off`, `freecam_reset`, `info` (the
 menu's numbers in the log), `menu` (opens / closes the window). The free
 camera flies with `key W 1000` and the like, but note that debug key taps also

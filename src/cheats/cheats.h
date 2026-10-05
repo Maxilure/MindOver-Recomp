@@ -96,6 +96,10 @@ void RequestLevelUp(int player);   // one upgrade for the character it plays now
 void RequestMaxLevel(int player);  // every upgrade left (Crash: one per frame)
 void RequestAddMojo(int player, int amount);  // like picking up that much mojo
 void RequestRefillHealth(int player);
+// Kills what the player is on now: in a titan the titan dies (Crash is thrown
+// out), on foot Crash dies (the game's death: back at the checkpoint).
+// Works with god mode on.
+void RequestKill(int player);
 // The game's "free jack" power-up: jack any titan without beating it first
 // (until the next jack). On foot only.
 void RequestFreeJack(int player);
@@ -122,7 +126,7 @@ void NoteProgressCheat();
 // Debug FIFO (debug_input_script.h): "cheat <command>" for test runs without
 // clicking the menu. Commands: god on|off, freeze on|off, step, speed <x>,
 // hud on|off, levelup <player 1-4>, maxlevel <p>, mojo <p> <amount>, refill <p>,
-// freejack <p>, hurt <p> <amount> (test damage through the game's own path),
+// freejack <p>, kill <p>, hurt <p> <amount> (test damage through the game's own path),
 // freecam on|off, freecam_keys on|off, freecam_reset, info (logs the
 // snapshot), spawn <template> [player] [count] [ko] (spawn.h). False if unknown. ("cheat menu" = F5, handled by the FIFO.)
 bool DebugCommand(std::string_view command);

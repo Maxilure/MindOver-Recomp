@@ -186,6 +186,13 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     if (ImGui::Button("Refill health")) cheats::RequestRefillHealth(player_);
     ImGui::EndDisabled();
     ImGui::SameLine();
+    ImGui::BeginDisabled(info.mask);
+    if (ImGui::Button("Kill")) cheats::RequestKill(player_);
+    ImGui::EndDisabled();
+    ImGui::SetItemTooltip(
+        "In a titan: the titan dies and the player is thrown out.\n"
+        "On foot: the player dies (back at the checkpoint). Works with god mode.");
+    ImGui::SameLine();
     ImGui::BeginDisabled(info.mask || info.titan);
     if (ImGui::Button("Free jack")) cheats::RequestFreeJack(player_);
     ImGui::EndDisabled();

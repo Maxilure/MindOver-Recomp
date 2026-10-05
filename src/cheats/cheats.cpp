@@ -160,6 +160,7 @@ struct Requests {
   bool max_level[kPlayers] = {};
   int add_mojo[kPlayers] = {};
   bool refill[kPlayers] = {};
+  bool kill[kPlayers] = {};
   float hurt[kPlayers] = {};  // debug FIFO only: damage through the game's own path
   bool free_jack[kPlayers] = {};
   bool step = false;
@@ -184,6 +185,9 @@ void MarkCheated() {
 // Damageables that belonged to a player's character at their last update
 // (game thread only). God mode refuses them any loss.
 std::set<uint32_t> g_player_damageables;
+// Damageables just killed by the cheat -> frames left during which god mode
+// leaves them alone (else its refill, the next frame, would undo the kill).
+std::map<uint32_t, int> g_killed;
 // Actor -> its damageable, from the damageables' per-frame updates (game
 // thread only): filled during a frame, handed over at the next frame's start
 // (so it never holds actors that are gone).
@@ -363,6 +367,26 @@ void Refill(PPCContext& ctx, uint8_t* base, uint32_t body) {
   if (const uint32_t dmg = DamageableOf(body)) RefillDamageable(ctx, base, dmg);
 }
 
+// KILL: hitpoints to 0 through the damage function's original (god mode's
+// wrapper doesn't see it); the game does the rest as for any death. Tested
+// 2026-10-05: on foot Crash plays his death, the screen fades, he comes back
+// at the checkpoint with full health; in a titan the titan dies the game's way
+// (it collapses, Crash is thrown out, mojo drops) and Crash goes on on foot (a
+// second kill then kills him). God mode keeps its hands off for 3 s.
+void Kill(PPCContext& ctx, uint8_t* base, int p, uint32_t body, bool titan) {
+  const uint32_t dmg = DamageableOf(body);
+  if (!dmg) {
+    REXLOG_INFO("Cheats: player {} kill: no health found", p + 1);
+    return;
+  }
+  const uint32_t hp = Read32(dmg + kDmgHitpoints), max = Read32(dmg + kDmgMaxHitpoints);
+  if (!Readable(hp, 4) || !Readable(max, 4)) return;
+  g_killed[dmg] = 180;
+  CallGame(__imp__sub_821349E0, ctx, base, dmg, 0, 0, 0,
+           -double(ReadFloat(hp) + ReadFloat(max) + 1.0f));
+  REXLOG_INFO("Cheats: player {} killed ({})", p + 1, titan ? "their titan" : "on foot");
+}
+
 // FREE JACK: the game's power-up (the "Free jack" pickup, c_freeJack): the
 // player may jack a titan without beating it first. The pickup (Crash's
 // message handler sub_821ACAD8, at 0x821ACF30) calls sub_821AE998(Crash's
@@ -462,6 +486,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
         }
       }
       if (requests.refill[p] && body) Refill(ctx, base, body);
+      if (requests.kill[p] && body) Kill(ctx, base, p, body, titan != 0);
       if (requests.free_jack[p]) GiveFreeJack(ctx, base, p, titan);
       if (requests.hurt[p] > 0.0f && body) {
         if (const uint32_t dmg = DamageableOf(body)) {
@@ -470,6 +495,10 @@ void Tick(PPCContext& ctx, uint8_t* base) {
         }
       }
     }
+  }
+
+  for (auto it = g_killed.begin(); it != g_killed.end();) {
+    it = --it->second <= 0 ? g_killed.erase(it) : std::next(it);
   }
 
   // Spawns waiting (spawn.h).
@@ -511,6 +540,11 @@ void RequestAddMojo(int player, int amount) {
   MarkCheated();
   std::lock_guard<std::mutex> lock(g_mutex);
   if (player >= 0 && player < kPlayers) g_requests.add_mojo[player] += amount;
+}
+void RequestKill(int player) {
+  MarkCheated();
+  std::lock_guard<std::mutex> lock(g_mutex);
+  if (player >= 0 && player < kPlayers) g_requests.kill[player] = true;
 }
 void RequestRefillHealth(int player) {
   MarkCheated();
@@ -576,6 +610,7 @@ bool DebugCommand(std::string_view command) {
     RequestAddMojo(player, std::atoi(std::string(words[2]).c_str()));
   } else if (verb == "refill" && player_ok) RequestRefillHealth(player);
   else if (verb == "freejack" && player_ok) RequestFreeJack(player);
+  else if (verb == "kill" && player_ok) RequestKill(player);
   else if (verb == "hurt" && player_ok && count > 2) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.hurt[player] += std::strtof(std::string(words[2]).c_str(), nullptr);
@@ -634,7 +669,7 @@ extern "C" REX_FUNC(sub_82132F88) {
   g_damageable_filling[actor] = self;
   if (IsPlayerBody(actor)) {
     g_player_damageables.insert(self);
-    if (g_god.load()) RefillDamageable(ctx, base, self);
+    if (g_god.load() && !g_killed.count(self)) RefillDamageable(ctx, base, self);
   } else {
     g_player_damageables.erase(self);
   }
