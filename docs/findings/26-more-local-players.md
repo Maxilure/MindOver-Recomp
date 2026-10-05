@@ -1020,3 +1020,14 @@ HUD. The base y is a constant: `sub_82265BB0` returns the float at
 `0x82047014` (456). The layout now reads that constant. Tested: player 3
 (players 1 and 3 in game, player 2's controller connected) and player 4
 each show "Please Wait 5 .. 1" in their corner.
+
+**A stray "no B" icon with three local players.** With `--local_players=3`
+a red crossed-out B stood in the bottom right corner all the time. A
+temporary guest-stack log on the sprite draw (`sub_823A7218`) placed it in
+the front end's page draw (`sub_82263584` -> Scrooby): an element of the
+in-game page. The HUD patch added players 3 **and** 4's copies whenever
+more than two players were set; with three, player 4's copy of player 2's
+counter prompt (`CounterButtonPlayer4`: a text in the button-glyph font
+`Titans_Small`, normally the Y of a titan's dodge-counter) was never set up
+and kept its authored state: shown, with a crossed-out B glyph. Copies are now made only for the players there
+are. Tested with three and four local players: no icon.

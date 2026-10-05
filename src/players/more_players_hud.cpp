@@ -275,6 +275,13 @@ bool PatchHud(const Bytes& host, Bytes* out) {
   if (project == top.end()) return false;
   const float bottom = BottomBaseY();
   const int32_t join_y = int32_t(bottom - (TopBaseY() - kJoinTextY));
+  // Copies only for the players there are (digit '3' / '4'). A copy nobody
+  // sets up keeps its authored state: with --local_players=3, player 4's
+  // CounterButtonPlayer4 (copy of player 2's counter prompt text, the Y of a
+  // titan's dodge-counter; font Titans_Small = button glyphs), never set up,
+  // stood on screen bottom right with its authored text: a red crossed-out B
+  // (found 2026-10-06 from a screenshot; drawn by the front end's page draw).
+  const auto wanted = [](char digit) { return digit - '1' < more_players::LocalPlayerCount(); };
   Bytes children;
   bool page_done = false, coop_done = false, screen_done = false;
   for (const Chunk& k : pure3d::ChildrenOf(host, *project)) {
@@ -289,7 +296,7 @@ bool PatchHud(const Bytes& host, Bytes* out) {
         for (const char* stem : {"MojoCountPlayer", "MojoMultiplierPlayer", "MojoMultiplierFXPlayer",
                                  "CounterButtonPlayer"}) {
           for (char from : {'1', '2'}) {
-            if (text == std::string(stem) + from) {
+            if (text == std::string(stem) + from && wanted(from == '1' ? '3' : '4')) {
               const Bytes extra = Renamed(host, e, from == '1' ? '3' : '4');
               layer.insert(layer.end(), extra.begin(), extra.end());
             }
@@ -303,6 +310,7 @@ bool PatchHud(const Bytes& host, Bytes* out) {
       const size_t count_at = 12 + 1 + chunk[12] + 4;
       uint32_t count = pure3d::Le32(&chunk[count_at]);
       for (char digit : {'3', '4'}) {
+        if (!wanted(digit)) continue;
         const std::string page = std::string("InGame_CoOp_Player") + digit + ".pag";
         chunk.push_back(0x18);  // field length 24: the name, NUL padded
         for (size_t i = 0; i < 24; ++i) chunk.push_back(i < page.size() ? uint8_t(page[i]) : 0);
@@ -318,7 +326,8 @@ bool PatchHud(const Bytes& host, Bytes* out) {
     children.insert(children.end(), chunk.begin(), chunk.end());
     // after each player 1-2 "Join Game" page: its copy for player 3 / 4, moved down
     for (char from : {'1', '2'}) {
-      if (k.id == pure3d::kChunkPage && name == std::string("InGame_CoOp_Player") + from + ".pag") {
+      if (k.id == pure3d::kChunkPage && name == std::string("InGame_CoOp_Player") + from + ".pag" &&
+          wanted(from == '1' ? '3' : '4')) {
         Bytes renamed = Renamed(host, k, from == '1' ? '3' : '4');
         Chunk copy_chunk{0, k.id, k.data_size, k.total_size};
         const Bytes moved = EditLayer(renamed, copy_chunk, [&](const Chunk& e, Bytes& layer) {
