@@ -87,6 +87,10 @@ owners (see [Disclaimer](#disclaimer)).
   key and to pick which device plays as which player (two-player co-op:
   keyboard + a controller, or two controllers;
   [findings/23](docs/findings/23-keyboard-and-mouse.md) has the full table).
+  **F5** opens a Cheats menu for testing: level ups, mojo, god mode, game
+  speed, freeze, a free camera, spawning titans (knocked out or ready to fight)
+  ([findings/27](docs/findings/27-cheat-menu.md)); after a cheat that changes
+  progress, achievements stay off until the game restarts.
 
 ## Quick start (Linux)
 
@@ -127,6 +131,7 @@ crash_mom_manifest.toml    recompiler config: every analysis fix and hook, comme
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       OUR native code: app setup, hooks, fixes, debug tools
   input/                   keyboard + mouse as a virtual controller, the Controls menu (F6)
+  cheats/                  the Cheats menu for testing (F5): level ups, mojo, god mode, speed, free camera, spawning
   saves/                   the save library: a list of any number of saves, rename / delete, the name keyboard in game
   data/                    changed copies of game data files, built at run time from your own game files
   pddi/                    interception of the game's renderer calls + the frame tracer

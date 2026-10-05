@@ -54,6 +54,7 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include "cheats/cheats.h"
 #include "data/data_patcher.h"
 #include "data/pure3d.h"
 
@@ -353,8 +354,10 @@ extern "C" REX_FUNC(sub_8226A908) {
   if (!(*Guest(controller + 4) & 0x80)) return;
   if (auto* extra = ExtraOf(controller)) for (uint32_t d : *extra) CallVirtual(ctx, base, d, 3, 0, dt);
 }
-// Draw: slot 4 of each that says yes to slot 6.
+// Draw: slot 4 of each that says yes to slot 6. Nothing while the cheat menu
+// hides the HUD (cheats/cheats.h).
 extern "C" REX_FUNC(sub_8226A998) {
+  if (cheats::HudHidden()) return;
   const uint32_t controller = ctx.r3.u32;
   __imp__sub_8226A998(ctx, base);
   if (auto* extra = ExtraOf(controller)) {

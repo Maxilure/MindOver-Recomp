@@ -35,6 +35,7 @@
 //    the keyboard driver and the player's bindings (input/keyboard_mouse.h),
 //    exactly as if typed (names as in controls.toml: Space, LMB, WheelUp...):
 //      echo "key Q 1000" > /path/to/fifo     (hold Spin for a second)
+//      echo "cheat god on" > /path/to/fifo   (a cheat: cheats/cheats.h)
 //
 // 3) MORE FAKE CONTROLLERS (local multiplayer tests): --debug_fake_pads=N
 //    (1-3) adds N more fake controllers, "Debug fake controller 2..N+1", which

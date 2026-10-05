@@ -45,6 +45,10 @@ set(CRASHMOM_SOURCES
     src/players/more_players.cpp  # room for 4 players in the co-op tables, --local_players (findings/26)
     src/players/more_players_hud.cpp  # players 3-4's HUD in the bottom corners (findings/26)
     src/players/more_players_frontend.cpp  # players 3-4's combo meters, lock-on arrows, counter prompts, reticles
+    src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
+    src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups
+    src/cheats/free_camera.cpp   # the cheat menu's free camera (fly the view with keys + mouse)
+    src/cheats/cheat_menu.cpp    # F5: the Cheats menu
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/data/fight_tree.cpp      # fight trees (.bfig): new nodes, C++ decisions for new front end states

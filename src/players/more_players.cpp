@@ -1139,6 +1139,12 @@ uint32_t more_players::CharacterOfPlayer(int p) {
   return p >= 0 && p < kMaxPlayers ? CharacterOf(p) : 0;
 }
 
+// The game object's +24 list (players 1-2) / our block (3-4), as sub_8226FC88 reads it.
+uint32_t more_players::TitanOfPlayer(int p) {
+  if (p < 0 || p >= kMaxPlayers) return 0;
+  return p < 2 ? Read32(0x825B0008 + 24 + 4 * p) : Read32(g_block + kBlockTitans + 4 * (p - 2));
+}
+
 // --debug_coop_trace: where every player's Crash is (with each state change).
 // Found the NaN position of the safety net above this way.
 namespace more_players {

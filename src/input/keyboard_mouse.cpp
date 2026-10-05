@@ -154,6 +154,11 @@ bool KeyboardMouseDriver::capturing() const {
   return static_cast<bool>(capture_done_);
 }
 
+bool KeyboardMouseDriver::InputHeld(Input input) const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return input < kInputCount && held_[input];
+}
+
 bool KeyboardMouseDriver::HandleDown(Input input) {
   if (!capture_done_ || input == kNoInput || IsReservedInput(input)) {
     return false;  // not capturing, or a tool key: let it do its job

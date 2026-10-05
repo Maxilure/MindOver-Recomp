@@ -84,6 +84,8 @@
 
 #include "frame_rate.h"
 
+#include "cheats/cheats.h"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -333,7 +335,12 @@ bool PacerAllowsFrame(int32_t cap) {
 void CrashMomFrameStep(PPCRegister& f30) {
   const int32_t cap = REXCVAR_GET(fps_cap);
   if (cap == 30) {
-    return;  // the original: the game's 1/60 s minimum stands
+    // The original: the game's 1/60 s minimum stands. EXCEPT while frozen by
+    // the cheat menu (cheats.h): then each frame adds only 1e-7 s and would
+    // never reach the minimum (no frame = no picture, no free camera); the
+    // swap's two-vblank wait still paces it at 30.
+    if (cheats::Frozen()) f30.f64 = 0.0;
+    return;
   }
   if (cap == 0) {
     f30.f64 = 0.0;  // no limit: this pass runs a frame

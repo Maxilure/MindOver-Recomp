@@ -122,6 +122,11 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   void CancelCapture();
   bool capturing() const;
 
+  // Is this key / mouse button held right now (any thread)? Raw keys, not
+  // actions, and also while the game's input is paused: the cheat menu's free
+  // camera flies with them (cheats/free_camera.h). Debug FIFO taps count.
+  bool InputHeld(Input input) const;
+
   // Debug FIFO (debug_input_script.h): press `key_name` for `hold_ms` as if
   // typed. Works without focus. False if the name is unknown / no driver.
   static bool DebugTap(std::string_view key_name, int64_t hold_ms);

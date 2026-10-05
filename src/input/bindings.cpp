@@ -325,6 +325,7 @@ bool IsReservedInput(Input input) {
   switch (input) {
     case V(VK::kF3):    // SDK: debug overlay
     case V(VK::kF4):    // SDK: settings
+    case V(VK::kF5):    // ours: the Cheats menu
     case V(VK::kF6):    // ours: the Controls menu
     case V(VK::kF7):    // SDK: achievements
     case V(VK::kF8):    // ours: native window (dual mode)
@@ -540,7 +541,7 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
          "# the game closed: up to " << kSlots << " keys per action, separated by commas.\n"
          "# Key names: A-Z, 0-9, F1-F24, Space, Return, Escape, Tab, Backspace, Shift,\n"
          "# Control, Alt, Up/Down/Left/Right, Numpad0-9, LMB, RMB, MMB, Mouse4, Mouse5,\n"
-         "# WheelUp, WheelDown (more: src/input/bindings.cpp). F3, F4, F6-F12 and the\n"
+         "# WheelUp, WheelDown (more: src/input/bindings.cpp). F3-F12 and the\n"
          "# backtick key belong to the tools and can't be bound.\n"
          "# The comment after each line is the Xbox 360 control the game sees.\n\n";
   char number[32];

@@ -18,6 +18,8 @@
 
 #include <rex/logging.h>
 
+#include "cheats/cheat_menu.h"
+#include "cheats/cheats.h"
 #include "input/keyboard_mouse.h"
 
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
@@ -221,6 +223,19 @@ void ScriptedInputDriver::FifoThread(std::string path) {
         } else {
           REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown key, or no keyboard driver)",
                       line);
+        }
+        continue;
+      }
+      // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
+      if (view.substr(0, 6) == "cheat ") {
+        // "cheat menu" opens / closes the F5 window (draws it: a crash check).
+        if (view.substr(6) == "menu") {
+          cheat_menu::Toggle();
+          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+        } else if (cheats::DebugCommand(view.substr(6))) {
+          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+        } else {
+          REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown cheat command)", line);
         }
         continue;
       }

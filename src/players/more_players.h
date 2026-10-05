@@ -82,6 +82,9 @@ bool InPlay();
 // Player p's character (Crash), 0 if none (the game object's list / ours).
 uint32_t CharacterOfPlayer(int p);
 
+// The titan player p has jacked (rides), 0 if on foot / none.
+uint32_t TitanOfPlayer(int p);
+
 }  // namespace more_players
 
 struct PPCContext;

@@ -20,7 +20,8 @@
 //
 // Built-in debug overlays: F3 = perf/threads, ` (backtick) = log console,
 // F4 = settings (CVars). Ours: F2 / Delete = rename / delete a save on the Load /
-// Save Game screen (saves/save_library.h), F6 = Controls menu (keyboard + mouse keys,
+// Save Game screen (saves/save_library.h), F5 = Cheats menu for testing
+// (cheats/cheat_menu.h), F6 = Controls menu (keyboard + mouse keys,
 // input/controls_menu.h), F8 = the native renderer's picture in a second
 // window (native/native_window.h), F9 = emulated <-> native picture,
 // F10 = photo (native/ab_capture.h).
@@ -43,6 +44,8 @@
 #include <rex/ui/keybinds.h>
 
 #include "audio_trace.h"
+#include "cheats/cheat_menu.h"
+#include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
@@ -160,6 +163,11 @@ class CrashMomApp : public rex::ReXApp {
         }
       }
     }
+    // F5: the Cheats menu (cheats/cheat_menu.h), for testing.
+    rex::ui::RegisterBind("bind_cheat_menu", "F5",
+                          "Open / close the Cheats menu (level ups, mojo, god mode, game speed, "
+                          "free camera; for testing)",
+                          [] { cheat_menu::Toggle(); });
     // F6: the Controls menu (input/controls_menu.h), keyboard + mouse keys.
     rex::ui::RegisterBind("bind_controls_menu", "F6",
                           "Open / close the Controls menu (keyboard and mouse keys)",
@@ -206,6 +214,9 @@ class CrashMomApp : public rex::ReXApp {
     if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {
       kbm_driver->SetPausedCheck([this] { return KeyboardInputPaused(); });
       kbm_driver->Attach(window());
+      // The cheat menu's free camera looks around with the mouse (it reads
+      // the keys from the driver).
+      free_camera::AttachWindow(window());
       // Which device plays as which player (input/players.h; the Controls
       // menu's Players tab), replacing the SDK's fixed rule (keyboard + first
       // pad = player 1). Before the game's first poll, as the SDK asks.
@@ -242,6 +253,8 @@ class CrashMomApp : public rex::ReXApp {
     overlay_banner::Create(drawer);
     // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.
     controls_menu::Create(drawer);
+    // F5: the Cheats menu (cheats/cheat_menu.h), closed at first.
+    cheat_menu::Create(drawer);
     // The save library's rename / delete box (saves/save_library.h).
     save_library::Create(drawer);
   }
@@ -296,6 +309,11 @@ class CrashMomApp : public rex::ReXApp {
     const bool focused = (window() && window()->HasFocus()) ||
                          native_window_focused_.load(std::memory_order_relaxed);
     if (!focused) {
+      return Driver::kPauseAll;
+    }
+    // The cheat menu's free camera flies with the keys and mouse: the game
+    // gets none of them meanwhile (cheats/free_camera.h).
+    if (free_camera::Flying()) {
       return Driver::kPauseAll;
     }
     rex::ui::ImGuiDrawer* drawer = imgui_drawer();
