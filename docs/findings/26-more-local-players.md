@@ -955,3 +955,37 @@ mask dropping out), 9 (nothing going on).
   (three masks fit on one Crash). Not tested in play yet (it needs the
   interaction that calls it).
 
+
+## 25. Combo meters for four players
+
+The **combo meter** (`CComboCounter`, vtable `0x82039E38`; the green star
+with the number of hits in a row) already existed for players 3-4 (section
+19), counted their hits, and answered "yes" to "do you want to draw", yet
+nothing showed on screen. Two reasons:
+
+* **Drawn outside the 2D block.** The front end's draw `sub_82263328` draws
+  the meters and the "counter now" prompts between a "begin 2D"
+  `sub_82262FA8(fe, 1, 0, 1)` and an "end 2D" `sub_82263198(fe)`, only when
+  `+8593` bit `0x10` is set. Players 3-4's were drawn after the original
+  returned, i.e. after the end: invisible. They now get a begin / end pair
+  of their own (the same pair the reticle draw uses). Players 3-4's counter
+  prompts had the same problem.
+* **One place for "everyone but player 1".** Both draw parts
+  (`sub_8225D570` star, `sub_8225D300` number) ask `sub_8225D798` where the
+  meter stands: player `+3148 == 0` at the left HUD's x + 50, any other
+  player at the right HUD's x - 50 (`0x82506B74`), and y = 200
+  (`0x82506B78`, mid-screen) for everyone. Player 3's and 4's meters would
+  have covered player 2's.
+
+With three or four players, `sub_8225D798` is wrapped: the side follows the
+player's HUD corner (players 1 / 3 left, 2 / 4 right), and the height moves
+next to the player's HUD: players 1-2 centred just under the mojo count
+(the count's lower edge, an 8-unit gap, then the meter's resting half size
+38.4 = scale x 1.2 x 32 from its draw), players 3-4 the same mirrored top to
+bottom (y -> 480 - y, the HUD's own mirror). With two players the game's
+own place is kept.
+
+Test without a fight: the debug FIFO command `cheat combo <player> [hits]`
+counts hits on a player's meter the way a landed hit does (`sub_8225D840`).
+Four players, 5 / 7 / 9 / 11 hits: four meters, each by its own corner.
+Real hits by players 3-4 (on foot or in a titan) still need a play test.

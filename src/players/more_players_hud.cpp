@@ -177,6 +177,15 @@ constexpr float kSpecialTop = 26.67f, kSpecialBottom = 46.67f;
 constexpr float kCountTop = 86.67f, kCountBottom = 100.67f;
 constexpr float kMultiplierTop = kCountTop - 25.0f, kMultiplierBottom = kCountBottom - 25.0f;
 
+// THE COMBO METER (CComboCounter, more_players_frontend.cpp): the game puts
+// it at y 200 (the constant at 0x82506B78), mid-screen, far from its player's
+// HUD. With 3-4 players it moves next to the HUD: centred this far below
+// player 1's base y = the mojo count's lower edge, a small gap, then the
+// meter's half size at rest (its draw sub_8225D570: scale +3116 x 1.2
+// (0x82020C28) x 32 (0x8201F538) = 38.4; it pops bigger on each hit).
+constexpr float kComboGap = 8.0f, kComboHalfSize = 38.4f;
+constexpr float kComboBelowBase = kCountBottom + kComboGap + kComboHalfSize;
+
 // Players 3-4's base y: player 1's mirrored (the portrait's top gap becomes
 // its bottom gap). Player 1's live value when its display exists (the game
 // computes it at set-up: sub_82265BB0), else the usual 456.
@@ -193,6 +202,13 @@ std::vector<uint32_t>* ExtraOf(uint32_t controller) {
 }
 
 }  // namespace
+
+// Players 1-2 under their HUD; players 3-4 the same mirrored top to bottom
+// (the HUD's mirror is y -> 480 - y, see BottomBaseY).
+float ComboMeterY(int player) {
+  const float top = (g_player1_display ? ReadFloat(g_player1_display + kDisplayY) : kTopY) - kComboBelowBase;
+  return player < 2 ? top : kScreenHeight - top;
+}
 
 // =============================================================================
 // 1. The data patch

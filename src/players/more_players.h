@@ -100,4 +100,6 @@ bool PlayerPlays(int p);
 namespace more_players_frontend {
 // Sets up players 3-4's counter prompts (call once the in-game HUD is set up).
 void SetUpInGame(PPCContext& ctx, uint8_t* base);
+// One hit on player p's (0-3) combo meter, like a landed hit (debug FIFO).
+void AddComboHit(PPCContext& ctx, uint8_t* base, int player);
 }  // namespace more_players_frontend

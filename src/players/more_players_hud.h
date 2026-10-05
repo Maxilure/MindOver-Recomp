@@ -13,4 +13,10 @@ namespace more_players_hud {
 // menus packages. Call before data_patcher::Install().
 void Register();
 
+// THE COMBO METERS' HEIGHT (the green star with the hit count; findings/26
+// s.25): with 3-4 players, players 1-2's meter moves up under their mojo
+// count, players 3-4's mirrored down over theirs. y counts up from the bottom
+// of the 480-unit screen; player = 0-3.
+float ComboMeterY(int player);
+
 }  // namespace more_players_hud

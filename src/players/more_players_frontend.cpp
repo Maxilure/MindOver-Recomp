@@ -30,6 +30,7 @@
 // went nowhere (the combo meter of "player 3" was other front end fields).
 // =============================================================================
 #include "more_players.h"
+#include "more_players_hud.h"
 
 #include <cstring>
 
@@ -198,16 +199,26 @@ extern "C" REX_FUNC(sub_82261F90) {
   }
 }
 // Draw (sub_82263328): the combo meters and counter prompts that want to (slot
-// 6) draw (slot 4).
+// 6) draw (slot 4), when the front end draws players 1-2's (+8593 bit 0x10).
+// INSIDE A 2D BLOCK of their own: the original draws them between its
+// "begin 2D" sub_82262FA8(fe, 1, 0, 1) and "end 2D" sub_82263198(fe); drawn
+// after the end, players 3-4's meters and prompts never showed (found
+// 2026-10-05: their meters counted hits and said "draw", nothing on screen).
 extern "C" REX_FUNC(__imp__sub_82263328);
+extern "C" REX_FUNC(__imp__sub_82262FA8);
+extern "C" REX_FUNC(__imp__sub_82263198);
 extern "C" REX_FUNC(sub_82263328) {
   const uint32_t fe = ctx.r3.u32;
   __imp__sub_82263328(ctx, base);
   if (fe != g_front_end) return;
-  for (int i = 0; i < Extra(); ++i) {
-    for (int k : {kCombo, kCounter}) {
-      if (CallVirtual(ctx, base, g_objects[k][i], 6) & 0xFF) CallVirtual(ctx, base, g_objects[k][i], 4);
+  if (*Guest(fe + 8593) & 0x10) {
+    CallGame(__imp__sub_82262FA8, ctx, base, fe, 1, 0, 1);
+    for (int i = 0; i < Extra(); ++i) {
+      for (int k : {kCombo, kCounter}) {
+        if (CallVirtual(ctx, base, g_objects[k][i], 6) & 0xFF) CallVirtual(ctx, base, g_objects[k][i], 4);
+      }
     }
+    CallGame(__imp__sub_82263198, ctx, base, fe);
   }
   // The markers over the heads, when the front end draws players 1-2's
   // (+8594 bit 0x08, then sub_8226D958): each one that wants to (slot 6) and
@@ -264,6 +275,38 @@ extern "C" REX_FUNC(sub_82166240) {
   const uint32_t fe = Read32(Read32(0x8259B190) + 52);
   if (const uint32_t meter = ObjectOf(kCombo, fe, p)) CallGame(__imp__sub_8225D840, ctx, base, meter);
 }
+// WHERE A COMBO METER STANDS (sub_8225D798: r3 = meter, r4 = out x, y; used
+// by both its draw parts). The game: player 0 at the left HUD's x + 50, ANY
+// other player at the right HUD's x - 50 (it tests +3148 == 0 only), y 200
+// (0x82506B78) for all. So players 3-4's meters were drawn exactly over player
+// 2's (found 2026-10-05 from a playtest screenshot: no meter for players
+// 3-4). With 3-4 players: the side by player & 1 (players 1 / 3 left, 2 / 4
+// right, like their HUDs) and the height next to the player's own HUD
+// (more_players_hud::ComboMeterY). With two players the game's own place.
+extern "C" REX_FUNC(__imp__sub_8225D798);
+extern "C" REX_FUNC(sub_8225D798) {
+  if (more_players::LocalPlayerCount() <= 2) { __imp__sub_8225D798(ctx, base); return; }
+  const uint32_t meter = ctx.r3.u32, out = ctx.r4.u32;
+  const uint32_t player = Read32(meter + 3148);
+  Write32(meter + 3148, player & 1);  // the original only picks the side from it
+  __imp__sub_8225D798(ctx, base);
+  Write32(meter + 3148, player);
+  const float y = more_players_hud::ComboMeterY(int(player & 3));
+  uint32_t bits;
+  std::memcpy(&bits, &y, 4);
+  Write32(out + 4, bits);
+}
+
+// Debug FIFO "cheat combo <player> [hits]" (cheats.cpp): count hits on a
+// player's meter as a landed hit does (sub_8225D840, the script helper's
+// target), to see the meters without a fight. Game thread.
+namespace more_players_frontend {
+void AddComboHit(PPCContext& ctx, uint8_t* base, int player) {
+  const uint32_t fe = Read32(Read32(0x8259B190) + 52);
+  if (const uint32_t meter = ObjectOf(kCombo, fe, player)) CallGame(__imp__sub_8225D840, ctx, base, meter);
+}
+}  // namespace more_players_frontend
+
 // Crash's collect (sub_82198738): "mulli r11,r25,3152 ; add r11,r11,r8 ; addi
 // r3,r11,1852 ; bl sub_8225D9E0" -> before the call, players 3-4's meter. If
 // there is none, the call goes to a harmless dummy (the meter's fields of a
