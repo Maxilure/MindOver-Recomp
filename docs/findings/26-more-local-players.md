@@ -603,11 +603,48 @@ What the port adds (`src/players/more_players_hud.cpp`):
   changes one digit of a name, so every size stays the same;
 * displays for players 3-4, run by every controller method;
 * their names (four midasm hooks in the set-up) and their base position:
-  player 3 takes player 1's x and mirror, player 4 player 2's, and y =
-  `--hud_bottom_y` (130). Since the HUD sits at the bottom, two parts swap
-  sides vertically: the bars are drawn `--hud_bottom_bar_shift` (40) lower,
-  and the mojo count and multiplier texts move `--hud_bottom_text_shift`
-  (100) up, above the portrait;
+  player 3 takes player 1's x and mirror, player 4 player 2's;
+* **the layout = players 1-2's mirrored top to bottom**, computed from
+  player 1's live base y (+256) and the HUD's shape measured on 720p
+  captures (1 unit = 1.5 px; distances below the base: portrait ring
+  12-71.3, bars with their icons 9.3-46.7 with a special bar, 9.3-26.7
+  without, count glyphs 86.7-100.7, the multiplier 25 units higher, by the
+  set-up's constants 115 / 90). Each part is mirrored around the
+  portrait's centre, keeping its own inside order (a part spanning
+  [a, b] moves by (12 + 71.3) - (a + b)):
+  - the base: 480 - player 1's base + 83.3 (= 107.3: the portrait as far
+    from the bottom edge as player 1's is from the top, 54 px);
+  - the bars mirrored one by one: the special bar (`sub_82269DA0`) above,
+    health (`sub_82269940`) below, each moved with its icon (cross
+    9.3-26.7, bolt 26.7-46.7). Health then stays at one height with or
+    without a titan. The draw order is mirrored too (special first, health
+    after: the lower icon lies over the upper one where they touch, as on
+    player 1's HUD); both parts are called only from the display's draw
+    `sub_82269480`, one after the other. Earlier attempts moved the bars as
+    one block, health on top, sized by whether the player rode a titan:
+    the bars jumped during a jack or pocket animation, which switches the
+    titan and the HUD's bars at different moments;
+  - the LEVEL-UP RING upside down: `sub_8226A118` passes the portrait's
+    centre (f1, f2), half sizes (f3, f4), the progress (f5 = display +208)
+    and a texture (+120) to `sub_8225F2B8`, which draws a pie, a fan
+    through the 9 points centre +- size, clockwise from the top. Player
+    1's multiplier covers the ring's bottom (the pie's half-way point);
+    players 3-4's covers the top, where the pie starts, so their f4 is
+    negated: the pie fills from the bottom, mirrored;
+  - the count above the portrait (25 px gap, player 1: 23 below), the
+    multiplier over the portrait's upper edge.
+
+  The texts move through their POSITION (+92 / +96, what the set-up's
+  `sub_82370E20` writes), not their transform matrix (+16): the display's
+  update resets the matrix (`sub_82370A58`) whenever it pulses a text (the
+  count after a mojo pickup: timer +272 started by `sub_82269460`; the
+  multiplier: +264 / +268), so a matrix move was lost at the first pickup
+  and the count dropped back under the portrait. The set-up also shrinks
+  the count to 0.9 around its centre (`sub_82371198`, constant
+  `0x8201F594`) before the move: that scale is rebuilt after it, or the
+  count stays 0.9 x as far moved (14 px short) until its first pulse.
+  A first version used fixed offsets and lifted the special bar above
+  health: its bolt met the health cross, and the count sat on the portrait;
 * the display's two character lookups now take every local player, joined
   or not, like player 2's hidden display (with the joined-only guard a
   display of a player not yet joined bound to nothing and read null).

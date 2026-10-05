@@ -3,13 +3,9 @@
 // =============================================================================
 // Player 3 bottom left, player 4 bottom right, each with player 1 / 2's set
 // (portrait, bars, mojo count, combo multiplier, "Join Game"). Only with
-// --local_players 3 or 4; --hud_bottom_y moves them up / down.
+// --local_players 3 or 4. Laid out as players 1-2's mirrored top to bottom.
 // =============================================================================
 #pragma once
-
-#include <rex/cvar.h>
-
-REXCVAR_DECLARE(double, hud_bottom_y);
 
 namespace more_players_hud {
 

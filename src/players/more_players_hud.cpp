@@ -36,7 +36,10 @@
 //      loops over them too (wrappers below).
 //   3. Their set-up gets the ...Player3 / 4 names (4 midasm hooks) and a base
 //      position at the bottom: player 3 = player 1's x and mirror, player 4 =
-//      player 2's, y = --hud_bottom_y.
+//      player 2's, y from the layout below.
+//   4. THE LAYOUT: players 3-4's HUD is players 1-2's MIRRORED top to bottom,
+//      computed from player 1's base y and the measured shape of the HUD
+//      (section "Layout"), not hand-tuned offsets.
 // =============================================================================
 #include "more_players_hud.h"
 #include "more_players.h"
@@ -46,6 +49,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <rex/logging.h>
@@ -57,10 +61,6 @@
 #include "cheats/cheats.h"
 #include "data/data_patcher.h"
 #include "data/pure3d.h"
-
-REXCVAR_DEFINE_DOUBLE(hud_bottom_y, 130.0, "CrashMoM",
-                      "Players 3-4's HUD: the height of its top edge above the bottom of the "
-                      "screen (the game's HUD units: 480 = the whole height; players 1-2 use 456)");
 
 extern "C" REX_FUNC(__imp__sub_8227E890);  // the game's operator new (r3 = size)
 extern "C" REX_FUNC(__imp__sub_822678F8);  // CHealthDisplay constructor (this, player)
@@ -142,7 +142,50 @@ void MakeNames(PPCContext& ctx, uint8_t* base) {
 
 // --- the displays of players 3-4, per HUD controller ----------------------------
 std::map<uint32_t, std::vector<uint32_t>> g_extra;  // controller -> displays of players 3..N
+uint32_t g_player1_display = 0;                     // for the layout (player 1's base y)
 uint32_t g_player2_display = 0;                     // for player 4's x (the last controller made)
+
+// --- Layout ----------------------------------------------------------------------
+// Players 1-2's HUD hangs from the TOP of the screen: portrait, the bars beside
+// its upper half (health, then the titan's special bar under it), the combo
+// multiplier over the portrait's lower edge and the mojo count under it.
+// Players 3-4 sit at the BOTTOM, so they get the same HUD mirrored top to
+// bottom, each part around the PORTRAIT'S CENTRE, keeping its own inside
+// order (digits stay upright, icons the right way up):
+//   * the portrait as far from the bottom edge as player 1's is from the top;
+//   * the bars as far above the portrait's lower edge as player 1's are
+//     under its upper edge, the special bar above health;
+//   * the count above the portrait, as far from it as player 1's is below,
+//     the multiplier over the portrait's upper edge.
+// (A first version used fixed shifts with the special bar lifted above
+// health: its icon met the health icon, the count sat on the portrait.)
+//
+// Shapes, measured on 1280 x 720 captures of player 1's HUD (2026-10-05;
+// 1 HUD unit = 1.5 px vertically), as distances BELOW the display's base y
+// (+256; y counts up from the bottom of a 480-unit screen):
+constexpr float kScreenHeight = 480.0f;
+constexpr float kPortraitTop = 12.0f, kPortraitBottom = 71.33f;  // the ring, outer edge
+// mirroring a part spanning [a, b] below the base around the portrait's
+// centre gives [S - b, S - a]: it moves by S - (a + b) (down if positive)
+constexpr float kMirrorSum = kPortraitTop + kPortraitBottom;
+// the bars WITH their icons (the cross / bolt stick out past the bars; the
+// bolt starts where the cross ends):
+constexpr float kHealthTop = 9.33f, kHealthBottom = 26.67f;
+constexpr float kSpecialTop = 26.67f, kSpecialBottom = 46.67f;
+// the texts' glyphs: count 130-151 px; the multiplier's anchor is 25 units
+// (115 - 90, the set-up's constants 0x82506C20 / 0x82506C10) above it
+constexpr float kCountTop = 86.67f, kCountBottom = 100.67f;
+constexpr float kMultiplierTop = kCountTop - 25.0f, kMultiplierBottom = kCountBottom - 25.0f;
+
+// Players 3-4's base y: player 1's mirrored (the portrait's top gap becomes
+// its bottom gap). Player 1's live value when its display exists (the game
+// computes it at set-up: sub_82265BB0), else the usual 456.
+float BottomBaseY() {
+  const float top = g_player1_display ? ReadFloat(g_player1_display + kDisplayY) : kTopY;
+  return kScreenHeight - top + kMirrorSum;
+}
+// How far down a part spanning [top, bottom] below the base moves when mirrored.
+constexpr float MirrorShift(float top, float bottom) { return kMirrorSum - (top + bottom); }
 
 std::vector<uint32_t>* ExtraOf(uint32_t controller) {
   auto it = g_extra.find(controller);
@@ -205,7 +248,7 @@ bool PatchHud(const Bytes& host, Bytes* out) {
     return c.id == pure3d::kChunkProject && pure3d::NameOf(host, c) == "InGame.prj";
   });
   if (project == top.end()) return false;
-  const float bottom = float(REXCVAR_GET(hud_bottom_y));
+  const float bottom = BottomBaseY();
   const int32_t join_y = int32_t(bottom - (kTopY - kJoinTextY));
   Bytes children;
   bool page_done = false, coop_done = false, screen_done = false;
@@ -310,6 +353,7 @@ extern "C" REX_FUNC(sub_8226A690) {
   const int n = more_players::LocalPlayerCount();
   if (n <= 2) return;
   MakeNames(ctx, base);
+  g_player1_display = Read32(controller + kControllerDisplays);
   g_player2_display = Read32(controller + kControllerDisplays + 4);
   std::vector<uint32_t>& extra = g_extra[controller];
   for (int p = 2; p < n; ++p) {
@@ -434,23 +478,18 @@ void MorePlayersHudPosition(PPCRegister& display) {
     WriteFloat(d + kDisplayX, ReadFloat(g_player2_display + kDisplayX));
     WriteFloat(d + kDisplayMirror, ReadFloat(g_player2_display + kDisplayMirror));
   }
-  WriteFloat(d + kDisplayY, float(REXCVAR_GET(hud_bottom_y)));
+  WriteFloat(d + kDisplayY, BottomBaseY());
 }
 
 // =============================================================================
-// 4. Players 3-4's layout tweaks (the HUD sits at the bottom, so some parts swap
-//    sides vertically): the bars a little lower, the mojo count / multiplier
-//    texts above the portrait instead of below it.
+// 4. Players 3-4's parts mirrored (see "Layout" at the top): the bars drawn
+//    lower, the mojo count / multiplier texts above the portrait.
 // =============================================================================
-REXCVAR_DEFINE_INT32(hud_bottom_bar_shift, 40, "CrashMoM",
-                     "Players 3-4's HUD: how far down the health / special bars sit (HUD units)");
-REXCVAR_DEFINE_INT32(hud_bottom_text_shift, 100, "CrashMoM",
-                     "Players 3-4's HUD: how far up the mojo count and multiplier texts move "
-                     "(from below the portrait to above it; HUD units)");
 extern "C" REX_FUNC(__imp__sub_82267B18);  // CHealthDisplay set-up (slot 1)
-extern "C" REX_FUNC(__imp__sub_82370EE8);  // Scrooby element: move by (r4, r5) units
-extern "C" REX_FUNC(__imp__sub_82269940);  // display draw part (bars, test)
-extern "C" REX_FUNC(__imp__sub_82269DA0);  // display draw part (bars, test)
+extern "C" REX_FUNC(__imp__sub_82370A58);  // Scrooby element: transform matrix = identity
+extern "C" REX_FUNC(__imp__sub_82371198);  // Scrooby element: scale f1 around its centre
+extern "C" REX_FUNC(__imp__sub_82269940);  // display draw part: the health bar
+extern "C" REX_FUNC(__imp__sub_82269DA0);  // display draw part: the special (titan ultimate) bar
 
 namespace more_players_hud {
 namespace {
@@ -458,33 +497,115 @@ bool IsBottom(uint32_t display) {
   const uint32_t p = Read32(display + kDisplayPlayer);
   return p >= 2 && p < 4;
 }
-// Runs a draw part with the display's y lowered by the bar shift (put back after).
-void WithBarsLower(void (*part)(PPCContext&, uint8_t*), PPCContext& ctx, uint8_t* base) {
+// The bars, mirrored one by one around the portrait's centre: the special
+// bar (sub_82269DA0) above, health (sub_82269940) below, each a part's
+// shift (its bar with its icon). Health then sits at the same place with or
+// without a special bar: nothing moves when a titan is jacked or pocketed.
+// (Earlier: the two moved as one block, health still on top, and the block
+// depended on whether the player rode a titan, which changes at another
+// moment of the jack / pocket animation than the bars: they jumped.)
+// The DRAW ORDER is mirrored too: the game draws health, then the special
+// bar, so player 1's lower icon (the bolt) lies over the upper one (the
+// cross) where they touch; players 3-4 draw the special bar first and
+// health after, their lower icon (the cross) on top. Both parts are called
+// only from the display's draw (sub_82269480, 0x82269820 / 0x82269828, one
+// right after the other): for players 3-4 the health call does nothing and
+// the special call draws both.
+void DrawPartLowered(void (*part)(PPCContext&, uint8_t*), PPCContext& ctx, uint8_t* base,
+                     float top, float bottom) {
   const uint32_t d = ctx.r3.u32;
-  if (!IsBottom(d)) {
-    part(ctx, base);
-    return;
-  }
+  const PPCContext saved = ctx;
   const float y = ReadFloat(d + kDisplayY);
-  WriteFloat(d + kDisplayY, y - float(REXCVAR_GET(hud_bottom_bar_shift)));
+  WriteFloat(d + kDisplayY, y - MirrorShift(top, bottom));
   part(ctx, base);
   WriteFloat(d + kDisplayY, y);
+  ctx = saved;
 }
 }  // namespace
 }  // namespace more_players_hud
 
-extern "C" REX_FUNC(sub_82269940) { WithBarsLower(__imp__sub_82269940, ctx, base); }
-extern "C" REX_FUNC(sub_82269DA0) { WithBarsLower(__imp__sub_82269DA0, ctx, base); }
+extern "C" REX_FUNC(sub_82269940) {
+  if (!IsBottom(ctx.r3.u32)) __imp__sub_82269940(ctx, base);  // players 3-4: from sub_82269DA0
+}
+extern "C" REX_FUNC(sub_82269DA0) {
+  if (!IsBottom(ctx.r3.u32)) {
+    __imp__sub_82269DA0(ctx, base);
+    return;
+  }
+  DrawPartLowered(__imp__sub_82269DA0, ctx, base, kSpecialTop, kSpecialBottom);
+  DrawPartLowered(__imp__sub_82269940, ctx, base, kHealthTop, kHealthBottom);
+}
+
+// THE LEVEL-UP RING upside down. The ring around the portrait that fills up
+// toward the next level is drawn by sub_8226A118 (r3 = display): it passes
+// the portrait's centre (f1, f2), half sizes (f3, f4), the progress 0-1
+// (f5 = display +208) and the texture (+120) to sub_8225F2B8, which draws a
+// PIE: a fan of triangles from the centre through the 9 points (centre +-
+// size) clockwise from the TOP (y up), cut at the progress. Player 1's combo
+// multiplier covers the ring's bottom, the pie's half-way point; mirrored,
+// players 3-4's multiplier covers the top, where the pie STARTS, hiding the
+// first part of the progress (playtest, 2026-10-05). So their pie is mirrored
+// too: a negative vertical half size puts each point below the centre
+// instead of above, and the pie fills from the bottom, its half-way point
+// under the multiplier as for player 1.
+extern "C" REX_FUNC(__imp__sub_8226A118);
+extern "C" REX_FUNC(__imp__sub_8225F2B8);
+namespace more_players_hud {
+namespace {
+bool g_mirror_ring = false;  // set around a player 3-4 ring draw (game's main thread)
+}  // namespace
+}  // namespace more_players_hud
+extern "C" REX_FUNC(sub_8226A118) {
+  g_mirror_ring = IsBottom(ctx.r3.u32);
+  __imp__sub_8226A118(ctx, base);
+  g_mirror_ring = false;
+}
+extern "C" REX_FUNC(sub_8225F2B8) {
+  if (g_mirror_ring) ctx.f4.f64 = -ctx.f4.f64;
+  __imp__sub_8225F2B8(ctx, base);
+}
 
 // Set-up: then players 3-4's texts (multiplier +36, its effect +48, mojo count
 // +84) move up above the portrait (y counts up).
+//
+// The move goes into the element's POSITION (+92 x / +96 y, what the set-up's
+// sub_82370E20 writes: HUD units x the constant at 0x8204701C), NOT its
+// transform matrix (+16). It used the matrix at first (sub_82370EE8, a
+// relative move), but the game RESETS that matrix (sub_82370A58) every time
+// it pulses one of these texts: the mojo count when mojo is collected
+// (0x822684F4), the multiplier and its effect (0x82269364 / 0x822692F0). So
+// the first mojo picked up dropped player 3-4's count back under the
+// portrait (a playtest report: "sometimes it doesn't happen"; found
+// 2026-10-05 by listing the callers of the reset in CHealthDisplay's code).
+// Only the set-up writes the position, so this move stays.
+constexpr uint32_t kElementY = 96;
+constexpr uint32_t kHudUnitScale = 0x8204701C;  // sub_82370E20's units -> element position
+constexpr uint32_t kCountRestScale = 0x8201F594;  // 0.9: the count's size at rest
 extern "C" REX_FUNC(sub_82267B18) {
   const uint32_t d = ctx.r3.u32;
   __imp__sub_82267B18(ctx, base);
   if (!IsBottom(d)) return;
-  for (uint32_t field : {36u, 48u, 84u}) {
+  const float multiplier_up = -MirrorShift(kMultiplierTop, kMultiplierBottom);
+  const float count_up = -MirrorShift(kCountTop, kCountBottom);
+  for (const auto& [field, up] : {std::pair{36u, multiplier_up}, std::pair{48u, multiplier_up},
+                                  std::pair{84u, count_up}}) {
     const uint32_t element = Read32(d + field);
-    if (element) CallGame(__imp__sub_82370EE8, ctx, base, element, 0, uint32_t(REXCVAR_GET(hud_bottom_text_shift)));
+    if (element) {
+      WriteFloat(element + kElementY, ReadFloat(element + kElementY) + up * ReadFloat(kHudUnitScale));
+    }
+  }
+  // The set-up also shrinks the count to 0.9 around its CENTRE (reset
+  // sub_82370A58, then sub_82371198 with the constant at 0x8201F594), and
+  // that centre was taken before the move above: the count moved only 0.9 x
+  // as far (14 px short) until its first pulse rebuilt the scale around the
+  // new place. Done again here, as the set-up does it.
+  if (const uint32_t count = Read32(d + 84)) {
+    CallGame(__imp__sub_82370A58, ctx, base, count);
+    const PPCContext saved = ctx;
+    ctx.r3.u64 = count;
+    ctx.f1.f64 = ReadFloat(kCountRestScale);
+    __imp__sub_82371198(ctx, base);
+    ctx = saved;
   }
 }
 
@@ -508,5 +629,5 @@ void MorePlayersCounterPosition(PPCRegister& prompt) {
     WriteFloat(d + 32, ReadFloat(p2 + 32));
   }
   // as far below the top as the HUD moves: y' = y - (456 - bottom)
-  WriteFloat(d + 28, ReadFloat(d + 28) - (kTopY - float(REXCVAR_GET(hud_bottom_y))));
+  WriteFloat(d + 28, ReadFloat(d + 28) - (kTopY - BottomBaseY()));
 }
