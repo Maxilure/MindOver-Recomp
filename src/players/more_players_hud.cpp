@@ -70,6 +70,7 @@ namespace more_players_hud {
 namespace {
 
 constexpr float kTopY = 456.0f;              // players 1-2's base y (sub_82265BB0)
+constexpr uint32_t kTopBaseYConstant = 0x82047014;  // the float sub_82265BB0 returns
 constexpr float kJoinTextY = 385.0f;         // "Join Game" texts of players 1-2 (pages)
 constexpr uint32_t kDisplaySize = 284;       // sub_8226A690 allocates 284 per display
 constexpr uint32_t kDisplayPlayer = 144, kDisplayX = 252, kDisplayY = 256, kDisplayMirror = 260;
@@ -142,7 +143,6 @@ void MakeNames(PPCContext& ctx, uint8_t* base) {
 
 // --- the displays of players 3-4, per HUD controller ----------------------------
 std::map<uint32_t, std::vector<uint32_t>> g_extra;  // controller -> displays of players 3..N
-uint32_t g_player1_display = 0;                     // for the layout (player 1's base y)
 uint32_t g_player2_display = 0;                     // for player 4's x (the last controller made)
 
 // --- Layout ----------------------------------------------------------------------
@@ -186,13 +186,22 @@ constexpr float kMultiplierTop = kCountTop - 25.0f, kMultiplierBottom = kCountBo
 constexpr float kComboGap = 8.0f, kComboHalfSize = 38.4f;
 constexpr float kComboBelowBase = kCountBottom + kComboGap + kComboHalfSize;
 
-// Players 3-4's base y: player 1's mirrored (the portrait's top gap becomes
-// its bottom gap). Player 1's live value when its display exists (the game
-// computes it at set-up: sub_82265BB0), else the usual 456.
-float BottomBaseY() {
-  const float top = g_player1_display ? ReadFloat(g_player1_display + kDisplayY) : kTopY;
-  return kScreenHeight - top + kMirrorSum;
+// Players 1-2's base y: what the set-up stores at +256, i.e. what
+// sub_82265BB0 returns, the float at 0x82047014 (456; a constant, read from
+// the game rather than assumed).
+// NOT player 1's display: the data patch (the "Join Game" pages' text y)
+// runs while a level loads, when that display either doesn't exist, isn't
+// set up yet (+256 still 0: players 3-4's "Join Game" / "Please Wait" texts
+// landed at y 492, off the top of the 480-unit screen, so a dropped-out
+// player 3's countdown ran unseen; found 2026-10-06) or was freed with the
+// previous level's HUD.
+float TopBaseY() {
+  const float y = ReadFloat(kTopBaseYConstant);
+  return y > 0.0f && y <= kScreenHeight ? y : kTopY;
 }
+// Players 3-4's base y: player 1's mirrored (the portrait's top gap becomes
+// its bottom gap).
+float BottomBaseY() { return kScreenHeight - TopBaseY() + kMirrorSum; }
 // How far down a part spanning [top, bottom] below the base moves when mirrored.
 constexpr float MirrorShift(float top, float bottom) { return kMirrorSum - (top + bottom); }
 
@@ -206,7 +215,7 @@ std::vector<uint32_t>* ExtraOf(uint32_t controller) {
 // Players 1-2 under their HUD; players 3-4 the same mirrored top to bottom
 // (the HUD's mirror is y -> 480 - y, see BottomBaseY).
 float ComboMeterY(int player) {
-  const float top = (g_player1_display ? ReadFloat(g_player1_display + kDisplayY) : kTopY) - kComboBelowBase;
+  const float top = TopBaseY() - kComboBelowBase;
   return player < 2 ? top : kScreenHeight - top;
 }
 
@@ -265,7 +274,7 @@ bool PatchHud(const Bytes& host, Bytes* out) {
   });
   if (project == top.end()) return false;
   const float bottom = BottomBaseY();
-  const int32_t join_y = int32_t(bottom - (kTopY - kJoinTextY));
+  const int32_t join_y = int32_t(bottom - (TopBaseY() - kJoinTextY));
   Bytes children;
   bool page_done = false, coop_done = false, screen_done = false;
   for (const Chunk& k : pure3d::ChildrenOf(host, *project)) {
@@ -369,7 +378,6 @@ extern "C" REX_FUNC(sub_8226A690) {
   const int n = more_players::LocalPlayerCount();
   if (n <= 2) return;
   MakeNames(ctx, base);
-  g_player1_display = Read32(controller + kControllerDisplays);
   g_player2_display = Read32(controller + kControllerDisplays + 4);
   std::vector<uint32_t>& extra = g_extra[controller];
   for (int p = 2; p < n; ++p) {
@@ -645,5 +653,5 @@ void MorePlayersCounterPosition(PPCRegister& prompt) {
     WriteFloat(d + 32, ReadFloat(p2 + 32));
   }
   // as far below the top as the HUD moves: y' = y - (456 - bottom)
-  WriteFloat(d + 28, ReadFloat(d + 28) - (kTopY - BottomBaseY()));
+  WriteFloat(d + 28, ReadFloat(d + 28) - (TopBaseY() - BottomBaseY()));
 }

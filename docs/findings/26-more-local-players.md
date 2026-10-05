@@ -989,3 +989,34 @@ Test without a fight: the debug FIFO command `cheat combo <player> [hits]`
 counts hits on a player's meter the way a landed hit does (`sub_8225D840`).
 Four players, 5 / 7 / 9 / 11 hits: four meters, each by its own corner.
 Real hits by players 3-4 (on foot or in a titan) still need a play test.
+
+## 26. "P3 Paused" / "P4 Paused", and players 3-4's corner texts off screen
+
+**The pause title.** The pause menu (`CPauseScreenAction`, vtable
+`0x82024484`, Enter `sub_820D9770`) and the Options screen opened from it
+(`CInGameOptionsScreenAction`, vtable `0x82023594`, Enter `sub_820CDAD0`)
+pick their title by the menu owner (front end `+8536`): 0 ->
+`InGame_Pause_Player1` ("P1 Paused"), 1 -> `InGame_Pause_Player2`, anything
+else -> `InGame_Pause_Paused` ("Paused"). The game's text list has no player
+3-4 entries. Both keep the title element at `+24` and set it with
+`sub_82371CE0(element, key)`, which looks the key up in the text list and
+keeps a pointer to the UTF-16 string at element `+156`. Both Enters are now
+wrapped (`menu_input.cpp`): for owner 2-3, player 1's text is looked up the
+same way, its digit 1 becomes 3 / 4, and the copy is set with
+`sub_82373360`. The title follows the game's own text (and language).
+Tested with fake controllers: "P3 Paused", "P4 Paused", also on Options.
+
+**The countdown that ran unseen.** A dropped-out player 3 or 4 sometimes
+saw nothing in its corner, neither "Please Wait N" nor "Join Game", while
+START was still refused for 5 s (the countdown ran). A temporary log of the
+corner (`sub_82269480`) showed every check passing (dead, a spare
+controller, text elements marked visible). The cause was the texts' place
+in the patched HUD package: the "Join Game" pages of players 3-4 had their
+texts at y = 492, above the top of the 480-unit screen. Their y is
+computed from players 1-2's base y (`+256` of a display), and the data
+patch read it from player 1's display while a level loads, when that
+display wasn't set up yet (0) or had been freed with the previous level's
+HUD. The base y is a constant: `sub_82265BB0` returns the float at
+`0x82047014` (456). The layout now reads that constant. Tested: player 3
+(players 1 and 3 in game, player 2's controller connected) and player 4
+each show "Please Wait 5 .. 1" in their corner.

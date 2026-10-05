@@ -332,3 +332,81 @@ extern "C" REX_FUNC(sub_820E5F20) {
   g_upgrade_screen.store(false);
   if (Tracing()) REXLOG_INFO("Menu input: level-up screen closed");
 }
+
+// THE PAUSE MENU'S TITLE for players 3-4 ("P3 Paused" / "P4 Paused").
+// The pause menu (CPauseScreenAction, vtable 0x82024484, Enter = slot 4
+// sub_820D9770) and the Options screen opened from it (CInGameOptionsScreen-
+// Action, vtable 0x82023594, Enter sub_820CDAD0: it shows the same title) pick
+// the title by the menu owner (front end +8536, who paused): 0 -> the text
+// "InGame_Pause_Player1" ("P1 Paused"), 1 -> "InGame_Pause_Player2", anything
+// else -> "InGame_Pause_Paused" (plain "Paused"). The game's text list has no
+// player 3 or 4 entries, so players 3-4 got "Paused".
+// Both Enters keep the title text element at action +24 and set it with
+// sub_82371CE0(element, key): looks the key up in the text list and keeps a
+// pointer to its UTF-16 string at element +156 (a missing key shows the key
+// itself). After the original, for owner 2-3, we take player 1's text the same
+// way, change its digit 1 to 3 / 4 and set that (sub_82373360 copies a
+// string), so the title follows the language of the game's own text. A text
+// without a '1' (no such language seen) keeps "Paused".
+// Found 2026-10-06 from the strings' references (lis 0x8202 + 0x3540..0x3584).
+extern "C" REX_FUNC(__imp__sub_820D9770);  // CPauseScreenAction: Enter
+extern "C" REX_FUNC(__imp__sub_820CDAD0);  // CInGameOptionsScreenAction: Enter
+extern "C" REX_FUNC(__imp__sub_82371CE0);  // text element: string from the text list by key
+extern "C" REX_FUNC(__imp__sub_82373360);  // text element: set its string (UTF-16, copied)
+
+namespace {
+constexpr uint32_t kPauseTitle = 24;                    // both actions: the title text element
+constexpr uint32_t kTextString = 156;                   // text element: its current string
+constexpr uint32_t kKeyPausePlayer1 = 0x82023558;       // "InGame_Pause_Player1"
+constexpr uint32_t kKeyPaused = 0x82023570;             // "InGame_Pause_Paused"
+constexpr uint32_t kTitleChars = 63;                    // our copy's room (+ the NUL)
+
+void PauseTitleForOwner(PPCContext& ctx, uint8_t* base, uint32_t action) {
+  const uint32_t front_end = Read32(Read32(kGameGlobal) + 52);
+  const int owner = int32_t(Read32(front_end + kOwner));
+  if (owner < 2 || owner > 3) return;  // players 1-2: the game's own; 3-4 here
+  const uint32_t title = Read32(action + kPauseTitle);
+  if (!title) return;
+  CallGame(__imp__sub_82371CE0, ctx, base, title, kKeyPausePlayer1);
+  const uint32_t text = Read32(title + kTextString);
+  // Our copy of it, in guest memory (made once; game thread only).
+  static uint32_t copy = 0;
+  if (!copy) copy = rex::system::kernel_memory()->SystemHeapAlloc(2 * (kTitleChars + 1));
+  bool digit_changed = false;
+  if (text && copy) {
+    uint32_t i = 0;
+    for (; i < kTitleChars; ++i) {
+      const uint8_t* c = Guest(text + 2 * i);  // big-endian UTF-16
+      uint16_t ch = uint16_t(c[0] << 8 | c[1]);
+      if (!ch) break;
+      if (ch == u'1' && !digit_changed) {
+        ch = uint16_t(u'1' + owner);
+        digit_changed = true;
+      }
+      Guest(copy + 2 * i)[0] = uint8_t(ch >> 8);
+      Guest(copy + 2 * i)[1] = uint8_t(ch);
+    }
+    Guest(copy + 2 * i)[0] = Guest(copy + 2 * i)[1] = 0;
+  }
+  if (digit_changed) {
+    CallGame(__imp__sub_82373360, ctx, base, title, copy);
+  } else {
+    CallGame(__imp__sub_82371CE0, ctx, base, title, kKeyPaused);  // as before: "Paused"
+  }
+  if (Tracing()) {
+    REXLOG_INFO("Menu input: pause title for player {} ({})", owner + 1,
+                digit_changed ? "player 1's text, digit changed" : "no digit: \"Paused\"");
+  }
+}
+}  // namespace
+
+extern "C" REX_FUNC(sub_820D9770) {
+  const uint32_t action = ctx.r3.u32;
+  __imp__sub_820D9770(ctx, base);
+  PauseTitleForOwner(ctx, base, action);
+}
+extern "C" REX_FUNC(sub_820CDAD0) {
+  const uint32_t action = ctx.r3.u32;
+  __imp__sub_820CDAD0(ctx, base);
+  PauseTitleForOwner(ctx, base, action);
+}
