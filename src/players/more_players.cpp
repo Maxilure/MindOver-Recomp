@@ -1165,6 +1165,88 @@ void TracePositions() {
 }  // namespace
 }  // namespace more_players
 
+// DEATHS WITH THREE OR FOUR PLAYERS (findings/26 s.23). What happens when a
+// player dies is written in the scripts (script/objectives/objectives.lua),
+// four objectives, each "WAIT_NumPlayers(n) AND WAIT_PlayerIsDead(p), then
+// DO_ResetPlayer(p, drop)":
+//   OnePlayerOutOfPack_P1_Dies / _P2_Dies   n = 1: fade out, back at the
+//                                           checkpoint (drop = false)
+//   TwoPlayersOutOfPack_P1_Dies / _P2_Dies  n = 2: the dead player drops out
+//                                           (drop = true: back to the mask,
+//                                           Join Game), the other plays on
+// "n" = players IN GAME (state 2, sub_82270590). With three or four in game no
+// objective matched, and players 3-4 have none: a dead player lay on the ground
+// for good (found 2026-10-05 with the cheat menu's Kill: players 2-4 stayed
+// down, states 2 2 2 2; with two players player 2 dropped out as it should).
+// Three answers make the scripts' own rules cover four players:
+//   1. WAIT_NumPlayers(2) is "two OR MORE in game" (only these objectives and
+//      one more n = 1 rule use WAIT_NumPlayers).
+//   2. WAIT_PlayerIsDead(player 2) is "one of players 2-4 in game is dead";
+//      we remember which.
+//   3. DO_ResetPlayer(player 2) resets the one remembered.
+// "Dead" = the game object's alive byte +36 + player (CRequirementActorIsDead
+// sub_822A01E8 reads it; Crash's code writes it by his own player number, so
+// players 3-4's are at +38 / +39, which nothing else uses).
+namespace more_players {
+namespace {
+constexpr uint32_t kGameObject = 0x825B0008;   // sub_82270608's singleton
+constexpr uint32_t kGameObjectAlive = 36;      // byte per player: 0 = dead
+int g_dead_standing_for_two = -1;  // the player "player 2" means for the reset (game thread)
+}  // namespace
+}  // namespace more_players
+
+// CRequirementNumPlayers check (r3 = it, its +8 = n): count == n; for n = 2
+// "two or more".
+extern "C" REX_FUNC(__imp__sub_822A3178);
+extern "C" REX_FUNC(sub_822A3178) {
+  const uint32_t wanted = Read32(ctx.r3.u32 + 8);
+  if (wanted != 2 || LocalPlayers() <= 2) {
+    __imp__sub_822A3178(ctx, base);
+    return;
+  }
+  uint32_t n = 0;
+  for (int p = 0; p < kMaxPlayers; ++p) n += Read32(kState + 4 * p) == 2;
+  ctx.r3.u64 = n >= 2 ? 1 : 0;
+}
+
+// CRequirementActorIsDead check (WAIT_PlayerIsDead; r3 = it, its +20 = the
+// player, -1 = an actor by name): for player 2, any of players 2-4 in game.
+extern "C" REX_FUNC(__imp__sub_822A01E8);
+extern "C" REX_FUNC(sub_822A01E8) {
+  if (int32_t(Read32(ctx.r3.u32 + 20)) != 1 || LocalPlayers() <= 2) {
+    __imp__sub_822A01E8(ctx, base);
+    return;
+  }
+  int dead = -1;
+  for (int p = 1; p < LocalPlayers() && dead < 0; ++p) {
+    if (Read32(kState + 4 * p) == 2 && *Guest(kGameObject + kGameObjectAlive + p) == 0) dead = p;
+  }
+  if (dead >= 0) {
+    g_dead_standing_for_two = dead;
+    if (REXCVAR_GET(debug_coop_trace)) {
+      REXLOG_INFO("Co-op: player {} is dead: the scripts' player-2 death rule takes it", dead + 1);
+    }
+  }
+  ctx.r3.u64 = dead >= 0 ? 1 : 0;
+}
+
+// CActionResetPlayer's work (DO_ResetPlayer; r3 = it, its +8 = the player):
+// "player 2" = the one the death rule found.
+extern "C" REX_FUNC(__imp__sub_82297928);
+extern "C" REX_FUNC(sub_82297928) {
+  const uint32_t action = ctx.r3.u32;
+  const int dead = g_dead_standing_for_two;
+  if (Read32(action + 8) != 1 || dead <= 1) {
+    __imp__sub_82297928(ctx, base);
+    return;
+  }
+  g_dead_standing_for_two = -1;
+  if (REXCVAR_GET(debug_coop_trace)) REXLOG_INFO("Co-op: reset of player 2 goes to player {}", dead + 1);
+  Write32(action + 8, uint32_t(dead));
+  __imp__sub_82297928(ctx, base);
+  Write32(action + 8, 1);
+}
+
 // SAFETY NET: a character's "set position" (physics behaviour, sub_8217F528:
 // r3 = the physics behaviour, r5 = the message, position at message +68,
 // snapped by the world sub_822E6AA0) that ends with a NaN position keeps the

@@ -801,3 +801,56 @@ at player 2:
 Tested with three players: player 3 takes a pocketed Roller out (RB),
 player 1 walks into the next level, and player 3 starts that level on the
 Roller with its level, mojo and health unchanged, without errors.
+
+
+## 23. Deaths with three or four players
+
+**The bug.** With `--local_players` 3 or 4 and three or more players in
+game, a player other than player 1 who died (a fight, a pit, the cheat
+menu's Kill) lay on the ground for good: health 0, co-op state still 2, no
+drop-out, no respawn. Player 2 too. With two players, player 2's death drops
+it out (state 0, back to the mask, "Please Wait", then "Join Game").
+
+**Where deaths are handled.** Not in compiled code: in the scripts.
+`script/objectives/objectives.lua` (Radical's Lua 5.0 layout,
+`notes/scratch-tools/dis50.py` reads it) has four objectives, each
+"`WAIT_NumPlayers(n)` AND `WAIT_PlayerIsDead(p)`, then `DO_ResetPlayer(p,
+drop)`":
+
+| Objective | n | p | Reset |
+|---|---|---|---|
+| `OnePlayerOutOfPack_P1_Dies` | 1 | player 1 | fade out, back at the checkpoint |
+| `OnePlayerOutOfPack_P2_Dies` | 1 | player 2 | fade out, back at the checkpoint |
+| `TwoPlayersOutOfPack_P1_Dies` | 2 | player 1 | drops out, the other plays on |
+| `TwoPlayersOutOfPack_P2_Dies` | 2 | player 2 | drops out, the other plays on |
+
+`n` is the number of players **in game** (state 2; `CRequirementNumPlayers`,
+check `sub_822A3178` = `GetCurrentNumPlayers` `sub_82270590` == n). With three
+or four in game nothing matched, and players 3-4 have no objectives at all.
+`WAIT_PlayerIsDead` = `CRequirementActorIsDead` (vtable `0x82040B30`, check
+`sub_822A01E8`, player at `+20`): the game object's alive byte `+36 + player`
+is 0. Crash's code writes that byte by his own player number (`+320`; e.g.
+`0x821AC96C`), so players 3-4's land in `+38` / `+39`, unused otherwise.
+`DO_ResetPlayer` = `CActionResetPlayer` (vtable `0x8203FCEC`, player at `+8`,
+"drop" in bit 0x80 of `+12`); its work, `sub_82297928`, reaches the dying
+Crash's co-op behaviour (message kind 48, sub-kind 8 -> `sub_82235760`: state
+0, sub-state 6). Its per-player reads were already opened to four players
+(manifest hooks at `0x82297954` / `0x822979C8`). Found with a write watch on
+the state table (two players: the drop-out came from `sub_82234DC8` <-
+`sub_82235350` <- ... <- `sub_82297928`; four players: never called).
+
+**The fix** (`more_players.cpp`): the scripts' own rules, widened.
+
+1. `WAIT_NumPlayers(2)` = two **or more** in game (only these objectives and
+   one more n = 1 rule in the same file use `WAIT_NumPlayers`).
+2. `WAIT_PlayerIsDead(player 2)` = one of players 2-4 in game is dead (the
+   first found is remembered).
+3. `DO_ResetPlayer(player 2)` resets the one remembered.
+
+Tested with four players on foot, with and without god mode: players 2, 3
+and 4 killed one after another each drop out (states 2 0 2 2 -> 2 0 0 2 ->
+2 0 0 0); player 2 gets its "Please Wait" countdown, players 3-4 "Join Game"
+in their corners right away (the countdown is player 2's own HUD element);
+players 3-4 rejoin with START and leave the mask with B, with full health.
+Player 1 dying while the others play drops out too, as with two players.
+Two players: unchanged.
