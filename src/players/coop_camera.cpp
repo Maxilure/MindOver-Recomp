@@ -33,7 +33,8 @@
 //      so jumps keep the original's hold. The volume is then picked by the
 //      centre, and the spread is 0, so the game's own zoom stays at its
 //      minimum (the single-player look). The centre moves with a spring,
-//      faster when a player nears the edge of the picture (URGENCY).
+//      faster when a player nears the edge of the picture (URGENCY). With 3-4
+//      players the centre leans toward the biggest GROUP (kGroupNear).
 //   2. DISTANCE = enough to see everyone: a mid-function hook right where the
 //      zoom is handed to its smoother (0x82107864) raises it to the smallest
 //      distance at which every player (feet and head) is inside the picture,
@@ -68,6 +69,10 @@ REXCVAR_DEFINE_BOOL(coop_camera, true, "CrashMoM",
 REXCVAR_DEFINE_DOUBLE(coop_camera_max_distance, 45.0, "CrashMoM",
                       "Co-op camera: the farthest it backs off from the players' centre (game units; the "
                       "original's range is about 12-20)");
+REXCVAR_DEFINE_DOUBLE(coop_camera_group_focus, 2.0, "CrashMoM",
+                      "Co-op camera (3-4 players): how much more a GROUP of players near each other counts "
+                      "in the centre than a player on their own (each player counts by group size to this "
+                      "power; 0 = everyone counts the same)");
 REXCVAR_DEFINE_BOOL(debug_coop_camera_trace, false, "CrashMoM",
                     "Debug: log the game camera, the players and the camera volume's numbers (co-op camera)");
 REXCVAR_DEFINE_INT32(debug_coop_camera_trace_every, 10, "CrashMoM",
@@ -112,6 +117,18 @@ constexpr float kBlendSeconds = 0.6f;
 constexpr float kSmoothCalm = 0.22f, kSmoothUrgent = 0.06f;
 constexpr float kZoomOutCalm = 1.5f, kZoomOutUrgent = 10.0f;
 constexpr float kUrgentFrom = 0.85f;
+// GROUPS (3-4 players; added 2026-10-06): the camera leans toward where MOST
+// players are. Each player's group size = 1 + how "near" every other player in
+// game is (1 within kGroupNear units, fading to 0 at kGroupFar: a soft edge so
+// nobody's weight jumps when someone crosses a line). In the centre a player
+// counts group ^ coop_camera_group_focus: two together + one alone (power 2) =
+// 4 : 4 : 1, so the centre sits with the pair and the lone player gets 1/9 of
+// the say. 2 vs 2 = 4 each = balanced; with two players both always count the
+// same, so two-player co-op doesn't change. The FIT still takes everyone: the
+// lone player stays in the picture while the maximum distance allows it, and
+// past it they are the one who leaves the screen first (where the game's own
+// catch-up applies: off screen, B = become a mask on a partner).
+constexpr float kGroupNear = 7.0f, kGroupFar = 15.0f;
 // CCameraVolumeBehaviour +296: the camera's current (smoothed) distance from its target.
 constexpr uint32_t kVolumeDistance = 296;
 
@@ -164,6 +181,7 @@ bool BodyOf(int p, Vec& at, bool& titan) {
 using Clock = std::chrono::steady_clock;
 struct Player {
   float weight = 0.0f;  // 0..1: how much this player counts in the centre (ramps)
+  float group = 1.0f;   // 1..4: this player's group size (see kGroupNear), for the centre
   Vec last;             // last known camera point (kept while fading out)
   bool in_game = false, titan = false;
   // The game's own camera point for this player (sub_82105538's answer for
@@ -225,11 +243,24 @@ void UpdatePlayers() {
       pl.weight = std::max(0.0f, pl.weight - step);
     }
   }
+  // Group sizes (kGroupNear): players fading in / out count by their weight.
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    Player& pl = g_players[p];
+    pl.group = 1.0f;
+    for (int q = 0; q < kMaxPlayers; ++q) {
+      const Player& other = g_players[q];
+      if (q == p || other.weight <= 0.0f) continue;
+      const float near = std::clamp((kGroupFar - Length(other.last - pl.last)) / (kGroupFar - kGroupNear), 0.0f, 1.0f);
+      pl.group += near * other.weight;
+    }
+  }
+  const float focus = std::max(0.0f, float(REXCVAR_GET(coop_camera_group_focus)));
   Vec sum;
   float total = 0.0f;
   for (const Player& pl : g_players) {
-    sum = sum + pl.last * pl.weight;
-    total += pl.weight;
+    const float w = pl.weight * std::pow(pl.group, focus);
+    sum = sum + pl.last * w;
+    total += w;
   }
   const bool was_active = g_active;
   g_active = g_answer && REXCVAR_GET(coop_camera) && more_players::InPlay() && g_in_game >= 2 && total > 0.0f;
@@ -336,8 +367,8 @@ void Trace(uint32_t camera) {
   for (int p = 0; p < kMaxPlayers; ++p) {
     const Player& pl = g_players[p];
     if (pl.weight == 0.0f && !pl.in_game) continue;
-    s += fmt::format(" | P{} st {} w {:.2f} ({:.1f} {:.1f} {:.1f})", p + 1, Read32(kPlayerStates + 4 * p),
-                     pl.weight, pl.last.x, pl.last.y, pl.last.z);
+    s += fmt::format(" | P{} st {} w {:.2f} group {:.2f} ({:.1f} {:.1f} {:.1f})", p + 1,
+                     Read32(kPlayerStates + 4 * p), pl.weight, pl.group, pl.last.x, pl.last.y, pl.last.z);
   }
   if (const uint32_t v = g_volume) {
     s += fmt::format(" || volume {} primaries {} spread {:.1f} distance {:.1f} focus P{}", int32_t(Read32(v + 264)),

@@ -110,12 +110,15 @@ save-slot numbers; `assets/markers/`, section 29), and get their own paw
 prints on the loading screen, green and purple, once they have joined
 (section 28). The camera frames every player in game: it looks at the
 centre of the group and backs off until everyone is in the picture, instead
-of following one player (experimental, [findings/28](findings/28-coop-camera.md)). Any player can drop out and join again, player 1 included,
+of following one player; with three or four players it leans toward the
+biggest group while still keeping the others in view (experimental, needs
+extensive testing: [findings/28](findings/28-coop-camera.md)). Any player can drop out and join again, player 1 included,
 as long as someone else stays in game (sections 30-31). A player whose
 controller disconnects (or is moved to another player in F6) no longer
 leaves a pause menu only that controller could close: the game pauses and
 its own question box says so; any player can drop that player out, and once
-the controller is back that player presses a button to resume (section 33). Next: the camera.
+the controller is back that player presses a button to resume (section 33). Next: more camera testing (fights, titans, bosses, tight
+spaces) and the game's off-screen catch-up for players 3-4.
 
 ![Players 1, 4 and 3's markers](images/markers-players-three-four.jpg)
 

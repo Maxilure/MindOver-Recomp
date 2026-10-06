@@ -1,6 +1,9 @@
 # 28. The co-op camera: framing every player
 
-Status: experimental (on by default; `--coop_camera=false` = the original).
+Status: experimental, **needs extensive testing** (on by default;
+`--coop_camera=false` = the original). The group focus for three or four
+players (section 2, item 4) is the newest part and has only been tested
+with fake controllers.
 
 With two players, the original camera follows one of them and only backs off
 a little when the other walks away; the other player easily ends up off
@@ -20,6 +23,8 @@ fit.*
 Code: `src/players/coop_camera.*`, one mid-function hook in the manifest
 (`CoopCameraDistance`). `--coop_camera=false` gives back the original camera;
 `--coop_camera_max_distance` (default 45) caps how far it backs off;
+`--coop_camera_group_focus` (default 2, 0 = everyone counts the same) sets
+how much a group of players outweighs a player on their own;
 `--debug_coop_camera_trace` logs the camera, the players and the volume's
 numbers every 10th frame.
 
@@ -137,6 +142,19 @@ With **two or more players in game** (state IN_GAME; masks don't count):
    fit uses the camera points, so jumps don't change the zoom either. Coming
    back in stays the game's own smoothing.
 
+4. **Groups (three or four players).** The centre leans toward where MOST
+   players are. Each player's *group size* is 1 plus, for every other player
+   in game, how near they are: 1 within 7 units, fading to 0 at 15 (a soft
+   edge, so no weight jumps when someone crosses a line). In the centre a
+   player counts group size to the power `--coop_camera_group_focus` (2):
+   two players together and one apart = 4 : 4 : 1, so the camera sits with
+   the pair and the one apart gets a ninth of the say; two pairs = 4 each,
+   balanced. With two players both always have the same group size, so
+   two-player co-op is unchanged. The distance still fits EVERYONE: the
+   player apart stays in the picture while the maximum distance allows it,
+   and past it is the first to leave the screen (where the game's own
+   catch-up applies: section 4).
+
 With **one player in game** nothing changes: the trace before a join matched
 the original camera to the hundredth of a unit. Cutscenes and scripted
 cameras don't use the volume behaviour and are untouched.
@@ -156,6 +174,10 @@ On Wumpa Island with fake controllers (`--debug_fake_pads`):
 * **Two players walking and jumping together:** the camera's height stays
   through the jumps; walking, it trails the pair by under 2 units and
   catches up when they stop.
+* **Three players, two walking off together** (players 2-3 about 25 units
+  from player 1): group sizes 2 / 2 / 1, centre 3 units from the pair
+  instead of 8 (the plain middle); at the 45-unit cap player 1 is still in
+  the picture, at its edge.
 * No errors in the logs.
 
 Played on two levels: experimental, working well so far (two players far
@@ -163,3 +185,23 @@ apart on Wumpa Island both stay in the picture). Not tested yet: fights (enemies
 bosses, tight spaces (the wider view may show places the level designers
 never meant to be seen), cutscenes started with players apart, and how it
 feels in play.
+
+## 4. The game's own catch-up: B while off screen
+
+The original has a way back for a player who got lost: every frame the
+co-op behaviour's update (`sub_82234FB0`) asks whether that player's Crash
+is **off screen** (`sub_82235978`: the camera's visibility test, vtable slot
+68 of `*(game + 76) + 444`, on the actor's position) and whether the player
+just **released B** (`sub_82272338(controller, 5, 42, 0)`: input map PLAYER,
+event `SPECIAL` = `AddInputUp(CIRCLE)` in `inputmap_methods.lua`). Both =
+sub-state 5, "forced into a mask": the player becomes a mask on a partner.
+On screen, B is the ordinary "turn into a mask", which instead requires the
+partner to be ON screen (`sub_82235CB8`). So the same button either hops
+on a nearby partner or pulls a far-away player back.
+
+`sub_82235978` only answers "off screen" while players 1 AND 2 are both in
+game (states 2 or 3, read from `0x8259B11C`): with player 1 and players 3-4
+but no player 2, nobody counts as off screen and the catch-up never fires.
+The camera's fit (section 2) keeps everyone in view up to the maximum
+distance, so the catch-up only matters past it.
+

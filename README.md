@@ -30,7 +30,8 @@ port adds things the Xbox 360 game never had:
   masks (up to three on one Crash), with a HUD of their own for players 3
   and 4 in the bottom corners, their own "3" / "4" markers over their heads,
   their own paw prints on the loading screen, and a camera that frames every
-  player instead of following one
+  player instead of following one, leaning toward where most players are
+  (experimental, needs extensive testing)
 
 Details: **[Enhancements](docs/05-enhancements.md)**.
 
