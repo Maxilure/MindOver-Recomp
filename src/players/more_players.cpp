@@ -499,21 +499,36 @@ extern "C" REX_FUNC(sub_82266178) {
   g_controllers[0] = g_controllers[1] = -1;
 }
 
-// HaveBothPlayersJoinedGame (r3 = front end): with more than two local
-// players, "every local player": in play (game state 5) all of them have a
-// co-op state other than "not joined", else all of them have a controller.
+// HaveBothPlayersJoinedGame (r3 = front end). The original: in play (game
+// state 5) players 1 and 2 both have a co-op state other than "not joined",
+// else both have a controller. Its 13 callers ask two different questions,
+// identical with two players but not with more:
+//   * the join (sub_82264988, call at 0x82265064): "is there room for one
+//     more?" -> with more than two local players: have ALL of them joined;
+//   * the other 12, all in the front end's compiled fight tree: the pause
+//     screens (PauseScreen 868 decision sub_82121B48, NoSavePauseScreen 901
+//     sub_82121EA8, DemoPauseScreen 936 sub_821222D8) and their TwoPlayer /
+//     OnePlayer branch checks (sub_82122E38/E80 = nodes 870/871, F38/F80 =
+//     903/904, 23010/23058 = 937/938): "is this a co-op game?" -> the
+//     TwoPlayer branch = the pause page WITH "Drop Out" (InGame_Pause2Player).
+//     With more than two: at least TWO players in game.
+// Found 2026-10-06: with --local_players=4 and fewer than four joined, nobody's
+// pause menu offered Drop Out (players 1-2 included), because those 12 heard
+// the join's "all of them".
+constexpr uint32_t kJoinCallReturn = 0x82265068;  // return address of the join's call
 extern "C" REX_FUNC(sub_82265FB8) {
   const int n = LocalPlayers();
   if (n <= 2) {
     __imp__sub_82265FB8(ctx, base);
     return;
   }
+  const bool join = uint32_t(ctx.lr) == kJoinCallReturn;
   const bool playing = CallGame(__imp__sub_82248EA8, ctx, base, Read32(kGameGlobal)) == 5;
-  bool all = true;
+  int count = 0;
   for (int p = 0; p < n; ++p) {
-    all = all && (playing ? Read32(kState + 4 * p) != 0 : ControllerOf(p) != -1);
+    count += (playing ? Read32(kState + 4 * p) != 0 : ControllerOf(p) != -1) ? 1 : 0;
   }
-  ctx.r3.u64 = all ? 1 : 0;
+  ctx.r3.u64 = (join ? count == n : count >= 2) ? 1 : 0;
 }
 
 // Wires player r4's character r6 (and input map r5) to its controller (r3 =

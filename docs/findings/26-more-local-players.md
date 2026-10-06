@@ -1149,3 +1149,32 @@ Tested with four players (fake controllers): players 3 and 4 show their own
 banners, before and after a level change.
 
 ![Players 1, 4 and 3's markers](../images/markers-players-three-four.jpg)
+
+## 30. "Drop Out" in the pause menu with three or four players
+
+With more than two local players, no pause menu offered **Drop Out**,
+players 1 and 2 included; two-player games had it.
+
+The pause menu has two versions in `fighttrees/Frontend.bfig`: under
+`PauseScreen` (node 868, decision `sub_82121B48`) the branches `TwoPlayer`
+(870, with `ExitDropOut` 882) and `OnePlayer` (871, without). The same pair
+exists under `NoSavePauseScreen` (901: 903/904) and `DemoPauseScreen` (936:
+937/938). Every one of these choices asks `HaveBothPlayersJoinedGame`
+(`sub_82265FB8`): the three decisions and the six branch checks
+(`sub_82122E38`/`E80`, `F38`/`F80`, `sub_82123010`/`58`), 12 calls in all.
+
+Its 13th caller is the join (`sub_82264988`, call at `0x82265064`): "no room
+for another player". Section 9 widened the function for that caller ("have
+**all** local players joined?"), so with `--local_players=4` and fewer than
+four in game the pause menus heard "no" and took the `OnePlayer` branch.
+
+The function now tells its callers apart by the return address: the join
+still hears "all of them", every other caller hears "at least two players in
+game" (the original's meaning, players 1 and 2 both joined, for any number
+of players). Two players: unchanged (the original function).
+
+Tested with four local players (fake controllers): players 1 and 2 only:
+"P1 Paused" and "P2 Paused" both offer Drop Out; three in game: player 3
+drops out through its menu (states 2 1 1 0 -> 2 1 0 0), then player 2
+(-> 2 0 0 0); player 1 alone: the menu without Drop Out; players 4, 3 and 2
+join again (-> 2 1 1 1).
