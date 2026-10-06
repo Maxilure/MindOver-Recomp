@@ -110,3 +110,11 @@ void AddComboHit(PPCContext& ctx, uint8_t* base, int player);
 // Shows player p's (0-3) "counter now" prompt, as a titan's heavy attack does (debug FIFO).
 void ShowCounterPrompt(PPCContext& ctx, uint8_t* base, int player);
 }  // namespace more_players_frontend
+
+namespace more_players_markers {
+// Reads players 3-4's marker pictures (<user data>/markers/HUD_coop_player_
+// three.png / four.png) and registers the data patch that adds them to the
+// in-game menu packages. With --local_players 3 or 4; call before
+// data_patcher::Install().
+void Register();
+}  // namespace more_players_markers

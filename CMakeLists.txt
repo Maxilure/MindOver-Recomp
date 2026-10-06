@@ -46,6 +46,7 @@ set(CRASHMOM_SOURCES
     src/players/more_players_hud.cpp  # players 3-4's HUD in the bottom corners (findings/26)
     src/players/more_players_frontend.cpp  # players 3-4's combo meters, lock-on arrows, counter prompts, reticles
     src/players/more_players_loading.cpp  # players 3-4's paw prints on the loading screen (findings/26)
+    src/players/more_players_markers.cpp  # players 3-4's own marker pictures (findings/26)
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
     src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups
     src/cheats/free_camera.cpp   # the cheat menu's free camera (fly the view with keys + mouse)
@@ -143,6 +144,8 @@ target_include_directories(crash_mom PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/shaders
 # RenderDoc's API header, which the SDK doesn't install: take it from the SDK
 # source tree, like xexdis does for the disassembler headers.
 target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/renderdoc)
+# stb_image (PNG reader) for players 3-4's marker pictures (src/players/more_players_markers.cpp).
+target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/stb)
 
 # Copy ReXGlue's shared libraries next to the executable on Linux.
 # The SDK already sets the executable's library search path to its own
@@ -171,6 +174,14 @@ if(UNIX AND NOT APPLE)
     add_custom_target(crash_mom_stage_libs ALL ${_stage_cmds} VERBATIM)
     add_dependencies(crash_mom_stage_libs crash_mom)  # the exe's folder exists by then
 endif()
+
+# The port's own assets (assets/: players 3-4's marker pictures), copied next
+# to the exe on every build (assets/ is read from there at run time).
+add_custom_target(crash_mom_stage_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets $<TARGET_FILE_DIR:crash_mom>/assets
+    VERBATIM)
+add_dependencies(crash_mom_stage_assets crash_mom)  # the exe's folder exists by then
 
 # -----------------------------------------------------------------------------
 # Developer tools (not part of the game)

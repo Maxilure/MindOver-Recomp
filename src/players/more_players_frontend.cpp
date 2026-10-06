@@ -477,19 +477,16 @@ void more_players_frontend::SetUpInGame(PPCContext& ctx, uint8_t* base) {
 // --- the markers over the heads (CPlayerIdentifierArrow) ------------------------
 // Its set-up (slot 1, sub_8226CF10) takes its picture by name from a two-entry
 // table (0x825A5B20: HUD_coop_player_one / two .tga) indexed by its player:
-// "rlwinm r11,rP,3 ; add r3,r11,r30" (0x8226CF38). Players 3-4: player 1 / 2's
-// banner for now (their own pictures come with the marker art), told apart by
-// their colour. Its draw (slot 4, sub_8226D358) tints it with a two-entry colour
-// table (0x825B0120, ARGB) read "lwzx r9,r10,r30" with r10 = player * 4: for
-// player 3 that was the next word (an init flag: a black, see-through marker).
+// players 3-4's pictures of their own (or player 1 / 2's banner when there
+// are none) are more_players_markers.cpp's. Its draw (slot 4, sub_8226D358)
+// tints it with a two-entry colour table (0x825B0120, ARGB) read "lwzx
+// r9,r10,r30" with r10 = player * 4: for player 3 that was the next word (an
+// init flag: a black, see-through marker). Players 3-4: these colours (also
+// their reticles' and their loading-screen paw prints').
 REXCVAR_DEFINE_UINT32(marker_colour_player3, 0xFF3CD23C, "CrashMoM",
                       "Players 3-4: the colour of player 3's marker over its head (0xAARRGGBB)");
 REXCVAR_DEFINE_UINT32(marker_colour_player4, 0xFFB45AF0, "CrashMoM",
                       "Players 3-4: the colour of player 4's marker over its head (0xAARRGGBB)");
-void MorePlayersMarkerPicture(PPCRegister& offset, PPCRegister& name) {
-  const uint32_t p = offset.u32 / 8;
-  if (p >= 2 && p < 4) name.u64 = name.u32 - 16;  // player 1 / 2's entry
-}
 void MorePlayersMarkerColour(PPCRegister& offset, PPCRegister& colour) {
   const uint32_t p = offset.u32 / 4;
   if (p == 2) colour.u64 = REXCVAR_GET(marker_colour_player3);

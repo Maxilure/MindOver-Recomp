@@ -103,7 +103,13 @@ meters, lock-on arrows, counter prompts and aiming reticles (sections
 17-19). With three or four players, each player's "counter now" Y (a
 titan's heavy attack) stands beside that player's own HUD, a little smaller;
 the pause menu says "P3 Paused" / "P4 Paused"; players 3-4's "Please Wait"
-countdown shows in their corner (sections 26-27). Next: the markers over
-their heads and the camera.
+countdown shows in their corner (sections 26-27). Players 3 and 4 wear
+markers of their own over their heads, a "3" and a "4" drawn for the port
+in the style of the game's "1" and "2" (after *Crash of the Titans*'
+save-slot numbers; `assets/markers/`, section 29), and get their own paw
+prints on the loading screen, green and purple, once they have joined
+(section 28). Next: the camera.
+
+![Players 1, 4 and 3's markers](images/markers-players-three-four.jpg)
 
 ![Four players, each "counter now" Y beside its own HUD](images/four-players-counter-prompts.jpg)

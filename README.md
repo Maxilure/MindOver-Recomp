@@ -28,7 +28,8 @@ port adds things the Xbox 360 game never had:
 * **Up to four players** (in progress): the original's co-op is for two;
   four players can already join, run around together or ride along as
   masks (up to three on one Crash), with a HUD of their own for players 3
-  and 4 in the bottom corners
+  and 4 in the bottom corners, their own "3" / "4" markers over their heads
+  and their own paw prints on the loading screen
 
 Details: **[Enhancements](docs/05-enhancements.md)**.
 
@@ -136,6 +137,8 @@ src/                       OUR native code: app setup, hooks, fixes, debug tools
   data/                    changed copies of game data files, built at run time from your own game files
   pddi/                    interception of the game's renderer calls + the frame tracer
   native/                  our Vulkan renderer (in development)
+assets/                    the port's own pictures (copied next to the exe at build time)
+  markers/                 players 3-4's markers over their heads ("3", "4")
 tools/                     disc extraction, xex inspection, disassembler, play/debug scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
 docs/                      how everything works + everything we've found
@@ -186,7 +189,8 @@ session log from `tools/play.sh` (in `logs/`) helps a lot.
 
 ## Credits
 
-* **Maxilure**: project lead, direction, playtesting.
+* **Maxilure**: project lead, direction, playtesting; the "3" / "4" marker
+  art for players 3-4 (`assets/markers/`).
 * **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static
   recompiler and runtime that make this possible.
 * **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator
@@ -212,6 +216,9 @@ and to give it the upgrades and love it deserves.
   [Xenia](https://github.com/xenia-project/xenia) emulator's code).
 * The screenshots in `docs/images/` show the game's own imagery and are not
   covered by these licenses.
+* The marker pictures in `assets/markers/` were drawn for this port, after
+  the save-slot numbers of *Crash of the Titans* (Radical Entertainment,
+  2007), to match the game's own "1" / "2" markers.
 
 ## Disclaimer
 
@@ -220,5 +227,6 @@ affiliated with, endorsed by, or sponsored by Activision, Sierra
 Entertainment, Radical Entertainment, or Microsoft. *Crash Bandicoot* and
 *Crash: Mind over Mutant* are trademarks of their respective owners. This
 repository contains no game code, assets or data (only a few screenshots in
-`docs/images/` that document the port's progress): you need your own legally
-obtained copy of the game.
+`docs/images/` that document the port's progress, and two marker pictures
+drawn for the port in `assets/markers/`): you need your own legally obtained
+copy of the game.

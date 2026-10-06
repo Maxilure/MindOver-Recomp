@@ -1110,3 +1110,42 @@ left): all four trails, each in its own colour; with only player 3 joined,
 player 1 orange plus player 3 green, no blue or purple.
 
 ![Paw prints of four players on the loading screen](../images/loading-paws-four-players.jpg)
+
+## 29. Markers of their own for players 3 and 4
+
+The marker over a player's head (`CPlayerIdentifierArrow`, vtable
+`0x8203B21C`) is a banner with a stylized digit plus a small arrow, tinted in
+the player's colour (section 19 gave players 3-4 markers of their own,
+showing player 1 / 2's banner in green / purple). Its set-up (`sub_8226CF10`)
+finds its pictures by NAME KEY: an 8-byte hashed name built at startup by
+`sub_8236ACB8(key, "HUD_coop_player_one.tga")`; two keys at `0x825A5B20`
+indexed by the player, the arrow's at `0x825A5B18`; `sub_820D88D0(4, &key)`
+finds the loaded texture. The draw uses `+12` (the player's banner) and
+`+20` (the arrow); `+16`, the other player's number, is looked up but never
+drawn. The game ships only "one" and "two".
+
+The pictures are Pure3D textures in the 16 in-game menu packages (the ones
+holding `InGame.prj`): `0x19000` texture (name, 32 x 64, 8 bpp, ...) ->
+`0x19001` image -> `0x19002` image data = a u32 size and a whole TGA file
+(8-bit palettized, 256 x 32-bit palette, top-left origin). The white banner
+is at alpha 254, the black symbol and frame at alpha 100 (about 39%: the
+world shows through), anti-aliased greys between.
+
+Pictures for players 3-4 were drawn for the port, in the style of the
+game's "1" and "2" (after the save-slot numbers of *Crash of the Titans*):
+`assets/markers/HUD_coop_player_three.png` and `..._four.png` (32 x 64,
+white, black and greys), copied next to the exe at build time and read at
+startup; a copy with the same name in `<user data>/markers/` replaces them
+(custom markers). Their opacity
+follows the game's banners: alpha from brightness (black 100, white 254,
+nearly transparent pixels dropped). A data patch adds to every in-game
+menus package two textures built like player 1's, `HUD_coop_player_three.tga`
+and `..._four.tga`; the set-up builds their keys with the game's own
+function, checks the texture is loaded, and a midasm hook at `0x8226CF3C`
+gives players 3-4's lookup that key. Without a picture (or a package without
+the copy), player 1 / 2's banner as before.
+
+Tested with four players (fake controllers): players 3 and 4 show their own
+banners, before and after a level change.
+
+![Players 1, 4 and 3's markers](../images/markers-players-three-four.jpg)

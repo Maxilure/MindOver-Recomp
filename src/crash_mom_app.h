@@ -189,6 +189,8 @@ class CrashMomApp : public rex::ReXApp {
     }
     // Players 3-4's HUD (players/more_players_hud.h), with --local_players 3 or 4.
     more_players_hud::Register();
+    // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
+    more_players_markers::Register();
     data_patcher::Install();
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
