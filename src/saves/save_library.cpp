@@ -33,6 +33,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../overlay_banner.h"
+#include "../players/lost_controller.h"
 #include "../players/more_players.h"
 #include "quick_load.h"
 #include "rename_screen.h"
@@ -1687,14 +1688,16 @@ extern "C" REX_FUNC(sub_8211BE58) {
 // The game's XInputGetState wrapper (r3 = player, r4 = XINPUT_STATE: u32
 // packet number + the 12-byte gamepad), only called by its input manager's
 // poll (sub_8235D188). While the rename box has the controller, the game
-// gets a connected but untouched pad.
+// gets a connected but untouched pad. The lost-controller message reads every
+// socket's presses here too, and mutes them (players/lost_controller.h).
 extern "C" REX_FUNC(sub_824742F0) {
   using namespace save_library;
-  const uint32_t state = ctx.r4.u32;
+  const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
   __imp__sub_824742F0(ctx, base);
-  if (g_block_game_input.load(std::memory_order_relaxed) && ctx.r3.u32 == 0 && state) {
+  if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
     std::memset(base + state + 4, 0, 12);
   }
+  if (state) lost_controller::FilterPad(int(user), base + state + 4, ctx.r3.u32 == 0);
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

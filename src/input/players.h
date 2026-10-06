@@ -20,9 +20,9 @@
 //   * A controller: the chosen player, off, or Automatic = the SDK's rule
 //     (the Nth controller connected = player N), the default.
 //   * Other synthetic devices (the SDK's "None" stand-in that keeps player 1
-//     connected, the debug input script): always player 1.
-//   * --debug_fake_pads' extra fake controllers ("debug-pad-2".."-4",
-//     debug_input_script.h): player 2-4 by default, or the chosen player.
+//     connected): always player 1.
+//   * The debug input script's fake controllers ("debug-pad-1".."-4",
+//     debug_input_script.h): player 1-4 by default, or the chosen player.
 // Several devices on one player are merged (buttons OR'ed, the bigger stick
 // push wins), as before.
 //
@@ -105,6 +105,10 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // "Is a level being played?" (game thread safe). While it says no, every
   // device also plays as player 1 (see above). Unset = always in play.
   void SetInPlayCheck(std::function<bool()> in_play);
+  // Does a real device (keyboard or pad, fake ones included) play as `player`
+  // (0-3)? For the SDK's sign-in answers and the lost-controller pause
+  // (players/lost_controller.h). Takes the lock; any thread.
+  bool HasDeviceFor(int player) const;
 
  private:
   struct Known {
@@ -117,8 +121,6 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   int PlayerOf(const Known& d) const;
   // Bit N = a real device (keyboard or pad) plays as player N (mutex held).
   uint32_t PresentMask() const;
-  // For the SDK's sign-in answers (takes the lock).
-  bool HasDeviceFor(int player) const;
   void UpdateDevices(const std::vector<rex::input::DeviceInfo>& devices);
   // Tells the game when the set of players with a device changed (a
   // "sign-in changed" notification). Without the lock held.

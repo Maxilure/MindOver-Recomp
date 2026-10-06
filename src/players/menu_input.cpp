@@ -60,6 +60,8 @@
 // =============================================================================
 #include "more_players.h"
 
+#include "../input/players.h"
+
 #include <atomic>
 #include <chrono>
 #include <string>
@@ -218,14 +220,25 @@ extern "C" REX_FUNC(sub_822652B0) {
   const char* why = "";
   const int32_t who_before = int32_t(Read32(fe + kWhoPressedStart));
   int owner = -1;
-  if (asked == -1 && g_upgrade_screen.load() && more_players::InPlay()) {
+  // A menu whose owner has NO controller (unplugged, or moved to another
+  // player in F6, while their pause menu was up): every player may answer it,
+  // like the level-up screen, or nobody could ever close it
+  // (players/lost_controller.h: its own box waits while a pause menu is up).
+  bool owner_without_device = false;
+  if (asked == -1 && more_players::InPlay() && !g_upgrade_screen.load()) {
+    const char* unused = "";
+    const int menu_owner = MenuOwner(ctx, base, fe, &unused);
+    const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+    owner_without_device = menu_owner >= 0 && assignment && !assignment->HasDeviceFor(menu_owner);
+  }
+  if (asked == -1 && (g_upgrade_screen.load() || owner_without_device) && more_players::InPlay()) {
     // The level-up screen: upgrades are SHARED (like mojos), so every player
     // may answer it. Asked player by player: the game's own "anyone" answer
     // would go to who paused, or to player 1 only.
     // The game's owner check refuses everyone but +8536 (the screen sets it
     // up like a pause menu: owner = who last pressed START, usually player
     // 1), so each player is asked AS the owner, and the owner is put back.
-    why = "level-up screen";
+    why = owner_without_device ? "its owner has no controller" : "level-up screen";
     const PPCContext saved = ctx;
     const uint32_t game_owner = Read32(fe + kOwner);
     bool heard = false;

@@ -58,6 +58,7 @@
 #include "saves/rename_screen.h"
 #include "saves/save_library.h"
 #include "native/native_window.h"
+#include "players/lost_controller.h"
 #include "players/more_players.h"
 #include "players/more_players_hud.h"
 

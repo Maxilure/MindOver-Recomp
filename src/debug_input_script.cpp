@@ -163,7 +163,7 @@ ScriptedInputDriver::ScriptedInputDriver(std::vector<Tap> taps, int pads)
 
 int ScriptedInputDriver::PadOf(DeviceId id) const {
   for (int pad = 0; pad < pads_; ++pad) {
-    if (id == PadDevice(pad)) return pad;
+    if (id == PadDevice(pad)) return unplugged_[pad] ? -1 : pad;  // unplugged: not connected
   }
   return -1;
 }
@@ -241,6 +241,13 @@ void ScriptedInputDriver::FifoThread(std::string path) {
       }
       // "[p<N>.]<inputs> [<hold_ms>]"
       const int pad = SplitPad(view, pads_);
+      // "p<N>.unplug" / "p<N>.plug": an extra fake controller pulled out / back.
+      if (pad >= 0 && (view == "unplug" || view == "plug")) {
+        unplugged_[pad] = view == "unplug";
+        REXLOG_INFO("debug_input_fifo: fake controller {} {}", pad + 1,
+                    view == "unplug" ? "unplugged" : "plugged back in");
+        continue;
+      }
       size_t space = view.find(' ');
       uint32_t inputs = ParseInputs(view.substr(0, space));
       int64_t hold_ms = kDefaultHoldMs;
@@ -268,14 +275,22 @@ X_STATUS ScriptedInputDriver::Setup() {
 }
 
 void ScriptedInputDriver::EnumerateDevices(std::vector<DeviceInfo>& out) {
+  if (!unplugged_[0]) {  // "p1.unplug": the first one pulled out too
   DeviceInfo info;
   info.id = kScriptDevice;
   info.name = "Debug input script";
-  info.synthetic = true;  // -> merged into guest player 1 (input/players.h)
+  // Synthetic, named like the extra ones below: player 1 by default, and it
+  // counts as a real device for player 1 (input/players.h), so a test run
+  // without the keyboard isn't "player 1 lost its controller"
+  // (players/lost_controller.h).
+  info.guid = "debug-pad-1";
+  info.synthetic = true;
   out.push_back(info);
+  }
   // The extra fake controllers: synthetic too, told apart by their guid
   // "debug-pad-<N>" (N = 2-4), which input/players.h turns into player N.
   for (int pad = 1; pad < pads_; ++pad) {
+    if (unplugged_[pad]) continue;  // "p<N>.unplug": not connected any more
     DeviceInfo extra;
     extra.id = PadDevice(pad);
     extra.name = "Debug fake controller " + std::to_string(pad + 1);

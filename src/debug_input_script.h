@@ -46,6 +46,8 @@
 //      --debug_input_script="30000:p2.start,32000:p3.lsup+a:1000"
 //      echo "p3.lsup 2000" > /path/to/fifo
 //    Why: testing 3-4 players needs 3-4 controllers; nobody has to own them.
+//    FIFO "p<N>.unplug" / "p<N>.plug" (N = 1-4): that fake controller is
+//    pulled out / plugged back in (a lost controller, players/lost_controller.h).
 // =============================================================================
 
 #pragma once
@@ -111,6 +113,10 @@ class ScriptedInputDriver final : public rex::input::InputDriver {
   std::vector<Tap> taps_;  // timeline taps + live taps (appended by the FIFO)
   Inputs last_inputs_[kMaxPads] = {};
   uint32_t packet_number_[kMaxPads] = {1, 1, 1, 1};  // must change whenever the state changes
+  // "p<N>.unplug" / "p<N>.plug": a fake controller that is unplugged
+  // isn't listed any more (the SDK re-lists devices at every poll), exactly
+  // like a real pad pulled out. For the lost-controller handling's tests.
+  std::atomic<bool> unplugged_[kMaxPads] = {};
 
   std::thread fifo_thread_;
   std::atomic<bool> stop_{false};

@@ -1250,3 +1250,96 @@ or more: the number of players with a co-op state other than "not joined",
 counted over players 1-2. These two are its only callers; it now counts
 every local player (same answer with two). Tested with players 1 and 3:
 player 1's "1" and player 3's "3" over their heads.
+
+## 33. A lost controller: a message anyone answers
+
+**What happened.** A player in a level whose controller disconnected, or
+was moved to another player in the Controls menu (F6), got the game's pause
+menu ("P2 Paused") owned by that player, and nobody could close it until
+that controller came back: menus answer to their owner (section 21).
+Players 3-4 had no handling at all.
+
+**The game's handling.** The controller list (game global `+56`) keeps
+"controller missing" flags at byte `+80`, two kinds for each of players 1-2
+(set by `sub_82275128`, read by `sub_822750E0`; four bits, no room for
+players 3-4), updated by the device-change handler `sub_82274CF8`. Every
+frame the front end's `sub_82262D78` (called by the frame function
+`sub_8227C5D8`) shows a message element in the menus and, in a level, sets
+the pause request (`+8594` bit 0x02) with the menu owner (`+8536`) = the
+player whose flag is set. Reproduced with fake controllers: player 2's pad
+unplugged opens "P2 Paused"; player 1's A, B and START do nothing; player 2's
+A after plugging it back in closes it.
+
+**The port's handling** (`src/players/lost_controller.*`, on by default,
+`--lost_controller=false` = the game's): the game's own question box, the
+one a save totem asks "Do you want to save the game?" with.
+
+* in a level the game's check is replaced (the menus keep it);
+* every frame, a player in game (co-op state other than "not joined") with
+  no device playing as them (`input/players.h`) pauses the game with the
+  game manager's own pause (`sub_8227C8E8(manager, on)`: `+168` bit 0x20,
+  sound and rumble paused) and opens the question box through its script
+  method `ShowConfirmMessage` (`sub_8225F758`: front end `+172`, its text
+  element at front end `+192`, f1 = an automatic answer after that many
+  seconds, -1 = none). The text is ours (set with `sub_82373360`, like
+  "P3 Paused"; section 26), the button pictures are the prompt font's own
+  characters (U+00B4 = the Y button):
+  "Player 2's controller disconnected. Reconnect it, or press (Y) to drop out
+  Player 2." The Yes / No row (the box's menu, `+16`) is hidden while the
+  box is ours (`+110` bit 0x80 = visible). "drop out" is offered only while
+  someone else is in game;
+* any player's Y drops that player out: the pause menu's own Drop Out
+  (`sub_82266040`, which drops the menu owner: the owner is set to that
+  player for the call). The game's XInputGetState wrapper (`sub_824742F0`)
+  hands every socket's new presses over and gives the game an untouched
+  pad while the box is up, so the box never answers by itself;
+* once a device plays as that player again: "Player 2's controller is back.
+  Player 2: press any button to resume." That player's press closes the box
+  (`sub_8225E1D8`) and unpauses;
+* the only player in game gets no player number and no drop out:
+  "Controller disconnected. Reconnect your controller to continue.", then
+  "Controller reconnected. Press any button to resume.";
+* several controllers gone at once: one player at a time, lowest number
+  first; once one is dealt with the box goes straight on to the next (the
+  game stays paused). A player dropped from the box counts as out at once
+  (its Drop Out completes as the game runs on), and one whose controller
+  came back meanwhile needs no box;
+* the box waits while a menu is on screen in play (front end `+8594` bit
+  0x80: a pause menu, the totem's question and save list). A menu whose
+  owner has no controller answers to every player (`menu_input.cpp`, like
+  the level-up screen), so a lost player's own pause menu can be closed
+  (or used to drop them out) by the others.
+
+Three traps on the way. The box's text change allocates from the game's
+"current heap": called from where this runs (the frame function's
+`sub_822B3D60`) that heap had no room, the copy failed and the game wrote an
+AssertLog and stopped (gdb on the assert writer `sub_8227A7A0`: ...
+`sub_8227E890` <- `sub_82373360`); the box's own update makes heap 7 current
+around its text change (`sub_823574E8(7)`, `0x8225E160`), and so does this
+code around everything it does with the box. In a level the box closes
+itself unless the game is paused with bit 0x20 (`0x8225DEB4`): the
+developers' screenshot freeze (bit 0x04, the cheat menu's) left it
+invisible. And `+168` bit 0x10 isn't set behind the pause menu: the first
+version opened the box over player 2's pause menu, and dropping player 2
+out from there made the game read null + 0x14 in a loop. (A first version
+drew its own ImGui box with "Continue"; the game's box matches the game.)
+
+For tests the debug FIFO unplugs a fake controller (`p<N>.unplug` /
+`p<N>.plug`); the first fake controller now counts as a device of player 1
+(`debug-pad-1`).
+
+Tested with fake controllers: two players: player 2 unplugged -> the box,
+no "P2 Paused"; plugged back in -> "is back", player 2's A resumes; unplugged
+again, player 1's Y drops player 2 out (states 2 2 -> 2 0); a save totem's
+question afterwards has its text and Yes / No back. Player 2's pause menu
+open when its pad goes: player 1 resumes it, then the box, Y drops player 2
+(no fault). Three players: player 3 unplugged, player 2's Y drops player 3
+out; player 3 alone in game (players 1-2 dropped out) unplugged: "Reconnect
+it to carry on", Y ignored; plugged back in, player 3's A resumes. Players 2
+and 3 unplugged together: player 2's box, Y drops player 2, straight on to
+player 3's box, Y drops player 3, the game goes on; the same with player 3
+plugged back in during player 2's box: after player 2, the game goes on.
+Player 1 alone (`p1.unplug`): the solo texts, a press without a controller
+does nothing, plugged back in, A resumes.
+
+![The game's question box: a lost controller](../images/lost-controller-question-box.jpg)

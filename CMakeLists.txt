@@ -52,6 +52,7 @@ set(CRASHMOM_SOURCES
     src/cheats/free_camera.cpp   # the cheat menu's free camera (fly the view with keys + mouse)
     src/cheats/cheat_menu.cpp    # F5: the Cheats menu
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
+    src/players/lost_controller.cpp  # a player's controller is gone: pause + message anyone answers (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/data/fight_tree.cpp      # fight trees (.bfig): new nodes, C++ decisions for new front end states
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
