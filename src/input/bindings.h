@@ -6,7 +6,7 @@
 // over Mutant ("Jump", "Light attack", "Spin", ...), which Xbox 360 control
 // each one presses on the game's (virtual) controller, which keys and mouse
 // buttons are bound to it, and the small text file that remembers the
-// player's choices (`controls.toml` next to the exe).
+// player's choices (`user/controls.toml` in the game folder, game_folder.h).
 //
 // WHY ACTIONS, NOT "BUTTON A": the game only understands a 360 controller, so
 // in the end every key becomes a controller input (input/keyboard_mouse.h
@@ -186,7 +186,7 @@ struct Bindings {
   Action Assign(Action action, int slot, Input input);
 };
 
-// Where the file lives: --controls_file, else controls.toml next to the exe.
+// Where the file lives: --controls_file, else user/controls.toml in the game folder.
 std::filesystem::path ControlsFilePath();
 // Loads `path` over the defaults. Missing file = defaults (logged once).
 Bindings LoadBindings(const std::filesystem::path& path);

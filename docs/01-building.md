@@ -179,6 +179,35 @@ picture, **F10** photo of the same frame from both renderers, **F11** /
 
 For the current state, see the Status table in the [README](../README.md).
 
+### Your files: saves, settings, controls
+
+Everything that belongs to the player stays **inside the game's folder**,
+not in a system folder, so copying the folder moves the whole game, progress
+included ([`src/game_folder.h`](../src/game_folder.h)):
+
+```
+user/saves/        saves (the emulated profile's folder layout inside, for now), achievements
+user/settings.toml every changed setting (F4 saves here)
+user/controls.toml keyboard + mouse keys, which device is which player (F6)
+user/photos/       F10 photos          user/logs/   a log per run without --log_file
+user/markers/      your own player 3/4 marker pictures (optional)
+cache/             shader cache + changed game data: safe to delete, rebuilt
+```
+
+Which folder counts as the game's folder depends on where the exe is: a
+build run from this source tree uses the **repository folder** (`user/` and
+`cache/` are gitignored, and deleting `out/` never touches them); an
+installed copy with the exe in a `program/` folder uses that folder's
+parent; anything else uses the exe's own folder.
+
+The **first start** copies saves from the old place
+(`~/.local/share/crash_mom`), and `crash_mom.toml` / `controls.toml` from
+next to the exe, keeping the save files' dates (the save list is ordered by
+them). The originals are left where they were. If the game's folder can't be
+written to, the game says so and quits instead of saving somewhere else.
+`--user_data_root`, `--cache_root`, `--controls_file`, `--photo_dir` and
+`--log_file` still choose other places (test runs use copies this way).
+
 ## Developer tools
 
 | Tool | What it does |

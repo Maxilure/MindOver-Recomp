@@ -94,8 +94,9 @@
 # Notes:
 # * logs/ is gitignored: logs mention file names from the game disc, which
 #   is fine locally but they never go into the repo.
-# * Save games live in ~/.local/share/crash_mom/B13EBABEBABEBABE/565507FA/
-#   (the default profile's folder for title 565507FA; 00000001 = saves).
+# * Save games live in user/saves/B13EBABEBABEBABE/565507FA/ (the default
+#   profile's folder for title 565507FA; 00000001 = saves); settings and keys
+#   in user/settings.toml and user/controls.toml (src/game_folder.h).
 # * The "Resolve region is empty" spam is gone since SDK patch 0003, so an
 #   [error] or [warning] line in these logs is worth a look.
 # =============================================================================
@@ -137,7 +138,7 @@ GAME FLAGS (passed straight through, write them as --name=value)
 
 IN-GAME KEYS
   F2   rename / delete box (Load Game or Save Game screen)
-  F3   SDK debug overlay        F4   SDK settings (writes crash_mom.toml next to the exe!)
+  F3   SDK debug overlay        F4   SDK settings (writes user/settings.toml)
   F5   cheats: level up, god mode, speed, freeze, free camera, spawn
   F6   controls: rebind keys, choose which device is which player
   F7   achievements             `    SDK console

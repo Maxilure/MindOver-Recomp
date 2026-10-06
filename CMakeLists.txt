@@ -29,6 +29,7 @@ set(CRASHMOM_SOURCES
     src/main.cpp          # entry point: hands control to ReXGlue's app framework
     src/debug_frame_capture.cpp  # --debug_capture_dir: periodic screenshots for debugging
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
+    src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
@@ -78,6 +79,11 @@ endif()
 
 # Links the generated code + runtime, adds the codegen dependency.
 rexglue_setup_target(crash_mom)
+
+# The source tree's path, for game_folder.cpp: a build run from inside the
+# source tree keeps the player's files in <repo>/user/ (gitignored), so wiping
+# out/ never deletes saves. Installed builds use <folder>/program -> <folder>.
+target_compile_definitions(crash_mom PRIVATE CRASHMOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # -----------------------------------------------------------------------------
 # Shaders of the native renderer (src/native/shaders/*.vert / *.frag)

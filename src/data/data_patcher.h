@@ -4,7 +4,7 @@
 //
 // WHY: some of the port's features need the game's DATA changed, not only
 // its code: a page added to the in-game menus, new states in the front
-// end's screen tree (saves/rename_screen.h). The player's game folder must
+// end's screen tree (saves/rename_screen.h). The extracted disc files must
 // never be written to, and the port can't ship any game content. So the
 // changes are made at run time, from the player's own files, the way a mod
 // would ship them: a "patch" is code that turns the original file into the
@@ -17,7 +17,7 @@
 // levels/GlobalPackages.p3d's, traced 2026-10-03). It's wrapped: when a patch
 // is registered for that category and name, the original file is read out
 // of default.rcf (where the game would find it), the patches change it, the
-// result goes to <user data>/cache/patched_data/<file name>, and the path
+// result goes to <game folder>/cache/patched_data/<file name>, and the path
 // becomes "crashmom/<file name>". Built once per run (they follow the
 // player's disc data), at the first request.
 //
@@ -30,7 +30,7 @@
 // is mounted exactly there, as a host-folder device at the game drive's
 // \Device\Harddisk0\Partition1 + \crashmom: SDK patch 0012 makes the file
 // system pick the device with the longest matching mount path (it took the
-// first registered: the game folder).
+// first registered: the disc files' folder).
 // =============================================================================
 #pragma once
 

@@ -248,7 +248,7 @@ From the log ("not drawn natively yet") and the difference image:
 ```bash
 # into Wumpa Island on a COPY of the save data: ~45 s (the Load Game presses
 # at 23-38 s depend on your own save list)
-cp -a ~/.local/share/crash_mom <tmp>/userdata
+cp -a user/saves <tmp>/userdata
 out/build/linux-amd64-relwithdebinfo/crash_mom --game_data_root=$PWD/game \
     --user_data_root=<tmp>/userdata --renderer=native \
     --debug_capture_dir=<tmp>/cap --debug_capture_interval_ms=5000 \

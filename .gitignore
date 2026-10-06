@@ -43,3 +43,10 @@ __pycache__/
 # the project.
 /CLAUDE.md
 /notes/
+
+# The player's own files when the game runs from the source tree
+# (src/game_folder.h): saves, settings, controls, photos, logs. Saves come
+# from the game; settings are personal. Never in the repo.
+/user/
+# Shader cache + patched game data (rebuilt when missing).
+/cache/

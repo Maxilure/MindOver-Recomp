@@ -158,6 +158,8 @@ thirdparty/rexglue-sdk     the recompiler + runtime (git submodule, pinned)
 game/                      extracted disc contents (the port reads these at runtime)
 generated/default/         C++ produced by the recompiler
 out/, logs/                build output, run logs
+user/                      YOUR files: saves, settings, controls, photos (see docs/01-building.md, "Your files")
+cache/                     shader cache + changed game data (rebuilt when missing)
 ```
 
 ## Reading order

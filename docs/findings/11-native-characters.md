@@ -252,7 +252,7 @@ shadows (0 in the hub so far).
 ```bash
 # into Wumpa Island on a COPY of the save data; same-frame A/B at 55 s
 # (the Load Game presses depend on your own save list)
-cp -a ~/.local/share/crash_mom <tmp>/userdata
+cp -a user/saves <tmp>/userdata
 out/build/linux-amd64-relwithdebinfo/crash_mom --game_data_root=$PWD/game \
     --user_data_root=<tmp>/userdata --renderer=native --readback_resolve=full \
     --debug_capture_dir=<tmp>/ab --debug_native_ab_ms=55000 \

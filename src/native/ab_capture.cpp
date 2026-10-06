@@ -20,6 +20,7 @@
 #include <rex/ui/presenter.h>
 
 #include "../debug_frame_capture.h"
+#include "../game_folder.h"
 #include "../png_writer.h"
 #include "guest.h"
 #include "spotter.h"
@@ -32,10 +33,11 @@ REXCVAR_DEFINE_STRING(debug_native_ab_ms, "", "CrashMoM",
 REXCVAR_DEFINE_STRING(debug_native_ab_trigger, "", "CrashMoM",
                       "Debug: like --debug_native_ab_ms, whenever this file appears (`touch` it; "
                       "it is deleted once the frame is saved)");
-REXCVAR_DEFINE_STRING(photo_dir, "photos", "CrashMoM",
+REXCVAR_DEFINE_STRING(photo_dir, "", "CrashMoM",
                       "Where F10 saves photos (PNG): the same frame from both renderers while "
-                      "the native picture is shown, else the screen. A relative path starts at "
-                      "the folder the game was started from");
+                      "the native picture is shown, else the screen. Empty = user/photos in "
+                      "the game folder; a relative path starts at the folder the game was "
+                      "started from");
 
 namespace native::ab_capture {
 
@@ -127,6 +129,7 @@ void HoldEmulatedEveryFrame() {
 // two quick presses don't collide), creating the folder if needed.
 std::filesystem::path PhotoPath(const std::string& stamp, const char* which) {
   std::filesystem::path dir = REXCVAR_GET(photo_dir);
+  if (dir.empty()) dir = game_folder::UserFolder() / "photos";  // game_folder.h
   std::error_code error;
   std::filesystem::create_directories(dir, error);
   return dir / ("photo_" + stamp + "_" + which + ".png");

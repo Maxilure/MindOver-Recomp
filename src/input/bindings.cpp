@@ -16,8 +16,10 @@
 #include <rex/logging.h>
 #include <rex/ui/virtual_key.h>
 
+#include "game_folder.h"
+
 REXCVAR_DEFINE_STRING(controls_file, "", "CrashMoM",
-                      "Keyboard + mouse controls file (empty = controls.toml next to the exe; "
+                      "Keyboard + mouse controls file (empty = user/controls.toml in the game folder; "
                       "written by the Controls menu, F6)");
 
 namespace kbm {
@@ -411,7 +413,7 @@ std::filesystem::path ControlsFilePath() {
   if (!custom.empty()) {
     return custom;
   }
-  return rex::filesystem::GetExecutableFolder() / "controls.toml";
+  return game_folder::UserFolder() / "controls.toml";  // game_folder.h
 }
 
 Bindings LoadBindings(const std::filesystem::path& path) {

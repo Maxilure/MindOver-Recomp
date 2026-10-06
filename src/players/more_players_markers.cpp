@@ -60,6 +60,7 @@
 #include <rex/system/xmemory.h>
 
 #include "data/data_patcher.h"
+#include "game_folder.h"
 #include "data/pure3d.h"
 
 // stb_image (from the SDK's source tree), private to this file.
@@ -226,13 +227,10 @@ bool PatchPackage(const Bytes& d, Bytes* out) {
 
 void Register() {
   if (more_players::LocalPlayerCount() <= 2) return;
-  // The player's own copy first (<user data>/markers), then the port's
-  // (assets/markers next to the exe).
-  auto* runtime = rex::Runtime::instance();
+  // The player's own copy first (user/markers in the game folder,
+  // game_folder.h), then the port's (assets/markers next to the exe).
   std::vector<std::filesystem::path> folders;
-  if (runtime && !runtime->user_data_root().empty()) {
-    folders.push_back(std::filesystem::absolute(runtime->user_data_root()) / "markers");
-  }
+  folders.push_back(game_folder::UserFolder() / "markers");
   folders.push_back(rex::filesystem::GetExecutableFolder() / "assets" / "markers");
   int found = 0;
   for (int i = 0; i < 2; ++i) {

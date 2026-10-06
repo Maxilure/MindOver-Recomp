@@ -106,7 +106,7 @@ struct Registered {
 
 std::vector<Registered> g_patches;  // registered before Install, read-only after
 std::atomic<bool> g_installed{false};
-std::filesystem::path g_folder;  // <user data>/cache/patched_data
+std::filesystem::path g_folder;  // <cache root>/patched_data (game_folder.h)
 std::mutex g_mutex;
 // (category, name) -> the path to give the game ("crashmom/<file>"), or
 // empty = its own file. Decided once per run.
@@ -197,13 +197,14 @@ bool ReadArchiveFile(std::string_view name, Bytes* out, std::string* error) {
 void Install() {
   auto* runtime = rex::Runtime::instance();
   auto* vfs = runtime ? runtime->file_system() : nullptr;
-  if (!vfs || runtime->user_data_root().empty() || g_patches.empty()) {
+  if (!vfs || runtime->cache_root().empty() || g_patches.empty()) {
     return;
   }
-  // A folder of its own: the SDK keeps its shader cache in <user data>/cache,
-  // which the game shouldn't see as D:\crashmom.
+  // A folder of its own inside the cache folder (<game folder>/cache,
+  // game_folder.h: rebuilt when missing); the SDK's shader cache sits next to
+  // it, which the game shouldn't see as D:\crashmom.
   const std::filesystem::path folder =
-      std::filesystem::absolute(runtime->user_data_root()) / "cache" / "patched_data";
+      std::filesystem::absolute(runtime->cache_root()) / "patched_data";
   std::error_code ec;
   std::filesystem::create_directories(folder, ec);
   auto device = std::make_unique<rex::filesystem::HostPathDevice>(kDeviceMount, folder, true);

@@ -8,7 +8,8 @@
 //
 // Lifecycle, in order (full details: ReXGlue wiki page "ReXApp"):
 //
-//   OnConfigurePaths    choose where game data / saves live
+//   OnConfigurePaths    choose where game data / saves live (game_folder.h)
+//   OnConfigureLogging  where per-run log files go (user/logs)
 //   OnPostInitLogging   logging is ready
 //   OnPreSetup          tweak runtime config before the fake 360 is built
 //   OnCreateDialogs     add our own ImGui overlay windows
@@ -49,6 +50,7 @@
 #include "debug_frame_capture.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "game_folder.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
 #include "input/players.h"
@@ -262,9 +264,16 @@ class CrashMomApp : public rex::ReXApp {
     save_library::Create(drawer);
   }
 
+  // Saves, settings, controls, photos and logs live in the game's own
+  // folder (user/), not in a system folder: game_folder.h has the layout,
+  // the first-start copy of the old saves and the "folder not writable" box.
+  void OnConfigurePaths(rex::PathConfig& paths) override { game_folder::Configure(paths); }
+  void OnConfigureLogging(rex::LogConfig& config) override {
+    game_folder::ConfigureLogging(config);
+  }
+  void OnPostInitLogging() override { game_folder::LogWhatHappened(); }
+
   // Other hooks we can override (uncomment + implement as needed):
-  // void OnConfigurePaths(rex::PathConfig& paths) override {}
-  // void OnPostInitLogging() override {}
   // void OnLoadXexImage(std::string& xex_image) override {}
   // void OnPostLoadXexImage() override {}
 

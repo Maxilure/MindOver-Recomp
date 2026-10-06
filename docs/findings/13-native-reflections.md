@@ -154,7 +154,7 @@ live through the input FIFO and check the newest capture before
 confirming:
 
 ```bash
-S=<tmp>; cp -a ~/.local/share/crash_mom $S/userdata
+S=<tmp>; cp -a user/saves $S/userdata
 crash_mom --game_data_root=$PWD/game --user_data_root=$S/userdata --renderer=native \
   --readback_resolve=full --debug_capture_dir=$S/cap --debug_capture_interval_ms=1000 \
   --debug_native_ab_trigger=$S/ab.now --debug_input_fifo=$S/input.fifo \
