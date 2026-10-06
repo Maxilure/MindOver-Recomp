@@ -402,7 +402,7 @@ extern "C" REX_FUNC(sub_822661B8) {
 // ... its users: "mulli r11,r3,52 ; add r11,r11,r8" then r11 + 8420 = the
 // reticle: players 3-4's r11 = ours - 8420 (sub_822ACD78 at 0x822ACE80,
 // sub_822AD320 at 0x822AD384), and "addi r11,r3,162 ; mulli ; add r4,r11,r8"
-// = the reticle + 4 (sub_822AD0A0, at 0x822AD124).
+// = the reticle + 4 (sub_82140038's copy; sub_822AD0A0's below).
 void MorePlayersReticleBase(PPCRegister& player, PPCRegister& base_register) {
   const int p = int32_t(player.u32);
   if (p < 2) return;
@@ -411,6 +411,15 @@ void MorePlayersReticleBase(PPCRegister& player, PPCRegister& base_register) {
 }
 void MorePlayersReticlePlus4(PPCRegister& player, PPCRegister& pointer) {
   const int p = int32_t(player.u32);
+  if (p < 2) return;
+  const uint32_t ours = ObjectOf(kReticle, g_front_end, p);
+  if (ours) pointer.u64 = ours + 4;
+}
+
+// ... the same in sub_822AD0A0 (0x822AD124), where r3 is already a stack
+// address: r11 = (player + 162) * 52 tells the player.
+void MorePlayersReticlePlus4From52(PPCRegister& offset, PPCRegister& pointer) {
+  const int p = int(offset.u32 / 52) - 162;
   if (p < 2) return;
   const uint32_t ours = ObjectOf(kReticle, g_front_end, p);
   if (ours) pointer.u64 = ours + 4;

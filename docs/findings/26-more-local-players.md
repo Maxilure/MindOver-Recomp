@@ -710,7 +710,7 @@ came from the physics behaviour's "set position" (`sub_8217F528`, which
 snaps the position from the mask's message to the world with
 `sub_822E6AA0`). The exact cause is still unknown: the mask's matrices were
 valid, and it only happens at that spot. A "set position" that ends at a
-NaN now keeps the previous position (logged), which removes every symptom.
+NaN now keeps the previous position (logged), which removes every symptom. (Cause found later: section 34.)
 
 ## 21. Who controls what: devices, players and menus
 
@@ -1343,3 +1343,43 @@ Player 1 alone (`p1.unplug`): the solo texts, a press without a controller
 does nothing, plugged back in, A resumes.
 
 ![The game's question box: a lost controller](../images/lost-controller-question-box.jpg)
+
+## 34. The NaN position, found: players 3-4's aim point
+
+Section 20's safety net logged about ten "set to a NaN position" warnings
+every time player 3 or 4 joined as a mask, and players 3-4's aiming reticle
+(section 19) never worked reliably. Both had one cause.
+
+**The chain, traced backwards from the warning.** A temporary probe on the
+physics "set position" (`sub_8217F528`) showed the message's whole matrix was
+already NaN on arrival, so the snap to the world wasn't to blame. A walk up
+the guest stack (saved return addresses along the back chain) led through two
+message forwarders (`sub_82103C88`, `sub_8221D730`) to the message's author:
+the mask's own update, `CMaskAttachableBehaviour` slot 4 (`sub_82237778`). It
+builds the mask's spot on its host (`sub_82237650`: host joint matrix x host
+world matrix + offset; valid), smooths it with a small spring (`sub_82238380`),
+then sends a `CActionTeleport` (vtable `0x8202187C`) to the rider's hidden
+Crash. The spring's facing step (`sub_822380E0`) asks the rider "what are you
+aiming at?" (message type 38, sub-kind 7) and turns the mask toward the
+answer. The answer comes from `CReticleAimingBehaviour` (`sub_82161D28`): its
+aim point. Player 2's was a real point in the level; player 3's was NaN and
+player 4's about -6e31. A NaN direction makes the mask's matrix NaN, and NaN
+then sticks (the spring's "too far, snap back" test is false for NaN).
+
+**Why the aim point was wrong.** The reticle's update (`sub_822AC668`) casts
+a ray (`sub_8224C6C0`) through the player's reticle on screen, read by
+`sub_822AD0A0` from "the front end's reticle of player p, + 4". For players
+3-4 that address is redirected to their own reticle objects by a midasm hook
+at `0x822AD124`, which took the player number from `r3`. But two instructions
+earlier the game reuses `r3` for a stack address (`addi r11,r3,162 ; addi
+r3,r1,80 ; mulli r11,r11,52`): the hook saw a huge "player", did nothing, and
+players 3-4 read front-end bytes past player 2's reticle. Now the hook reads
+`r11` = (player + 162) x 52. The other three reticle hooks were checked:
+their registers still hold the player at the hook.
+
+**Result** (fake controllers, four players joining as masks, masks on and off
+again): 0 NaN warnings (before: 10 per join), players 3-4's aim points are
+real points next to player 2's, 0 errors; two players unchanged. The safety
+net stays in place and should stay silent. Moving the reticle needs the
+"reticle on" state the scripts set while a masked player aims, which fake
+controllers haven't reached yet: to confirm in play.

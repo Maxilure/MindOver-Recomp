@@ -1491,10 +1491,15 @@ extern "C" REX_FUNC(sub_82297928) {
 // SAFETY NET: a character's "set position" (physics behaviour, sub_8217F528:
 // r3 = the physics behaviour, r5 = the message, position at message +68,
 // snapped by the world sub_822E6AA0) that ends with a NaN position keeps the
-// previous one. Found 2026-10-04 (cause TBD): at the save totem in the first
-// level after Crash's house, player 3's hidden Crash, riding as a mask, got a
-// NaN position this way; leaving the mask it stayed NaN (invisible, picking up
-// mission items, holding the co-op camera so player 1 couldn't walk).
+// previous one. Found 2026-10-04: at the save totem in the first level after
+// Crash's house, player 3's hidden Crash, riding as a mask, got a NaN position
+// this way; leaving the mask it stayed NaN (invisible, picking up mission
+// items, holding the co-op camera so player 1 couldn't walk).
+// CAUSE FOUND 2026-10-06 (findings/26 s.34): the mask faces its player's aim
+// point (CReticleAimingBehaviour answers message 38/7); players 3-4's aim was
+// built from front-end bytes past player 2's reticle (a hook that never fired,
+// MorePlayersReticlePlus4From52 now), so the mask's direction, then its matrix,
+// then this teleport were NaN. Kept as a net: it should stay silent now.
 extern "C" REX_FUNC(__imp__sub_8217F528);
 extern "C" REX_FUNC(sub_8217F528) {
   using namespace more_players;

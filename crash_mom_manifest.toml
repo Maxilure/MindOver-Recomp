@@ -1528,11 +1528,16 @@ registers = ["r3", "r11"]
 address = 0x822AD384
 name = "MorePlayersReticleBase"
 registers = ["r3", "r11"]
-# "addi r11,r3,162 ; mulli r11,r11,52 ; add r4,r11,r8" = the reticle + 4.
+# "addi r11,r3,162 ; addi r3,r1,80 ; mulli r11,r11,52 ; add r4,r11,r8" = the reticle + 4.
+# r3 is a stack address by then, so the player comes from r11 = (player + 162) * 52.
+# Found 2026-10-06: this hook read r3 (= the stack) and never fired; players 3-4's
+# aim then read front-end bytes past player 2's reticle (NaN / garbage): their masks'
+# hidden Crash got NaN positions (the safety net's warnings) and their reticles
+# couldn't be moved (findings/26 s.34).
 [[entrypoint.midasm_hook]]
 address = 0x822AD124
-name = "MorePlayersReticlePlus4"
-registers = ["r3", "r4"]
+name = "MorePlayersReticlePlus4From52"
+registers = ["r11", "r4"]
 # sub_82140038 (r4 -> r30 = a character): compares with players 1-2's characters; a player 3-4
 # character continues at 0x8214007C with r6 = its player; then its reticle base, reticle + 4,
 # and the base again from r30 = p * 52.
