@@ -13,6 +13,7 @@
 // =============================================================================
 
 #include "recorder.h"
+#include "../guest_memory.h"
 #include "spotter.h"
 
 #include <algorithm>
@@ -1182,7 +1183,7 @@ void OnEndPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
                                                                      : !additive;
       if (hit) {
         for (uint32_t v = 0; v < d.vertex_count; ++v) {
-          std::memset(base + g.pending_vertices + v * d.layout.stride + d.layout.colour, 0, 4);
+          std::memset(GuestPtr(base, g.pending_vertices + v * d.layout.stride + d.layout.colour), 0, 4);
         }
       }
     }
@@ -1190,7 +1191,7 @@ void OnEndPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
     d.vertex_offset = uint32_t(g.frame.vertex_data.size() * 4);
     g.frame.vertex_data.resize(g.frame.vertex_data.size() + words);
     uint32_t* out = g.frame.vertex_data.data() + d.vertex_offset / 4;
-    const uint8_t* in = base + g.pending_vertices;
+    const uint8_t* in = GuestPtr(base, g.pending_vertices);
     for (uint32_t i = 0; i < words; ++i) {
       out[i] = Load32(in + 4 * i);
     }

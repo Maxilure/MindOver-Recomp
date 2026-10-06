@@ -2,6 +2,7 @@
 // saves/quick_load.cpp -- see quick_load.h
 // =============================================================================
 #include "quick_load.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <cctype>
@@ -52,7 +53,7 @@ constexpr uint32_t kGameActiveController = 352;  // s32, -1 = nobody pressed STA
 constexpr uint32_t kController = 0;  // the first controller (keyboard + mouse plays as it too)
 
 uint32_t Read32(const uint8_t* base, uint32_t address) {
-  const uint8_t* p = base + address;
+  const uint8_t* p = GuestPtr(base, address);
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
 }
 
@@ -229,9 +230,9 @@ extern "C" REX_FUNC(sub_82188448) {
   const uint32_t object = ctx.r3.u32;
   const uint32_t name = ctx.r4.u32;
   REXLOG_INFO("Quick load: {:.1f} s: boot movie '{}' skipped", Seconds(),
-              name ? reinterpret_cast<const char*>(base + name) : "?");
+              name ? reinterpret_cast<const char*>(GuestPtr(base, name)) : "?");
   const uint8_t last[4] = {0, 0, 0, kLastMovie};
-  std::memcpy(base + object + kCounter, last, 4);  // big-endian u32
+  std::memcpy(GuestPtr(base, object + kCounter), last, 4);  // big-endian u32
   ctx.r3.u64 = object + kFinishedInterface;
   __imp__sub_821882B8(ctx, base);
 }

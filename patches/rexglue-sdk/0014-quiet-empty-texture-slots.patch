@@ -1,0 +1,93 @@
+Fix: empty texture slots are no longer warned about on every draw
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0014-quiet-empty-texture-slots.patch
+Status:     local patch (log noise; worth reporting upstream)
+
+WHAT BROKE
+  The log filled with
+    Texture fetch constant (00024800 00000000 00000000 0AA80000 00000C03 00000018)
+    has "invalid" type! ... --gpu_allow_invalid_fetch_constants=true.
+  thousands of times per level load (9,665 warnings in the first 27 s of a
+  save load, 6 distinct constants), a few per session otherwise. It buried
+  real warnings and inflated the launcher's warning count.
+
+WHY
+  A texture fetch constant describes one sampler slot. Both kinds seen have
+  type 0 ("invalid") AND base address 0 AND mip address 0: an empty slot,
+  what D3D leaves after unbinding a texture (SetTexture(n, NULL)): one with
+  only the sampler state set (filter / clamp in dword 0, swizzle in dword 3),
+  one fully cleared. The game draws with such slots while a level's textures
+  stream in. Nothing is bound for them either way: the warning's own advice
+  (--gpu_allow_invalid_fetch_constants=true) lets the constant through, and
+  the very next check ("base_page == 0 && mip_page == 0: no texture data at
+  all") returns with nothing bound, exactly as now. The picture is unchanged.
+
+FIX
+  TextureCache::BindingInfoFromFetchConstant: an invalid-type constant with
+  no base and no mip address returns quietly (same result as before). An
+  invalid-type constant that DOES point at memory may matter: still warned,
+  but once per distinct constant (up to 64), not per draw.
+
+HOW FOUND
+  Grouping the session log's warnings by message (6 distinct constants, all
+  with dword 1 = 0 and dword 5's mip address = 0) and reading the texture
+  cache's binding code.
+
+diff --git a/src/graphics/pipeline/texture/cache.cpp b/src/graphics/pipeline/texture/cache.cpp
+index 76f5600..bd9ccdf 100644
+--- a/src/graphics/pipeline/texture/cache.cpp
++++ b/src/graphics/pipeline/texture/cache.cpp
+@@ -10,7 +10,10 @@
+  */
+ 
+ #include <algorithm>
++#include <array>
+ #include <cstdint>
++#include <mutex>
++#include <set>
+ #include <utility>
+ 
+ #include <rex/assert.h>
+@@ -910,17 +913,39 @@ void TextureCache::BindingInfoFromFetchConstant(const xenos::xe_gpu_texture_fetc
+   switch (fetch.type) {
+     case xenos::FetchConstantType::kTexture:
+       break;
+-    case xenos::FetchConstantType::kInvalidTexture:
++    case xenos::FetchConstantType::kInvalidTexture: {
+       if (REXCVAR_GET(gpu_allow_invalid_fetch_constants)) {
+         break;
+       }
++      // An EMPTY slot: "invalid" type and no address at all is what D3D
++      // leaves after unbinding a texture (SetTexture(n, NULL)), and games
++      // draw with such slots (e.g. while textures stream in). Nothing is
++      // bound either way (with the flag above, the address check below would
++      // return just the same), so it isn't worth a warning: it was logged
++      // for every draw, thousands of lines per level load.
++      if (fetch.base_address == 0 && fetch.mip_address == 0) {
++        return;
++      }
++      // One that points at memory may matter: warned once per distinct
++      // constant (not per draw), up to 64 of them.
++      static std::mutex warned_mutex;
++      static std::set<std::array<uint32_t, 6>> warned;
++      {
++        std::lock_guard<std::mutex> lock(warned_mutex);
++        const std::array<uint32_t, 6> words = {fetch.dword_0, fetch.dword_1, fetch.dword_2,
++                                               fetch.dword_3, fetch.dword_4, fetch.dword_5};
++        if (warned.size() >= 64 || !warned.insert(words).second) {
++          return;
++        }
++      }
+       REXGPU_WARN(
+           "Texture fetch constant ({:08X} {:08X} {:08X} {:08X} {:08X} {:08X}) "
+           "has \"invalid\" type! This is incorrect behavior, but you can try "
+           "bypassing this by launching Xenia with "
+-          "--gpu_allow_invalid_fetch_constants=true.",
++          "--gpu_allow_invalid_fetch_constants=true. (Logged once per constant.)",
+           fetch.dword_0, fetch.dword_1, fetch.dword_2, fetch.dword_3, fetch.dword_4, fetch.dword_5);
+       return;
++    }
+     default:
+       REXGPU_WARN(
+           "Texture fetch constant ({:08X} {:08X} {:08X} {:08X} {:08X} {:08X}) "

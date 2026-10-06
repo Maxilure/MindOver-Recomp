@@ -3,6 +3,7 @@
 // =============================================================================
 
 #include "ab_capture.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <atomic>
@@ -142,7 +143,11 @@ std::string PhotoStamp() {
                          .count() %
                      1000);
   std::tm local{};
+#ifdef _WIN32
+  localtime_s(&local, &t);  // Windows: same job, arguments the other way round
+#else
   localtime_r(&t, &local);
+#endif
   char buffer[48];
   std::strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H%M%S", &local);
   char with_ms[64];
@@ -209,7 +214,7 @@ bool FindMarkerPixels(const TextureCache& textures, const GuestTexture& texture,
 
 void WriteMarker(uint8_t* base, const Region& r) {
   for (uint32_t address : r.pixels) {
-    std::memcpy(base + address, &kMarker, 4);
+    std::memcpy(GuestPtr(base, address), &kMarker, 4);
   }
 }
 
@@ -217,7 +222,7 @@ bool MarkerGone(const uint8_t* base, const Region& r) {
   bool intact[2] = {true, true};
   for (uint32_t i = 0; i < 2 * kMarkerPixels; ++i) {
     uint32_t v;
-    std::memcpy(&v, base + r.pixels[i], 4);
+    std::memcpy(&v, GuestPtr(base, r.pixels[i]), 4);
     intact[i / kMarkerPixels] &= v == kMarker;
   }
   return !intact[0] && !intact[1];

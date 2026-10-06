@@ -1,7 +1,10 @@
 // =============================================================================
 // data/data_patcher.cpp -- see data_patcher.h
 // =============================================================================
+#include <cstdio>
+#include <cstdlib>
 #include "data_patcher.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <atomic>
@@ -236,13 +239,13 @@ extern "C" REX_FUNC(sub_822E3828) {
   if (!g_installed || !name || !out) {
     return;
   }
-  const std::string name_text(reinterpret_cast<const char*>(base + name));
+  const std::string name_text(reinterpret_cast<const char*>(GuestPtr(base, name)));
   if (!AnyPatchFor(category, name_text)) {
     return;
   }
-  const std::string game_path(reinterpret_cast<const char*>(base + out));
+  const std::string game_path(reinterpret_cast<const char*>(GuestPtr(base, out)));
   const std::string redirect = RedirectFor(category, name_text, game_path);
   if (!redirect.empty() && redirect.size() < 512) {
-    std::memcpy(base + out, redirect.c_str(), redirect.size() + 1);
+    std::memcpy(GuestPtr(base, out), redirect.c_str(), redirect.size() + 1);
   }
 }

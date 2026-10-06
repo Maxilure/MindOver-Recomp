@@ -2,6 +2,7 @@
 // saves/rename_screen.cpp -- see rename_screen.h
 // =============================================================================
 #include "rename_screen.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <atomic>
@@ -74,7 +75,7 @@ constexpr uint8_t kFlagDone = 0x08;
 constexpr uint8_t kFlagCancel = 0x04;
 
 uint32_t Read32(const uint8_t* base, uint32_t address) {
-  const uint8_t* p = base + address;
+  const uint8_t* p = GuestPtr(base, address);
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
 }
 
@@ -87,7 +88,7 @@ int32_t Decide(uint8_t* base, const Route& route) {
   if (!front_end) {
     return -1;
   }
-  const uint8_t flags = base[front_end + kFrontEndResultFlags];
+  const uint8_t flags = (*GuestPtr(base, front_end + kFrontEndResultFlags));
   if (flags & kFlagDone) {
     return save_library::OnGameRenameFinished(base, true) ? route.save : route.done;
   }

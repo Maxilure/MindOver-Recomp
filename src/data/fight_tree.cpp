@@ -1,7 +1,9 @@
 // =============================================================================
 // data/fight_tree.cpp -- see fight_tree.h
 // =============================================================================
+#include <cstdlib>
 #include "fight_tree.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <cstring>
@@ -197,7 +199,7 @@ extern "C" REX_FUNC(sub_8211AF40) {
   using namespace fight_tree;
   const uint32_t node = ctx.r4.u32;
   if (node) {
-    const uint8_t* p = base + node + 30;
+    const uint8_t* p = GuestPtr(base, node + 30);
     const int32_t number = int16_t(uint16_t(p[0]) << 8 | p[1]);
     Decision decision;
     {
@@ -227,18 +229,18 @@ extern "C" REX_FUNC(sub_8211AF40) {
 // less room than its nodes need.
 extern "C" REX_FUNC(sub_820C27A8) {
   using namespace fight_tree;
-  const char* path = reinterpret_cast<const char*>(base + ctx.r3.u32);
+  const char* path = reinterpret_cast<const char*>(GuestPtr(base, ctx.r3.u32));
   std::string key = data_patcher::OriginalPath(path);
   if (key.empty()) {
     key = path;
   }
   int count = 0;
-  const uint32_t entries = Be32(base + kBranchCountEntries);
+  const uint32_t entries = Be32(GuestPtr(base, kBranchCountEntries));
   for (uint32_t i = 0; i < entries; ++i) {
     const uint32_t entry = kBranchCountTable + i * kBranchCountEntrySize;
-    const char* name = reinterpret_cast<const char*>(base + entry);
+    const char* name = reinterpret_cast<const char*>(GuestPtr(base, entry));
     if (strnlen(name, kBranchCountPathSize) < kBranchCountPathSize && key == name) {
-      count = int(Be32(base + entry + kBranchCountPathSize));
+      count = int(Be32(GuestPtr(base, entry + kBranchCountPathSize)));
       break;
     }
   }
@@ -247,6 +249,12 @@ extern "C" REX_FUNC(sub_820C27A8) {
     if (const auto it = g_node_counts.find(key); it != g_node_counts.end()) {
       count = std::max(count, it->second);
     }
+  }
+  if (count == 0) {
+    // The loader (sub_820C23C0) writes through a null node array next: say
+    // which tree, while there's still a log line to write.
+    REXLOG_WARN("Fight tree: no node count for '{}' ({} entries in the table): the game will crash",
+                key, entries);
   }
   ctx.r3.u64 = uint32_t(count);
 }

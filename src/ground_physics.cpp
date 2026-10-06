@@ -130,6 +130,7 @@
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
+#include "guest_memory.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
 
@@ -187,7 +188,7 @@ Clock::duration GraceTime() { return std::chrono::milliseconds(REXCVAR_GET(groun
 
 uint32_t Be32(const uint8_t* base, uint32_t address) {
   uint32_t v;
-  std::memcpy(&v, base + address, 4);
+  std::memcpy(&v, GuestPtr(base, address), 4);
   return __builtin_bswap32(v);
 }
 float BeFloat(const uint8_t* base, uint32_t address) {
@@ -208,7 +209,7 @@ uint32_t Contact(const uint8_t* base, uint32_t self, uint32_t index_field) {
   if (!actor) {
     return 0;
   }
-  const uint32_t storage = VariableAddress(base, actor, base[self + index_field]);
+  const uint32_t storage = VariableAddress(base, actor, (*GuestPtr(base, self + index_field)));
   return storage ? Be32(base, storage) : 0;
 }
 

@@ -4,8 +4,9 @@
 //
 // The game (PowerPC, big-endian) keeps all its data in "guest" memory: a 4 GB
 // block the runtime maps into our process. A guest address A lives at host
-// address `base + A`, where `base` is the pointer every recompiled function
-// receives (and kernel_memory()->virtual_membase() elsewhere). Every value in
+// address GuestPtr(base, A) (base + A on Linux; ../guest_memory.h), where
+// `base` is the pointer every recompiled function receives (and
+// kernel_memory()->virtual_membase() elsewhere). Every value in
 // there is big-endian, so each read swaps the bytes.
 //
 // This file also names the offsets inside the game's renderer objects that
@@ -18,6 +19,8 @@
 
 #include <cstdint>
 #include <cstring>
+
+#include "../guest_memory.h"  // GuestPtr: base + address, + 0x1000 at 0xE0000000+ on Windows
 
 namespace native::guest {
 
@@ -37,9 +40,9 @@ inline float LoadFloat(const uint8_t* host) {
 }
 
 // Same, from a guest address (base = guest memory base).
-inline uint32_t Load32(const uint8_t* base, uint32_t address) { return Load32(base + address); }
-inline uint8_t Load8(const uint8_t* base, uint32_t address) { return base[address]; }
-inline float LoadFloat(const uint8_t* base, uint32_t address) { return LoadFloat(base + address); }
+inline uint32_t Load32(const uint8_t* base, uint32_t address) { return Load32(GuestPtr(base, address)); }
+inline uint8_t Load8(const uint8_t* base, uint32_t address) { return *GuestPtr(base, address); }
+inline float LoadFloat(const uint8_t* base, uint32_t address) { return LoadFloat(GuestPtr(base, address)); }
 
 // The guest memory base (what recompiled functions receive as `base`), for
 // code that isn't handed it.

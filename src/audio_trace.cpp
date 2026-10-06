@@ -78,6 +78,7 @@
 // =============================================================================
 
 #include "audio_trace.h"
+#include "guest_memory.h"
 
 #include <algorithm>
 #include <atomic>
@@ -187,7 +188,9 @@ bool IndexArchive(const std::filesystem::path& path) {
     }
     const std::string_view hex = name.substr(name.size() - 20, 16);
     uint64_t id = 0;
-    if (std::from_chars(hex.data(), hex.data() + hex.size(), id, 16).ptr != hex.end()) {
+    // .ptr compared with data() + size(), not end(): a string_view iterator is
+    // a plain pointer in libstdc++ but a class in Microsoft's library (Windows).
+    if (std::from_chars(hex.data(), hex.data() + hex.size(), id, 16).ptr != hex.data() + hex.size()) {
       continue;
     }
     g_index.files.try_emplace(id, RsdFile{archive, offsets[i], {}});
@@ -315,8 +318,8 @@ extern "C" REX_FUNC(sub_82336430) {
   // Read everything before the call: it changes the registers.
   const uint32_t id_address = ctx.r5.u32;
   const uint32_t return_address = static_cast<uint32_t>(ctx.lr);
-  const uint64_t id = (uint64_t(audio_trace::Be32(base + id_address)) << 32) |
-                      audio_trace::Be32(base + id_address + 4);
+  const uint64_t id = (uint64_t(audio_trace::Be32(GuestPtr(base, id_address))) << 32) |
+                      audio_trace::Be32(GuestPtr(base, id_address + 4));
   __imp__sub_82336430(ctx, base);
   const char* kind = return_address == audio_trace::kFromLoadWrapper ? "load"
                      : audio_trace::t_kind                           ? audio_trace::t_kind
@@ -338,7 +341,7 @@ void CrashMomAudioFrame(PPCRegister& r4) {
   }
   using audio_trace::kChannels;
   using audio_trace::kFrameSamples;
-  const uint8_t* frame = memory->virtual_membase() + r4.u32;
+  const uint8_t* frame = GuestPtr(memory->virtual_membase(), r4.u32);
   // Channel planes of big-endian floats -> interleaved 16-bit samples.
   int16_t out[kFrameSamples * kChannels];
   for (uint32_t c = 0; c < kChannels; ++c) {

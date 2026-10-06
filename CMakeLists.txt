@@ -31,6 +31,7 @@ set(CRASHMOM_SOURCES
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
+    src/crash_report.cpp         # Windows: a crash writes its named call stack into the log
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
@@ -156,11 +157,13 @@ target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/r
 # stb_image (PNG reader) for players 3-4's marker pictures (src/players/more_players_markers.cpp).
 target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/stb)
 
-# Copy ReXGlue's shared libraries next to the executable on Linux.
+# Copy ReXGlue's shared libraries next to the executable (Linux and Windows).
 # The SDK already sets the executable's library search path to its own
-# folder ($ORIGIN), and it does this copy on Windows and macOS, but not on
-# Linux. Without it, launching fails with:
+# folder ($ORIGIN), and it copies the LINKED ones on Windows and macOS, but
+# nothing on Linux. Without it, launching fails with:
 #   error while loading shared libraries: librexruntimerd.so: cannot open ...
+# On Windows the SDK's own copy misses the GPU plugin (loaded at run time,
+# not linked): without rexgpu-xenos*.dll next to the exe the game can't draw.
 #   rex::runtime      the fake Xbox 360: kernel, memory, VFS, audio, input
 #   rex::gpu-xenos    Xenos GPU emulation (command processor + shader translation)
 #   rex::TracyClient  Tracy profiler client
@@ -171,7 +174,7 @@ target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/s
 # linked). We found this out when an SDK GPU change silently didn't reach
 # the game: the staged librexgpu-xenosrd.so was hours older than the
 # installed one. copy_if_different makes the every-build copy cheap.
-if(UNIX AND NOT APPLE)
+if(NOT APPLE)
     set(_stage_cmds)
     foreach(_lib rex::runtime rex::gpu-xenos rex::TracyClient)
         if(TARGET ${_lib})

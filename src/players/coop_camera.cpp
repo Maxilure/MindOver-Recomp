@@ -250,8 +250,9 @@ void UpdatePlayers() {
     for (int q = 0; q < kMaxPlayers; ++q) {
       const Player& other = g_players[q];
       if (q == p || other.weight <= 0.0f) continue;
-      const float near = std::clamp((kGroupFar - Length(other.last - pl.last)) / (kGroupFar - kGroupNear), 0.0f, 1.0f);
-      pl.group += near * other.weight;
+      // ("closeness", not "near": Windows' headers define near / far as macros)
+      const float closeness = std::clamp((kGroupFar - Length(other.last - pl.last)) / (kGroupFar - kGroupNear), 0.0f, 1.0f);
+      pl.group += closeness * other.weight;
     }
   }
   const float focus = std::max(0.0f, float(REXCVAR_GET(coop_camera_group_focus)));

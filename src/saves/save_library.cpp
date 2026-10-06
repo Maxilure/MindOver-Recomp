@@ -2,6 +2,7 @@
 // saves/save_library.cpp -- see save_library.h
 // =============================================================================
 #include "save_library.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <array>
@@ -201,21 +202,21 @@ constexpr uint32_t kNameEntryBuffer = 0x825A06F8;
 
 // Big-endian guest memory.
 uint32_t Read32(const uint8_t* base, uint32_t address) {
-  const uint8_t* p = base + address;
+  const uint8_t* p = GuestPtr(base, address);
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
 }
 void Write32(uint8_t* base, uint32_t address, uint32_t value) {
-  uint8_t* p = base + address;
+  uint8_t* p = GuestPtr(base, address);
   p[0] = uint8_t(value >> 24);
   p[1] = uint8_t(value >> 16);
   p[2] = uint8_t(value >> 8);
   p[3] = uint8_t(value);
 }
-int8_t ReadS8(const uint8_t* base, uint32_t address) { return int8_t(base[address]); }
+int8_t ReadS8(const uint8_t* base, uint32_t address) { return int8_t((*GuestPtr(base, address))); }
 std::u16string ReadName(const uint8_t* base, uint32_t address) {
   std::u16string name;
   for (uint32_t i = 0; i < kNameChars; ++i) {
-    const char16_t c = char16_t(base[address + 2 * i] << 8 | base[address + 2 * i + 1]);
+    const char16_t c = char16_t((*GuestPtr(base, address + 2 * i)) << 8 | (*GuestPtr(base, address + 2 * i + 1)));
     if (c == 0) break;
     name.push_back(c);
   }
@@ -224,8 +225,8 @@ std::u16string ReadName(const uint8_t* base, uint32_t address) {
 void WriteName(uint8_t* base, uint32_t address, std::u16string_view name) {
   for (uint32_t i = 0; i < kNameChars; ++i) {
     const char16_t c = i < name.size() ? name[i] : u'\0';
-    base[address + 2 * i] = uint8_t(c >> 8);
-    base[address + 2 * i + 1] = uint8_t(c & 0xFF);
+    (*GuestPtr(base, address + 2 * i)) = uint8_t(c >> 8);
+    (*GuestPtr(base, address + 2 * i + 1)) = uint8_t(c & 0xFF);
   }
 }
 
@@ -240,7 +241,7 @@ int32_t ManagerState(const uint8_t* base, uint32_t manager) {
 uint8_t FrontEndFlags(const uint8_t* base) {
   const uint32_t game = Game(base);
   const uint32_t front_end = game ? Read32(base, game + kGameFrontEnd) : 0;
-  return front_end ? base[front_end + kFrontEndFlags] : 0;
+  return front_end ? (*GuestPtr(base, front_end + kFrontEndFlags)) : 0;
 }
 
 // UTF-16 <-> UTF-8 for the ImGui box (names are short, from the game's own
@@ -485,7 +486,7 @@ void FillTable(uint8_t* base, uint32_t manager) {
     return;
   }
   for (int panel = 0; panel < kPanels; ++panel) {
-    uint8_t* entry = base + table + uint32_t(panel) * kEntrySize;
+    uint8_t* entry = GuestPtr(base, table + uint32_t(panel) * kEntrySize);
     std::array<uint8_t, kEntrySize> block{};
     const int file = PanelFile(panel);
     if (file > 0 && save_files::ReadBlockStart(file, block.data(), block.size())) {
@@ -522,12 +523,12 @@ Preview FillPreview(PPCContext& ctx, uint8_t* base, uint32_t manager) {
     return preview;  // nothing to show (no game in progress: our plain label)
   }
   const uint32_t entry = table + uint32_t(panel) * kEntrySize;
-  std::memcpy(preview.before.data(), base + entry, kEntrySize);
-  std::memcpy(base + entry, base + manager + kMgrHeader, kEntrySize);
+  std::memcpy(preview.before.data(), GuestPtr(base, entry), kEntrySize);
+  std::memcpy(GuestPtr(base, entry), GuestPtr(base, manager + kMgrHeader), kEntrySize);
   Write32(base, entry + kEntryFormat, kSaveFormat);
   CallGame(__imp__sub_8235AA10, ctx, base, entry + kEntryDate);
   const uint32_t game = Game(base);
-  Write32(base, entry + kEntryLevel, uint32_t(int32_t(int8_t(base[game + kGameLevel]))));
+  Write32(base, entry + kEntryLevel, uint32_t(int32_t(int8_t((*GuestPtr(base, game + kGameLevel))))));
   if (const uint32_t progress = Read32(base, game + kGameProgress)) {
     Write32(base, entry + kEntryPlayTime, Read32(base, progress + kProgressPlayTime));
     Write32(base, entry + kEntryPercent, CallGame(__imp__sub_822E10C8, ctx, base, progress));
@@ -541,7 +542,7 @@ Preview FillPreview(PPCContext& ctx, uint8_t* base, uint32_t manager) {
 void ClearPreview(uint8_t* base, uint32_t manager, const Preview& preview) {
   const uint32_t table = Read32(base, manager + kMgrSlotTable);
   if (preview.panel >= 0 && table) {
-    std::memcpy(base + table + uint32_t(preview.panel) * kEntrySize, preview.before.data(),
+    std::memcpy(GuestPtr(base, table + uint32_t(preview.panel) * kEntrySize), preview.before.data(),
                 kEntrySize);
   }
   g.preview_shown = preview.panel >= 0;
@@ -621,8 +622,8 @@ void SetPromptText(PPCContext& ctx, uint8_t* base, const char* page_name, const 
 
 void SetVisible(uint8_t* base, uint32_t element, bool visible) {
   if (element) {
-    base[element + kElementFlags] = visible ? (base[element + kElementFlags] | kElementVisible)
-                                            : (base[element + kElementFlags] & ~kElementVisible);
+    (*GuestPtr(base, element + kElementFlags)) = visible ? ((*GuestPtr(base, element + kElementFlags)) | kElementVisible)
+                                            : ((*GuestPtr(base, element + kElementFlags)) & ~kElementVisible);
   }
 }
 
@@ -751,9 +752,9 @@ void DecoratePanels(PPCContext& ctx, uint8_t* base) {
       const uint32_t items = Read32(base, g.slot_menu + kMenuItemsBegin);
       const uint32_t menu_item = items ? Read32(base, items + uint32_t(panel) * 4) : 0;
       if (menu_item) {
-        base[menu_item + kMenuItemFlags] =
-            shown ? (base[menu_item + kMenuItemFlags] | kMenuItemSelectable)
-                  : (base[menu_item + kMenuItemFlags] & ~kMenuItemSelectable);
+        (*GuestPtr(base, menu_item + kMenuItemFlags)) =
+            shown ? ((*GuestPtr(base, menu_item + kMenuItemFlags)) | kMenuItemSelectable)
+                  : ((*GuestPtr(base, menu_item + kMenuItemFlags)) & ~kMenuItemSelectable);
       }
     }
   }
@@ -791,7 +792,7 @@ void Refill(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   const uint32_t fade = Read32(base, screen + kScreenFade);
   const uint32_t game = Game(base);
   const uint32_t front_end = game ? Read32(base, game + kGameFrontEnd) : 0;
-  const uint8_t ready = front_end ? base[front_end + kFrontEndReadyFlags] & kFlagScreenReady : 0;
+  const uint8_t ready = front_end ? (*GuestPtr(base, front_end + kFrontEndReadyFlags)) & kFlagScreenReady : 0;
   const uint32_t manager = Manager(base);
   const Preview preview = manager ? FillPreview(ctx, base, manager) : Preview{};
   g.refilling = true;
@@ -804,8 +805,8 @@ void Refill(PPCContext& ctx, uint8_t* base, uint32_t screen) {
           (Read32(base, screen + kScreenState) & ~kScreenStateMask) | state);
   Write32(base, screen + kScreenFade, fade);
   if (front_end) {
-    base[front_end + kFrontEndReadyFlags] =
-        uint8_t((base[front_end + kFrontEndReadyFlags] & ~kFlagScreenReady) | ready);
+    (*GuestPtr(base, front_end + kFrontEndReadyFlags)) =
+        uint8_t(((*GuestPtr(base, front_end + kFrontEndReadyFlags)) & ~kFlagScreenReady) | ready);
   }
   DecoratePanels(ctx, base);
 }
@@ -1695,9 +1696,9 @@ extern "C" REX_FUNC(sub_824742F0) {
   const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
   __imp__sub_824742F0(ctx, base);
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
-    std::memset(base + state + 4, 0, 12);
+    std::memset(GuestPtr(base, state + 4), 0, 12);
   }
-  if (state) lost_controller::FilterPad(int(user), base + state + 4, ctx.r3.u32 == 0);
+  if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

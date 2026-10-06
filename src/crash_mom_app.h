@@ -52,6 +52,7 @@
 #include "frame_rate.h"
 #include "game_folder.h"
 #include "settings_list.h"
+#include "crash_report.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
 #include "input/players.h"
@@ -277,7 +278,12 @@ class CrashMomApp : public rex::ReXApp {
   void OnConfigureLogging(rex::LogConfig& config) override {
     game_folder::ConfigureLogging(config);
   }
-  void OnPostInitLogging() override { game_folder::LogWhatHappened(); }
+  void OnPostInitLogging() override {
+    game_folder::LogWhatHappened();
+    // Windows: a crash writes WHERE (named call stack) into the log and
+    // user/logs/crash-<time>.txt (src/crash_report.h).
+    crash_report::Install(game_folder::UserFolder() / "logs");
+  }
 
   // Other hooks we can override (uncomment + implement as needed):
   // void OnLoadXexImage(std::string& xex_image) override {}

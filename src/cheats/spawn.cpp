@@ -2,6 +2,7 @@
 // cheats/spawn.cpp -- see spawn.h
 // =============================================================================
 #include "spawn.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <cmath>
@@ -534,7 +535,7 @@ extern "C" REX_FUNC(sub_822D9D20) {
 // boss was jacked (caught the same way). Nothing to play: nothing done.
 extern "C" REX_FUNC(__imp__sub_8222CFC8);
 extern "C" REX_FUNC(sub_8222CFC8) {
-  const uint8_t* p = base + ctx.r3.u32 + 136;
+  const uint8_t* p = GuestPtr(base, ctx.r3.u32 + 136);
   if ((uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3]) == 0) return;
   __imp__sub_8222CFC8(ctx, base);
 }

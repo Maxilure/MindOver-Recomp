@@ -552,8 +552,9 @@ void RenderTargets::ClearNew(Image& image, VkCommandBuffer cmd) {
   Transition(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
   const VkImageSubresourceRange range{AspectOf(image.depth), 0, 1, 0, 1};
   if (image.depth) {
-    const VkClearDepthStencilValue far{0.0f, 0};  // reversed depth: 0 = far
-    cmd_clear_depth_stencil_image_(cmd, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &far,
+    // ("far_value", not "far": Windows' headers define near / far as macros)
+    const VkClearDepthStencilValue far_value{0.0f, 0};  // reversed depth: 0 = far
+    cmd_clear_depth_stencil_image_(cmd, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &far_value,
                                     1, &range);
   } else {
     const VkClearColorValue black{{0.0f, 0.0f, 0.0f, 1.0f}};
