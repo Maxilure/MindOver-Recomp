@@ -1074,3 +1074,39 @@ prompt shown" when a titan's wind-up starts one. Tested in play with four
 players: players 3 and 4 get theirs.
 
 ![Four players' counter prompts beside their HUDs](../images/four-players-counter-prompts.jpg)
+
+## 28. Paw prints for players 3 and 4 on the loading screen
+
+The loading screen (`CLoadingScreen`, vtable `0x8203B0CC`, the front end's
+element at `+304`) shows a trail of paw prints per player that has a
+controller (the front end's `sub_82266130` >= 0), so player 2's trail
+appears once player 2 has joined; each player steers their own with the left
+stick (section 14). Both trails live inside the object, 548 bytes each from
+`+20`: ten prints of 52 bytes (four corners, then the alpha at `+48`), the
+newest print's index at `+520`, position and heading after it. `+1116` is
+the step timer, `+1120` the time shown. Update = slot 3 `sub_8226B2C8`
+(a step = the timer wrapped: every present trail puts down its next print),
+draw = slot 4 `sub_8226BDA0` (the page, then every print through
+`sub_8225F108(this, print, foot UVs, ARGB, picture)`), reset of the trails
+= `sub_8226BF90`. Colours: one player = white (`0x825078E8`); two = player 1
+orange (`0x82507920`), player 2 blue (`0x82507924`), alpha from the print.
+The foot UV corners are 0 and 1 (constants `0x82046720`, `0x8201EE28`),
+the second set mirrored for the other foot.
+
+Players 3-4 get a SHADOW loading screen (guest heap) whose two trails are
+theirs. After the real update the game's own update runs again on it, with
+the same step timer and the controller lookup shifted by two
+(`more_players::ShiftControllerLookup`): players 3 and 4 steer their own
+trails and step in time with the others. After the real draw, the shadow's
+prints are drawn with the real screen's picture, in the players' marker
+colours (`--marker_colour_player3` green, `--marker_colour_player4`
+purple). Player 1's trail also takes its two-player colour when only player
+3 or 4 is in (the original counts players 1-2 and would draw it white). The
+shadow is reset with the real one. Nothing of this runs while players 3-4
+have no controller, so two-player games are unchanged.
+
+Tested with fake controllers on a level change (Wumpa Island cliff, walking
+left): all four trails, each in its own colour; with only player 3 joined,
+player 1 orange plus player 3 green, no blue or purple.
+
+![Paw prints of four players on the loading screen](../images/loading-paws-four-players.jpg)

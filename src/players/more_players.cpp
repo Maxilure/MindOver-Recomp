@@ -454,8 +454,15 @@ extern "C" REX_FUNC(sub_82270590) {
 }
 
 // Controllers: the front end keeps players 1-2's (+8524); 3-4's are here.
+// g_lookup_shift: while the loading screen's paws run their second pass for
+// players 3-4 (more_players_loading.cpp), "player 0 / 1" means player 3 / 4.
+namespace more_players {
+thread_local int g_lookup_shift = 0;
+void ShiftControllerLookup(int shift) { g_lookup_shift = shift; }
+}  // namespace more_players
 extern "C" REX_FUNC(sub_82266130) {
-  const int32_t player = int32_t(ctx.r4.u32);
+  const int32_t player = int32_t(ctx.r4.u32) + more_players::g_lookup_shift;
+  ctx.r4.u64 = uint32_t(player);
   if (player >= 2 && player < kMaxPlayers) {
     ctx.r3.u64 = uint32_t(g_controllers[player - 2]);
     return;

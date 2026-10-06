@@ -85,6 +85,11 @@ uint32_t CharacterOfPlayer(int p);
 // The titan player p has jacked (rides), 0 if on foot / none.
 uint32_t TitanOfPlayer(int p);
 
+// The front end's "controller of player p" (sub_82266130) answers for player
+// p + shift on THIS thread until set back to 0 (the loading screen's paws run
+// the game's own two-player update a second time for players 3-4).
+void ShiftControllerLookup(int shift);
+
 }  // namespace more_players
 
 struct PPCContext;
