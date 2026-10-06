@@ -545,6 +545,20 @@ extern "C" REX_FUNC(sub_82265FB8) {
   ctx.r3.u64 = (join ? count == n : count >= 2) ? 1 : 0;
 }
 
+// The markers' "how many players joined" (sub_8226DBB0: players with a co-op
+// state other than "not joined"). Its only callers are the markers over the
+// heads (CPlayerIdentifierArrow): the fade machine sub_8226D130 and the "show
+// them" call on every state change sub_8226D318 fade the markers in when it
+// says 2 or more, out otherwise. The original counted players 1-2 only:
+// found 2026-10-06 (a gdb count of the marker functions + the fade mode globals
+// 0x8259B168 / 0x8259B16C), with players 1 and 3 the count was 1 and NO marker
+// showed until player 2 joined. Every local player counts now.
+extern "C" REX_FUNC(sub_8226DBB0) {
+  uint32_t joined = 0;
+  for (int p = 0; p < LocalPlayers(); ++p) joined += Read32(kState + 4 * p) != 0 ? 1 : 0;
+  ctx.r3.u64 = joined;
+}
+
 // Wires player r4's character r6 (and input map r5) to its controller (r3 =
 // the controllers). For a player without a controller the original takes
 // "the one the OTHER player doesn't use", a two-player rule: players 3-4 take

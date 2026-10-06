@@ -1232,3 +1232,21 @@ out and hides on player 3's Crash (states 2 0 2 0 -> 0 0 2 0); player 3
 pauses (no Drop Out: the last player in game); player 1 comes back with
 START (-> 2 0 2 0), and player 3's pause offers Drop Out again. Four local
 players: section 30's sequence unchanged.
+
+## 32. Markers without player 2
+
+With players 1 and 3 (or 4) in game and no player 2, no marker showed over
+anyone's head; they appeared the moment player 2 joined. Every marker was
+being drawn, invisibly: the markers fade in and out together, and a count
+of the call rates under gdb (group draw `sub_8226D958`, each marker's draw
+`sub_8226D358` and update `sub_8226D0B8`) next to the fade globals (current
+mode `0x8259B168`, target `0x8259B16C`: 0 hidden, 1 fading in, 2 shown)
+showed the mode stuck at 0 until player 2's join, then 1, then 2.
+
+The fade machine (`sub_8226D130`, every frame) and the "show them" call on
+every co-op state change (`sub_8226D318`, from `SetPlayerCoOpState`
+`sub_82234DC8`) both fade the markers in only when `sub_8226DBB0` returns 2
+or more: the number of players with a co-op state other than "not joined",
+counted over players 1-2. These two are its only callers; it now counts
+every local player (same answer with two). Tested with players 1 and 3:
+player 1's "1" and player 3's "3" over their heads.
