@@ -3,7 +3,7 @@
 Some of this project is what any good PC port is expected to do: run
 natively, at higher frame rates, with keyboard and mouse, drawn by a
 renderer of its own. That work is tracked in the
-[README's status table](../README.md#status) and the
+[README](../README.md#what-works) and the
 [roadmap](03-roadmap.md).
 
 This page is for the rest: **big additions the Xbox 360 game never had**,

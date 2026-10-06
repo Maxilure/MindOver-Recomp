@@ -9,10 +9,22 @@
 # can build the game itself (clang 20+). The game is never built here: each
 # player builds it on their own computer, from their own disc.
 #
+# TWO JOBS:
+#   windows-launcher  builds ONLY the launcher .exe (Windows runner, Visual
+#                     Studio's x64 environment + LLVM's clang, like the test
+#                     PC), kept as an artifact of the run
+#   release           (Linux) packs the Linux release, then the Windows one
+#                     with that .exe (make_release.sh --system windows
+#                     --launcher), so both archives carry the SAME source
+#                     files (packed once, on Linux: no CRLF line ends or
+#                     symlinks-as-text from a Windows checkout) and ONE
+#                     release.toml lists both
+#
 # WHEN:
 #   - a version tag is pushed (git tag v0.1.0-alpha && git push origin v0.1.0-alpha):
 #     tools/make_release.sh runs and a DRAFT GitHub release is created with
-#     both files (the .tar.gz and release.toml, the update feed). Nothing is
+#     all three files (the .tar.gz, the .zip and release.toml, the update
+#     feed). Nothing is
 #     public until someone presses Publish on GitHub's Releases page. The tag
 #     must match the VERSION.txt file.
 #   - by hand ("Run workflow" on the Actions tab): the same build, files kept
@@ -33,7 +45,42 @@ permissions:
   contents: write   # creating the release and attaching its files
 
 jobs:
-  linux:
+  windows-launcher:
+    runs-on: windows-2025
+    steps:
+      # Before the checkout: long paths (the SDK's third-party folders are
+      # deep) and no CRLF conversion (only SDL3 / ImGui are compiled here,
+      # but keep the files exactly as committed).
+      - name: Git settings for Windows
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
+
+      - name: "Check out (with the SDK submodule: SDL3 and ImGui come from it)"
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Visual Studio's x64 environment (clang needs its libraries)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build the launcher
+        shell: cmd
+        run: |
+          clang --version
+          cmake -S launcher -B out/build/launcher-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ || exit /b 1
+          cmake --build out/build/launcher-release || exit /b 1
+
+      - name: Keep the launcher for the release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-launcher
+          path: out/build/launcher-release/crash_mom_launcher.exe
+
+  release:
+    needs: windows-launcher
     runs-on: ubuntu-24.04
     steps:
       - name: "Check out (with the SDK submodule: the launcher builds SDL3 and ImGui from it)"
@@ -59,11 +106,21 @@ jobs:
             exit 1
           fi
 
-      - name: Make the release files
+      - name: Make the Linux release
         env:
           CC: clang
           CXX: clang++
         run: tools/make_release.sh
+
+      # Outside the checkout: an untracked file would make the tree "dirty".
+      - name: Fetch the Windows launcher
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-launcher
+          path: ${{ runner.temp }}/windows-launcher
+
+      - name: Make the Windows release (same source, that launcher)
+        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/crash_mom_launcher.exe"
 
       - name: The launcher's needs (for the log)
         run: |
@@ -90,6 +147,7 @@ jobs:
           # releases/latest link (the launchers' update feed) skips those.
           gh release create "${GITHUB_REF_NAME}" --draft \
             --title "Crash: Mind over Mutant PC port ${version}" \
-            --notes "Download the .tar.gz, unpack it, and read READ ME FIRST.txt. You need your own copy of the game (Xbox 360 disc image)." \
+            --notes-file tools/release/RELEASE_NOTES.md \
             "out/release/${version}/CrashMoM-${version}-linux-x86_64.tar.gz" \
+            "out/release/${version}/CrashMoM-${version}-windows-x86_64.zip" \
             "out/release/${version}/release.toml"

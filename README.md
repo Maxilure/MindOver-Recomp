@@ -1,180 +1,191 @@
 # Mind over Recomp
 
-An unofficial port of **Crash: Mind over Mutant** (Xbox 360, 2008, Radical
-Entertainment) into a native PC game, built by **statically recompiling** the
-original Xbox 360 executable into C++ with
-[ReXGlue](https://github.com/rexglue/rexglue-sdk). Linux today, Windows
-planned.
+An unofficial native PC port of **Crash: Mind over Mutant** (Xbox 360, 2008,
+Radical Entertainment), for **Linux and Windows**. It is made by
+**statically recompiling** the original Xbox 360 program into C++ with
+[ReXGlue](https://github.com/rexglue/rexglue-sdk), then improving it piece
+by piece with native code.
 
-**Note:** developed with extensive AI assistance, see
+> [!WARNING]
+> **The whole project is in alpha.** The game is playable, but expect bugs,
+> crashes and rough edges. Back up your saves, and expect features marked
+> *experimental* to change or break. It has been tested on only a few
+> computers so far.
+
+> [!IMPORTANT]
+> **No game files are included, and none ever will be.** You need your own
+> Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`.
+> The launcher builds the game on your computer from that disc.
+
+Developed with extensive AI assistance: see
 [Development approach](#development-approach).
 
-> **No game files are included, and none ever will be.** You need your own
-> copy of the Xbox 360 disc, dumped to an `.iso`. This repo contains only
-> our tools, notes, and native code. Everything derived from the game
-> (extracted files and the generated C++) stays on your machine and is
-> blocked by `.gitignore`.
+![Wumpa Island: the port's own renderer (left) and the emulated Xbox 360 GPU (right), on the same frame](docs/images/wumpa-island-native-vs-emulated.jpg)
+
+## Download and play
+
+**[⬇ Download the latest release](https://github.com/Maxilure/MindOver-Recomp/releases/latest)**
+
+| System | Download | Needs |
+|---|---|---|
+| **Windows** 10 / 11, 64-bit | `...-windows-x86_64.zip` | an NTFS drive, not a OneDrive folder |
+| **Linux** x86-64 | `...-linux-x86_64.tar.gz` | glibc 2.39+ (Ubuntu 24.04, Fedora 40, Mint 22, Arch, or newer) |
+
+Both need a **Vulkan** graphics card (only NVIDIA has been tested so far),
+**16 GB RAM** recommended, **~25 GB of free disk space**, and an internet
+connection for the first setup.
+
+1. **Unpack** the download into a folder with enough space (on Windows: a
+   short path such as `C:\Games\`).
+2. **Start the launcher**, *Crash Mind over Mutant*, in that folder.
+   Windows may warn about an unknown program: **More info → Run anyway**.
+3. **Setup tab:** install the build tools it lists (it shows each
+   package's name for your system), pick your `.iso`, then press
+   **Set up everything**. The first time takes a while: it downloads
+   ~550 MB and builds the game on your computer.
+4. Press **Play**. Next time, **Continue** jumps straight into your last save.
+
+The launcher also has your saves, the settings, a live game log, and
+updates: when a new version is out, it tells you, and updating keeps your
+saves and settings.
+
+Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)**
+(Linux and Windows).
+
+## What works
+
+* **The whole game boots and plays**: intro movies, menus, cutscenes with
+  5.1 sound, gameplay, saving and loading. It hasn't been played through to
+  the end yet.
+* **60 fps**, with the same game speed as the original's 30. Higher frame
+  rates (120, 144, uncapped) work but are **experimental**.
+* **Keyboard and mouse**, with every key rebindable (**F6**), and any
+  controller SDL recognizes. Both at once, or one per player.
+* **The port's own Vulkan renderer** (in progress): it draws every area
+  tested so far with the same look as the original, and on its own
+  ("Native only") runs much lighter than the emulated picture. Switch
+  with **F9**.
+* **Windows** builds and runs. It is less tested than Linux.
 
 ## Enhancements
 
-Beyond what a PC port is expected to do (the [status](#status) below), the
-port adds things the Xbox 360 game never had:
+Things the Xbox 360 game never had:
 
-* **More saves, with names** (in testing): as many saves as you like, in
-  one scrolling list in the game's own Load / Save Game screen (most
-  recently played first), named when created and renamed with the game's
-  own on-screen keyboard (in the menus and over the level in game), deleted
-  (Y) from there
-* **Up to four players** (in progress): the original's co-op is for two;
-  four players can already join, run around together or ride along as
-  masks (up to three on one Crash), with a HUD of their own for players 3
-  and 4 in the bottom corners, their own "3" / "4" markers over their heads,
-  their own paw prints on the loading screen, and a camera that frames every
-  player instead of following one, leaning toward where most players are
-  (experimental, needs extensive testing)
+* **Unlimited, named saves** (in testing): one list in the game's own save
+  screen, with rename and delete.
+* **Up to four players** (in progress): co-op for four instead of two,
+  with HUDs and markers for players 3 and 4, and a camera that keeps
+  everyone in view (experimental).
 
-Details: **[Enhancements](docs/05-enhancements.md)**.
+Details and pictures: **[Enhancements](docs/05-enhancements.md)**.
 
-## Status
+## Controls
 
-| Milestone | State |
+| Action | Keyboard and mouse | Controller |
+|---|---|---|
+| Move / walk | W A S D / hold Ctrl | left stick |
+| Jump (twice: double jump) | Space | A |
+| Light / heavy attack | left / right mouse button | X / Y |
+| Spin | Q or middle mouse button | rotate the left stick |
+| Block | Shift | RT |
+| Jack / unjack a titan | E | B |
+| Titan special / pocket a titan | F / R | LT / RB |
+| Map / pause | Tab / Esc | Back / Start |
+
+| Key | What it does |
 |---|---|
-| Extract disc (`tools/xiso_extract.py`) | ✅ done |
-| Profile the executable (`tools/xex_info.py`) | ✅ done ([findings](docs/findings/01-disc-and-executable.md)) |
-| Recompile `default.xex` → C++ (0 unresolved branches) | ✅ done ([findings](docs/findings/02-recompilation.md)) |
-| Boots: kernel, fibers, audio, Vulkan up | ✅ done ([findings](docs/findings/03-first-boot.md)) |
-| Loading finishes (fixed an XMA audio decoder bug in the SDK) | ✅ done ([findings](docs/findings/04-loading-hang-xma.md)) |
-| Sound (5.1 audio) | ✅ done |
-| No freeze after the intros (fixed an SDK fiber bug) | ✅ done ([findings](docs/findings/05-post-intro-freeze-fibers.md)) |
-| Intro movies with picture, title screen, menus, cutscenes | ✅ done ([findings](docs/findings/06-black-screens-render-target-path.md)) |
-| Playable (first level reached, saves load) | ✅ first look, playtesting in progress |
-| 60 fps option (`--fps_cap=60`) | ✅ works, same game speed ([findings](docs/findings/07-frame-rate.md)); no split-second "falls" when stepping down ([findings](docs/findings/22-ground-contact-high-fps.md)) |
-| Above 60 fps (`--fps_cap=144`, `--fps_cap=0` = no cap) | 🧪 work in progress: any cap is paced exactly by the clock; 140-160 fps uncapped in gameplay with the native renderer; one frame-rate dependency found in playtesting so far (Crash briefly "falling" when stepping down, fixed), but not yet confirmed stable ([findings](docs/findings/07-frame-rate.md#pacing-by-the-clock-2026-09-30)) |
-| Native Vulkan renderer | 🔧 in progress: the menus and every area playtested so far are drawn by our own Vulkan code (world, characters, shadows, reflections, water, particles, depth of field, 2x MSAA, mipmaps, lights). F9 switches pictures, F8 shows both side by side in two windows, F10 saves a photo from both, `--native_only` turns the emulated GPU's drawing off ([plan](docs/04-native-renderer.md), findings [09](docs/findings/09-native-first-screens.md) to [21](docs/findings/21-motion-blur-cut.md)) |
-| Keyboard and mouse, two players | ✅ works (playtested): WASD + mouse by default, Spin on a key (it draws circles with the virtual stick, as the game wants), every key rebindable in the Controls menu (**F6**), a controller works at the same time or as player 2 for the game's co-op ([findings](docs/findings/23-keyboard-and-mouse.md)); keyboard pictures in the game's button prompts are next |
-| Windows build, mods | planned ([roadmap](docs/03-roadmap.md)) |
+| **F5** | Cheats menu, for testing: level ups, god mode, free camera, spawning |
+| **F6** | Controls: change keys, pick which device plays as which player |
+| **F9** | Switch between the emulated picture and the port's renderer |
+| **F10** | Save a photo of the game into `user/photos/` |
+
+Friends join from the pause menu (**Join Game**), as in the original's co-op.
 
 ## Screenshots
 
-The native renderer next to the emulated Xbox 360 GPU, on the **same game
-frame** (the port's comparison tool captures one frame from both):
-
-![Wumpa Island by Crash's house: native renderer left, emulated right](docs/images/wumpa-island-native-vs-emulated.jpg)
+The port's own renderer next to the emulated Xbox 360 GPU, on the **same
+game frame**:
 
 ![The game's second area (name TBD), with waterfalls and particles: native left, emulated right](docs/images/waterfall-area-native-vs-emulated.jpg)
 
-More comparisons, each with the write-up of how that effect was rebuilt:
+![The save list: five saves, and "Create New Save" with its preview](docs/images/save-library-list.jpg)
+
+More, each with the write-up of how that effect was rebuilt:
 [reflections](docs/findings/13-native-reflections.md),
 [water and particles](docs/findings/14-native-water-particles.md),
 [depth of field](docs/findings/15-native-depth-of-field.md),
-[anti-aliasing](docs/findings/16-native-msaa.md) and
+[anti-aliasing](docs/findings/16-native-msaa.md),
 [texture filtering](docs/findings/17-native-mipmaps.md). Captured from the
-maintainer's own copy of the game; the game's imagery belongs to its
-owners (see [Disclaimer](#disclaimer)).
+maintainer's own copy of the game; the game's imagery belongs to its owners
+(see [Disclaimer](#disclaimer)).
 
-## Requirements
+## Building from source
 
-* **Your own copy** of the Xbox 360 game, dumped to an `.iso`.
-* **Linux**. Windows is planned.
-* **A Vulkan GPU with `VK_EXT_fragment_shader_interlock`**, which the
-  emulated rendering mode needs. Without it the port falls back to a mode
-  where the movies and some screens render black
-  ([findings/06](docs/findings/06-black-screens-render-target-path.md)).
-* **Build tools:** clang, CMake 3.25+, git, Python 3, `glslc` (shaderc; compiles our shaders).
-* **16 GB RAM** for building (the recompiled game is ~140 large C++ files;
-  `-j 6` keeps memory in check). About **16 GB of disk**: the ISO (7.8 GB,
-  removable after extraction), the extracted game (6 GB) and builds (~2 GB).
-* A controller (anything SDL recognizes as a gamepad), or keyboard and mouse:
-  WASD to move, Space to jump, the mouse buttons to attack, Q to spin, Shift
-  to block, E to jack; **F6** opens the Controls menu to see and change every
-  key and to pick which device plays as which player (two-player co-op:
-  keyboard + a controller, or two controllers;
-  [findings/23](docs/findings/23-keyboard-and-mouse.md) has the full table).
-  **F5** opens a Cheats menu for testing: level ups, mojo, god mode, no enemy AI,
-  game speed, freeze, a free camera, spawning titans (knocked out or ready to fight)
-  ([findings/27](docs/findings/27-cheat-menu.md)); after a cheat that changes
-  progress, achievements stay off until the game restarts.
+For developers. Players don't need this: the launcher does it all.
 
-## Quick start (Linux)
-
-See **[docs/01-building.md](docs/01-building.md)** for the full walkthrough
-and requirements. The short version:
+Linux: clang 20+, CMake 3.25+, Ninja, Python 3, Git, `glslc`. The full
+walkthrough, including Windows, is in **[Building](docs/01-building.md)**.
 
 ```bash
-# 1. unpack your disc into game/
+git clone --recursive https://github.com/Maxilure/MindOver-Recomp.git
+cd MindOver-Recomp
+
+# the launcher (Setup tab = everything below, with progress bars)
+cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake --build out/build/launcher && out/build/launcher/crash_mom_launcher
+
+# or by hand: unpack the disc, build the SDK with our patches, then the game
 python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
-
-# 2. build + install the ReXGlue SDK, with our fixes applied (once)
-git submodule update --init --recursive
-cd thirdparty/rexglue-sdk
-git apply ../../patches/rexglue-sdk/*.patch
-cmake --preset linux-amd64 -DCMAKE_INSTALL_PREFIX=$PWD/../rexglue-install
-cmake --build out/build/linux-amd64 --config Release        --target install
-cmake --build out/build/linux-amd64 --config RelWithDebInfo --target install
-cd ../..
-
-# 3. recompile the game, then build the port
+(cd thirdparty/rexglue-sdk && git apply ../../patches/rexglue-sdk/*.patch \
+  && cmake --preset linux-amd64 -DCMAKE_INSTALL_PREFIX=$PWD/../rexglue-install \
+  && cmake --build out/build/linux-amd64 --config Release --target install \
+  && cmake --build out/build/linux-amd64 --config RelWithDebInfo --target install)
 cmake --preset linux-amd64-relwithdebinfo
 cmake --build --preset linux-amd64-relwithdebinfo --target crash_mom_codegen
 cmake --preset linux-amd64-relwithdebinfo   # first time only: picks up the generated code
 cmake --build --preset linux-amd64-relwithdebinfo -j 6
-
-# 4. play (one log file per session in logs/)
-tools/play.sh                  # original 30 fps
-tools/play.sh --fps_cap=60     # 60 fps
-tools/play.sh --fps_cap=144 --native-only   # above 60 (work in progress)
-
-# or the launcher: Play, Continue your last save, pick any save (docs/01-building.md, "The launcher")
-cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-cmake --build out/build/launcher && out/build/launcher/crash_mom_launcher
+tools/play.sh                               # one log per session in logs/
 ```
 
-## Repo layout
+<details>
+<summary>Repository layout</summary>
 
 ```
-README.md                  you are here
-LICENSE                    GPL-3.0 (see "License" below)
 crash_mom_manifest.toml    recompiler config: every analysis fix and hook, commented
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
-src/                       OUR native code: app setup, hooks, fixes, debug tools
-  input/                   keyboard + mouse as a virtual controller, the Controls menu (F6)
-  cheats/                  the Cheats menu for testing (F5): level ups, mojo, god mode, speed, free camera, spawning
-  saves/                   the save library: a list of any number of saves, rename / delete, the name keyboard in game
-  data/                    changed copies of game data files, built at run time from your own game files
-  pddi/                    interception of the game's renderer calls + the frame tracer
-  native/                  our Vulkan renderer (in development)
-launcher/                  the launcher: Play, Continue, your saves (a program of its own, no game code)
-assets/                    the port's own pictures (copied next to the exe at build time)
-  markers/                 players 3-4's markers over their heads ("3", "4")
-tools/                     disc extraction, xex inspection, disassembler, play/debug scripts
+src/                       the port's own native code
+  input/                   keyboard + mouse, the Controls menu (F6)
+  players/                 up to four players, the co-op camera
+  saves/                   the save list: any number of saves, rename / delete
+  cheats/                  the Cheats menu (F5)
+  data/                    changed copies of game data, built at run time from your files
+  pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
+launcher/                  the launcher: setup, play, settings, log, updates (no game code)
+assets/                    the port's own pictures (players 3-4's markers)
+tools/                     disc extraction, disassembler, play/debug and release scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
-docs/                      how everything works + everything we've found
-  01-building.md           step-by-step build guide
-  02-how-the-port-works.md the big picture: static recompilation explained
-  03-roadmap.md            where the project is going
-  04-native-renderer.md    the native Vulkan renderer: plan and progress
-  05-enhancements.md       big additions unique to this port (more saves, more players)
-  findings/                reverse-engineering notes about the game itself
-  images/                  a few screenshots of the port's progress (used by the docs)
+docs/                      guides, and findings about the game's internals
 thirdparty/rexglue-sdk     the recompiler + runtime (git submodule, pinned)
 
-# local only (gitignored):
-*.iso                      your disc image
-game/                      extracted disc contents (the port reads these at runtime)
+# made on your machine, never committed:
+*.iso, game/               your disc and its extracted files
 generated/default/         C++ produced by the recompiler
-out/, logs/                build output, run logs
-user/                      YOUR files: saves, settings, controls, photos (see docs/01-building.md, "Your files")
-cache/                     shader cache + changed game data (rebuilt when missing)
+out/, logs/, cache/        builds, logs, caches
+user/                      YOUR files: saves, settings, controls, photos, logs
 ```
 
-## Reading order
+</details>
 
-1. [How the port works](docs/02-how-the-port-works.md): what static recompilation is and why we use it
-2. [Building](docs/01-building.md): get it running on your machine
-3. [Findings](docs/findings/): everything we've learned about the game's internals
-4. [Roadmap](docs/03-roadmap.md): what's next
-5. [Enhancements](docs/05-enhancements.md): what only this port adds to the game
+## Documentation
+
+1. [How the port works](docs/02-how-the-port-works.md): static recompilation explained
+2. [Building](docs/01-building.md): every build step, the launcher, releases
+3. [Troubleshooting](docs/06-troubleshooting.md): common problems on Linux and Windows
+4. [Enhancements](docs/05-enhancements.md): what only this port adds
+5. [Roadmap](docs/03-roadmap.md): where the project is going
+6. [Native renderer](docs/04-native-renderer.md): the port's own Vulkan renderer
+7. [Findings](docs/findings/): everything learned about the game's internals
 
 ## Development approach
 
@@ -194,8 +205,10 @@ recompilation or reverse engineering.
 
 Contributions of any kind (code, reverse engineering, testing, bug reports,
 corrections) are welcome and will be credited by name in [Credits](#credits).
-Hand-written, expert work is especially valued. For bug reports, the
-session log from `tools/play.sh` (in `logs/`) helps a lot.
+Hand-written, expert work is especially valued. Bug reports go in the
+[issues](https://github.com/Maxilure/MindOver-Recomp/issues): attach the
+session's log from `user/logs/` (see
+[Troubleshooting](docs/06-troubleshooting.md#logs-and-bug-reports)).
 
 ## Credits
 
@@ -207,8 +220,7 @@ session log from `tools/play.sh` (in `logs/`) helps a lot.
   that ReXGlue's runtime and GPU emulation build on.
 * **Claude** (Anthropic): AI assistant that wrote most of the code and
   documentation (see [Development approach](#development-approach)).
-* **You?** Every human contribution (code, reverse engineering, testing,
-  bug reports, corrections to our notes) gets listed here by name.
+* **You?** Every human contribution gets listed here by name.
 
 ## Why this project exists
 

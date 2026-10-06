@@ -1,8 +1,11 @@
 # Building the port
 
-Step-by-step, from a disc image to a native executable. These steps were
-verified on Linux with Clang 22 on 2026-09-25. Windows
-should work with the `win-amd64-*` presets but hasn't been tested yet.
+Step-by-step, from a disc image to a native executable. **Players don't
+need this page**: the launcher's Setup tab runs these steps by itself (see
+the [README](../README.md#download-and-play)). The steps below are written
+for Linux (verified with Clang 22); Windows uses the same commands with a
+few differences, listed in [Building on Windows](#building-on-windows).
+Problems: [Troubleshooting](06-troubleshooting.md).
 
 ## 0. Prerequisites
 
@@ -348,6 +351,32 @@ folder. A developer clone updates with `git pull` instead.
 The launcher links its C++ libraries in, but needs a C library (glibc) at
 least as new as the system that built it: releases for older distributions
 have to be built on an older system.
+
+## Building on Windows
+
+The launcher's Setup does this on Windows too (and lists each missing tool
+with its `winget` name). By hand, the differences from the Linux steps:
+
+* **Tools**: LLVM (clang 20+), CMake, Ninja, Python 3, Git, the Vulkan SDK
+  (for `glslc`), and Visual Studio 2022 (or its Build Tools) with the
+  **Desktop development with C++** workload and a Windows 11 SDK. Run every
+  command from an **x64 Native Tools Command Prompt** (or after
+  `vcvars64.bat`): clang uses Visual Studio's libraries.
+* **Clone** with `git -c core.autocrlf=false -c core.longpaths=true`: the
+  SDK patches need LF line ends, and some SDK paths are long. Git checks
+  symbolic links out as small text files on Windows; the SDK's
+  `libmspack` sources contain a few, which must be replaced by copies of
+  their targets before building (Setup does it).
+* **SDK**: preset `win-amd64`, plus `-DREXGLUE_USE_VULKAN=ON
+  -DREXGLUE_USE_D3D12=OFF` (the SDK picks Direct3D 12 by default on
+  Windows; the port uses Vulkan).
+* **Game**: preset `win-amd64-relwithdebinfo`. Pass
+  `-Drexglue_DIR=<repo>/thirdparty/rexglue-install/lib/cmake/rexglue
+  -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF`: the SDK's install registers
+  itself in CMake's per-user package list, and without these a build can
+  pick up another folder's SDK.
+* `game/` must be on an NTFS drive (Setup links `source/game` to it with
+  a directory junction in releases).
 
 ## Developer tools
 
