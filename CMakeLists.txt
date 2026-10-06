@@ -30,6 +30,7 @@ set(CRASHMOM_SOURCES
     src/debug_frame_capture.cpp  # --debug_capture_dir: periodic screenshots for debugging
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
+    src/settings_list.cpp        # --list_settings: every setting written out for the launcher
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace

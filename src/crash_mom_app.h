@@ -51,6 +51,7 @@
 #include "debug_input_script.h"
 #include "frame_rate.h"
 #include "game_folder.h"
+#include "settings_list.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
 #include "input/players.h"
@@ -131,6 +132,11 @@ class CrashMomApp : public rex::ReXApp {
     // Requested path, not necessarily the one used (see the fallback above).
     REXLOG_INFO("CrashMoM: render_target_path_vulkan = \"{}\"",
                 rex::cvar::GetFlagByName("render_target_path_vulkan"));
+
+    // --list_settings=<file> (the launcher's Settings tab): every flag now
+    // exists, the GPU plugin's included; write them out and quit before any
+    // window opens (src/settings_list.h).
+    settings_list::WriteAndQuitIfAsked();
   }
 
   // Everything is initialized, including the window and the presenter

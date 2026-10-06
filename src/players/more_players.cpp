@@ -23,7 +23,7 @@
 
 REXCVAR_DEFINE_INT32(local_players, 2, "CrashMoM",
                      "How many local players a level makes room for: 2 (the original) to 4. "
-                     "Players 3-4 are spawned like player 2 (in progress: no join for them yet)");
+                     "Players 3-4 join like player 2 (pause menu Join Game; experimental)");
 
 // The originals of the functions rewritten or wrapped below.
 extern "C" REX_FUNC(__imp__sub_82266130);  // front end: controller of player r4
