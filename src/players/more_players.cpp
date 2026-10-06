@@ -381,15 +381,29 @@ bool MorePlayersLoopEndPlayer(PPCRegister& p) { return int32_t(p.u32) < LocalPla
 // (input/players.h) then drove someone else, and moving devices there
 // "didn't work reliably". A socket beyond --local_players, or whose player
 // already plays, is skipped.
+// PLAYER 1 REJOINS TOO (2026-10-06, findings/26 s.31): the original picks
+// player 1 whenever player 2 is in game (r31 = 0 at 0x822650E4: player 1 is
+// then the only free player), so a player 1 who dropped out comes back with
+// START. Socket 0 was refused here ("c >= 1"), and player 1 stayed out for
+// good. Socket 0 now joins as player 1 while ANOTHER player is in game (with
+// nobody in game, e.g. the moment a level starts, the original never picks
+// player 1 either).
 bool MorePlayersJoinPick(PPCRegister& controller, PPCRegister& player) {
   const int c = int(int32_t(controller.u32));
-  const bool can_join = c >= 1 && c < LocalPlayers() && Read32(kState + 4 * c) == 0;
+  bool someone_else = false;
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    someone_else = someone_else || (p != c && Read32(kState + 4 * p) != 0);
+  }
+  const bool can_join = c >= 0 && c < LocalPlayers() && Read32(kState + 4 * c) == 0 &&
+                        (c != 0 || someone_else);
   if (REXCVAR_GET(debug_coop_trace)) {
     if (can_join) {
       REXLOG_INFO("Co-op: controller {} pressed START: joins as player {}", c, c + 1);
     } else {
       REXLOG_INFO("Co-op: controller {} pressed START: no join (player {} {})", c, c + 1,
-                  c >= LocalPlayers() ? "is beyond --local_players" : "already plays");
+                  c >= LocalPlayers()           ? "is beyond --local_players"
+                  : Read32(kState + 4 * c) != 0 ? "already plays"
+                                                : "would be alone");
     }
   }
   if (!can_join) return true;
@@ -1223,6 +1237,56 @@ void MorePlayersDropOutPath(PPCRegister& r11, PPCRegister& r31) {
   for (int q = 0; q < LocalPlayers(); ++q) someone_else_plays |= q != me && Read32(kState + 4 * q) == 2;
   const bool path_a = someone_else_plays && RidersOf(Read32(behaviour + kBehaviourCrash)).empty();
   r11.u64 = path_a ? 2 : 0;
+}
+
+// =============================================================================
+// THE FIGHT TREE'S "DROPPED OUT / FORCED INTO A MASK" STEP (findings/26 s.31).
+// Every frame, a fight tree whose actor belongs to a player with sub-state 5
+// (forced into a mask: Drop Out on foot) or 6 (dropped out) runs sub_820C0EF0
+// (r3 = the tree, actor at +16; caller sub_820C10A0) to pick the exit that puts
+// that player away. The original:
+//   * the actor is player 1's or 2's TITAN (game object +24 / +28): the titan
+//     ejects its Crash (sub_82235678(Crash, titan)), no exit;
+//   * my state is not "not joined": exit to EnterMaskState (state 3);
+//   * my state is "not joined" (Drop Out already set it): only if THE OTHER
+//     PLAYER is in game (state 2) -- player 2 for player 1, player 1 for
+//     everyone else -- exit to CoOpNotJoinedGame, whose action runs
+//     HideAndAttachToOtherPlayer (the dropped Crash hides as a mask on a
+//     player in game); else nothing.
+// Found 2026-10-06: player 1 dropping out with only player 3 in game stayed a
+// "ghost" (a hittable-by-nothing Crash still steered by the pad, no HUD, no way
+// back in; player 3 could no longer pause): "the other" was player 2, not in
+// game, so the tree never left its state. A trace of the tree's transitions
+// (sub_820C1578) and pending exits (tree +144, sub_820C11E8) in a two-player
+// drop (exit 1044 -> CoOpNotJoinedGame 1051 -> HideAndAttach) vs a three-player
+// one (no exit at all) led here. Same bug for players 3-4 while player 1 is out.
+// =============================================================================
+
+// Midasm hook before "cmpwi r11,2" at 0x820C0FA0 (r11 = "the other player"'s
+// state just read, r29 = my player number): with more than two local players,
+// "in game" when ANY other player is in game on foot (a mask always rides one).
+void MorePlayersTreeOtherInGame(PPCRegister& r11, PPCRegister& r29) {
+  if (LocalPlayers() <= 2) return;
+  const int me = int(int32_t(r29.u32));
+  bool someone_else = false;
+  for (int q = 0; q < LocalPlayers(); ++q) someone_else |= q != me && Read32(kState + 4 * q) == 2;
+  r11.u64 = someone_else ? 2 : 0;
+}
+
+// Players 3-4's titans: the original only recognises players 1-2's (+24 / +28)
+// and would treat player 3's titan like a Crash (exit to EnterMaskState). Their
+// titan ejects its Crash the same way, no exit (-1).
+extern "C" REX_FUNC(__imp__sub_820C0EF0);
+extern "C" REX_FUNC(__imp__sub_82235678);
+extern "C" REX_FUNC(sub_820C0EF0) {
+  const uint32_t actor = Read32(ctx.r3.u32 + 16);
+  for (int p = 2; p < LocalPlayers() && actor; ++p) {
+    if (TitanOfPlayer(p) != actor) continue;
+    CallGame(__imp__sub_82235678, ctx, base, CharacterOf(p), actor);
+    ctx.r3.u64 = uint32_t(-1);
+    return;
+  }
+  __imp__sub_820C0EF0(ctx, base);
 }
 
 // ForceOtherPlayerToBecomeMask (script method; Crash.bfig calls it right before

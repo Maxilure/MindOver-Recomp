@@ -1178,3 +1178,57 @@ Tested with four local players (fake controllers): players 1 and 2 only:
 drops out through its menu (states 2 1 1 0 -> 2 1 0 0), then player 2
 (-> 2 0 0 0); player 1 alone: the menu without Drop Out; players 4, 3 and 2
 join again (-> 2 1 1 1).
+
+## 31. Player 1 dropping out (and coming back)
+
+The rules, the original's two-player ones kept for four: any player may drop
+out, player 1 included, while at least one other player stays in game; the
+last player in game can't (section 30's menu choice already follows that);
+a player who dropped out can join again. Three things broke them.
+
+**Player 1 never came back.** The original's join takes player 2 if player 2
+is out, else player 1 (`r31` = 0 at `0x822650E4`): with player 2 in game,
+player 1's START (or B, "Join Game") brings player 1 back. The port's "socket
+N = player N" rule (section 21) only let sockets 1-3 join. Socket 0 now joins
+as player 1, but only while another player is in game (with nobody in game,
+for instance the moment a level starts, the original never picks player 1
+either). Two players: player 1 drops out, then START or B joins as the mask,
+B again puts player 1 on foot.
+
+**A "ghost" player 1 with players 3-4.** Dropping out sets the player's
+state to "not joined" and its sub-state to 5 (forced into a mask), then sends
+its Crash message 10. Every frame, a fight tree whose player has sub-state 5
+or 6 runs `sub_820C0EF0` (from `sub_820C10A0`, which stores the exit it
+picks at tree `+144`). Once the state is "not joined" it takes the exit to
+`CoOpNotJoinedGame` (Crash.bfig; exit 1044, state 1051), whose action runs
+`HideAndAttachToOtherPlayer` (`sub_82235160`): the Crash hides as a mask on
+a player in game. That exit is taken only if **the other player** is in game,
+player 2 for player 1 and player 1 for everyone else. With players 1 and 3,
+player 1's "other" was player 2: nothing happened, and player 1's Crash
+stayed in the level, still steered by its pad, without a HUD, unhittable,
+and its START could not rejoin a Crash that was never put away. Found by
+logging the tree's transitions (`sub_820C1578`, node number at `+28` of the
+node) and pending exits (`sub_820C0738`) after a two-player drop (exit 1044,
+then `CoOpNotJoinedGame` and `HideAndAttach` within 20 ms) and a
+three-player one (no transition at all). A midasm hook before the
+comparison at `0x820C0FA0` now answers "in game" when any other player is
+on foot. The same function also ejects a dropping player's Crash from a
+jacked titan, for players 1-2's titans only (game object `+24` / `+28`); a
+wrapper does the same for players 3-4's.
+
+**Players 3-4 couldn't pause while player 1 was out.** The front end's
+in-game decision (`sub_8211E850`) opens the pause menu on START only when
+`sub_82265A60` says "no". That helper loops over players 1-2 and says "yes"
+when every one of them with a controller passes a per-controller check
+(`sub_82272D68`). With no controller in players 1-2 the answer was a vacuous
+"yes". Its loop now runs for every local player (`MorePlayersLoopEndPlayer`
+at `0x82265ACC`). Found with `--debug_menu_input_trace`: player 3's START
+was seen, but no `StoreWhoPausedGame` followed.
+
+Tested with fake controllers. Two players (both on foot, and with player 2
+as the mask): player 1 drops out, is hidden on player 2's Crash, and comes
+back with START or B. Three local players, players 1 and 3: player 1 drops
+out and hides on player 3's Crash (states 2 0 2 0 -> 0 0 2 0); player 3
+pauses (no Drop Out: the last player in game); player 1 comes back with
+START (-> 2 0 2 0), and player 3's pause offers Drop Out again. Four local
+players: section 30's sequence unchanged.

@@ -802,10 +802,11 @@ name = "MorePlayersActorSlot"
 registers = ["r11", "r3"]
 
 # THE JOIN (front end input, sub_82264988, docs/findings/26 section 9): a free
-# controller's START during play joins player 2 if player 2 isn't joined
-# (0x822650E4-0x822650F4 leave the player in r31). Right after: SOCKET N = PLAYER N
-# (section 21): controller N joins as player N, if N < --local_players and player N
-# isn't playing; else it's skipped (true = jump to the loop's next controller, 0x8226521C).
+# controller's START during play joins player 2 if player 2 isn't joined, else player 1
+# (0x822650E4-0x822650F4 leave the player in r31: a player 1 who dropped out comes back).
+# Right after: SOCKET N = PLAYER N (section 21): controller N joins as player N, if N <
+# --local_players and player N isn't playing (player 1: only while someone else is in game,
+# section 31); else it's skipped (true = jump to the loop's next controller, 0x8226521C).
 [[entrypoint.midasm_hook]]
 address = 0x822650F8
 name = "MorePlayersJoinPick"
@@ -1451,6 +1452,18 @@ address = 0x822E60B4
 name = "MorePlayersLoopEndPlayer"
 registers = ["r31"]
 jump_address_on_true = 0x822E6070
+# ... and the PAUSE: the front end's in-game decision sub_8211E850 opens the pause menu (exit
+# 516) on START only if sub_82265A60 says "no". That helper loops over players 1-2 ("addi
+# r4,r4,1 ; cmpwi cr6,r4,2 ; blt 0x82265A80" at 0x82265AC8-0x82265AD0) and answers "yes" when
+# EVERY player with a controller passes sub_82272D68 (a per-controller flag, +516 high byte):
+# with nobody in players 1-2 (player 1 dropped out, no player 2) the answer was a vacuous
+# "yes" and players 3-4 could never pause. Found 2026-10-06 with --debug_menu_input_trace
+# (START seen, no StoreWhoPausedGame). r4 survives the getter sub_82266130 (src/players).
+[[entrypoint.midasm_hook]]
+address = 0x82265ACC
+name = "MorePlayersLoopEndPlayer"
+registers = ["r4"]
+jump_address_on_true = 0x82265A80
 
 # MOJO MULTIPLIERS OF PLAYERS 3-4 (src/players/more_players.cpp, findings/26 s.17): front end
 # +8572 + 4p, two entries; player 3's read landed on other front end fields: a mojo worth
@@ -1604,3 +1617,15 @@ registers = ["r11", "r31"]
 address = 0x822357FC
 name = "MorePlayersDropOutPath"
 registers = ["r11", "r31"]
+# The fight tree's "put a dropped-out player away" step sub_820C0EF0 (findings/26 s.31): once
+# Drop Out has set the player "not joined", the tree only leaves for CoOpNotJoinedGame (whose
+# action hides the Crash as a mask on a player in game) if "the other player" is in game:
+# player 2 for player 1 (0x820C0F94: lwz r11,4(r30)), player 1 for the rest (0x820C0F9C:
+# lwz r11,0(r30)), both joining at the "cmpwi cr6,r11,2" at 0x820C0FA0 (r29 = my player
+# number from sub_8226FCD8 at 0x820C0F40, verified with xexdis). With more than two players,
+# r11 = 2 when ANY other player is in game. Found 2026-10-06: player 1 dropping out next to
+# only player 3 stayed a steerable "ghost" Crash (tree transition trace, two vs three players).
+[[entrypoint.midasm_hook]]
+address = 0x820C0FA0
+name = "MorePlayersTreeOtherInGame"
+registers = ["r11", "r29"]
