@@ -28,8 +28,9 @@ port adds things the Xbox 360 game never had:
 * **Up to four players** (in progress): the original's co-op is for two;
   four players can already join, run around together or ride along as
   masks (up to three on one Crash), with a HUD of their own for players 3
-  and 4 in the bottom corners, their own "3" / "4" markers over their heads
-  and their own paw prints on the loading screen
+  and 4 in the bottom corners, their own "3" / "4" markers over their heads,
+  their own paw prints on the loading screen, and a camera that frames every
+  player instead of following one
 
 Details: **[Enhancements](docs/05-enhancements.md)**.
 

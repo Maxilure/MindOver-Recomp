@@ -1634,3 +1634,16 @@ registers = ["r11", "r31"]
 address = 0x820C0FA0
 name = "MorePlayersTreeOtherInGame"
 registers = ["r11", "r29"]
+# =============================================================================
+# THE CO-OP CAMERA (src/players/coop_camera.cpp, camera rework step 1). The camera volume's
+# zoom function sub_821076B0 (r31 = the CCameraVolumeBehaviour) computes the camera's distance
+# from its target in f1 and hands it to its smoother at 0x82107864 (lwz r11,168(r31); both of
+# its paths meet there: the "no zoom range" beq from 0x82107778 with f1 = the minimum, and the
+# spread-based min + (max - min) x t from 0x82107860). Ours raises f1 to the distance at which
+# every player in game is in the picture. Found 2026-10-06: a per-frame trace of the volume
+# behaviour on Wumpa Island showed +296 (the smoothed value) = the camera-to-target distance
+# (12 at rest, 20 with the players apart); verified with xexdis 0x821076B0-0x821078A0.
+[[entrypoint.midasm_hook]]
+address = 0x82107864
+name = "CoopCameraDistance"
+registers = ["f1", "r31"]

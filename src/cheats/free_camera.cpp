@@ -20,6 +20,7 @@
 #include <rex/ui/window_listener.h>
 
 #include "../input/keyboard_mouse.h"
+#include "../players/coop_camera.h"
 
 namespace free_camera {
 namespace {
@@ -249,6 +250,7 @@ extern "C" REX_FUNC(sub_82373D18) {
   using namespace free_camera;
   const uint32_t camera = ctx.r3.u32;
   if (!g_enabled.load()) {
+    coop_camera::OnGameCameraRebuilt(camera);
     __imp__sub_82373D18(ctx, base);
     std::lock_guard<std::mutex> lock(g_mutex);
     for (int i = 0; i < 3; ++i) {

@@ -108,7 +108,9 @@ markers of their own over their heads, a "3" and a "4" drawn for the port
 in the style of the game's "1" and "2" (after *Crash of the Titans*'
 save-slot numbers; `assets/markers/`, section 29), and get their own paw
 prints on the loading screen, green and purple, once they have joined
-(section 28). Any player can drop out and join again, player 1 included,
+(section 28). The camera frames every player in game: it looks at the
+centre of the group and backs off until everyone is in the picture, instead
+of following one player (experimental, [findings/28](findings/28-coop-camera.md)). Any player can drop out and join again, player 1 included,
 as long as someone else stays in game (sections 30-31). A player whose
 controller disconnects (or is moved to another player in F6) no longer
 leaves a pause menu only that controller could close: the game pauses and
