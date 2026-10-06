@@ -158,8 +158,8 @@ On Wumpa Island with fake controllers (`--debug_fake_pads`):
   catches up when they stop.
 * No errors in the logs.
 
-Played on two levels (including a fight next to a titan): experimental,
-working well so far. Not tested yet: fights (enemies as SECONDARY interests), titans (their size),
+Played on two levels: experimental, working well so far (two players far
+apart on Wumpa Island both stay in the picture). Not tested yet: fights (enemies as SECONDARY interests), titans (their size),
 bosses, tight spaces (the wider view may show places the level designers
 never meant to be seen), cutscenes started with players apart, and how it
 feels in play.
