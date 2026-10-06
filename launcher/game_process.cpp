@@ -3,15 +3,10 @@
 // =============================================================================
 #include "game_process.h"
 
-#include <csignal>
 #include <cstring>
 #include <ctime>
 #include <fstream>
 
-#include <fcntl.h>
-#include <poll.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -27,8 +22,7 @@ constexpr size_t kKeptLines = 50000;
 // starts within one minute).
 fs::path SessionLogPath(const fs::path& logs) {
   const std::time_t now = std::time(nullptr);
-  std::tm local{};
-  localtime_r(&now, &local);
+  const std::tm local = platform::LocalTime(now);
   char name[64];
   std::strftime(name, sizeof(name), "play-%Y-%m-%d_%H%M.log", &local);
   std::error_code ec;
@@ -82,61 +76,22 @@ bool Game::Start(const fs::path& exe, const std::vector<std::string>& args,
   fs::create_directories(user_folder / "logs", ec);
   const fs::path log_file = SessionLogPath(user_folder / "logs");
 
-  // argv, built BEFORE fork: between fork and exec the child may only call
-  // async-signal-safe functions (no memory allocation).
-  std::vector<std::string> argv_strings;
-  argv_strings.push_back(exe.string());
-  argv_strings.insert(argv_strings.end(), args.begin(), args.end());
-  argv_strings.push_back("--log_file=" + log_file.string());
-  std::vector<char*> argv;
-  for (auto& arg : argv_strings) {
-    argv.push_back(arg.data());
-  }
-  argv.push_back(nullptr);
-  const std::string exe_path = exe.string();
-  const std::string work_path = work_folder.string();
-
-  int pipe_fds[2];
-  if (pipe2(pipe_fds, O_CLOEXEC) != 0) {
-    *error = std::string("Couldn't make a pipe: ") + std::strerror(errno);
-    return false;
-  }
+  platform::ChildOptions options;
+  options.argv.push_back(exe.string());
+  options.argv.insert(options.argv.end(), args.begin(), args.end());
+  options.argv.push_back("--log_file=" + log_file.string());
+  options.work_folder = work_folder;
+  options.die_with_launcher = false;  // closing the launcher never closes the game
+  auto child = std::make_unique<platform::Child>();
   started_ = std::chrono::steady_clock::now();
-
-  const pid_t pid = fork();
-  if (pid < 0) {
-    *error = std::string("Couldn't start the game: ") + std::strerror(errno);
-    close(pipe_fds[0]);
-    close(pipe_fds[1]);
+  if (!child->Start(options, error)) {
     return false;
   }
-  if (pid == 0) {
-    // THE CHILD. Its own session (and process group): Stop() can signal the
-    // whole game, a Ctrl+C in the launcher's terminal doesn't reach it, and
-    // closing the launcher doesn't close the game.
-    setsid();
-    const int null_fd = open("/dev/null", O_RDONLY);
-    if (null_fd >= 0) {
-      dup2(null_fd, STDIN_FILENO);
-    }
-    dup2(pipe_fds[1], STDOUT_FILENO);  // dup2 clears close-on-exec on the copies
-    dup2(pipe_fds[1], STDERR_FILENO);
-    close_range(3, ~0U, 0);  // nothing of the launcher's (window, sockets) leaks in
-    if (chdir(work_path.c_str()) != 0) {
-      _exit(126);
-    }
-    execv(exe_path.c_str(), argv.data());
-    const char message[] = "launcher: couldn't run the game's executable\n";
-    (void)!write(STDERR_FILENO, message, sizeof(message) - 1);
-    _exit(127);
-  }
-
-  close(pipe_fds[1]);
   {
     std::lock_guard lock(mutex_);
     state_ = State::kRunning;
     result_ = {};
-    pid_ = pid;
+    child_ = std::move(child);
     stop_requested_ = false;
     user_folder_ = user_folder;
     log_file_ = log_file;
@@ -148,7 +103,7 @@ bool Game::Start(const fs::path& exe, const std::vector<std::string>& args,
     fps_.clear();
     ++version_;
   }
-  watcher_ = std::thread(&Game::Watch, this, int(pid), pipe_fds[0]);
+  watcher_ = std::thread(&Game::Watch, this);
   return true;
 }
 
@@ -173,8 +128,10 @@ void Game::AddLine(std::string line) {
 
 // The watcher thread: terminal output and the log file's new lines, merged,
 // until the game closes its end of the pipe (= it ended); then its exit status.
-void Game::Watch(int pid, int output_fd) {
-  std::ofstream copy(user_folder_ / "logs" / "last-launch-output.txt", std::ios::trunc);
+void Game::Watch() {
+  platform::Child* child = child_.get();  // stays until the next Start (after this thread)
+  std::ofstream copy(user_folder_ / "logs" / "last-launch-output.txt",
+                     std::ios::trunc | std::ios::binary);
   std::ifstream log;               // opened once the game has created the file
   std::string terminal_pending, log_pending;
   char buffer[65536];
@@ -196,64 +153,47 @@ void Game::Watch(int pid, int output_fd) {
       log_pending.append(buffer, size_t(got));
     }
     log.clear();  // at the end for now: clear EOF so the next read continues
+    std::erase(log_pending, '\r');  // Windows line ends
     std::lock_guard lock(mutex_);
     TakeLines(log_pending, [&](std::string line) { AddLine(std::move(line)); });
   };
 
-  bool open = true;
-  while (open) {
-    pollfd poller{output_fd, POLLIN, 0};
-    const int ready = poll(&poller, 1, 250);
-    if (ready > 0) {
-      const ssize_t got = read(output_fd, buffer, sizeof(buffer));
-      if (got < 0 && errno == EINTR) {
-        continue;
-      }
-      if (got <= 0) {
-        open = false;  // the game closed its end: it has ended
-      } else {
-        copy.write(buffer, got);
-        copy.flush();
-        terminal_pending.append(buffer, size_t(got));
-        std::lock_guard lock(mutex_);
-        TakeLines(terminal_pending,
-                  [&](std::string line) { AddLine("terminal: " + std::move(line)); });
-      }
+  for (;;) {
+    const int got = child->Read(buffer, sizeof(buffer), 250);
+    if (got < 0) {
+      break;  // the game closed its end: it has ended
+    }
+    if (got > 0) {
+      copy.write(buffer, got);
+      copy.flush();
+      terminal_pending.append(buffer, size_t(got));
+      std::erase(terminal_pending, '\r');
+      std::lock_guard lock(mutex_);
+      TakeLines(terminal_pending,
+                [&](std::string line) { AddLine("terminal: " + std::move(line)); });
     }
     read_log();
   }
-  close(output_fd);
-  int status = 0;
-  while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
-  }
+  const platform::Ended ended = child->Wait();
   read_log();  // the last lines it wrote
-  Finish(status);
+  Finish(ended);
 }
 
-void Game::Finish(int status) {
+void Game::Finish(const platform::Ended& ended) {
   std::lock_guard lock(mutex_);
   Result result;
   result.stopped_by_launcher = stop_requested_;
-  if (WIFSIGNALED(status)) {
-    result.signal = WTERMSIG(status);
-    switch (result.signal) {
-      case SIGSEGV: case SIGABRT: case SIGBUS: case SIGILL: case SIGFPE: case SIGTRAP: case SIGSYS:
-        result.crashed = true;
-        break;
-      default:
-        result.killed = !result.stopped_by_launcher;
-        break;
-    }
-  } else if (WIFEXITED(status)) {
-    result.exit_code = WEXITSTATUS(status);
-  }
+  result.raw = ended.raw;
+  result.ended_by = ended.description;
+  result.exit_code = ended.exit_code;
+  result.crashed = ended.crashed && !result.stopped_by_launcher;
+  result.killed = ended.killed && !result.stopped_by_launcher;
   result.played = std::chrono::duration_cast<std::chrono::seconds>(
       std::chrono::steady_clock::now() - started_);
   result.log = log_file_;
   result.fps = fps_;
   result_ = std::move(result);
   state_ = State::kEnded;
-  pid_ = -1;
   ++version_;
 }
 
@@ -283,24 +223,24 @@ bool Game::CopyLog(LogView& view) {
 }
 
 void Game::Stop() {
-  int pid;
+  platform::Child* child;
   {
     std::lock_guard lock(mutex_);
-    if (state_ != State::kRunning || pid_ <= 0) {
+    if (state_ != State::kRunning || !child_) {
       return;
     }
-    pid = pid_;
+    child = child_.get();
     stop_requested_ = true;
   }
-  kill(-pid, SIGTERM);  // the whole process group (setsid in Start); ends in ~0.5 s
-  // Still there after 5 s: force it. Checked against the same pid under the
+  child->RequestStop();  // TERM / closing its window; the game ends in ~0.5 s
+  // Still there after 5 s: force it. Checked against the same game under the
   // lock, so a later session is never hit. (The Game object lives as long as
   // the process: main.cpp never deletes it.)
-  std::thread([this, pid] {
+  std::thread([this, child] {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     std::lock_guard lock(mutex_);
-    if (state_ == State::kRunning && pid_ == pid) {
-      kill(-pid, SIGKILL);
+    if (state_ == State::kRunning && child_.get() == child) {
+      child->ForceStop();
     }
   }).detach();
 }
@@ -322,20 +262,6 @@ void Game::Forget() {
   }
 }
 
-bool AnotherGameRunning() {
-  std::error_code ec;
-  for (const auto& entry : fs::directory_iterator("/proc", ec)) {
-    const std::string name = entry.path().filename().string();
-    if (name.empty() || name.find_first_not_of("0123456789") != std::string::npos) {
-      continue;
-    }
-    std::ifstream comm(entry.path() / "comm");
-    std::string command;
-    if (std::getline(comm, command) && command == "crash_mom") {
-      return true;
-    }
-  }
-  return false;
-}
+bool AnotherGameRunning() { return platform::ProcessRunning("crash_mom"); }
 
 }  // namespace game_process

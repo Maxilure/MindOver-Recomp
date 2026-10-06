@@ -9,11 +9,10 @@
 #include <fstream>
 #include <sstream>
 
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 #include <toml++/toml.hpp>
+
+#include "platform.h"
 
 namespace fs = std::filesystem;
 
@@ -40,37 +39,11 @@ Type TypeFromName(const std::string& name) {
 }
 
 // Runs `argv` in `work_folder` with no output, waits; its exit code (-1 if
-// it couldn't run or was killed).
+// it couldn't run, crashed or was stopped).
 int RunQuietly(const std::vector<std::string>& args, const fs::path& work_folder) {
-  std::vector<std::string> copy = args;
-  std::vector<char*> argv;
-  for (auto& arg : copy) {
-    argv.push_back(arg.data());
-  }
-  argv.push_back(nullptr);
-  const std::string work = work_folder.string();
-  const pid_t pid = fork();
-  if (pid < 0) {
-    return -1;
-  }
-  if (pid == 0) {
-    const int null_fd = open("/dev/null", O_RDWR);
-    if (null_fd >= 0) {
-      dup2(null_fd, STDIN_FILENO);
-      dup2(null_fd, STDOUT_FILENO);
-      dup2(null_fd, STDERR_FILENO);
-    }
-    close_range(3, ~0U, 0);
-    if (chdir(work.c_str()) != 0) {
-      _exit(126);
-    }
-    execv(argv[0], argv.data());
-    _exit(127);
-  }
-  int status = 0;
-  while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
-  }
-  return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+  bool ok = false;
+  platform::Capture(args, &ok, work_folder, 60000);
+  return ok ? 0 : -1;
 }
 
 // A TOML value as the text the game's own parser would make of it.
@@ -135,7 +108,12 @@ bool Catalogue::Load(const fs::path& exe, const fs::path& work_folder, const fs:
   if (ec || cache_time < exe_time) {
     fs::create_directories(cache_file.parent_path(), ec);
     const int code = RunQuietly({exe.string(), "--list_settings=" + cache_file.string(),
-                                 "--log_file=/dev/null"},
+                                 #if defined(_WIN32)
+                                 "--log_file=NUL"
+#else
+                                 "--log_file=/dev/null"
+#endif
+},
                                 work_folder);
     if (code != 0) {
       *error = "The game couldn't list its settings (exit code " + std::to_string(code) +

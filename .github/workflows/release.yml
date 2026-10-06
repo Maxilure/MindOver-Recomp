@@ -1,0 +1,95 @@
+# =============================================================================
+# release.yml -- builds the release files on GitHub's machines
+# =============================================================================
+#
+# WHY HERE: the launcher is the one part of a release that comes ready-built,
+# and a Linux program only runs on systems with a C library (glibc) at least
+# as new as the one it was built on. Building on Ubuntu 24.04 makes it run on
+# 24.04 and everything newer, which is also the oldest kind of system that
+# can build the game itself (clang 20+). The game is never built here: each
+# player builds it on their own computer, from their own disc.
+#
+# WHEN:
+#   - a version tag is pushed (git tag v0.1.0-alpha && git push origin v0.1.0-alpha):
+#     tools/make_release.sh runs and a DRAFT GitHub release is created with
+#     both files (the .tar.gz and release.toml, the update feed). Nothing is
+#     public until someone presses Publish on GitHub's Releases page. The tag
+#     must match the VERSION.txt file.
+#   - by hand ("Run workflow" on the Actions tab): the same build, files kept
+#     as a downloadable artifact of the run, no release (a test).
+#
+# Launchers find updates through releases/latest/download/release.toml, i.e.
+# the newest PUBLISHED release that isn't marked pre-release (drafts and
+# pre-releases aren't "latest"), so releases are never marked pre-release.
+# =============================================================================
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # creating the release and attaching its files
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "Check out (with the SDK submodule: the launcher builds SDL3 and ImGui from it)"
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build tools and SDL3's window-system headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang ninja-build cmake pkg-config \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
+            libxfixes-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
+            libegl-dev libgl-dev libdecor-0-dev libdbus-1-dev libudev-dev libdrm-dev libgbm-dev
+
+      - name: The tag matches VERSION.txt
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(tr -d '[:space:]' < VERSION.txt)
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} doesn't match VERSION.txt (${version}): expected v${version}"
+            exit 1
+          fi
+
+      - name: Make the release files
+        env:
+          CC: clang
+          CXX: clang++
+        run: tools/make_release.sh
+
+      - name: The launcher's needs (for the log)
+        run: |
+          version=$(tr -d '[:space:]' < VERSION.txt)
+          tar -xzf "out/release/${version}/CrashMoM-${version}-linux-x86_64.tar.gz" -C /tmp
+          ldd "/tmp/Crash Mind over Mutant/Crash Mind over Mutant"
+          objdump -T "/tmp/Crash Mind over Mutant/Crash Mind over Mutant" \
+            | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+
+      - name: Keep the files (test runs)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: out/release/
+
+      - name: Create the draft release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(tr -d '[:space:]' < VERSION.txt)
+          # NOT marked "pre-release" even for -alpha versions: GitHub's
+          # releases/latest link (the launchers' update feed) skips those.
+          gh release create "${GITHUB_REF_NAME}" --draft \
+            --title "Crash: Mind over Mutant PC port ${version}" \
+            --notes "Download the .tar.gz, unpack it, and read READ ME FIRST.txt. You need your own copy of the game (Xbox 360 disc image)." \
+            "out/release/${version}/CrashMoM-${version}-linux-x86_64.tar.gz" \
+            "out/release/${version}/release.toml"

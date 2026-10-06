@@ -23,13 +23,12 @@
 //   come (in total and how many DIFFERENT ones: the emulated GPU repeats one
 //   warning thousands of times while a save loads).
 //
-// HOW IT ENDED (waitpid): exit code 0 = a normal quit (closing the window
-// ends the game with _Exit(0)); ended by a signal the program raises on
-// itself when it breaks (SIGSEGV, SIGABRT, SIGBUS, SIGILL, SIGFPE...) = a
-// crash; any other signal (SIGKILL, SIGTERM...) came from outside: the
-// launcher's Stop button, the out-of-memory killer, a shutdown; any other
-// exit code = it gave up (e.g. a message box about a missing folder, then
-// exit 1).
+// HOW IT ENDED (platform.h): exit code 0 = a normal quit (closing the window
+// ends the game with _Exit(0)); a crash (Linux: SIGSEGV, SIGABRT...; Windows:
+// an NTSTATUS like 0xC0000005); ended from outside (Linux: SIGKILL, SIGTERM:
+// the out-of-memory killer, a shutdown); any other exit code = it gave up
+// (e.g. a message box about a missing folder, then exit 1). The Stop button
+// asks politely first (TERM / closing its window), then forces it after 5 s.
 // =============================================================================
 #pragma once
 
@@ -43,6 +42,8 @@
 #include <thread>
 #include <vector>
 
+#include "platform.h"
+
 namespace game_process {
 
 enum class State { kIdle, kRunning, kEnded };
@@ -51,8 +52,9 @@ struct Result {
   bool crashed = false;          // ended by a CRASH signal (SEGV, ABRT, BUS, ILL, FPE, TRAP, SYS)
   bool killed = false;           // ended by another signal from outside (KILL, TERM...: the
                                  // out-of-memory killer, a shutdown, a `kill`)
-  int signal = 0;                // which signal (crashed or killed)
-  int exit_code = 0;             // exit code (no signal)
+  std::string ended_by;          // how (crashed or killed): "SIGSEGV (...)", "0xC0000005 (...)"
+  uint32_t raw = 0;              // the signal number (Linux) or the exit code / NTSTATUS
+  int exit_code = 0;             // exit code (neither crashed nor killed)
   bool stopped_by_launcher = false;  // the Stop button
   std::chrono::seconds played{0};
   std::filesystem::path log;     // the game's log of this session
@@ -90,14 +92,14 @@ class Game {
   bool CopyLog(LogView& view);
 
  private:
-  void Watch(int pid, int output_fd);
+  void Watch();
   void AddLine(std::string line);           // under mutex_
-  void Finish(int status);
+  void Finish(const platform::Ended& ended);
 
   std::mutex mutex_;
   State state_ = State::kIdle;
   Result result_;
-  int pid_ = -1;
+  std::unique_ptr<platform::Child> child_;  // the running game (state_ == kRunning)
   bool stop_requested_ = false;
   std::thread watcher_;
   std::chrono::steady_clock::time_point started_;

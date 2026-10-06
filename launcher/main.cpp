@@ -29,8 +29,10 @@
 // 4 times a second while the game runs: its clock and the live log), so it costs ~nothing while
 // waiting next to the game.
 //
-// THREE TABS: Play (above), Settings (settings_page.h: the main settings with
-// warnings on risky values, plus all ~200 of the game's flags) and Game log: the session's log LIVE while the game
+// FOUR TABS: Play (above), Settings (settings_page.h: the main settings with
+// warnings on risky values, plus all ~200 of the game's flags), Setup
+// (setup.h: build tools listed, disc extraction, SDK + game builds; the
+// launcher opens on it while the game can't be played yet) and Game log: the session's log LIVE while the game
 // runs (and the last session's after), merged with what the game printed to
 // the terminal; errors red, warnings yellow; a filter box, "errors and
 // warnings only", and it follows new lines while scrolled to the bottom.
@@ -42,7 +44,10 @@
 // Command line: --game_folder=<path> (else found next to / above the launcher);
 // --play=new|last|<save number>: start the game right away, as if Play /
 // Continue / a save's Play was pressed (for a desktop shortcut, and tests);
-// --tab=settings / --tab=log: open on that tab;
+// --tab=settings / --tab=log / --tab=setup: open on that tab;
+// --setup_run=check|source|disc|sdk|game|all|update [--iso=<file>]: a Setup step, no window;
+// --update_feed=<url>: where updates are looked for (update.h; tests: a file:// URL);
+// --after_update: started by an update's restart (opens Setup, rebuilds);
 // --desktop_entry=add|remove: the applications-menu entry (desktop_entry.h), no window;
 // --screenshot=<file.png> [--screenshot_after=<seconds>]: draw the page, save
 // it as a picture and quit (for checking the look and pictures for the docs
@@ -61,15 +66,19 @@
 #include <vector>
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>  // Windows: SDL provides WinMain and calls main below
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
 
 #include "desktop_entry.h"
 #include "folders.h"
+#include "platform.h"
 #include "game_process.h"
 #include "saves.h"
 #include "settings_page.h"
+#include "setup.h"
+#include "update.h"
 
 namespace fs = std::filesystem;
 using Clock = std::chrono::steady_clock;
@@ -95,28 +104,14 @@ struct Fonts {
   ImFont* mono = nullptr;  // the Game log's lines
 };
 
-// A system font file for `pattern` (fontconfig's fc-match), or empty.
-std::string SystemFont(const char* pattern) {
-  std::string command = std::string("fc-match -f '%{file}' '") + pattern + "' 2>/dev/null";
-  std::string path;
-  if (FILE* pipe = popen(command.c_str(), "r")) {
-    char buffer[512];
-    while (fgets(buffer, sizeof(buffer), pipe)) {
-      path += buffer;
-    }
-    pclose(pipe);
-  }
-  std::error_code ec;
-  return !path.empty() && fs::is_regular_file(path, ec) ? path : std::string();
-}
-
 Fonts LoadFonts() {
   ImGuiIO& io = ImGui::GetIO();
   Fonts fonts;
-  // The desktop's sans font (Noto Sans, DejaVu Sans...); ImGui's own small
-  // pixel font if fontconfig finds nothing.
-  const std::string regular = SystemFont("sans:style=Regular");
-  const std::string bold = SystemFont("sans:style=Bold");
+  // The desktop's fonts (Linux: fontconfig's sans / monospace, e.g. Noto
+  // Sans; Windows: Segoe UI / Consolas); ImGui's own small pixel font if none.
+  const platform::FontFiles files = platform::SystemFonts();
+  const std::string regular = files.regular.string();
+  const std::string bold = files.bold.string();
   if (!regular.empty()) {
     fonts.regular = io.Fonts->AddFontFromFileTTF(regular.c_str(), 17.0f);
   }
@@ -129,7 +124,7 @@ Fonts LoadFonts() {
   if (!fonts.bold) {
     fonts.bold = fonts.regular;
   }
-  const std::string mono = SystemFont("monospace:style=Regular");
+  const std::string mono = files.mono.string();
   if (!mono.empty()) {
     fonts.mono = io.Fonts->AddFontFromFileTTF(mono.c_str(), 15.0f);
   }
@@ -233,9 +228,7 @@ std::string PlayedWhen(int64_t ticks) {
   const auto when = clock_cast<system_clock>(file_time);
   const std::time_t then_t = system_clock::to_time_t(when);
   const std::time_t now_t = system_clock::to_time_t(system_clock::now());
-  std::tm then{}, now{};
-  localtime_r(&then_t, &then);
-  localtime_r(&now_t, &now);
+  const std::tm then = platform::LocalTime(then_t), now = platform::LocalTime(now_t);
   // Calendar days between the two (midnight to midnight, local time).
   std::tm then_day = then, now_day = now;
   then_day.tm_hour = now_day.tm_hour = 12;
@@ -254,18 +247,8 @@ std::string PlayedWhen(int64_t ticks) {
   return text;
 }
 
-// "SIGSEGV (segmentation fault)".
-std::string SignalName(int signal) {
-  const char* abbrev = sigabbrev_np(signal);
-  const char* description = sigdescr_np(signal);
-  std::string text = abbrev ? std::string("SIG") + abbrev : "signal " + std::to_string(signal);
-  if (description) {
-    text += std::string(" (") + description + ")";
-  }
-  return text;
-}
-
-// Opens a folder or file with the desktop's default program (xdg-open).
+// Opens a folder or file with the desktop's default program (Linux:
+// xdg-open, Windows: the shell), through SDL.
 void OpenPath(const fs::path& path) {
   std::error_code ec;
   if (!fs::exists(path, ec)) {
@@ -274,7 +257,11 @@ void OpenPath(const fs::path& path) {
     }
     fs::create_directories(path, ec);  // a folder the game hasn't made yet
   }
+#if defined(_WIN32)
+  SDL_OpenURL(("file:///" + path.generic_string()).c_str());  // file:///D:/CrashMoM/...
+#else
   SDL_OpenURL(("file://" + path.string()).c_str());
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -295,7 +282,8 @@ struct Launcher {
   char filter[64] = {};
   int selected = -1;  // index into save_list
   bool confirm_stop = false;
-  int select_tab = -1;  // 0 Play, 1 Settings, 2 Game log: switch to it on the next frame
+  int select_tab = -1;  // 0 Play, 1 Settings, 2 Game log, 3 Setup: switch to it next frame
+  std::unique_ptr<setup::Setup> setup;
   std::unique_ptr<settings_page::Page> settings;  // made once the game folder is known
   fs::path launcher_path;                         // this program (for the menu entry)
   desktop_entry::Status desktop = desktop_entry::Status::kMissing;
@@ -366,7 +354,8 @@ void Launcher::DrawHeader() {
   ImGui::SameLine();
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().FontSizeBase * 0.65f);
   ImGui::PushStyleColor(ImGuiCol_Text, kOrange);
-  ImGui::TextUnformatted("PC port (alpha)");
+  static const std::string version = update::InstalledVersion(folders);
+  ImGui::Text("PC port %s", version.empty() ? "(alpha)" : version.c_str());
   ImGui::PopStyleColor();
   ImGui::Spacing();
 }
@@ -388,6 +377,13 @@ bool Launcher::DrawProblems() {
     return true;
   }
   bool blocked = false;
+  if ((!folders.ExeExists() || !folders.DiscExists()) && setup) {
+    ImGui::TextUnformatted("The game isn't ready to play yet.");
+    if (ImGui::Button("Open Setup")) {
+      select_tab = 3;
+    }
+    ImGui::Spacing();
+  }
   if (!folders.ExeExists()) {
     problem("The game isn't built yet.",
             "Expected at " + folders::Pretty(folders.exe) +
@@ -458,8 +454,9 @@ void Launcher::DrawReport() {
   }
   ImGui::PopFont();
   if (result.crashed || result.killed) {
-    ImGui::TextColored(kMuted, "Ended by %s.%s", SignalName(result.signal).c_str(),
-                       result.signal == SIGKILL
+    // (Linux SIGKILL = 9: also what the system does when memory runs out.)
+    ImGui::TextColored(kMuted, "Ended by %s.%s", result.ended_by.c_str(),
+                       result.killed && result.raw == 9
                            ? " (Also what the system does when memory runs out.)"
                            : "");
   }
@@ -690,6 +687,19 @@ void Launcher::DrawFolders() {
 }
 
 void Launcher::DrawPlayTab(game_process::State state) {
+  std::string newer;
+  if (setup && setup->UpdateAvailable(&newer)) {
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(kOrange, "Version %s is out.", newer.c_str());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("See the update")) {
+      select_tab = 3;
+    }
+    ImGui::Spacing();
+  }
+  if (DrawProblems()) {
+    return;  // not built / no disc yet: the message points to Setup
+  }
   if (state == game_process::State::kRunning) {
     DrawRunning();
   } else {
@@ -836,7 +846,8 @@ void Launcher::Draw() {
     RefreshOtherGame();
   }
   game->CopyLog(log);
-  if (DrawProblems()) {
+  if (folders.root.empty()) {
+    DrawProblems();  // no game folder at all: nothing else can work
     ImGui::End();
     return;
   }
@@ -855,6 +866,12 @@ void Launcher::Draw() {
         const settings_page::Look look{fonts.bold, kMuted, kWarn, kBad, kOrange};
         settings->Draw(look, state == game_process::State::kRunning);
       }
+      ImGui::EndTabItem();
+    }
+    if (setup && ImGui::BeginTabItem("Setup", nullptr, flags(3))) {
+      ImGui::Spacing();
+      const setup::Look look{fonts.bold, fonts.mono, kMuted, kGood, kWarn, kBad, kOrange};
+      setup->Draw(look, state == game_process::State::kRunning || other_game_running);
       ImGui::EndTabItem();
     }
     char log_label[64];
@@ -878,6 +895,10 @@ int main(int argc, char** argv) {
   std::string screenshot, play;
   int start_tab = -1;
   std::string desktop_action;
+  std::string setup_run;
+  std::string update_feed;
+  bool after_update = false;
+  fs::path setup_iso;
   double screenshot_after = 0;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
@@ -885,6 +906,16 @@ int main(int argc, char** argv) {
       override_root = arg.substr(std::strlen("--game_folder="));
     } else if (arg.starts_with("--desktop_entry=")) {
       desktop_action = arg.substr(std::strlen("--desktop_entry="));
+    } else if (arg.starts_with("--setup_run=")) {
+      setup_run = arg.substr(std::strlen("--setup_run="));
+    } else if (arg.starts_with("--update_feed=")) {
+      update_feed = arg.substr(std::strlen("--update_feed="));
+    } else if (arg == "--after_update") {
+      after_update = true;
+    } else if (arg.starts_with("--iso=")) {
+      setup_iso = arg.substr(std::strlen("--iso="));
+    } else if (arg == "--tab=setup") {
+      start_tab = 3;
     } else if (arg == "--tab=settings") {
       start_tab = 1;
     } else if (arg == "--tab=log") {
@@ -906,14 +937,29 @@ int main(int argc, char** argv) {
   // --desktop_entry=add|remove: the applications-menu entry, without a window.
   if (!desktop_action.empty()) {
     std::error_code ec;
-    const fs::path self = fs::read_symlink("/proc/self/exe", ec);
+    const fs::path self = platform::SelfPath();
     const folders::Folders found = folders::Find(override_root);
     std::string error;
     const bool ok = desktop_action == "remove" ? desktop_entry::Remove(&error)
                                                : desktop_entry::Write(self, found.root, &error);
     std::printf("%s: %s\n", ok ? "done" : "failed",
-                ok ? desktop_entry::EntryPath().c_str() : error.c_str());
+                ok ? desktop_entry::EntryPath().string().c_str() : error.c_str());
     return ok ? 0 : 1;
+  }
+
+  // --setup_run=check|source|disc|sdk|game [--iso=<file>]: a Setup step
+  // without a window (tests; setup.h), output on stdout.
+  if (!setup_run.empty()) {
+    const folders::Folders found = folders::Find(override_root);
+    if (found.root.empty() || !found.from_source) {
+      std::printf("setup: needs the source tree\n");
+      return 1;
+    }
+    std::error_code self_ec;
+    setup::Setup headless(found, update_feed, platform::SelfPath());
+    const int code = headless.RunHeadless(setup_run, setup_iso);
+    std::fflush(stdout);
+    std::_Exit(code);
   }
 
   SDL_SetAppMetadata("Crash: Mind over Mutant launcher", "0.1.0-alpha", "crash_mom_launcher");
@@ -951,7 +997,11 @@ int main(int argc, char** argv) {
   launcher.select_tab = start_tab;
   {
     std::error_code ec;
-    launcher.launcher_path = fs::read_symlink("/proc/self/exe", ec);
+    launcher.launcher_path = platform::SelfPath();
+    // Windows: an update renamed the previous launcher aside (update.cpp).
+    fs::path aside = launcher.launcher_path;
+    aside += ".old";
+    fs::remove(aside, ec);
     // First start: into the applications menu (once; desktop_entry.h). Not in
     // test runs (--screenshot / --play), which use copies of the game folder.
     if (!launcher.folders.root.empty() && screenshot.empty() && play.empty()) {
@@ -959,6 +1009,15 @@ int main(int argc, char** argv) {
                                      launcher.folders.user);
     }
     launcher.desktop = desktop_entry::Check(launcher.launcher_path);
+  }
+  if (!launcher.folders.root.empty() && launcher.folders.from_source) {
+    launcher.setup = std::make_unique<setup::Setup>(launcher.folders, update_feed,
+                                                    launcher.launcher_path, after_update);
+    if (after_update) {
+      launcher.select_tab = 3;  // the update's rebuild runs there
+    } else if (start_tab < 0 && launcher.setup->NeedsAttention()) {
+      launcher.select_tab = 3;  // not playable yet: open on Setup
+    }
   }
   if (!launcher.folders.root.empty()) {
     launcher.settings = std::make_unique<settings_page::Page>(

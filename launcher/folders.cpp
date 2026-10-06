@@ -3,33 +3,52 @@
 // =============================================================================
 #include "folders.h"
 
+#include "platform.h"
+
 #include <cstdlib>
 #include <system_error>
 
-#include <unistd.h>
 
 namespace fs = std::filesystem;
 
 namespace folders {
 namespace {
 
-// The launcher's own folder (/proc/self/exe = the running executable).
+// The launcher's own folder.
 fs::path LauncherFolder() {
-  std::error_code ec;
-  const fs::path self = fs::read_symlink("/proc/self/exe", ec);
-  return ec ? fs::current_path() : self.parent_path();
+  const fs::path self = platform::SelfPath();
+  return self.empty() ? fs::current_path() : self.parent_path();
 }
+
+// The build preset's folder for this system (CMakePresets.json).
+#if defined(_WIN32)
+constexpr const char* kBuildPreset = "win-amd64-relwithdebinfo";
+#else
+constexpr const char* kBuildPreset = "linux-amd64-relwithdebinfo";
+#endif
 
 // A folder's layout, if it is a game folder (see folders.h).
 bool Fill(const fs::path& root, Folders& out) {
   std::error_code ec;
-  if (fs::is_regular_file(root / "program" / "crash_mom", ec)) {
-    out.exe = root / "program" / "crash_mom";
-    out.from_source = false;
-  } else if (fs::is_regular_file(root / "crash_mom_manifest.toml", ec)) {
-    // The build folder the docs (docs/01-building.md) and tools/play.sh use.
-    out.exe = root / "out" / "build" / "linux-amd64-relwithdebinfo" / "crash_mom";
+  const std::string exe = platform::ExeName("crash_mom");
+  if (fs::is_regular_file(root / "source" / "crash_mom_manifest.toml", ec)) {
+    // A release: built in source/, played from program/ (Setup copies it).
+    out.source = root / "source";
+    out.exe = root / "program" / exe;
     out.from_source = true;
+    out.release = true;
+  } else if (fs::is_regular_file(root / "crash_mom_manifest.toml", ec)) {
+    // A developer clone: played straight from the build folder the docs
+    // (docs/01-building.md) and tools/play.sh use.
+    out.source = root;
+    out.exe = root / "out" / "build" / kBuildPreset / exe;
+    out.from_source = true;
+    out.release = false;
+  } else if (fs::is_regular_file(root / "program" / exe, ec)) {
+    out.source.clear();
+    out.exe = root / "program" / exe;
+    out.from_source = false;
+    out.release = false;
   } else {
     return false;
   }
@@ -40,6 +59,11 @@ bool Fill(const fs::path& root, Folders& out) {
 }
 
 }  // namespace
+
+fs::path Folders::BuiltExe() const {
+  return source.empty() ? fs::path()
+                        : source / "out" / "build" / kBuildPreset / platform::ExeName("crash_mom");
+}
 
 bool Folders::ExeExists() const {
   std::error_code ec;
@@ -72,11 +96,15 @@ Folders Find(const fs::path& override_root) {
 
 std::string Pretty(const fs::path& path) {
   const std::string text = path.string();
-  const char* home = std::getenv("HOME");
-  if (home && *home) {
-    const std::string prefix = std::string(home) + "/";
+  const std::string home = platform::HomeDir().string();
+  if (!home.empty()) {
+    const std::string prefix = home + std::string(1, fs::path::preferred_separator);
     if (text.starts_with(prefix)) {
+#if defined(_WIN32)
+      return text;  // Windows users read full paths (no "~")
+#else
       return "~/" + text.substr(prefix.size());
+#endif
     }
   }
   return text;

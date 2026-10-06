@@ -2,7 +2,10 @@
 // desktop_entry.h -- the launcher in the desktop's applications menu
 // =============================================================================
 //
-// One button on the Play tab writes (or removes) a standard Linux menu entry
+// WINDOWS: two Start menu shortcuts instead (desktop_entry.cpp): "Crash Mind
+// over Mutant" and "Crash Mind over Mutant (continue last save)".
+//
+// LINUX: one button on the Play tab writes (or removes) a standard menu entry
 // (freedesktop.org "Desktop Entry" file):
 //
 //   $XDG_DATA_HOME/applications/crash_mom_launcher.desktop

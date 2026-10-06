@@ -3,17 +3,27 @@
 // =============================================================================
 #include "desktop_entry.h"
 
+#include "platform.h"
+
+#if defined(_WIN32)
+#define NOMINMAX
+#include <windows.h>
+// (after windows.h:)
+#include <objbase.h>
+#include <shlobj.h>
+#include <shobjidl.h>
+#endif
+
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
 
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 namespace fs = std::filesystem;
 
 namespace desktop_entry {
+#if !defined(_WIN32)
+
 namespace {
 
 constexpr const char* kFileName = "crash_mom_launcher.desktop";
@@ -42,21 +52,9 @@ std::string ExecLine(const fs::path& launcher) {
 // Tells the desktop the menu changed, where the tool exists (most menus
 // notice new files by themselves; this makes sure). Quiet, waited for.
 void RefreshMenus(const fs::path& folder) {
-  const pid_t pid = fork();
-  if (pid == 0) {
-    const int null_fd = open("/dev/null", O_RDWR);
-    if (null_fd >= 0) {
-      dup2(null_fd, STDOUT_FILENO);
-      dup2(null_fd, STDERR_FILENO);
-    }
-    close_range(3, ~0U, 0);
-    execlp("update-desktop-database", "update-desktop-database", folder.c_str(),
-           static_cast<char*>(nullptr));
-    _exit(127);
-  }
-  if (pid > 0) {
-    int status = 0;
-    waitpid(pid, &status, 0);
+  if (!platform::FindProgram("update-desktop-database").empty()) {
+    bool ok = false;
+    platform::Capture({"update-desktop-database", folder.string()}, &ok);
   }
 }
 
@@ -74,6 +72,8 @@ fs::path EntryPath() {
   return base / "applications" / kFileName;
 }
 
+#endif  // !_WIN32
+
 fs::path IconFile(const fs::path& game_folder) {
   std::error_code ec;
   for (const fs::path& candidate :
@@ -85,6 +85,8 @@ fs::path IconFile(const fs::path& game_folder) {
   }
   return {};
 }
+
+#if !defined(_WIN32)
 
 Status Check(const fs::path& launcher) {
   std::ifstream in(EntryPath());
@@ -145,6 +147,8 @@ bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* e
   return true;
 }
 
+#endif  // !_WIN32
+
 bool AddOnFirstStart(const fs::path& launcher, const fs::path& game_folder,
                      const fs::path& user_folder) {
   const fs::path state = user_folder / "launcher.toml";
@@ -168,6 +172,120 @@ bool AddOnFirstStart(const fs::path& launcher, const fs::path& game_folder,
   return added;
 }
 
+
+#if defined(_WIN32)
+
+// --- Windows: Start menu shortcuts --------------------------------------------
+//   %APPDATA%\Microsoft\Windows\Start Menu\Programs\
+//     Crash Mind over Mutant.lnk                     the launcher
+//     Crash Mind over Mutant (continue last save).lnk  the launcher --play=last
+// (Windows has no right-click actions on a Start menu entry like Linux's
+// .desktop "Actions", so the shortcut to the last save is a second entry.)
+
+namespace {
+
+fs::path StartMenuPrograms() {
+  PWSTR path = nullptr;
+  fs::path result;
+  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Programs, 0, nullptr, &path))) {
+    result = path;
+  }
+  CoTaskMemFree(path);
+  return result;
+}
+
+fs::path ContinuePath() {
+  return StartMenuPrograms() / L"Crash Mind over Mutant (continue last save).lnk";
+}
+
+// Writes one .lnk (COM's IShellLink + IPersistFile).
+bool WriteShortcut(const fs::path& lnk, const fs::path& target, const std::wstring& arguments,
+                   const fs::path& work, const std::wstring& description, const fs::path& icon) {
+  CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  IShellLinkW* link = nullptr;
+  bool ok = false;
+  if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW,
+                                 reinterpret_cast<void**>(&link)))) {
+    link->SetPath(target.wstring().c_str());
+    link->SetArguments(arguments.c_str());
+    link->SetWorkingDirectory(work.wstring().c_str());
+    link->SetDescription(description.c_str());
+    if (!icon.empty()) link->SetIconLocation(icon.wstring().c_str(), 0);
+    IPersistFile* file = nullptr;
+    if (SUCCEEDED(link->QueryInterface(IID_IPersistFile, reinterpret_cast<void**>(&file)))) {
+      ok = SUCCEEDED(file->Save(lnk.wstring().c_str(), TRUE));
+      file->Release();
+    }
+    link->Release();
+  }
+  CoUninitialize();
+  return ok;
+}
+
+// The program a .lnk points at (empty if none / unreadable).
+fs::path ShortcutTarget(const fs::path& lnk) {
+  CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  fs::path result;
+  IShellLinkW* link = nullptr;
+  if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLinkW,
+                                 reinterpret_cast<void**>(&link)))) {
+    IPersistFile* file = nullptr;
+    if (SUCCEEDED(link->QueryInterface(IID_IPersistFile, reinterpret_cast<void**>(&file)))) {
+      if (SUCCEEDED(file->Load(lnk.wstring().c_str(), STGM_READ))) {
+        wchar_t path[MAX_PATH * 4] = {};
+        if (SUCCEEDED(link->GetPath(path, int(std::size(path)), nullptr, SLGP_RAWPATH))) {
+          result = path;
+        }
+      }
+      file->Release();
+    }
+    link->Release();
+  }
+  CoUninitialize();
+  return result;
+}
+
+}  // namespace
+
+fs::path EntryPath() { return StartMenuPrograms() / L"Crash Mind over Mutant.lnk"; }
+
+Status Check(const fs::path& launcher) {
+  std::error_code ec;
+  if (!fs::exists(EntryPath(), ec)) {
+    return Status::kMissing;
+  }
+  const fs::path target = ShortcutTarget(EntryPath());
+  return fs::equivalent(target, launcher, ec) ? Status::kCurrent : Status::kOutdated;
+}
+
+bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* error) {
+  const fs::path icon = IconFile(game_folder);  // a .png can't be a Windows icon: the exe's own
+  (void)icon;
+  std::error_code ec;
+  fs::create_directories(EntryPath().parent_path(), ec);
+  if (!WriteShortcut(EntryPath(), launcher, L"", game_folder,
+                     L"Crash: Mind over Mutant, PC port (alpha): play, settings, setup", launcher)) {
+    *error = "Couldn't write the Start menu shortcut.";
+    return false;
+  }
+  WriteShortcut(ContinuePath(), launcher, L"--play=last", game_folder,
+                L"Crash: Mind over Mutant: straight into the most recently played save", launcher);
+  return true;
+}
+
+bool Remove(std::string* error) {
+  std::error_code ec;
+  fs::remove(EntryPath(), ec);
+  if (ec) {
+    *error = "Couldn't remove the Start menu shortcut: " + ec.message();
+    return false;
+  }
+  fs::remove(ContinuePath(), ec);
+  return true;
+}
+
+#else  // Linux
+
 bool Remove(std::string* error) {
   const fs::path entry = EntryPath();
   std::error_code ec;
@@ -179,5 +297,7 @@ bool Remove(std::string* error) {
   RefreshMenus(entry.parent_path());
   return true;
 }
+
+#endif  // _WIN32
 
 }  // namespace desktop_entry

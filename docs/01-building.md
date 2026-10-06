@@ -83,6 +83,7 @@ A few minutes per configuration.
   | `0011-local-players-share-profile` | Not a fix, a feature: users 1-3 can be signed in, sharing user 0's profile (same XUID, name, settings, saves), while the app says a device plays as them (`SetLocalPlayerPresentCallback`); `NotifyLocalPlayersChanged` broadcasts the sign-in change. Without it a second local player gets "You do not have an active gamer profile" (findings/23). No callback = user 0 only, as before |
   | `0012-vfs-longest-mount-wins` | Not a fix, a feature: the file system picks the device with the LONGEST matching mount path, so a host folder can be mounted inside the game drive's tree (changed copies of game data files at `D:\crashmom\`, `src/data/data_patcher.h`, findings/24 section 7.6). Without nested mounts nothing changes |
   | `0013-draw-every-nth-frame` | Not a fix, a feature (apply after 0009): GPU flag `draw_every_nth_frame` makes the emulated GPU draw and present only every Nth frame (skipped frames are parsed but neither drawn nor shown; read per draw, so it can change mid-frame). Our `--emulated_draw_every` (default 2) sets it while the native renderer draws too, e.g. dual mode: GPU 97% -> 60% busy at 60 fps (findings/20 section 5) |
+  | `0014-quiet-empty-texture-slots` | "Texture fetch constant ... has "invalid" type!" was logged for every draw with an EMPTY texture slot (type "invalid", no address: what unbinding a texture leaves), thousands of lines per level load. Nothing is bound for such a slot either way, so it's now skipped quietly; an invalid slot that points at memory is still warned about, once per distinct constant |
 
   `patches/rexglue-sdk/debug/` holds **optional debugging patches** that
   the `*.patch` glob above deliberately skips. Apply one by hand when
@@ -263,6 +264,31 @@ the launcher keeps it in `cache/launcher/` and asks again after each build.
 It also removes `load_save` and `log_file` from the file before each start:
 they're per-session flags, but F4 saves command-line flags too.
 
+**Setup** tab (the launcher opens on it while the game can't be played
+yet) walks through the steps above, each with a check:
+
+1. **Build tools**: clang 20+, CMake 3.25+, Ninja, Python 3, Git, glslc,
+   pkg-config, the GTK 3 headers, the Vulkan loader. Only checked and
+   listed: each missing one shows the package that provides it on Arch,
+   Debian/Ubuntu, Fedora or openSUSE. The launcher never installs system
+   packages.
+2. **Source parts**: the SDK submodule (`git submodule update --init --recursive`).
+3. **Your disc**: an `.iso` in the game folder, or one picked; checked
+   (an Xbox 360 disc with `default.xex`), extracted into `game/` with a
+   progress bar, then the title id is checked (565507FA).
+4. **ReXGlue SDK**: our patches applied (all or none; a hand-changed SDK
+   folder is reported, not touched), configured and installed. The patch
+   set it was built with is noted in `thirdparty/rexglue-install/`, so a
+   changed patch later shows "rebuild".
+5. **The game**: configure, recompile, compile (jobs from the RAM: 2.5 GB
+   each); "out of date" when the sources or the SDK changed since the last
+   build. Not while the game runs.
+
+"Set up everything" runs what's left of 2-5. The output shows live in the
+tab and goes to `user/logs/setup-<date>_<time>.log`;
+`--setup_run=check|source|disc|sdk|game [--iso=<file>]` runs a step without
+a window.
+
 **Applications menu:** the launcher's first start adds it to the desktop's
 applications menu by itself (once: noted in `user/launcher.toml`, so an
 entry removed later stays removed). The button at the bottom right of the
@@ -276,6 +302,52 @@ desktop's standard games icon until the port has its own picture
 (`assets/icon/crash_mom.png`, original art only).
 For now it only starts the game: setting up, settings and updates come later
 ([`launcher/main.cpp`](../launcher/main.cpp)).
+
+## Releases and updates
+
+What a player downloads is a **release**: the launcher (ready-built) plus
+this repository's files, which the launcher's Setup builds on the player's
+computer from their own disc. Nothing from the disc is in it, and neither is
+a built game (that would be the game's code). `tools/make_release.sh`
+makes one from a clean commit (`--allow-dirty` packs the working tree, for
+tests), with the version from `VERSION.txt` (not `VERSION`: on Windows, which
+ignores letter case in file names, that name would be found in place of the
+C++ library's own `<version>` header):
+
+```
+out/release/<version>/
+  CrashMoM-<version>-linux-x86_64.tar.gz   ~6.5 MB, unpacks to:
+    Crash Mind over Mutant/
+      Crash Mind over Mutant      the launcher (double-click)
+      READ ME FIRST.txt           tools/release/READ_ME_FIRST.txt
+      source/                     the repo's files, no .git, no SDK;
+        RELEASE.toml              the version + the exact ReXGlue SDK (tag + commit)
+  release.toml                    the update feed: version, archive, SHA-256
+```
+
+After Setup the folder also has `game/` (the disc's files), `program/` (the
+built game, copied there from `source/out/`) and `user/` (saves, settings).
+In a release, Setup's step 2 downloads the SDK version named in
+`RELEASE.toml` (a shallow clone with its libraries, ~550 MB) instead of the
+git submodule.
+
+**Publishing:** a GitHub release tagged `v<version>` with both files
+attached. **Updates:** the launcher reads
+`releases/latest/download/release.toml` (quietly at start, or "Check for
+updates" on the Setup tab); when it names a newer version, "Update to ..."
+downloads the archive, checks its SHA-256, and swaps in the new `source/`
+and launcher. Unchanged files keep their old dates (so the next build only
+redoes what changed) and the build state (`out/`, `generated/default/`, the
+SDK and its install) moves over; `user/`, `game/` and `program/` stay. The
+launcher then restarts and rebuilds: a new SDK version is downloaded, new
+patches re-applied on a clean SDK, and the game rebuilt and copied into
+`program/` ([`launcher/update.h`](../launcher/update.h)).
+`--update_feed=file:///.../release.toml` tests an update from a local
+folder. A developer clone updates with `git pull` instead.
+
+The launcher links its C++ libraries in, but needs a C library (glibc) at
+least as new as the system that built it: releases for older distributions
+have to be built on an older system.
 
 ## Developer tools
 

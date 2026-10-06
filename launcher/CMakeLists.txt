@@ -33,6 +33,11 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# Windows: the C/C++ runtime built INTO the exe (static), so the launcher
+# runs on a PC without Microsoft's runtime DLLs (testers may not have Visual
+# Studio). Set before any target: SDL3 and ImGui get it too.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 set(SDK_THIRDPARTY ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/rexglue-sdk/thirdparty)
 if(NOT EXISTS ${SDK_THIRDPARTY}/sdl3/CMakeLists.txt)
     message(FATAL_ERROR
@@ -67,16 +72,26 @@ target_include_directories(launcher_imgui PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backe
 target_link_libraries(launcher_imgui PUBLIC SDL3::SDL3-static)
 
 # --- the launcher ------------------------------------------------------------
-add_executable(crash_mom_launcher
+add_executable(crash_mom_launcher WIN32   # WIN32: a window, no console (Windows)
     main.cpp          # the window and the Play page
+    platform_posix.cpp  # Linux: processes, places, facts (platform.h)
+    platform_win.cpp    # Windows: the same
+    sha256.cpp        # SHA-256 of a download (updates), no outside tool needed
     folders.cpp       # where the game, its disc files and the player's files are
     saves.cpp         # the player's saves: names, progress, last played
     game_process.cpp  # starting the game, watching it, telling a crash from a quit
     settings.cpp      # the game's settings: the list (asked from the game) + user/settings.toml
     settings_page.cpp # the Settings tab
     desktop_entry.cpp # the launcher in the desktop's applications menu
+    task_runner.cpp   # runs a setup step's commands one after another, with progress
+    setup.cpp         # the Setup tab: build tools listed, disc, SDK, game builds
+    update.cpp        # new versions: the feed, download, swap (release layout)
 )
 # toml++ (header only, in the SDK submodule): reads and writes settings.toml.
 # SYSTEM: its headers' own warnings (old literal-operator spelling) aren't ours.
 target_include_directories(crash_mom_launcher SYSTEM PRIVATE ${SDK_THIRDPARTY}/tomlplusplus/include)
 target_link_libraries(crash_mom_launcher PRIVATE launcher_imgui)
+if(WIN32)
+    # ole32 / shell32 / uuid: Start menu shortcuts (desktop_entry.cpp).
+    target_link_libraries(crash_mom_launcher PRIVATE ole32 shell32 uuid)
+endif()
