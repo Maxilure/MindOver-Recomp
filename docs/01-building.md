@@ -208,6 +208,75 @@ written to, the game says so and quits instead of saving somewhere else.
 `--user_data_root`, `--cache_root`, `--controls_file`, `--photo_dir` and
 `--log_file` still choose other places (test runs use copies this way).
 
+### The launcher
+
+A small program of its own that starts the game: **Play** (from the
+start), **Continue** (straight into the most recently played save, no
+movies or menus), and the list of every save with its progress, play time
+and when it was last played, each with its own Play button. While the game
+runs it shows for how long; when it closes, how the session ended: a normal
+quit, a **crash** (with the signal), or ended from outside (e.g. the
+out-of-memory killer), plus the log's error/warning counts and buttons to
+open the log. The **Game log** tab shows the session's log live while the
+game runs (and the last session's afterwards), with whatever the game
+printed to the terminal mixed in: errors red, warnings yellow, a filter box
+and an "errors and warnings only" switch. Each session gets its own log,
+`user/logs/play-<date>_<time>.log` (the launcher names it, so an old
+`log_file` left in `user/settings.toml` can't send every session into one
+file).
+
+```bash
+cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake --build out/build/launcher
+out/build/launcher/crash_mom_launcher
+```
+
+It contains none of the game's code (only SDL3 and ImGui, compiled from the
+SDK submodule's source folders; no SDK build needed), so it can be handed
+out ready-built. It finds the game folder by itself: going up from its own
+folder, the first one with `program/crash_mom` (an installed copy) or this
+repository's `crash_mom_manifest.toml` (a build from source,
+`out/build/linux-amd64-relwithdebinfo/crash_mom`); `--game_folder=<path>`
+skips the search. It starts the game with only `--game_data_root` (and
+`--load_save=<number>` for a save): every setting still comes from
+`user/settings.toml`. The game runs in its own session, so closing the
+launcher never closes the game. `--play=new|last|<save number>` starts the
+game right away (a desktop shortcut); `--screenshot=<file.png>
+[--screenshot_after=<seconds>]` saves a picture of the window and quits;
+`--tab=settings` / `--tab=log` opens on that tab.
+
+The **Settings** tab edits `user/settings.toml` (the same file the game's F4
+menu writes; saved at once, applied at the next start): the main settings
+with plain names (frame rate cap, renderer, fullscreen, players, co-op
+camera, keyboard and mouse, sound, log extras; the save list has no
+switch there: it stays on), and under "All
+settings" every one of the game's ~200 flags, searchable. A yellow
+**warning triangle** marks risky values (hover it for why): above 60 fps,
+the native renderer and native-only picture, 3-4 players, the co-op camera,
+the ground grace off above 30 fps. Only values that
+differ from the default are written, and "Default" removes one. The list of
+settings comes from the game itself: `crash_mom --list_settings=<file>`
+writes them all (name, type, default, allowed values, range, description)
+and quits before any window opens ([`src/settings_list.h`](../src/settings_list.h));
+the launcher keeps it in `cache/launcher/` and asks again after each build.
+It also removes `load_save` and `log_file` from the file before each start:
+they're per-session flags, but F4 saves command-line flags too.
+
+**Applications menu:** the launcher's first start adds it to the desktop's
+applications menu by itself (once: noted in `user/launcher.toml`, so an
+entry removed later stays removed). The button at the bottom right of the
+Play tab adds or removes it any time. It's a standard menu entry,
+`~/.local/share/applications/crash_mom_launcher.desktop`, pointing at the
+launcher where it is now; right-clicking it in the menu offers "Continue
+last save". The same button removes it again, or rewrites it after the game
+folder moved ([`launcher/desktop_entry.h`](../launcher/desktop_entry.h);
+`--desktop_entry=add|remove` does it without a window). Its icon is the
+desktop's standard games icon until the port has its own picture
+(`assets/icon/crash_mom.png`, original art only).
+For now it only starts the game: setting up, settings and updates come later
+([`launcher/main.cpp`](../launcher/main.cpp)).
+
 ## Developer tools
 
 | Tool | What it does |

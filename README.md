@@ -123,6 +123,11 @@ cmake --build --preset linux-amd64-relwithdebinfo -j 6
 tools/play.sh                  # original 30 fps
 tools/play.sh --fps_cap=60     # 60 fps
 tools/play.sh --fps_cap=144 --native-only   # above 60 (work in progress)
+
+# or the launcher: Play, Continue your last save, pick any save (docs/01-building.md, "The launcher")
+cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake --build out/build/launcher && out/build/launcher/crash_mom_launcher
 ```
 
 ## Repo layout
@@ -139,6 +144,7 @@ src/                       OUR native code: app setup, hooks, fixes, debug tools
   data/                    changed copies of game data files, built at run time from your own game files
   pddi/                    interception of the game's renderer calls + the frame tracer
   native/                  our Vulkan renderer (in development)
+launcher/                  the launcher: Play, Continue, your saves (a program of its own, no game code)
 assets/                    the port's own pictures (copied next to the exe at build time)
   markers/                 players 3-4's markers over their heads ("3", "4")
 tools/                     disc extraction, xex inspection, disassembler, play/debug scripts
