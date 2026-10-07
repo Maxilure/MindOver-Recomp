@@ -52,6 +52,7 @@
 #include "frame_rate.h"
 #include "game_folder.h"
 #include "settings_list.h"
+#include "session_log.h"
 #include "crash_report.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
@@ -138,6 +139,8 @@ class CrashMomApp : public rex::ReXApp {
     // exists, the GPU plugin's included; write them out and quit before any
     // window opens (src/settings_list.h).
     settings_list::WriteAndQuitIfAsked();
+    // Every flag exists now: the log lists the changed ones (session_log.h).
+    session_log::LogSettings();
   }
 
   // Everything is initialized, including the window and the presenter
@@ -279,6 +282,10 @@ class CrashMomApp : public rex::ReXApp {
     game_folder::ConfigureLogging(config);
   }
   void OnPostInitLogging() override {
+    // The log's header (version, system, how it was started), the event logs'
+    // on/off switch and the old-log clean-up (src/session_log.h).
+    session_log::Start(game_folder::UserFolder().empty() ? std::filesystem::path()
+                                                         : game_folder::UserFolder() / "logs");
     game_folder::LogWhatHappened();
     // Windows: a crash writes WHERE (named call stack) into the log and
     // user/logs/crash-<time>.txt (src/crash_report.h).

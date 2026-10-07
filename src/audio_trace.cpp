@@ -103,7 +103,9 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
-REXCVAR_DEFINE_BOOL(debug_audio_trace, false, "CrashMoM",
+// ON BY DEFAULT: one of the session log's event logs (session_log.h;
+// --event_logs=false turns them all off).
+REXCVAR_DEFINE_BOOL(debug_audio_trace, true, "CrashMoM",
                     "Log every sound the game asks for, by the sound designer's file name");
 REXCVAR_DEFINE_STRING(debug_audio_dump, "", "CrashMoM",
                       "Record the game's sound output to this WAV file (6 channels, 48 kHz, "

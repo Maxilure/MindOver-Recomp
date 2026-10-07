@@ -73,7 +73,9 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
-REXCVAR_DEFINE_BOOL(debug_menu_input_trace, false, "CrashMoM",
+// ON BY DEFAULT: one of the session log's event logs (session_log.h;
+// --event_logs=false turns them all off).
+REXCVAR_DEFINE_BOOL(debug_menu_input_trace, true, "CrashMoM",
                     "Log every button press a menu hears (button, player asked, menu owner, caller), "
                     "START presses, menu owner changes and interactions (findings/26)");
 

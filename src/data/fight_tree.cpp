@@ -187,7 +187,9 @@ void SetFrontEndDecision(int32_t number, Decision decision) {
 
 }  // namespace fight_tree
 
-REXCVAR_DEFINE_BOOL(debug_frontend_trace, false, "CrashMoM",
+// ON BY DEFAULT: one of the session log's event logs (session_log.h;
+// --event_logs=false turns them all off).
+REXCVAR_DEFINE_BOOL(debug_frontend_trace, true, "CrashMoM",
                     "Debug: log every exit the front end's screen tree takes (state number -> "
                     "exit number; names: notes/scratch-tools/fig_tree.py)");
 

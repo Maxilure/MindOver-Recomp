@@ -44,7 +44,9 @@ extern "C" REX_FUNC(__imp__sub_821B6E40);  // give controller r4 the input map r
 extern "C" REX_FUNC(__imp__sub_822392A0);  // mask holder (CMaskAttacherBehaviour): attach mask r4
 extern "C" REX_FUNC(__imp__sub_82239418);  // mask holder: let go of its mask
 
-REXCVAR_DEFINE_BOOL(debug_coop_trace, false, "CrashMoM",
+// ON BY DEFAULT: one of the session log's event logs (session_log.h;
+// --event_logs=false turns them all off).
+REXCVAR_DEFINE_BOOL(debug_coop_trace, true, "CrashMoM",
                     "Debug: log every change of the players' co-op states, each join "
                     "decision and controller assignment (findings/26)");
 

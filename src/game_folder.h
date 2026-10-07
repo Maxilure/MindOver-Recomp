@@ -21,7 +21,9 @@
 //       controls.toml keyboard + mouse keys and which device is which player
 //       markers/      the player's own player 3/4 marker pictures (optional)
 //       photos/       F10 photos
-//       logs/         a log per run when no --log_file is given
+//       logs/         a log per session (session_log.h: header, event logs,
+//                     oldest deleted past --logs_budget_mb)
+//       reports/      the launcher's "Report a problem" .zip files
 //     cache/          shader cache + patched game data (rebuilt when missing)
 //
 // Which folder is the game folder (decided from where the exe is):

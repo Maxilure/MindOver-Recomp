@@ -134,7 +134,7 @@ GAME FLAGS (passed straight through, write them as --name=value)
   --ground_grace_ms=40      above 30 fps: how long a lost ground contact is forgiven (0 = off)
   --keyboard_mouse=false    turn our keyboard + mouse controls off
   --save_library=false      the game's original 3 save slots instead of our save list
-  --debug_log_fps=false     / --debug_audio_trace=false: turn off the default log lines
+  --event_logs=false        only the basic log lines (no fps / sound / co-op / menu events)
 
 IN-GAME KEYS
   F2   rename / delete box (Load Game or Save Game screen)

@@ -114,7 +114,9 @@ REXCVAR_DEFINE_INT32(fps_cap, 30, "CrashMoM",
                      "Frame-rate cap: 30 = original, any other rate (60, 144, 165, ...) = a frame "
                      "every 1/rate s by the clock (above 60 EXPERIMENTAL), 0 = as fast as possible")
     .range(0, 1000);
-REXCVAR_DEFINE_BOOL(debug_log_fps, false, "CrashMoM",
+// ON BY DEFAULT: one of the session log's event logs (session_log.h;
+// --event_logs=false turns them all off).
+REXCVAR_DEFINE_BOOL(debug_log_fps, true, "CrashMoM",
                     "Log the frame rate every 5 s: average, 1% / 0.1% lows, worst frame "
                     "(last 5 s and whole session), plus pacing details");
 REXCVAR_DEFINE_STRING(debug_fps_csv, "", "CrashMoM",

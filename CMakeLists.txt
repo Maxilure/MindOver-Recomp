@@ -32,6 +32,7 @@ set(CRASHMOM_SOURCES
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
     src/crash_report.cpp         # Windows: a crash writes its named call stack into the log
+    src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
@@ -86,6 +87,13 @@ rexglue_setup_target(crash_mom)
 # source tree keeps the player's files in <repo>/user/ (gitignored), so wiping
 # out/ never deletes saves. Installed builds use <folder>/program -> <folder>.
 target_compile_definitions(crash_mom PRIVATE CRASHMOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
+# The port's version (VERSION.txt, e.g. 0.1.0-alpha) for the first line of
+# every log (session_log.cpp). Re-read at the next build when the file changes.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS VERSION.txt)
+file(READ VERSION.txt CRASHMOM_VERSION)
+string(STRIP "${CRASHMOM_VERSION}" CRASHMOM_VERSION)
+target_compile_definitions(crash_mom PRIVATE CRASHMOM_VERSION="${CRASHMOM_VERSION}")
 
 # -----------------------------------------------------------------------------
 # Shaders of the native renderer (src/native/shaders/*.vert / *.frag)
