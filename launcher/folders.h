@@ -7,7 +7,7 @@
 //
 //   RELEASE (a downloaded .tar.gz)      DEVELOPER (a git clone of this repo)
 //   <game folder>/                      <repo>/
-//     Crash Mind over Mutant  launcher    out/build/launcher/crash_mom_launcher
+//     Mind over Recomp  launcher          out/build/launcher/crash_mom_launcher
 //     READ ME FIRST.txt
 //     source/      the port's code        (the repo itself)
 //     program/crash_mom  the built game,  out/build/linux-amd64-relwithdebinfo/crash_mom

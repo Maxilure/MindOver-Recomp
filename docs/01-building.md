@@ -319,9 +319,9 @@ C++ library's own `<version>` header):
 
 ```
 out/release/<version>/
-  CrashMoM-<version>-linux-x86_64.tar.gz   ~6.5 MB, unpacks to:
-    Crash Mind over Mutant/
-      Crash Mind over Mutant      the launcher (double-click)
+  MindOverRecomp-<version>-linux-x86_64.tar.gz   ~6.5 MB, unpacks to:
+    Mind over Recomp/
+      Mind over Recomp            the launcher (double-click)
       READ ME FIRST.txt           tools/release/READ_ME_FIRST.txt
       source/                     the repo's files, no .git, no SDK;
         RELEASE.toml              the version + the exact ReXGlue SDK (tag + commit)

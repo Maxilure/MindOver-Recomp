@@ -130,12 +130,12 @@ void Configure(rex::PathConfig& paths) {
     // rex::ShowSimpleMessageBox only prints to stderr on Linux, invisible to
     // a player who started the game from a file manager. stderr gets it too.
     const std::string message =
-        fmt::format("Crash: Mind over Mutant can't save in its folder:\n\n{}\n\n"
+        fmt::format("Mind over Recomp can't save in its folder:\n\n{}\n\n"
                     "Move the game's folder somewhere you can write to (for example "
                     "Documents or another drive) and start it again.",
                     g_user.string());
     std::fprintf(stderr, "[ERROR] %s\n", message.c_str());
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Crash: Mind over Mutant", message.c_str(),
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Mind over Recomp", message.c_str(),
                              nullptr);
     std::exit(1);
   }

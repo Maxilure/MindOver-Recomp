@@ -152,7 +152,7 @@ Properties → allow it to run as a program, or start it from a terminal in
 that folder:
 
 ```bash
-./"Crash Mind over Mutant"
+./"Mind over Recomp"
 ```
 
 **"version `GLIBC_2.39' not found"**: your distribution is older than the
@@ -190,7 +190,7 @@ with the log.
 then **Run anyway**. Windows only asks once.
 
 **Where to put the folder**: a short path on an **NTFS** drive, for example
-`C:\Games\Crash Mind over Mutant` or `D:\Crash Mind over Mutant`. Avoid:
+`C:\Games\Mind over Recomp` or `D:\Mind over Recomp`. Avoid:
 * **Program Files**: needs administrator rights to write there.
 * **OneDrive folders** (Documents, Desktop and Pictures often are): it
   would try to upload ~25 GB, and syncing can lock files during the build.

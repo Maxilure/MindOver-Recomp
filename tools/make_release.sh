@@ -9,10 +9,10 @@
 # the game's code, translated). Nothing from the game disc is in it.
 #
 #   out/release/<version>/
-#     CrashMoM-<version>-linux-x86_64.tar.gz   the download (Windows: -windows-
+#     MindOverRecomp-<version>-linux-x86_64.tar.gz   the download (Windows: -windows-
 #                                              x86_64.zip), unpacking to:
-#       Crash Mind over Mutant/
-#         Crash Mind over Mutant     the launcher (Windows: ... .exe)
+#       Mind over Recomp/
+#         Mind over Recomp           the launcher (Windows: ... .exe)
 #         READ ME FIRST.txt          tools/release/READ_ME_FIRST[_windows].txt
 #         source/                    every tracked file of this repo (no .git,
 #                                    no submodule: Setup downloads the SDK)
@@ -68,7 +68,10 @@ while [ $# -gt 0 ]; do
 done
 
 version=$(tr -d '[:space:]' < VERSION.txt)
-name="Crash Mind over Mutant"
+# The PROJECT's name, not the game's: the port isn't an official product
+# (0.1.0-alpha's first build used the game's name; the launcher's updater
+# finds the new folder and launcher by their contents, not their names).
+name="Mind over Recomp"
 out=$out_base/$version
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) host=windows ;;
@@ -80,8 +83,8 @@ if [ "$system" != "$host" ] && [ -z "$launcher_file" ]; then
   exit 1
 fi
 case "$system" in
-  windows) exe=".exe"; archive="CrashMoM-$version-windows-x86_64.zip" ;;
-  *) exe=""; archive="CrashMoM-$version-linux-x86_64.tar.gz" ;;
+  windows) exe=".exe"; archive="MindOverRecomp-$version-windows-x86_64.zip" ;;
+  *) exe=""; archive="MindOverRecomp-$version-linux-x86_64.tar.gz" ;;
 esac
 
 # A real release is exactly a commit: refuse uncommitted changes (the SDK
@@ -184,7 +187,7 @@ ${system}_archive = "$archive"
 ${system}_sha256 = "$sha"
 EOF
 {
-  echo "# The update feed of the Crash: Mind over Mutant PC port (launcher/update.h)."
+  echo "# The update feed of Mind over Recomp (launcher/update.h)."
   echo "version = \"$version\""
   echo "date = \"$(date -u +%Y-%m-%d)\""
   cat "$out"/feed-*.toml

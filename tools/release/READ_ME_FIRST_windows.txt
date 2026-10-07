@@ -1,8 +1,10 @@
-Crash: Mind over Mutant -- PC port, version @VERSION@ (alpha)
-==============================================================
+Mind over Recomp -- version @VERSION@ (alpha)
+=============================================
 
-A fan-made native PC port of the Xbox 360 game. It does NOT contain the
-game: it is built on your computer from YOUR OWN copy of the disc.
+An unofficial, fan-made native PC port of the Xbox 360 game Crash: Mind
+over Mutant, not affiliated with or endorsed by Activision or the game's
+other owners. It does NOT contain the game: it is built on your computer
+from YOUR OWN copy of the disc.
 THIS IS AN ALPHA: an early test version. The game is playable, but expect
 bugs, crashes and rough edges, and keep a copy of your saves
 (user\saves). Many features are experimental and have been tested on only
@@ -18,7 +20,7 @@ How to start (Windows 10 / 11)
    Documents or Desktop may be one), and not on a drive formatted exFAT or
    FAT32 (most USB sticks): the drive must be NTFS.
 
-2. Double-click "Crash Mind over Mutant.exe" in this folder.
+2. Double-click "Mind over Recomp.exe" in this folder.
    (Windows may warn about an unknown program the first time: "More info",
    then "Run anyway".)
 
@@ -35,7 +37,7 @@ How to start (Windows 10 / 11)
 What's in this folder
 ---------------------
 
-  Crash Mind over Mutant.exe   the launcher: play, settings, setup, updates
+  Mind over Recomp.exe         the launcher: play, settings, setup, updates
   user\                        YOUR files: saves, settings, controls, photos
   game\                        the game's files from your disc (made by Setup)
   program\                     the built game (made by Setup)

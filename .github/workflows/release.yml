@@ -125,9 +125,9 @@ jobs:
       - name: The launcher's needs (for the log)
         run: |
           version=$(tr -d '[:space:]' < VERSION.txt)
-          tar -xzf "out/release/${version}/CrashMoM-${version}-linux-x86_64.tar.gz" -C /tmp
-          ldd "/tmp/Crash Mind over Mutant/Crash Mind over Mutant"
-          objdump -T "/tmp/Crash Mind over Mutant/Crash Mind over Mutant" \
+          tar -xzf "out/release/${version}/MindOverRecomp-${version}-linux-x86_64.tar.gz" -C /tmp
+          ldd "/tmp/Mind over Recomp/Mind over Recomp"
+          objdump -T "/tmp/Mind over Recomp/Mind over Recomp" \
             | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
 
       - name: Keep the files (test runs)
@@ -146,8 +146,8 @@ jobs:
           # NOT marked "pre-release" even for -alpha versions: GitHub's
           # releases/latest link (the launchers' update feed) skips those.
           gh release create "${GITHUB_REF_NAME}" --draft \
-            --title "Crash: Mind over Mutant PC port ${version}" \
+            --title "Mind over Recomp ${version}" \
             --notes-file tools/release/RELEASE_NOTES.md \
-            "out/release/${version}/CrashMoM-${version}-linux-x86_64.tar.gz" \
-            "out/release/${version}/CrashMoM-${version}-windows-x86_64.zip" \
+            "out/release/${version}/MindOverRecomp-${version}-linux-x86_64.tar.gz" \
+            "out/release/${version}/MindOverRecomp-${version}-windows-x86_64.zip" \
             "out/release/${version}/release.toml"

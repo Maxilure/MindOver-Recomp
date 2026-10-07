@@ -8,7 +8,7 @@
 // THE FEED: every GitHub release of the project carries a small
 // release.toml (tools/make_release.sh) next to its archive:
 //   version = "0.1.1-alpha"
-//   archive = "CrashMoM-0.1.1-alpha-linux-x86_64.tar.gz"
+//   archive = "MindOverRecomp-0.1.1-alpha-linux-x86_64.tar.gz"
 //   sha256 = "..."
 // The launcher reads the NEWEST one through GitHub's fixed link
 //   https://github.com/Maxilure/MindOver-Recomp/releases/latest/download/release.toml

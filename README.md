@@ -37,7 +37,7 @@ connection for the first setup.
 
 1. **Unpack** the download into a folder with enough space (on Windows: a
    short path such as `C:\Games\`).
-2. **Start the launcher**, *Crash Mind over Mutant*, in that folder.
+2. **Start the launcher**, *Mind over Recomp*, in that folder.
    Windows may warn about an unknown program: **More info → Run anyway**.
 3. **Setup tab:** install the build tools it lists (it shows each
    package's name for your system), pick your `.iso`, then press

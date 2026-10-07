@@ -2,8 +2,8 @@
 // desktop_entry.h -- the launcher in the desktop's applications menu
 // =============================================================================
 //
-// WINDOWS: two Start menu shortcuts instead (desktop_entry.cpp): "Crash Mind
-// over Mutant" and "Crash Mind over Mutant (continue last save)".
+// WINDOWS: two Start menu shortcuts instead (desktop_entry.cpp): "Mind over
+// Recomp" and "Mind over Recomp (continue last save)".
 //
 // LINUX: one button on the Play tab writes (or removes) a standard menu entry
 // (freedesktop.org "Desktop Entry" file):
@@ -52,6 +52,14 @@ bool Remove(std::string* error);
 bool AddOnFirstStart(const std::filesystem::path& launcher,
                      const std::filesystem::path& game_folder,
                      const std::filesystem::path& user_folder);
+
+// The port's earlier name: 0.1.0-alpha's first build named the entry after
+// the GAME ("Crash: Mind over Mutant"); the port is named after the project
+// now ("Mind over Recomp"). At each start, an entry that points at THIS
+// launcher but still has the old name is rewritten (nothing else is
+// touched: an entry for another folder's launcher stays as it is). True if
+// it rewrote one.
+bool RenameIfOld(const std::filesystem::path& launcher, const std::filesystem::path& game_folder);
 
 // Where the entry goes.
 std::filesystem::path EntryPath();

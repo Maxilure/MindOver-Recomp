@@ -113,9 +113,9 @@ bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* e
   text << "[Desktop Entry]\n"
        << "Type=Application\n"
        << "Version=1.5\n"
-       << "Name=Crash: Mind over Mutant\n"
+       << "Name=Mind over Recomp\n"
        << "GenericName=Game\n"
-       << "Comment=PC port (alpha): play, continue a save, settings\n"
+       << "Comment=Unofficial PC port of Crash: Mind over Mutant (alpha)\n"
        << ExecLine(launcher) << "\n"
        << "Path=" << game_folder.string() << "\n"
        << "Icon=" << (icon.empty() ? std::string("applications-games") : icon.string()) << "\n"
@@ -177,10 +177,13 @@ bool AddOnFirstStart(const fs::path& launcher, const fs::path& game_folder,
 
 // --- Windows: Start menu shortcuts --------------------------------------------
 //   %APPDATA%\Microsoft\Windows\Start Menu\Programs\
-//     Crash Mind over Mutant.lnk                     the launcher
-//     Crash Mind over Mutant (continue last save).lnk  the launcher --play=last
+//     Mind over Recomp.lnk                       the launcher
+//     Mind over Recomp (continue last save).lnk  the launcher --play=last
 // (Windows has no right-click actions on a Start menu entry like Linux's
 // .desktop "Actions", so the shortcut to the last save is a second entry.)
+// The port is named after the PROJECT, not the game: 0.1.0-alpha's first
+// build called the shortcuts "Crash Mind over Mutant ...". Those old names
+// are removed whenever the shortcuts are written or removed (kOldNames).
 
 namespace {
 
@@ -195,7 +198,24 @@ fs::path StartMenuPrograms() {
 }
 
 fs::path ContinuePath() {
-  return StartMenuPrograms() / L"Crash Mind over Mutant (continue last save).lnk";
+  return StartMenuPrograms() / L"Mind over Recomp (continue last save).lnk";
+}
+
+// Shortcuts by an earlier name of the port (see the header comment).
+constexpr const wchar_t* kOldNames[] = {L"Crash Mind over Mutant.lnk",
+                                        L"Crash Mind over Mutant (continue last save).lnk"};
+
+bool OldShortcutsThere() {
+  std::error_code ec;
+  for (const wchar_t* name : kOldNames) {
+    if (fs::exists(StartMenuPrograms() / name, ec)) return true;
+  }
+  return false;
+}
+
+void RemoveOldShortcuts() {
+  std::error_code ec;
+  for (const wchar_t* name : kOldNames) fs::remove(StartMenuPrograms() / name, ec);
 }
 
 // Writes one .lnk (COM's IShellLink + IPersistFile).
@@ -247,12 +267,13 @@ fs::path ShortcutTarget(const fs::path& lnk) {
 
 }  // namespace
 
-fs::path EntryPath() { return StartMenuPrograms() / L"Crash Mind over Mutant.lnk"; }
+fs::path EntryPath() { return StartMenuPrograms() / L"Mind over Recomp.lnk"; }
 
 Status Check(const fs::path& launcher) {
   std::error_code ec;
   if (!fs::exists(EntryPath(), ec)) {
-    return Status::kMissing;
+    // Only the old-named shortcuts: "outdated", so the button rewrites them.
+    return OldShortcutsThere() ? Status::kOutdated : Status::kMissing;
   }
   const fs::path target = ShortcutTarget(EntryPath());
   return fs::equivalent(target, launcher, ec) ? Status::kCurrent : Status::kOutdated;
@@ -263,18 +284,31 @@ bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* e
   (void)icon;
   std::error_code ec;
   fs::create_directories(EntryPath().parent_path(), ec);
+  RemoveOldShortcuts();
   if (!WriteShortcut(EntryPath(), launcher, L"", game_folder,
-                     L"Crash: Mind over Mutant, PC port (alpha): play, settings, setup", launcher)) {
+                     L"Mind over Recomp (alpha), an unofficial PC port of Crash: Mind over Mutant",
+                     launcher)) {
     *error = "Couldn't write the Start menu shortcut.";
     return false;
   }
   WriteShortcut(ContinuePath(), launcher, L"--play=last", game_folder,
-                L"Crash: Mind over Mutant: straight into the most recently played save", launcher);
+                L"Mind over Recomp: straight into the most recently played save", launcher);
   return true;
+}
+
+bool RenameIfOld(const fs::path& launcher, const fs::path& game_folder) {
+  std::error_code ec;
+  if (!OldShortcutsThere() ||
+      !fs::equivalent(ShortcutTarget(StartMenuPrograms() / kOldNames[0]), launcher, ec)) {
+    return false;
+  }
+  std::string error;
+  return Write(launcher, game_folder, &error);  // removes the old-named ones too
 }
 
 bool Remove(std::string* error) {
   std::error_code ec;
+  RemoveOldShortcuts();
   fs::remove(EntryPath(), ec);
   if (ec) {
     *error = "Couldn't remove the Start menu shortcut: " + ec.message();
@@ -285,6 +319,23 @@ bool Remove(std::string* error) {
 }
 
 #else  // Linux
+
+bool RenameIfOld(const fs::path& launcher, const fs::path& game_folder) {
+  std::ifstream in(EntryPath());
+  if (!in) {
+    return false;
+  }
+  const std::string wanted = ExecLine(launcher);
+  bool ours = false, old_name = false;
+  std::string line;
+  while (std::getline(in, line)) {
+    ours = ours || line == wanted;
+    old_name = old_name || line == "Name=Crash: Mind over Mutant";
+  }
+  in.close();
+  std::string error;
+  return ours && old_name && Write(launcher, game_folder, &error);
+}
 
 bool Remove(std::string* error) {
   const fs::path entry = EntryPath();

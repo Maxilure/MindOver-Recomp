@@ -349,14 +349,17 @@ struct Launcher {
 
 void Launcher::DrawHeader() {
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.9f);
-  ImGui::TextUnformatted("Crash: Mind over Mutant");
+  ImGui::TextUnformatted("Mind over Recomp");
   ImGui::PopFont();
   ImGui::SameLine();
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().FontSizeBase * 0.65f);
   ImGui::PushStyleColor(ImGuiCol_Text, kOrange);
   static const std::string version = update::InstalledVersion(folders);
-  ImGui::Text("PC port %s", version.empty() ? "(alpha)" : version.c_str());
+  ImGui::Text("%s", version.empty() ? "(alpha)" : version.c_str());
   ImGui::PopStyleColor();
+  // The port is named after the project; the game's name only says what it
+  // is a port of (it's not an official product).
+  ImGui::TextDisabled("An unofficial PC port of Crash: Mind over Mutant");
   ImGui::Spacing();
 }
 
@@ -968,7 +971,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   const float scale = std::max(1.0f, SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()));
-  SDL_Window* window = SDL_CreateWindow("Crash: Mind over Mutant", int(980 * scale),
+  SDL_Window* window = SDL_CreateWindow("Mind over Recomp", int(980 * scale),
                                         int(680 * scale),
                                         SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
   if (!window) {
@@ -1005,6 +1008,7 @@ int main(int argc, char** argv) {
     // First start: into the applications menu (once; desktop_entry.h). Not in
     // test runs (--screenshot / --play), which use copies of the game folder.
     if (!launcher.folders.root.empty() && screenshot.empty() && play.empty()) {
+      desktop_entry::RenameIfOld(launcher.launcher_path, launcher.folders.root);
       desktop_entry::AddOnFirstStart(launcher.launcher_path, launcher.folders.root,
                                      launcher.folders.user);
     }

@@ -1,3 +1,7 @@
+**Mind over Recomp** is an unofficial, fan-made native PC port of the Xbox 360
+game *Crash: Mind over Mutant*. It is not affiliated with or endorsed by
+Activision or the game's other owners.
+
 > ⚠️ **Alpha.** This is an early test version of an unofficial fan project.
 > The game is playable, but expect bugs, crashes and rough edges. Keep a
 > copy of your saves (the `user/saves` folder). Many features are
@@ -11,15 +15,15 @@ no game files. The launcher builds the game on your computer, from your disc.
 
 | System | File |
 |---|---|
-| Linux (x86-64, glibc 2.39+: Ubuntu 24.04, Fedora 40, Arch… or newer) | `CrashMoM-<version>-linux-x86_64.tar.gz` |
-| Windows 10 / 11 (64-bit) | `CrashMoM-<version>-windows-x86_64.zip` |
+| Linux (x86-64, glibc 2.39+: Ubuntu 24.04, Fedora 40, Arch… or newer) | `MindOverRecomp-<version>-linux-x86_64.tar.gz` |
+| Windows 10 / 11 (64-bit) | `MindOverRecomp-<version>-windows-x86_64.zip` |
 
 `release.toml` is for the launcher's update check. You don't need to download it.
 
 ### How to start
 
 1. Unpack the archive somewhere with **~25 GB free**.
-2. Open **READ ME FIRST.txt** in that folder, then start **Crash Mind over Mutant**.
+2. Open **READ ME FIRST.txt** in that folder, then start **Mind over Recomp**.
 3. The launcher opens on **Setup**. Install any tools it lists, pick your
    `.iso`, then press **Set up everything**. The first build takes a while.
 4. Press **Play**.

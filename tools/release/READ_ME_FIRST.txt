@@ -1,8 +1,10 @@
-Crash: Mind over Mutant -- PC port, version @VERSION@ (alpha)
-==============================================================
+Mind over Recomp -- version @VERSION@ (alpha)
+=============================================
 
-A fan-made native PC port of the Xbox 360 game. It does NOT contain the
-game: it is built on your computer from YOUR OWN copy of the disc.
+An unofficial, fan-made native PC port of the Xbox 360 game Crash: Mind
+over Mutant, not affiliated with or endorsed by Activision or the game's
+other owners. It does NOT contain the game: it is built on your computer
+from YOUR OWN copy of the disc.
 THIS IS AN ALPHA: an early test version. The game is playable, but expect
 bugs, crashes and rough edges, and keep a copy of your saves
 (user/saves). Many features are experimental and have been tested on only
@@ -15,7 +17,7 @@ How to start (Linux)
    of Crash: Mind over Mutant (USA). Putting it in this folder saves a click.
    Keep this folder on a drive with ~25 GB free.
 
-2. Double-click "Crash Mind over Mutant" in this folder.
+2. Double-click "Mind over Recomp" in this folder.
    (If nothing happens: right-click it, Properties, allow it to run as a
    program. Or start it from a terminal.)
 
@@ -30,7 +32,7 @@ How to start (Linux)
 What's in this folder
 ---------------------
 
-  Crash Mind over Mutant   the launcher: play, settings, setup, updates
+  Mind over Recomp         the launcher: play, settings, setup, updates
   user/                    YOUR files: saves, settings, controls, photos
   game/                    the game's files from your disc (made by Setup)
   program/                 the built game (made by Setup)
