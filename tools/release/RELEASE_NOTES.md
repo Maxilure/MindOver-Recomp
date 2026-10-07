@@ -11,6 +11,20 @@ Activision or the game's other owners.
 Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain
 no game files. The launcher builds the game on your computer, from your disc.
 
+### What's new in 0.1.1-alpha
+
+- **Report a problem** in the launcher: one click packs the logs of the
+  sessions you pick, your settings and a short summary (version, system,
+  graphics card) into a `.zip`, optionally with a save near the problem
+  spot, and opens the bug report form with those details filled in.
+- **Better logs**: every session's log now starts with the version, system
+  and changed settings, records what the game does (frame rate, sounds,
+  co-op, menus) and ends with how the session ended. Old logs are cleaned
+  up automatically. *Settings → Event logs* turns the extra lines off.
+
+Already on 0.1.0-alpha? The launcher shows **Version 0.1.1-alpha is out**:
+open *Setup* and update. Your saves and settings stay.
+
 ### Downloads
 
 | System | File |
@@ -36,5 +50,6 @@ listed under
 common problems and their fixes are in
 [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md).
 
-Found a bug? **[Report it here](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
-(pick "Bug report") and attach your session log from `user/logs/`.
+Found a bug? Press **Report a problem...** in the launcher: it makes the file
+to attach and opens the
+**[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**.
