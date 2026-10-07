@@ -160,8 +160,8 @@ is rejected. Useful extras:
 * `--fps_cap=60`: lifts the game's 30 fps pacing
   ([findings/07](findings/07-frame-rate.md)). Default 30 = original.
   Values above 60 (e.g. `144`, or `0` for no cap) are **work in progress**:
-  they run, but aren't confirmed stable yet. `--debug_log_fps` logs the
-  frame rate every 5 s.
+  they run, but aren't confirmed stable yet. The log gets the frame rate
+  every 5 s (`--debug_log_fps`, on by default).
 * `--renderer=native`: start on the native renderer's picture (F9 switches
   while playing; [04-native-renderer.md](04-native-renderer.md)).
   `--native_only`: the emulated GPU skips its drawing while the native
@@ -193,7 +193,9 @@ included ([`src/game_folder.h`](../src/game_folder.h)):
 user/saves/        saves (the emulated profile's folder layout inside, for now), achievements
 user/settings.toml every changed setting (F4 saves here)
 user/controls.toml keyboard + mouse keys, which device is which player (F6)
-user/photos/       F10 photos          user/logs/   a log per run without --log_file
+user/photos/       F10 photos
+user/logs/         a log per session (oldest deleted past 300 MB)
+user/reports/      the launcher's "Report a problem" .zip files
 user/markers/      your own player 3/4 marker pictures (optional)
 cache/             shader cache + changed game data: safe to delete, rebuilt
 ```
@@ -227,7 +229,31 @@ printed to the terminal mixed in: errors red, warnings yellow, a filter box
 and an "errors and warnings only" switch. Each session gets its own log,
 `user/logs/play-<date>_<time>.log` (the launcher names it, so an old
 `log_file` left in `user/settings.toml` can't send every session into one
-file).
+file), and the launcher appends a last line saying how it ended.
+
+**Report a problem...** (launcher/report.h) packs chosen sessions' logs,
+Windows crash reports, `settings.toml` + `controls.toml`, a `summary.txt`
+(version, system, CPU/RAM, graphics card + driver, changed settings: read
+from the log's `Session:` header), optionally that session's F10 photos and
+one save (file + header, same folders as under `user/saves/`, so it drops
+into a test copy for `--load_save`) into
+`user/reports/report-<date>_<time>.zip` (or a folder picked with Change...,
+remembered as `report_folder` in `user/launcher.toml`; home folder path replaced by
+`~`; logs over 8 MB keep their first 2 and last 6 MB), then opens the
+GitHub bug form with those fields pre-filled (`?template=bug_report.yml&
+version=...&system=...&gpu=...&settings=...`). `--make_report
+[--report_save=<N>]` does the same for the newest session without a window; `--report` opens the window at
+start.
+
+**Session logs** (src/session_log.h): every log starts with `Session:` lines
+(version from `VERSION.txt`, system, CPU/RAM, command line, then the
+settings changed from the file / command line). Five event logs are on by
+default (`debug_log_fps`, `debug_audio_trace`, `debug_coop_trace`,
+`debug_menu_input_trace`, `debug_frontend_trace`: one line per event, never
+per frame); `--event_logs=false` turns off the ones not set on their own.
+At start the game deletes the oldest `.log`/`.txt` files in `user/logs`
+until the folder fits `--logs_budget_mb` (300; 0 = never), never its own
+log or anything written in the last 30 s.
 
 ```bash
 cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \

@@ -59,6 +59,36 @@ void TakeLines(std::string& pending, Add&& add) {
 
 }  // namespace
 
+// The last line of the session's log says how the session ended, in the log's
+// own format: the game can't write it itself when it crashes or is killed,
+// and a log sent with a problem report must tell (report.h reads it back).
+//   [2026-10-07 16:32:10.000] [error] [launcher] [t0] Launcher: the game crashed
+//   (SIGSEGV (Segmentation fault)) after 12 min 3 s
+void Game::AppendEnding(const Result& result) {
+  std::string how;
+  bool bad = true;
+  if (result.crashed) {
+    how = "crashed (" + result.ended_by + ")";
+  } else if (result.killed) {
+    how = "was ended from outside (" + result.ended_by + ")";
+  } else if (result.stopped_by_launcher) {
+    how = "was stopped with the launcher's Stop button";
+    bad = false;
+  } else if (result.exit_code != 0) {
+    how = "quit with an error (exit code " + std::to_string(result.exit_code) + ")";
+  } else {
+    how = "closed normally";
+    bad = false;
+  }
+  const long seconds = long(result.played.count());
+  const std::tm local = platform::LocalTime(std::time(nullptr));
+  char stamp[40];
+  std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S.000", &local);
+  std::ofstream log(log_file_, std::ios::app | std::ios::binary);
+  log << "[" << stamp << "] [" << (bad ? "error" : "info") << "] [launcher] [t0] Launcher: the game "
+      << how << " after " << seconds / 60 << " min " << seconds % 60 << " s\n";
+}
+
 bool Game::Start(const fs::path& exe, const std::vector<std::string>& args,
                  const fs::path& work_folder, const fs::path& user_folder, std::string* error) {
   {
@@ -192,6 +222,7 @@ void Game::Finish(const platform::Ended& ended) {
       std::chrono::steady_clock::now() - started_);
   result.log = log_file_;
   result.fps = fps_;
+  AppendEnding(result);
   result_ = std::move(result);
   state_ = State::kEnded;
   ++version_;

@@ -80,6 +80,7 @@ add_executable(crash_mom_launcher WIN32   # WIN32: a window, no console (Windows
     folders.cpp       # where the game, its disc files and the player's files are
     saves.cpp         # the player's saves: names, progress, last played
     game_process.cpp  # starting the game, watching it, telling a crash from a quit
+    report.cpp        # "Report a problem": the chosen sessions' logs + a summary in one .zip
     settings.cpp      # the game's settings: the list (asked from the game) + user/settings.toml
     settings_page.cpp # the Settings tab
     desktop_entry.cpp # the launcher in the desktop's applications menu

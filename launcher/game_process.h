@@ -95,6 +95,7 @@ class Game {
   void Watch();
   void AddLine(std::string line);           // under mutex_
   void Finish(const platform::Ended& ended);
+  void AppendEnding(const Result& result);  // under mutex_: "Launcher: the game ..." into the log
 
   std::mutex mutex_;
   State state_ = State::kIdle;

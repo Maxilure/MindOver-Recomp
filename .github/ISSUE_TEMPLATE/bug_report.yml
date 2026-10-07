@@ -79,8 +79,10 @@ body:
     attributes:
       label: Log
       description: |
-        Drag the session's log file here: `user/logs/play-<date>_<time>.log` in the game's folder (the launcher's
-        Game log tab has a button to open it). For Setup problems: `user/logs/setup-<date>_<time>.log`. On Windows,
-        after a crash, also the `crash-<date>_<time>.txt` next to it. Screenshots or a short video help too.
+        Drag the report file here: the launcher's **Report a problem...** button makes it
+        (`user/reports/report-<date>_<time>.zip`: the session's log, settings and a summary). Without the launcher:
+        the session's log, `user/logs/play-<date>_<time>.log` in the game's folder (Setup problems:
+        `user/logs/setup-<date>_<time>.log`; on Windows after a crash also the `crash-<date>_<time>.txt` next to it).
+        Screenshots or a short video help too.
     validations:
       required: false

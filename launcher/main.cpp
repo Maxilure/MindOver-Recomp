@@ -10,12 +10,14 @@
 //   [ Continue "<save>" ]    straight into the most recently played save
 //   Your saves               every save, most recently played first, each
 //                            with its own Play button (or double-click it)
-//   Open: saves / photos / logs / settings file
+//   Open: saves / photos / logs / settings file / Report a problem...
 //
 // While the game runs the page shows how long it has been running and a
 // Stop button; when it ends, a short report: closed normally, or CRASHED
 // (with the signal), the log's [error]/[warning] counts and buttons to open
-// the log. The game itself is started by game_process.h; saves are read by
+// the log, and "Report a problem..." (report.h: the session's logs, settings
+// and a summary in one .zip for a bug report; it stands out after a crash).
+// The game itself is started by game_process.h; saves are read by
 // saves.h; the folders found by folders.h.
 //
 // HOW THE GAME IS STARTED: <exe> --game_data_root=<game folder>/game, plus
@@ -45,6 +47,9 @@
 // --play=new|last|<save number>: start the game right away, as if Play /
 // Continue / a save's Play was pressed (for a desktop shortcut, and tests);
 // --tab=settings / --tab=log / --tab=setup: open on that tab;
+// --report: open the "Report a problem" window (report.h) at once;
+// --make_report [--report_save=<N>]: make the newest session's report (+ save N)
+// without a window, print where;
 // --setup_run=check|source|disc|sdk|game|all|update [--iso=<file>]: a Setup step, no window;
 // --update_feed=<url>: where updates are looked for (update.h; tests: a file:// URL);
 // --after_update: started by an update's restart (opens Setup, rebuilds);
@@ -62,6 +67,7 @@
 #include <cstring>
 #include <ctime>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -75,6 +81,7 @@
 #include "folders.h"
 #include "platform.h"
 #include "game_process.h"
+#include "report.h"
 #include "saves.h"
 #include "settings_page.h"
 #include "setup.h"
@@ -299,6 +306,18 @@ struct Launcher {
   bool log_shown_problems = false;
   bool log_follow = true;           // keep scrolled to the newest line
 
+  // "Report a problem" (report.h): the window's choices and its result.
+  bool report_open = false;         // open the window on the next frame
+  char report_text[4096] = {};      // "What happened?"
+  std::vector<report::Session> report_sessions;  // newest first
+  std::vector<char> report_chosen;  // per session: in the report
+  bool report_settings = true, report_setup = false, report_photos = false;
+  fs::path report_setup_log;        // the newest Setup log (empty = none)
+  report::Built report_built;       // the last .zip made (file empty = none yet)
+  std::string report_error;
+  int report_save = -1;             // index into save_list to include (-1 = none)
+  fs::path report_folder;           // where the .zip goes (report::ReportFolder)
+
   void RefreshSaves(bool force) {
     const auto now = Clock::now();
     if (force || now - saves_read > std::chrono::seconds(5)) {
@@ -345,6 +364,8 @@ struct Launcher {
   void DrawFolders();
   void DrawPlayTab(game_process::State state);
   void DrawLogTab();
+  void OpenReport();
+  void DrawReportWindow();
 };
 
 void Launcher::DrawHeader() {
@@ -487,6 +508,13 @@ void Launcher::DrawReport() {
   ImGui::SameLine();
   if (ImGui::Button("Show the game log")) {
     select_tab = 2;
+  }
+  ImGui::SameLine();
+  // Something went wrong: the report button stands out.
+  const bool went_wrong = result.crashed || result.killed || result.exit_code != 0 || log.errors;
+  if (went_wrong ? AccentButton("Report a problem...", {0, 0})
+                 : ImGui::Button("Report a problem...")) {
+    OpenReport();
   }
   ImGui::SameLine();
   if (ImGui::Button("OK")) {
@@ -658,7 +686,9 @@ void Launcher::DrawFolders() {
     OpenPath(folders.user / "settings.toml");
   }
   ImGui::SameLine();
-  ImGui::TextColored(kMuted, "  %s", folders::Pretty(folders.user).c_str());
+  if (ImGui::Button("Report a problem...")) {
+    OpenReport();
+  }
 
   // The applications menu entry (desktop_entry.h), at the row's right end.
   const char* label = desktop == desktop_entry::Status::kMissing    ? "Add to the applications menu"
@@ -666,6 +696,13 @@ void Launcher::DrawFolders() {
                                                                     : "Remove from the menu";
   const float width = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2;
   const float right = ImGui::GetWindowContentRegionMax().x - width;
+  // The folder's path in between, when there's room for it.
+  const std::string where = "  " + folders::Pretty(folders.user);
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  ImGui::SameLine();
+  if (ImGui::GetCursorPosX() + ImGui::CalcTextSize(where.c_str()).x + gap < right) {
+    ImGui::TextColored(kMuted, "%s", where.c_str());
+  }
   ImGui::SameLine(std::max(right, ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x));
   if (ImGui::Button(label)) {
     std::string error;
@@ -835,6 +872,265 @@ void Launcher::DrawLogTab() {
   ImGui::PopStyleColor();
 }
 
+// -----------------------------------------------------------------------------
+// Report a problem (report.h)
+// -----------------------------------------------------------------------------
+
+// The desktop's folder picker (SDL_ShowOpenFolderDialog) answers on another
+// thread, maybe after a while: the answer waits here until the next frame.
+std::mutex g_picked_mutex;
+std::string g_picked_folder;  // set by the dialog, taken by DrawReportWindow
+
+void OnFolderPicked(void*, const char* const* files, int) {
+  if (files && files[0]) {  // null = error, empty list = cancelled
+    std::lock_guard lock(g_picked_mutex);
+    g_picked_folder = files[0];
+  }
+}
+
+void Launcher::OpenReport() {
+  report_sessions = report::RecentSessions(folders);
+  report_chosen.assign(report_sessions.size(), 0);
+  if (!report_chosen.empty()) {
+    report_chosen[0] = 1;  // the newest session: usually the one that went wrong
+  }
+  report_setup_log = report::NewestSetupLog(folders);
+  report_setup = report_sessions.empty() && !report_setup_log.empty();  // no game run yet: a build problem
+  report_photos = false;
+  report_save = -1;  // a save only when picked (report.h)
+  report_folder = report::ReportFolder(folders);
+  RefreshSaves(true);
+  report_built = {};
+  report_error.clear();
+  report_open = true;
+}
+
+void Launcher::DrawReportWindow() {
+  if (report_open) {
+    ImGui::OpenPopup("Report a problem");
+    report_open = false;
+  }
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowSize({viewport->WorkSize.x * 0.8f, viewport->WorkSize.y * 0.85f},
+                          ImGuiCond_Appearing);
+  ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, {0.5f, 0.5f});
+  if (!ImGui::BeginPopupModal("Report a problem", nullptr, ImGuiWindowFlags_NoSavedSettings)) {
+    return;
+  }
+  MutedText("Makes one .zip file with what's needed to look into a problem: the logs of the "
+            "sessions you pick, your settings and a short summary (version, system, graphics "
+            "card), plus a save if you pick one. Nothing is sent anywhere: you attach the file "
+            "to a bug report yourself. Your home folder's name is taken out of the files.");
+  ImGui::Spacing();
+
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted("What happened?");
+  ImGui::PopFont();
+  ImGui::SameLine();
+  ImGui::TextColored(kMuted, "(optional: where in the game, what you did, what you saw)");
+  ImGui::InputTextMultiline("##what", report_text, sizeof(report_text),
+                            {-1, ImGui::GetTextLineHeight() * 5});
+  ImGui::Spacing();
+
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted("Sessions to include");
+  ImGui::PopFont();
+  ImGui::SameLine();
+  ImGui::TextColored(kMuted, "(newest first)");
+  if (report_sessions.empty()) {
+    MutedText("No game sessions logged yet.");
+  }
+  // One row per session: [x] when, how long, how it ended.
+  const float list_height =
+      (std::min(float(report_sessions.size()), 6.0f) + 0.3f) * ImGui::GetFrameHeightWithSpacing();
+  if (!report_sessions.empty() &&
+      ImGui::BeginTable("sessions", 4,
+                        ImGuiTableFlags_BordersOuter | ImGuiTableFlags_RowBg |
+                            ImGuiTableFlags_ScrollY,
+                        {0, list_height})) {
+    ImGui::TableSetupColumn("##chosen", ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn("When", ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn("Played", ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn("How it ended", ImGuiTableColumnFlags_WidthStretch);
+    for (size_t i = 0; i < report_sessions.size(); ++i) {
+      const report::Session& session = report_sessions[i];
+      ImGui::PushID(int(i));
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      bool chosen = report_chosen[i] != 0;
+      if (ImGui::Checkbox("##chosen", &chosen)) {
+        report_chosen[i] = chosen;
+      }
+      ImGui::TableNextColumn();
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted(session.when.c_str());
+      ImGui::TableNextColumn();
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextColored(kMuted, "%s", session.length.c_str());
+      ImGui::TableNextColumn();
+      ImGui::AlignTextToFramePadding();
+      // The launcher's own line ("the game crashed (...) after 12 min 3 s"),
+      // without the time (the Played column has it); older logs don't have it.
+      std::string ended = session.ended.substr(0, session.ended.rfind(" after "));
+      if (ended.starts_with("the game ")) {
+        ended = ended.substr(9);
+      }
+      const bool bad = !ended.empty() && ended != "closed normally" &&
+                       ended.find("Stop button") == std::string::npos;
+      ImGui::TextColored(bad ? kBad : kMuted, "%s",
+                         ended.empty() ? "(not recorded)" : ended.c_str());
+      ImGui::PopID();
+    }
+    ImGui::EndTable();
+  }
+
+  // The extras.
+  ImGui::Checkbox("Settings and controls (settings.toml, controls.toml)", &report_settings);
+  if (!report_setup_log.empty()) {
+    ImGui::Checkbox("The newest Setup log (for problems while setting up or building)",
+                    &report_setup);
+  }
+  int photos = 0;
+  uint64_t photo_bytes = 0;
+  for (size_t i = 0; i < report_sessions.size(); ++i) {
+    if (report_chosen[i]) {
+      photos += report_sessions[i].photos;
+      photo_bytes += report_sessions[i].photo_bytes;
+    }
+  }
+  // One save (optional): the problem spot, loadable on a copy (report.h).
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted("Include a save:");
+  ImGui::SameLine();
+  auto save_label = [&](int index) {
+    if (index < 0 || index >= int(save_list.size())) {
+      return std::string("None");
+    }
+    const saves::Save& save = save_list[size_t(index)];
+    return std::to_string(save.number) + "  " + save.name + "  (" + std::to_string(save.percent) +
+           "%, saved " + SavedAt(save) + ")";
+  };
+  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 24);
+  if (ImGui::BeginCombo("##save", save_label(report_save).c_str())) {
+    for (int i = -1; i < int(save_list.size()); ++i) {
+      if (ImGui::Selectable(save_label(i).c_str(), i == report_save)) {
+        report_save = i;
+      }
+    }
+    ImGui::EndCombo();
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+    ImGui::SetTooltip("A save near the spot where it happens lets the problem be seen first-hand.\n"
+                      "It holds the save's name and the game's progress, nothing else.");
+  }
+
+  if (photos > 0) {
+    char label[160];
+    std::snprintf(label, sizeof(label), "F10 photos taken in those sessions (%d files, %.1f MB)",
+                  photos, photo_bytes / 1048576.0);
+    ImGui::Checkbox(label, &report_photos);
+  }
+  ImGui::Spacing();
+
+  // Where the .zip goes: user/reports unless another folder was picked
+  // (remembered in user/launcher.toml).
+  {
+    std::lock_guard lock(g_picked_mutex);
+    if (!g_picked_folder.empty()) {
+      report_folder = g_picked_folder;
+      report::RememberReportFolder(folders, report_folder);
+      g_picked_folder.clear();
+    }
+  }
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted("Save the report in:");
+  ImGui::SameLine();
+  if (ImGui::Button("Change...")) {
+    const std::string start = report_folder.string();
+    SDL_ShowOpenFolderDialog(OnFolderPicked, nullptr, nullptr, start.c_str(), false);
+  }
+  if (report_folder != folders.user / "reports") {
+    ImGui::SameLine();
+    if (ImGui::Button("Back to the default")) {
+      report_folder = folders.user / "reports";
+      report::RememberReportFolder(folders, {});
+    }
+  }
+  ImGui::SameLine();
+  ImGui::PushStyleColor(ImGuiCol_Text, kMuted);
+  ImGui::TextWrapped("%s", folders::Pretty(report_folder).c_str());
+  ImGui::PopStyleColor();
+  ImGui::Spacing();
+
+  bool any = report_settings || report_setup || report_save >= 0;
+  for (char chosen : report_chosen) {
+    any = any || chosen;
+  }
+  ImGui::BeginDisabled(!any);
+  if (AccentButton("Make the report", {0, 0})) {
+    report::Request request;
+    request.what_happened = report_text;
+    for (size_t i = 0; i < report_sessions.size(); ++i) {
+      if (report_chosen[i]) {
+        request.logs.push_back(report_sessions[i].log);
+      }
+    }
+    request.settings = report_settings;
+    request.setup_log = report_setup;
+    request.photos = report_photos;
+    if (report_save >= 0 && report_save < int(save_list.size())) {
+      request.save_file = save_list[size_t(report_save)].file;
+      request.save_label = save_label(report_save);
+    }
+    request.folder = report_folder;
+    request.version = update::InstalledVersion(folders);
+    report_error.clear();
+    if (!report::Build(folders, request, &report_built, &report_error)) {
+      report_built = {};
+    }
+  }
+  ImGui::EndDisabled();
+  ImGui::SameLine();
+  if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    ImGui::CloseCurrentPopup();
+  }
+  if (!report_error.empty()) {
+    ImGui::TextColored(kBad, "%s", report_error.c_str());
+  }
+
+  // The result: where it is, and the way to GitHub.
+  if (!report_built.file.empty()) {
+    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::TextColored(kGood, "Report saved:");
+    ImGui::SameLine();
+    ImGui::TextWrapped("%s (%.1f MB)", folders::Pretty(report_built.file).c_str(),
+                       report_built.bytes / 1048576.0);
+    std::string contents;
+    for (const std::string& item : report_built.contents) {
+      contents += (contents.empty() ? "" : ", ") + item;
+    }
+    ImGui::PushStyleColor(ImGuiCol_Text, kMuted);
+    ImGui::TextWrapped("Inside: %s", contents.c_str());
+    ImGui::PopStyleColor();
+    if (ImGui::Button("Show the file")) {
+      OpenPath(report_built.file.parent_path());
+    }
+    ImGui::SameLine();
+    if (AccentButton("Open the bug report form on GitHub", {0, 0})) {
+      SDL_OpenURL(report_built.issue_url.c_str());
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Copy the summary")) {
+      ImGui::SetClipboardText(report_built.summary.c_str());
+    }
+    MutedText("The form opens with the version, system, graphics card and settings filled in. "
+              "Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub "
+              "account is needed to post. No account? Send the .zip to whoever asked for it.)");
+  }
+  ImGui::EndPopup();
+}
+
 void Launcher::Draw() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -888,6 +1184,7 @@ void Launcher::Draw() {
     select_tab = -1;
     ImGui::EndTabBar();
   }
+  DrawReportWindow();
   ImGui::End();
 }
 
@@ -897,6 +1194,9 @@ int main(int argc, char** argv) {
   fs::path override_root;
   std::string screenshot, play;
   int start_tab = -1;
+  bool open_report = false;  // --report: open "Report a problem" at once (tests, pictures)
+  bool make_report = false;  // --make_report: the newest session's report, no window
+  int report_save_number = 0;  // --report_save=<N>: with --make_report, include save N
   std::string desktop_action;
   std::string setup_run;
   std::string update_feed;
@@ -923,6 +1223,12 @@ int main(int argc, char** argv) {
       start_tab = 1;
     } else if (arg == "--tab=log") {
       start_tab = 2;
+    } else if (arg == "--report") {
+      open_report = true;
+    } else if (arg == "--make_report") {
+      make_report = true;
+    } else if (arg.starts_with("--report_save=")) {
+      report_save_number = std::atoi(arg.c_str() + std::strlen("--report_save="));
     } else if (arg.starts_with("--play=")) {
       play = arg.substr(std::strlen("--play="));
     } else if (arg.starts_with("--screenshot_after=")) {
@@ -948,6 +1254,34 @@ int main(int argc, char** argv) {
     std::printf("%s: %s\n", ok ? "done" : "failed",
                 ok ? desktop_entry::EntryPath().string().c_str() : error.c_str());
     return ok ? 0 : 1;
+  }
+
+  // --make_report: what the window's defaults make (the newest session +
+  // settings), without a window; prints where the .zip went (tests, or a
+  // tester without a working window).
+  if (make_report) {
+    const folders::Folders found = folders::Find(override_root);
+    report::Request request;
+    for (const report::Session& session : report::RecentSessions(found, 1)) {
+      request.logs.push_back(session.log);
+    }
+    request.version = update::InstalledVersion(found);
+    request.folder = report::ReportFolder(found);
+    for (const saves::Save& save : saves::List(found.user)) {
+      if (save.number == report_save_number) {
+        request.save_file = save.file;
+        request.save_label = std::to_string(save.number) + "  " + save.name;
+      }
+    }
+    report::Built built;
+    std::string error;
+    if (found.root.empty() || !report::Build(found, request, &built, &error)) {
+      std::printf("report: failed: %s\n", found.root.empty() ? "no game folder" : error.c_str());
+      return 1;
+    }
+    std::printf("report: %s (%.1f MB)\n%s\nbug form: %s\n", built.file.string().c_str(),
+                built.bytes / 1048576.0, built.summary.c_str(), built.issue_url.c_str());
+    return 0;
   }
 
   // --setup_run=check|source|disc|sdk|game [--iso=<file>]: a Setup step
@@ -998,6 +1332,9 @@ int main(int argc, char** argv) {
   launcher.fonts = LoadFonts();
   launcher.RefreshSaves(true);
   launcher.select_tab = start_tab;
+  if (open_report) {
+    launcher.OpenReport();
+  }
   {
     std::error_code ec;
     launcher.launcher_path = platform::SelfPath();

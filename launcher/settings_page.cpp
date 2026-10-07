@@ -64,6 +64,12 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "The new co-op camera keeps every player in the picture. It needs more testing in "
               "fights, tight places and cutscenes. Turn it off for the original camera."};
     }
+  } else if (name == "event_logs") {
+    if (!AsBool(value)) {
+      return {"Less to go on",
+              "Problem reports from these sessions won't show what the game was doing (frame "
+              "rate, sounds, co-op, menus): a bug may be impossible to track down."};
+    }
   } else if (name == "ground_grace_ms") {
     const double fps = AsNumber(get("fps_cap"));
     if (AsNumber(value) == 0 && fps != 30) {
@@ -444,11 +450,10 @@ void Page::DrawMain() {
   if (section("Sound and logging")) {
     columns();
     check("Mute the sound", "audio_mute", nullptr);
-    check("Frame rate in the log", "debug_log_fps",
-          "Every 5 s the log gets the average frame rate and the 1% / 0.1% lows (the Game log "
-          "tab shows them; the report shows the session's at the end).");
-    check("Sound names in the log", "debug_audio_trace",
-          "The log names every sound the game plays (handy to report a missing voice line).");
+    check("Event logs (for bug reports)", "event_logs",
+          "The session's log also records what the game does: frame rate every 5 s, the sounds "
+          "it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; "
+          "it's what \"Report a problem\" sends. Off = only the basics.");
     ImGui::EndTable();
   }
 }

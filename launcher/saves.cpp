@@ -138,6 +138,7 @@ std::vector<Save> List(const fs::path& user_folder) {
         continue;  // a folder without a readable save file
       }
       save.number = number;
+      save.file = file;
       save.played = int64_t(written.time_since_epoch().count());
       if (const auto it = loaded.find(number); it != loaded.end()) {
         save.played = std::max(save.played, it->second);

@@ -51,8 +51,10 @@ saves and settings.
 
 Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)**
 (Linux and Windows) and the [known issues](docs/06-troubleshooting.md#known-issues).
-Found a bug? **[Report it](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**:
-the form asks for everything needed, and your log is in `user/logs/`.
+Found a bug? Press **Report a problem...** in the launcher: it packs the
+session's log and your settings into one file and opens the
+**[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
+with your version, system and graphics card filled in.
 
 ## What works
 
@@ -208,9 +210,9 @@ recompilation or reverse engineering.
 Contributions of any kind (code, reverse engineering, testing, bug reports,
 corrections) are welcome and will be credited by name in [Credits](#credits).
 Hand-written, expert work is especially valued. Bug reports go in the
-[issues](https://github.com/Maxilure/MindOver-Recomp/issues): attach the
-session's log from `user/logs/` (see
-[Troubleshooting](docs/06-troubleshooting.md#logs-and-bug-reports)).
+[issues](https://github.com/Maxilure/MindOver-Recomp/issues): the launcher's
+**Report a problem...** makes the file to attach (see
+[Troubleshooting](docs/06-troubleshooting.md#reporting-a-bug)).
 
 ## Credits
 

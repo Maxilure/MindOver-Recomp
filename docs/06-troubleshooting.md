@@ -251,14 +251,37 @@ The launcher's **Game log** tab shows it live, with errors in red and
 warnings in yellow, and has buttons to open the file. Setup writes
 `user/logs/setup-<date>_<time>.log`.
 
-To report a bug, open the
-[issues page](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)
-and pick **Bug report**: the form asks for everything needed (what
-happened, how to make it happen, the port's version shown in the launcher,
-your system and graphics card), and the log file can be dragged into it.
-Check the [known issues](#known-issues) and the open issues first: if your
-problem is already there, add your details to it instead. Never attach
+What a log holds: a header (the port's version, your system, CPU and RAM,
+how the game was started, the settings you changed), the graphics card and
+driver, then the game's events: frame rate every 5 seconds, the sounds it
+plays, co-op joins and players' states, which player a menu answers to,
+and every menu screen change. The launcher adds a last line saying how the
+session ended (closed normally, crashed, ended from outside). That's a few
+MB per hour of play. Old logs are deleted, oldest first, once the folder
+passes 300 MB (setting `logs_budget_mb`). To log only the basics, set
+`event_logs` to false in the launcher's Settings tab.
+
+### Reporting a bug
+
+1. In the launcher, press **Report a problem...** (on the Play page, and
+   highlighted after a session that crashed or logged errors).
+2. Pick the session(s) where it happened (the newest is picked already),
+   add a few words if you like, and press **Make the report**. It writes
+   one `.zip` to `user/reports/` (**Change...** picks another folder; the
+   launcher remembers it): those sessions' logs, your settings and
+   controls, a summary, and optionally the F10 photos you took then and
+   **a save** near the spot where it happens (it lets the problem be seen
+   first-hand; a save holds only its name and the game's progress).
+3. Press **Open the bug report form on GitHub**: the form opens with the
+   version, system, graphics card and settings filled in. Describe the
+   problem and drag the `.zip` into its **Log** box.
+
+Check the [known issues](#known-issues) and the
+[open issues](https://github.com/Maxilure/MindOver-Recomp/issues) first: if
+your problem is already there, add your details to it instead. Never attach
 game files (the disc image, extracted files or the built game).
 
-The logs contain no personal data beyond the folder paths on your
-computer. Look through them before posting if that matters to you.
+Nothing is sent anywhere by the launcher: you attach the file yourself. The
+report replaces your home folder's path (which holds your account name)
+with `~` in every file and includes a save only when you pick one. Without the launcher,
+attach `user/logs/play-<date>_<time>.log` by hand.

@@ -42,6 +42,7 @@ struct Save {
   int percent = 0;
   int difficulty = 0;           // 0 easy, 1 normal, 2 hard
   int64_t played = 0;           // file-clock ticks: last saved or loaded
+  std::filesystem::path file;   // the save file itself (report.h can include it)
 };
 
 // Every save under `user_folder`/saves, most recently played first. Files
