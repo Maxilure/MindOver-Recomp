@@ -104,6 +104,63 @@ bool Newer(const std::string& a, const std::string& b) {
   return pa > pb;  // "alpha.2" after "alpha.1"
 }
 
+std::string WhatsNew(const std::string& markdown, const std::string& version) {
+  std::istringstream in(markdown);
+  std::string line, out;
+  bool inside = false;
+  const std::string heading = "### What's new in " + version;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.starts_with("#")) {
+      if (inside) break;              // the next section
+      inside = line.starts_with(heading);
+      continue;
+    }
+    if (!inside) continue;
+    // Plain text: [label](url) -> label, then no ** / ` / * marks.
+    std::string plain;
+    for (size_t i = 0; i < line.size(); ++i) {
+      if (line[i] == '[') {
+        const size_t close = line.find("](", i);
+        const size_t end = close == std::string::npos ? close : line.find(')', close);
+        if (end != std::string::npos) {
+          plain += line.substr(i + 1, close - i - 1);
+          i = end;
+          continue;
+        }
+      }
+      if (line[i] == '`' || (line[i] == '*' && !(i == 0 && line.size() > 1 && line[1] == ' '))) {
+        continue;
+      }
+      plain += line[i];
+    }
+    // A wrapped line of the same bullet / paragraph joins the one before
+    // (the window wraps the text itself).
+    const bool continues = !plain.empty() && plain[0] == ' ' && !out.empty() && out.back() == '\n' &&
+                           out.size() >= 2 && out[out.size() - 2] != '\n';
+    if (continues) {
+      out.back() = ' ';
+      plain.erase(0, plain.find_first_not_of(' '));
+    }
+    out += plain + "\n";
+  }
+  // Trim blank lines at both ends.
+  const size_t first = out.find_first_not_of("\n");
+  if (first == std::string::npos) return {};
+  const size_t last = out.find_last_not_of("\n");
+  return out.substr(first, last - first + 1);
+}
+
+std::string InstalledWhatsNew(const folders::Folders& folders) {
+  if (folders.source.empty()) return {};
+  return WhatsNew(ReadFile(folders.source / "tools" / "release" / "RELEASE_NOTES.md"),
+                  InstalledVersion(folders));
+}
+
+std::string ReleasePage(const std::string& version) {
+  return std::string(kReleasePages) + "v" + version;
+}
+
 std::string InstalledVersion(const folders::Folders& folders) {
   if (folders.source.empty()) {
     return {};
@@ -157,6 +214,20 @@ void Updater::Check() {
     }
 #endif
     release.date = Value(text, "date");
+    // The new version's "What's new" (see update.h), only when it is newer.
+    if (!release.version.empty() && Newer(release.version, installed_)) {
+      std::string notes_url = Value(text, "notes_url");
+      if (notes_url.empty()) {
+        notes_url = std::string(kNotesAtTag) + "v" + release.version +
+                    "/tools/release/RELEASE_NOTES.md";
+      }
+      bool notes_ok = false;
+      const std::string markdown = task_runner::Capture(
+          {"curl", "-fsSL", "--max-time", "15", notes_url}, &notes_ok, {}, 20000);
+      if (notes_ok) {
+        release.notes = WhatsNew(markdown, release.version);
+      }
+    }
     if (release.archive.find("://") != std::string::npos) {
       release.archive_url = release.archive;
     } else {

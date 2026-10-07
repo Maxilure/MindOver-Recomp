@@ -20,10 +20,17 @@ no game files. The launcher builds the game on your computer, from your disc.
 - **Better logs**: every session's log now starts with the version, system
   and changed settings, records what the game does (frame rate, sounds,
   co-op, menus) and ends with how the session ended. Old logs are cleaned
-  up automatically. *Settings → Event logs* turns the extra lines off.
+  up automatically. The *Event logs* setting turns the extra lines off.
+- **What's new** in the launcher: from this version on, it shows a
+  release's notes before you update and once after.
+- After an update the game now always gets rebuilt, whichever tab is open
+  (0.1.0's launcher could leave the old build in place).
 
-Already on 0.1.0-alpha? The launcher shows **Version 0.1.1-alpha is out**:
-open *Setup* and update. Your saves and settings stay.
+### Updating from 0.1.0-alpha
+
+The launcher shows **Version 0.1.1-alpha is out**: open *Setup* and update.
+Your saves and settings stay. After the restart, let Setup finish
+rebuilding the game before you play (it says so on the Play page).
 
 ### Downloads
 

@@ -57,11 +57,29 @@ namespace update {
 
 constexpr const char* kDefaultFeed =
     "https://github.com/Maxilure/MindOver-Recomp/releases/latest/download/release.toml";
+// A release's notes at its tag (+ "v<version>/tools/release/RELEASE_NOTES.md")
+// and its page (+ "v<version>"): update.h's WHAT'S NEW.
+constexpr const char* kNotesAtTag = "https://raw.githubusercontent.com/Maxilure/MindOver-Recomp/";
+constexpr const char* kReleasePages = "https://github.com/Maxilure/MindOver-Recomp/releases/tag/";
 
 struct Release {
   std::string version, archive, sha256, date;
   std::string archive_url;  // archive resolved against the feed's folder
+  std::string notes;        // "What's new" of that version, plain text ("" = couldn't get it)
 };
+
+// WHAT'S NEW: every release's notes are tools/release/RELEASE_NOTES.md at its
+// tag; its "### What's new in <version>" section is what the launcher shows:
+// before updating (fetched from GitHub at that version's tag, or from the
+// feed's `notes_url = "..."` when given: tests with a file:// feed) and once
+// after an update's restart (the installed source's own copy).
+// The section as plain text (**bold**, `code` and [links](...) unwrapped);
+// "" if the notes have no section for `version`.
+std::string WhatsNew(const std::string& markdown, const std::string& version);
+// The installed version's notes (source/tools/release/RELEASE_NOTES.md).
+std::string InstalledWhatsNew(const folders::Folders& folders);
+// The release's page on GitHub.
+std::string ReleasePage(const std::string& version);
 
 // a newer than b? (see the header)
 bool Newer(const std::string& a, const std::string& b);

@@ -293,6 +293,7 @@ struct Launcher {
   std::unique_ptr<setup::Setup> setup;
   std::unique_ptr<settings_page::Page> settings;  // made once the game folder is known
   fs::path launcher_path;                         // this program (for the menu entry)
+  std::string whats_new;                          // after an update: its notes (update.h), until OK
   desktop_entry::Status desktop = desktop_entry::Status::kMissing;
   std::string desktop_error;
 
@@ -315,6 +316,7 @@ struct Launcher {
   fs::path report_setup_log;        // the newest Setup log (empty = none)
   report::Built report_built;       // the last .zip made (file empty = none yet)
   std::string report_error;
+  Clock::time_point report_made{};  // the last "Make the report" (a second press within 2 s = ignored)
   int report_save = -1;             // index into save_list to include (-1 = none)
   fs::path report_folder;           // where the .zip goes (report::ReportFolder)
 
@@ -740,6 +742,43 @@ void Launcher::DrawPlayTab(game_process::State state) {
   if (DrawProblems()) {
     return;  // not built / no disc yet: the message points to Setup
   }
+  // Right after an update's restart: what it brought (update.h: WHAT'S NEW).
+  if (!whats_new.empty()) {
+    ImGui::BeginChild("whatsnew", {0, 0}, ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+    ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.2f);
+    ImGui::TextColored(kGood, "Updated to %s", update::InstalledVersion(folders).c_str());
+    ImGui::PopFont();
+    ImGui::TextUnformatted("What's new:");
+    ImGui::Indent();
+    ImGui::TextWrapped("%s", whats_new.c_str());
+    ImGui::Unindent();
+    if (ImGui::Button("OK")) {
+      whats_new.clear();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Release page")) {
+      SDL_OpenURL(update::ReleasePage(update::InstalledVersion(folders)).c_str());
+    }
+    ImGui::EndChild();
+    ImGui::Spacing();
+  }
+  // The game not (yet) rebuilt for this version: playing would start the old
+  // build (Setup::GameNeedsBuild).
+  if (setup && setup->Building()) {
+    ImGui::TextColored(kOrange, "Building the game for this version...");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Watch it in Setup")) {
+      select_tab = 3;
+    }
+    ImGui::Spacing();
+  } else if (setup && setup->GameNeedsBuild()) {
+    ImGui::TextColored(kWarn, "The game isn't rebuilt for this version yet: Play starts the old build.");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Rebuild it in Setup")) {
+      select_tab = 3;
+    }
+    ImGui::Spacing();
+  }
   if (state == game_process::State::kRunning) {
     DrawRunning();
   } else {
@@ -751,7 +790,10 @@ void Launcher::DrawPlayTab(game_process::State state) {
       ImGui::TextColored(kWarn, "The game is already running (started some other way).");
       MutedText("Close it first: two copies at once would fight over the saves.");
     } else {
+      // (No playing while it builds: the build replaces the game's files.)
+      ImGui::BeginDisabled(setup && setup->Building());
       DrawPlay();
+      ImGui::EndDisabled();
     }
   }
   ImGui::Separator();
@@ -1066,8 +1108,10 @@ void Launcher::DrawReportWindow() {
   for (char chosen : report_chosen) {
     any = any || chosen;
   }
-  ImGui::BeginDisabled(!any);
+  // (Greyed for 2 s after a press: a double click made two identical files.)
+  ImGui::BeginDisabled(!any || Clock::now() - report_made < std::chrono::seconds(2));
   if (AccentButton("Make the report", {0, 0})) {
+    report_made = Clock::now();
     report::Request request;
     request.what_happened = report_text;
     for (size_t i = 0; i < report_sessions.size(); ++i) {
@@ -1145,6 +1189,9 @@ void Launcher::Draw() {
     RefreshOtherGame();
   }
   game->CopyLog(log);
+  if (setup) {
+    setup->Tick(state == game_process::State::kRunning);  // an update's rebuild goes on on any tab
+  }
   if (folders.root.empty()) {
     DrawProblems();  // no game folder at all: nothing else can work
     ImGui::End();
@@ -1355,7 +1402,10 @@ int main(int argc, char** argv) {
     launcher.setup = std::make_unique<setup::Setup>(launcher.folders, update_feed,
                                                     launcher.launcher_path, after_update);
     if (after_update) {
-      launcher.select_tab = 3;  // the update's rebuild runs there
+      // Play: what's new + "Building the game for this version..." (the
+      // rebuild itself runs on any tab: Setup::Tick).
+      launcher.select_tab = 0;
+      launcher.whats_new = update::InstalledWhatsNew(launcher.folders);
     } else if (start_tab < 0 && launcher.setup->NeedsAttention()) {
       launcher.select_tab = 3;  // not playable yet: open on Setup
     }

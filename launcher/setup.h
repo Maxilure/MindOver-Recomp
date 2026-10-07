@@ -109,6 +109,17 @@ class Setup {
   // Draws the tab. `game_running`: building is refused meanwhile.
   void Draw(const Look& look, bool game_running);
 
+  // Every frame, whichever tab is open: carries "Set up everything" on (after
+  // the SDK download, and the rebuild after an update's restart). It used to
+  // run only while this tab was drawn: switching to Play during the first
+  // checks after an update left the game unbuilt (0.1.0 -> 0.1.1 test).
+  void Tick(bool game_running);
+
+  // The game is built but older than its sources (e.g. right after an
+  // update) or a build is running: the Play page says so.
+  bool GameNeedsBuild();
+  bool Building();
+
   // An update is out (release layout, after the quiet check at start).
   bool UpdateAvailable(std::string* version);
 

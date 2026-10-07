@@ -370,7 +370,13 @@ redoes what changed) and the build state (`out/`, `generated/default/`, the
 SDK and its install) moves over; `user/`, `game/` and `program/` stay. The
 launcher then restarts and rebuilds: a new SDK version is downloaded, new
 patches re-applied on a clean SDK, and the game rebuilt and copied into
-`program/` ([`launcher/update.h`](../launcher/update.h)).
+`program/` ([`launcher/update.h`](../launcher/update.h)). After the restart
+the launcher opens on Play: the version's "What's new" and "Building the
+game for this version..." (Play stays greyed until the build is done; the
+rebuild runs whichever tab is open). The update panel shows the new
+version's "What's new" before updating: the `### What's new in <version>`
+section of `tools/release/RELEASE_NOTES.md` at its tag (from
+raw.githubusercontent.com, or the feed's `notes_url = "..."`).
 `--update_feed=file:///.../release.toml` tests an update from a local
 folder. A developer clone updates with `git pull` instead.
 

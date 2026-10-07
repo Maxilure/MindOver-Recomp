@@ -672,6 +672,11 @@ void Setup::DrawUpdates(bool busy) {
       ImGui::SetTooltip("Downloads the new version and swaps it in: your saves, settings and the "
                         "game's files stay. Then the launcher restarts and rebuilds what changed.");
     }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Release page")) {
+      SDL_OpenURL(update::ReleasePage(latest.version).c_str());
+    }
+
   } else if (known) {
     ImGui::TextColored(look_->good, " -  the newest version");
   } else if (!error.empty()) {
@@ -684,6 +689,17 @@ void Setup::DrawUpdates(bool busy) {
       updater_->Check();
     }
     ImGui::EndDisabled();
+  }
+  if (known && available) {
+    // What the update brings (update.h: WHAT'S NEW).
+    if (!latest.notes.empty()) {
+      ImGui::PushFont(look_->bold, 0.0f);
+      ImGui::Text("What's new in %s", latest.version.c_str());
+      ImGui::PopFont();
+      ImGui::Indent();
+      ImGui::TextWrapped("%s", latest.notes.c_str());
+      ImGui::Unindent();
+    }
   }
   ImGui::Separator();
 }
@@ -1463,6 +1479,41 @@ void Setup::DrawJob() {
   ImGui::EndChild();
 }
 
+void Setup::Tick(bool game_running) {
+  if (!folders_.from_source || !continue_setup_ || game_running) {
+    return;
+  }
+  Status s;
+  {
+    std::lock_guard lock(mutex_);
+    s = status_;
+  }
+  runner_.Copy(job_);
+  const bool busy = job_.state == task_runner::State::kRunning;
+  const bool checking = checking_ || !s.done;
+  // "Set up everything" goes on by itself after the SDK download, and after
+  // an update's restart (--after_update), once the checks have run again.
+  if (!busy && !checking && job_.state != task_runner::State::kFailed) {
+    fs::path pick;
+    {
+      std::lock_guard lock(mutex_);
+      pick = !iso_.empty() ? iso_ : (s.isos.empty() ? fs::path() : s.isos.front());
+    }
+    runner_.Forget();
+    SetUpEverything(s, pick);
+  }
+}
+
+bool Setup::GameNeedsBuild() {
+  std::lock_guard lock(mutex_);
+  return folders_.from_source && status_.done && folders_.ExeExists() &&
+         status_.game_state != StepState::kDone;
+}
+
+bool Setup::Building() {
+  return runner_.Running();
+}
+
 void Setup::Draw(const Look& look, bool game_running) {
   look_ = &look;
   if (!folders_.from_source) {
@@ -1481,18 +1532,6 @@ void Setup::Draw(const Look& look, bool game_running) {
   const bool busy = job_.state == task_runner::State::kRunning;
   const bool show_job = job_.state != task_runner::State::kIdle;
   const bool checking = checking_ || !s.done;
-
-  // "Set up everything" goes on by itself after the SDK download, and after
-  // an update's restart (--after_update), once the checks have run again.
-  if (continue_setup_ && !busy && !checking && job_.state != task_runner::State::kFailed) {
-    fs::path pick;
-    {
-      std::lock_guard lock(mutex_);
-      pick = !iso_.empty() ? iso_ : (s.isos.empty() ? fs::path() : s.isos.front());
-    }
-    runner_.Forget();
-    SetUpEverything(s, pick);
-  }
 
   DrawUpdates(busy || game_running);
 
