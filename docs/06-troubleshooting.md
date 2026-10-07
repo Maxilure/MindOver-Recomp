@@ -9,10 +9,33 @@ Every path below is inside the folder you unpacked (the one with the
 launcher in it). `user/` holds everything that is yours: saves, settings,
 controls, photos and logs.
 
+* [Known issues](#known-issues)
 * [Every system](#every-system)
 * [Linux](#linux)
 * [Windows](#windows)
 * [Logs and bug reports](#logs-and-bug-reports)
+
+---
+
+## Known issues
+
+Already known: no need to report these (adding details to the linked issue
+is welcome).
+
+* **Crash can break "heavy" objects** that only a titan should break
+  ([#1](https://github.com/Maxilure/MindOver-Recomp/issues/1)).
+* **The game hasn't been played through to the end** on the port yet:
+  later levels may have problems nobody has seen.
+* **Above 60 fps is experimental**: physics and animations can misbehave.
+  60 or 30 is the safe choice.
+* **Three or four players and the co-op camera are experimental.**
+* **Only NVIDIA graphics cards have been tested.** On other cards the
+  emulated picture may show black movies or menus (see
+  [below](#starting-and-playing)).
+* **The port's own renderer ("native") may miss effects** in areas not
+  checked yet. The emulated picture is the reference: if something looks
+  different, a report with a screenshot of both (**F9** switches) helps.
+* **Windows is less tested than Linux** (see [Windows](#windows)).
 
 ---
 
@@ -228,13 +251,14 @@ The launcher's **Game log** tab shows it live, with errors in red and
 warnings in yellow, and has buttons to open the file. Setup writes
 `user/logs/setup-<date>_<time>.log`.
 
-When reporting a bug on the
-[issues page](https://github.com/Maxilure/MindOver-Recomp/issues), include:
-
-1. what you were doing, and what happened instead;
-2. the session's log (and on Windows a `crash-*.txt` if there is one);
-3. your system (Linux distribution or Windows version, graphics card);
-4. the port's version (shown in the launcher).
+To report a bug, open the
+[issues page](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)
+and pick **Bug report**: the form asks for everything needed (what
+happened, how to make it happen, the port's version shown in the launcher,
+your system and graphics card), and the log file can be dragged into it.
+Check the [known issues](#known-issues) and the open issues first: if your
+problem is already there, add your details to it instead. Never attach
+game files (the disc image, extracted files or the built game).
 
 The logs contain no personal data beyond the folder paths on your
 computer. Look through them before posting if that matters to you.

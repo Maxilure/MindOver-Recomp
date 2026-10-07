@@ -41,7 +41,7 @@ your saves and settings (user/) and only rebuilds what changed.
 
 Something went wrong? See Troubleshooting:
   https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md
-Bug reports (attach your log from user/logs):
-  https://github.com/Maxilure/MindOver-Recomp/issues
+Found a bug? Report it here (pick "Bug report", attach your log from user/logs):
+  https://github.com/Maxilure/MindOver-Recomp/issues/new/choose
 
 Project page: https://github.com/Maxilure/MindOver-Recomp

@@ -1,0 +1,6 @@
+# The New issue page: our forms only, plus links for things that aren't bugs.
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting
+    url: https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md
+    about: Setup problems, black screens, controllers, Windows warnings, where your saves and logs are.

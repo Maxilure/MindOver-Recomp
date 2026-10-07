@@ -24,8 +24,13 @@ no game files. The launcher builds the game on your computer, from your disc.
    `.iso`, then press **Set up everything**. The first build takes a while.
 4. Press **Play**.
 
-If something goes wrong, see
+### Known issues and bug reports
+
+What's already known (experimental features, untested graphics cards...) is
+listed under
+[Known issues](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#known-issues);
+common problems and their fixes are in
 [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md).
-To report a bug, open an
-[issue](https://github.com/Maxilure/MindOver-Recomp/issues) and attach your
-session log from `user/logs/`.
+
+Found a bug? **[Report it here](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
+(pick "Bug report") and attach your session log from `user/logs/`.

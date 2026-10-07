@@ -1,0 +1,86 @@
+# The "Bug report" form on GitHub's New issue page (an issue form: GitHub
+# shows these fields instead of an empty text box).
+name: Bug report
+description: Something in the port doesn't work, crashes, or looks or plays differently from the Xbox 360 game.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing! The port is in **alpha**, so every report helps.
+        Before you write: check [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md)
+        and the [open issues](https://github.com/Maxilure/MindOver-Recomp/issues) (one report per problem: add to an existing one if it's the same).
+        Never attach game files (disc images, extracted files, the built game).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected instead (the way the Xbox 360 game does it, if you know).
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen
+      description: Where in the game (area, level, menu), and what you did. Say if it happens every time or only sometimes.
+      placeholder: |
+        1. Load a save on Wumpa Island
+        2. Jump on a titan
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - Setup or the launcher (tools, building, updates)
+        - Starting the game / crash
+        - Gameplay
+        - Picture (missing, black or wrong graphics)
+        - Sound
+        - Controls (keyboard, mouse, controller)
+        - Saves
+        - Co-op / more players
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Port version
+      description: Shown at the top of the launcher, for example 0.1.0-alpha.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Windows version, or Linux distribution (and desktop, e.g. KDE, GNOME, Hyprland).
+      placeholder: Windows 11 / Ubuntu 24.04 (GNOME)
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: Graphics card
+      placeholder: e.g. NVIDIA GTX 1070, AMD RX 6600, Intel Arc A750
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings you changed
+      description: Anything set in the launcher's Settings tab, e.g. the frame rate cap, Picture (emulated / native renderer), players. "None" is fine.
+      placeholder: fps cap 60, Native only
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Drag the session's log file here: `user/logs/play-<date>_<time>.log` in the game's folder (the launcher's
+        Game log tab has a button to open it). For Setup problems: `user/logs/setup-<date>_<time>.log`. On Windows,
+        after a crash, also the `crash-<date>_<time>.txt` next to it. Screenshots or a short video help too.
+    validations:
+      required: false

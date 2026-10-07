@@ -50,7 +50,9 @@ updates: when a new version is out, it tells you, and updating keeps your
 saves and settings.
 
 Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)**
-(Linux and Windows).
+(Linux and Windows) and the [known issues](docs/06-troubleshooting.md#known-issues).
+Found a bug? **[Report it](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**:
+the form asks for everything needed, and your log is in `user/logs/`.
 
 ## What works
 

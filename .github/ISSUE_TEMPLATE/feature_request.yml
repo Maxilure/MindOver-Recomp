@@ -1,0 +1,17 @@
+# The "Idea or request" form on GitHub's New issue page.
+name: Idea or request
+description: Something the port could add or do better.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The port is in **alpha**: fixing what's broken comes first, but ideas are welcome.
+        See the [roadmap](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/03-roadmap.md) for what's already planned.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What you'd like, and why it would make the game better on PC.
+    validations:
+      required: true
