@@ -653,7 +653,8 @@ void Setup::DrawUpdates(bool busy) {
     ImGui::TextColored(look_->accent, " -  %s is available%s%s", latest.version.c_str(),
                        latest.date.empty() ? "" : " (", latest.date.empty() ? "" : (latest.date + ")").c_str());
     ImGui::SameLine();
-    ImGui::BeginDisabled(busy);
+    // (Not while Setup's checks run: they read the SDK folder the update moves.)
+    ImGui::BeginDisabled(busy || checking_);
     if (ImGui::Button(("Update to " + latest.version).c_str())) {
       pending_ = latest;
       std::vector<Command> commands = updater_->Job(latest, launcher_);
@@ -1432,10 +1433,15 @@ void Setup::DrawJob() {
   std::snprintf(overlay, sizeof(overlay), "%s%s%s", job_.step.c_str(),
                 job_.detail.empty() ? "" : "  -  ", job_.detail.c_str());
   ImGui::ProgressBar(float(job_.fraction), {-FLT_MIN, 0}, overlay);
-  if (running) {
+  if (running && job_.cancellable) {
     if (ImGui::Button("Cancel")) {
       runner_.Cancel();
     }
+  } else if (running) {
+    // (An in-process step, e.g. an update's swap: stopping it halfway would
+    // leave a mix of two versions.)
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(look_->muted, "This step can't be stopped: a few seconds.");
   } else {
     if (ImGui::Button("OK")) {
       runner_.Forget();

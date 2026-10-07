@@ -109,13 +109,17 @@ void Runner::Run(std::vector<Command> commands, fs::path log_file,
   bool ok = true;
   for (size_t i = 0; i < commands.size() && ok; ++i) {
     ok = RunOne(commands[i], i, commands.size(), log);
-    if (cancel_) {
+    // Cancel stops what's LEFT: a last step that finished well is done (an
+    // update's swap pressed "Cancel" on while it worked, swapped everything,
+    // and was then called cancelled: the update was offered again).
+    if (cancel_ && (!ok || i + 1 < commands.size())) {
       ok = false;
     }
   }
   {
     std::lock_guard lock(mutex_);
     state_.state = ok ? State::kDone : cancel_ ? State::kCancelled : State::kFailed;
+    state_.cancellable = false;
     if (ok) {
       state_.fraction = 1;
       state_.detail.clear();
@@ -134,6 +138,7 @@ bool Runner::RunOne(const Command& command, size_t index, size_t count, std::ofs
     state_.step = command.title;
     state_.fraction = double(index) / double(count);
     state_.detail.clear();
+    state_.cancellable = !command.function;
     ++state_.version;
   }
   AddLine("== " + command.title, log);

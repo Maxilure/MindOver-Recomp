@@ -61,6 +61,8 @@ struct Snapshot {
   double fraction = 0;                  // 0..1, overall
   std::string detail;                   // "1234 / 4567" or ""
   std::string error;                    // why it failed
+  bool cancellable = true;              // false during an in-process step (Command::function):
+                                        // it can't be stopped halfway (an update's swap)
   std::filesystem::path log;
   uint64_t version = 0;                 // grows with every new line / change
   std::vector<std::string> lines;       // the output (last kKeptLines)
