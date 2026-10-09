@@ -562,6 +562,11 @@ bool Build(const folders::Folders& folders, const Request& request, Built* built
     result.contents.push_back("logs/" + log.filename().string());
     added.insert(log);
 
+    // Its controller recording (the game's input_record.h): lets the
+    // problem's presses be replayed into the game.
+    const fs::path inputs = log.parent_path() / (log.stem().string() + "-inputs.txt");
+    if (fs::exists(inputs, ec)) add_file("logs/" + inputs.filename().string(), inputs, false);
+
     const auto [from, to] = Window(log);
     for (const fs::path& crash : ChangedBetween(logs_folder, from, to, "crash-")) {
       add_file("logs/" + crash.filename().string(), crash, true);

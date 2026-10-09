@@ -3,6 +3,7 @@
 // =============================================================================
 #include "save_library.h"
 #include "../guest_memory.h"
+#include "../input_record.h"
 
 #include <algorithm>
 #include <array>
@@ -1695,10 +1696,18 @@ extern "C" REX_FUNC(sub_824742F0) {
   using namespace save_library;
   const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
   __imp__sub_824742F0(ctx, base);
+  // A replay of recorded presses replaces what the device said (input_record.h).
+  if (state) {
+    uint32_t result = ctx.r3.u32;
+    input_record::BeforeFilters(user, GuestPtr(base, state + 4), result);
+    ctx.r3.u64 = result;
+  }
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
     std::memset(GuestPtr(base, state + 4), 0, 12);
   }
   if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  // The session's input recording: what the game gets, after every filter.
+  if (state) input_record::AfterFilters(user, GuestPtr(base, state + 4), ctx.r3.u32);
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

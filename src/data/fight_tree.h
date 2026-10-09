@@ -131,4 +131,15 @@ void SetNodeCount(std::string path, int count);
 using Decision = std::function<int32_t(PPCContext& ctx, uint8_t* base)>;
 void SetFrontEndDecision(int32_t number, Decision decision);
 
+// Where the front end is (for the debug console, debug_console.h): the
+// state its dispatcher was last asked about (it asks every frame while a
+// screen of the tree is up), and the last exit taken. -1 = none yet.
+struct FrontEndPosition {
+  int32_t state = -1;      // node number (names: notes/scratch-tools/fig_tree.py)
+  int32_t last_from = -1;  // the last exit: from this state...
+  int32_t last_exit = -1;  // ...through this exit node
+  uint32_t exits = 0;      // exits taken so far (changes = something happened)
+};
+FrontEndPosition CurrentFrontEnd();
+
 }  // namespace fight_tree

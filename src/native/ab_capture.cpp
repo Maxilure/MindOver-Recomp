@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -83,6 +84,19 @@ struct State {
 // screen), 2 the screen only. Set by the key (UI thread), taken by the main
 // thread.
 std::atomic<int> g_photo_request{0};
+
+// RequestPhotoLikeF10's renderer check, and the last photo (LastPhoto).
+std::atomic<bool (*)(void*)> g_native_shown_check{nullptr};
+std::atomic<void*> g_native_shown_self{nullptr};
+std::mutex g_last_photo_mutex;
+PhotoRecord g_last_photo;
+
+// A photo was saved: these files (one per line).
+void NotePhoto(std::string files) {
+  std::lock_guard lock(g_last_photo_mutex);
+  ++g_last_photo.serial;
+  g_last_photo.files = std::move(files);
+}
 constexpr int kPhotoPair = 1, kPhotoScreen = 2;
 
 // A photo needs the emulated GPU to copy its picture back into guest
@@ -496,6 +510,7 @@ void SaveNativeOnlyPhoto(rex::ui::Presenter* presenter, const TextureCache& text
   std::filesystem::path list = PhotoPath(stamp, "draws");
   list.replace_extension(".txt");
   WriteDrawList(frame, list, material_name, textures);
+  NotePhoto(path.string() + "\n" + list.string());
   REXLOG_INFO("Photo (F10): {} (native only: the emulated GPU is off, so there is no "
               "emulated picture to pair it with)",
               path.string());
@@ -586,6 +601,9 @@ void AfterPresent(rex::ui::Presenter* presenter, const TextureCache& textures,
   if (photo) {
     const std::filesystem::path path = PhotoPath(stamp, "emulated");
     WritePng(path, rgba.data(), width, height, size_t(width) * 4);
+    std::filesystem::path list = PhotoPath(stamp, "draws");
+    list.replace_extension(".txt");
+    NotePhoto(PhotoPath(stamp, "native").string() + "\n" + path.string() + "\n" + list.string());
     REXLOG_INFO("Photo (F10): {} (+ _native.png, the same frame from both renderers)",
                 path.string());
     return;
@@ -599,6 +617,23 @@ bool CaptureUnderway() { return g.stage != Stage::kIdle; }
 
 void RequestPhoto(bool native_shown) {
   g_photo_request.store(native_shown ? kPhotoPair : kPhotoScreen);
+}
+
+void SetNativeShownCheck(bool (*check)(void*), void* self) {
+  g_native_shown_self = self;
+  g_native_shown_check = check;
+}
+
+bool RequestPhotoLikeF10() {
+  bool (*check)(void*) = g_native_shown_check.load();
+  if (!check) return false;
+  RequestPhoto(check(g_native_shown_self.load()));
+  return true;
+}
+
+PhotoRecord LastPhoto() {
+  std::lock_guard lock(g_last_photo_mutex);
+  return g_last_photo;
 }
 
 void WhileEmulatedShown(rex::ui::Presenter* presenter) {
@@ -619,6 +654,7 @@ void WhileEmulatedShown(rex::ui::Presenter* presenter) {
   }
   const std::filesystem::path path = PhotoPath(PhotoStamp(), "emulated");
   if (WritePng(path, image.data.data(), image.width, image.height, image.stride)) {
+    NotePhoto(path.string());
     REXLOG_INFO("Photo (F10): {} (the emulated picture; F9 first for both)", path.string());
   } else {
     REXLOG_WARN("Photo (F10): can't write {}", path.string());

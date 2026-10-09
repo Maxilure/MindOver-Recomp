@@ -439,6 +439,7 @@ NativeRenderer::~NativeRenderer() {
   // any more (this waits for a frame in progress), then give the window back
   // to the emulated GPU, then wait for the GPU before destroying anything.
   native::spotter::Uninstall();
+  native::ab_capture::SetNativeShownCheck(nullptr, nullptr);
   pddi::RemoveFrameEndListener(&FrameEndThunk, this);
   native::recorder::Uninstall();
   rex::ui::UnregisterBind("bind_renderer");
@@ -746,6 +747,9 @@ bool NativeRenderer::Initialize() {
   pddi::AddFrameEndListener(&FrameEndThunk, this);
   // Loud log lines when a material we're hunting shows up (spotter.h).
   native::spotter::Install(
+      [](void* self) { return static_cast<NativeRenderer*>(self)->native_drawn(); }, this);
+  // The debug console's `photo` = F10 (ab_capture::RequestPhotoLikeF10).
+  native::ab_capture::SetNativeShownCheck(
       [](void* self) { return static_cast<NativeRenderer*>(self)->native_drawn(); }, this);
   REXLOG_INFO("NativeRenderer: ready ({}x{}), F9 switches emulated/native, F10 takes a photo",
               kWidth, kHeight);

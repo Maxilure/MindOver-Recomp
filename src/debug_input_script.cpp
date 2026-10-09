@@ -20,6 +20,7 @@
 
 #include "cheats/cheat_menu.h"
 #include "cheats/cheats.h"
+#include "debug_console.h"
 #include "input/keyboard_mouse.h"
 
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
@@ -37,6 +38,9 @@ using namespace rex;
 using namespace rex::input;
 
 namespace {
+
+// The driver while it exists (Live()).
+std::atomic<ScriptedInputDriver*> g_live{nullptr};
 
 // Any value no other driver uses. The SDK's own synthetic devices use ASCII
 // tags ("NOP\0", "MNK\0"); this is "SCR\0". SDL pads count up from small ints.
@@ -113,7 +117,9 @@ std::unique_ptr<ScriptedInputDriver> ScriptedInputDriver::CreateFromCvars() {
   std::string_view rest = REXCVAR_GET(debug_input_script);
   const std::string& fifo = REXCVAR_GET(debug_input_fifo);
   const int pads = 1 + std::clamp(REXCVAR_GET(debug_fake_pads), 0, kMaxPads - 1);
-  if (rest.empty() && fifo.empty() && pads == 1) {
+  // The debug console (debug_console.h) forwards input lines to this driver,
+  // so it needs one too.
+  if (rest.empty() && fifo.empty() && pads == 1 && REXCVAR_GET(debug_console).empty()) {
     return nullptr;
   }
   std::vector<Tap> taps;
@@ -159,7 +165,11 @@ ScriptedInputDriver::ScriptedInputDriver(std::vector<Tap> taps, int pads)
     : InputDriver(nullptr, 0),
       start_(std::chrono::steady_clock::now()),
       pads_(pads),
-      taps_(std::move(taps)) {}
+      taps_(std::move(taps)) {
+  g_live = this;
+}
+
+ScriptedInputDriver* ScriptedInputDriver::Live() { return g_live; }
 
 int ScriptedInputDriver::PadOf(DeviceId id) const {
   for (int pad = 0; pad < pads_; ++pad) {
@@ -169,6 +179,7 @@ int ScriptedInputDriver::PadOf(DeviceId id) const {
 }
 
 ScriptedInputDriver::~ScriptedInputDriver() {
+  g_live = nullptr;
   stop_ = true;
   if (fifo_thread_.joinable()) {
     fifo_thread_.join();  // it polls with a timeout, so this is quick
@@ -179,6 +190,69 @@ int64_t ScriptedInputDriver::NowMs() const {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
                                                                start_)
       .count();
+}
+
+// One live command (a FIFO line, or a debug console line: debug_console.h).
+// Returns false (and logs why) when it isn't understood.
+bool ScriptedInputDriver::HandleLine(const std::string& line) {
+  bool ok = true;
+  std::string_view view(line);
+  // "key <Name> [<hold_ms>]": a keyboard / mouse key, through the
+  // keyboard driver's bindings (input/keyboard_mouse.h), as if typed.
+  if (view.substr(0, 4) == "key ") {
+    std::string_view rest = view.substr(4);
+    size_t space = rest.find(' ');
+    int64_t hold_ms = kDefaultHoldMs;
+    if (space != std::string_view::npos) {
+      std::from_chars(rest.data() + space + 1, rest.data() + rest.size(), hold_ms);
+    }
+    if (hold_ms > 0 && kbm::KeyboardMouseDriver::DebugTap(rest.substr(0, space), hold_ms)) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+    } else {
+      REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown key, or no keyboard driver)",
+                  line);
+      ok = false;
+    }
+    return ok;
+  }
+  // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
+  if (view.substr(0, 6) == "cheat ") {
+    // "cheat menu" opens / closes the F5 window (draws it: a crash check).
+    if (view.substr(6) == "menu") {
+      cheat_menu::Toggle();
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+    } else if (cheats::DebugCommand(view.substr(6))) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+    } else {
+      REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown cheat command)", line);
+      ok = false;
+    }
+    return ok;
+  }
+  // "[p<N>.]<inputs> [<hold_ms>]"
+  const int pad = SplitPad(view, pads_);
+  // "p<N>.unplug" / "p<N>.plug": an extra fake controller pulled out / back.
+  if (pad >= 0 && (view == "unplug" || view == "plug")) {
+    unplugged_[pad] = view == "unplug";
+    REXLOG_INFO("debug_input_fifo: fake controller {} {}", pad + 1,
+                view == "unplug" ? "unplugged" : "plugged back in");
+    return ok;
+  }
+  size_t space = view.find(' ');
+  uint32_t inputs = ParseInputs(view.substr(0, space));
+  int64_t hold_ms = kDefaultHoldMs;
+  if (space != std::string_view::npos) {
+    std::from_chars(view.data() + space + 1, view.data() + view.size(), hold_ms);
+  }
+  if (pad < 0 || !inputs || hold_ms <= 0) {
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\"", line);
+    return false;
+  }
+  int64_t now = NowMs();
+  REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", now, line);
+  std::lock_guard<std::mutex> lock(mutex_);
+  taps_.push_back({now, hold_ms, inputs, pad});
+  return true;
 }
 
 void ScriptedInputDriver::FifoThread(std::string path) {
@@ -208,60 +282,7 @@ void ScriptedInputDriver::FifoThread(std::string path) {
     while ((eol = pending.find('\n')) != std::string::npos) {
       std::string line = pending.substr(0, eol);
       pending.erase(0, eol + 1);
-      std::string_view view(line);
-      // "key <Name> [<hold_ms>]": a keyboard / mouse key, through the
-      // keyboard driver's bindings (input/keyboard_mouse.h), as if typed.
-      if (view.substr(0, 4) == "key ") {
-        std::string_view rest = view.substr(4);
-        size_t space = rest.find(' ');
-        int64_t hold_ms = kDefaultHoldMs;
-        if (space != std::string_view::npos) {
-          std::from_chars(rest.data() + space + 1, rest.data() + rest.size(), hold_ms);
-        }
-        if (hold_ms > 0 && kbm::KeyboardMouseDriver::DebugTap(rest.substr(0, space), hold_ms)) {
-          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
-        } else {
-          REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown key, or no keyboard driver)",
-                      line);
-        }
-        continue;
-      }
-      // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
-      if (view.substr(0, 6) == "cheat ") {
-        // "cheat menu" opens / closes the F5 window (draws it: a crash check).
-        if (view.substr(6) == "menu") {
-          cheat_menu::Toggle();
-          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
-        } else if (cheats::DebugCommand(view.substr(6))) {
-          REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
-        } else {
-          REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (unknown cheat command)", line);
-        }
-        continue;
-      }
-      // "[p<N>.]<inputs> [<hold_ms>]"
-      const int pad = SplitPad(view, pads_);
-      // "p<N>.unplug" / "p<N>.plug": an extra fake controller pulled out / back.
-      if (pad >= 0 && (view == "unplug" || view == "plug")) {
-        unplugged_[pad] = view == "unplug";
-        REXLOG_INFO("debug_input_fifo: fake controller {} {}", pad + 1,
-                    view == "unplug" ? "unplugged" : "plugged back in");
-        continue;
-      }
-      size_t space = view.find(' ');
-      uint32_t inputs = ParseInputs(view.substr(0, space));
-      int64_t hold_ms = kDefaultHoldMs;
-      if (space != std::string_view::npos) {
-        std::from_chars(view.data() + space + 1, view.data() + view.size(), hold_ms);
-      }
-      if (pad < 0 || !inputs || hold_ms <= 0) {
-        REXLOG_WARN("debug_input_fifo: ignoring \"{}\"", line);
-        continue;
-      }
-      int64_t now = NowMs();
-      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", now, line);
-      std::lock_guard<std::mutex> lock(mutex_);
-      taps_.push_back({now, hold_ms, inputs, pad});
+      HandleLine(line);
     }
   }
   close(fd);

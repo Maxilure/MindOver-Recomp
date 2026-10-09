@@ -110,6 +110,21 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
 // screen).
 void RequestPhoto(bool native_shown);
 
+// The same as pressing F10, from any thread (the debug console's `photo`,
+// debug_console.h): asks the renderer whether its picture is drawn (the
+// check NativeRenderer registers at start-up) and requests that photo.
+// False when the renderer isn't up yet.
+void SetNativeShownCheck(bool (*check)(void*), void* self);
+bool RequestPhotoLikeF10();
+
+// The last photo saved (any thread): `serial` counts photos (changes = a new
+// one), `files` = its file paths, one per line.
+struct PhotoRecord {
+  uint32_t serial = 0;
+  std::string files;
+};
+PhotoRecord LastPhoto();
+
 // A capture is between its two frames (the emulated GPU must draw every
 // frame meanwhile: NativeRenderer::UpdateEmulatedFrameRate).
 bool CaptureUnderway();

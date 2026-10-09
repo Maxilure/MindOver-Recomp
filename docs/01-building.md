@@ -175,6 +175,14 @@ is rejected. Useful extras:
 * `--debug_input_fifo=<path>`: the same fake controller, live. The game reads
   commands from that named pipe, e.g. `echo "down" > <path>` or
   `echo "lsright 2000" > <path>` (Linux).
+* `--debug_console=<socket path>`: ask the running game questions and get
+  answers (Linux): `tools/mom.py -s <path> state`, `players`, `read
+  [0x8259B190]+52 u32`, `wait level`, `photo`, `watch`, `snap`/`diff`, `goto`,
+  `replay`... The full list is in `src/debug_console.h` and
+  [findings/29](findings/29-debug-console.md).
+* `--debug_input_record` (on by default): every controller state the game reads
+  goes to `<log name>-inputs.txt` next to the session log, for replaying a
+  session's presses through the debug console.
 
 In-game overlays: **F3** stats, **`** log console, **F4** settings. The
 port's own keys: **F8** second window (native picture), **F9** switch the

@@ -6,6 +6,7 @@
 #include "../guest_memory.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 #include <string>
 #include <map>
@@ -185,6 +186,19 @@ void SetFrontEndDecision(int32_t number, Decision decision) {
   g_decisions[number] = std::move(decision);
 }
 
+// Written by the dispatcher (game thread), read by the debug console.
+std::atomic<int32_t> g_fe_state{-1}, g_fe_from{-1}, g_fe_exit{-1};
+std::atomic<uint32_t> g_fe_exits{0};
+
+FrontEndPosition CurrentFrontEnd() {
+  FrontEndPosition p;
+  p.state = g_fe_state.load();
+  p.last_from = g_fe_from.load();
+  p.last_exit = g_fe_exit.load();
+  p.exits = g_fe_exits.load();
+  return p;
+}
+
 }  // namespace fight_tree
 
 // ON BY DEFAULT: one of the session log's event logs (session_log.h;
@@ -214,6 +228,12 @@ extern "C" REX_FUNC(sub_8211AF40) {
       ctx.r3.u64 = uint32_t(decision(ctx, base));
     } else {
       __imp__sub_8211AF40(ctx, base);
+    }
+    g_fe_state = number;
+    if (int32_t(ctx.r3.u32) >= 0) {
+      g_fe_from = number;
+      g_fe_exit = int32_t(ctx.r3.u32);
+      ++g_fe_exits;
     }
     // --debug_frontend_trace: one line per exit taken (-1 = stay, not logged).
     if (REXCVAR_GET(debug_frontend_trace) && int32_t(ctx.r3.u32) >= 0) {

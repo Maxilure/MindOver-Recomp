@@ -53,6 +53,7 @@ constexpr const char* kEventFlags[] = {
     "debug_coop_trace",        // players/more_players.cpp
     "debug_menu_input_trace",  // players/menu_input.cpp
     "debug_frontend_trace",    // data/fight_tree.cpp
+    "debug_input_record",      // input_record.cpp (<log>-inputs.txt)
 };
 
 // --- facts about the machine ---------------------------------------------------

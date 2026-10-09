@@ -29,6 +29,8 @@ set(CRASHMOM_SOURCES
     src/main.cpp          # entry point: hands control to ReXGlue's app framework
     src/debug_frame_capture.cpp  # --debug_capture_dir: periodic screenshots for debugging
     src/debug_input_script.cpp   # --debug_input_script: scripted button presses for test runs
+    src/input_record.cpp         # every controller state the game reads -> <log>-inputs.txt; replay
+    src/debug_console.cpp        # --debug_console: a socket that answers questions about the running game
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
     src/crash_report.cpp         # Windows: a crash writes its named call stack into the log

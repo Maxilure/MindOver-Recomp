@@ -48,6 +48,7 @@
 #include "cheats/cheat_menu.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
+#include "debug_console.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
 #include "game_folder.h"
@@ -224,6 +225,10 @@ class CrashMomApp : public rex::ReXApp {
     if (auto driver = ScriptedInputDriver::CreateFromCvars(); driver && input) {
       input->AddDriver(std::move(driver));
     }
+    // The debug console, only with --debug_console (debug_console.h): a
+    // socket that answers questions (memory, players, front end) mid-run.
+    debug_console::Start(
+        [this](std::function<void()> f) { app_context().CallInUIThread(std::move(f)); }, window());
     // Keyboard + mouse as a virtual controller (input/keyboard_mouse.h), on
     // unless --keyboard_mouse=false. Merged with a real pad into player 1.
     if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {

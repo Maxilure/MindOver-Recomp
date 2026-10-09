@@ -48,6 +48,9 @@
 //    Why: testing 3-4 players needs 3-4 controllers; nobody has to own them.
 //    FIFO "p<N>.unplug" / "p<N>.plug" (N = 1-4): that fake controller is
 //    pulled out / plugged back in (a lost controller, players/lost_controller.h).
+//
+// 4) The debug console (--debug_console, debug_console.h) passes every line
+//    it doesn't answer itself to HandleLine(): the same commands, with a reply.
 // =============================================================================
 
 #pragma once
@@ -75,6 +78,12 @@ class ScriptedInputDriver final : public rex::input::InputDriver {
   // parse (logged).
   static std::unique_ptr<ScriptedInputDriver> CreateFromCvars();
   ~ScriptedInputDriver() override;
+
+  // The driver while it exists (else null): the debug console sends it lines.
+  static ScriptedInputDriver* Live();
+  // One live command, exactly like a FIFO line ("down 500", "key Q", "cheat
+  // god on", "p2.start"...). False (logged) when it isn't understood.
+  bool HandleLine(const std::string& line);
 
   rex::X_STATUS Setup() override;
   void EnumerateDevices(std::vector<rex::input::DeviceInfo>& out) override;

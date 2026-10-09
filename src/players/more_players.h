@@ -79,6 +79,11 @@ int LocalPlayerCount();
 // Safe from any thread.
 bool InPlay();
 
+// Is the loading screen up (drawn within the last 250 ms)? Any thread. InPlay()
+// turns true BEFORE loading ends (the debug console's `wait level` found
+// that: its photo showed "Loading"), so "playable" = InPlay() && !Loading().
+bool Loading();
+
 // Player p's character (Crash), 0 if none (the game object's list / ours).
 uint32_t CharacterOfPlayer(int p);
 

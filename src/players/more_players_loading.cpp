@@ -49,6 +49,8 @@
 // =============================================================================
 #include "more_players.h"
 
+#include <atomic>
+#include <chrono>
 #include <cstring>
 
 #include <rex/cvar.h>
@@ -184,9 +186,19 @@ extern "C" REX_FUNC(sub_8226B2C8) {
   ctx = saved;
 }
 
+// When the loading screen was last drawn (steady clock, ms): Loading().
+static std::atomic<int64_t> g_loading_drawn_ms{-1000000};
+static int64_t SteadyMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+}
+bool more_players::Loading() { return SteadyMs() - g_loading_drawn_ms.load() < 250; }
+
 // Draw: the real one (page + players 1-2's paws), then players 3-4's.
 extern "C" REX_FUNC(sub_8226BDA0) {
   const uint32_t screen = ctx.r3.u32;
+  g_loading_drawn_ms = SteadyMs();
   __imp__sub_8226BDA0(ctx, base);
   if (!g_shadow || !ExtraPlayersPresent(ctx, base)) return;
   const float alpha_scale = ReadFloat(0x8201F94C);  // 255 (the draw's f30)
