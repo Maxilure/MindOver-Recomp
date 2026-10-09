@@ -1647,3 +1647,15 @@ registers = ["r11", "r29"]
 address = 0x82107864
 name = "CoopCameraDistance"
 registers = ["f1", "r31"]
+# ACTIVE ZONES (src/players/coop_camera.cpp, CoopCameraZoneActive; findings/28 s.6). The world
+# manager runs a zone's characters only while sub_822EFFD8 calls the zone active: loaded and the
+# camera near it, or the camera's FOCUS player standing in it (one player). Both of its paths
+# (li r11,0 at 0x822F0030 / li r11,1 at 0x822F0038) meet at 0x822F003C (li r9,1) with the answer
+# in r11 and the zone in r31; the hook also says active when ANY player in game is in that zone.
+# Found 2026-10-08: player 2 froze on a path in Ratcicle Kingdom (physics update no longer called)
+# until player 1 came near; the call chain physics <- sub_822F0100 <- sub_822E6EC0 led here
+# (verified with xexdis 0x822EFFD8-0x822F0100).
+[[entrypoint.midasm_hook]]
+address = 0x822F003C
+name = "CoopCameraZoneActive"
+registers = ["r11", "r31"]

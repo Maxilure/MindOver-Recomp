@@ -205,3 +205,136 @@ but no player 2, nobody counts as off screen and the catch-up never fires.
 The camera's fit (section 2) keeps everyone in view up to the maximum
 distance, so the catch-up only matters past it.
 
+
+## 5. Second round: cutscenes, shimmer, room around players
+
+Three problems came up in play, all seen on Wumpa Island at the NV mail
+(two players, the mail's in-engine cutscene and the cartoon movie after it,
+both skipped).
+
+**Zoomed far out after a cutscene.** Cutscenes and scripted shots rebuild
+the same `VectorCamera` (`sub_82373D18`) that gameplay uses, so the co-op
+code kept reading the CUTSCENE'S view while one played: both players were
+"off screen" from its angle (urgency 1). At the first gameplay frame the fit,
+still working from that view, asked for the 45-unit maximum and moved the
+current distance (+296) most of the way at once; the game's own smoother
+then took several seconds to come back in from about 35 units.
+
+![Right after skipping the NV-mail cutscene: zoomed far out before the fix, the
+normal distance after it](../images/coop-camera-after-cutscene.jpg)
+
+Fix: a view counts as gameplay only when the volume behaviour's zoom
+(`sub_821076B0`) ran since the previous rebuild. Traced: in gameplay that is
+every frame (one rebuild per frame, never two), during cutscenes and movies
+never. While no volume view arrives the co-op camera is off. When play
+resumes it takes over again starting from the target the game's camera was
+looking at (+228, the focus player), gliding to the centre of the players.
+For the first 15 frames it doesn't push the distance out itself unless a
+player is about to leave the picture. The first fit after the skip asked
+for 14 units instead of 12 for a moment. After the fix: 14 at the first
+frame, 12 within 0.6 s, with no visible zoom.
+
+**A shimmer while standing still.** With both players idle the trace showed
+the distance cycling 12.1 → 12.5 → 12.1 units about every 5 frames, with
+the camera moving a tenth of a unit back and forth. The fit read where the
+camera was on the previous frame to know its angle, and the camera moved
+with each fit, so every frame chased the last one. Fix:
+
+* the camera's offset from the centre is taken in the camera's own frame
+  (right, up, forward) and averaged over about 0.4 s;
+* the distance we ask for goes out at once when more room is needed, but
+  only comes back in once the fit is at least 0.6 units closer, then eases in
+  the whole way;
+* urgency rises at once and falls back over 0.4 s, so the centre's smoothing
+  speed doesn't flip with every step near the edge.
+
+The distance's direction changes in the same test (with both players idle,
+then after the cutscene): 63 in 2,131 frames before, 4 in 1,793 after.
+
+**Room around each player.** Feet and head on screen wasn't enough. A player
+at the edge of the picture couldn't see the ground around them (a ledge, a
+drop). Besides feet and head, the fit now keeps points
+`--coop_camera_room` units (default 4, about two Crash heights) to each
+player's left and right and beyond them on screen. Not the point between a
+player and the camera: the game's own view keeps Crash in the lower half of
+the picture, so that point sits below him on screen and backed the camera
+off to 18-22 units even with both players together (tried, removed). With
+the room, two players standing together still get the game's own 12-unit
+view (12.3 side by side). Walking apart on the cliff by the house, the player
+on the cliff edge keeps more ground and water around them than without the
+room (`--coop_camera_room=0` gives the old fit).
+
+
+## 6. A partner frozen far away: the level's active zones
+
+**The symptom.** In Ratcicle Kingdom's courtyard, player 2 walked up the
+snowy path while player 1 stood still. At one spot player 2 stopped dead:
+no input worked (back, sideways, jump), not even gravity. Player 1 walking
+near brought them back. With 3-4 players the same applies to everyone but
+the camera's focus player.
+
+**Not the camera's fit, not the off-screen rule.** The stop point was the
+same spot (319.1, 38.5, -199.5) every time: with the original camera
+(`--coop_camera=false`), with the off-screen answer of section 4 forced to
+"on screen", and with player 1 standing 13 units closer. A per-actor count
+of the physics update (`CPhysicsBehaviour` slot 4, `sub_8217D0A0`) showed
+the reason: player 2's update stopped being called at that moment, as did a
+few other characters' nearby.
+
+**How the level decides who runs.** A guest stack walk from that update
+led to the world manager's frame (`sub_822E6EC0`): the level is split into
+**zones** (its list at +20), and each zone's characters are updated
+(`sub_822F0100`) only while `sub_822EFFD8` calls the zone **active**:
+
+- the zone is loaded (+596 == 2), and
+- either the **camera** is near it (`sub_822F4AA0`: the camera's position,
+  `*(*(uber + 76) + 444) + 216`, against the zone's bounding sphere at
+  +488 / radius² +500, then its portals at +376),
+- or it is the zone of the player the camera **focuses** on
+  (`sub_822E7A70`: game +40 = that player, their character's +40 = its zone).
+
+A character belongs to the zone its position falls in (the same frame's
+loop over moving actors at +144 re-files them: `sub_822E6AA0`, actor +40).
+Only one player is the focus. With the original camera a partner that far
+away is already off screen (and B brings them back as a mask, section 4).
+With ours, which backs off to keep everyone in the picture, the frozen
+partner stays in view.
+
+**The fix.** A mid-function hook at `0x822F003C`, where both of
+`sub_822EFFD8`'s answers meet in r11 (r31 = the zone): a loaded zone that
+holds any player in game (their Crash, or the titan they ride) is active
+too (`CoopCameraZoneActive` in `src/players/coop_camera.cpp`). The same walk
+now goes on up the path (to 332, -206), back down, sideways and jumps.
+Characters in the partner's zone (enemies too) now run as well, as they
+would for the focus player.
+
+
+## 7. Front to back: the camera stays with the nearest player
+
+![Player 2 walks up a path away from the camera while player 1 stands still. Top: the camera aims at the middle of the players, follows player 2 up the path and loses player 1 off the bottom (then both). Bottom: the camera stays with player 1 and backs off; player 2 stays in view, smaller, near the top](../images/coop-camera-near-focus.jpg)
+
+**The problem.** The centre of section 2 was the middle of the players in
+all three directions. When one player walked deep into the picture (up a
+path, away from the camera), the camera's aim followed them halfway, and
+the player near the camera slipped off the bottom of the picture, although
+the far player was in plain view all along.
+
+**Why front to back is different.** The game's cameras look down only about
+10 degrees. A far player on the ground appears near the middle of the
+picture, just smaller, without the camera moving toward them. Left / right
+and height are what push a player out of the picture.
+
+**The change.** Along the camera's forward direction (kept level) the centre
+now sits with the player **nearest** the camera; left / right and height
+still use the middle (`--coop_camera_near_focus`, 1 = nearest player,
+0 = the middle as before; the launcher's "Stay with the nearest player").
+The distance fit is unchanged, so the camera still backs off when the far
+player would leave the top or the sides. The nearest player's distance
+along that direction is a minimum over the players, which changes
+continuously, so two players swapping who is nearer doesn't make the
+camera jump.
+
+Same walk as in the picture (fake controllers, player 2 climbing the path
+from the Ratcicle Kingdom courtyard): with the middle, the camera ended up
+looking at a wall with nobody in view; with the nearest player, player 1
+stayed on screen throughout and player 2 stayed in view up the path.

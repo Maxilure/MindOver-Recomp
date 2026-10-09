@@ -427,6 +427,14 @@ void Page::DrawMain() {
       slider("   Farthest zoom-out", "coop_camera_max_distance", 20, 80, "%.0f",
              "How far the co-op camera may back off to fit everyone (the original camera's "
              "range is about 12-20). Past it, a player who runs off leaves the screen.");
+      slider("   Room around players", "coop_camera_room", 0, 10, "%.1f",
+             "How much ground around each player stays in the picture (to their left, right and "
+             "beyond them), so a player at the edge still sees a ledge or a drop. Crash is about "
+             "2 tall. 0 = just the players themselves.");
+      slider("   Stay with the nearest player", "coop_camera_near_focus", 0, 1, "%.2f",
+             "Front to back, the camera stays with the player nearest to it, so a player walking deep "
+             "into the picture doesn't pull the others off the bottom. 1 = nearest player, 0 = the "
+             "middle of the players (the old way).");
       slider("   Group focus", "coop_camera_group_focus", 0, 4, "%.1f",
              "3-4 players: how much more a group of players counts than a player on their own "
              "when the camera picks its centre. 0 = everyone the same.");
