@@ -208,7 +208,8 @@ recompilation or reverse engineering.
 ## Contributing
 
 Contributions of any kind (code, reverse engineering, testing, bug reports,
-corrections) are welcome and will be credited by name in [Credits](#credits).
+corrections) are welcome and will be credited by name in [Credits](#credits) and
+[CREDITS.md](CREDITS.md).
 Hand-written, expert work is especially valued. Bug reports go in the
 [issues](https://github.com/Maxilure/MindOver-Recomp/issues): the launcher's
 **Report a problem...** makes the file to attach (see
@@ -216,15 +217,17 @@ Hand-written, expert work is especially valued. Bug reports go in the
 
 ## Credits
 
-* **Maxilure**: project lead, direction, playtesting; the "3" / "4" marker
-  art for players 3-4 (`assets/markers/`).
+Every contribution in detail: **[CREDITS.md](CREDITS.md)**.
+
+* **Maxilure**: project lead, direction, ideas, playtesting, art.
 * **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static
   recompiler and runtime that make this possible.
 * **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator
   that ReXGlue's runtime and GPU emulation build on.
 * **Claude** (Anthropic): AI assistant that wrote most of the code and
   documentation (see [Development approach](#development-approach)).
-* **You?** Every human contribution gets listed here by name.
+* **You?** Every human contribution gets listed here and in
+  [CREDITS.md](CREDITS.md) by name.
 
 ## Why this project exists
 
