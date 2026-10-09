@@ -162,6 +162,16 @@ constexpr float kUrgencyFall = 0.4f;
 // Camera frames after a take-over during which we don't push the distance
 // out ourselves (see CoopCameraDistance).
 constexpr int kSettleFrames = 15;
+// BACK FROM A CUTSCENE (added 2026-10-09, findings/28 s.8): the picture cut
+// anyway, so ours takes over at once: the centre jumps to the players and, for
+// kSnapSeconds, the distance IS the fit (no settle, no gentle back-off, no
+// deadband), measured on the last STEADY view from before the cutscene while
+// the game's camera glides (~0.6 s from its own one-player spot, where the cut
+// puts it, to ours), then on the live view once its direction holds still.
+// Fits measured on the gliding view asked for the maximum (45 units), then
+// crept back to 19.5 over ~3 s: the "zoom out + readjust" after the NV lab
+// cutscene with partners left behind.
+constexpr float kSnapSeconds = 1.0f;
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
 uint32_t Read32(uint32_t a) {
@@ -249,6 +259,33 @@ bool g_offset_valid = false;
 float g_fit = 0.0f;        // the distance we ask for (deadband / ease-in state; 0 = none yet)
 bool g_closing_in = false;  // g_fit is easing in toward a closer fit
 int g_active_frames = 0;    // camera frames since ours took over
+// A non-volume view (cutscene, scripted shot) was seen in play since ours was
+// last on: the next take-over SNAPS (kSnapSeconds) instead of gliding.
+bool g_after_cutscene = false;
+float g_snap_left = 0.0f;   // seconds left in which the distance snaps to the fit
+// The last view (and averaged offset) while ours was on and settled: what the
+// fit reads during the snap. Forgotten outside play (a level change).
+View g_steady_view;
+bool g_steady_valid = false;
+Vec g_steady_offset;
+// Camera frames in a row in which the live view's direction didn't change
+// (the game's glide after a cut has ended once it's a few).
+int g_live_still_frames = 0;
+constexpr int kLiveStill = 3;
+int32_t g_steady_volume = -1;  // the camera volume (+264) the steady view was seen in
+// The steady view is used for the whole snap when the camera is back in the
+// SAME volume (same angle: exact; measured 17.4 before and after the NV lab
+// cutscene, while live fits wandered 19 -> 24 -> 17.4: the first views after a
+// cut are still built around the game's own one-player target). In another
+// volume only until the live view stops gliding.
+bool UsingSteadyView() {
+  if (g_snap_left <= 0.0f || !g_steady_valid) return false;
+  const bool same_volume = g_volume && int32_t(Read32(g_volume + 264)) == g_steady_volume;
+  return same_volume || g_live_still_frames < kLiveStill;
+}
+// The view the fit, the urgency and the near focus measure on: the steady one
+// while snapping and the game's camera is still gliding, else the live one.
+const View& FitView() { return UsingSteadyView() ? g_steady_view : g_view; }
 float g_game_zoom = 0.0f;  // the game's own zoom this frame, and ours (debug trace)
 float g_our_zoom = 0.0f;
 int g_trace_count = 0;
@@ -306,6 +343,9 @@ void UpdatePlayers(bool volume_view) {
     total += w;
   }
   const bool was_active = g_active;
+  if (!volume_view && more_players::InPlay()) g_after_cutscene = true;
+  if (!more_players::InPlay()) g_steady_valid = false;
+  g_snap_left = std::max(0.0f, g_snap_left - dt);
   g_active = volume_view && g_answer && REXCVAR_GET(coop_camera) && more_players::InPlay() && g_in_game >= 2 &&
              total > 0.0f;
   if (!g_active) {  // the next take-over starts fresh
@@ -328,8 +368,8 @@ void UpdatePlayers(bool volume_view) {
   // and height need the middle. The fit (FitDistance) still backs off when
   // the far player would leave the top or the sides. min() over players is
   // continuous, so two players swapping who's nearer doesn't jump.
-  if (REXCVAR_GET(coop_camera_near_focus) && g_view.valid) {
-    const Vec forward = Vec{g_view.direction.x, 0.0f, g_view.direction.z};
+  if (REXCVAR_GET(coop_camera_near_focus) && FitView().valid) {
+    const Vec forward = Vec{FitView().direction.x, 0.0f, FitView().direction.z};
     if (Length(forward) > 0.1f) {
       const Vec f = Normalized(forward);
       float nearest = 1e30f;
@@ -339,10 +379,32 @@ void UpdatePlayers(bool volume_view) {
       if (nearest < 1e29f) raw = raw + f * (nearest - Dot(raw, f));
     }
   }
+  if (!was_active && g_after_cutscene && g_active) {
+    // Back from a cutscene / scripted shot: the picture cut anyway, so start
+    // on the players' centre right away (kSnapSeconds). Gliding from the
+    // game's own view (one player) showed as a zoom out + re-aim lasting
+    // ~2 s after the NV lab cutscene with partners left far behind.
+    g_after_cutscene = false;
+    g_snap_left = kSnapSeconds;
+    if (g_steady_valid) {
+      g_offset_local = g_steady_offset;
+      g_offset_valid = true;
+    }
+    g_centre = raw;
+    g_centre_velocity = {};
+    return;
+  }
+  if (g_active) g_after_cutscene = false;
+  // Remember a settled view (not while snapping, nor in the first frames).
+  if (g_active && g_snap_left <= 0.0f && g_offset_valid && g_view.valid && g_active_frames > kSettleFrames) {
+    g_steady_view = g_view;
+    g_steady_offset = g_offset_local;
+    g_steady_volume = g_volume ? int32_t(Read32(g_volume + 264)) : -1;
+    g_steady_valid = true;
+  }
   if (!was_active || !Finite(g_centre)) {
-    // Taking over (a second player joins, back from a cutscene): start where
-    // the game's camera was looking and glide to the players' centre, so the
-    // picture doesn't jump.
+    // Taking over (a second player joins): start where the game's camera was
+    // looking and glide to the players' centre, so the picture doesn't jump.
     const Vec target = g_volume ? ReadVec(g_volume + kVolumeTarget) : raw;
     g_centre = Finite(target) && Length(target - raw) < 30.0f ? target : raw;
     g_centre_velocity = {};
@@ -364,23 +426,24 @@ void UpdatePlayers(bool volume_view) {
 void UpdateUrgency() {
   const float before = g_urgency;
   g_urgency = 0.0f;
-  if (!g_view.valid || !g_active) return;
-  const Vec d = Normalized(g_view.direction);
-  const Vec r = Normalized(Cross(g_view.up, d));
+  const View& view = FitView();
+  if (!view.valid || !g_active) return;
+  const Vec d = Normalized(view.direction);
+  const Vec r = Normalized(Cross(view.up, d));
   const Vec u = Cross(d, r);
   float edge = 0.0f;  // 1 = the edge of the picture
   for (const Player& pl : g_players) {
     if (!pl.in_game) continue;
     const float height = pl.titan ? kTitanHeight : kCrashHeight;
     for (float h : {0.0f, height}) {
-      const Vec v = pl.last + Vec{0, h, 0} - g_view.position;
+      const Vec v = pl.last + Vec{0, h, 0} - view.position;
       const float depth = Dot(v, d);
       if (depth <= 0.5f) {
         edge = 2.0f;
         continue;
       }
-      edge = std::max({edge, std::fabs(Dot(v, r) / (depth * g_view.tan_x)),
-                       std::fabs(Dot(v, u) / (depth * g_view.tan_y))});
+      edge = std::max({edge, std::fabs(Dot(v, r) / (depth * view.tan_x)),
+                       std::fabs(Dot(v, u) / (depth * view.tan_y))});
     }
   }
   const float now = std::clamp((edge - kUrgentFrom) / (1.0f - kUrgentFrom), 0.0f, 1.0f);
@@ -391,13 +454,14 @@ void UpdateUrgency() {
 // The camera's offset from the centre, averaged (see kOffsetSeconds): from
 // the view the game just built around the centre we answered.
 void UpdateOffset() {
-  if (!g_view.valid || !g_active) return;
+  if (!g_view.valid || !g_active || UsingSteadyView()) return;  // (the steady offset holds)
   const Vec d = Normalized(g_view.direction);
   const Vec r = Normalized(Cross(g_view.up, d));
   const Vec u = Cross(d, r);
   const Vec off = Normalized(g_view.position - g_centre);
   const Vec local{Dot(off, r), Dot(off, u), Dot(off, d)};
-  if (!g_offset_valid) {
+  // Snapping on the live view (its glide ended): no averaging, it IS the offset.
+  if (!g_offset_valid || g_snap_left > 0.0f) {
     g_offset_local = local;
     g_offset_valid = true;
     return;
@@ -422,14 +486,15 @@ int PlayerOfActor(uint32_t actor) {
 // direction. Bisection between the game's own distance and the maximum.
 float FitDistance(float game_zoom) {
   const float max_d = std::max(game_zoom, float(REXCVAR_GET(coop_camera_max_distance)));
-  if (!g_view.valid) return game_zoom;
-  const Vec d = Normalized(g_view.direction);
-  const Vec r = Normalized(Cross(g_view.up, d));  // screen right
+  const View& view = FitView();
+  if (!view.valid) return game_zoom;
+  const Vec d = Normalized(view.direction);
+  const Vec r = Normalized(Cross(view.up, d));  // screen right
   const Vec u = Cross(d, r);                       // screen up
   // Where the camera sits relative to the centre: the averaged offset (not
   // last frame's raw position: see STEADY in the header).
   Vec offset = g_offset_valid ? r * g_offset_local.x + u * g_offset_local.y + d * g_offset_local.z
-                              : g_view.position - g_centre;
+                              : view.position - g_centre;
   if (Length(offset) < 1e-3f) offset = d * -1.0f;
   offset = Normalized(offset);
   // ROOM: besides feet and head, points `room` units to the player's left /
@@ -448,8 +513,8 @@ float FitDistance(float game_zoom) {
       const Vec v = point - cam;
       const float depth = Dot(v, d);
       if (depth <= 0.5f) return false;
-      const float sx = Dot(v, r) / (depth * g_view.tan_x);
-      const float sy = Dot(v, u) / (depth * g_view.tan_y);
+      const float sx = Dot(v, r) / (depth * view.tan_x);
+      const float sy = Dot(v, u) / (depth * view.tan_y);
       return std::fabs(sx) <= kMarginX && sy <= kMarginTop && sy >= -kMarginBottom;
     };
     for (const Player& pl : g_players) {
@@ -497,8 +562,12 @@ void Trace(uint32_t camera) {
 
 void OnGameCameraRebuilt(uint32_t camera) {
   // The view the game just set (the next frame's fit starts from it).
+  const Vec previous_direction = g_view.direction;
   g_view.position = ReadVec(camera + kCamPosition);
   g_view.direction = ReadVec(camera + kCamDirection);
+  g_live_still_frames = Dot(Normalized(previous_direction), Normalized(g_view.direction)) > 0.99999f
+                            ? g_live_still_frames + 1
+                            : 0;
   g_view.up = ReadVec(camera + kCamUp);
   const float fov_x = ReadFloat(camera + kCamFovX), aspect = ReadFloat(camera + kCamAspect);
   if (fov_x > 0.1f && fov_x < 3.0f && aspect > 0.5f && aspect < 4.0f) {
@@ -582,6 +651,15 @@ void CoopCameraDistance(PPCRegister& f1, PPCRegister& r31) {
   // Out at once (when more room is needed), back in only once the fit is
   // clearly closer, then easing (STEADY in the header).
   const float fit = FitDistance(g_game_zoom);
+  if (g_snap_left > 0.0f) {
+    // Back from a cutscene (kSnapSeconds): the distance is the fit, at once.
+    g_fit = fit;
+    g_closing_in = false;
+    g_our_zoom = std::max(g_game_zoom, g_fit);
+    f1.f64 = g_our_zoom;
+    WriteFloat(r31.u32 + kVolumeDistance, g_our_zoom);
+    return;
+  }
   if (g_fit <= 0.0f || fit >= g_fit) {
     g_fit = fit;
     g_closing_in = false;

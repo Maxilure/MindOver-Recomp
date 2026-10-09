@@ -1320,6 +1320,48 @@ extern "C" REX_FUNC(sub_820C0EF0) {
   __imp__sub_820C0EF0(ctx, base);
 }
 
+// =============================================================================
+// COMBAT BARRIERS LIGHT UP FOR EVERY PLAYER (findings/26 s.36).
+// CWorldCombatBarrierBehaviour (vtable 0x8203767C) = the purple walls that close
+// an arena (e.g. Wumpa Island's fight right after the NV mail). Its update
+// (slot 4 sub_8222FE00) walks the barrier list (global 0x8259B100) and calls
+// sub_82230D18 for each one: that gathers TWO positions (players 1-2: the titan
+// they ride at game object +24 / +28, else their Crash at +16 / +20; loop ends
+// at r30 == 24) and, per wall vertex, takes the smaller ground distance (x, z)
+// to either of them (f8 = "far" to start, 0x82230EA4-0x82230F24). The wall's
+// glow follows that distance: a wall nobody of the two is near stays invisible.
+// Players 3-4 still bump into it (the collision is separate), so for them it
+// was an invisible wall until player 1 or 2 came close.
+// Found 2026-10-09 from a 4-player report (the wall showed only near P1/P2):
+// the class name by RTTI, then xexdis 0x82230D18-0x82231058.
+// =============================================================================
+
+// Midasm hook at 0x82230F24 (fcmpu cr6,f0,f8; both "smaller?" paths meet
+// there): f0 = the squared ground distance from the vertex r11 (x at +0, z at
+// +8) to the nearer of players 1-2. Ours lowers it to players 3-4's when they
+// are nearer, computed the same way (single-precision, x and z only).
+void MorePlayersBarrierNearest(PPCRegister& f0, PPCRegister& r11) {
+  if (LocalPlayers() <= 2) return;
+  auto read_float = [](uint32_t a) {
+    const uint32_t b = Read32(a);
+    float f;
+    std::memcpy(&f, &b, 4);
+    return f;
+  };
+  const float vx = read_float(r11.u32), vz = read_float(r11.u32 + 8);
+  float nearest = float(f0.f64);
+  for (int p = 2; p < LocalPlayers(); ++p) {
+    if (Read32(kState + 4 * p) == 0) continue;  // not joined: nobody to light it for
+    const uint32_t titan = TitanOfPlayer(p);    // like the original: the titan they ride first
+    float at[3];
+    if (!PositionOf(titan ? titan : CharacterOf(p), at)) continue;
+    const float dx = vx - at[0], dz = vz - at[2];
+    const float d = dz * dz + dx * dx;
+    if (d < nearest) nearest = d;
+  }
+  f0.f64 = nearest;
+}
+
 // ForceOtherPlayerToBecomeMask (script method; Crash.bfig calls it right before
 // InteractWithInteractable). The original: when players 1 AND 2 are both in game
 // and neither is being forced into a mask / dropped out (sub-states 5 / 6), "the
@@ -1541,3 +1583,69 @@ extern "C" REX_FUNC(sub_8217F528) {
   }
 }
 
+// =============================================================================
+// PLAYERS 3-4 AS THE CAMERA'S PLAYER, "THE HOST" (findings/26 s.38).
+// The game object's +40 = the player the camera FOCUSES on (EPlayer, set by
+// sub_821099C0 from the focus actor's owner, sub_8226FCD8). Player 1 normally;
+// when player 1 drops out the focus moves to a player still in game, which
+// with players 3-4 can be 2 or 3. Story triggers and the camera follow this
+// player ("EPlayer_CAMERA_FOCUSING_ON" = -4 in the level's objectives), and
+// several of its readers only knew 0 and 1:
+//   * sub_82109770 (the volume camera's focus record), sub_8222EA78,
+//     sub_822E76D0 and sub_822E7A70 (the focus player's zone) start with
+//     "0 <= focus < 2, else give up": with player 3 alone the camera stood
+//     still at the spot player 1 dropped out;
+//   * CRequirementTriggerVolume (sub_822A6188, "who" at +20) turns -4 into
+//     "player 2 if the focus isn't player 1": player 3 walked through the
+//     N. Gin's lab trigger and nothing happened (the story can't go on);
+//   * CRequirementInteraction (sub_822A2460, "who" = +16 >> 28) reads the
+//     focus player's actor behind "p < 2" (players 3-4 = none) and its
+//     default ("both") loop covers players 1-2 only;
+//   * sub_82234F40 (a partner left in a zone being unloaded is pulled onto
+//     the focus player as a mask) only knew ONE partner.
+// Found 2026-10-09: player 1 dropped out with only player 3 in game (fake
+// controllers, Wumpa Island): +40 = 2, then the camera and the lab cutscene
+// ignored player 3. Every function reading +40 was listed (bl sub_82270608;
+// lwz rX,40(r3)) and checked with xexdis.
+// =============================================================================
+
+// Midasm hook on "cmpwi cr6,r11,2" of a "0 <= focus < 2" check (r11 = the
+// focus): a player 3-4 still in game counts as a valid focus (r11 is
+// overwritten right after; the reads that follow have their guards opened).
+void MorePlayersFocusCheck(PPCRegister& r11) {
+  const int32_t p = int32_t(r11.u32);
+  if (p >= 2 && p < LocalPlayers() && Read32(kState + 4 * p) != 0) r11.u64 = 1;
+}
+
+// sub_822A6188 at 0x822A620C (rlwinm r8,r31,2: r31 = the player whose state
+// is read next, r26 = the requirement): for "the camera's player" (-4) the
+// original made r31 = (focus != 0); a focus of 2-3 becomes that player.
+void MorePlayersTriggerFocus(PPCRegister& r31, PPCRegister& r26) {
+  if (int32_t(Read32(r26.u32 + 20)) != -4) return;
+  const int32_t focus = int32_t(Read32(0x825B0008 + 40));
+  if (focus >= 2 && focus < LocalPlayers()) r31.u64 = uint32_t(focus);
+}
+
+// sub_822A2460 at 0x822A24C0: the default loop's last player (r29 = 1, set
+// just before) -> every local player. Players 0 / 1 / focus overwrite it.
+void MorePlayersInteractionLast(PPCRegister& r29) { r29.u64 = uint32_t(LocalPlayers() - 1); }
+
+// The partner check: for EVERY other player (joined), the original's test
+// (their Crash's zone +40 in state 4 = being unloaded -> sub_82234E60 pulls
+// them to the focus player as a mask).
+extern "C" REX_FUNC(__imp__sub_82234F40);
+extern "C" REX_FUNC(__imp__sub_82234E60);
+extern "C" REX_FUNC(sub_82234F40) {
+  if (LocalPlayers() <= 2) {
+    __imp__sub_82234F40(ctx, base);
+    return;
+  }
+  const int32_t focus = int32_t(Read32(0x825B0008 + 40));
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    if (p == focus || (p >= 2 && Read32(kState + 4 * p) == 0)) continue;
+    const uint32_t crash = CharacterOf(p);
+    if (!crash) continue;
+    const uint32_t zone = Read32(crash + 40);
+    if (zone && Read32(zone + 596) == 4) CallGame(__imp__sub_82234E60, ctx, base, crash);
+  }
+}

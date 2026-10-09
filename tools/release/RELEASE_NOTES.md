@@ -26,7 +26,14 @@ no game files. The launcher builds the game on your computer, from your disc.
   *Stay with the nearest player*.
 - The camera returns to its normal distance after cutscenes, holds still
   while everyone stands still, and keeps some ground around each player in
-  view (setting: *Room around players*).
+  view (setting: *Room around players*). After a cutscene with the other
+  players far away, it goes straight to everyone instead of zooming out
+  to the maximum and slowly back in.
+- The purple walls that close a fight now light up when players 3 or 4
+  come near them, not only players 1 and 2.
+- When player 1 drops out and only players 3 or 4 are left, the camera
+  now follows them and they can start story scenes. Before, the camera
+  stood still and the story couldn't go on.
 
 **Launcher and logs**
 

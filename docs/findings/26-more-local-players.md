@@ -1412,3 +1412,82 @@ mask, no player in sub-state 7, me on foot, my partner on foot with room for
 a mask). Off = the original's rule. The same walk then turns player 2 into
 a mask on player 1's Crash from 87 units away; with four players, from
 about 90 units onto the nearest Crash. The catch-up is unchanged.
+
+## 36. Combat barriers light up for players 3-4
+
+**The symptom.** The purple walls that close a fight arena (Wumpa Island,
+the fight after the NV mail) stayed invisible when player 3 or 4 walked up
+to them. They still blocked them; the glow appeared only once player 1 or 2
+came near.
+
+**Why.** The walls are `CWorldCombatBarrierBehaviour` (vtable
+`0x8203767C`). Its update (`sub_8222FE00`) walks the list of live barriers
+(global `0x8259B100`, empty outside a fight) and runs `sub_82230D18` for
+each. That function first gathers **two** positions, players 1 and 2 (the
+titan a player rides, game object +24 / +28, else their Crash at +16 / +20;
+the loop stops at offset 24), then for every wall vertex takes the smaller
+ground distance (x and z) to either of them. The glow follows that
+distance, so a wall nobody of the two is near stays dark. The collision is
+separate, which is why it still worked for everyone.
+
+**The change.** A midasm hook at `0x82230F24` (`fcmpu cr6,f0,f8`, where both
+"is this one nearer?" paths meet with the squared distance in `f0` and the
+vertex in `r11`) lowers `f0` to the distance of player 3 or 4 when they are
+nearer, measured the same way (their titan first, then their Crash; only
+players who joined). With two players nothing changes.
+
+## 37. Who may start a story trigger (no change)
+
+Walking into the N. Gin's lab cutscene works for player 1 only, with two
+players as well as four. That is the original's design. The level's
+"actor in trigger volume" objectives (`CRequirementTriggerVolume`, check
+`sub_822A6188`) carry a WHO setting at +20:
+
+| value | who counts |
+|---|---|
+| 0 / 1 | player 1 / player 2 |
+| -4 | the player the camera FOCUSES on (game object +40) |
+| -2 | any player in game |
+| -3 | every player in game |
+
+A temporary log on Wumpa Island listed about 200 of them: almost all -4, a
+few 0 / 1 pairs, two -2. The focus player is player 1 unless they're out of
+play, so player 2 can't start story scenes on the Xbox either. The check's
+player loop already runs for four players (section 16), so -2 and -3 work
+for players 3-4. Letting anyone start a -4 scene would play it while the
+camera follows someone else, so it stays as it is. When player 1 drops out
+the focus moves to a player still in game, and that player starts the
+scenes (section 38).
+
+## 38. Players 3-4 as the camera's player
+
+**The symptom.** Player 1 drops out while only player 3 is in game. The
+camera stays where player 1 left, player 3 walks out of the picture, and
+walking into the N. Gin's lab trigger does nothing. The story can't go on.
+
+**Why.** The focus (game object +40) is set by `sub_821099C0` from the
+owner of the actor the camera follows (`sub_8226FCD8`), so it does become 2
+(player 3). Its readers were found by listing every `bl sub_82270608; lwz
+rX,40(r3)` (13 functions). The ones that only knew 0 and 1:
+
+| function | what it does | problem with a focus of 2-3 |
+|---|---|---|
+| `sub_82109770` | the volume camera's focus record | "0 <= focus < 2" first: no record, the camera's target stops |
+| `sub_822E76D0`, `sub_822E7A70` | the focus player's zone (kept running) | same check |
+| `sub_8222EA78` | clears a flag on the focus player's behaviour | same check |
+| `sub_822A6188` | `CRequirementTriggerVolume`, who -4 | player = (focus != 0): player 2 |
+| `sub_822A2460` | `CRequirementInteraction`, who at +16 >> 28 | focus player's actor behind "p < 2"; "both" = players 1-2 |
+| `sub_82234F40` | a partner in a zone being unloaded (state 4) becomes a mask on the focus player | one partner: player 1 or 2 |
+
+The other readers pass the focus to lookups that already handle four
+players.
+
+**The change.** A hook on the four "focus < 2" checks lets a player 3-4 in
+game through (the reads after them were already widened). The trigger
+volume's -4 player becomes the real focus. The interaction check's actor
+reads are widened and its "both" range covers every local player.
+`sub_82234F40` checks every partner. With two players nothing changes.
+Tested with fake controllers on Wumpa Island: player 3 joins, player 1
+drops out (focus 2), the camera follows player 3, player 3 walking into the
+lab starts the cutscene, play goes on after it, and player 1 can join
+again.

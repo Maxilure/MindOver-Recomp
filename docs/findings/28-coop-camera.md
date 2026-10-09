@@ -338,3 +338,37 @@ Same walk as in the picture (fake controllers, player 2 climbing the path
 from the Ratcicle Kingdom courtyard): with the middle, the camera ended up
 looking at a wall with nobody in view; with the nearest player, player 1
 stayed on screen throughout and player 2 stayed in view up the path.
+
+## 8. Back from a cutscene with the partners far away
+
+**The symptom.** Wumpa Island, three players: players 2 and 3 stay at the
+save totem, player 1 walks alone to N. Gin's lab and starts its cutscene.
+When play resumed, the camera came back inside a rock face, flew out to the
+45-unit maximum and then crept back in over about 3 seconds.
+
+**Why.** Section 5's take-over still glided: it started from the game's own
+target (player 1) and only measured the fit on the live view. After a cut
+the game places its camera around the FOCUS player (the cut ends a frame
+before ours turns on) and then spends about 0.6 s gliding between camera
+volumes (89 → 91 here) toward the players' centre. Fits measured on that
+moving view put the players at the edge of the picture: the 45-unit
+maximum, written into the current distance at once (urgency 1), followed by
+the game's slow smoother coming back in to 19.5.
+
+**The change.** After a non-volume view (cutscene, scripted shot) the next
+take-over SNAPS for 1 s: the centre jumps straight to the players, and the
+distance is the fit itself (no settle, no gentle back-off, no deadband).
+The fit is measured on the last STEADY view from before the cutscene
+(saved every settled frame with its averaged offset), not on the gliding
+one. That is used for the whole second when the camera is back in the same
+volume, and otherwise only until the live view's direction stops changing.
+A join still glides as before.
+
+| After the NV lab cutscene (trace every 3 frames) | camera distance |
+|---|---|
+| before | 45 for 0.6 s, then 39 → 19.5 over ~3 s |
+| live fit only, no glide | 19 → 24 → 17.4 over ~1 s |
+| steady view (the change) | 20 → 17 during the glide, then 17 → 19.4 gently |
+
+In the 250 ms captures the picture shows the final framing about 0.5 s
+after the fade; the last couple of units are the normal gentle zoom out.

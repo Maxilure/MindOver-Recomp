@@ -1659,3 +1659,69 @@ registers = ["f1", "r31"]
 address = 0x822F003C
 name = "CoopCameraZoneActive"
 registers = ["r11", "r31"]
+# COMBAT BARRIERS (src/players/more_players.cpp, MorePlayersBarrierNearest; findings/26 s.36). The
+# purple arena walls (CWorldCombatBarrierBehaviour, per-barrier update sub_82230D18) glow by each
+# vertex's ground distance to the nearer of TWO positions (players 1-2, gathered at 0x82230D40,
+# loop end r30 == 24). Both "smaller?" paths of the per-vertex minimum meet at 0x82230F24
+# (fcmpu cr6,f0,f8) with the squared distance in f0 and the vertex in r11: the hook lowers f0 to
+# players 3-4's distance when they're nearer. Found 2026-10-09: the wall stayed invisible for
+# players 3-4 (still solid) until player 1 or 2 came near; verified with xexdis 0x82230D18-0x82231058.
+[[entrypoint.midasm_hook]]
+address = 0x82230F24
+name = "MorePlayersBarrierNearest"
+registers = ["f0", "r11"]
+# PLAYERS 3-4 AS THE CAMERA'S PLAYER (src/players/more_players.cpp; findings/26 s.38). The game
+# object's +40 = the focus player ("EPlayer_CAMERA_FOCUSING_ON"), 2-3 once player 1 drops out with
+# only players 3-4 in game. Four readers start with "0 <= focus < 2" (the "cmpwi cr6,r11,2" below):
+# the volume camera's focus record sub_82109770, sub_8222EA78, the focus player's zone sub_822E76D0
+# / sub_822E7A70. Found 2026-10-09: player 3 alone, the camera stood still where player 1 dropped
+# out and the N. Gin's lab trigger ignored player 3; readers listed by "bl sub_82270608; lwz rX,
+# 40(r3)", each checked with xexdis.
+[[entrypoint.midasm_hook]]
+address = 0x82109790
+name = "MorePlayersFocusCheck"
+registers = ["r11"]
+[[entrypoint.midasm_hook]]
+address = 0x8222EA9C
+name = "MorePlayersFocusCheck"
+registers = ["r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822E76F8
+name = "MorePlayersFocusCheck"
+registers = ["r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822E7A98
+name = "MorePlayersFocusCheck"
+registers = ["r11"]
+# CRequirementTriggerVolume sub_822A6188: "who" -4 = (focus != 0) -> player 2 for a focus of 2-3;
+# at 0x822A620C (rlwinm r8,r31,2,0,29) r31 becomes the real focus (r26 = the requirement).
+[[entrypoint.midasm_hook]]
+address = 0x822A620C
+name = "MorePlayersTriggerFocus"
+registers = ["r31", "r26"]
+# CRequirementInteraction sub_822A2460: player loop 822A2504-822A2554 (r31 = p, r30 = 16 + 4p,
+# from p = first to r29 = last): the titan read (add r11,r30,r3 ; lwz r11,8(r11)) and the Crash
+# read (lwzx r11,r30,r3) behind "p < 2"; the default ("both") range ends at player 2 (li r29,1
+# right before 0x822A24C0).
+[[entrypoint.midasm_hook]]
+address = 0x822A24C0
+name = "MorePlayersInteractionLast"
+registers = ["r29"]
+[[entrypoint.midasm_hook]]
+address = 0x822A2514
+name = "MorePlayersTitanGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A2518
+[[entrypoint.midasm_hook]]
+address = 0x822A2520
+name = "MorePlayersLoopTitan16"
+registers = ["r30", "r11"]
+[[entrypoint.midasm_hook]]
+address = 0x822A2538
+name = "MorePlayersActorGuard"
+registers = ["r31"]
+jump_address_on_true = 0x822A253C
+[[entrypoint.midasm_hook]]
+address = 0x822A2540
+name = "MorePlayersLoopChar16"
+registers = ["r30", "r11"]
