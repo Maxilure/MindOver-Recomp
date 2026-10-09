@@ -1383,3 +1383,32 @@ real points next to player 2's, 0 errors; two players unchanged. The safety
 net stays in place and should stay silent. Moving the reticle needs the
 "reticle on" state the scripts set while a masked player aims, which fake
 controllers haven't reached yet: to confirm in play.
+
+
+## 35. Turning into a mask from any distance
+
+**The symptom.** With the co-op camera, a player far from their partner
+could not turn into a mask: B did nothing, with two players and with four.
+
+**Why.** Two rules let B make a mask, and both look at the screen:
+
+- the ordinary one, "may I turn into a mask" (`sub_82235CB8`, section 12),
+  needs the partner **on screen** (`sub_82235978`);
+- the catch-up (findings/28 section 4) needs the player **themselves off
+  screen**.
+
+The original camera follows one player, so a far player was the one off
+screen and the catch-up brought them back. The co-op camera keeps everyone
+in view up to its maximum distance, so the far player stays on screen while
+the partner can drop out of the picture: neither rule applies. Reproduced
+with fake controllers (player 2 climbing the path from the Ratcicle
+Kingdom courtyard, the camera aiming at the players' middle): two presses
+of B, no mask.
+
+**The change.** `--coop_mask_from_anywhere` (on by default) drops the
+on-screen condition. With it, the rewritten check of section 12 answers for
+two players as well (the same rules with one partner: nobody entering a
+mask, no player in sub-state 7, me on foot, my partner on foot with room for
+a mask). Off = the original's rule. The same walk then turns player 2 into
+a mask on player 1's Crash from 87 units away; with four players, from
+about 90 units onto the nearest Crash. The catch-up is unchanged.

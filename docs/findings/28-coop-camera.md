@@ -326,8 +326,8 @@ and height are what push a player out of the picture.
 
 **The change.** Along the camera's forward direction (kept level) the centre
 now sits with the player **nearest** the camera; left / right and height
-still use the middle (`--coop_camera_near_focus`, 1 = nearest player,
-0 = the middle as before; the launcher's "Stay with the nearest player").
+still use the middle (`--coop_camera_near_focus`, on by default; off = the middle as
+before; the launcher's "Stay with the nearest player").
 The distance fit is unchanged, so the camera still backs off when the far
 player would leave the top or the sides. The nearest player's distance
 along that direction is a minimum over the players, which changes

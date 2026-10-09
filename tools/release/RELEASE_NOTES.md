@@ -13,6 +13,23 @@ no game files. The launcher builds the game on your computer, from your disc.
 
 ### What's new in 0.1.1-alpha
 
+**Co-op** (the co-op camera is experimental and needs more testing)
+
+- **No more frozen partners**: a player far from the camera used to stop
+  dead, unable to move, until the other player came near. Every player's
+  part of the level now keeps running.
+- **Turn into a mask from anywhere**: a player far from their partner can
+  press B to become a mask and fly back, with 2 to 4 players. Before, B
+  did nothing while the partner was off screen.
+- **Walking into the distance no longer pushes the others off screen**:
+  front to back, the camera stays with the player nearest to it. Setting:
+  *Stay with the nearest player*.
+- The camera returns to its normal distance after cutscenes, holds still
+  while everyone stands still, and keeps some ground around each player in
+  view (setting: *Room around players*).
+
+**Launcher and logs**
+
 - **Report a problem** in the launcher: one click packs the logs of the
   sessions you pick, your settings and a short summary (version, system,
   graphics card) into a `.zip`, optionally with a save near the problem
@@ -23,6 +40,8 @@ no game files. The launcher builds the game on your computer, from your disc.
   up automatically. The *Event logs* setting turns the extra lines off.
 - **What's new** in the launcher: from this version on, it shows a
   release's notes before you update and once after.
+- Each session also records your controller presses next to its log (they
+  go into problem reports, so a bug's moves can be replayed).
 - After an update the game now always gets rebuilt, whichever tab is open
   (0.1.0's launcher could leave the old build in place).
 

@@ -86,10 +86,10 @@ REXCVAR_DEFINE_DOUBLE(coop_camera_group_focus, 2.0, "CrashMoM",
 REXCVAR_DEFINE_DOUBLE(coop_camera_room, 4.0, "CrashMoM",
                       "Co-op camera: how much of each player's surroundings must stay on screen (game units "
                       "left / right of them and beyond them; Crash is about 2 tall). 0 = just the players");
-REXCVAR_DEFINE_DOUBLE(coop_camera_near_focus, 1.0, "CrashMoM",
-                      "Co-op camera: front to back, the camera stays with the player NEAREST to it (1) instead "
-                      "of the middle of the players (0); a player further into the picture just looks smaller. "
-                      "Left / right and height still use the middle");
+REXCVAR_DEFINE_BOOL(coop_camera_near_focus, true, "CrashMoM",
+                    "Co-op camera: front to back, the camera stays with the player NEAREST to it instead of "
+                    "the middle of the players (false); a player further into the picture just looks smaller. "
+                    "Left / right and height still use the middle");
 REXCVAR_DEFINE_BOOL(debug_coop_camera_trace, false, "CrashMoM",
                     "Debug: log the game camera, the players and the camera volume's numbers (co-op camera)");
 REXCVAR_DEFINE_INT32(debug_coop_camera_trace_every, 10, "CrashMoM",
@@ -328,8 +328,7 @@ void UpdatePlayers(bool volume_view) {
   // and height need the middle. The fit (FitDistance) still backs off when
   // the far player would leave the top or the sides. min() over players is
   // continuous, so two players swapping who's nearer doesn't jump.
-  const float near_focus = std::clamp(float(REXCVAR_GET(coop_camera_near_focus)), 0.0f, 1.0f);
-  if (near_focus > 0.0f && g_view.valid) {
+  if (REXCVAR_GET(coop_camera_near_focus) && g_view.valid) {
     const Vec forward = Vec{g_view.direction.x, 0.0f, g_view.direction.z};
     if (Length(forward) > 0.1f) {
       const Vec f = Normalized(forward);
@@ -337,7 +336,7 @@ void UpdatePlayers(bool volume_view) {
       for (const Player& pl : g_players) {
         if (pl.in_game) nearest = std::min(nearest, Dot(pl.last, f));
       }
-      if (nearest < 1e29f) raw = raw + f * ((nearest - Dot(raw, f)) * near_focus);
+      if (nearest < 1e29f) raw = raw + f * (nearest - Dot(raw, f));
     }
   }
   if (!was_active || !Finite(g_centre)) {

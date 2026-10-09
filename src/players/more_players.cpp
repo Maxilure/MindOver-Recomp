@@ -44,6 +44,17 @@ extern "C" REX_FUNC(__imp__sub_821B6E40);  // give controller r4 the input map r
 extern "C" REX_FUNC(__imp__sub_822392A0);  // mask holder (CMaskAttacherBehaviour): attach mask r4
 extern "C" REX_FUNC(__imp__sub_82239418);  // mask holder: let go of its mask
 
+// A mask from anywhere (2026-10-09, findings/26 s.35): B turns a player into a
+// mask on their partner however far apart they are. The original also needed
+// the partner ON SCREEN, because its camera followed one player: the other one
+// walked off screen and came back with the catch-up (B while off screen,
+// findings/28 s.4). The co-op camera keeps everyone in the picture, so a far
+// player stayed on screen while their partner could be off it, and B did
+// nothing at all (neither rule applied).
+REXCVAR_DEFINE_BOOL(coop_mask_from_anywhere, true, "CrashMoM",
+                    "Co-op: B turns a player into a mask on their partner from any distance (false = the "
+                    "original rule: only while the partner is on screen)");
+
 // ON BY DEFAULT: one of the session log's event logs (session_log.h;
 // --event_logs=false turns them all off).
 REXCVAR_DEFINE_BOOL(debug_coop_trace, true, "CrashMoM",
@@ -1102,12 +1113,16 @@ extern "C" REX_FUNC(sub_82237960) {
 // check, I am on foot, and my host (sub_82235B10: the nearest Crash on foot) is
 // on foot with room for one more mask (three per Crash). A Crash that carries
 // masks may turn into one: its riders follow it (g_orphans above).
+// With --coop_mask_from_anywhere (default) the on-screen check is dropped, for
+// two players too (then this function answers for them as well: same rules
+// with one partner).
 // =============================================================================
 extern "C" REX_FUNC(__imp__sub_82235CB8);
 extern "C" REX_FUNC(__imp__sub_82235978);  // false = the other player may be the host (on screen)
 extern "C" REX_FUNC(sub_82235CB8) {
   const int n = LocalPlayers();
-  if (n <= 2) {
+  const bool anywhere = REXCVAR_GET(coop_mask_from_anywhere);
+  if (n <= 2 && !anywhere) {
     __imp__sub_82235CB8(ctx, base);
     return;
   }
@@ -1127,7 +1142,7 @@ extern "C" REX_FUNC(sub_82235CB8) {
     const int riders = holder ? (Read32(holder + kHolderRider) != 0) + (extras ? int(extras->size()) : 0) : 0;
     may = host_player >= 0 && host_player != my_player && Read32(kState + 4 * host_player) == 2 &&
           holder && riders < 1 + kMaxExtraRiders &&
-          (CallGame(__imp__sub_82235978, ctx, base, me_behaviour, host) & 0xFF) == 0;
+          (anywhere || (CallGame(__imp__sub_82235978, ctx, base, me_behaviour, host) & 0xFF) == 0);
   }
   ctx.r3.u64 = may ? 1 : 0;
   if (REXCVAR_GET(debug_coop_trace)) {  // each distinct answer once per (me, host)
