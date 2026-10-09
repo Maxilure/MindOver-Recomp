@@ -51,6 +51,9 @@ no game files. The launcher builds the game on your computer, from your disc.
   go into problem reports, so a bug's moves can be replayed).
 - After an update the game now always gets rebuilt, whichever tab is open
   (0.1.0's launcher could leave the old build in place).
+- **Linux: a crash now closes the game with a crash report** (like on
+  Windows) instead of freezing it. The report in `user/logs/crash-*.txt`
+  names the game code it happened in and goes into *Report a problem*.
 
 ### Updating from 0.1.0-alpha
 

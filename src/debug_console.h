@@ -52,6 +52,14 @@
 //                            may not contain spaces here.
 //   pos [p]                  where player p (default 1) is: their titan, else Crash
 //   goto <p> <x> <y> <z>     TELEPORT player p (~ = keep, ~5 = current + 5)
+//   who <expr> [bytes]       WHO WRITES THERE? Starts a write watch on the
+//                            range (default 4 bytes; no spaces in <expr>):
+//                            every write is caught (debug/write_watchpoints.h)
+//   who                      the writers so far, most frequent first: the
+//                            original PowerPC instruction, the last write's
+//                            old -> new word, the game's call stack
+//   who stop                 stop watching (forgets the writes)
+//   wait who [ms]            until a new write is caught
 //   photo                    F10: a photo of the next frame (both pictures while
 //                            ours is drawn); replies with the saved files'
 //                            paths once written (PNG + draw list)

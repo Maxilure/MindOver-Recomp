@@ -33,7 +33,10 @@ set(CRASHMOM_SOURCES
     src/debug_console.cpp        # --debug_console: a socket that answers questions about the running game
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
-    src/crash_report.cpp         # Windows: a crash writes its named call stack into the log
+    src/crash_report.cpp         # a crash writes its named call stack into the log + crash-*.txt
+    src/debug/host_symbols.cpp   # host code address -> function name / original PowerPC instruction
+    src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
+    src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name

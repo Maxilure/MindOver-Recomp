@@ -46,6 +46,9 @@
 #include <rex/ui/ui_event.h>
 
 #include "cheats/cheats.h"
+#include "debug/guest_stack.h"
+#include "debug/host_symbols.h"
+#include "debug/write_watchpoints.h"
 #include "data/fight_tree.h"
 #include "pddi/intercept.h"
 #include "debug_input_script.h"
@@ -385,6 +388,14 @@ std::string Wait(const std::vector<std::string_view>& w) {
       return FrontEndText() + "\n";
     });
   }
+  if (w[1] == "who") {  // until the write watch catches a NEW write
+    const uint64_t before = write_watchpoints::TotalHits();
+    return WaitFor(timeout(2), [&]() -> std::optional<std::string> {
+      const uint64_t now = write_watchpoints::TotalHits();
+      if (now == before) return std::nullopt;
+      return fmt::format("{} new write(s) (`who` lists them)\n", now - before);
+    });
+  }
   if (w[1] == "replay") {
     return WaitFor(timeout(2), [&]() -> std::optional<std::string> {
       if (input_record::ReplayRunning()) return std::nullopt;
@@ -610,6 +621,74 @@ uint32_t PhysicsOf(uint32_t body) {
 // velocity zeroed. Tested 2026-10-08: a titan and Crash on foot stay where
 // put and settle on the ground. "~" keeps a coordinate, "~<n>" adds n to it (goto 1 ~ ~5 ~ =
 // 5 units up).
+// who <expr> [bytes] | who | who stop: which code writes a memory range
+// (debug/write_watchpoints.h). The listing groups the writes by the host
+// instruction that made them, most frequent first, and names each one:
+// the original PowerPC instruction (host_symbols::GuestInstructions, one
+// llvm-symbolizer run for the whole list), the last write's old -> new value
+// and the game's call stack at that write.
+std::string GuestCodeName(uint32_t address) {
+  const uint32_t fn = guest_stack::FunctionContaining(address);
+  return fn ? fmt::format("{:08X} (sub_{:08X}+0x{:X})", address, fn, address - fn)
+            : fmt::format("{:08X}", address);
+}
+
+std::string WhoCommand(const std::vector<std::string_view>& w) {
+  if (w.size() == 2 && w[1] == "stop") {
+    write_watchpoints::DisarmAll();
+    return "stopped (hits forgotten)\n";
+  }
+  if (w.size() >= 2) {
+    const uint32_t address = Eval(w[1]);
+    const uint32_t size = w.size() >= 3 ? uint32_t(Number(w[2], "bytes")) : 4;
+    if (std::string why = write_watchpoints::Arm(address, size); !why.empty()) throw Error{why};
+    return fmt::format("watching 0x{:08X} ({} bytes)\n", address, size);
+  }
+  // The listing.
+  const auto ranges = write_watchpoints::Ranges();
+  std::string out = "watching:";
+  for (const auto& r : ranges) out += fmt::format(" 0x{:08X} ({} bytes)", r.address, r.size);
+  if (ranges.empty()) out += " nothing (who <expr> [bytes])";
+  out += fmt::format("; {} write(s) so far\n", write_watchpoints::TotalHits());
+
+  auto writers = write_watchpoints::Writers();
+  std::sort(writers.begin(), writers.end(),
+            [](const auto& a, const auto& b) { return a.count > b.count; });
+  const auto hits = write_watchpoints::Hits();
+  std::vector<uint64_t> pcs;
+  for (const auto& wr : writers) pcs.push_back(wr.host_pc);
+  const auto instructions = host_symbols::GuestInstructions(pcs);
+  for (size_t i = 0; i < writers.size(); ++i) {
+    const auto& wr = writers[i];
+    char host[512];
+    host_symbols::Describe(wr.host_pc, host, sizeof(host));
+    out += fmt::format("{:6}x  ", wr.count);
+    if (instructions[i].address) {
+      out += fmt::format("{}  {}\n", GuestCodeName(instructions[i].address), instructions[i].text);
+      out += fmt::format("         host {}\n", host);
+    } else {
+      out += fmt::format("host {}  (no PowerPC instruction: our code / the SDK / no debug info)\n", host);
+    }
+    // Its newest write still in the ring.
+    for (auto it = hits.rbegin(); it != hits.rend(); ++it) {
+      if (it->host_pc != wr.host_pc) continue;
+      out += fmt::format("         last: write #{} to 0x{:08X} at {:.0f} ms, thread {}: word {:08X} -> {}\n",
+                         it->serial, it->address, it->ms, it->thread, it->old_value,
+                         it->done ? fmt::format("{:08X}", it->new_value) : std::string("(pending)"));
+      if (it->guest_lr) {
+        out += "         game stack: lr " + GuestCodeName(it->guest_lr) + "\n";
+        for (int c = 0; c < it->caller_count; ++c) {
+          out += "                     " + GuestCodeName(it->callers[c]) + "\n";
+        }
+      } else {
+        out += "         (not a game thread)\n";
+      }
+      break;
+    }
+  }
+  return out;
+}
+
 std::string PosCommand(const std::vector<std::string_view>& w) {
   const uint32_t m = BodyMatrix(w.size() > 1 ? w[1] : "1");
   return Format("vec3", m + 48) + "\n";
@@ -677,7 +756,8 @@ const char kHelp[] =
     "write <expr> <type> <value> | wait ms <N> | wait state <N> [ms] | wait exit [ms] |\n"
     "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> |\n"
     "snap <name> <expr> <bytes> | diff <name> [update] | replay <file> [from] [to] | replay stop |\n"
-    "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | <any FIFO input line>\n"
+    "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
+    "who <expr> [bytes] | who | who stop | wait who [ms] | <any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
 
 // One command line -> its reply (throws Error).
@@ -700,6 +780,7 @@ std::string Run(std::string_view line) {
   if (verb == "replay") return ReplayCommand(w);
   if (verb == "watch") return WatchCommand(w);
   if (verb == "pos") return PosCommand(w);
+  if (verb == "who") return WhoCommand(w);
   if (verb == "goto") return GotoCommand(w);
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);

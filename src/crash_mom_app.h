@@ -55,6 +55,7 @@
 #include "settings_list.h"
 #include "session_log.h"
 #include "crash_report.h"
+#include "debug/write_watchpoints.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
 #include "input/players.h"
@@ -147,6 +148,11 @@ class CrashMomApp : public rex::ReXApp {
   // Everything is initialized, including the window and the presenter
   // (SetupPresentation runs before the runtime is built).
   void OnPostSetup() override {
+    // Linux crash report: the last handler in the SDK's list (crash_report.h).
+    crash_report::AfterRuntimeSetup();
+    // Debug console `who`: our write-watch fault handler, in front of the
+    // SDK's (src/debug/write_watchpoints.h). Costs nothing until armed.
+    write_watchpoints::Install();
     // Debug screenshots, only with --debug_capture_dir (see
     // debug_frame_capture.h). The presenter is the SDK object that holds
     // the final picture the emulated GPU sends to the "TV".
@@ -292,8 +298,9 @@ class CrashMomApp : public rex::ReXApp {
     session_log::Start(game_folder::UserFolder().empty() ? std::filesystem::path()
                                                          : game_folder::UserFolder() / "logs");
     game_folder::LogWhatHappened();
-    // Windows: a crash writes WHERE (named call stack) into the log and
-    // user/logs/crash-<time>.txt (src/crash_report.h).
+    // A crash writes WHERE (named call stack) into the log and
+    // user/logs/crash-<time>.txt (src/crash_report.h; Linux: its handler is
+    // added in OnPostSetup, after the SDK's own).
     crash_report::Install(game_folder::UserFolder() / "logs");
   }
 

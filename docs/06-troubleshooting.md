@@ -113,6 +113,12 @@ a save), F4 (all settings), F5 (cheats), F6 (controls), F8-F12 (renderer
 tools). If another program (an overlay such as MangoHud, Steam or a
 recording tool) uses the same keys, change that program's keys.
 
+**The game crashed**: the game closes and writes a crash report to
+`user/logs/crash-<date>_<time>.txt`, next to the session log. The launcher's
+**Report a problem** includes it. On Linux, versions before 0.1.1-alpha froze
+instead of closing (the picture stopped and one CPU core stayed busy): close
+the window in that case.
+
 **I changed a setting and now the game won't start / looks wrong**: in the
 launcher's Settings tab, press **Default** next to it. To reset everything,
 delete `user/settings.toml` (the launcher writes a new one).
@@ -231,10 +237,6 @@ NVIDIA, AMD or Intel. The game needs Vulkan.
 **The build is very slow**: Windows Defender scans every file the build
 writes. That is normal, just slower. You may choose to add the game's
 folder as an exclusion in Windows Security, but you don't have to.
-
-**The game crashed**: a crash report is written to
-`user\logs\crash-<date>_<time>.txt`, next to the session log. Attach both
-to your bug report.
 
 **Windows is less tested than Linux**: the port has only run on a few
 Windows PCs so far. Gameplay, keyboard and mouse, controllers, co-op, the

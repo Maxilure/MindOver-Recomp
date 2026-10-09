@@ -1,7 +1,9 @@
 # 29. The debug console: asking the running game questions
 
 Status: a developer tool (Linux), off unless `--debug_console=<socket>` is
-given. The input recording it replays is on by default.
+given. The input recording it replays is on by default. Section 4 adds the
+write watch (`who`: which code writes a value). Section 5 covers the Linux
+crash reports built on the same pieces.
 
 Test runs used to work one way only. A script could press buttons
 (`--debug_input_script`, the live FIFO), but what happened next had to be read
@@ -107,3 +109,146 @@ on real time, so where the character ends up is close but not identical
 (about 5 units apart after 5 s of walking). A replay is good for "does this
 sequence of moves trigger it", not for frame-exact reproduction. The
 launcher's Report a problem adds each chosen session's recording to the zip.
+
+## 4. Who writes there? (`who`)
+
+The question that came up most while hunting bugs: some code changes a value
+(a position, a camera distance, a flag), and which code is it? The console's
+`snap`/`diff` show THAT a value changed, not WHO changed it. Before, the answer
+meant gdb and a hardware watchpoint. Now:
+
+```
+who [p1+44]+48 12      watch player 1's position (x, y, z)
+wait who 5000          until something writes there
+who                    every writer so far
+who stop               stop watching
+```
+
+`who` lists the writers, most frequent first. Walking right for 1.5 s:
+
+```
+watching: 0xF9FCCC80 (12 bytes); 291 write(s) so far
+    97x  8217E9C8 (sub_8217E850+0x178)  stfs f0,48(r11)
+         host __imp__sub_8217E850+0x772
+         last: write #289 to 0xF9FCCC80 at 28545 ms, thread 69482: word 43B077BD -> 43B06F5C
+         game stack: lr 8217E9A4 (sub_8217E850+0x154)
+                     82103D38 (sub_82103C88+0xB0)
+                     8221DD00 (sub_8221D730+0x5D0)
+                     ...
+                     8227C72C (sub_8227C5D8+0x154)     the frame function
+                     8227B0D8 (sub_8227AEE0+0x1F8)     the main loop
+    97x  8217E9D0 (sub_8217E850+0x180)  stfs f13,52(r11)
+    97x  8217E9D8 (sub_8217E850+0x188)  stfs f12,56(r11)
+```
+
+One writer per coordinate, once per game frame, and the instructions are
+exactly what the disassembler shows at those addresses. A second check: the
+vblank counter `0x8258E460` (findings/07) named its writer as
+`stw r11,-7072(r10)` in `sub_82433380` (the game's vblank callback), called
+from D3D's vblank interrupt `sub_82310628`, 60 times a second. Both match what
+was known.
+
+### How it works (`src/debug/write_watchpoints.*`)
+
+1. The 4 KB host page(s) holding the range are made read-only (`mprotect`).
+   Reads go on as normal.
+2. A write to such a page faults (SIGSEGV). Our signal handler checks the
+   address. A write inside a watched range is recorded: old value, the host
+   instruction, the guest's LR and its call stack. Either way, the page is
+   made writable again and the CPU's trap flag (x86 EFLAGS.TF) is set in the
+   faulting thread.
+3. The write runs again, succeeds, and the trap flag stops the thread right
+   after that one instruction (SIGTRAP). That handler protects the page again
+   and records the new value.
+
+Every write is caught, not only the first, and the game never pauses for
+more than two signals. Graphics memory (the physical heaps, where the
+characters' objects live) is also watched by the emulated GPU and the
+texture cache. There the handler first runs the SDK's watchers
+(`Memory::TriggerPhysicalMemoryCallbacks`, as the SDK's own handler does),
+so their bookkeeping stays right.
+
+The handler sits in front of the SDK's at the signal level. Joining the SDK's
+handler list (`rex::arch::ExceptionHandler`) seemed the obvious way, but ours
+had to come first in that list, so it had to be added before guest memory
+exists. The first `Install()` into that list is what takes over SIGSEGV, and
+`Runtime::Setup` installs its SEH emulation's SIGSEGV handler ("not inside a
+`__try`: back to the default action and raise") right before it creates
+memory. With the early install that handler stayed on top, and the game's
+first ordinary GPU write-watch fault killed it.
+
+### Naming the writer (`src/debug/host_symbols.*`, `guest_stack.*`)
+
+- **The function**: the executable keeps its symbol table (about 62,000
+  functions, each recompiled one as `__imp__sub_X` with its size).
+- **The exact PowerPC instruction**: `llvm-symbolizer` maps the host address
+  to a line of `generated/default/*.cpp`. In those files, every guest
+  instruction is a `// <asm>` comment line followed by its C++. Counting the
+  comments from the nearest anchor (`DEFINE_REX_FUNC(sub_X)` or a `loc_X:`
+  label) gives the instruction's address: anchor + 4 x index. Checked against
+  the `ctx.lr = 0x...` line the generator writes after every call: 7,881 of
+  7,881 agreed. This needs a build with debug info and the generated sources
+  on disk, which every build has, since the game is always built on the
+  player's own computer.
+- **The game's call stack**: the PowerPC back chain in guest memory (each
+  frame stores the caller's stack pointer, and the return address sits 8
+  bytes below it). It is read with `process_vm_readv`, which returns an error
+  for unmapped memory instead of faulting. A frameless leaf function doesn't
+  show up; its caller is the `lr` line.
+
+### Limits
+
+- Linux x86-64 only, and not under gdb (the debugger takes the SIGTRAPs).
+- The kernel writing into a watched page (a file read straight into a buffer)
+  doesn't fault: the read fails instead. Don't watch a buffer that is being
+  loaded.
+- Another thread writing to the same page during the single step isn't seen.
+- At most 8 ranges and 64 pages. A page that also holds busy data costs a
+  fault and a trap per write to it.
+
+## 5. Crash reports on Linux
+
+On Windows, a crash already wrote a named call stack to
+`user/logs/crash-<date>_<time>.txt` (`src/crash_report.cpp`, DbgHelp). On
+Linux a crash didn't even end the game. The SDK's SIGSEGV handler declined a
+fault it couldn't place and returned, so the instruction ran again and
+faulted again, forever. The picture froze and one CPU core sat at 100%
+(`tools/play.sh --catch` was the way to find out where).
+
+Now a last handler joins the SDK's list once the runtime is set up, so it
+runs only when every other handler (MMIO, the GPU's write watches, the write
+watch above) declined the fault. It retries the same fault 20 times, 1 ms
+apart, in case another thread is just changing that page's state. Then it
+writes the report to the same file, the terminal and the log, and lets the
+game die by the same signal, **without a core dump**: `PR_SET_DUMPABLE 0`.
+A core dump of the game's gigabytes of mappings can fill RAM and swap
+while the system's dump service processes it. Under a debugger, the old repeat stays
+so gdb can catch it.
+
+A test crash, made by pointing the game's central object pointer
+(`0x8259B190`) at `0x10` through the console:
+
+```
+CRASH: access violation (read of host 0x10000005c = guest 0x0000005C)
+  thread 69482 "Main XThread (F"
+  at sub_8227AEE0+0x6eb  [crash_mom+0xd0df2b]
+  = inside the game's function sub_8227AEE0
+Guest registers: r1 7018FB50  lr 8227B054  ctr 823687C8
+  r3 825A56C0  r4 9DF3CA80  r5 00000035  r6 82369C20  r30 03327710  r31 825B0308
+Game call stack (return addresses, innermost first; lr = the last call made):
+  #0  8227A420  (sub_8227A3C0+0x60)
+  #1  82300D3C  (sub_82300BA0+0x19C)
+Host call stack (innermost first; the first frames are the fault handlers):
+  ...
+Original PowerPC instructions (generated sources + debug info):
+  fault  0x8227B058  lwz r3,76(r8)
+  called 0x8227A41C  bl 0x8227aee0
+```
+
+`lwz r3,76(r8)` with r8 = 0x10 reads guest 0x5C: the broken pointer plus 76.
+Everything up to the file write runs inside the signal handler, without
+allocating: the symbol table is loaded at startup, and text is built with
+`snprintf` into a static buffer. The PowerPC instructions need
+`llvm-symbolizer` and file reads, so a forked child appends them to the
+already-written file. It is killed after 10 s if it gets stuck. The
+launcher's Report a problem already packs `crash-*.txt` files.
