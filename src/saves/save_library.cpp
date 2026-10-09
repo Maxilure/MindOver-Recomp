@@ -1699,7 +1699,7 @@ extern "C" REX_FUNC(sub_824742F0) {
   // A replay of recorded presses replaces what the device said (input_record.h).
   if (state) {
     uint32_t result = ctx.r3.u32;
-    input_record::BeforeFilters(user, GuestPtr(base, state + 4), result);
+    input_record::BeforeFilters(user, GuestPtr(base, state + 4), result, base);
     ctx.r3.u64 = result;
   }
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {

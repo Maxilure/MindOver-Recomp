@@ -49,6 +49,7 @@
 #include "debug/guest_stack.h"
 #include "debug/host_symbols.h"
 #include "debug/write_watchpoints.h"
+#include "fixed_step.h"
 #include "data/fight_tree.h"
 #include "pddi/intercept.h"
 #include "debug_input_script.h"
@@ -518,10 +519,20 @@ std::string DiffCommand(const std::vector<std::string_view>& w) {
 std::string ReplayCommand(const std::vector<std::string_view>& w) {
   if (w.size() == 1) return input_record::ReplayStatus();
   if (w[1] == "stop") return input_record::StopReplay();
-  const int64_t from = w.size() > 2 ? Number(w[2], "from_ms") : -1;
-  const int64_t to = w.size() > 3 ? Number(w[3], "to_ms") : -1;
+  // Trailing words (game-frame replays): "raw" = no reaction alignment above
+  // 30 fps, "onlevel" = start on the level's first playable frame, "onspawn"
+  // = 1.5 s of game time after player 1's Crash is created (input_record.h).
+  std::vector<std::string_view> args(w.begin(), w.end());
+  bool raw = false, on_level = false, on_spawn = false;
+  while (args.size() > 2 &&
+         (args.back() == "raw" || args.back() == "onlevel" || args.back() == "onspawn")) {
+    (args.back() == "raw" ? raw : args.back() == "onlevel" ? on_level : on_spawn) = true;
+    args.pop_back();
+  }
+  const int64_t from = args.size() > 2 ? Number(args[2], "from_ms") : -1;
+  const int64_t to = args.size() > 3 ? Number(args[3], "to_ms") : -1;
   try {
-    return input_record::StartReplay(std::string(w[1]), from, to);
+    return input_record::StartReplay(std::string(w[1]), from, to, raw, on_level, on_spawn);
   } catch (const std::exception& e) {
     throw Error{e.what()};
   }
@@ -669,6 +680,27 @@ std::string WhoCommand(const std::vector<std::string_view>& w) {
     } else {
       out += fmt::format("host {}  (no PowerPC instruction: our code / the SDK / no debug info)\n", host);
     }
+    // How often it wrote ZERO (of its writes still in the ring): "who
+    // resets this to 0?" is a common question (2026-10-09: Crash's vertical
+    // speed snapped to 0.00 on a slope at 180 fps).
+    int in_ring = 0, zeros = 0;
+    std::map<uint32_t, int> zero_callers;  // the game function that asked for each 0
+    for (const auto& h : hits) {
+      if (h.host_pc != wr.host_pc || !h.done) continue;
+      ++in_ring;
+      if (h.new_value == 0) {
+        ++zeros;
+        ++zero_callers[h.guest_lr];
+      }
+    }
+    if (zeros) {
+      out += fmt::format("         wrote 0 {} time(s) (of its {} writes still recorded), asked by:", zeros,
+                         in_ring);
+      for (const auto& [lr, n] : zero_callers) {
+        out += fmt::format(" {}x lr {}", n, lr ? GuestCodeName(lr) : std::string("(not a game thread)"));
+      }
+      out += '\n';
+    }
     // Its newest write still in the ring.
     for (auto it = hits.rbegin(); it != hits.rend(); ++it) {
       if (it->host_pc != wr.host_pc) continue;
@@ -721,6 +753,159 @@ std::string GotoCommand(const std::vector<std::string_view>& w) {
   return Format("vec3", m + 48) + "\n";
 }
 
+// clock fixed <N> [fast] | clock real | clock: the FIXED STEP (fixed_step.h):
+// every game frame exactly 1/N s, for exact, repeatable runs.
+std::string ClockCommand(const std::vector<std::string_view>& w) {
+  if (w.size() == 1) return fixed_step::Status();
+  if (w[1] == "real" && w.size() == 2) return fixed_step::Set(0, false);
+  if (w[1] == "fixed" && (w.size() == 3 || (w.size() == 4 && w[3] == "fast"))) {
+    const int64_t fps = Number(w[2], "fps");
+    if (fps < 1 || fps > 1000) throw Error{"fps: 1-1000"};
+    return fixed_step::Set(int32_t(fps), w.size() == 4);
+  }
+  throw Error{"clock | clock fixed <fps> [fast] | clock real"};
+}
+
+// track <file> [frames] | track stop | track: EVERY GAME FRAME, every player
+// in game -> one CSV row: where their body is and how it moves, for
+// comparing two runs (tools/compare_runs.py). Columns:
+//   frame        the fixed step's frame number (fixed_step.h), else a count
+//   replay_frame the game-frame replay's own count (-1: none running), so
+//                two runs line up on the replay's start
+//   t_ms         game time at the END of this frame: fixed step = (replay
+//                frame + 1) x 1000 / fps (or frame + 1 without a replay);
+//                real time = ms since the track began
+//   player body  1-4, the body's actor (titan or Crash: a jack changes it)
+//   x y z        the physics' own position (CPhysicsBehaviour +140), else
+//                the world matrix's
+//   vx vy vz     the physics' velocity (+104), units/s; y = up
+//   ground steep the contact objects (findings/22: variables at physics
+//                +39 / +40), 0 = none
+//   mx my mz     the world matrix's position (actor +44 -> +48): where the
+//                body is DRAWN (the physics writes it back each frame, but
+//                not in every state: the two can part)
+// Written at frame end on the game's main thread (pddi frame-end listener),
+// when a frame's physics is complete.
+struct Track {
+  std::FILE* file = nullptr;
+  std::string path;
+  int64_t max_frames = 0;  // 0 = until `track stop`
+  int64_t frames = 0, rows = 0;
+  uint64_t count = 0;      // frames seen (the "frame" column without a fixed step)
+  Clock::time_point start = Clock::now();
+  std::mutex mutex;
+};
+std::mutex g_track_mutex;           // guards g_track (the pointer)
+std::unique_ptr<Track> g_track;
+
+// The contact object in the physics' variable whose index byte is at
+// physics + index_field (ground_physics.cpp Contact, with checked reads).
+uint32_t ContactOf(uint32_t physics, uint32_t index_field) {
+  try {
+    const uint32_t actor = ReadBE(physics + kPhysicsActor, 4);
+    if (!actor) return 0;
+    const uint32_t table =
+        actor == ReadBE(0x8259ACE0, 4) ? 0x82597B30u : ReadBE(actor + 32, 4);
+    if (!table) return 0;
+    const uint32_t storage = ReadBE(table + 4 * ReadBE(physics + index_field, 1), 4);
+    return storage ? ReadBE(storage, 4) : 0;
+  } catch (const Error&) {
+    return 0;
+  }
+}
+
+void TrackFrame(void* user) {
+  Track& t = *static_cast<Track*>(user);
+  std::lock_guard lock(t.mutex);
+  if (!t.file || (t.max_frames && t.frames >= t.max_frames)) return;
+  if (!more_players::InPlay()) return;  // menus / no level: nobody to track
+  ++t.count;
+  ++t.frames;
+  const int32_t fps = fixed_step::Fps();
+  const int64_t frame = fps ? int64_t(fixed_step::Frame()) : int64_t(t.count);
+  const int64_t replay_frame = input_record::ReplayFrame();
+  double t_ms;
+  if (fps) {
+    t_ms = double((replay_frame >= 0 ? replay_frame : frame) + 1) * 1000.0 / fps;
+  } else {
+    t_ms = std::chrono::duration<double, std::milli>(Clock::now() - t.start).count();
+  }
+  for (int p = 0; p < 4; ++p) {
+    const uint32_t titan = more_players::TitanOfPlayer(p);
+    const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(p);
+    if (!body) continue;
+    float pos[3] = {}, vel[3] = {}, drawn[3] = {};
+    uint32_t ground = 0, steep = 0;
+    try {
+      const uint32_t m = ReadBE(body + 44, 4);
+      for (int i = 0; i < 3; ++i) drawn[i] = ReadF32(m + 48 + 4 * i);
+      const uint32_t physics = PhysicsOf(body);
+      if (physics) {
+        for (int i = 0; i < 3; ++i) {
+          pos[i] = ReadF32(physics + kPhysicsPosition + 4 * i);
+          vel[i] = ReadF32(physics + kPhysicsVelocity + 4 * i);
+        }
+        ground = ContactOf(physics, 39);
+        steep = ContactOf(physics, 40);
+      } else {
+        for (int i = 0; i < 3; ++i) pos[i] = drawn[i];
+      }
+    } catch (const Error&) {
+      continue;  // unreadable this frame (spawning / leaving)
+    }
+    std::fprintf(t.file,
+                 "%lld,%lld,%.3f,%d,%08X,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%08X,%08X,%.5f,%.5f,%.5f\n",
+                 (long long)frame, (long long)replay_frame, t_ms, p + 1, body, pos[0], pos[1],
+                 pos[2], vel[0], vel[1], vel[2], ground, steep, drawn[0], drawn[1], drawn[2]);
+    ++t.rows;
+  }
+}
+
+std::string StopTrack() {
+  std::unique_ptr<Track> track;
+  {
+    std::lock_guard lock(g_track_mutex);
+    track = std::move(g_track);
+  }
+  if (!track) return "no track running\n";
+  pddi::RemoveFrameEndListener(&TrackFrame, track.get());  // waits for a call in progress
+  std::fclose(track->file);
+  return fmt::format("track stopped: {} frames, {} rows in {}\n", track->frames, track->rows,
+                     track->path);
+}
+
+std::string TrackCommand(const std::vector<std::string_view>& w) {
+  if (w.size() == 1) {
+    std::lock_guard lock(g_track_mutex);
+    if (!g_track) return "no track running\n";
+    std::lock_guard track_lock(g_track->mutex);
+    return fmt::format("tracking into {}: {} frames, {} rows{}\n", g_track->path,
+                       g_track->frames, g_track->rows,
+                       g_track->max_frames && g_track->frames >= g_track->max_frames
+                           ? " (done: frame limit reached)"
+                           : "");
+  }
+  if (w[1] == "stop") return StopTrack();
+  StopTrack();  // one at a time
+  auto track = std::make_unique<Track>();
+  track->path = std::string(w[1]);
+  track->max_frames = w.size() > 2 ? Number(w[2], "frames") : 0;
+  track->file = std::fopen(track->path.c_str(), "w");
+  if (!track->file) throw Error{"can't write " + track->path};
+  const int32_t fps = fixed_step::Fps();
+  std::fprintf(track->file, "# Mind over Recomp track (debug console): fixed_step_fps=%d\n", fps);
+  std::fprintf(track->file, "frame,replay_frame,t_ms,player,body,x,y,z,vx,vy,vz,ground,steep,mx,my,mz\n");
+  std::string reply = fmt::format("tracking every frame into {}{}{}\n", track->path,
+                                  fps ? fmt::format(" (fixed step 1/{} s)", fps)
+                                      : std::string(" (REAL TIME: runs won't line up exactly)"),
+                                  track->max_frames ? fmt::format(", {} frames", track->max_frames)
+                                                    : std::string());
+  pddi::AddFrameEndListener(&TrackFrame, track.get());
+  std::lock_guard lock(g_track_mutex);
+  g_track = std::move(track);
+  return reply;
+}
+
 // photo: F10, then the saved files (photos/ or --photo_dir) once written.
 std::string Photo() {
   const uint32_t before = native::ab_capture::LastPhoto().serial;
@@ -757,7 +942,8 @@ const char kHelp[] =
     "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> |\n"
     "snap <name> <expr> <bytes> | diff <name> [update] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
-    "who <expr> [bytes] | who | who stop | wait who [ms] | <any FIFO input line>\n"
+    "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
+    "track <file> [frames] | track stop | track | <any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
 
 // One command line -> its reply (throws Error).
@@ -785,6 +971,8 @@ std::string Run(std::string_view line) {
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);
   if (verb == "fkey") return FKey(w);
+  if (verb == "clock") return ClockCommand(w);
+  if (verb == "track") return TrackCommand(w);
   // Everything else: an input line (buttons, keys, cheats).
   ScriptedInputDriver* driver = ScriptedInputDriver::Live();
   if (!driver) throw Error{"no input driver yet"};

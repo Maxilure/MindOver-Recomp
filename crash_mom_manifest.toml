@@ -270,6 +270,25 @@ address = 0x8227C670
 name = "CrashMomFrameStep"
 registers = ["f30"]
 
+# FIXED STEP: EXACT, REPEATABLE RUNS (src/fixed_step.cpp,
+# 2026-10-09). Every frame's time step comes from ONE place, the main loop's
+# clock read (sub_8227AEE0):
+#   0x8227B020  bl     0x8235aae0       ; the clock, microseconds (QPC)
+#   0x8227B030  subf   r29,r11,r30      ; - the last pass's reading (+164)
+#   0x8227B048  fmuls  f31,f12,f30      ; x 1e-6 = this pass's delta, seconds
+#   0x8227B04C  fmr    f1,f31           ; <- hook: f31 is final here
+# f31 then feeds everything that keeps time: sub_8227aa18, the subsystems
+# (sub_8227CE08), the time manager (slot 40 of uber+104, called by the frame
+# function) and the frame function's accumulated step (+160, the frame's dt).
+# With the fixed step on, the hook sleeps until the frame's start time (or
+# not at all: "fast") and answers exactly 1/N s; CrashMomFrameStep then lets
+# every pass run its frame. Found by disassembling the main loop (the
+# accumulator in sub_8227C5D8 is fed by its f1 = this f31).
+[[entrypoint.midasm_hook]]
+address = 0x8227B04C
+name = "CrashMomPassDelta"
+registers = ["f31"]
+
 # AUDIO DUMP (src/audio_trace.cpp, --debug_audio_dump). The XDK's audio
 # render thread hands every mixed frame (256 samples x 6 channels, big-endian
 # floats, one whole channel after another) to the kernel here:

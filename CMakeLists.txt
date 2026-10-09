@@ -39,6 +39,7 @@ set(CRASHMOM_SOURCES
     src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
+    src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)

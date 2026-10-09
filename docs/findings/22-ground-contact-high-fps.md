@@ -175,3 +175,44 @@ gone.
 * The fight tree's Lua copies: a disassembler for this format makes every
   character's move logic readable (`fighttrees/*lua`: Crash, the bosses, the
   enemy types), a start for the roadmap's script work.
+
+## 8. Measured with exact replays: the slope "skip"
+
+With the fixed step and game-frame replays (findings/29 s.6), the same
+recorded presses can be run at exactly 30 and exactly 180 frames per second
+with the ground grace off. A recorded walk down the stepped slope at the start
+of the Ratcicle Kingdom courtyard (about 5 units of descent):
+
+| | 30 fps | 180 fps |
+|---|---|---|
+| ground contact losses on the slope | none | 7 (44, 6, 39, 106, 139, 78, 61 ms) |
+| vertical speed while walking down | steady about -4.3 units/s | sawtooth: snapped to 0.00, then gravity |
+
+Frame by frame at 180 fps, each skip goes the same way: the body lands on the
+slope with the slope's speed (about -3.9), a contact snaps the vertical speed
+to exactly 0.00, gravity (-60 units/s², -0.33 per 1/180 s frame) needs
+about 70 ms to rebuild -4.3, the body drifts off the surface meanwhile, the
+reach check drops the contact, and the body falls for about 100 ms until it
+meets the slope again. Long enough for the fight tree's fall branch: the
+"trip".
+
+**Who writes the 0.00.** The console's `who` on the physics velocity
+(+108) over the whole slope: three writers, gravity (`sub_82182A00`), an
+add-velocity helper (`sub_821829A8`, from the character's movement code) and
+the setter `sub_821829E0`. Only the setter wrote 0, and every zero came from
+the collision response `sub_8217F068` (at 0x8217F0CC). That response is a
+slide: `sub_822EB850(out, v, n, e)` returns `v` unchanged when it moves away
+from the surface (`n·v >= 0`), else `v - (1 + e)(n·v) n`. Exactly 0.00
+vertical speed after a slide means a contact normal of exactly (0, 1, 0):
+at those moments the body touches something FLAT, on a slope.
+
+**The numbers of the reach check** (`sub_8217D668`): Crash's collision
+shape is a `CReactiveCollisionEllipsoid` with half-sizes 0.5 / 0.8 / 0.5
+(x / y / z, at shape +32); the contact stays while the body is within
+0.8 x 0.25 = 0.2 units of the contact object (constant 0.25 at 0x8201F558;
+a second probe for the ground uses 0.5 x 0.3 at 0x8201F9C8).
+
+Open: where the flat contacts on the slope come from (the collision mesh
+under the slope, or an edge contact between its triangles); the contact
+normal at each response (contact record +68, restitution +84) answers it.
+![Vertical speed on the slope at 30 and 180 fps](../images/slope-skip-30-vs-180.png)

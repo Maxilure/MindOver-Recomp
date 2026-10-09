@@ -44,7 +44,14 @@
 //   diff <name> [update]     every 4-byte word changed since the snap (old ->
 //                            new, hex + float); "update" = compare to now next
 //                            time. Find a value by what changes when X happens.
-//   replay <file> [from_ms] [to_ms]   play back a session's recorded
+//   clock fixed <fps> [fast] | clock real | clock
+//                            EXACT RUNS: every game frame exactly 1/fps s
+//                            (fixed_step.h); replays then count game frames
+//   track <file> [frames] | track stop | track
+//                            every game frame, every player: position,
+//                            velocity, ground contact -> CSV, for
+//                            tools/compare_runs.py
+//   replay <file> [from_ms] [to_ms] [raw] [onlevel] [onspawn]   play back a session's recorded
 //                            presses (<log>-inputs.txt, input_record.h);
 //                            `replay stop`, `replay` (status), `wait replay`
 //   watch <ms> <expr>:<type> [...]  sample values once per GAME FRAME for ms;

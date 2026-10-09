@@ -252,3 +252,101 @@ allocating: the symbol table is loaded at startup, and text is built with
 `llvm-symbolizer` and file reads, so a forked child appends them to the
 already-written file. It is killed after 10 s if it gets stuck. The
 launcher's Report a problem already packs `crash-*.txt` files.
+
+## 6. Exact runs: the fixed step, `track` and `compare_runs.py`
+
+Section 3's replay was close but not exact, because the game moves the world
+by the real time since the last frame (findings/07), and no two runs get
+the same frame times. Comparing a 30 fps run with a 180 fps run, to find
+what in the physics depends on the frame rate, was guesswork.
+
+**One place hands out time.** The main loop (`sub_8227AEE0`) reads its
+microsecond clock, subtracts the last pass's reading and turns that into
+seconds:
+
+```
+0x8227B020  bl     0x8235aae0       ; clock (QueryPerformanceCounter, us)
+0x8227B030  subf   r29,r11,r30      ; - the last pass's reading (+164)
+0x8227B048  fmuls  f31,f12,f30      ; x 1e-6 = this pass's delta, s
+0x8227B04C  fmr    f1,f31
+```
+
+That `f31` feeds the subsystem update (`sub_8227CE08`), the time manager and
+the frame function's accumulated step (`sub_8227C5D8` +160 = the frame's
+dt). The midasm hook `CrashMomPassDelta` at `0x8227B04C`
+(`src/fixed_step.*`) answers exactly 1/N s there, and the frame-rate hooks
+let every pass run its frame. Game time is then frame number / N.
+`--fixed_step=N`, or the console's `clock fixed N [fast]` / `clock real`
+(`fast` = no waiting between frames). With the fixed step on, `replay`
+counts GAME FRAMES: each recorded change lands on a 30 Hz grid of game time
+(tick = ceil(ms x 30 / 1000)), which 30, 60, 90 and 180 fps frames all hit,
+so every run gets each press at the same game moment.
+
+**`track <file> [frames]`** writes one CSV row per player per game frame
+(at frame end): the physics position (+140), velocity (+104) and ground /
+steep contact objects (variables at physics +39 / +40, findings/22), plus
+the replay's own frame count and game time. **`tools/compare_runs.py a.csv
+b.csv`** lines two tracks up on game time and prints where the paths part,
+the biggest gap, ground contact losses per run and the end positions.
+
+**First results** (Wumpa Island, a scripted 9.5 s walk with two jumps,
+`--ground_grace_ms=0` so only the original's physics is measured):
+
+| Runs | Result |
+|---|---|
+| 30 fps vs 30 fps (two launches) | identical to the last digit, all 286 frames |
+| 30 fps vs 180 fps | part at 0.6 s, biggest gap 0.99 units (during a jump) |
+
+The 30-vs-180 gap is mostly **reaction time**: a 180 fps run starts moving
+and leaves the ground about two 30 fps frames earlier after the same press
+(the game reads the controller one frame before it acts on it, and a frame
+is 5.6 ms instead of 33 ms). The jumps themselves match: peak height
+5.833 vs 5.823 and 6.118 vs 6.122 units above the same ground, the same
+fall. One real difference: standing on the ground, the 180 fps body rests
+0.03 units higher and keeps a small downward velocity (-0.25 to -0.47
+units/s), where the 30 fps one has exactly 0. Same ground contact count
+(2 losses, 2 gains each).
+
+**Starting on the same world frame.** A replay of a real 48 s session in the
+Ratcicle Kingdom courtyard first gave two DIFFERENT 180 fps runs: Crash's
+body pops into place one frame after the first button press, and the
+console's `replay` command landed on a slightly different game frame each
+run, so the world was at another phase. What it took for two 180 fps runs
+of a 44 s recording to come out IDENTICAL, frame for frame:
+
+1. `--fixed_step` from launch, and the game's three clocks (`sub_8235AAE0`
+   us, `sub_8235AB58` us 64-bit, `sub_8235ABC8` ms: dozens of gameplay
+   callers) answering fixed-step time on the main thread, from a FIXED
+   start value (the PC's clock differs every run) and without creeping per
+   read (how often loading code reads the clock varies).
+2. `replay ... onspawn`: start 1.5 s of game time after player 1's Crash is
+   created, checked every frame. "Playable" (`onlevel`) is a fixed 166
+   frames after the loading screen goes, but the loading screen goes when
+   the loading THREAD is done: 10 or 11 frames after Crash appeared, so
+   his animations were a frame apart between runs.
+3. The pads' poll rhythm restarted on the replay's first frame.
+   `sub_822744F0` polls when the millisecond clock is more than 16 ms past
+   the last poll (object `[uber+56]`, last poll at +76): every frame at 30
+   fps, every 3-4 frames at 180, a rhythm running since boot through
+   loading screens of varying length. Two runs read the same stick change a
+   frame apart until the replay reset it ("last poll" = 17 ms ago).
+
+**The stair trip, measured.** Ground contact losses of the same replay,
+grace off:
+
+| | 30 fps | 180 fps |
+|---|---|---|
+| walking down the stepped slope (12.5-13.6 s, y 30.6 -> 26.8) | none | 111 ms, 133 ms, 133 ms (drops of 0.5-0.6 units) + short blips |
+| flicker on flat ground (21.7 s) | none | five 5.6 ms losses in a row |
+
+110-133 ms is about the time gravity (-60 units/s^2 for Crash) needs to
+drop him 0.5 units: at 180 fps he walks off each step and falls down it,
+where at 30 fps he stays on the ground all the way down. That long in the
+air starts the fall animation: the "trip". Why 30 fps stays glued is the
+next question (the reach check and the sweep, findings/22).
+
+Two things to keep in mind:
+- The ground grace (`--ground_grace_ms`, findings/22) counts WALL-CLOCK
+  milliseconds and is on at every cap but 30: turn it off for exact runs.
+- Work on other threads (streaming, sound) doesn't follow the fixed step.
+  The walk above didn't need any; a long run through a level may.

@@ -85,6 +85,7 @@
 #include "frame_rate.h"
 
 #include "cheats/cheats.h"
+#include "fixed_step.h"
 
 #include <algorithm>
 #include <array>
@@ -211,7 +212,8 @@ void CrashMomVsyncMode(PPCRegister& r10) {
     last_mode = mode;
   }
 
-  if (mode == 1 && cap != 30) {
+  // The fixed step (fixed_step.h) paces frames itself, like the clock pacer.
+  if (mode == 1 && (cap != 30 || fixed_step::Active())) {
     r10.u64 = 2;
   }
 }
@@ -335,6 +337,13 @@ bool PacerAllowsFrame(int32_t cap) {
 
 // Codegen declares `extern void CrashMomFrameStep(PPCRegister& f30);`.
 void CrashMomFrameStep(PPCRegister& f30) {
+  if (fixed_step::Active()) {
+    // EXACT RUNS (fixed_step.h): the pass already waited for its start time
+    // and its delta is exactly 1/N s; every pass runs its frame, so the
+    // frame's step = that delta.
+    f30.f64 = 0.0;
+    return;
+  }
   const int32_t cap = REXCVAR_GET(fps_cap);
   if (cap == 30) {
     // The original: the game's 1/60 s minimum stands. EXCEPT while frozen by
@@ -359,7 +368,9 @@ void CrashMomFrameStep(PPCRegister& f30) {
 void CrashMomFrameLimiter(PPCRegister& r29) {
   const int32_t cap = REXCVAR_GET(fps_cap);
   const uint32_t elapsed_us = r29.u32;
-  if (cap != 30) {
+  if (fixed_step::Active()) {
+    r29.u64 = 33334;  // fixed step: every pass is a frame (fixed_step.h)
+  } else if (cap != 30) {
     // The game's own threshold is 33333 us: it runs a frame when r29 > 33333.
     // Answer that comparison for our threshold instead.
     const uint32_t threshold_us = cap > 0 ? uint32_t(1000000 / cap) : 0;
