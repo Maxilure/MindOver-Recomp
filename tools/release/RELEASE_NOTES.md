@@ -13,6 +13,21 @@ no game files. The launcher builds the game on your computer, from your disc.
 
 ### What's new in 0.1.1-alpha
 
+**An Options screen** in the game's own look (Pause → Options, and new in
+the main menu): tabs (LB / RB), every change takes effect at once.
+
+- **Display**: frame-rate cap, renderer (Emulated Only, Emulated, Native,
+  Native Only; X on Emulated or Native opens Dual Mode), brightness (the
+  original's calibration grey scale as the guide; it replaces Calibration in
+  the main menu), V-sync (no tearing, the game held to your monitor's
+  refresh rate), fullscreen, and a frame-rate counter in the game's font,
+  on screen everywhere, in any corner.
+- **Audio** and **Controls**: the game's own volumes and Invert Axis; Rebind
+  Keys opens the keyboard / mouse window (F6).
+- **Camera**: the co-op camera's settings.
+- **Native Only** (the port's own renderer alone, the lightest) is now the
+  default picture; the emulated one is a choice away.
+
 **Co-op** (the co-op camera is experimental and needs more testing)
 
 - **No more frozen partners**: a player far from the camera used to stop

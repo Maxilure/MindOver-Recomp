@@ -81,8 +81,9 @@ Picture → **Native renderer** (or press **F9** in the game). It is still in pr
 effects may be missing in later levels.
 
 **The game is slow or stutters**: the emulated picture is the heavy part.
-**Native only (fastest)** (Settings → Picture) draws the game with the port's own renderer and
-stops the emulated one, which usually runs much faster. Also check that
+**Native only** (the default; Settings → Picture, or Options → Display → Renderer in the game)
+draws the game with the port's own renderer and stops the emulated one, which usually runs much
+faster: check it hasn't been switched to Emulated. Also check that
 the frame rate cap isn't set higher than your computer can keep up with.
 
 **Odd movement above 60 fps** (Crash falling for a split second, physics

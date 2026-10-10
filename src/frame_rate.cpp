@@ -103,6 +103,7 @@
 #endif
 
 #include <fmt/format.h>
+#include <SDL3/SDL.h>
 
 #include <rex/cvar.h>
 #include <rex/logging.h>
@@ -115,6 +116,9 @@ REXCVAR_DEFINE_INT32(fps_cap, 30, "CrashMoM",
                      "Frame-rate cap: 30 = original, any other rate (60, 144, 165, ...) = a frame "
                      "every 1/rate s by the clock (above 60 EXPERIMENTAL), 0 = as fast as possible")
     .range(0, 1000);
+REXCVAR_DEFINE_BOOL(present_vsync, false, "CrashMoM",
+                    "V-sync: pictures wait for the monitor's refresh (no tearing) and the game runs "
+                    "at most at the monitor's refresh rate");
 // ON BY DEFAULT: one of the session log's event logs (session_log.h;
 // --event_logs=false turns them all off).
 REXCVAR_DEFINE_BOOL(debug_log_fps, true, "CrashMoM",
@@ -187,7 +191,7 @@ static void SyncGuestRefresh() {
 // `extern void CrashMomVsyncMode(PPCRegister& r10);` in the generated file.
 void CrashMomVsyncMode(PPCRegister& r10) {
   const int32_t mode = r10.s32;
-  const int32_t cap = REXCVAR_GET(fps_cap);
+  const int32_t cap = frame_rate::EffectiveCap();
   SyncGuestRefresh();
 
   // Log the cap whenever it changes (start, or the F4 settings), and the
@@ -282,6 +286,10 @@ using PaceClock = std::chrono::steady_clock;
 // Spin (don't sleep) this close to a frame's start time.
 constexpr auto kPacerSpin = std::chrono::milliseconds(1);
 
+// The latest frame's wait for its start time, for the HUD frame-rate counter
+// (TakePaceWaitMs: read once per frame, its own copy).
+std::atomic<double> g_wait_for_counter{0.0};
+
 struct Pacer {
   int32_t cap = -1;            // the --fps_cap the schedule is for (F4 can change it)
   PaceClock::time_point next;  // when the next frame may start
@@ -323,6 +331,7 @@ bool PacerAllowsFrame(int32_t cap) {
   g_pacer.last_wait_ms =
       g_pacer.waiting ? std::chrono::duration<double, std::milli>(now - g_pacer.wait_start).count()
                       : 0.0;
+  g_wait_for_counter.store(g_pacer.last_wait_ms, std::memory_order_relaxed);  // fps_overlay.h
   g_pacer.waiting = false;
   const auto period = std::chrono::duration_cast<PaceClock::duration>(
       std::chrono::duration<double>(1.0 / double(cap)));
@@ -344,7 +353,7 @@ void CrashMomFrameStep(PPCRegister& f30) {
     f30.f64 = 0.0;
     return;
   }
-  const int32_t cap = REXCVAR_GET(fps_cap);
+  const int32_t cap = frame_rate::EffectiveCap();
   if (cap == 30) {
     // The original: the game's 1/60 s minimum stands. EXCEPT while frozen by
     // the cheat menu (cheats.h): then each frame adds only 1e-7 s and would
@@ -366,7 +375,7 @@ void CrashMomFrameStep(PPCRegister& f30) {
 
 // Codegen declares `extern void CrashMomFrameLimiter(PPCRegister& r29);`.
 void CrashMomFrameLimiter(PPCRegister& r29) {
-  const int32_t cap = REXCVAR_GET(fps_cap);
+  const int32_t cap = frame_rate::EffectiveCap();
   const uint32_t elapsed_us = r29.u32;
   if (fixed_step::Active()) {
     r29.u64 = 33334;  // fixed step: every pass is a frame (fixed_step.h)
@@ -620,4 +629,59 @@ void StopFrameStats() {
   }
 }
 
+}  // namespace frame_rate
+
+// =============================================================================
+// V-sync (frame_rate.h)
+// =============================================================================
+namespace frame_rate {
+namespace {
+std::atomic<double> g_display_refresh{0.0};  // Hz, 0 = unknown
+}  // namespace
+
+void ApplyVsyncPresentMode() {
+  // FIFO = neither immediate (tearing) nor mailbox (newest picture, no wait)
+  // nor relaxed FIFO (tears when late). Off = the SDK's defaults (immediate).
+  const bool vsync = REXCVAR_GET(present_vsync);
+  for (const char* name : {"vulkan_allow_present_mode_immediate", "vulkan_allow_present_mode_mailbox",
+                           "vulkan_allow_present_mode_fifo_relaxed"}) {
+    rex::cvar::SetFlagByName(name, vsync ? "false" : "true");
+  }
+  REXLOG_INFO("frame_rate: V-sync {} (present mode {})", vsync ? "on" : "off",
+              vsync ? "FIFO, paced to the monitor" : "immediate");
+}
+
+void UpdateDisplayRefresh() {
+  // The game window's display; else the primary one (a window on a hidden
+  // workspace may have none yet). Its current mode, else the desktop's.
+  int count = 0;
+  SDL_Window** windows = SDL_GetWindows(&count);
+  SDL_DisplayID display = windows && count > 0 ? SDL_GetDisplayForWindow(windows[0]) : 0;
+  SDL_free(windows);
+  if (!display) display = SDL_GetPrimaryDisplay();
+  const SDL_DisplayMode* mode = display ? SDL_GetCurrentDisplayMode(display) : nullptr;
+  if (!mode || mode->refresh_rate <= 0.0f) mode = display ? SDL_GetDesktopDisplayMode(display) : nullptr;
+  const double hz = mode ? mode->refresh_rate : 0.0;
+  static bool logged = false;
+  if (hz != g_display_refresh.load() || !logged) {
+    logged = true;
+    g_display_refresh = hz;
+    REXLOG_INFO("frame_rate: the monitor refreshes at {:.2f} Hz (display {}){}", hz, display,
+                hz > 0 ? "" : ": unknown, V-sync can't cap the frame rate");
+  }
+}
+
+int32_t EffectiveCap() {
+  const int32_t cap = REXCVAR_GET(fps_cap);
+  if (cap == 30 || !REXCVAR_GET(present_vsync)) return cap;
+  const double hz = g_display_refresh.load(std::memory_order_relaxed);
+  if (hz < 30.0) return cap;  // unknown: as set
+  const int32_t refresh = int32_t(std::lround(hz));
+  return cap == 0 || cap > refresh ? refresh : cap;
+}
+
+}  // namespace frame_rate
+
+namespace frame_rate {
+double TakePaceWaitMs() { return g_wait_for_counter.exchange(0.0, std::memory_order_relaxed); }
 }  // namespace frame_rate

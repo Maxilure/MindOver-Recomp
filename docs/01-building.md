@@ -87,6 +87,7 @@ A few minutes per configuration.
   | `0012-vfs-longest-mount-wins` | Not a fix, a feature: the file system picks the device with the LONGEST matching mount path, so a host folder can be mounted inside the game drive's tree (changed copies of game data files at `D:\crashmom\`, `src/data/data_patcher.h`, findings/24 section 7.6). Without nested mounts nothing changes |
   | `0013-draw-every-nth-frame` | Not a fix, a feature (apply after 0009): GPU flag `draw_every_nth_frame` makes the emulated GPU draw and present only every Nth frame (skipped frames are parsed but neither drawn nor shown; read per draw, so it can change mid-frame). Our `--emulated_draw_every` (default 2) sets it while the native renderer draws too, e.g. dual mode: GPU 97% -> 60% busy at 60 fps (findings/20 section 5) |
   | `0014-quiet-empty-texture-slots` | "Texture fetch constant ... has "invalid" type!" was logged for every draw with an EMPTY texture slot (type "invalid", no address: what unbinding a texture leaves), thousands of lines per level load. Nothing is bound for such a slot either way, so it's now skipped quietly; an invalid slot that points at memory is still warned about, once per distinct constant |
+  | `0015-gamma-ramp-power` | Brightness (the Options screen's Display tab): GPU flag `gamma_ramp_power`, a power on each channel of the game's display gamma ramp, applied when the swap uploads the ramp (re-uploaded when the flag changes); the native renderer applies the same curve (`CommandProcessor::GammaRampEntryWithPower`) |
 
   `patches/rexglue-sdk/debug/` holds **optional debugging patches** that
   the `*.patch` glob above deliberately skips. Apply one by hand when
@@ -164,8 +165,9 @@ is rejected. Useful extras:
   every 5 s (`--debug_log_fps`, on by default).
 * `--renderer=native`: start on the native renderer's picture (F9 switches
   while playing; [04-native-renderer.md](04-native-renderer.md)).
-  `--native_only`: the emulated GPU skips its drawing while the native
-  picture is shown (much less GPU work). `--native_window`: both pictures,
+  `--native_only` (ON by default): the emulated GPU skips its drawing while
+  the native picture is shown (much less GPU work); `--native_only=false`
+  keeps both drawing (the emulated picture one F9 away). `--native_window`: both pictures,
   in two windows (F8).
 * `--debug_input_script="8000:start,9500:start,30000:lsright:2000"`: a fake
   controller that presses inputs at those milliseconds after launch (held

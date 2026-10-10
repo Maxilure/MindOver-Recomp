@@ -67,8 +67,9 @@ with your version, system and graphics card filled in.
   controller SDL recognizes. Both at once, or one per player.
 * **The port's own Vulkan renderer** (in progress): it draws every area
   tested so far with the same look as the original, and on its own
-  ("Native only") runs much lighter than the emulated picture. Switch
-  with **F9**.
+  ("Native only", the default) runs much lighter than the emulated picture.
+  The emulated picture is one choice away (Options → Display → Renderer, or
+  **F9**).
 * **Windows** builds and runs. It is less tested than Linux.
 
 ## Enhancements

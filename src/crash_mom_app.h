@@ -61,7 +61,10 @@
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
+#include "fps_overlay.h"
 #include "data/data_patcher.h"
+#include "options/options_menu.h"
+#include "options/options_settings.h"
 #include "saves/rename_screen.h"
 #include "saves/save_library.h"
 #include "native/native_window.h"
@@ -143,6 +146,8 @@ class CrashMomApp : public rex::ReXApp {
     settings_list::WriteAndQuitIfAsked();
     // Every flag exists now: the log lists the changed ones (session_log.h).
     session_log::LogSettings();
+    // V-sync (frame_rate.h): the window's present mode, before its swapchain is made.
+    frame_rate::ApplyVsyncPresentMode();
   }
 
   // Everything is initialized, including the window and the presenter
@@ -207,11 +212,50 @@ class CrashMomApp : public rex::ReXApp {
     if (REXCVAR_GET(save_library)) {
       rename_screen::Register();
     }
+    // Pause -> Options: the port's Options screen with tabs (options/options_menu.h):
+    // its page replaces the game's in the in-game menus package.
+    options_menu::Register();
+    {
+      options_settings::Hooks hooks;
+      if (native_renderer_) {
+        NativeRenderer* renderer = native_renderer_.get();
+        hooks.native_shown = [renderer] { return renderer->show_native(); };
+        hooks.show_native = [renderer](bool show) { renderer->SetShowNative(show); };
+        hooks.emulated_drawing = [renderer] { renderer->UpdateEmulatedDrawing(); };
+        hooks.emulated_only = [renderer] { return renderer->emulated_only(); };
+      }
+      // Rebind Keys: the F6 window (ImGui runs on the UI thread).
+      hooks.open_controls = [this] {
+        app_context().CallInUIThread([] { controls_menu::Toggle(); });
+      };
+      // V-sync: the windows' swapchains made again (their present mode is
+      // picked then), as a resize does; on the UI thread.
+      hooks.refresh_present = [this] {
+        app_context().CallInUIThread([this] {
+          auto* gfx = runtime() ? runtime()->graphics_system() : nullptr;
+          frame_rate::UpdateDisplayRefresh();  // V-sync paces to it
+          if (gfx && gfx->presenter()) gfx->presenter()->OnSurfaceResizeFromUIThread();
+          if (native_window_ && native_window_->presenter()) {
+            native_window_->presenter()->OnSurfaceResizeFromUIThread();
+          }
+          REXLOG_INFO("Options: the window's present mode made again (V-sync)");
+        });
+      };
+      // Renderer's X: dual mode, as F8 (needs the native renderer).
+      if (native_renderer_) {
+        hooks.toggle_dual = [this] { app_context().CallInUIThread([this] { ToggleNativeWindow(); }); };
+      }
+      options_settings::SetHooks(std::move(hooks));
+    }
     // Players 3-4's HUD (players/more_players_hud.h), with --local_players 3 or 4.
     more_players_hud::Register();
     // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
     more_players_markers::Register();
     data_patcher::Install();
+    // The frame-rate counter in the HUD (fps_overlay.h): its frame listener.
+    fps_overlay::Install();
+    // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
+    app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).

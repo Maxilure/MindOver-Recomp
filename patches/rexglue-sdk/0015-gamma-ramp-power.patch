@@ -1,0 +1,134 @@
+Feature: a brightness setting, as a power on the game's display gamma ramp
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk), after 0013
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0015-gamma-ramp-power.patch
+Status:     local patch (a port feature; not an upstream bug)
+
+WHAT
+  The port's Options screen has a Brightness row (it replaces the original's
+  TV "Calibration" screen, which only showed a grey scale). The game sets a
+  256-entry display gamma ramp (D3D -> the DC_LUT registers); the command
+  processor keeps the table and applies it to the picture at every swap.
+
+FIX
+  GPU flag gamma_ramp_power (double, 1.0 = the game's own ramp, below 1
+  brighter, above 1 darker; hot reload). The Vulkan swap uploads the
+  256-entry table with the power applied to each 10-bit channel
+  (CommandProcessor::GammaRampEntryWithPower, inline in the header so the
+  port's native renderer applies the same curve to the same table), and a
+  change of the flag re-uploads it at the next swap. The PWL ramp is left
+  alone (the game uses the 256-entry table).
+
+HOW FOUND
+  docs/findings/09 s.5 (the ramp), the swap's ramp upload in
+  VulkanCommandProcessor::IssueSwap.
+
+--- a/include/rex/graphics/command_processor.h
++++ b/include/rex/graphics/command_processor.h
+@@ -11,6 +11,7 @@
+ 
+ #pragma once
+ 
++#include <cmath>
+ #include <atomic>
+ #include <cstring>
+ #include <functional>
+@@ -170,6 +171,24 @@
+   // skipped because of the GPU flag draw_every_nth_frame. Read per draw (and
+   // at the swap), so a change of the flag takes effect at once.
+   bool CurrentFrameSkipped() const;
++  // Mind over Recomp (patch 0015): the picture's brightness, as a power on
++  // the game's display gamma ramp (GPU flag gamma_ramp_power: 1 = the game's
++  // own ramp, below 1 brighter, above 1 darker). Applied where the ramp is
++  // uploaded for the swap; a host renderer drawing the game applies the same.
++  static double GammaRampPower();
++  // One 256-entry table value (DC_LUT_30_COLOR bits: 10-bit blue 0-9, green
++  // 10-19, red 20-29) with the power applied to each channel. Inline: the
++  // host renderer (outside the GPU plugin) uses the same curve.
++  static uint32_t GammaRampEntryWithPower(uint32_t entry, double power) {
++    if (power == 1.0) return entry;
++    uint32_t out = entry & ~UINT32_C(0x3FFFFFFF);
++    for (uint32_t shift = 0; shift < 30; shift += 10) {
++      const double v = double((entry >> shift) & 0x3FF) / 1023.0;
++      const uint32_t c = uint32_t(std::lround(std::pow(v, power) * 1023.0));
++      out |= (c < 0x3FFu ? c : 0x3FFu) << shift;
++    }
++    return out;
++  }
+ 
+   virtual void PrepareForWait();
+   virtual void ReturnFromWait();
+--- a/include/rex/graphics/vulkan/command_processor.h
++++ b/include/rex/graphics/vulkan/command_processor.h
+@@ -638,6 +638,8 @@
+   std::array<VkBufferView, 2 * kMaxFramesInFlight> gamma_ramp_buffer_views_{};
+   // UINT32_MAX if outdated.
+   uint32_t gamma_ramp_256_entry_table_current_frame_ = UINT32_MAX;
++  // patch 0015: the gamma_ramp_power the uploaded table was made with.
++  double gamma_ramp_power_uploaded_ = 1.0;
+   uint32_t gamma_ramp_pwl_current_frame_ = UINT32_MAX;
+ 
+   VkDescriptorSetLayout swap_descriptor_set_layout_sampled_image_ = VK_NULL_HANDLE;
+--- a/src/graphics/command_processor.cpp
++++ b/src/graphics/command_processor.cpp
+@@ -55,6 +55,16 @@
+                     "For host renderers that draw the game themselves")
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ 
++// Mind over Recomp (patch 0015): the picture's brightness for the port's
++// Options screen (its Brightness row): a power on every channel of the game's
++// display gamma ramp, applied where the ramp goes to the swap. Hot reload:
++// a change re-uploads the ramp at the next swap.
++REXCVAR_DEFINE_DOUBLE(gamma_ramp_power, 1.0, "GPU",
++                      "Brightness: power on the game's display gamma ramp (1 = the game's own, "
++                      "below 1 brighter, above 1 darker)")
++    .range(0.25, 4.0)
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
++
+ // Mind over Recomp (patch 0013): next to a host renderer that draws the game
+ // too (the port's dual mode), the emulated GPU can draw only every Nth frame:
+ // the frames it draws are complete and exact, the ones in between are parsed
+@@ -988,6 +998,8 @@
+   return true;
+ }
+ 
++double CommandProcessor::GammaRampPower() { return REXCVAR_GET(gamma_ramp_power); }
++
+ bool CommandProcessor::CurrentFrameSkipped() const {
+   const int32_t every = REXCVAR_GET(draw_every_nth_frame);
+   return every > 1 && (frame_cycle_ % uint64_t(every)) != 0;
+--- a/src/graphics/vulkan/command_processor.cpp
++++ b/src/graphics/vulkan/command_processor.cpp
+@@ -2536,6 +2536,11 @@
+         uint32_t& gamma_ramp_frame_index_ref = use_pwl_gamma_ramp
+                                                    ? gamma_ramp_pwl_current_frame_
+                                                    : gamma_ramp_256_entry_table_current_frame_;
++        // patch 0015: a brightness change re-uploads the 256-entry table.
++        const double gamma_ramp_power = GammaRampPower();
++        if (!use_pwl_gamma_ramp && gamma_ramp_power != gamma_ramp_power_uploaded_) {
++          gamma_ramp_frame_index_ref = UINT32_MAX;
++        }
+         if (gamma_ramp_frame_index_ref == UINT32_MAX) {
+           constexpr uint32_t kGammaRampSize256EntryTable = sizeof(uint32_t) * 256;
+           constexpr uint32_t kGammaRampSizePWL = sizeof(uint16_t) * 2 * 3 * 128;
+@@ -2562,12 +2567,20 @@
+               gamma_ramp_pwl_upload_entry.base = gamma_ramp_pwl_entry.delta;
+               gamma_ramp_pwl_upload_entry.delta = gamma_ramp_pwl_entry.base;
+             }
++          } else if (!use_pwl_gamma_ramp && gamma_ramp_power != 1.0) {
++            // patch 0015: the table with the brightness power applied.
++            auto* upload = reinterpret_cast<uint32_t*>(gamma_ramp_frame_upload);
++            const auto* table = reinterpret_cast<const uint32_t*>(gamma_ramp_256_entry_table());
++            for (size_t i = 0; i < 256; ++i) {
++              upload[i] = GammaRampEntryWithPower(table[i], gamma_ramp_power);
++            }
+           } else {
+             std::memcpy(gamma_ramp_frame_upload,
+                         use_pwl_gamma_ramp ? static_cast<const void*>(gamma_ramp_pwl_rgb())
+                                            : static_cast<const void*>(gamma_ramp_256_entry_table()),
+                         gamma_ramp_size);
+           }
++          if (!use_pwl_gamma_ramp) gamma_ramp_power_uploaded_ = gamma_ramp_power;
+           bool gamma_ramp_has_upload_buffer = gamma_ramp_upload_buffer_memory_ != VK_NULL_HANDLE;
+           VkPipelineStageFlags gamma_ramp_read_stage_mask =
+               VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;

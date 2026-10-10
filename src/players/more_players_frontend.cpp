@@ -29,6 +29,7 @@
 // shoot but not move the reticle (no reticle controller), and their combos
 // went nowhere (the combo meter of "player 3" was other front end fields).
 // =============================================================================
+#include "../fps_overlay.h"
 #include "more_players.h"
 #include "more_players_hud.h"
 
@@ -184,6 +185,7 @@ extern "C" REX_FUNC(sub_82261C40) {
   const uint32_t fe = ctx.r3.u32;
   const double dt = ctx.f1.f64;
   __imp__sub_82261C40(ctx, base);
+  fps_overlay::Update(ctx, base);  // the port's frame-rate counter (fps_overlay.h)
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) {
     for (int k : {kCombo, kLockOn, kCounter}) CallVirtual(ctx, base, g_objects[k][i], 3, 0, dt);

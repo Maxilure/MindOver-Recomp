@@ -41,12 +41,8 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "The native renderer draws nearly everything, but an effect may still be missing "
               "or look different. F9 switches back to the emulated picture while playing."};
     }
-    if (value == "native_only") {
-      return {"Experimental",
-              "Only the native renderer draws: the fastest, but anything it can't draw yet is "
-              "missing, and F10 photos only have the native half. F9 turns the emulated one back "
-              "on."};
-    }
+    // native_only = the default since 2026-10-10 (the player's pick): no
+    // warning on the default; Native (both renderers drawing) keeps its note.
     if (value == "dual") {
       return {"Heavy on the GPU",
               "Two windows: the emulated picture and the native one, both drawn live. Meant for "
@@ -124,7 +120,7 @@ struct PictureChoice {
 constexpr PictureChoice kPictures[] = {
     {"emulated", "Emulated (the default)"},
     {"native", "Native renderer"},
-    {"native_only", "Native only (fastest)"},
+    {"native_only", "Native only (fastest, default)"},
     {"dual", "Both, in two windows"},
     {"emulated_only", "Emulated only"},
 };

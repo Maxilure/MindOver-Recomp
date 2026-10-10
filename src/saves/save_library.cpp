@@ -34,6 +34,7 @@
 #include <rex/ui/imgui_drawer.h>
 
 #include "../input/keyboard_mouse.h"
+#include "../options/options_menu.h"
 #include "../overlay_banner.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
@@ -1545,6 +1546,10 @@ extern "C" REX_FUNC(sub_820CCB08) {
 extern "C" REX_FUNC(sub_8237A668) {
   using namespace save_library;
   const uint32_t menu = ctx.r3.u32;
+  if (options_menu::TurnPage(menu, +1, base)) {  // the Options screen's pages
+    ctx.r3.u64 = 1;
+    return;
+  }
   if (OwnsSlotMenu(menu)) {
     if (!ListActive() || DialogBusy() || g.scroll_pending || g.refresh_pending) {
       ctx.r3.u64 = 0;
@@ -1566,6 +1571,10 @@ extern "C" REX_FUNC(sub_8237A668) {
 extern "C" REX_FUNC(sub_8237A550) {
   using namespace save_library;
   const uint32_t menu = ctx.r3.u32;
+  if (options_menu::TurnPage(menu, -1, base)) {  // the Options screen's pages
+    ctx.r3.u64 = 1;
+    return;
+  }
   if (OwnsSlotMenu(menu)) {
     if (!ListActive() || DialogBusy() || g.scroll_pending || g.refresh_pending) {
       ctx.r3.u64 = 0;
@@ -1708,6 +1717,8 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
   // The session's input recording: what the game gets, after every filter.
   if (state) input_record::AfterFilters(user, GuestPtr(base, state + 4), ctx.r3.u32);
+  // The Options screen's tab buttons (options/options_menu.h).
+  if (state && ctx.r3.u32 == 0) options_menu::SeePad(user, GuestPtr(base, state + 4));
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

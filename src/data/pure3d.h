@@ -106,4 +106,75 @@ inline Bytes WithChildren(const Bytes& d, const Chunk& c, const Bytes& children)
   return out;
 }
 
+// -----------------------------------------------------------------------------
+// Chunks as an editable tree (options/options_page.cpp builds a whole page
+// out of copies of the game's own elements)
+// -----------------------------------------------------------------------------
+
+// One chunk with its children parsed: `data` = everything after the 12-byte
+// header up to the first child (the name first, then the chunk's fields).
+struct Node {
+  uint32_t id = 0;
+  Bytes data;
+  std::vector<Node> children;
+};
+
+inline Node ToNode(const Bytes& d, const Chunk& c) {
+  Node n;
+  n.id = c.id;
+  n.data.assign(d.begin() + c.offset + 12, d.begin() + c.offset + c.data_size);
+  for (const Chunk& k : ChildrenOf(d, c)) n.children.push_back(ToNode(d, k));
+  return n;
+}
+
+// The chunk again (sizes follow the edited data and children).
+inline void AppendNode(const Node& n, Bytes& out) {
+  const size_t start = out.size();
+  PutLe32(out, n.id);
+  PutLe32(out, uint32_t(12 + n.data.size()));
+  PutLe32(out, 0);  // total size, filled in below
+  out.insert(out.end(), n.data.begin(), n.data.end());
+  for (const Node& k : n.children) AppendNode(k, out);
+  const uint32_t total = uint32_t(out.size() - start);
+  for (int i = 0; i < 4; ++i) out[start + 8 + i] = uint8_t(total >> (8 * i));
+}
+inline Bytes ToBytes(const Node& n) {
+  Bytes out;
+  AppendNode(n, out);
+  return out;
+}
+
+// A node's name (its data starts with u8 length + the bytes, NUL padded).
+inline std::string_view NodeName(const Node& n) {
+  if (n.data.empty() || 1 + size_t(n.data[0]) > n.data.size()) return {};
+  std::string_view name(reinterpret_cast<const char*>(&n.data[1]), n.data[0]);
+  return name.substr(0, name.find('\0'));
+}
+// Where the fields after the name start.
+inline size_t NameEnd(const Node& n) { return n.data.empty() ? 0 : 1 + size_t(n.data[0]); }
+
+// Pure3D's string padding, as the game's own packages have it: the bytes are
+// NUL padded up to a multiple of 4 ("SFX" -> 4, "_Empty" -> 8), and a name
+// that is already a multiple of 4 gets no NUL ("DialogueMenu" -> 12).
+inline Bytes PaddedString(std::string_view s) {
+  Bytes out;
+  const size_t length = (s.size() + 3) & ~size_t(3);
+  out.push_back(uint8_t(length));
+  out.insert(out.end(), s.begin(), s.end());
+  out.resize(1 + length, 0);
+  return out;
+}
+inline void SetNodeName(Node& n, std::string_view name) {
+  const size_t end = NameEnd(n);
+  Bytes data = PaddedString(name);
+  data.insert(data.end(), n.data.begin() + end, n.data.end());
+  n.data = std::move(data);
+}
+
+// Little-endian fields at an offset of the data.
+inline uint32_t NodeLe32(const Node& n, size_t at) { return Le32(&n.data[at]); }
+inline void SetNodeLe32(Node& n, size_t at, uint32_t v) {
+  for (int i = 0; i < 4; ++i) n.data[at + i] = uint8_t(v >> (8 * i));
+}
+
 }  // namespace pure3d

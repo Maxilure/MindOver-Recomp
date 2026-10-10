@@ -6,6 +6,8 @@
 
 
 #include <algorithm>
+#include <cstdlib>
+#include <string>
 #include <chrono>
 #include <cstddef>
 #include <cstring>
@@ -40,7 +42,7 @@ REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
 // ONLY; until 2026-10-01 it froze the game 3 s waiting for the emulated
 // one), and anything the game READS BACK from an emulated resolve (none
 // known) would go stale.
-REXCVAR_DEFINE_BOOL(native_only, false, "CrashMoM",
+REXCVAR_DEFINE_BOOL(native_only, true, "CrashMoM",
                     "Start on the native picture and stop the emulated GPU's drawing while "
                     "the native picture is in the main window (F9 back turns it on again)");
 // EMULATED ONLY (2026-09-30, the mirror image of --native_only): the plain
@@ -309,6 +311,11 @@ struct GammaRampReader : rex::graphics::CommandProcessor {
   static const uint32_t* Table(const rex::graphics::CommandProcessor* gpu) {
     const auto getter = &GammaRampReader::gamma_ramp_256_entry_table;
     return reinterpret_cast<const uint32_t*>((gpu->*getter)());
+  }
+  // The brightness curve the emulated GPU applies (SDK patch 0015; static,
+  // protected, so reached from here too).
+  static uint32_t WithPower(uint32_t entry, double power) {
+    return GammaRampEntryWithPower(entry, power);
   }
 };
 
@@ -824,6 +831,21 @@ void NativeRenderer::UpdateGammaRamp(VkCommandBuffer cmd, uint64_t submission) {
     for (uint32_t i = 0; i < 256; ++i) {
       const uint32_t v = i * 1023 / 255;
       ramp[i] = v | (v << 10) | (v << 20);
+    }
+  }
+  // Brightness (the Options screen; SDK patch 0015): the same power on the
+  // ramp the emulated GPU applies at its swap. A GPU-plugin flag: by name.
+  static double power = 1.0;
+  static uint32_t frames_since_read = 0;
+  if (++frames_since_read >= 15) {  // a string parse: 4 times a second is plenty
+    frames_since_read = 0;
+    const std::string value = rex::cvar::GetFlagByName("gamma_ramp_power");
+    power = value.empty() ? 1.0 : std::strtod(value.c_str(), nullptr);
+    if (!(power > 0.0)) power = 1.0;
+  }
+  if (power != 1.0) {
+    for (uint32_t& entry : ramp) {
+      entry = GammaRampReader::WithPower(entry, power);
     }
   }
   if (gamma_uploaded_ && ramp == gamma_ramp_) {
@@ -1342,6 +1364,12 @@ void NativeRenderer::AnnouncePicture() {
 
 void NativeRenderer::UpdateEmulatedDrawing() {
   if (!REXCVAR_GET(native_only)) {
+    // Native only can be switched OFF while the game runs (the Options
+    // screen, options/options_settings.cpp): the emulated GPU draws again.
+    if (rex::cvar::GetFlagByName("skip_draws") == "true") {
+      rex::cvar::SetFlagByName("skip_draws", "false");
+      REXLOG_INFO("NativeRenderer: emulated GPU drawing ON (native only switched off)");
+    }
     return;
   }
   // Off exactly when the emulated picture is on no screen: main window on

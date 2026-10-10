@@ -93,6 +93,8 @@ class NativeWindow : public rex::ui::WindowListener, public rex::ui::WindowInput
   bool is_open() const { return window_->phase() == rex::ui::Window::Phase::kOpen; }
   // The window itself (the keyboard driver listens to its keys too).
   rex::ui::Window* window() const { return window_.get(); }
+  // Its presenter (the Options screen's V-sync makes its swapchain again).
+  rex::ui::Presenter* presenter() const { return presenter_.get(); }
 
  private:
   // Draws nothing: its presence makes the presenter paint on the UI thread
