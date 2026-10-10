@@ -2,7 +2,7 @@
 
 Step-by-step, from a disc image to a native executable. **Players don't
 need this page**: the launcher's Setup tab runs these steps by itself (see
-the [README](../README.md#download-and-play)). The steps below are written
+the [README](../README.md#-download-and-play)). The steps below are written
 for Linux (verified with Clang 22); Windows uses the same commands with a
 few differences, listed in [Building on Windows](#building-on-windows).
 Problems: [Troubleshooting](06-troubleshooting.md).

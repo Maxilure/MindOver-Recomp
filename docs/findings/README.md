@@ -5,7 +5,7 @@ one file per investigation, in the order they happened.
 
 **About these notes:** like most of the project, they were written with an
 AI coding assistant working with the maintainer (see
-[Development approach](../../README.md#development-approach)).
+[Contributing](../../README.md#-contributing)).
 Every conclusion was tested against the running game (logs, screenshots,
 debugger sessions, measurements), and wrong turns are kept in the text
 because they're part of how the answer was found. They have not been
