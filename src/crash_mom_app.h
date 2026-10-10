@@ -252,7 +252,7 @@ class CrashMomApp : public rex::ReXApp {
     // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
     more_players_markers::Register();
     data_patcher::Install();
-    // The frame-rate counter in the HUD (fps_overlay.h): its frame listener.
+    // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
@@ -321,6 +321,8 @@ class CrashMomApp : public rex::ReXApp {
   void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override {
     // The short message shown when F9 / F8 switch pictures (overlay_banner.h).
     overlay_banner::Create(drawer);
+    // The frame-rate counter over the picture, in the game's font (fps_overlay.h).
+    fps_overlay::Create(drawer, immediate_drawer());
     // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.
     controls_menu::Create(drawer);
     // F5: the Cheats menu (cheats/cheat_menu.h), closed at first.

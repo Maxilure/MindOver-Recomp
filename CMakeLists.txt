@@ -44,7 +44,7 @@ set(CRASHMOM_SOURCES
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
-    src/fps_overlay.cpp          # our own frame-rate counter at the top of the window (Options -> Display)
+    src/fps_overlay.cpp          # our own frame-rate counter over the picture, game font (Options -> Display)
     src/input/bindings.cpp       # keyboard + mouse: the actions, their keys, controls.toml
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
     src/input/players.cpp        # which device plays as which player (local co-op)
@@ -67,6 +67,7 @@ set(CRASHMOM_SOURCES
     src/players/lost_controller.cpp  # a player's controller is gone: pause + message anyone answers (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/ui/scrooby.cpp           # helpers to drive the game's own menu library (find / set texts, menus)
+    src/ui/game_font.cpp         # the game's own font read from the disc data, for text we draw ourselves
     src/options/options_page.cpp      # the Options screen's page, rebuilt in the in-game menus package
     src/options/options_settings.cpp  # what the Options screen offers: tabs, rows, live changes, saving
     src/options/options_menu.cpp      # Pause -> Options: tabs, rows, values (hooks on the game's menu driver)

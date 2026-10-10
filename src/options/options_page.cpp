@@ -26,7 +26,6 @@ constexpr std::string_view kHostProject = "InGame.prj";
 constexpr std::string_view kPageName = "InGame_Options_XENON.pag";
 constexpr std::string_view kMenuName = "InGameOptionsMenu";
 constexpr std::string_view kMapPageName = "InGame_Map.pag";
-constexpr std::string_view kHudPageName = "InGame.pag";  // the HUD's texts (findings/30 s.6)
 
 
 constexpr uint32_t kChunkLayer = 0x18020;
@@ -40,7 +39,6 @@ constexpr uint32_t kChunkString = 0x1800B;
 constexpr uint32_t kGreen = 0xFF00FF00;   // menu items (#00FF00)
 constexpr uint32_t kYellow = 0xFFFFF110;  // the selected item (#FFF110)
 constexpr uint32_t kCyan = 0xFF00FFF7;    // titles, messages, prompts (#00FFF7)
-constexpr uint32_t kWhite = 0xFFFFFFFF;
 constexpr uint32_t kFadedGreen = 0x8000FF00;  // the tabs beside the current one: half see-through
 
 // Text justification codes (horizontal): 0 left, 1 right, 4 centre.
@@ -348,67 +346,6 @@ bool CutGuide(const Bytes& menus, Node* picture, Bytes* sprite) {
 }
 
 // ---------------------------------------------------------------------------
-// The frame-rate counter (fps_overlay.h): on the button prompts' page
-// ---------------------------------------------------------------------------
-// FE_Buttons.pag (package b4c85fe7, GameLoad.prj: loaded from boot to the
-// end) holds the four corner prompts every menu screen sets; it's drawn over
-// every MENU screen (main menus, pause, Options; not in play: checked on
-// photos 2026-10-10). In play the HUD page InGame.pag gets the same five
-// texts (in-game patch above). The counter's five places are five copies of its lower left
-// text: one per position, the code shows the chosen one. The canvas is 4:3
-// in the 16:9 picture, so the screen's corners are past its edges: x -107 to
-// 747 at 1280 x 720 (findings/30 s.1). Each text is drawn at 0.7 x around
-// its box's centre: the boxes are placed so the SCALED text starts (left),
-// ends (right) or centres where wanted.
-constexpr std::string_view kPromptsProject = "GameLoad.prj";
-constexpr std::string_view kPromptsPage = "FE_Buttons.pag";
-constexpr int kFpsWidth = 360, kFpsHeight = 27;
-constexpr float kFpsScale = 0.7f;
-constexpr int kFpsInset = int(kFpsWidth * (1.0f - kFpsScale) / 2);  // what the scale takes off each side
-constexpr int kFpsLeft = -100, kFpsRight = 740, kFpsTop = 446, kFpsBottom = 8;
-struct FpsPlace {
-  const char* name;
-  int x, y;
-  uint32_t justify;
-};
-constexpr FpsPlace kFpsPlaces[] = {
-    {"PortFps0", kFpsLeft - kFpsInset, kFpsTop, 0},                 // top left
-    {"PortFps1", 320 - kFpsWidth / 2, kFpsTop, kCentre},            // top centre
-    {"PortFps2", kFpsRight - kFpsWidth + kFpsInset, kFpsTop, kRight},  // top right
-    {"PortFps3", kFpsLeft - kFpsInset, kFpsBottom, 0},              // bottom left
-    {"PortFps4", kFpsRight - kFpsWidth + kFpsInset, kFpsBottom, kRight},  // bottom right
-};
-
-// The five counter texts appended to a page's layer, copies of `text`.
-void AddFpsTexts(Node& layer, const Node& text, const Node& empty) {
-  for (const FpsPlace& place : kFpsPlaces) {
-    layer.children.push_back(MakeText(text, empty, place.name, place.x, place.y, kFpsWidth,
-                                      kFpsHeight, place.justify, kWhite));
-  }
-}
-
-bool PatchPrompts(const Bytes& original, Bytes* patched) {
-  const bool ok = RebuildProject(
-      original, kPromptsProject, {kPromptsPage},
-      [&](std::string_view, Node& page) {
-        Node* layer = Child(page, kChunkLayer);
-        const Node* found = layer ? Child(*layer, kChunkText, "LowerLeftText") : nullptr;
-        if (!found || found->children.empty()) return false;
-        // COPIES first: the texts are added to the same list the template
-        // lives in, and the first push_back can move that list (a pointer
-        // into it then reads freed memory: the heap damage of 2026-10-10,
-        // caught with glibc's malloc checks).
-        const Node text = *found;
-        const Node empty = text.children[0];  // persistent "_Empty"
-        AddFpsTexts(*layer, text, empty);
-        return true;
-      },
-      {}, patched);
-  if (ok) REXLOG_INFO("Options: the frame-rate counter's texts added to the button prompts' page");
-  return ok;
-}
-
-// ---------------------------------------------------------------------------
 // In game: every in-game menus package (one per level group)
 // ---------------------------------------------------------------------------
 
@@ -439,16 +376,10 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
   std::vector<Bytes> extra;
   if (!guide_sprite.empty()) extra.push_back(guide_sprite);
   const bool ok = RebuildProject(
-      original, kHostProject, {kPageName, kHudPageName},
-      [&](std::string_view name, Node& page) {
+      original, kHostProject, {kPageName},
+      [&](std::string_view, Node& page) {
         Node* layer = Child(page, kChunkLayer);
         if (!layer) return false;
-        if (name == kHudPageName) {
-          // The frame-rate counter in play (the button prompts' page isn't
-          // drawn then): the same five texts as on that page, same places.
-          AddFpsTexts(*layer, parts.label, parts.empty);
-          return true;
-        }
         layer->children = BuildElements(parts);
         return true;
       },
@@ -632,8 +563,6 @@ void Register() {
   data_patcher::Register("options page", data_patcher::kCategoryFrontend, "", PatchInGameMenus);
   data_patcher::Register("main menu options", data_patcher::kCategoryFrontend, "cdd70a8c",
                          PatchMainMenu);
-  data_patcher::Register("frame-rate counter", data_patcher::kCategoryFrontend, "b4c85fe7",
-                         PatchPrompts);
 }
 
 bool Available() { return g_patched.load(); }
