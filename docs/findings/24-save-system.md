@@ -18,6 +18,12 @@ no checksum anywhere in the file.
 
 ## 1. On disk
 
+> **Since 2026-10-10** the port stores each save as one plain file,
+> `user/saves/CrashMOM GameSlot N.sav`, with exactly the bytes described
+> below (header file gone): Radical's save drive is replaced by a PC one
+> ([findings/32](32-native-saves-and-profiles.md)). This section describes
+> the emulated Xbox's layout the research was done on.
+
 The runtime keeps each save as Xbox "content" (type 1, saved game) under
 the user data root:
 
@@ -465,7 +471,8 @@ save under the cursor:
 * **Delete** (after the game's question, 6.5): the save's folder and its
   header move to `<profile>/565507FA/Deleted saves/CrashMOM GameSlot N (<date time>)/`,
   out of the game's sight, and the list is built again (the window stays
-  where it was, as far as the shorter list allows).
+  where it was, as far as the shorter list allows). (Since findings/32:
+  `user/saves/Deleted saves/CrashMOM GameSlot N (<date time>).sav`.)
 * **Controller**: A confirms, B cancels. While the box is open the game
   sees a connected but untouched controller (its XInputGetState wrapper,
   `sub_824742F0`, called only by the input manager's poll, is wrapped), and

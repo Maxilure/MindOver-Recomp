@@ -228,6 +228,7 @@ Both the shared profile (patch 0011) and the stick circles are stand-ins
 that lean on the emulated Xbox and its controller. The goal is native
 code: the game's own sign-in and save calls answered by the port itself,
 and the spin triggered directly instead of through the virtual stick.
+(Sign-in and saves: done 2026-10-10, [findings/32](32-native-saves-and-profiles.md).)
 
 ## 5. Players: which device is player 1, which is player 2
 
@@ -278,6 +279,11 @@ profile's XUID whatever the player number, so they stay in one place.
 Whenever the set of players with a device changes, the game is told with a
 "sign-in changed" notification (`XN_SYS_SIGNINCHANGED`), the one it rebuilds
 its mask on.
+
+> **Update 2026-10-10:** patch 0011 is removed, and so are profiles: the
+> game's sign-in code is replaced by the port's, where "who plays" is simply
+> which controllers play (the same device assignment), without the SDK ([findings/32](32-native-saves-and-profiles.md)
+> section 4).
 
 ## 6. Next: keyboard pictures in the prompts
 

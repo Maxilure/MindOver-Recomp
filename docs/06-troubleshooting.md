@@ -130,14 +130,27 @@ purpose.
 
 ### Saves
 
-**Where are my saves?** In `user/saves/`. Copy that folder to back them up
-(a good habit during the alpha).
+**Where are my saves?** In `user/saves/`, one file per save:
+`CrashMOM GameSlot 1.sav`, `CrashMOM GameSlot 2.sav`, ... (the number is the
+save's, its name is inside the file). Copy that folder to back them up (a
+good habit during the alpha).
 
 **I deleted a save by mistake**: deleted saves aren't destroyed. They're
-moved into a `Deleted saves` folder, a few levels down inside
-`user/saves/` (next to the `00000001` folder that holds the saves). Each
-deleted save is a folder named after it and the time it was deleted; move
-the folder inside it back into `00000001` to restore the save.
+moved into `user/saves/Deleted saves/`, named after the save and the time it
+was deleted (`CrashMOM GameSlot 4 (2026-10-02 18.05.31).sav`). To restore
+one, move it back into `user/saves/` and rename it to `CrashMOM GameSlot
+<number>.sav` with a number no other save uses.
+
+**I saved over the wrong save**: the game deletes a save before writing
+over it; the port keeps that old version in `user/saves/Backups/` (the 10
+newest per save, named with the time). Restore it the same way.
+
+**My saves are in folders like `B13EBABEBABEBABE/565507FA/...`**: that's
+where versions before 0.1.1 kept them (the emulated Xbox's layout). The
+first start of a newer version copies them into `user/saves/` as `.sav`
+files (listed in `copied-from-xbox-layout.txt`) and leaves the old folders
+exactly as they were, as a backup. You can delete the old folders once
+you're happy with the new ones.
 
 ### Updates
 

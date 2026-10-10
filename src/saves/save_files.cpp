@@ -4,9 +4,8 @@
 #include "save_files.h"
 
 #include <algorithm>
-#include <array>
+#include <cctype>
 #include <charconv>
-#include <chrono>
 #include <cstdint>
 #include <ctime>
 #include <fstream>
@@ -17,54 +16,33 @@
 
 #include <fmt/format.h>
 
-#include <rex/runtime.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xam/user_profile.h>
+#include "../game_folder.h"
 
 namespace save_files {
 namespace {
 
+namespace fs = std::filesystem;
+
 // The game's own names (its save manager formats "%s GameSlot %d" with the
 // prefix "CrashMOM", findings/24 section 2.2).
 constexpr std::string_view kNamePrefix = "CrashMOM GameSlot ";
-constexpr std::string_view kSavedGameType = "00000001";  // XContentType::kSavedGame
+constexpr std::string_view kExtension = ".sav";
 constexpr std::string_view kDeletedFolder = "Deleted saves";
+constexpr std::string_view kBackupsFolder = "Backups";
 constexpr std::string_view kPlayedFile = "save_library_played.txt";
+constexpr std::string_view kCopiedNote = "copied-from-xbox-layout.txt";
+
+// The old layout's pieces (the emulated Xbox's content folders).
+constexpr std::string_view kTitleId = "565507FA";
+constexpr std::string_view kSavedGameType = "00000001";  // XContentType::kSavedGame
 
 // The save file's layout (save_files.h).
 constexpr size_t kFileSize = 0x4EED;
 constexpr size_t kNameOffset = 4 + 20;  // the size word, then block +20
 constexpr size_t kNameChars = 32;       // the field, terminator included
-// The header (XCONTENT_AGGREGATE_DATA): the display name after the device id
-// and content type.
-constexpr size_t kHeaderSize = 0x148;
-constexpr size_t kDisplayNameOffset = 8;
-constexpr size_t kDisplayNameChars = 128;
-
-// <user data>/<xuid>/<title id>: the profile's content for this game.
-std::filesystem::path TitleFolder() {
-  rex::Runtime* runtime = rex::Runtime::instance();
-  rex::system::KernelState* kernel = rex::system::kernel_state();
-  if (!runtime || runtime->user_data_root().empty() || !kernel || !kernel->user_profile()) {
-    return {};
-  }
-  // The runtime makes the root absolute the same way (KernelState's
-  // ContentManager), so relative --user_data_root values agree.
-  const std::filesystem::path root = std::filesystem::absolute(runtime->user_data_root());
-  return root / fmt::format("{:016X}", kernel->user_profile()->xuid()) /
-         fmt::format("{:08X}", kernel->title_id());
-}
-
-std::filesystem::path HeaderPath(int number) {
-  const std::filesystem::path title = TitleFolder();
-  if (title.empty()) {
-    return {};
-  }
-  return title / "Headers" / kSavedGameType / (ContentName(number) + ".header");
-}
 
 // Reads a whole file; false if it can't be opened.
-bool ReadAll(const std::filesystem::path& path, std::vector<uint8_t>& out) {
+bool ReadAll(const fs::path& path, std::vector<uint8_t>& out) {
   std::ifstream in(path, std::ios::binary);
   if (!in) {
     return false;
@@ -73,35 +51,7 @@ bool ReadAll(const std::filesystem::path& path, std::vector<uint8_t>& out) {
   return true;
 }
 
-// Writes `data` next to `path` and renames it over: a crash mid-write
-// leaves the old file whole.
-bool ReplaceFile(const std::filesystem::path& path, const std::vector<uint8_t>& data,
-                 std::string* error) {
-  std::filesystem::path temp = path;
-  temp += ".renaming";
-  {
-    std::ofstream out(temp, std::ios::binary | std::ios::trunc);
-    if (!out) {
-      *error = "can't write " + temp.string();
-      return false;
-    }
-    out.write(reinterpret_cast<const char*>(data.data()), std::streamsize(data.size()));
-    if (!out) {
-      *error = "can't write " + temp.string();
-      return false;
-    }
-  }
-  std::error_code ec;
-  std::filesystem::rename(temp, path, ec);
-  if (ec) {
-    std::filesystem::remove(temp, ec);
-    *error = "can't replace " + path.string();
-    return false;
-  }
-  return true;
-}
-
-// UTF-16 <-> big-endian bytes (the guest's byte order, in the files too).
+// UTF-16 -> big-endian bytes (the guest's byte order, in the files too).
 void PutUtf16Be(uint8_t* out, size_t chars, std::u16string_view text) {
   for (size_t i = 0; i < chars; ++i) {
     const char16_t c = i < text.size() ? text[i] : u'\0';
@@ -109,39 +59,11 @@ void PutUtf16Be(uint8_t* out, size_t chars, std::u16string_view text) {
     out[2 * i + 1] = uint8_t(c & 0xFF);
   }
 }
-std::u16string GetUtf16Be(const uint8_t* in, size_t chars) {
-  std::u16string text;
-  for (size_t i = 0; i < chars; ++i) {
-    const char16_t c = char16_t(in[2 * i] << 8 | in[2 * i + 1]);
-    if (c == 0) {
-      break;
-    }
-    text.push_back(c);
-  }
-  return text;
-}
-
-// The header's display name with the name part replaced: the game's
-// "Name: <old> Slot: ..." keeps everything after " Slot:". Anything else
-// (a header written by something else) is left alone.
-bool RenameInDisplayName(std::u16string& display, std::u16string_view name) {
-  constexpr std::u16string_view kStart = u"Name: ";
-  constexpr std::u16string_view kSlot = u" Slot:";
-  if (display.rfind(kStart, 0) != 0) {
-    return false;
-  }
-  const size_t slot = display.find(kSlot, kStart.size());
-  if (slot == std::u16string::npos) {
-    return false;
-  }
-  display = std::u16string(kStart) + std::u16string(name) + display.substr(slot);
-  return true;
-}
 
 // "CrashMOM GameSlot <digits>" -> the number, 0 if the name isn't one (a
 // hand-made "CrashMOM GameSlot 4 copy" isn't a save the game can open).
-int NumberOf(const std::string& name) {
-  if (name.size() <= kNamePrefix.size() || name.compare(0, kNamePrefix.size(), kNamePrefix)) {
+int NumberOf(std::string_view name) {
+  if (name.size() <= kNamePrefix.size() || name.substr(0, kNamePrefix.size()) != kNamePrefix) {
     return 0;
   }
   int number = 0;
@@ -151,14 +73,43 @@ int NumberOf(const std::string& name) {
   return err == std::errc() && end == last && number > 0 ? number : 0;
 }
 
-// The "played" list: number -> file-clock ticks of the last load.
-std::map<int, int64_t> ReadPlayed() {
-  std::map<int, int64_t> played;
-  const std::filesystem::path title = TitleFolder();
-  if (title.empty()) {
-    return played;
+// "CrashMOM GameSlot 4.sav" -> 4, 0 for anything else.
+int NumberOfFile(const fs::path& file) {
+  if (file.extension() != kExtension) {
+    return 0;
   }
-  std::ifstream in(title / kPlayedFile);
+  return NumberOf(file.stem().string());
+}
+
+// "2026-10-02 18.05.31" (dots: Windows file names can't hold colons).
+std::string Stamp() {
+  const std::time_t now = std::time(nullptr);
+  std::tm local{};
+#ifdef _WIN32
+  localtime_s(&local, &now);
+#else
+  localtime_r(&now, &local);
+#endif
+  char stamp[32];
+  std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H.%M.%S", &local);
+  return stamp;
+}
+
+// A free name "<stem> (<stamp>)[ n].sav" inside `folder`.
+fs::path StampedName(const fs::path& folder, const std::string& stem) {
+  const std::string stamp = Stamp();
+  fs::path target = folder / fmt::format("{} ({}){}", stem, stamp, kExtension);
+  std::error_code ec;
+  for (int n = 2; fs::exists(target, ec); ++n) {  // two moves within one second
+    target = folder / fmt::format("{} ({}) {}{}", stem, stamp, n, kExtension);
+  }
+  return target;
+}
+
+// The "played" list: number -> file-clock ticks of the last load.
+std::map<int, int64_t> ReadPlayedFile(const fs::path& path) {
+  std::map<int, int64_t> played;
+  std::ifstream in(path);
   int number = 0;
   long long ticks = 0;
   while (in >> number >> ticks) {
@@ -166,9 +117,13 @@ std::map<int, int64_t> ReadPlayed() {
   }
   return played;
 }
+std::map<int, int64_t> ReadPlayed() {
+  const fs::path folder = SavesFolder();
+  return folder.empty() ? std::map<int, int64_t>() : ReadPlayedFile(folder / kPlayedFile);
+}
 void WritePlayed(const std::map<int, int64_t>& played) {
-  const std::filesystem::path title = TitleFolder();
-  if (title.empty()) {
+  const fs::path folder = SavesFolder();
+  if (folder.empty()) {
     return;
   }
   std::string text;
@@ -176,7 +131,31 @@ void WritePlayed(const std::map<int, int64_t>& played) {
     text += fmt::format("{} {}\n", number, ticks);
   }
   std::string ignored;
-  ReplaceFile(title / kPlayedFile, std::vector<uint8_t>(text.begin(), text.end()), &ignored);
+  ReplaceFile(folder / kPlayedFile, std::vector<uint8_t>(text.begin(), text.end()), &ignored);
+}
+
+// Copies one file (temp + rename), keeping its modification date: the save
+// list orders saves by it.
+bool CopyKeepingDate(const fs::path& from, const fs::path& to, std::string* error) {
+  std::vector<uint8_t> data;
+  if (!ReadAll(from, data)) {
+    *error = "can't read " + from.string();
+    return false;
+  }
+  if (!ReplaceFile(to, data, error)) {
+    return false;
+  }
+  std::error_code ec;
+  const auto when = fs::last_write_time(from, ec);
+  if (!ec) {
+    fs::last_write_time(to, when, ec);
+  }
+  return true;
+}
+
+bool IsProfileFolderName(const std::string& name) {
+  return name.size() == 16 &&
+         std::all_of(name.begin(), name.end(), [](char c) { return std::isxdigit(uint8_t(c)); });
 }
 
 }  // namespace
@@ -185,50 +164,56 @@ std::string ContentName(int number) {
   return fmt::format("{}{}", kNamePrefix, number);
 }
 
-std::filesystem::path SavesFolder() {
-  const std::filesystem::path title = TitleFolder();
-  return title.empty() ? title : title / kSavedGameType;
+fs::path SavesFolder() {
+  return game_folder::SavesFolder();
+}
+
+fs::path FileOf(std::string_view game_name) {
+  const fs::path folder = SavesFolder();
+  return folder.empty() ? folder : folder / (std::string(game_name) + std::string(kExtension));
+}
+
+fs::path FileOf(int number) {
+  return FileOf(ContentName(number));
+}
+
+std::recursive_mutex& Lock() {
+  static std::recursive_mutex lock;
+  return lock;
 }
 
 bool Exists(int number) {
-  const std::filesystem::path folder = SavesFolder();
   std::error_code ec;
-  return !folder.empty() && std::filesystem::is_directory(folder / ContentName(number), ec);
+  const fs::path file = FileOf(number);
+  return !file.empty() && fs::is_regular_file(file, ec);
 }
 
 int HighestNumber() {
-  const std::filesystem::path folder = SavesFolder();
-  std::error_code ec;
-  if (folder.empty() || !std::filesystem::is_directory(folder, ec)) {
-    return 0;
-  }
   int highest = 0;
-  for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
-    if (entry.is_directory(ec)) {
-      highest = std::max(highest, NumberOf(entry.path().filename().string()));
-    }
+  for (const SaveInfo& save : ListSaves()) {
+    highest = std::max(highest, save.number);
   }
   return highest;
 }
 
 std::vector<SaveInfo> ListSaves() {
+  std::lock_guard guard(Lock());
   std::vector<SaveInfo> saves;
-  const std::filesystem::path folder = SavesFolder();
+  const fs::path folder = SavesFolder();
   std::error_code ec;
-  if (folder.empty() || !std::filesystem::is_directory(folder, ec)) {
+  if (folder.empty() || !fs::is_directory(folder, ec)) {
     return saves;
   }
   const std::map<int, int64_t> loaded = ReadPlayed();
-  for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
-    const int number = entry.is_directory(ec) ? NumberOf(entry.path().filename().string()) : 0;
+  for (const auto& entry : fs::directory_iterator(folder, ec)) {
+    const int number = entry.is_regular_file(ec) ? NumberOfFile(entry.path()) : 0;
     if (!number) {
       continue;
     }
-    const std::filesystem::path file = entry.path() / ContentName(number);
-    const auto written = std::filesystem::last_write_time(file, ec);
+    const auto written = fs::last_write_time(entry.path(), ec);
     if (ec) {
       ec.clear();
-      continue;  // a folder without its save file
+      continue;
     }
     SaveInfo info{number, int64_t(written.time_since_epoch().count())};
     if (const auto it = loaded.find(number); it != loaded.end()) {
@@ -242,7 +227,17 @@ std::vector<SaveInfo> ListSaves() {
   return saves;
 }
 
+std::vector<std::string> GameNames() {
+  std::vector<std::string> names;
+  for (const SaveInfo& save : ListSaves()) {
+    names.push_back(ContentName(save.number));
+  }
+  std::sort(names.begin(), names.end());
+  return names;
+}
+
 int FreeNumber() {
+  std::lock_guard guard(Lock());
   int number = 1;
   while (Exists(number)) {
     ++number;
@@ -251,12 +246,14 @@ int FreeNumber() {
 }
 
 void MarkPlayed(int number) {
+  std::lock_guard guard(Lock());
   std::map<int, int64_t> played = ReadPlayed();
-  played[number] = int64_t(std::filesystem::file_time_type::clock::now().time_since_epoch().count());
+  played[number] = int64_t(fs::file_time_type::clock::now().time_since_epoch().count());
   WritePlayed(played);
 }
 
 void ForgetPlayed(int number) {
+  std::lock_guard guard(Lock());
   std::map<int, int64_t> played = ReadPlayed();
   if (played.erase(number)) {
     WritePlayed(played);
@@ -264,12 +261,11 @@ void ForgetPlayed(int number) {
 }
 
 bool ReadBlockStart(int number, uint8_t* out, size_t size) {
-  const std::filesystem::path folder = SavesFolder();
-  if (folder.empty() || number < 1) {
+  std::lock_guard guard(Lock());
+  if (number < 1) {
     return false;
   }
-  const std::string content = ContentName(number);
-  std::ifstream in(folder / content / content, std::ios::binary);
+  std::ifstream in(FileOf(number), std::ios::binary);
   if (!in) {
     return false;
   }
@@ -278,20 +274,41 @@ bool ReadBlockStart(int number, uint8_t* out, size_t size) {
   return size_t(in.gcount()) == size;
 }
 
+bool ReplaceFile(const fs::path& path, const std::vector<uint8_t>& data, std::string* error) {
+  fs::path temp = path;
+  temp += ".writing";
+  {
+    std::ofstream out(temp, std::ios::binary | std::ios::trunc);
+    if (!out) {
+      *error = "can't write " + temp.string();
+      return false;
+    }
+    out.write(reinterpret_cast<const char*>(data.data()), std::streamsize(data.size()));
+    out.flush();
+    if (!out) {
+      *error = "can't write " + temp.string();
+      return false;
+    }
+  }
+  std::error_code ec;
+  fs::rename(temp, path, ec);
+  if (ec) {
+    fs::remove(temp, ec);
+    *error = "can't replace " + path.string();
+    return false;
+  }
+  return true;
+}
+
 bool Rename(int number, std::u16string_view name, std::string* error) {
+  std::lock_guard guard(Lock());
   if (name.size() > kMaxNameLength) {
     *error = "name too long";
     return false;
   }
-  const std::filesystem::path folder = SavesFolder();
-  if (folder.empty()) {
-    *error = "no profile";
-    return false;
-  }
-  const std::string content = ContentName(number);
-  const std::filesystem::path save = folder / content / content;
+  const fs::path save = FileOf(number);
   std::vector<uint8_t> data;
-  if (!ReadAll(save, data)) {
+  if (save.empty() || !ReadAll(save, data)) {
     *error = "can't read " + save.string();
     return false;
   }
@@ -308,70 +325,175 @@ bool Rename(int number, std::u16string_view name, std::string* error) {
   // The file time says when the game last saved it (the list's order): a
   // rename keeps it.
   std::error_code time_error;
-  const auto saved_at = std::filesystem::last_write_time(save, time_error);
+  const auto saved_at = fs::last_write_time(save, time_error);
   if (!ReplaceFile(save, data, error)) {
     return false;
   }
   if (!time_error) {
-    std::filesystem::last_write_time(save, saved_at, time_error);
-  }
-
-  // The header's display name too (cosmetic: the game never reads it), if
-  // it looks like the game's own.
-  const std::filesystem::path header = HeaderPath(number);
-  std::vector<uint8_t> head;
-  if (ReadAll(header, head) && head.size() >= kHeaderSize) {
-    std::u16string display = GetUtf16Be(head.data() + kDisplayNameOffset, kDisplayNameChars);
-    if (RenameInDisplayName(display, name)) {
-      display.resize(std::min(display.size(), kDisplayNameChars - 1));
-      PutUtf16Be(head.data() + kDisplayNameOffset, kDisplayNameChars, display);
-      std::string ignored;
-      ReplaceFile(header, head, &ignored);  // the save itself is renamed already
-    }
+    fs::last_write_time(save, saved_at, time_error);
   }
   return true;
 }
 
-bool MoveToDeleted(int number, std::filesystem::path* moved_to, std::string* error) {
-  const std::filesystem::path folder = SavesFolder();
-  const std::string content = ContentName(number);
+bool MoveToDeleted(int number, fs::path* moved_to, std::string* error) {
+  std::lock_guard guard(Lock());
+  const fs::path file = FileOf(number);
   std::error_code ec;
-  if (folder.empty() || !std::filesystem::is_directory(folder / content, ec)) {
-    *error = content + " doesn't exist";
+  if (file.empty() || !fs::is_regular_file(file, ec)) {
+    *error = ContentName(number) + " doesn't exist";
     return false;
   }
-  // "CrashMOM GameSlot 4 (2026-10-02 18.05.31)": unique enough, readable
-  // (dots: Windows folder names can't hold colons).
-  const std::time_t now = std::time(nullptr);
-  std::tm local{};
-#ifdef _WIN32
-  localtime_s(&local, &now);
-#else
-  localtime_r(&now, &local);
-#endif
-  char stamp[32];
-  std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H.%M.%S", &local);
-  const std::filesystem::path target =
-      folder.parent_path() / kDeletedFolder / fmt::format("{} ({})", content, stamp);
-  std::filesystem::create_directories(target, ec);
+  const fs::path folder = SavesFolder() / kDeletedFolder;
+  fs::create_directories(folder, ec);
   if (ec) {
-    *error = "can't create " + target.string();
+    *error = "can't create " + folder.string();
     return false;
   }
-  std::filesystem::rename(folder / content, target / content, ec);
+  const fs::path target = StampedName(folder, ContentName(number));
+  fs::rename(file, target, ec);
   if (ec) {
-    *error = fmt::format("can't move {}: {}", content, ec.message());
+    *error = fmt::format("can't move {}: {}", file.string(), ec.message());
     return false;
-  }
-  // The header goes along (without it the runtime would still list the
-  // content by its folder name, but there's no folder any more).
-  const std::filesystem::path header = HeaderPath(number);
-  if (std::filesystem::exists(header, ec)) {
-    std::filesystem::rename(header, target / header.filename(), ec);
   }
   ForgetPlayed(number);
   *moved_to = target;
   return true;
+}
+
+bool MoveToBackups(const fs::path& file, fs::path* moved_to, std::string* error) {
+  std::lock_guard guard(Lock());
+  const fs::path folder = SavesFolder() / kBackupsFolder;
+  std::error_code ec;
+  fs::create_directories(folder, ec);
+  if (ec) {
+    *error = "can't create " + folder.string();
+    return false;
+  }
+  const std::string stem = file.stem().string();
+  const fs::path target = StampedName(folder, stem);
+  fs::rename(file, target, ec);
+  if (ec) {
+    *error = fmt::format("can't move {}: {}", file.string(), ec.message());
+    return false;
+  }
+  *moved_to = target;
+
+  // Keep the newest kBackupsPerSave of this save ("<stem> (<stamp>)...":
+  // the stamp sorts by time).
+  std::vector<fs::path> mine;
+  const std::string prefix = stem + " (";
+  for (const auto& entry : fs::directory_iterator(folder, ec)) {
+    const std::string name = entry.path().filename().string();
+    if (name.rfind(prefix, 0) == 0 && entry.path().extension() == kExtension) {
+      mine.push_back(entry.path());
+    }
+  }
+  std::sort(mine.begin(), mine.end());
+  for (size_t i = 0; i + kBackupsPerSave < mine.size(); ++i) {
+    fs::remove(mine[i], ec);
+  }
+  return true;
+}
+
+std::vector<std::string> CopyFromXboxLayout() {
+  std::lock_guard guard(Lock());
+  std::vector<std::string> log;
+  const fs::path folder = SavesFolder();
+  std::error_code ec;
+  if (folder.empty() || !fs::is_directory(folder, ec)) {
+    return log;
+  }
+  const fs::path note = folder / kCopiedNote;
+  if (fs::exists(note, ec)) {
+    return log;  // done before: never again (a save deleted since stays deleted)
+  }
+
+  // Every profile folder (16 hex digits) with saves of this game, in name
+  // order (one profile on every port install so far).
+  std::vector<fs::path> profiles;
+  for (const auto& entry : fs::directory_iterator(folder, ec)) {
+    if (entry.is_directory(ec) && IsProfileFolderName(entry.path().filename().string()) &&
+        fs::is_directory(entry.path() / kTitleId / kSavedGameType, ec)) {
+      profiles.push_back(entry.path());
+    }
+  }
+  std::sort(profiles.begin(), profiles.end());
+  if (profiles.empty()) {
+    return log;  // nothing in the old layout (a new install): no note either
+  }
+
+  std::string note_text =
+      "Mind over Recomp copied these saves from the old Xbox-style folders into this folder\n"
+      "(the old folders were left exactly as they were: they are a backup).\n"
+      "While this file exists, the copy doesn't run again.\n\n";
+  int copied = 0, failed = 0;
+  std::map<int, int64_t> played = ReadPlayed();
+  for (const fs::path& profile : profiles) {
+    const fs::path content = profile / kTitleId / kSavedGameType;
+    const std::map<int, int64_t> old_played =
+        ReadPlayedFile(profile / kTitleId / kPlayedFile);
+    std::vector<fs::path> saves;
+    for (const auto& entry : fs::directory_iterator(content, ec)) {
+      const std::string name = entry.path().filename().string();
+      if (entry.is_directory(ec) && NumberOf(name) && fs::is_regular_file(entry.path() / name, ec)) {
+        saves.push_back(entry.path() / name);
+      }
+    }
+    std::sort(saves.begin(), saves.end());
+    for (const fs::path& old_file : saves) {
+      const int old_number = NumberOf(old_file.filename().string());
+      // Already here with the same bytes (copied by hand, by an earlier try
+      // that stopped half way, or a 2nd profile holding the same file): skip.
+      std::vector<uint8_t> old_data;
+      ReadAll(old_file, old_data);
+      bool already = false;
+      for (const SaveInfo& save : ListSaves()) {
+        std::vector<uint8_t> have;
+        if (ReadAll(FileOf(save.number), have) && have == old_data) {
+          already = true;
+          break;
+        }
+      }
+      if (already) {
+        note_text += fmt::format("{}: already here\n", old_file.string());
+        continue;
+      }
+      // Its own number if that's free, else the next free one.
+      const int number = Exists(old_number) ? FreeNumber() : old_number;
+      std::string error;
+      if (!CopyKeepingDate(old_file, FileOf(number), &error)) {
+        ++failed;
+        log.push_back(fmt::format("COULD NOT copy {}: {}", old_file.string(), error));
+        note_text += fmt::format("{}: NOT COPIED ({})\n", old_file.string(), error);
+        continue;
+      }
+      ++copied;
+      if (const auto it = old_played.find(old_number); it != old_played.end()) {
+        // (File-clock ticks can be negative: libstdc++'s clock counts from
+        // 2174. Never compare against a default 0.)
+        const auto have = played.find(number);
+        played[number] = have == played.end() ? it->second : std::max(have->second, it->second);
+      }
+      const bool usual = old_data.size() == kFileSize;
+      log.push_back(fmt::format("copied {} -> {}{}", old_file.string(),
+                                FileOf(number).filename().string(),
+                                usual ? "" : fmt::format(" (unusual size: {} bytes)", old_data.size())));
+      note_text += fmt::format("{} -> {}\n", old_file.string(), FileOf(number).filename().string());
+    }
+  }
+  WritePlayed(played);
+  // A failed copy leaves no note: the next start tries again (copies that
+  // worked are skipped then: same bytes).
+  if (failed == 0) {
+    std::string error;
+    if (!ReplaceFile(note, std::vector<uint8_t>(note_text.begin(), note_text.end()), &error)) {
+      log.push_back("COULD NOT write " + note.string() + ": " + error);
+    }
+  }
+  log.push_back(fmt::format("old Xbox-style saves: {} copied, {} failed (the old folders are kept "
+                            "as they were)",
+                            copied, failed));
+  return log;
 }
 
 }  // namespace save_files

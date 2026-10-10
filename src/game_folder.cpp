@@ -194,4 +194,9 @@ void LogWhatHappened() {
 
 fs::path UserFolder() { return g_user; }
 
+fs::path SavesFolder() {
+  std::error_code ec;
+  return g_saves.empty() ? g_saves : fs::absolute(g_saves, ec);
+}
+
 }  // namespace game_folder

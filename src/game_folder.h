@@ -13,9 +13,11 @@
 //     program/        crash_mom(.exe), libraries, shaders, assets/
 //                     (replaced by every update)
 //     user/           THE PLAYER'S FILES: updates never touch this folder
-//       saves/        the SDK's "user data" folder: the emulated profile's
-//                     saves (<profile>/565507FA/00000001/...), the save list's
-//                     play order, achievements
+//       saves/        the saves, CrashMOM GameSlot N.sav (saves/save_files.h:
+//                     the PC save drive's files, Backups/, Deleted saves/,
+//                     the save list's play order); also the SDK's "user data"
+//                     (achievements; before 2026-10-10 the emulated profile's
+//                     <profile>/565507FA/00000001/..., copied over once)
 //       settings.toml every changed setting (was crash_mom.toml next to the
 //                     exe; the SDK's F4 menu saves here)
 //       controls.toml keyboard + mouse keys and which device is which player
@@ -67,5 +69,9 @@ void LogWhatHappened();
 
 // <game folder>/user: settings, controls, photos, markers (see above).
 std::filesystem::path UserFolder();
+
+// The saves folder (user/saves, or --user_data_root for test runs on a copy),
+// absolute. Empty before Configure ran.
+std::filesystem::path SavesFolder();
 
 }  // namespace game_folder

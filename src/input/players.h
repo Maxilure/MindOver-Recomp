@@ -106,7 +106,7 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // device also plays as player 1 (see above). Unset = always in play.
   void SetInPlayCheck(std::function<bool()> in_play);
   // Does a real device (keyboard or pad, fake ones included) play as `player`
-  // (0-3)? For the SDK's sign-in answers and the lost-controller pause
+  // (0-3)? For the game's "who plays" fields (players/who_plays.h) and the lost-controller pause
   // (players/lost_controller.h). Takes the lock; any thread.
   bool HasDeviceFor(int player) const;
 

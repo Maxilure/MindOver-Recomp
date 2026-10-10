@@ -98,6 +98,12 @@ the CPU part:
 * A **native renderer** (`src/native/`): our own Vulkan code that redraws
   each frame from the game's renderer calls, replacing the emulated GPU
   step by step ([04-native-renderer.md](04-native-renderer.md)).
+* **Going native** for the rest of the pretend Xbox: the few game functions
+  that ask it for something are answered by our own code instead. Saves and
+  profiles are done (a PC save drive writing plain `.sav` files; no
+  profiles or sign-in at all, "who plays" = which controllers play: [findings/32](findings/32-native-saves-and-profiles.md));
+  the README's *Going native* table shows what's left, measured by the
+  Xbox calls meter (`src/debug/xbox_calls.h`).
 
 ## Endianness, in one paragraph
 

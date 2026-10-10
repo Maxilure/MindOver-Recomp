@@ -473,19 +473,24 @@ void RememberReportFolder(const folders::Folders& folders, const fs::path& folde
 
 namespace {
 
-// A save file and its header, with their places under user/saves (report.h):
-// user/saves/<profile>/565507FA/00000001/CrashMOM GameSlot N/CrashMOM GameSlot N
-// user/saves/<profile>/565507FA/Headers/00000001/CrashMOM GameSlot N.header
+// A save file (and, in the old layout, its header), with its place under
+// user/saves (report.h):
+//   user/saves/CrashMOM GameSlot N.sav                  (since 2026-10-10)
+//   user/saves/<profile>/565507FA/00000001/CrashMOM GameSlot N/CrashMOM GameSlot N
+//   user/saves/<profile>/565507FA/Headers/00000001/CrashMOM GameSlot N.header
 std::vector<std::pair<std::string, fs::path>> SaveFiles(const folders::Folders& folders,
                                                         const fs::path& file) {
   std::vector<std::pair<std::string, fs::path>> files;
   std::error_code ec;
   const fs::path saves = folders.user / "saves";
-  const fs::path slot = file.parent_path();      // CrashMOM GameSlot N/
-  const fs::path content = slot.parent_path();   // 00000001/
-  const fs::path title = content.parent_path();  // 565507FA/
-  const fs::path header = title / "Headers" / content.filename() / (slot.filename().string() + ".header");
-  for (const fs::path& path : {file, header}) {
+  std::vector<fs::path> paths{file};
+  if (file.extension() != ".sav") {  // the old layout: the header goes along
+    const fs::path slot = file.parent_path();      // CrashMOM GameSlot N/
+    const fs::path content = slot.parent_path();   // 00000001/
+    const fs::path title = content.parent_path();  // 565507FA/
+    paths.push_back(title / "Headers" / content.filename() / (slot.filename().string() + ".header"));
+  }
+  for (const fs::path& path : paths) {
     if (!fs::exists(path, ec)) continue;
     const fs::path relative = fs::relative(path, saves, ec);
     if (ec || relative.empty()) continue;

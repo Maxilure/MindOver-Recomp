@@ -72,6 +72,35 @@ with your version, system and graphics card filled in.
   **F9**).
 * **Windows** builds and runs. It is less tested than Linux.
 
+## Going native
+
+The game's own code already runs as native PC code. What is still emulated
+is the **Xbox 360 around it**: the system services the game asks for
+(graphics driver, profiles, saves, controllers, sound...), answered today by
+the ReXGlue runtime. The goal is to answer every one of them with the port's
+own code, so the game no longer needs a pretend Xbox at all.
+
+<!-- native-progress:begin -->
+<!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
+**Xbox services replaced: 17 of 66 (26%)** `▰▰▰▱▱▱▱▱▱▱`
+
+| Xbox piece | Replaced | Becomes |
+|---|---|---|
+| Graphics driver | `▱▱▱▱▱▱▱▱▱▱` 0 / 20 | the port's own Vulkan renderer, then the emulated GPU off |
+| Profiles and sign-in | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | no profiles at all: who plays = which controllers play |
+| Saves and storage | `▰▰▰▰▰▰▰▰▰▰` 11 / 11 | plain save files in one folder: no storage devices, no content packages |
+| Controllers | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the input manager fed directly (keyboard and mouse, any SDL controller, rumble) |
+| Sound output | `▱▱▱▱▱▱▱▱▱▱` 0 / 5 | each mixed frame straight to the PC's audio |
+| XMA sound decoder | `▱▱▱▱▱▱▱▱▱▱` 0 / 2 | a software decoder instead of the emulated sound chip |
+| System pop-ups and notifications | `▰▰▰▰▱▱▱▱▱▱` 2 / 5 | PC behaviour (the port's own messages); gone once profiles and saves are native |
+| System messages (achievements, ...) | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the port's own handlers |
+| Console settings | `▱▱▱▱▱▱▱▱▱▱` 0 / 8 | the port's settings (language, region, video mode) |
+| Quit and launch | `▱▱▱▱▱▱▱▱▱▱` 0 / 4 | quit the program cleanly |
+| Network | `▱▱▱▱▱▱▱▱▱▱` 0 / 1 | not needed (no online features) |
+
+Not counted: 89 kernel basics (threads, locks, memory, files), already thin translations to the PC's own.
+<!-- native-progress:end -->
+
 ## Enhancements
 
 Things the Xbox 360 game never had:

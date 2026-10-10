@@ -49,6 +49,7 @@
 #include "debug/guest_stack.h"
 #include "debug/host_symbols.h"
 #include "debug/write_watchpoints.h"
+#include "debug/xbox_calls.h"
 #include "fixed_step.h"
 #include "data/fight_tree.h"
 #include "pddi/intercept.h"
@@ -943,7 +944,7 @@ const char kHelp[] =
     "snap <name> <expr> <bytes> | diff <name> [update] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
-    "track <file> [frames] | track stop | track | <any FIFO input line>\n"
+    "track <file> [frames] | track stop | track | xbox | <any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
 
 // One command line -> its reply (throws Error).
@@ -973,6 +974,7 @@ std::string Run(std::string_view line) {
   if (verb == "fkey") return FKey(w);
   if (verb == "clock") return ClockCommand(w);
   if (verb == "track") return TrackCommand(w);
+  if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
   // Everything else: an input line (buttons, keys, cheats).
   ScriptedInputDriver* driver = ScriptedInputDriver::Live();
   if (!driver) throw Error{"no input driver yet"};

@@ -52,6 +52,7 @@
 #include "debug_input_script.h"
 #include "frame_rate.h"
 #include "game_folder.h"
+#include "saves/save_files.h"
 #include "settings_list.h"
 #include "session_log.h"
 #include "crash_report.h"
@@ -344,6 +345,12 @@ class CrashMomApp : public rex::ReXApp {
     session_log::Start(game_folder::UserFolder().empty() ? std::filesystem::path()
                                                          : game_folder::UserFolder() / "logs");
     game_folder::LogWhatHappened();
+    // Saves from the old Xbox-style folders are copied ONCE into the flat
+    // user/saves/*.sav layout the PC save drive uses (saves/save_files.h);
+    // the old folders stay untouched.
+    for (const std::string& line : save_files::CopyFromXboxLayout()) {
+      REXLOG_INFO("Saves: {}", line);
+    }
     // A crash writes WHERE (named call stack) into the log and
     // user/logs/crash-<time>.txt (src/crash_report.h; Linux: its handler is
     // added in OnPostSetup, after the SDK's own).

@@ -26,8 +26,8 @@
 //   photos/             F10 photos taken during the chosen sessions (optional,
 //                       off by default: ~3 MB each)
 //   saves/...           ONE save the tester picks (optional, off by default):
-//                       its file + its header, in the same folders as under
-//                       user/saves/, so it can be dropped into a copy and
+//                       its .sav file (old layout: file + header), at the same
+//                       path as under user/saves/, so it can be dropped into a copy and
 //                       loaded with --load_save to see the problem spot
 //
 // WHERE: user/reports/ unless the tester picked another folder in the

@@ -20,6 +20,8 @@ constexpr std::string_view kTitle = "565507FA";        // the game's title id
 constexpr std::string_view kSavedGame = "00000001";    // content type: saved game
 constexpr std::string_view kPrefix = "CrashMOM GameSlot ";
 constexpr std::string_view kPlayedFile = "save_library_played.txt";
+constexpr std::string_view kExtension = ".sav";                          // flat layout: <name>.sav
+constexpr std::string_view kCopiedNote = "copied-from-xbox-layout.txt";  // the game's one-time copy is done
 constexpr size_t kBlock = 4;                           // the save block's start in the file
 
 // "CrashMOM GameSlot <digits>" -> the number, 0 if it isn't one.
@@ -109,14 +111,50 @@ std::map<int, int64_t> ReadPlayed(const fs::path& title_folder) {
   return played;
 }
 
-}  // namespace
 
-std::vector<Save> List(const fs::path& user_folder) {
+// One save file -> its list entry (false if it can't be read).
+bool ReadEntry(const fs::path& file, int number, const std::map<int, int64_t>& loaded, Save& save) {
+  std::error_code ec;
+  const auto written = fs::last_write_time(file, ec);
+  if (ec || !ReadSummary(file, save)) {
+    return false;
+  }
+  save.number = number;
+  save.file = file;
+  save.played = int64_t(written.time_since_epoch().count());
+  if (const auto it = loaded.find(number); it != loaded.end()) {
+    save.played = std::max(save.played, it->second);
+  }
+  return true;
+}
+
+// The flat layout (since 2026-10-10): user/saves/CrashMOM GameSlot N.sav.
+std::vector<Save> ListFlat(const fs::path& saves_folder) {
   std::vector<Save> list;
   std::error_code ec;
-  // user/saves/<profile id>/...: normally one profile; "achievements" and
-  // anything else without the title folder is skipped by the checks below.
-  for (const auto& profile : fs::directory_iterator(user_folder / "saves", ec)) {
+  const std::map<int, int64_t> loaded = ReadPlayed(saves_folder);
+  for (const auto& entry : fs::directory_iterator(saves_folder, ec)) {
+    if (!entry.is_regular_file(ec) || entry.path().extension() != kExtension) {
+      continue;
+    }
+    const int number = NumberOf(entry.path().stem().string());
+    Save save;
+    if (number && ReadEntry(entry.path(), number, loaded, save)) {
+      list.push_back(std::move(save));
+    }
+  }
+  return list;
+}
+
+// The old Xbox-style layout (user/saves/<profile id>/565507FA/00000001/
+// CrashMOM GameSlot N/CrashMOM GameSlot N): shown until the game has run once
+// after an update and copied it into the flat layout.
+std::vector<Save> ListOldLayout(const fs::path& saves_folder) {
+  std::vector<Save> list;
+  std::error_code ec;
+  // Normally one profile; "achievements" and anything else without the title
+  // folder is skipped by the checks below.
+  for (const auto& profile : fs::directory_iterator(saves_folder, ec)) {
     const fs::path title = profile.path() / kTitle;
     const fs::path folder = title / kSavedGame;
     if (!fs::is_directory(folder, ec)) {
@@ -127,24 +165,25 @@ std::vector<Save> List(const fs::path& user_folder) {
     for (const auto& entry : fs::directory_iterator(folder, ec)) {
       const std::string name = entry.path().filename().string();
       const int number = entry.is_directory(ec) ? NumberOf(name) : 0;
-      if (!number) {
-        continue;
-      }
-      const fs::path file = entry.path() / name;
-      const auto written = fs::last_write_time(file, ec);
       Save save;
-      if (ec || !ReadSummary(file, save)) {
-        ec.clear();
-        continue;  // a folder without a readable save file
+      if (number && ReadEntry(entry.path() / name, number, loaded, save)) {
+        list.push_back(std::move(save));
       }
-      save.number = number;
-      save.file = file;
-      save.played = int64_t(written.time_since_epoch().count());
-      if (const auto it = loaded.find(number); it != loaded.end()) {
-        save.played = std::max(save.played, it->second);
-      }
-      list.push_back(std::move(save));
     }
+  }
+  return list;
+}
+
+}  // namespace
+
+std::vector<Save> List(const fs::path& user_folder) {
+  const fs::path saves_folder = user_folder / "saves";
+  std::error_code ec;
+  std::vector<Save> list = ListFlat(saves_folder);
+  // Nothing flat yet, and the game hasn't done its one-time copy: the old
+  // folders still hold the saves (same numbers the copy will give them).
+  if (list.empty() && !fs::exists(saves_folder / kCopiedNote, ec)) {
+    list = ListOldLayout(saves_folder);
   }
   std::sort(list.begin(), list.end(), [](const Save& a, const Save& b) {
     return a.played != b.played ? a.played > b.played : a.number < b.number;

@@ -23,7 +23,7 @@
 //
 // The extracted disc is <game folder>/game (what tools/xiso_extract.py
 // writes); the player's files are <game folder>/user. Saves:
-// user/saves/<profile id>/565507FA/00000001/ (saves.h).
+// user/saves/CrashMOM GameSlot N.sav (saves.h).
 // =============================================================================
 #pragma once
 

@@ -25,7 +25,7 @@ extern "C" REX_FUNC(__imp__sub_8211CE30);  // front end: LoadComplete's decision
 // What START on the title screen does (the front end's input update,
 // sub_82264988, at 0x8226520C / 0x82265218), called by us instead:
 extern "C" REX_FUNC(__imp__sub_82266150);  // front end: player slot r4 = controller r5 (+ (2131 + slot) * 4)
-extern "C" REX_FUNC(__imp__sub_8227CEA8);  // game: sign in the profile of controller r4 (sets +352)
+extern "C" REX_FUNC(sub_8227CEA8);  // controller r4 starts playing (sets +352; the PC version, players/who_plays.h)
 
 REXCVAR_DEFINE_STRING(load_save, "", "CrashMoM",
                       "Start straight into a save, skipping the intros, title and menus: "
@@ -273,7 +273,7 @@ extern "C" REX_FUNC(sub_8211B5A8) {
       return;
     }
     CallGame(__imp__sub_82266150, ctx, base, front_end, 0, kController);
-    CallGame(__imp__sub_8227CEA8, ctx, base, game, kController);
+    CallGame(sub_8227CEA8, ctx, base, game, kController);
     if (int32_t(Read32(base, game + kGameActiveController)) < 0) {
       GiveUp("no profile signed in on the first controller");
       return;

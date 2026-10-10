@@ -50,6 +50,23 @@ the main menu): tabs (LB / RB), every change takes effect at once.
   now follows them and they can start story scenes. Before, the camera
   stood still and the story couldn't go on.
 
+**Saves and profiles, natively** (less pretend Xbox; see the README's
+*Going native* progress)
+
+- **Saves are plain files** now: `user/saves/CrashMOM GameSlot 1.sav`, ...
+  one file per save, no Xbox profile or storage folders. The first start
+  **copies** your saves there from the old folders and leaves the old ones
+  untouched, as a backup.
+- **Saving over a save keeps the old one** in `user/saves/Backups/` (the 10
+  newest per save), and a save is written in one go: a crash while saving
+  leaves the previous save whole.
+- **No more profiles or sign-in** behind the scenes: who plays is simply
+  which controllers play (player 1 always, players 2-4 as soon as a
+  controller plays as them).
+- **Invert Axis stays as you set it**: it used to reset to off at every
+  Press START, quit to the title and co-op join (the Xbox profile's
+  setting).
+
 **Launcher and logs**
 
 - **Report a problem** in the launcher: one click packs the logs of the
@@ -74,7 +91,9 @@ the main menu): tabs (LB / RB), every change takes effect at once.
 
 The launcher shows **Version 0.1.1-alpha is out**: open *Setup* and update.
 Your saves and settings stay. After the restart, let Setup finish
-rebuilding the game before you play (it says so on the Play page).
+rebuilding the game before you play (it says so on the Play page). The
+first start copies your saves into the new layout (see above); keep your
+backup until you've checked they're all there.
 
 ### Downloads
 

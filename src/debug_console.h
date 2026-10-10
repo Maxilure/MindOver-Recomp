@@ -51,6 +51,9 @@
 //                            every game frame, every player: position,
 //                            velocity, ground contact -> CSV, for
 //                            tools/compare_runs.py
+//   xbox                     the Xbox calls meter: every Xbox service the game
+//                            called so far, counts + calling functions
+//                            (debug/xbox_calls.h)
 //   replay <file> [from_ms] [to_ms] [raw] [onlevel] [onspawn]   play back a session's recorded
 //                            presses (<log>-inputs.txt, input_record.h);
 //                            `replay stop`, `replay` (status), `wait replay`

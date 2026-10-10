@@ -6,7 +6,8 @@
 #include <atomic>
 
 #include <rex/logging.h>
-#include <rex/system/xam/user_profile.h>
+
+#include "../players/who_plays.h"
 
 using rex::input::DeviceId;
 using rex::input::DeviceInfo;
@@ -25,16 +26,14 @@ const char* PlayerText(int player) {
 
 PlayerAssignment::PlayerAssignment(DeviceId keyboard_id, std::map<std::string, int> choices)
     : keyboard_id_(keyboard_id), choices_(std::move(choices)) {
+  // Players 2-4 play while a device plays as them: the game's "who plays"
+  // fields are filled from HasDeviceFor (players/who_plays.h). On the 360
+  // that was a profile sign-in per controller; without a player-2 answer the
+  // game refuses player 2 ("You do not have an active gamer profile").
   g_assignment.store(this);
-  // Players 2-4 count as signed in (sharing player 1's profile) while a
-  // device plays as them (SDK patch 0011): without that, the game refuses
-  // player 2 ("You do not have an active gamer profile").
-  rex::system::xam::SetLocalPlayerPresentCallback(
-      [this](uint32_t user_index) { return HasDeviceFor(int(user_index)); });
 }
 
 PlayerAssignment::~PlayerAssignment() {
-  rex::system::xam::SetLocalPlayerPresentCallback(nullptr);
   g_assignment.store(nullptr);
 }
 
@@ -65,11 +64,11 @@ void PlayerAssignment::AnnounceIfChanged() {
     }
     announced_mask_ = mask;
   }
-  // Outside the lock: the broadcast asks HasDeviceFor again.
+  // Outside the lock: the game's notification step asks HasDeviceFor again.
   REXLOG_INFO("Players: players with a device (signed in with the one profile): {}{}{}{}",
               mask & 1 ? "1 " : "", mask & 2 ? "2 " : "", mask & 4 ? "3 " : "",
               mask & 8 ? "4" : "");
-  rex::system::xam::NotifyLocalPlayersChanged();
+  who_plays::PlayersChanged();
 }
 
 PlayerAssignment* PlayerAssignment::Get() {

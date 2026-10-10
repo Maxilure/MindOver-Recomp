@@ -83,7 +83,7 @@ A few minutes per configuration.
   | `0008-physical-release-order` | "BaseHeap::Release failed because address is not a region start" (1-7 per session, when a new part of a level streamed in or on quitting a level): freeing physical memory released the physical pages before the window's own bookkeeping, and another thread could be handed those pages in between (e.g. D3D creating a texture while the XMA audio library freed its old buffer). The second step then erased the new owner's entry, so its own free failed later. Now the window's entry goes first, the physical pages second. Found with a temporary alloc/free history keyed by physical address |
   | `0009-skip-draws-flag` | Not a fix, a feature: GPU flag `skip_draws` makes the emulated GPU skip every draw and resolve (packets still parsed, so fences/interrupts/swaps carry on). Our `--native_only` sets it while the native picture is shown: the host GPU then only runs our renderer (15-20% busy at a low clock instead of ~97% with both renderers) |
   | `0010-guest-refresh-rate` | Not a fix, a feature: GPU flag `guest_refresh_hz` sets the guest's vblank rate (default: the video mode's 60 Hz). A game that vsyncs waits for the next vblank every frame, so 60 Hz meant 60 fps at most. First used to raise it to the `--fps_cap`; since the clock pacer (findings/07) frame_rate.cpp holds it at 60, so the SDK's `video_mode_refresh_rate` setting can't speed up the original 30 fps pacing |
-  | `0011-local-players-share-profile` | Not a fix, a feature: users 1-3 can be signed in, sharing user 0's profile (same XUID, name, settings, saves), while the app says a device plays as them (`SetLocalPlayerPresentCallback`); `NotifyLocalPlayersChanged` broadcasts the sign-in change. Without it a second local player gets "You do not have an active gamer profile" (findings/23). No callback = user 0 only, as before |
+  | (`0011-local-players-share-profile`) | Removed 2026-10-10: players 2-4 shared player 1's profile. The game's profile and sign-in code is replaced by the port's (no profiles at all) ([findings/32](findings/32-native-saves-and-profiles.md)), so the SDK isn't asked |
   | `0012-vfs-longest-mount-wins` | Not a fix, a feature: the file system picks the device with the LONGEST matching mount path, so a host folder can be mounted inside the game drive's tree (changed copies of game data files at `D:\crashmom\`, `src/data/data_patcher.h`, findings/24 section 7.6). Without nested mounts nothing changes |
   | `0013-draw-every-nth-frame` | Not a fix, a feature (apply after 0009): GPU flag `draw_every_nth_frame` makes the emulated GPU draw and present only every Nth frame (skipped frames are parsed but neither drawn nor shown; read per draw, so it can change mid-frame). Our `--emulated_draw_every` (default 2) sets it while the native renderer draws too, e.g. dual mode: GPU 97% -> 60% busy at 60 fps (findings/20 section 5) |
   | `0014-quiet-empty-texture-slots` | "Texture fetch constant ... has "invalid" type!" was logged for every draw with an EMPTY texture slot (type "invalid", no address: what unbinding a texture leaves), thousands of lines per level load. Nothing is bound for such a slot either way, so it's now skipped quietly; an invalid slot that points at memory is still warned about, once per distinct constant |
@@ -200,7 +200,7 @@ not in a system folder, so copying the folder moves the whole game, progress
 included ([`src/game_folder.h`](../src/game_folder.h)):
 
 ```
-user/saves/        saves (the emulated profile's folder layout inside, for now), achievements
+user/saves/        saves: CrashMOM GameSlot N.sav (Backups/, Deleted saves/ beside them), achievements
 user/settings.toml every changed setting (F4 saves here)
 user/controls.toml keyboard + mouse keys, which device is which player (F6)
 user/photos/       F10 photos
@@ -245,7 +245,7 @@ file), and the launcher appends a last line saying how it ended.
 Windows crash reports, `settings.toml` + `controls.toml`, a `summary.txt`
 (version, system, CPU/RAM, graphics card + driver, changed settings: read
 from the log's `Session:` header), optionally that session's F10 photos and
-one save (file + header, same folders as under `user/saves/`, so it drops
+one save (its `.sav` file, the same path as under `user/saves/`, so it drops
 into a test copy for `--load_save`) into
 `user/reports/report-<date>_<time>.zip` (or a folder picked with Change...,
 remembered as `report_folder` in `user/launcher.toml`; home folder path replaced by
