@@ -61,6 +61,7 @@
 #include "more_players.h"
 
 #include "../input/players.h"
+#include "../options/options_menu.h"
 
 #include <atomic>
 #include <chrono>
@@ -432,4 +433,6 @@ extern "C" REX_FUNC(sub_820CDAD0) {
   const uint32_t action = ctx.r3.u32;
   __imp__sub_820CDAD0(ctx, base);
   PauseTitleForOwner(ctx, base, action);
+  // The Options screen's card: the glass panel moves left (options_menu.h).
+  options_menu::MoveGlassForCard(ctx, base, action);
 }

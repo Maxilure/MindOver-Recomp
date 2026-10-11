@@ -1,0 +1,87 @@
+Fix: use RenderDoc only when it is already in the process (not whenever it is installed)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0016-renderdoc-only-when-attached.patch
+Status:     upstream bug (report to rexglue-sdk)
+
+WHAT BROKE
+  With RenderDoc installed (1.45), the game window never appeared on a
+  Wayland desktop. The game ran normally
+  behind it (logs: quick load, ~118 fps) and both the launcher and
+  tools/play.sh were affected. Every log from then on said "RenderDoc API
+  initialized", and the Vulkan instance had lost VK_KHR_wayland_surface
+  (only VK_KHR_xcb_surface left).
+
+WHY
+  RenderDocAPI::CreateIfConnected() (src/ui/renderdoc_api.cpp) is meant to
+  pick up RenderDoc only when it is attached. Its comment says "if not attached,
+  the load will fail", but the code did a plain dlopen("librenderdoc.so"). With
+  RenderDoc installed that load succeeds, which puts RenderDoc into every run.
+  RenderDoc does not support Wayland and hides the Wayland surface extension,
+  so the SDL Wayland window never gets a buffer and the compositor never maps it.
+  Upstream Xenia checks with GetModuleHandle / RTLD_NOLOAD instead.
+
+FIX
+  First ask whether the library is ALREADY loaded (RTLD_NOW | RTLD_NOLOAD on
+  POSIX, GetModuleHandleA on Windows); return nullptr if not. Only then Load()
+  it (which just adds a reference). Starting the game from RenderDoc still
+  works as before.
+
+HOW FOUND
+  The session logs were compared before and after the RenderDoc install
+  (pacman.log): the first session after it had the "RenderDoc API initialized"
+  line and no wayland_surface. That line was traced to the SDK.
+  Test: with RenderDoc still installed, a launch logs no RenderDoc line, the
+  Wayland surface is back, and the window is mapped (hyprctl clients).
+
+diff --git a/src/ui/renderdoc_api.cpp b/src/ui/renderdoc_api.cpp
+index e1a5287..9b140a3 100644
+--- a/src/ui/renderdoc_api.cpp
++++ b/src/ui/renderdoc_api.cpp
+@@ -12,6 +12,18 @@
+ #include <rex/logging.h>
+ #include <rex/ui/renderdoc_api.h>
+ 
++#if REX_PLATFORM_WIN32
++#ifndef WIN32_LEAN_AND_MEAN
++#define WIN32_LEAN_AND_MEAN
++#endif
++#ifndef NOMINMAX
++#define NOMINMAX
++#endif
++#include <windows.h>
++#elif !REX_PLATFORM_MAC
++#include <dlfcn.h>
++#endif
++
+ namespace rex {
+ namespace ui {
+ 
+@@ -25,9 +37,24 @@ std::unique_ptr<RenderDocAPI> RenderDocAPI::CreateIfConnected() {
+ 
+   pRENDERDOC_GetAPI get_api = nullptr;
+ 
+-  // Try to load the RenderDoc library. If RenderDoc is attached, the library
+-  // should already be loaded into the process and this will increment the
+-  // reference count. If not attached, the load will fail and we return nullptr.
++  // Only use RenderDoc when it is ALREADY in the process (the game was started
++  // from RenderDoc, or its Vulkan layer was enabled). A plain load would pull
++  // librenderdoc in on every machine that merely has RenderDoc installed, and
++  // RenderDoc then hides the Wayland surface extension: the window never gets a
++  // picture and the compositor never shows it. So ask "is it loaded?" first
++  // (RTLD_NOLOAD / GetModuleHandle, like upstream Xenia); the Load() below then
++  // only adds a reference to the copy that is already there.
++#if REX_PLATFORM_WIN32
++  if (!GetModuleHandleA(platform::lib_names::kRenderDoc)) {
++    return nullptr;
++  }
++#else
++  void* already_loaded = dlopen(platform::lib_names::kRenderDoc, RTLD_NOW | RTLD_NOLOAD);
++  if (!already_loaded) {
++    return nullptr;
++  }
++  dlclose(already_loaded);  // drop the probe's reference; Load() takes its own
++#endif
+   if (!renderdoc_api->library_.Load(platform::lib_names::kRenderDoc)) {
+     return nullptr;
+   }

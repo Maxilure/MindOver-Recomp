@@ -176,6 +176,17 @@ bool Tree::RemoveAction(Bytes& record, uint32_t kind) {
   return false;
 }
 
+void Tree::Replace(int number, const Bytes& record) {
+  Span& s = records_[number - 1];
+  file_.erase(file_.begin() + long(s.offset), file_.begin() + long(s.offset + s.size));
+  file_.insert(file_.begin() + long(s.offset), record.begin(), record.end());
+  const long delta = long(record.size()) - long(s.size);
+  s.size = record.size();
+  for (size_t i = size_t(number); i < records_.size(); ++i) {
+    if (records_[i].size) records_[i].offset = size_t(long(records_[i].offset) + delta);
+  }
+}
+
 void SetNodeCount(std::string path, int count) {
   std::lock_guard lock(g_mutex);
   g_node_counts[std::move(path)] = count;

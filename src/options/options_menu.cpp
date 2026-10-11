@@ -17,6 +17,7 @@
 #include <rex/ppc/func.h>
 
 #include "../guest_memory.h"
+#include "../ui/game_font.h"
 #include "../ui/scrooby.h"
 #include "options_page.h"
 #include "options_settings.h"
@@ -27,7 +28,12 @@ extern "C" REX_FUNC(__imp__sub_820D2F08);  // CMenuAction::Exit
 // IsButtonPressed WITH our owner rules (players/menu_input.cpp hooks it):
 // the menu's owner answers, as for every other in-game menu.
 extern "C" REX_FUNC(sub_822652B0);
-extern "C" REX_FUNC(__imp__sub_821241E8);  // FindPage(layer, page name): a loaded Scrooby page
+extern "C" REX_FUNC(__imp__sub_821241E8);
+extern "C" REX_FUNC(__imp__sub_82371198);  // element: scale around its centre (f1), composed
+extern "C" REX_FUNC(__imp__sub_82371CE0);  // text element: string from the text list by key
+extern "C" REX_FUNC(__imp__sub_82370A58);  // element: reset its transform
+extern "C" REX_FUNC(__imp__sub_820CE2C8);  // CInGameOptionsScreenAction: a slide step
+extern "C" REX_FUNC(__imp__sub_82370FD0);  // element: scale (f1 x, f2 y, f3 z) around its centre  // FindPage(layer, page name): a loaded Scrooby page
 
 namespace options_menu {
 namespace {
@@ -75,6 +81,8 @@ constexpr uint16_t kPadA = 0x1000;
 constexpr uint16_t kPadB = 0x2000;
 constexpr uint16_t kPadX = 0x4000;
 constexpr char16_t kGlyphX = u'\u00B3';  // the font's X button picture
+constexpr char16_t kGlyphA = u'\u00B1';  // the font's A button picture
+constexpr const char* kSelectTextKey = "FE_Button_Text_Select";  // the prompts' "Select" (text list key)
 
 // The stars' colours, as the original screen sets them (sub_820D2F80): lit =
 // the colour word at 0x825078E4, unlit = translucent white.
@@ -84,15 +92,24 @@ constexpr uint32_t kStarUnlitColour = 0x4BFFFFFF;
 // The description / warning / selected tab's size (findings/30 s.4: menu
 // rows are Titans_Small at full size; the explanation reads as small print).
 constexpr float kSmallPrint = 0.72f;
-constexpr float kGuideScale = 0.6f;  // the Brightness guide (options_page.cpp)
+constexpr float kGuideScale = 0.55f;  // the Brightness guide (options_page.cpp): 176 units wide, inside the card
 // The tabs: the ones beside smaller than the rows, the current one larger,
 // like a selected menu item.
 constexpr float kTab = 0.8f;
 constexpr float kSelectedTab = 0.97f;
 
-// The selector arrows: the map's down arrow turned by this to point left
-// (the right one the other way).
-constexpr float kArrowLeftDegrees = 90.0f;  // (-90 pointed right: checked on a photo)
+// THE WHOLE SCREEN IS DRAWN AT 0.85 x, in game and in the main menu (the
+// first version filled the main menu's frame edge to edge and was shrunk
+// there only; one size for both since 2026-10-11): the screens' actions
+// scale the page and glass LAYERS around the screen's centre after every
+// step of their slides (each step resets them); the prompts follow.
+constexpr float kPageScale = 0.85f;
+constexpr float kPageArrowScale = 0.6f;          // the page markers' arrows
+// A greyed-out row's name and value (Row::unavailable): see-through like
+// the tab names beside the current one (options_page.cpp kFadedGreen).
+constexpr uint8_t kRowSolid = 0xFF, kRowGreyed = 0x60;
+constexpr uint32_t kArrowOn = 0xFFFFFFFF, kArrowFaded = 0x50FFFFFF;  // white; ~30 % (nothing that way)
+constexpr float kStarScale = 0.8f;  // the volume stars on a row
 
 // Button pictures of the font (findings/23 s.1.2).
 constexpr char16_t kGlyphLB = u'¾';
@@ -116,13 +133,21 @@ struct Screen {
   uint32_t tab_prev = 0, tab_text = 0, tab_next = 0;  // the three tab names (options_page.h)
   std::array<uint32_t, kRows> label{}, value{};
   std::array<std::array<uint32_t, kStars>, kRows> star{};
-  std::array<uint32_t, kRows> arrow_left{}, arrow_right{};
   uint32_t desc = 0, warn = 0, lb = 0, rb = 0, guide = 0;
-  uint32_t page_up = 0, page_down = 0, page_text = 0;  // the page markers beside the glass
+  uint32_t card_value = 0;                // the card (options_page.h)
+  std::array<uint32_t, 3> card_glass{};   // its glass: 4:1, 2:1, 1:1
+  uint32_t page_up = 0, page_down = 0, page_text = 0;  // the page markers under the rows
   // The game's button prompts (page FE_Buttons, always loaded): the lower
-  // right corner = a row's X action ("Dual Mode"), when it has one.
+  // right corner = "Select A" (A changes the value; the in-game Options
+  // state's own prompts were Back only), the upper right one = a row's X
+  // action ("Dual Mode"), when it has one.
+  uint32_t select_button = 0, select_text = 0;
   uint32_t x_button = 0, x_text = 0;
   bool x_showing = false;
+  // All eight prompts of FE_Buttons, moved with the glass while the screen
+  // is up (their x positions as found, put back at Exit).
+  std::array<uint32_t, 8> prompts{};
+  std::array<uint32_t, 8> prompts_x{}, prompts_y{};  // the +92 / +96 words as found
 };
 Screen g;
 std::atomic<bool> g_open{false};
@@ -195,26 +220,103 @@ bool Pressed(PPCContext& ctx, uint8_t* base, uint32_t button) {
   return pressed;
 }
 
-// Scrooby texts don't wrap by themselves: lines are broken at spaces so
-// none is longer than this many characters (at kSmallPrint: ~12 px a
-// character at 720p, the panel's inside is ~680 px wide; measured on a
-// photo, 2026-10-10).
-constexpr size_t kSmallPrintChars = 54;
+// ---------------------------------------------------------------------------
+// Element places, sizes and the card's text (options_page.h: THE CARD)
+// ---------------------------------------------------------------------------
+// A Scrooby element (read 2026-10-11 with the debug console, on a text whose
+// box was known): +92 / +96 x / y of its box's bottom-left as a fraction of
+// the 640-unit width (floats; sub_82370E20 writes units x the constant at
+// 0x8204701C), +88 / +90 its width / height in units (u16), +16 its
+// transform (a scale around the centre is built from the box at the call).
+// A picture is stretched to that size (the card's glass); a text's lines
+// hang from its box's top (vertical justify 2) and are centred across it.
+constexpr uint32_t kElementSize = 88;
+constexpr uint32_t kElementX = 92, kElementY = 96;
+constexpr uint32_t kUnitToPosition = 0x8204701C;  // Scrooby units -> element position
 
-std::u16string Wrap(const std::u16string& text, size_t width) {
+float ReadF(const uint8_t* base, uint32_t a) {
+  const uint32_t v = Read32(base, a);
+  float f;
+  std::memcpy(&f, &v, 4);
+  return f;
+}
+void WriteF(uint8_t* base, uint32_t a, float f) {
+  uint32_t v;
+  std::memcpy(&v, &f, 4);
+  uint8_t* p = GuestPtr(base, a);
+  for (int i = 0; i < 4; ++i) p[i] = uint8_t(v >> (24 - 8 * i));
+}
+void Write16(uint8_t* base, uint32_t a, uint16_t v) {
+  uint8_t* p = GuestPtr(base, a);
+  p[0] = uint8_t(v >> 8);
+  p[1] = uint8_t(v);
+}
+void MoveX(uint8_t* base, uint32_t element, int units) {
+  WriteF(base, element + kElementX,
+         ReadF(base, element + kElementX) + float(units) * ReadF(base, kUnitToPosition));
+}
+// Places an element's box (units, y up, bottom-left corner).
+void SetBox(uint8_t* base, uint32_t element, float x, float y, float w, float h) {
+  if (!element) return;
+  const float unit = ReadF(base, kUnitToPosition);
+  WriteF(base, element + kElementX, x * unit);
+  WriteF(base, element + kElementY, y * unit);
+  Write16(base, element + kElementSize, uint16_t(std::lround(std::max(1.0f, w))));
+  Write16(base, element + kElementSize + 2, uint16_t(std::lround(std::max(1.0f, h))));
+}
+
+// THE GAME'S FONT, to measure text (ui/game_font.h: Titans_Small, the font
+// of every text on the page). Its pixels -> Scrooby units at size 1:
+// calibrated on a photo, 2026-10-11 (a row label at size 1, "Frame-rate
+// Cap", and the lines of the small print).
+constexpr float kUnitsPerFontPixel = 0.5f;
+game_font::Font g_font;
+bool g_font_tried = false;
+const game_font::Font* Font() {
+  if (!g_font_tried) {
+    g_font_tried = true;
+    if (g_font.Load("Titans_Small")) {
+      REXLOG_INFO("Options: card text measured with the game's font (\"Frame-rate Cap\" = {:.0f} px, "
+                  "line {:.0f} px)", g_font.Measure(u"Frame-rate Cap"), g_font.cell_height());
+    }
+  }
+  return g_font.loaded() ? &g_font : nullptr;
+}
+// A line's width in units at `scale` (without the font: ~12 units a letter).
+float TextWidth(std::u16string_view text, float scale) {
+  const game_font::Font* f = Font();
+  return (f ? f->Measure(text) * kUnitsPerFontPixel : 12.0f * float(text.size())) * scale;
+}
+// A line's height in units at `scale` (the font's cell).
+float LineHeight(float scale) {
+  const game_font::Font* f = Font();
+  return (f ? f->cell_height() * kUnitsPerFontPixel : 29.5f) * scale;
+}
+
+// Scrooby texts don't wrap by themselves: lines are broken at spaces so
+// none is wider than `width` units at `scale` (measured letter by letter
+// with the game's font: wide letters like W and M take more room than a
+// count of letters would give them). A word wider than the line stays whole.
+std::u16string Wrap(const std::u16string& text, float width, float scale, int* lines) {
   std::u16string out, line;
+  *lines = 0;
+  if (text.empty()) return out;
   size_t start = 0;
   while (start <= text.size()) {
     size_t end = text.find(u' ', start);
     if (end == std::u16string::npos) end = text.size();
     const std::u16string word = text.substr(start, end - start);
-    if (!line.empty() && line.size() + 1 + word.size() > width) {
+    const std::u16string longer = line.empty() ? word : line + u' ' + word;
+    if (!line.empty() && TextWidth(longer, scale) > width) {
       out += line + u'\n';
-      line.clear();
+      ++*lines;
+      line = word;
+    } else {
+      line = longer;
     }
-    line += (line.empty() ? u"" : u" ") + word;
     start = end + 1;
   }
+  ++*lines;
   return out + line;
 }
 
@@ -256,10 +358,12 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     for (int k = 0; k < kStars; ++k) {
       g.star[r][k] = FindPicture(ctx, base, g.page, fmt::format("OptStar{}_{}", r, k));
     }
-    g.arrow_left[r] = FindPicture(ctx, base, g.page, fmt::format("OptArrowL{}", r));
-    g.arrow_right[r] = FindPicture(ctx, base, g.page, fmt::format("OptArrowR{}", r));
   }
   g.desc = FindText(ctx, base, g.page, "OptDesc");
+  g.card_value = FindText(ctx, base, g.page, "OptCardValue");
+  g.card_glass = {FindPicture(ctx, base, g.page, "OptCardSmall"),
+                  FindPicture(ctx, base, g.page, "OptCardLarge"),
+                  FindPicture(ctx, base, g.page, "OptCardSquare")};
   g.guide = FindPicture(ctx, base, g.page, "OptGuide");
   g.warn = FindText(ctx, base, g.page, "OptWarn");
   g.lb = FindText(ctx, base, g.page, "OptTabLB");
@@ -270,8 +374,14 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
   // FE_Buttons, found as the game's GetMenuIndex does (layer 4, then 0).
   uint32_t buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 4, scrooby::GuestAscii("FE_Buttons"));
   if (!buttons) buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 0, scrooby::GuestAscii("FE_Buttons"));
-  g.x_button = FindText(ctx, base, buttons, "LowerRightButton");
-  g.x_text = FindText(ctx, base, buttons, "LowerRightText");
+  g.select_button = FindText(ctx, base, buttons, "LowerRightButton");
+  g.select_text = FindText(ctx, base, buttons, "LowerRightText");
+  g.x_button = FindText(ctx, base, buttons, "UpperRightButton");
+  g.x_text = FindText(ctx, base, buttons, "UpperRightText");
+  constexpr const char* kPrompts[8] = {"LowerLeftButton",  "LowerLeftText",  "LowerRightButton",
+                                       "LowerRightText",   "UpperLeftButton", "UpperLeftText",
+                                       "UpperRightButton", "UpperRightText"};
+  for (size_t i = 0; i < g.prompts.size(); ++i) g.prompts[i] = FindText(ctx, base, buttons, kPrompts[i]);
   REXLOG_INFO("Options: page {:08X} menu {:08X} ({} items), label0 {:08X} value0 {:08X} star0 {:08X} "
               "item0 {:08X} desc {:08X}",
               g.page, g.menu, scrooby::ItemCount(base, g.menu), g.label[0], g.value[0], g.star[0][0],
@@ -285,22 +395,150 @@ void SetUpFixedTexts(PPCContext& ctx, uint8_t* base) {
   scrooby::SetScale(ctx, base, g.tab_next, kTab);
   scrooby::SetText(ctx, base, g.lb, std::u16string(1, prompt_icons::MenuGlyph(kGlyphLB)));
   scrooby::SetText(ctx, base, g.rb, std::u16string(1, prompt_icons::MenuGlyph(kGlyphRB)));
-  // The arrows are the map screen's DOWN arrow: turned to point left /
-  // right (from a fresh transform: the page lives on between visits).
+  // The stars, smaller than the volume screen's (rows are closer here).
   for (int r = 0; r < kRows; ++r) {
-    scrooby::SetScale(ctx, base, g.arrow_left[r], 1.0f);
-    scrooby::Rotate(ctx, base, g.arrow_left[r], kArrowLeftDegrees);
-    scrooby::SetScale(ctx, base, g.arrow_right[r], 1.0f);
-    scrooby::Rotate(ctx, base, g.arrow_right[r], -kArrowLeftDegrees);
+    for (int k = 0; k < kStars; ++k) scrooby::SetScale(ctx, base, g.star[r][k], kStarScale);
   }
-  // The page arrows: the same down arrow, the upper one turned over.
-  scrooby::SetScale(ctx, base, g.page_up, 1.0f);
+  // The page arrows: the same down arrow, smaller, the upper one turned over.
+  scrooby::SetScale(ctx, base, g.page_up, kPageArrowScale);
   scrooby::Rotate(ctx, base, g.page_up, 180.0f);
-  scrooby::SetScale(ctx, base, g.page_down, 1.0f);
+  scrooby::SetScale(ctx, base, g.page_down, kPageArrowScale);
   scrooby::SetScale(ctx, base, g.page_text, kSmallPrint);
-  scrooby::SetScale(ctx, base, g.guide, kGuideScale);
-  scrooby::SetScale(ctx, base, g.desc, kSmallPrint);
-  scrooby::SetScale(ctx, base, g.warn, kSmallPrint);
+  // (The card's texts and picture: LayOutCard, at every change.)
+}
+
+// THE CARD, fitted to what it says (options_page.h: the card is centred on
+// the glass's centre; its width is fixed, its height = its contents):
+//   padding, the value (yellow, shrunk if it's wider than the card), the
+//   picture (the Brightness guide), the description, the warning, padding;
+//   a gap between any two.
+// The glass shown is the game's shape nearest the card's (4:1 / 2:1 / 1:1,
+// switched at the geometric middles 2.83 and 1.41), stretched to fit: at
+// most 1.41 x one way, what the game itself does to its own glass panel
+// (a 2:1 picture drawn 500 x 354).
+constexpr float kCardValueScale = 1.0f;  // the value: as big as a row
+constexpr float kTextBoxHeight = 36.0f;  // the card texts' boxes in the data (options_page.cpp kLineHeight)
+constexpr float kCardPadY = 12.0f, kCardGap = 8.0f;
+// The guide picture, drawn at kGuideScale x its own size (320 x 64 units): 35
+// units tall; its box sits 10 units under the drawn picture's centre
+// (measured on a photo, 2026-10-11: a picture hangs from its box's top and
+// shrinks around the box's centre).
+constexpr float kGuideHeight = 35.0f, kGuideBoxBelowCentre = 10.0f, kGuideBoxHeight = 36.0f;
+
+void LayOutCard(PPCContext& ctx, uint8_t* base, const std::u16string& heading, bool picture,
+                const std::u16string& description, const std::u16string& warning) {
+  using options_page::kCardPadding;
+  using options_page::kCardWidth;
+  using options_page::kCardX;
+  const float inside_x = float(kCardX + kCardPadding);
+  const float inside_w = float(kCardWidth - 2 * kCardPadding);
+  // The texts and their line counts.
+  const float value_w = TextWidth(heading, kCardValueScale);
+  const float value_scale = value_w > inside_w ? kCardValueScale * inside_w / value_w : kCardValueScale;
+  int desc_lines = 0, warn_lines = 0;
+  const std::u16string desc = Wrap(description, inside_w, kSmallPrint, &desc_lines);
+  const std::u16string warn = Wrap(warning, inside_w, kSmallPrint, &warn_lines);
+  scrooby::SetText(ctx, base, g.card_value, heading);
+  scrooby::SetText(ctx, base, g.desc, desc);
+  scrooby::SetText(ctx, base, g.warn, warn);
+  scrooby::SetVisible(base, g.guide, picture);
+  scrooby::SetVisible(base, g.desc, desc_lines > 0);
+  scrooby::SetVisible(base, g.warn, warn_lines > 0);
+  // Heights, top to bottom.
+  const float value_h = LineHeight(value_scale);
+  const float small_h = LineHeight(kSmallPrint);
+  float height = 2 * kCardPadY + value_h;
+  if (picture) height += kCardGap + kGuideHeight;
+  if (desc_lines) height += kCardGap + desc_lines * small_h;
+  if (warn_lines) height += kCardGap + warn_lines * small_h;
+  const float top = float(options_page::kCardCentreY) + height / 2;
+  // A text's lines hang from the top of its box as the DATA made it (one
+  // line, kTextBoxHeight: a height written at +90 doesn't move them; found
+  // on a photo, 2026-10-11: each line past the first pushed the text ~20
+  // units low), and shrink around the box's centre. So every text keeps a
+  // one-line box, placed for its FIRST line's top: after the shrink, top =
+  // centre + scale x half the box.
+  auto place = [&](uint32_t text, float block_top, int /*lines*/, float scale) {
+    const float half = kTextBoxHeight / 2;
+    const float centre = block_top - scale * half;
+    SetBox(base, text, inside_x, centre - half, inside_w, kTextBoxHeight);
+    scrooby::SetScale(ctx, base, text, scale);
+  };
+  float y = top - kCardPadY;
+  place(g.card_value, y, 1, value_scale);
+  y -= value_h;
+  if (picture && g.guide) {
+    y -= kCardGap;
+    const float centre = y - kGuideHeight / 2;
+    const float box_y = centre - kGuideBoxBelowCentre;
+    SetBox(base, g.guide, float(kCardX) + float(kCardWidth) / 2 - 160.0f, box_y, 320.0f, kGuideBoxHeight);
+    scrooby::SetScale(ctx, base, g.guide, kGuideScale);
+    y -= kGuideHeight;
+  }
+  if (desc_lines) {
+    y -= kCardGap;
+    place(g.desc, y, desc_lines, kSmallPrint);
+    y -= desc_lines * small_h;
+  }
+  if (warn_lines) {
+    y -= kCardGap;
+    place(g.warn, y, warn_lines, kSmallPrint);
+  }
+  // The glass. A picture too is drawn at its box size AS THE DATA MADE IT
+  // (a size written at +88 / +90 isn't drawn: photo, 2026-10-11), so its
+  // box stays the picture's own shape, centred on the card's centre, and
+  // the TRANSFORM stretches it to the card's height: sub_82370FD0(element,
+  // f1 x, f2 y, f3 z) = a scale around the box's centre (the uniform one,
+  // sub_82371198, is that with x = y).
+  const float aspect = float(kCardWidth) / height;
+  const int shape = aspect > 2.83f ? 0 : aspect > 1.41f ? 1 : 2;
+  constexpr int kAspects[3] = {4, 2, 1};
+  for (int i = 0; i < 3; ++i) {
+    scrooby::SetVisible(base, g.card_glass[size_t(i)], i == shape);
+  }
+  if (const uint32_t glass = g.card_glass[size_t(shape)]) {
+    const float own_h = float(kCardWidth / kAspects[shape]);
+    const float centre = top - height / 2;
+    SetBox(base, glass, float(kCardX), centre - own_h / 2, float(kCardWidth), own_h);
+    scrooby::SetScale(ctx, base, glass, 1.0f);  // a fresh transform
+    scrooby::CallF(__imp__sub_82370FD0, ctx, base, glass, 1.0, height / own_h, 1.0);
+  }
+}
+
+// THE PULSE: only the selected row's VALUE pulses (the menu would pulse the
+// name too: CMenuAction's Update undoes that every frame, the name only
+// turns yellow). The menu pulses a text around the centre of its box
+// (sub_8237A070 -> sub_82371198), and the value's box (250 units, right
+// aligned) is wider than its text: it grew out past the glass's right edge.
+// So the value's box is made exactly its text (measured with the game's
+// font), ending where the row ends: x = right end - width (+92), width
+// (+88). A right-aligned text is placed by the box's run-time x AND width
+// (a first try widened the box only, keeping its x: the values moved right
+// by the extra width; photo, 2026-10-11).
+void CentrePulse(uint8_t* base, uint32_t text, const std::u16string& s) {
+  if (!text) return;
+  const float w = std::max(1.0f, TextWidth(s, 1.0f));
+  const float unit = ReadF(base, kUnitToPosition);
+  WriteF(base, text + kElementX, (float(options_page::kRowValueRight) - w) * unit);
+  Write16(base, text + kElementSize, uint16_t(std::lround(w)));
+}
+
+// Row::unavailable's reason, empty = usable.
+std::u16string Unavailable(Env& env, const Row& row) {
+  return row.unavailable ? row.unavailable(env) : std::u16string();
+}
+
+// Greyed-out rows see-through, the others solid. Every frame (Update): the
+// menu recolours its items when the selection moves, which may bring the
+// alpha back.
+void ApplyGreying(Env& env) {
+  for (int r = 0; r < kRows; ++r) {
+    const Row* row = RowOnScreen(r);
+    if (!row) continue;
+    const uint8_t alpha = Unavailable(env, *row).empty() ? kRowSolid : kRowGreyed;
+    scrooby::SetAlpha(env.ctx, env.base, g.label[r], alpha);
+    scrooby::SetAlpha(env.ctx, env.base, g.value[r], alpha);
+  }
 }
 
 // Everything that depends on the tab, the values and the selection.
@@ -334,8 +572,6 @@ void Refresh(Env& env) {
       scrooby::SetFrame(ctx, base, s, k < level ? 0 : 1);
       scrooby::SetColour(ctx, base, s, k < level ? lit : kStarUnlitColour);
     }
-    // The selector's arrows: on the selected row only, where it can still move.
-    bool can_left = false, can_right = false;
     if (row) {
       scrooby::SetText(ctx, base, g.label[r], row->label);
       std::u16string value;
@@ -343,38 +579,41 @@ void Refresh(Env& env) {
         const auto values = row->values(env);
         const int i = std::clamp(row->get(env), 0, int(values.size()) - 1);
         value = values.empty() ? u"" : values[size_t(i)];
-        can_left = i > 0;
-        can_right = i + 1 < int(values.size());
-      } else if (stars) {
-        can_left = level > 0;
-        can_right = level < kStars;
       }
       scrooby::SetText(ctx, base, g.value[r], value);
+      CentrePulse(base, g.value[r], value);
     }
-    scrooby::SetVisible(base, g.arrow_left[r], r == sel && can_left);
-    scrooby::SetVisible(base, g.arrow_right[r], r == sel && can_right);
   }
-  // The page markers: only for a tab with more than one page; an arrow where
-  // there are more rows that way, and "page / pages".
+  // The page markers: only for a tab with more than one page; "page /
+  // pages" and both arrows, faded where there are no more rows that way.
   const int pages = PageCount();
-  scrooby::SetVisible(base, g.page_up, pages > 1 && g.row_page > 0);
-  scrooby::SetVisible(base, g.page_down, pages > 1 && g.row_page + 1 < pages);
+  scrooby::SetVisible(base, g.page_up, pages > 1);
+  scrooby::SetVisible(base, g.page_down, pages > 1);
+  if (pages > 1) {
+    scrooby::SetColour(ctx, base, g.page_up, g.row_page > 0 ? kArrowOn : kArrowFaded);
+    scrooby::SetColour(ctx, base, g.page_down, g.row_page + 1 < pages ? kArrowOn : kArrowFaded);
+  }
   scrooby::SetVisible(base, g.page_text, pages > 1);
   if (pages > 1) {
     const std::string text = fmt::format("{}/{}", g.row_page + 1, pages);
     scrooby::SetText(ctx, base, g.page_text, std::u16string(text.begin(), text.end()));
   }
-  // The selected row's description and warning.
+  // The card: the selected row's value (its name for star and action rows,
+  // which have no words for their value), picture, description and warning.
   const Row& row = *RowOnScreen(sel);
-  scrooby::SetVisible(base, g.guide, row.guide);
   const int current = row.get ? row.get(env) : 0;
-  scrooby::SetText(ctx, base, g.desc,
-                   row.describe ? Wrap(row.describe(env, current), kSmallPrintChars) : u"");
-  const std::u16string warning = row.warn ? row.warn(env, current) : u"";
-  scrooby::SetText(ctx, base, g.warn, warning);
-  scrooby::SetVisible(base, g.warn, !warning.empty());
-  // The row's X action in the lower right corner (the main menu's copy had
-  // "Select A" there: blank unless the row offers something).
+  std::u16string heading = row.label;
+  if (row.kind == Kind::kChoice) {
+    const auto values = row.values(env);
+    if (!values.empty()) heading = values[size_t(std::clamp(current, 0, int(values.size()) - 1))];
+  }
+  // A greyed-out row: its reason is the warning.
+  const std::u16string unavailable = Unavailable(env, row);
+  LayOutCard(ctx, base, heading, row.guide, row.describe ? row.describe(env, current) : u"",
+             !unavailable.empty() ? unavailable : row.warn ? row.warn(env, current) : u"");
+  ApplyGreying(env);
+  // The row's X action in the upper right corner (blank unless the row
+  // offers something).
   const bool x = row.x_action && row.x_shown && row.x_shown(env, current);
   if (x != g.x_showing || x) {
     scrooby::SetText(ctx, base, g.x_button, x ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphX)) : u"");
@@ -404,15 +643,17 @@ void SwitchTab(Env& env, int delta) {
   Refresh(env);
 }
 
-// Left / right on the selected row; returns whether the value changed.
-bool ChangeValue(Env& env, int delta) {
+// Left / right on the selected row; returns whether the value changed. With
+// `wrap` (A), past the last value comes the first again.
+bool ChangeValue(Env& env, int delta, bool wrap = false) {
   const Row* on_screen = RowOnScreen(scrooby::Selection(env.base, g.menu));
   if (!on_screen) return false;
   const Row& row = *on_screen;
   if (row.kind == Kind::kAction || !row.get || !row.set) return false;
+  if (!Unavailable(env, row).empty()) return false;  // greyed out: stays as it is
   const int now = row.get(env);
   const int last = row.kind == Kind::kStars ? kStars : int(row.values(env).size()) - 1;
-  const int next = std::clamp(now + delta, 0, last);
+  const int next = wrap ? (now + delta + last + 1) % (last + 1) : std::clamp(now + delta, 0, last);
   if (next == now) return false;
   row.set(env, next);
   // Volume rows play their own sound (options_settings.cpp); the others the
@@ -454,6 +695,61 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
 
 bool Open() { return g_open.load(std::memory_order_relaxed); }
 
+// ---------------------------------------------------------------------------
+// THE GLASS MOVES LEFT (the card stands on the right: options_page.h)
+// ---------------------------------------------------------------------------
+// The in-game screen draws the game's glass panel page InGame_NV_GlassPanel
+// (panel, two cogs, hinge), which the PAUSE menu shares: the page is loaded
+// once and lives on between screens, so it's moved here for this screen
+// only and put back at its Exit.
+// CInGameOptionsScreenAction (vtable 0x82023594: Enter sub_820CDAD0, Update
+// sub_820CDCC0, Exit sub_820CDD60; read 2026-10-11) keeps that page at +28,
+// its layer at +32 (the slide-in: reset + move of the LAYER every step,
+// sub_820CE2C8) and the two cogs at +40 / +44 (every slide step RESETS their
+// transform and turns them again, sub_82370A58 + sub_823710C8). A relative
+// move (sub_82370EE8, the transform) would be lost on the cogs at the next
+// step, so the move goes into each element's POSITION instead (+92 x, as the
+// HUD fix for players 3-4 does: more_players_hud.cpp): a fraction of the
+// screen width (sub_82370E20 writes units x the constant at 0x8204701C), and
+// the turn is built around it.
+namespace {
+constexpr uint32_t kScreenGlassPage = 28;         // CInGameOptionsScreenAction
+constexpr uint32_t kScreenCog1 = 40, kScreenCog2 = 44;
+std::array<uint32_t, 4> g_moved_glass{};  // panel, hinge, cog, cog (0 = not moved)
+constexpr uint32_t kScreenPage = 20, kScreenGlassLayer = 32;
+// The screen drawn at kPageScale: its glass layer and its page.
+void ShrinkInGame(PPCContext& ctx, uint8_t* base, uint32_t action) {
+  if (!options_page::Available()) return;
+  for (const uint32_t field : {kScreenGlassLayer, kScreenPage}) {
+    if (const uint32_t e = Read32(base, action + field)) {
+      scrooby::CallF(__imp__sub_82371198, ctx, base, e, kPageScale);
+    }
+  }
+}
+}  // namespace
+
+void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action) {
+  if (!options_page::Available() || g_moved_glass[0]) return;
+  const uint32_t page = Read32(base, action + kScreenGlassPage);
+  if (!page) return;
+  g_moved_glass = {scrooby::FindPicture(ctx, base, page, "GlassPanel"),
+                   scrooby::FindPicture(ctx, base, page, "Hinge"),
+                   Read32(base, action + kScreenCog1), Read32(base, action + kScreenCog2)};
+  if (!g_moved_glass[0]) {  // not the page we know: leave it alone
+    g_moved_glass = {};
+    REXLOG_WARN("Options: the glass panel page isn't as expected: not moved for the card");
+    return;
+  }
+  for (const uint32_t e : g_moved_glass) {
+    if (e) MoveX(base, e, options_page::kGlassShift);
+  }
+  ShrinkInGame(ctx, base, action);
+  const uint8_t* l = GuestPtr(base, Read32(base, action + kScreenGlassLayer));
+  const uint8_t* pg = GuestPtr(base, Read32(base, action + kScreenPage));
+  REXLOG_INFO("Options: in-game glass layer box {}x{}, page box {}x{}", int(l[88] << 8 | l[89]),
+              int(l[90] << 8 | l[91]), int(pg[88] << 8 | pg[89]), int(pg[90] << 8 | pg[91]));
+}
+
 }  // namespace options_menu
 
 using namespace options_menu;
@@ -484,6 +780,36 @@ extern "C" REX_FUNC(sub_820D2828) {
   const int owner = Owner(base);
   g.seen = g_pad[size_t(owner)].load(std::memory_order_relaxed);
   FindElements(ctx, base);
+  // "Select A" in the lower right corner: the font's A picture and the
+  // game's own text (by the key the main menus' prompts use, so it's in the
+  // game's language; sub_82371CE0 = a text's string from the text list).
+  scrooby::SetText(ctx, base, g.select_button, std::u16string(1, prompt_icons::MenuGlyph(kGlyphA)));
+  if (g.select_text) {
+    scrooby::Call(__imp__sub_82371CE0, ctx, base, g.select_text, scrooby::GuestAscii(kSelectTextKey));
+  }
+  // The button prompts (Back, the X action...) go with the glass (their x
+  // as found is put back at Exit: FE_Buttons serves every screen).
+  // The page is drawn smaller (kPageScale, around the screen's centre (320,
+  // 240): its layer's box is the whole 640 x 480), so the prompts go where
+  // the smaller glass puts its corners.
+  for (size_t i = 0; i < g.prompts.size(); ++i) {
+    const uint32_t e = g.prompts[i];
+    if (!e) continue;
+    g.prompts_x[i] = Read32(base, e + kElementX);
+    g.prompts_y[i] = Read32(base, e + kElementY);
+    // Each prompt is shrunk like the page too, around its own centre, and
+    // that CENTRE goes where the page's scale puts it (only the positions
+    // moved at first: buttons and words kept their size, came closer
+    // together and overlapped; a playtest photo, 2026-10-11).
+    const float unit = ReadF(base, kUnitToPosition);
+    const uint8_t* size = GuestPtr(base, e + kElementSize);
+    const float w = float(size[0] << 8 | size[1]), h = float(size[2] << 8 | size[3]);
+    const float cx = ReadF(base, e + kElementX) / unit + float(options_page::kGlassShift) + w / 2;
+    const float cy = ReadF(base, e + kElementY) / unit + h / 2;
+    WriteF(base, e + kElementX, (320.0f + kPageScale * (cx - 320.0f) - w / 2) * unit);
+    WriteF(base, e + kElementY, (240.0f + kPageScale * (cy - 240.0f) - h / 2) * unit);
+    scrooby::SetScale(ctx, base, e, kPageScale);
+  }
   SetUpFixedTexts(ctx, base);
   scrooby::Select(ctx, base, g.menu, 0);
   Env env{ctx, base, owner};
@@ -503,6 +829,14 @@ extern "C" REX_FUNC(sub_820D2A00) {
   const int owner = Owner(base);
   RunWithoutSpecialCode(__imp__sub_820D2A00, ctx, base);
   const PPCContext saved = ctx;  // our calls below must not change what Update returned
+  // The selected row's name: yellow, not pulsing (the menu's pulse, run
+  // just now, undone: CentrePulse).
+  {
+    const int sel = scrooby::Selection(base, g.menu);
+    if (sel >= 0 && sel < kRows && g.label[size_t(sel)]) {
+      scrooby::Call(__imp__sub_82370A58, ctx, base, g.label[size_t(sel)]);
+    }
+  }
   if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) return;
   Env env{ctx, base, owner};
   if (g.pending_select >= 0) {
@@ -529,9 +863,10 @@ extern "C" REX_FUNC(sub_820D2A00) {
   } else if (Pressed(ctx, base, kButtonRight)) {
     refresh |= ChangeValue(env, +1);
   }
-  // The main menu's copy: B = back (the PS2 screen's action, which said so,
-  // doesn't run: options_menu.h); the state's decision takes it from there.
-  if (g.main_menu && (pressed & kPadB)) {
+  // The main menu's copy: B = back: the panel slides out first (the
+  // screen's action, below), then the state's decision sees the cancel
+  // flag; without its slide, the flag at once.
+  if (g.main_menu && (pressed & kPadB) && !CloseMainMenuOptions(base)) {
     *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
   }
   if (pressed & kPadX) {
@@ -541,11 +876,22 @@ extern "C" REX_FUNC(sub_820D2A00) {
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
     }
   }
+  // A: an action row (Rebind Keys) does its thing; any other row takes its
+  // next value, the first again after the last (no arrows to aim at:
+  // left / right still step either way and stop at the ends).
   if (pressed & kPadA) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
-    if (row && row->kind == Kind::kAction && row->activate) row->activate(env);
+    if (row && row->kind == Kind::kAction) {
+      if (row->activate && Unavailable(env, *row).empty()) row->activate(env);
+    } else if (row) {
+      refresh |= ChangeValue(env, +1, /*wrap=*/true);
+    }
   }
-  if (refresh || scrooby::Selection(base, g.menu) != g.selection) Refresh(env);
+  if (refresh || scrooby::Selection(base, g.menu) != g.selection) {
+    Refresh(env);
+  } else {
+    ApplyGreying(env);
+  }
   ctx = saved;
 }
 
@@ -559,12 +905,53 @@ extern "C" REX_FUNC(sub_820D2F08) {
       scrooby::SetText(ctx, base, g.x_text, u"");
       g.x_showing = false;
     }
+    if (!g.main_menu) {  // in game the pause menu sets its own corners again
+      scrooby::SetText(ctx, base, g.select_button, u"");
+      scrooby::SetText(ctx, base, g.select_text, u"");
+    }
+    for (size_t i = 0; i < g.prompts.size(); ++i) {
+      if (!g.prompts[i]) continue;
+      for (const auto& [field, word] : {std::pair{kElementX, g.prompts_x[i]}, std::pair{kElementY, g.prompts_y[i]}}) {
+        uint8_t* p = GuestPtr(base, g.prompts[i] + field);
+        for (int b = 0; b < 4; ++b) p[b] = uint8_t(word >> (24 - 8 * b));
+      }
+      scrooby::SetScale(ctx, base, g.prompts[i], 1.0f);  // its own size again
+      g.prompts[i] = 0;
+    }
     g.action = 0;
     g_open = false;
     options_settings::SaveChanged();
     REXLOG_INFO("Options: screen closed");
   }
   __imp__sub_820D2F08(ctx, base);
+}
+
+// The in-game screen's Exit: the glass page back where the pause menu has
+// it, BEFORE the original (it lets go of the cogs it holds). The cogs' last
+// turn was built around the moved place: their transform is reset (the
+// pause menu's own slide turns them again).
+extern "C" REX_FUNC(__imp__sub_820CDD60);  // CInGameOptionsScreenAction: Exit
+extern "C" REX_FUNC(sub_820CDD60) {
+  if (g_moved_glass[0]) {
+    for (size_t i = 0; i < g_moved_glass.size(); ++i) {
+      const uint32_t e = g_moved_glass[i];
+      if (!e) continue;
+      MoveX(base, e, -options_page::kGlassShift);
+      if (i >= 2) scrooby::SetScale(ctx, base, e, 1.0f);  // the cogs: a fresh transform
+    }
+    g_moved_glass = {};
+  }
+  __imp__sub_820CDD60(ctx, base);
+}
+
+// The in-game screen's slide step (sub_820CE2C8: resets + moves the glass
+// layer +32 and the options page +20, resets + turns the cogs): after it,
+// both drawn at kPageScale. Its Enter's set-up (sub_820CDEC8) resets the
+// layer too: MoveGlassForCard (after the Enter) scales once there.
+extern "C" REX_FUNC(sub_820CE2C8) {
+  const uint32_t action = ctx.r3.u32;
+  __imp__sub_820CE2C8(ctx, base);
+  ShrinkInGame(ctx, base, action);
 }
 
 // =============================================================================
@@ -614,28 +1001,115 @@ extern "C" REX_FUNC(sub_8211B6C8) {
 // The PS2 Options screen's own action (COptionsScreenAction, vtable
 // 0x82024404: Enter sub_820D8B10, Update sub_820D8D68, Exit sub_820D8F20)
 // works the PS2 rows (widescreen, sound, vibration, progressive scan) by
-// name and index: with our page in place of that page only the parts every
-// screen needs are kept (read 2026-10-10 from its Enter / Exit):
+// name and index: with our page in place of that page, its Enter / Exit are
+// rewritten here, keeping everything a screen needs and its SLIDE (read
+// 2026-10-10 / 11):
 //   Enter: sub_8210C068(action +12, action) (the action takes its track's
-//          updates), track object +124 = 0.0, the screen GameStart_Options
-//          (name hash at 0x825A0840, looked up by sub_820C5A28(4, &hash))
-//          shown with sub_82262730(front end, screen), result flags cleared;
+//          updates), track object +124 = 0.0, the page GameStart_OptionsPS2
+//          (+20; name hash at 0x825A0828, sub_820C5AD0(4, &hash)), its layer
+//          "OptionsMenu" (+28, hash 0x825A0838, sub_82371990(page, hash)),
+//          two pictures (+32 / +36, hashes 0x825A0850 / 0x825A0848: the
+//          panel's cog and hinge names, kept by our page: options_page.cpp),
+//          the screen GameStart_Options (hash 0x825A0840, sub_820C5A28(4,
+//          &hash)) shown with sub_82262730(front end, screen), result flags
+//          cleared, state +40 = 2 (OPENING) and the sounds "back" +
+//          "arm_wipe" (FE_SFX). (Skipped: the PS2 widescreen row's value.)
+//   Update, by state +40: 2 = sub_820D9038 (the opening step: menus wait
+//          (+8592 bit 0x40 off), the interpolator at +44 runs toward "in",
+//          the layer +28 is reset and moved by its value, the cog +36 turned;
+//          once there: state 3, menus take input), 3 = open (the PS2 rows'
+//          code: skipped, CMenuAction drives ours), 4 / 5 = sub_820D9360
+//          (the closing step, toward "out"; once there the result flag: 4 =
+//          cancel, 5 = accept). Every step resets the layer's transform: the
+//          page's smaller size (kMainMenuScale) goes on after each.
 //   Exit:  sub_8210C068(action +12, 0), front end +8592 |= 0x40 (menus take
 //          input again).
-// CMenuAction drives the menu meanwhile (the hooks above).
+// B (options_menu's CMenuAction Update) = state 4: the panel slides out, then
+// the state's decision sees the cancel flag (as the original did).
 extern "C" REX_FUNC(__imp__sub_820D8B10);
 extern "C" REX_FUNC(__imp__sub_820D8D68);
 extern "C" REX_FUNC(__imp__sub_820D8F20);
+extern "C" REX_FUNC(__imp__sub_820D9038);  // COptionsScreenAction: opening step (f1 = the frame's time)
+extern "C" REX_FUNC(__imp__sub_820D9360);  // COptionsScreenAction: closing step
 extern "C" REX_FUNC(__imp__sub_8210C068);  // track object: which action takes its updates
 extern "C" REX_FUNC(__imp__sub_820C5A28);  // a Scrooby screen by (layer, &name hash)
+extern "C" REX_FUNC(__imp__sub_820C5AD0);  // a Scrooby page by (layer, &name hash)
 extern "C" REX_FUNC(__imp__sub_82262730);  // front end: show a screen
+extern "C" REX_FUNC(__imp__sub_82371990);  // page: a layer by name hash (r4, 64 bits)
+extern "C" REX_FUNC(__imp__sub_823719A0);  // page: a picture by name hash (r4, 64 bits)
+extern "C" REX_FUNC(__imp__sub_820C5B08);  // holder = page (counted reference)
+extern "C" REX_FUNC(__imp__sub_820C9DE0);  // holder = layer
+extern "C" REX_FUNC(__imp__sub_820C5B78);  // holder = picture
+extern "C" REX_FUNC(__imp__sub_82261800);  // front end: play a sound (bank, name, f1-f3)
 
 namespace {
 constexpr uint32_t kActionTrackObject = 12;
 constexpr uint32_t kTrackObjectFade = 124;
 constexpr uint32_t kMainOptionsScreenKey = 0x825A0840;  // hash of "GameStart_Options"
+constexpr uint32_t kMainOptionsPageKey = 0x825A0828;    // hash of its page
+constexpr uint32_t kMainOptionsLayerKey = 0x825A0838;   // hash of "OptionsMenu" (layer)
+constexpr uint32_t kMainOptionsPic32Key = 0x825A0850, kMainOptionsPic36Key = 0x825A0848;
 constexpr uint32_t kMenusTakeInput = 0x40;               // front end +8592
+// COptionsScreenAction fields.
+constexpr uint32_t kOptPage = 20, kOptLayer = 28, kOptPic32 = 32, kOptPic36 = 36, kOptState = 40;
+constexpr uint32_t kStateOpening = 2, kStateOpen = 3, kStateClosingCancel = 4;
+// The sounds of its Enter: FE_SFX "back" and "arm_wipe", at (f1, f2, f3) =
+// the floats at 0x8201EE28, 0x82046720, 0x8201EE28 (as the original passes).
+constexpr uint32_t kSoundBank = 0x820222E4, kSoundBack = 0x820222DC, kSoundArmWipe = 0x820222EC;
+constexpr uint32_t kSoundF1 = 0x8201EE28, kSoundF2 = 0x82046720;
+uint32_t g_main_action = 0;  // the main menu's Options action while it's up
+
+// The main menu's Options page is drawn smaller than the in-game one: it
+// filled the purple frame's opening edge to edge (a playtest: "way too
+// big"). A scale of the page's LAYER around its centre, put on after every
+// slide step (each resets the layer) and kept once open.
+constexpr float kMainMenuScale = kPageScale;
+
+uint32_t ByHash(PPCContext& ctx, uint8_t* base, scrooby::GuestFunction find, uint32_t page,
+                uint32_t hash_global) {
+  if (!page) return 0;
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = page;
+  ctx.r4.u64 = Read64(base, hash_global);
+  find(ctx, base);
+  const uint32_t result = ctx.r3.u32;
+  ctx = saved;
+  return result;
+}
+void Hold(PPCContext& ctx, uint8_t* base, scrooby::GuestFunction assign, uint32_t holder,
+          uint32_t object) {
+  scrooby::Call(assign, ctx, base, holder, object);
+}
+void Sound(PPCContext& ctx, uint8_t* base, uint32_t fe, uint32_t name) {
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = fe;
+  ctx.r4.u64 = kSoundBank;
+  ctx.r5.u64 = name;
+  ctx.f1.f64 = ReadF(base, kSoundF1);
+  ctx.f2.f64 = ReadF(base, kSoundF2);
+  ctx.f3.f64 = ReadF(base, kSoundF1);
+  __imp__sub_82261800(ctx, base);
+  ctx = saved;
+}
+// The page's smaller size, after a slide step (or once at Enter).
+void ShrinkMainMenuPage(PPCContext& ctx, uint8_t* base, uint32_t action) {
+  if (const uint32_t layer = Read32(base, action + kOptLayer)) {
+    scrooby::CallF(__imp__sub_82371198, ctx, base, layer, kMainMenuScale);
+  }
+}
 }  // namespace
+
+namespace options_menu {
+bool CloseMainMenuOptions(uint8_t* base) {
+  if (!g_main_action || Read32(base, g_main_action + kOptLayer) == 0) return false;
+  if (Read32(base, g_main_action + kOptState) != kStateOpen) return true;  // sliding: wait
+  uint8_t* state = GuestPtr(base, g_main_action + kOptState);
+  state[0] = state[1] = state[2] = 0;
+  state[3] = uint8_t(kStateClosingCancel);
+  if (const uint32_t fe = FrontEnd(base)) *GuestPtr(base, fe + kMenuFlags) &= uint8_t(~kMenusTakeInput);
+  return true;
+}
+}  // namespace options_menu
 
 extern "C" REX_FUNC(sub_820D8B10) {
   if (!options_page::MainMenuAvailable()) {
@@ -648,18 +1122,59 @@ extern "C" REX_FUNC(sub_820D8B10) {
     scrooby::Call(__imp__sub_8210C068, ctx, base, track, action);
     std::memset(GuestPtr(base, track + kTrackObjectFade), 0, 4);  // 0.0f
   }
+  // The page, its layer and the two pictures, as the original finds them.
+  const uint32_t page = scrooby::Call(__imp__sub_820C5AD0, ctx, base, 4, kMainOptionsPageKey);
+  Hold(ctx, base, __imp__sub_820C5B08, action + kOptPage, page);
+  const uint32_t layer = ByHash(ctx, base, __imp__sub_82371990, page, kMainOptionsLayerKey);
+  const uint32_t pic32 = ByHash(ctx, base, __imp__sub_823719A0, page, kMainOptionsPic32Key);
+  const uint32_t pic36 = ByHash(ctx, base, __imp__sub_823719A0, page, kMainOptionsPic36Key);
+  Hold(ctx, base, __imp__sub_820C9DE0, action + kOptLayer, layer);
+  Hold(ctx, base, __imp__sub_820C5B78, action + kOptPic32, pic32);
+  Hold(ctx, base, __imp__sub_820C5B78, action + kOptPic36, pic36);
+  if (pic32) scrooby::Call(__imp__sub_82370A58, ctx, base, pic32);
   const uint32_t fe = FrontEnd(base);
   const uint32_t screen = scrooby::Call(__imp__sub_820C5A28, ctx, base, 4, kMainOptionsScreenKey);
   if (fe && screen) scrooby::Call(__imp__sub_82262730, ctx, base, fe, screen);
   if (fe) *GuestPtr(base, fe + kResultFlags) &= uint8_t(~(kFlagCancel | kFlagAccept));
+  // The slide needs all three (the steps use them unchecked); without them
+  // the page just shows (state 3, menus take input).
+  const bool slide = page && layer && pic36;
+  uint8_t* state = GuestPtr(base, action + kOptState);
+  state[0] = state[1] = state[2] = 0;
+  state[3] = uint8_t(slide ? kStateOpening : kStateOpen);
+  if (slide && fe) {
+    Sound(ctx, base, fe, kSoundBack);
+    Sound(ctx, base, fe, kSoundArmWipe);
+  }
+  if (!slide) {
+    REXLOG_WARN("Options: main menu page without its slide (page {:08X} layer {:08X} cog {:08X})",
+                page, layer, pic36);
+  } else {
+    const uint8_t* l = GuestPtr(base, layer);
+    REXLOG_INFO("Options: main menu layer box {}x{} at ({:.1f}, {:.1f})", int(l[88] << 8 | l[89]),
+                int(l[90] << 8 | l[91]), ReadF(base, layer + 92) * 640, ReadF(base, layer + 96) * 640);
+  }
+  g_main_action = action;
   ctx.r3.u64 = 1;
 }
 extern "C" REX_FUNC(sub_820D8D68) {
-  if (options_page::MainMenuAvailable()) {
-    ctx.r3.u64 = 1;
+  if (!options_page::MainMenuAvailable()) {
+    __imp__sub_820D8D68(ctx, base);
     return;
   }
-  __imp__sub_820D8D68(ctx, base);
+  const uint32_t action = ctx.r3.u32;
+  const uint32_t state = Read32(base, action + kOptState);
+  if (state == kStateOpening || state == kStateClosingCancel || state == kStateClosingCancel + 1) {
+    const PPCContext saved = ctx;  // (r3 = action, f1 = the frame's time: as the original passes)
+    if (state == kStateOpening) {
+      __imp__sub_820D9038(ctx, base);
+    } else {
+      __imp__sub_820D9360(ctx, base);
+    }
+    ctx = saved;
+    ShrinkMainMenuPage(ctx, base, action);
+  }
+  ctx.r3.u64 = 1;
 }
 extern "C" REX_FUNC(sub_820D8F20) {
   if (!options_page::MainMenuAvailable()) {
@@ -667,6 +1182,7 @@ extern "C" REX_FUNC(sub_820D8F20) {
     return;
   }
   const uint32_t action = ctx.r3.u32;
+  if (action == g_main_action) g_main_action = 0;
   if (const uint32_t track = Read32(base, action + kActionTrackObject)) {
     scrooby::Call(__imp__sub_8210C068, ctx, base, track, 0);
   }

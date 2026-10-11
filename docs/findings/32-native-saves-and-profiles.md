@@ -209,7 +209,7 @@ are replaced by address:
 | `sub_8227CEA8` (Press START, joining, the quick load) | signed-in users, the controller's user, the name's hash | players with a controller, the controller's player number; the same calls to the save handler and the front end |
 | `sub_8227B1D8` (every frame) | next system notification (sign-in changed, guide) | runs only when a controller is added, removed or moved |
 | `sub_8227CE70` | creates the notification listener | nothing to listen to |
-| `sub_82266398` (apply the profile) | default difficulty, every player's Invert Axis, vibration, from the profile settings | the same defaults (Normal, off, on), but Invert Axis is set once and then left to the player |
+| `sub_82266398` (apply the profile) | default difficulty, every player's Invert Axis, vibration, from the profile settings | the same defaults (Normal, off, on), but Invert Axis (and the volumes) = the player's settings (findings/31 s.6) |
 | `sub_82322960` (the front end's set-up asks the settings' size) | `XUserReadProfileSettings` | an empty 8-byte result, never read |
 | `sub_8235B400` (Radical's error thread) | sign-in pop-up loop until somebody is signed in, then the disc error box | the disc error box |
 | `sub_823007D0` (listener wrapper; only the save drive still calls it) | `XamNotifyCreateListener` | handle 0 |
@@ -222,7 +222,9 @@ players now.
 **Invert Axis.** On the 360 the profile owned it: every Press START, quit to
 the menu and join re-applied the profile and reset each player's Invert Axis
 (front end +8588..8591) to the profile's value. With no profile, the
-player's choice (Options -> Controls) now stays.
+player's choice (Options -> Controls) now stays: since findings/31 s.6 it
+comes from `user/settings.toml` (`invert_axis_player1`-`4`), applied there
+and after every save load (saves carried their own copy too).
 
 **A trap on the way.** The original "apply the profile" sets the default
 difficulty (game object +240) whenever there is no main player yet (+352 =

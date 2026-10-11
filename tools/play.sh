@@ -123,6 +123,8 @@ LAUNCHER OPTIONS (combine freely)
   --ground-trace     record ground contact per character (logs/ground-*.csv)
   --catch            run under gdb; a null-pointer freeze writes logs/fault-*.txt
   --quiet            don't show the live log in this terminal
+  --gdb              run under gdb, interactive: breakpoints on game functions (ghelp)
+  --console          debug console: talk to the running game with tools/mom.py -s logs/mom.sock
   -h, --help         this text
 
 GAME FLAGS (passed straight through, write them as --name=value)
@@ -155,6 +157,8 @@ fi
 trace=""
 ground=""
 catch=()
+console=""
+interactive=0
 live=1
 args=()
 for arg in "$@"; do
@@ -174,6 +178,13 @@ for arg in "$@"; do
       export CRASHMOM_FAULT_FILE="$PWD/logs/fault-${stamp}.txt"
       catch=(gdb -q -batch -x tools/gdb/catch_fault.gdb --args) ;;
     --quiet) live=0 ;;
+    --gdb)                                         # tools/gdb/debug.py: breakpoints, registers, memory
+      interactive=1
+      live=0  # gdb needs the terminal for itself
+      catch=(gdb -q -x tools/gdb/debug.gdb -ex run --args) ;;
+    --console)                                     # src/debug_console.cpp; talk to it with tools/mom.py
+      console="logs/mom.sock"
+      args+=(--debug_console="$PWD/$console") ;;
     *) args+=("$arg") ;;
   esac
 done
@@ -196,6 +207,7 @@ echo "  game log:   ${log}"
 echo "  terminal:   ${out}"
 echo "  photos:     photos/ (press F10 in the game)"
 [ -n "$ground" ] && echo "  ground:     ${ground}"
+[ -n "$console" ] && echo "  console:    tools/mom.py -s ${console}   (debug console; type \"help\")"
 [ -n "$trace" ] && mkdir -p "$trace" && echo "  traces:     ${trace}/ (F10, and automatically where something isn't drawn natively yet)"
 
 # The live console (see the header): follow the log file from its first line
@@ -212,10 +224,19 @@ if [ "$live" -eq 1 ]; then
   tail_pid=$!
 fi
 
-"${catch[@]}" out/build/linux-amd64-relwithdebinfo/crash_mom \
-  --game_data_root="$PWD/game" --log_file="$log" --debug_log_fps --debug_audio_trace \
-  --photo_dir="$PWD/photos" "${args[@]}" 2>&1 | tee "$out"
-status=${PIPESTATUS[0]}
+game=(out/build/linux-amd64-relwithdebinfo/crash_mom
+  --game_data_root="$PWD/game" --log_file="$log" --debug_log_fps --debug_audio_trace
+  --photo_dir="$PWD/photos" "${args[@]}")
+if [ "$interactive" -eq 1 ]; then
+  # --gdb: gdb owns the terminal (its prompt, Ctrl-C to pause), so no tee.
+  echo "  gdb: Ctrl-C pauses the game, ghelp lists the game commands, c continues"
+  echo
+  "${catch[@]}" "${game[@]}"
+  status=$?
+else
+  "${catch[@]}" "${game[@]}" 2>&1 | tee "$out"
+  status=${PIPESTATUS[0]}
+fi
 if [ -n "$tail_pid" ]; then
   sleep 0.5  # let the last lines through
   kill "$tail_pid" 2>/dev/null

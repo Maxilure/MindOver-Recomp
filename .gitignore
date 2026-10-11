@@ -50,3 +50,7 @@ __pycache__/
 /user/
 # Shader cache + patched game data (rebuilt when missing).
 /cache/
+# Editor support (clangd): the compile database is a link into the build
+# folder (cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON), .cache/ = clangd's index.
+/compile_commands.json
+/.cache/

@@ -84,6 +84,10 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
 // re-hashed only when its memory was written. Off = every used texture is
 // hashed every frame (the old way): to measure the difference, or to rule
 // the watch out if a texture ever looks stale.
+REXCVAR_DEFINE_INT32(texture_sharpness, 0, "CrashMoM",
+                     "Native renderer: how sharp textures stay in the distance and at angles: 0 original, "
+                     "1 sharper, 2 sharpest (a more detailed mip level: crisper, a little more shimmer)")
+    .range(0, 2);
 REXCVAR_DEFINE_BOOL(debug_native_write_watch, true, "CrashMoM",
                     "Native renderer: re-check a texture only when the game wrote to its memory "
                     "(off: hash every texture every frame)");
@@ -1238,7 +1242,20 @@ VkPipeline NativeRenderer::GetPipeline(const native::DrawCommand& draw, bool has
   return pipeline;
 }
 
-VkSampler NativeRenderer::GetSampler(const native::SamplerState& state) {
+VkSampler NativeRenderer::GetSampler(const native::SamplerState& game_state) {
+  // TEXTURE SHARPNESS (the texture_sharpness setting, docs/findings/36):
+  // mipmapped textures pick a more detailed mip level than the game asks, by
+  // a mip level bias of -0.5 (Sharper) or -1 (Sharpest), in the fetch
+  // constant's units (1/32 of a level). Only filtered, mipmapped samplers:
+  // palettized textures and the depth copies are read one texel at a time
+  // (Unfiltered) and the UI's "base map" ones have a single level. The game
+  // already asks for 16x anisotropic filtering on its mipmapped world
+  // textures (findings/36), the most a GPU offers, so this is the step left.
+  native::SamplerState state = game_state;
+  if (state.mip != 0 && state.min_linear) {
+    const int setting = std::clamp(int(REXCVAR_GET(texture_sharpness)), 0, 2);
+    state.lod_bias = int16_t(state.lod_bias - setting * 16);
+  }
   // Everything the sampler depends on, packed into one key.
   const uint64_t key = uint64_t(state.address_u & 7) | uint64_t(state.address_v & 7) << 3 |
                        uint64_t(state.linear) << 6 | uint64_t(state.min_linear) << 7 |

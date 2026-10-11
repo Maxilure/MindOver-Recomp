@@ -14,7 +14,9 @@ no game files. The launcher builds the game on your computer, from your disc.
 ### What's new in 0.1.1-alpha
 
 **An Options screen** in the game's own look (Pause → Options, and new in
-the main menu): tabs (LB / RB), every change takes effect at once.
+the main menu): tabs (LB / RB), every change takes effect at once. A card
+beside the list explains the selected setting (a second glass panel, with
+a picture where it helps).
 
 - **Display**: frame-rate cap, renderer (Emulated Only, Emulated, Native,
   Native Only; X on Emulated or Native opens Dual Mode), brightness (the
@@ -23,23 +25,21 @@ the main menu): tabs (LB / RB), every change takes effect at once.
   refresh rate), fullscreen, and a frame-rate counter in the game's font,
   on screen everywhere, in any corner.
 - **Audio** and **Controls**: the game's own volumes and Invert Axis; Rebind
-  Keys opens the keyboard / mouse window (F6).
+  Keys opens the keyboard / mouse window (F6). They're now ONE setting for
+  the whole game, no longer stored in save files: on the Xbox 360 each save
+  carried its own volumes, so loading a save or starting a New Game changed
+  them.
+- **Graphics**: **anti-aliasing** (Off, 2x like the original, 4x, 8x),
+  **texture sharpness** (crisper textures in the distance) and **motion blur** (new, the port's own: Off, Low, Medium, High) for the
+  Native renderer: motion blur smears the scenery when the camera moves
+  while the players stay sharp; the original game had none, so it starts
+  off. **Depth of field** (the game's gentle blur of the distance): Off,
+  Original or Strong, in both renderers. Settings that need the Native
+  renderer are greyed out while the emulated picture is shown.
 - **Camera**: the co-op camera's settings.
 - **Native Only** (the port's own renderer alone, the lightest) is now the
   default picture; the emulated one is a choice away.
 
-**Co-op** (the co-op camera is experimental and needs more testing)
-
-- **No more frozen partners**: a player far from the camera used to stop
-  dead, unable to move, until the other player came near. Every player's
-  part of the level now keeps running.
-- **Turn into a mask from anywhere**: a player far from their partner can
-  press B to become a mask and fly back, with 2 to 4 players. Before, B
-  did nothing while the partner was off screen.
-- **Walking into the distance no longer pushes the others off screen**:
-  front to back, the camera stays with the player nearest to it. Setting:
-  *Stay with the nearest player*.
-- The camera returns to its normal distance after cutscenes, holds still
 **Keyboard and mouse prompts**: while you play on the keyboard and mouse,
 the game's button prompts show YOUR keys and mouse buttons ("Press E to
 Jack", WASD for the stick, the Spin key for spins), in menus too (Enter /
@@ -54,6 +54,18 @@ key now (no more stick circles behind the scenes): tap it for one spin, hold
 it to keep spinning, and steer while you spin. Your old key settings carry
 over.
 
+**Co-op** (the co-op camera is experimental and needs more testing)
+
+- **No more frozen partners**: a player far from the camera used to stop
+  dead, unable to move, until the other player came near. Every player's
+  part of the level now keeps running.
+- **Turn into a mask from anywhere**: a player far from their partner can
+  press B to become a mask and fly back, with 2 to 4 players. Before, B
+  did nothing while the partner was off screen.
+- **Walking into the distance no longer pushes the others off screen**:
+  front to back, the camera stays with the player nearest to it. Setting:
+  *Stay with the nearest player*.
+- The camera returns to its normal distance after cutscenes, holds still
   while everyone stands still, and keeps some ground around each player in
   view (setting: *Room around players*). After a cutscene with the other
   players far away, it goes straight to everyone instead of zooming out

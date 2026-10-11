@@ -9,9 +9,10 @@
 //     an optional warning per value (yellow line: "this changes how the
 //     game plays");
 //   * where it is read and written: a port setting (a REXCVAR flag, the
-//     same ones the launcher's Settings tab and user/settings.toml hold), or
-//     the GAME'S OWN option (the three volumes and Invert Axis, kept by the
-//     game itself as the original Options screen did);
+//     same ones the launcher's Settings tab and user/settings.toml hold).
+//     The GAME'S OWN options (the three volumes and Invert Axis) are flags
+//     too since 2026-10-11, pushed into the game by global_options.cpp (the
+//     360 kept them in every save file);
 //   * applying it right away: flags our code reads every frame just work
 //     (frame-rate cap, co-op camera); others get a nudge (renderer:
 //     NativeRenderer::SetShowNative; fullscreen: the SDK's own change
@@ -20,8 +21,8 @@
 // closes (only the changed keys; every other line of the file is kept).
 //
 // WHAT'S LEFT OUT (2026-10-10, the plan in notes/plans.md s.3): resolution
-// above 720p and motion blur (features that don't exist yet), the keyboard
-// on / off (the driver is made at start-up only).
+// above 720p (doesn't exist yet), the keyboard on / off (the driver is made
+// at start-up only). Motion blur joined on 2026-10-11 (Graphics tab).
 // =============================================================================
 #pragma once
 
@@ -66,6 +67,10 @@ struct Row {
   // kStars rows: called when the row gets / loses the cursor (Music plays
   // its preview while selected, as in the original screen).
   std::function<void(Env&, bool)> focus;
+  // GREYED OUT: a non-empty reason = the row can't be used right now (a
+  // native-renderer effect while the emulated picture is shown): drawn
+  // see-through, its value can't change, the reason as the card's warning.
+  std::function<std::u16string(Env&)> unavailable;
   // Show the Brightness guide (the calibration grey scale) on this row.
   bool guide = false;
   // An X button action on this row (the prompt bottom right while the row is

@@ -5,15 +5,19 @@
 #include "render_targets.h"
 
 #include <algorithm>
+#include <atomic>
 #include <mutex>
 #include <string>
 #include <unordered_set>
 
+#include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ui/vulkan/util.h>
 
 #include "guest.h"
 #include "scan.h"
+
+REXCVAR_DECLARE(int32_t, anti_aliasing);  // effects/post_effects.cpp
 
 namespace native {
 
@@ -25,6 +29,9 @@ constexpr uint32_t kDepthCopyVs[] =
     ;
 constexpr uint32_t kDepthCopyFs[] =
 #include "depth_copy.frag.h"
+    ;
+constexpr uint32_t kDepthCopySingleFs[] =
+#include "depth_copy_single.frag.h"
     ;
 
 // Push constants of the depth copy (shaders/depth_copy.frag): xy = source
@@ -38,14 +45,21 @@ struct DepthCopyParams {
 // samples top, bottom and 4x ones top-left, bottom-left, top-right,
 // bottom-right; Vulkan's standard patterns are bottom-right, top-left (2x)
 // and top-left, top-right, bottom-left, bottom-right (4x).
+// An 8x surface exists only through the anti-aliasing setting (the Xbox has
+// no 8x): its sample 0 stands in for the Xbox's.
 int32_t VulkanSampleOf(uint32_t xbox, VkSampleCountFlagBits samples) {
   static constexpr int32_t k2x[2] = {1, 0};
   static constexpr int32_t k4x[4] = {0, 2, 1, 3};
+  if (samples == VK_SAMPLE_COUNT_8_BIT) return 0;
   return samples == VK_SAMPLE_COUNT_4_BIT ? k4x[xbox & 3] : k2x[xbox & 1];
 }
+
+std::atomic<int> g_max_samples{1};  // MaxSurfaceSamples()
 }  // namespace
 
 using rex::ui::vulkan::VulkanDevice;
+
+int MaxSurfaceSamples() { return g_max_samples.load(); }
 
 namespace {
 
@@ -139,6 +153,7 @@ RenderTargets::~RenderTargets() {
     if (pass) dfn.vkDestroyRenderPass(device, pass, nullptr);
   }
   if (copy_pipeline_) dfn.vkDestroyPipeline(device, copy_pipeline_, nullptr);
+  if (copy_pipeline_single_) dfn.vkDestroyPipeline(device, copy_pipeline_single_, nullptr);
   if (copy_layout_) dfn.vkDestroyPipelineLayout(device, copy_layout_, nullptr);
   if (copy_pool_) dfn.vkDestroyDescriptorPool(device, copy_pool_, nullptr);
   if (copy_set_layout_) dfn.vkDestroyDescriptorSetLayout(device, copy_set_layout_, nullptr);
@@ -183,7 +198,7 @@ bool RenderTargets::Initialize() {
                          props.framebufferStencilSampleCounts &
                          props.sampledImageDepthSampleCounts &
                          props.sampledImageStencilSampleCounts &
-                         (VK_SAMPLE_COUNT_2_BIT | VK_SAMPLE_COUNT_4_BIT);
+                         (VK_SAMPLE_COUNT_2_BIT | VK_SAMPLE_COUNT_4_BIT | VK_SAMPLE_COUNT_8_BIT);
     }
   }
 
@@ -218,8 +233,8 @@ bool RenderTargets::Initialize() {
   info.pAttachments = attachments;
   info.subpassCount = 1;
   info.pSubpasses = &subpass;
-  const VkSampleCountFlagBits counts[3] = {VK_SAMPLE_COUNT_1_BIT, VK_SAMPLE_COUNT_2_BIT,
-                                           VK_SAMPLE_COUNT_4_BIT};
+  const VkSampleCountFlagBits counts[4] = {VK_SAMPLE_COUNT_1_BIT, VK_SAMPLE_COUNT_2_BIT,
+                                           VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_8_BIT};
   for (VkSampleCountFlagBits samples : counts) {
     if (!(msaa_supported_ & samples)) {
       continue;
@@ -237,6 +252,12 @@ bool RenderTargets::Initialize() {
     REXLOG_WARN("NativeRenderer: no depth copy shader: surfaces drawn without MSAA");
     msaa_supported_ = VK_SAMPLE_COUNT_1_BIT;
   }
+  int max_samples = 1;
+  for (int n : {2, 4, 8}) {
+    if (msaa_supported_ & VkSampleCountFlags(n)) max_samples = n;
+  }
+  g_max_samples.store(max_samples);
+  REXLOG_INFO("NativeRenderer: MSAA up to {}x on this GPU", max_samples);
   return true;
 }
 
@@ -295,12 +316,12 @@ bool RenderTargets::CreateDepthCopyPipeline() {
       VK_SUCCESS) {
     return false;
   }
-  // One set per multisampled depth image (a hub frame has one); retired
-  // images keep theirs until the GPU is done, hence some room.
-  const VkDescriptorPoolSize pool_size{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * 16};
+  // One set per depth image (a hub frame has one or two, plus the scratch
+  // depths); retired images keep theirs until the GPU is done, hence room.
+  const VkDescriptorPoolSize pool_size{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * 64};
   VkDescriptorPoolCreateInfo pool_info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
   pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  pool_info.maxSets = 16;
+  pool_info.maxSets = 64;
   pool_info.poolSizeCount = 1;
   pool_info.pPoolSizes = &pool_size;
   if (dfn.vkCreateDescriptorPool(device, &pool_info, nullptr, &copy_pool_) != VK_SUCCESS) {
@@ -317,10 +338,15 @@ bool RenderTargets::CreateDepthCopyPipeline() {
   }
   // The pipeline: one full-screen triangle (no vertex buffer), both outputs
   // written as they are, viewport and scissor set per copy.
+  // Two of them: for multisampled sources (sampler2DMS) and 1x ones.
   VkShaderModule vs = rex::ui::vulkan::util::CreateShaderModule(device_, kDepthCopyVs,
                                                                 sizeof(kDepthCopyVs));
-  VkShaderModule fs = rex::ui::vulkan::util::CreateShaderModule(device_, kDepthCopyFs,
-                                                                sizeof(kDepthCopyFs));
+  for (int single = 0; single < 2; ++single) {
+  VkShaderModule fs = single ? rex::ui::vulkan::util::CreateShaderModule(
+                                   device_, kDepthCopySingleFs, sizeof(kDepthCopySingleFs))
+                             : rex::ui::vulkan::util::CreateShaderModule(device_, kDepthCopyFs,
+                                                                         sizeof(kDepthCopyFs));
+  VkPipeline& pipeline = single ? copy_pipeline_single_ : copy_pipeline_;
   if (vs && fs) {
     VkPipelineShaderStageCreateInfo stages[2]{};
     for (uint32_t i = 0; i < 2; ++i) {
@@ -371,23 +397,39 @@ bool RenderTargets::CreateDepthCopyPipeline() {
     info.pDynamicState = &dynamic;
     info.layout = copy_layout_;
     info.renderPass = copy_pass_;
-    if (dfn.vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr,
-                                      &copy_pipeline_) != VK_SUCCESS) {
-      copy_pipeline_ = VK_NULL_HANDLE;
+    if (dfn.vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline) !=
+        VK_SUCCESS) {
+      pipeline = VK_NULL_HANDLE;
     }
   }
-  if (vs) dfn.vkDestroyShaderModule(device, vs, nullptr);
   if (fs) dfn.vkDestroyShaderModule(device, fs, nullptr);
+  }
+  if (vs) dfn.vkDestroyShaderModule(device, vs, nullptr);
   return copy_pipeline_ != VK_NULL_HANDLE;
 }
 
 VkSampleCountFlagBits RenderTargets::SamplesFor(uint8_t msaa) const {
-  const VkSampleCountFlagBits wanted = msaa >= 2   ? VK_SAMPLE_COUNT_4_BIT
-                                       : msaa == 1 ? VK_SAMPLE_COUNT_2_BIT
-                                                   : VK_SAMPLE_COUNT_1_BIT;
+  VkSampleCountFlagBits wanted = msaa >= 2   ? VK_SAMPLE_COUNT_4_BIT
+                                 : msaa == 1 ? VK_SAMPLE_COUNT_2_BIT
+                                             : VK_SAMPLE_COUNT_1_BIT;
+  // The anti-aliasing setting (effects/post_effects.h), for the surfaces
+  // the game multisamples: 0 off, 1 the game's own, 2 4x, 3 8x. A change
+  // re-creates those surfaces at the next frame (EnsureSurface compares the
+  // count): one frame starts from a cleared picture, the next is whole.
+  if (msaa) {
+    switch (REXCVAR_GET(anti_aliasing)) {
+      case 0: wanted = VK_SAMPLE_COUNT_1_BIT; break;
+      case 2: wanted = VK_SAMPLE_COUNT_4_BIT; break;
+      case 3: wanted = VK_SAMPLE_COUNT_8_BIT; break;
+      default: break;
+    }
+  }
+  // What this GPU can't do steps down (8 -> 4 -> 2 -> 1).
   if (!(msaa_supported_ & wanted)) {
-    ReportOnce(std::to_string(uint32_t(wanted)) + "x MSAA on this GPU (drawn without)");
-    return VK_SAMPLE_COUNT_1_BIT;
+    ReportOnce(std::to_string(uint32_t(wanted)) + "x MSAA on this GPU (drawn with fewer samples)");
+    while (wanted != VK_SAMPLE_COUNT_1_BIT && !(msaa_supported_ & wanted)) {
+      wanted = VkSampleCountFlagBits(wanted >> 1);
+    }
   }
   return wanted;
 }
@@ -416,7 +458,7 @@ bool RenderTargets::CreateImage(Image& image, uint32_t width, uint32_t height, b
   // copied from.
   if (!multisampled) {
     info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                 (depth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+                 (depth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
                         : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
   } else if (depth) {
     info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
@@ -450,9 +492,11 @@ bool RenderTargets::CreateImage(Image& image, uint32_t width, uint32_t height, b
   image.samples = samples;
   image.format = info.format;
   image.layout = VK_IMAGE_LAYOUT_UNDEFINED;
-  if (multisampled && depth) {
+  // (Only a depth surface IN the depth format: the depth and stencil copies
+  // are colour images made through here too.)
+  if (depth && copy_set_layout_ && (multisampled || copy_pipeline_single_)) {
     // The depth copy shader reads each aspect through its own view, bound by
-    // a descriptor set made once here.
+    // a descriptor set made once here (1x surfaces too: depth_copy_single).
     const auto& dfn = device_->functions();
     view_info.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
     VkResult result = dfn.vkCreateImageView(device_->device(), &view_info, nullptr,
@@ -919,7 +963,9 @@ void RenderTargets::ResolveDepth(const ResolveCommand& r, VkCommandBuffer cmd) {
   if (w <= 0 || h <= 0) {
     return;
   }
-  if (src.samples != VK_SAMPLE_COUNT_1_BIT) {
+  // By shader when we can (multisampled: the only way; 1x: much lighter than
+  // the copy engine route below, which stays as the fallback).
+  if (src.samples != VK_SAMPLE_COUNT_1_BIT || (src.copy_set && copy_pipeline_single_)) {
     ResolveRect rect{x0, y0, dx, dy, w, h};
     ResolveDepthMultisampled(r, rect, src, depth_it->second, stencil_it->second, cmd);
     return;
@@ -995,7 +1041,9 @@ void RenderTargets::ResolveDepthMultisampled(const ResolveCommand& r, const Reso
   begin.framebuffer = framebuffer;
   begin.renderArea = area;
   dfn.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-  dfn.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, copy_pipeline_);
+  const bool single = src.samples == VK_SAMPLE_COUNT_1_BIT;
+  dfn.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        single ? copy_pipeline_single_ : copy_pipeline_);
   const VkViewport viewport{0.0f, 0.0f, float(depth_copy.width), float(depth_copy.height),
                             0.0f, 1.0f};
   dfn.vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -1009,7 +1057,7 @@ void RenderTargets::ResolveDepthMultisampled(const ResolveCommand& r, const Reso
                                    ? uint32_t(r.sample_select - 1)
                                    : 0u;
   const DepthCopyParams params{rect.x0 - rect.dx, rect.y0 - rect.dy,
-                               VulkanSampleOf(xbox_sample, src.samples), 0};
+                               single ? 0 : VulkanSampleOf(xbox_sample, src.samples), 0};
   dfn.vkCmdPushConstants(cmd, copy_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(params),
                          &params);
   dfn.vkCmdDraw(cmd, 3, 1, 0, 0);

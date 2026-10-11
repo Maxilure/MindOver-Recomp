@@ -33,19 +33,25 @@
 //   OptTabPrev / OptTab / OptTabNext  the previous (faded), current (yellow)
 //                               and next (faded) tab names
 //   OptTabLB / OptTabRB         the shoulder button pictures beside them
-//   InGameOptionsMenu           items OptRow0..N-1: label OptLabel<r>
-//                               (right aligned) + value OptValue<r>
-//   OptStar<r>_<k>              5 star pictures on each row (volumes)
-//   OptArrowL<r> / OptArrowR<r> the selector's arrows on each row (the map
-//                               screen's arrow picture, turned by code)
+//   InGameOptionsMenu           items OptRow0..N-1: label OptLabel<r> (left
+//                               aligned, glass's left) + value OptValue<r>
+//                               (right aligned, glass's right)
+//   OptStar<r>_<k>              5 star pictures on each row (volumes), at
+//                               the row's right
 //   OptTitle                    (main menu page) "Options", where the in-game
 //                               page has the game's "Paused" title
-//   OptGuide                    the Brightness row's guide: the original's
-//                               calibration grey scale (shown on that row)
-//   OptPageUp / OptPageDown / OptPage  beside the glass on the right: more
-//                               rows above / below, and "1/2" (pages)
-//   OptDesc / OptWarn           the selected row's description (cyan, 2
-//                               lines) and warning (yellow)
+//   OptPageUp / OptPageDown / OptPage  under the rows: more rows above /
+//                               below, and "1/2" (pages)
+//   THE CARD (2026-10-11): a glass panel on the right, beside the
+//   game's glass (moved left by kGlassShift), about the selected row:
+//   OptCardSmall / Large / Square  the glass in the game's three shapes
+//                               (4:1, 2:1, 1:1): the one nearest the card's
+//                               shape is shown, sized to fit the contents
+//   OptCardValue                its value (yellow)
+//   OptGuide                    a picture: the Brightness row's guide, the
+//                               original's calibration grey scale
+//   OptDesc                     its description (cyan, small print)
+//   OptWarn                     its warning (yellow, small print)
 // =============================================================================
 #pragma once
 
@@ -53,8 +59,25 @@ namespace options_page {
 
 // Rows shown at a time (the page has this many; unused ones are hidden). A
 // tab with more rows is shown in PAGES of this many (options_menu.cpp).
-constexpr int kRows = 5;
+constexpr int kRows = 7;
 constexpr int kStars = 5;
+// THE LAYOUT, two glass panels centred together on the 16:9 picture (x
+// -107-747 in Scrooby units), the same margin (~66) on both sides; inside
+// the main menu's purple frame too (its opening spans about x -53-690:
+// a first layout 22 units wider went under the frame on the right):
+//   the game's glass panel  500 wide, moved LEFT by kGlassShift: x -40-460
+//   (in game options_menu.cpp moves the game's own glass page, shared with
+//   the pause menu, and the button prompts, while the screen is up)
+//   a gap of 10, then the CARD  kCardWidth wide: x 470-680, its height fitted
+//   to its contents by options_menu.cpp, centred on the glass's centre (y 211)
+constexpr int kGlassShift = -110;
+constexpr int kCardX = 470, kCardWidth = 210;
+constexpr int kCardCentreY = 211;
+constexpr int kCardPadding = 14;  // text's room from the card's edges (each side)
+// A row's value text: a box this wide, right aligned, ending at x
+// kRowValueRight (the glass's right edge, 30 inside: options_page.cpp).
+constexpr int kRowValueWidth = 250;
+constexpr int kRowValueRight = 530 + kGlassShift;
 
 // Registers the patch (before data_patcher::Install()).
 void Register();

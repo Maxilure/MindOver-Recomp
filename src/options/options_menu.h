@@ -6,8 +6,9 @@
 // WHAT THE PLAYER SEES: Pause -> Options opens the glass panel as before,
 // now with a row of tabs (Display, Audio, Controls, Camera; LB / RB or Back
 // switch them), up to five rows per tab (left / right changes a value on the
-// spot), and under them a short description of the selected value plus a
-// yellow warning when a value changes how the game plays. The game's own
+// spot), and beside them a CARD (a square glass panel on the right, since
+// 2026-10-11): the selected value, its description, a yellow warning when a
+// value changes how the game plays, and a picture where a row has one. The game's own
 // options (the three volumes as stars, Invert Axis) are rows of the Audio
 // and Controls tabs. What the rows are and do: options_settings.h. The page
 // itself: options_page.h (a data patch of the in-game menus package).
@@ -34,6 +35,8 @@
 
 #include <cstdint>
 
+#include <rex/ppc/context.h>
+
 namespace options_menu {
 
 // Registers the page patch (CrashMomApp::OnPostSetup, before
@@ -54,5 +57,17 @@ bool Open();
 // (wrapping around) and returns true (= "moved": the menu plays its sound).
 // False for any other menu, or when the move stays on the page.
 bool TurnPage(uint32_t menu, int direction, uint8_t* base);
+
+// THE GLASS MOVES LEFT (2026-10-11): the in-game screen's action
+// (CInGameOptionsScreenAction) Enter, after the original (players/
+// menu_input.cpp wraps it for its title): the game's glass panel page, which
+// the pause menu shares, moves left by options_page::kGlassShift until the
+// screen's Exit (sub_820CDD60, wrapped here) puts it back. `action` = r3.
+void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action);
+
+// The main menu's Options: B starts the panel's slide-out (the PS2 screen
+// action's closing, whose end sets the cancel flag). False if the page has
+// no slide (then the caller sets the flag itself).
+bool CloseMainMenuOptions(uint8_t* base);
 
 }  // namespace options_menu

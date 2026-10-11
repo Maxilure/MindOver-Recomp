@@ -27,6 +27,7 @@ extern "C" REX_FUNC(__imp__sub_82371198);  // element: scale around its centre (
 extern "C" REX_FUNC(__imp__sub_823710C8);  // element: turn around its centre (f1, r5 = axis)
 extern "C" REX_FUNC(__imp__sub_82373F28);  // picture: show frame r4
 extern "C" REX_FUNC(__imp__sub_82370840);  // element: colour r4 (0xAARRGGBB)
+extern "C" REX_FUNC(__imp__sub_82370860);  // element: alpha r4 (the colour's top byte)
 extern "C" REX_FUNC(__imp__sub_8237A4C0);  // Scrooby Menu::SetSelection(index)
 extern "C" REX_FUNC(__imp__sub_82261800);  // front end: play a sound (bank, name, f1-f3)
 
@@ -185,6 +186,9 @@ void SetFrame(PPCContext& ctx, uint8_t* base, uint32_t picture, uint32_t frame) 
 }
 void SetColour(PPCContext& ctx, uint8_t* base, uint32_t element, uint32_t argb) {
   if (element) Call(__imp__sub_82370840, ctx, base, element, argb);
+}
+void SetAlpha(PPCContext& ctx, uint8_t* base, uint32_t element, uint8_t alpha) {
+  if (element) Call(__imp__sub_82370860, ctx, base, element, alpha);
 }
 
 int ItemCount(uint8_t* base, uint32_t menu) {

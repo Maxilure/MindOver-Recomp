@@ -71,6 +71,11 @@ nothing.
   option, off by default, since the original game doesn't have it). No
   work planned now.
 
+**Update 2026-10-11 (findings/34):** the port now has motion blur of its own,
+as an option (off by default), drawn by the native renderer. On the way we
+found that the 360 build never even creates `CMotionBlurRenderer`: its
+factory (`0x822BB8F8`) has no caller.
+
 ## 4. How we found it (repeatable)
 
 ```bash

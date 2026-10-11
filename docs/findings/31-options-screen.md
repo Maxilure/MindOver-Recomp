@@ -1,8 +1,8 @@
 # 31. The Options screen: tabs, port settings and live changes
 
 Status: built (first version). Pause -> Options opens the port's Options
-screen: the game's glass panel and menu look, with tabs (Display, Audio,
-Controls, Camera), and every change takes effect at once. Code:
+screen: the game's glass panel and menu look, with tabs (Display, Graphics,
+Audio, Controls, Camera), and every change takes effect at once. Code:
 `src/options/` (page, settings, screen) and `src/ui/scrooby.*` (helpers for
 the game's menu library). Builds on the menu research of findings/30.
 
@@ -10,7 +10,15 @@ the game's menu library). Builds on the menu research of findings/30.
 
 *Left: the Display tab, page 1 of 2 (the arrows show the selected value
 can move both ways; beside the glass: "1/2" and a down arrow). Right: page
-2, the FPS Counter row.*
+2, the FPS Counter row. (The first layout: since section 7 the description
+sits in a card on the right and the page markers under the rows.)*
+
+![The card beside the glass](../images/options-side-card.jpg)
+
+*The current layout (section 7): the selected row's value, picture,
+description and warning in a glass card beside the game's glass panel,
+fitted to what it says, in game and in the main menu (drawn smaller
+there).*
 
 ## 1. What the original screen is
 
@@ -56,14 +64,15 @@ star picture, the "Paused" title, plus the map screen's arrow picture
 selector. The page and menu keep their names, so the state's tracks find
 them as before.
 
-Layout (Scrooby units, findings/30 s.1): tabs at y 312, three at a time:
+Layout (Scrooby units, findings/30 s.1; x as first built, everything on
+the glass is 100 units further left since section 7): tabs at y 312, three at a time:
 the current one in the middle (0.97 x size, yellow), the previous and next
 ones beside it (0.8 x, half see-through: there is more to either side,
 wrapping around), the font's LB / RB pictures at both ends;
 up to five rows from y 270, 35 apart; labels right-aligned ending at x 300;
 values centred in a selector from x 312 to 568 with an arrow at each end;
-stars centred in the same place; a warning (yellow) and a description
-(cyan, two lines) at 0.72 x size above the game's Back prompt.
+stars centred in the same place; the description and warning at 0.72 x
+size (first above the game's Back prompt, now in the card: section 7).
 
 Things learnt building it:
 
@@ -112,14 +121,17 @@ The menu's own up / down (Scrooby `Menu::MoveNext` `sub_8237A668` /
 `MovePrevious` `sub_8237A550`, already hooked by the save list) asks the
 screen first: past the last / first row of a page it turns to the next /
 previous page (wrapping around), the cursor lands on its first / last row,
-and the menu plays its usual sound. Beside the glass on the right: the
+and the menu plays its usual sound. Under the rows (first beside the glass): the
 map's arrow (turned over for "up") where there are more rows that way, and
 "1/2" between them.
 
-**The X button** can belong to a row: while that row is selected (and its
-value allows it) the game's lower right button prompt (page `FE_Buttons`,
-`LowerRightButton` / `LowerRightText`; the main menu's "Select A" there is
-replaced) says what X does. The Renderer row's X is **Dual Mode** (= F8,
+**The prompts.** Lower right: "Select A" (A changes the value; section
+8), set by the screen in game too, where the state's own prompts were Back
+only: the font's A picture and the game's own text, by the key the main
+menus' prompts use (`FE_Button_Text_Select`, `sub_82371CE0(text, key)`:
+in the game's language). **The X button** can belong to a row: while that
+row is selected (and its value allows it) the upper right prompt (page
+`FE_Buttons`, `UpperRightButton` / `UpperRightText`) says what X does. The Renderer row's X is **Dual Mode** (= F8,
 the native picture in a second window) on Emulated and Native, the two
 values where both renderers draw.
 
@@ -138,8 +150,12 @@ width and height don't scale it): drawn at 0.6 x by code.
 | | Fullscreen | Off, On | the SDK's `fullscreen` | its change callback resizes the window |
 | | FPS Counter | Off, Simple, Average, Detailed | `fps_overlay` (`src/fps_overlay.*`) | the port's own counter (no MangoHud), ALWAYS on screen: drawn by the port itself on the overlay layer over the finished picture (ImGui's foreground draw list, both renderers) with the game's own font `Titans_Small`, read from package b4c85fe7 at run time (`src/ui/game_font.*`: Pure3D texture font 0x22000, white palettized pages split into a dark outline layer under a coloured letter layer). Coloured against the cap; text changes 4 times a second. The GAME's frames: FPS of the last 0.25 s, average of 5 s, 1% low of 10 s, frame / game / swap ms (GAME without the frame pacer's wait). Not in F10 photos (guest picture only). (Earlier versions: an ImGui window; a HUD-only text; then texts on the game's pages `FE_Buttons.pag` + `InGame.pag`, which vanished during every menu transition: a screen's exit fade closes its pages, and between two screens none is drawn.) |
 | | FPS Position | Top Left, Top Centre, Top Right, Bottom Left, Bottom Right | `fps_overlay_position` | five texts per page (one per place, in the 16:9 picture's corners past the 4:3 canvas), only the chosen one shown |
-| Audio | Dialogue, Music, SFX | 0-5 stars | the game's own | as the original screen |
-| Controls | Invert Axis | Off, On | the game's own (per player) | as the original screen |
+| Graphics | Anti-aliasing | Off, 2x (original), 4x, 8x (up to what the GPU can do) | `anti_aliasing` | the MSAA count of the game's multisampled surfaces, native only (greyed out with the emulated picture), re-created at the next frame (findings/35) |
+| | Texture Sharpness | Original, Sharper, Sharpest | `texture_sharpness` | a mip level bias of 0 / -0.5 / -1 on the mipmapped textures, native only (greyed out with the emulated picture); the game already uses 16x anisotropic filtering (findings/36) |
+| | Motion Blur | Off (original), Low, Medium, High | `motion_blur` (`src/effects/post_effects.*`) | the port's own effect, native renderer only (greyed out while the emulated picture shows: findings/35 s.4), read by the recorder every frame (findings/34) |
+| | Depth of Field | Off, Original, Strong | `depth_of_field` | the game's MaxRadius x 0 / 1 / 2 on the way into its renderer, both pictures (findings/34 s.3) |
+| Audio | Dialogue, Music, SFX | 0-5 stars | `volume_dialogue`, `volume_music`, `volume_sfx` (`src/options/global_options.*`) | the game's own volumes, kept in `user/settings.toml` instead of each save (section 6) |
+| Controls | Invert Axis | Off, On | `invert_axis_player1`-`4` | the game's own, per controller slot, kept in `user/settings.toml` (section 6) |
 | | Rebind Keys | (action) | | opens F6 |
 | Camera | Co-op Camera | Frame Everyone, Original | `coop_camera` | read every frame (findings/28) |
 | | Camera Follows | Nearest Player, Middle | `coop_camera_near_focus` | read every frame |
@@ -153,7 +169,7 @@ causes. It's a fix, not a choice, and stays on.
 Port settings changed on the screen are written to `user/settings.toml` when
 it closes: only those keys (a key back on its default is removed), every
 other line kept, through a temporary file and a rename. The game's own
-options stay where the game keeps them.
+options (volumes, Invert Axis) are such keys too (section 6).
 
 ## 4. The main menu's Options
 
@@ -195,6 +211,188 @@ menu plays its own music).
 
 ## 5. Not in this version
 * Keyboard on / off: the keyboard driver is made at start-up only.
-* Resolution above 720p, motion blur: the features don't exist yet.
+* Resolution above 720p: doesn't exist yet. (Motion blur joined on
+  2026-10-11: Graphics tab, findings/34.)
 * A game-style Rebind Keys screen (the row opens the F6 window for now),
   animated previews of the settings.
+
+## 6. Volumes and Invert Axis: one setting, not one per save
+
+On the Xbox 360 the volumes and Invert Axis travel inside every save file.
+The front end is one of the game's "saveable" objects (a second vtable at
+`0x8203AD4C`, `this` = front end + 4), each with three methods:
+
+| Slot | Function | What it does |
+|---|---|---|
+| 0 | `sub_82262170` | New game: resets the progress (objectives, map, combo...) AND the three volumes to 1.0 |
+| 1 | `sub_822622F8` | Load: its part of the save block = Music, Dialogue, SFX (3 floats), then a flags word: bits 0-3 = Invert Axis per controller slot (front end +8588..8591), bit 4 = the save handler's "device chosen" (handler +140 bit 0x10) |
+| 2 | `sub_82262410` | Save: writes the same into the block |
+
+So loading an older save brought its volumes back, and New Game turned
+everything up to full again. The volumes themselves sit in the audio
+settings object `*(0x8259B23C)` (`sub_822D8130`): +4 / +8 / +12 = the music /
+dialogue / SFX buses, volume float at bus +36 (`sub_822D83E8` reads,
+`sub_822D83F0` writes, the setters clamp to 0-1 first).
+
+The port keeps them in `user/settings.toml` (`volume_music`,
+`volume_dialogue`, `volume_sfx` = 0-5 stars, `invert_axis_player1`-`4`),
+like every other setting (the Options screen and the launcher's Settings tab
+both write them). `src/options/global_options.cpp` wraps slots 0 and 1: the
+original runs (the progress loads or resets as before), then the settings
+go back over what it set. The front end's set-up (the player defaults
+`sub_82266398`, `src/players/who_plays.cpp`) applies them at boot, the first
+moment the audio object exists.
+
+Slot 2 (`sub_82262410`) no longer saves them: after the original writes its
+part, the three volumes are set to 1.0 and the Invert Axis bits cleared, the
+game's own New Game values, so a save holds no settings of its own (saves
+made before keep theirs, unread). Bit 4 isn't a setting and stays. The bytes
+themselves can't go: the save block is a fixed-size memory image (20,174
+bytes, findings/24) that every subsystem reads at fixed positions, so cutting
+16 bytes would shift everything after them and break every existing save,
+and the 360 / Xenia format with it.
+
+Checked with the debug console (bus volume = `[[0x8259B23C]+4]+36 f32`):
+`--volume_music=2 --volume_dialogue=3 --invert_axis_player1=true` -> after
+loading a save written with full volumes: 0.4, 0.6, SFX 1.0, Invert Axis
+byte 1; in the main menu before any save: the settings' values; Music
+changed in Options -> applied at once and written to `settings.toml`; Pause
+-> Save Game over a save with Music 0.4 / Dialogue 0.6 / Invert Axis on ->
+the file's front end part (block +0x19E8 in that save) holds 1.0, 1.0, 1.0
+and flags 0x10 (only bit 4), the game keeps 0.4 and Invert Axis on.
+
+## 7. The card: a second glass panel beside the first
+
+The description used to sit in two small lines at the bottom of the glass.
+It now has a CARD of its own: a glass panel on the right with the selected
+row's value (yellow), a picture where the row has one (the Brightness
+guide), the description (cyan) and the warning (yellow). The row list keeps
+the game's glass panel at its original size; the panel moves left to make
+room.
+
+* **Centred as a pair.** Glass x -40-460 (was 70-570), a gap of 10, card x
+  470-680: the same margin (~66 units) left and right of the 16:9 picture
+  (x -107-747). The game always draws 1280 x 720, and uses those sides
+  itself (the map screen's strip spans x -150-790). The main menu's purple
+  frame opens about x -53-690: a first layout 22 units wider went under it.
+* **The button prompts go with the glass.** `FE_Buttons` (Back, Select,
+  the X action; x 70-560 = the original glass's edges) serves every screen:
+  its eight texts move left with the glass while the screen is up, and get
+  their x back (as found) when it closes.
+* **The card fits its contents.** Its width is fixed, its height = padding,
+  the value, the picture, the description, the warning, with a gap between
+  any two; centred on the glass's centre (y 211). Lines are broken by their
+  MEASURED width: the game's own font (`Titans_Small`, read for the FPS
+  counter: `src/ui/game_font.*`), 0.5 Scrooby units per font pixel at size 1
+  ("Frame-rate Cap" = 351 px = 175 units, as on screen). A letter count let
+  wide letters (W, M) run past the glass.
+* **The game's three glass shapes.** The card shows the one nearest its
+  shape: `FE_Common_GlassPanel_Rectangle_Small` (4:1, the save list),
+  `..._Rectangle_Large` (2:1, the in-game panel), `..._Square` (1:1, the
+  question box), switched at 2.83 and 1.41, then stretched to the card's
+  height: at most 1.41 x one way, as the game stretches its own 2:1 panel to
+  500 x 354. All three are found by name from the page (no copies): the
+  small and square ones are in package b4c85fe7 (always loaded), the large
+  one in every in-game menus package and the main menus' package.
+* **Pictures: stretched or at their own size.** The u32 right after a
+  picture element's box (`tools/scrooby_dump.py` calls it "frames") is the
+  draw mode: 1 = stretched to the box (the game's glass panels, the cogs),
+  0 = at the picture's own size, hanging from the box's top (the map's
+  arrows, the calibration grey scale). The card's glass is a copy of the
+  map's arrow element, so it drew its 256 x 256 picture 257 units wide in a
+  210 box (contents looked off-centre) until the field was set to 1.
+* **Element fields** (read with the debug console on a text whose box was
+  known): +92 / +96 x / y of the box's bottom-left as a fraction of the
+  640-unit width (floats; `sub_82370E20` writes units x the constant at
+  0x8204701C), +88 / +90 width / height in units (u16), +16 the transform.
+  The position is drawn from; the SIZE written at run time is NOT: a picture
+  keeps its data size, a text lays its lines out from its data box (each
+  line past the first pushed a text ~20 units low). So every card text
+  keeps a one-line box, placed for its first line (the rest hang below; a
+  text shrinks around its box's centre), and the glass keeps its picture's
+  own box, stretched by its transform: `sub_82370FD0(element, f1 x, f2 y,
+  f3 z)` scales around the box's centre (the uniform `sub_82371198` is that
+  with x = y).
+* **Text from the top.** A text's vertical justification (the data field
+  after the horizontal one): 2 = lines hang from the box's top (every text
+  in the game's pages has it).
+* **Moving the shared glass page.** In game the glass, cogs and hinge are
+  the page `InGame_NV_GlassPanel`, shared with the pause menu and loaded
+  once. `CInGameOptionsScreenAction` (vtable 0x82023594: Enter
+  `sub_820CDAD0`, Update `sub_820CDCC0`, Exit `sub_820CDD60`) keeps that
+  page at +28, its layer at +32 and the two cogs at +40 / +44; every step of
+  its slide (`sub_820CE2C8`) resets the layer's transform and moves it, and
+  RESETS the cogs' transforms and turns them again. A transform move
+  (`sub_82370EE8`) would be lost on the cogs at the next step, so the move
+  goes into each element's position (+92); the turn is built around it.
+  After the original Enter the four elements move left; the Exit puts them
+  back BEFORE the original (which lets go of the cogs) and gives the cogs a
+  fresh transform. Back in the pause menu glass and prompts are where the
+  game has them (checked on photos).
+* **Page markers** ("1/2" and the arrows) moved from beside the glass to
+  under the rows, then into the button prompts' line (between Back and
+  Select, centred on the glass): smaller arrows (0.6 x), both always shown,
+  the one with no more rows that way faded.
+* **The main menu's copy slides in and out** with the PS2 Options screen's
+  own code (`COptionsScreenAction`, vtable 0x82024404). Its Enter is
+  rewritten (the PS2 widescreen row is gone) but finds what the slide needs
+  as the original does, by the name hashes it keeps: the page (+20, hash
+  0x825A0828), its layer "OptionsMenu" (+28, 0x825A0838,
+  `sub_82371990(page, hash)`), the hinge and cog (+32 / +36, 0x825A0850 /
+  0x825A0848: our page keeps the names `OptionsMenu_PanelHinge` and `cog1`),
+  plays FE_SFX "back" + "arm_wipe", and sets state +40 = 2. Its Update runs
+  the original steps by state: 2 = `sub_820D9038` (opening: the
+  interpolator at +44 moves the layer from the right, the cog turns; then
+  state 3 and the menus take input), 4 / 5 = `sub_820D9360` (closing; at the
+  end the cancel / accept flag). B sets state 4: the panel slides out before
+  the decision goes back to the main menu.
+* **The main menu's copy is drawn at 0.85 x**: it filled the purple frame's
+  opening. Every slide step resets the layer's transform, so the scale
+  (`sub_82371198` on the layer, whose box is the whole 640 x 480: around
+  (320, 240)) goes on after each; the prompts are placed where the smaller
+  glass has its corners.
+
+The card's middle is where per-row PICTURES go (only Brightness has one so
+far); a live preview of a setting would make the card taller there.
+
+## 8. The rows: name left, value right, the value pulses
+
+A playtest found the first rows odd: names right-aligned against a
+centred value between two arrows left uneven gaps, the volume stars sat
+in the middle, and the glass had room for more rows. Now:
+
+* **Seven rows a page**, 30 units apart; the NAME left-aligned at the
+  glass's left (30 inside), the VALUE right-aligned at its right; stars
+  (0.8 x, 24 apart) end at the row's right too.
+* **No arrows.** A steps the selected row to its next value, the first
+  again after the last (left / right still step either way and stop at
+  the ends); A on an action row (Rebind Keys) does its action.
+* **The selected value pulses** like every selected item in the game. The
+  pulse is the menu's own update (Scrooby Menu vtable slot 5,
+  `sub_8237A070`: the selected item's label and value scaled by a sine of
+  the timer at menu +148). `CMenuAction`'s Update calls it only when byte
+  +41 of its FEMenu track is set, which comes from the FEMenu item in the
+  state's action list in `Frontend.bfig`: after its three strings come four
+  u32, and the THIRD is 1 in the pause menu's and main menu's items and 0
+  in the in-game Options' Xbox branch (node 958) and the main menu's
+  OptionsScreen (96). A data patch sets it to 1 in both (`fight_tree::Tree::
+  Replace` puts an edited record back). An FEMenuCursor track (the pause
+  states have one) was tried first: its `CMenuCursorAction` (vtable
+  0x82023B4C) does nothing on the Xbox (Enter = Update = "return 1").
+* **Only the value pulses.** The menu would pulse the name too: the screen
+  resets the selected name's transform right after the menu's update, so
+  the name only turns yellow.
+* **Around the text's own centre.** A pulse scales around the centre of the
+  text's box, and the value's box (250 units) is wider than its text, so it
+  grew past the glass's edge. The value's box is made exactly its text
+  (measured with the game's font), ending at the row's right end. A
+  right-aligned text is placed by the box's RUN-TIME x and width (+92,
+  +88), unlike a text's lines vertically (section 7).
+* **One size, in game too.** The whole screen (glass and page layers) is
+  drawn at 0.85 x in game as well as in the main menu, scaled after every
+  slide step (the in-game step `sub_820CE2C8` resets both layers); the
+  button prompts (page `FE_Buttons`, not in those layers) follow: each one
+  shrunk by the same 0.85 around its own centre, that centre moved where
+  the page's scale puts it, both undone at Exit. (Moving only their
+  positions first made each button overlap its word: the gaps shrank, the
+  pictures and words didn't.)

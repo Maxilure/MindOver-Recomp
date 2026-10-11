@@ -23,6 +23,7 @@
 #include "../game_folder.h"
 #include "../guest_memory.h"
 #include "../ui/scrooby.h"
+#include "global_options.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);
 REXCVAR_DECLARE(bool, native_only);
@@ -30,18 +31,16 @@ REXCVAR_DECLARE(bool, coop_camera);
 REXCVAR_DECLARE(bool, coop_camera_near_focus);
 
 // The game's own options (the original Options screen's code, CMenuAction
-// sub_820D2A00 / sub_820D2F80, traced 2026-10-10). Volumes are 0.0-1.0 in
-// steps of 0.2 (one star); the getters / setters ignore r3.
-extern "C" REX_FUNC(__imp__sub_82266240);  // Dialogue volume: get (f1)
-extern "C" REX_FUNC(__imp__sub_82266268);  // Dialogue volume: set (f1)
-extern "C" REX_FUNC(__imp__sub_822661F0);  // Music volume: get
-extern "C" REX_FUNC(__imp__sub_82266218);  // Music volume: set
-extern "C" REX_FUNC(__imp__sub_82266290);  // SFX volume: get
-extern "C" REX_FUNC(__imp__sub_822662B8);  // SFX volume: set
+// sub_820D2A00 / sub_820D2F80, traced 2026-10-10). The volumes and Invert
+// Axis are now kept in user/settings.toml (global_options.cpp sets them).
 extern "C" REX_FUNC(__imp__sub_822615D0);  // front end: Music row selected (its preview plays)
 extern "C" REX_FUNC(__imp__sub_822615E8);  // front end: Music row left (preview stops)
 extern "C" REX_FUNC(__imp__sub_82266130);  // front end: a player's slot (Invert Axis byte index)
 extern "C" REX_FUNC(__imp__sub_82261800);  // front end: play a sound (bank, name, f1-f3)
+
+namespace native {
+int MaxSurfaceSamples();  // native/render_targets.h (kept out of here: Vulkan headers)
+}
 
 namespace options_settings {
 namespace {
@@ -49,9 +48,6 @@ namespace {
 using scrooby::Call;
 
 constexpr uint32_t kGameGlobal = 0x8259B190;  // the game (front end at +52)
-// Front end +8588 + slot: a player's Invert Axis (1 = on), read by the aiming
-// reticle (CReticleAimingBehaviour sub_82255160 flips the vertical aim).
-constexpr uint32_t kInvertAxis = 8588;
 // The volume rows' own sounds (the original screen plays them on a change):
 // bank, name.
 constexpr uint32_t kSoundDialogueBank = 0x82023AFC;  // "FE_SFX_Volume_D"
@@ -308,24 +304,99 @@ Row FullscreenRow() {
 }
 
 // ---------------------------------------------------------------------------
-// Audio: the game's own volumes
+// Graphics: the picture's effects (effects/post_effects.h)
+// ---------------------------------------------------------------------------
+
+// A row for an int port flag whose values are 0..N-1, one label each.
+Row LevelRow(std::u16string label, const char* flag, std::vector<std::u16string> values,
+             std::vector<std::u16string> texts) {
+  Row r;
+  r.label = std::move(label);
+  const int top = int(values.size()) - 1;
+  r.values = [values](Env&) { return values; };
+  r.get = [flag, top](Env&) { return std::clamp(int(rex::cvar::Query<int32_t>(flag)), 0, top); };
+  r.set = [flag](Env&, int i) { SetFlag(flag, std::to_string(i)); };
+  r.describe = [texts](Env&, int i) {
+    return i >= 0 && i < int(texts.size()) ? texts[size_t(i)] : std::u16string();
+  };
+  return r;
+}
+
+// Rows only the native renderer draws: GREYED OUT while the main window
+// shows the emulated picture (Row::unavailable), with the way to turn it on.
+void NeedsNative(Row& r) {
+  r.unavailable = [](Env&) {
+    const bool native = g_hooks.native_shown && g_hooks.native_shown();
+    return native ? std::u16string()
+                  : std::u16string(u"Needs the port's renderer: set Renderer to Native on the Display tab.");
+  };
+}
+
+// MOTION BLUR (findings/34): ours (the 360 game has none), native only.
+Row MotionBlurRow() {
+  Row r = LevelRow(u"Motion Blur", "motion_blur", {u"Off (original)", u"Low", u"Medium", u"High"},
+                   {u"No motion blur, like the original game.",
+                    u"A light smear of the scenery when the camera moves. The players stay sharp.",
+                    u"The scenery smears more when the camera moves. The players stay sharp.",
+                    u"A strong smear, as long as one frame of the original game's movement."});
+  NeedsNative(r);
+  return r;
+}
+
+// ANTI-ALIASING (findings/35): the MSAA sample count of the game's
+// multisampled 3D surfaces, native only. Values up to what this GPU can do
+// (they're in order, so the list is just cut).
+Row AntiAliasingRow() {
+  Row r = LevelRow(u"Anti-aliasing", "anti_aliasing", {u"Off", u"2x (original)", u"4x", u"8x"},
+                   {u"No smoothing: jagged, shimmering edges, the lightest on your graphics card.",
+                    u"Edges smoothed with 2 samples per pixel, like the Xbox 360.",
+                    u"Smoother edges, 4 samples per pixel.",
+                    u"The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."});
+  const auto all = r.values;
+  r.values = [all](Env& e) {
+    auto values = all(e);
+    const int max = native::MaxSurfaceSamples();
+    const size_t keep = max >= 8 ? 4 : max >= 4 ? 3 : max >= 2 ? 2 : 1;
+    values.resize(std::min(values.size(), keep));
+    return values;
+  };
+  NeedsNative(r);
+  return r;
+}
+
+// TEXTURE SHARPNESS (findings/36): a more detailed mip level for the
+// mipmapped textures (the native renderer's samplers), native only.
+Row TextureSharpnessRow() {
+  Row r = LevelRow(u"Texture Sharpness", "texture_sharpness", {u"Original", u"Sharper", u"Sharpest"},
+                   {u"Textures soften in the distance like the Xbox 360's.",
+                    u"Textures stay crisper in the distance and on slanted ground.",
+                    u"The crispest distance, with a little more shimmer when moving."});
+  NeedsNative(r);
+  return r;
+}
+
+// DEPTH OF FIELD (findings/15): the game's own gentle blur of the distance,
+// scaled on the way into its renderer, so both pictures follow.
+Row DepthOfFieldRow() {
+  return LevelRow(u"Depth of Field", "depth_of_field", {u"Off", u"Original", u"Strong"},
+                  {u"The distance stays sharp.",
+                   u"The distance is gently blurred, like the original game.",
+                   u"The distance is blurred twice as much."});
+}
+
+// ---------------------------------------------------------------------------
+// Audio: the game's own volumes, kept in user/settings.toml (global_options.h:
+// the same for every save, no longer read back from save files)
 // ---------------------------------------------------------------------------
 
 struct Volume {
-  scrooby::GuestFunction get, set;
+  global_options::Volume which;
   uint32_t sound_bank, sound;  // 0 = no sound of its own
 };
 
-int Stars(Env& e, const Volume& v) {
-  const PPCContext saved = e.ctx;
-  v.get(e.ctx, e.base);
-  const double level = e.ctx.f1.f64;
-  e.ctx = saved;
-  return std::clamp(int(level * 5.0 + 0.5), 0, 5);  // as the original: x5, rounded
-}
-
 void SetStars(Env& e, const Volume& v, int stars) {
-  scrooby::CallF(v.set, e.ctx, e.base, 0, stars * 0.2);
+  SetFlag(global_options::VolumeFlag(v.which), std::to_string(stars));
+  global_options::ApplyVolumes(e.ctx, e.base);
   if (!v.sound_bank) return;
   const uint32_t fe = FrontEnd(e.base);
   if (!fe) return;
@@ -344,7 +415,7 @@ Row VolumeRow(std::u16string label, Volume v, std::u16string text, bool music) {
   Row r;
   r.label = std::move(label);
   r.kind = Kind::kStars;
-  r.get = [v](Env& e) { return Stars(e, v); };
+  r.get = [v](Env&) { return std::clamp(global_options::Stars(v.which), 0, 5); };
   r.set = [v](Env& e, int stars) { SetStars(e, v, stars); };
   r.describe = [text](Env&, int) { return text; };
   if (music) {
@@ -361,11 +432,13 @@ Row VolumeRow(std::u16string label, Volume v, std::u16string text, bool music) {
 // Controls
 // ---------------------------------------------------------------------------
 
-uint32_t InvertAxisByte(Env& e) {
+// The menu owner's controller slot (the front end's Invert Axis byte index),
+// -1 = none.
+int InvertAxisSlot(Env& e) {
   const uint32_t fe = FrontEnd(e.base);
-  if (!fe) return 0;
-  const uint32_t slot = Call(__imp__sub_82266130, e.ctx, e.base, fe, uint32_t(e.player));
-  return fe + kInvertAxis + slot;
+  if (!fe) return -1;
+  const int slot = int(Call(__imp__sub_82266130, e.ctx, e.base, fe, uint32_t(e.player)));
+  return slot >= 0 && slot < 4 ? slot : -1;
 }
 
 Row InvertAxisRow() {
@@ -373,11 +446,14 @@ Row InvertAxisRow() {
   r.label = u"Invert Axis";
   r.values = [](Env&) { return std::vector<std::u16string>{u"Off", u"On"}; };
   r.get = [](Env& e) {
-    const uint32_t a = InvertAxisByte(e);
-    return a && *GuestPtr(e.base, a) ? 1 : 0;
+    const int slot = InvertAxisSlot(e);
+    return slot >= 0 && global_options::InvertAxis(slot) ? 1 : 0;
   };
   r.set = [](Env& e, int i) {
-    if (const uint32_t a = InvertAxisByte(e)) *GuestPtr(e.base, a) = uint8_t(i == 1);
+    const int slot = InvertAxisSlot(e);
+    if (slot < 0) return;
+    SetFlag(global_options::InvertAxisFlag(slot), i == 1 ? "true" : "false");
+    global_options::ApplyInvertAxis(e.base, FrontEnd(e.base));
   };
   r.describe = [](Env&, int i) {
     return i == 1 ? std::u16string(u"Up and down are flipped when you aim the reticle.")
@@ -411,13 +487,14 @@ std::vector<Tab> Build() {
       {u"Display",
        {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), FullscreenRow(), FpsCounterRow(),
         FpsPositionRow()}});
+  tabs.push_back({u"Graphics", {AntiAliasingRow(), TextureSharpnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
       {u"Audio",
-       {VolumeRow(u"Dialogue", {__imp__sub_82266240, __imp__sub_82266268, kSoundDialogueBank, kSoundDialogue},
+       {VolumeRow(u"Dialogue", {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
                   u"How loud the characters talk.", false),
-        VolumeRow(u"Music", {__imp__sub_822661F0, __imp__sub_82266218, 0, 0},
+        VolumeRow(u"Music", {global_options::Volume::kMusic, 0, 0},
                   u"How loud the music plays.", true),
-        VolumeRow(u"SFX", {__imp__sub_82266290, __imp__sub_822662B8, kSoundSfxBank, kSoundSfx},
+        VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   u"How loud hits, crates, footsteps and the rest are.", false)}});
   tabs.push_back({u"Controls", {InvertAxisRow(), RebindRow()}});
   tabs.push_back(

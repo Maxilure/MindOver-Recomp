@@ -27,7 +27,8 @@
 //   sub_82370EE8 (element, dx, dy)         move it (Scrooby units)
 //   sub_823710C8 (element, f1 angle, r5 axis)  turn it around its centre
 //   sub_82373F28 (picture, frame)          show one of a picture's frames
-//   sub_82370840 (element, colour)         its colour (0xAARRGGBB)
+//   sub_82370840 (element, colour)         its colour (0xAARRGGBB, kept at element +80)
+//   sub_82370860 (element, alpha)          only its alpha (the top byte of +80)
 //   sub_82261800 (front end, bank, sound, f1, f2, f3)  play a menu sound
 // =============================================================================
 #pragma once
@@ -85,6 +86,9 @@ void SetScale(PPCContext& ctx, uint8_t* base, uint32_t element, float scale);
 void Rotate(PPCContext& ctx, uint8_t* base, uint32_t element, float degrees);
 void SetFrame(PPCContext& ctx, uint8_t* base, uint32_t picture, uint32_t frame);
 void SetColour(PPCContext& ctx, uint8_t* base, uint32_t element, uint32_t argb);
+// Only the element's see-through-ness (255 = solid), its colour kept (the
+// menu recolours selected / unselected items itself).
+void SetAlpha(PPCContext& ctx, uint8_t* base, uint32_t element, uint8_t alpha);
 
 // Menus.
 int ItemCount(uint8_t* base, uint32_t menu);

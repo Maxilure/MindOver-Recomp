@@ -1,0 +1,18 @@
+# clangd settings for this project (editor support: go to definition,
+# errors as you type, completion). clangd finds the compile flags in
+# compile_commands.json at the repo root (a link into the build folder:
+# cmake --preset linux-amd64-relwithdebinfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON).
+
+Diagnostics:
+  UnusedIncludes: None   # the generated pch pulls in a lot on purpose
+
+---
+# The recompiled game: 68 files of ~1-2 GB RAM each to parse. Never index
+# them in the background (it would fill the machine's memory); opening one
+# by hand still works, just slowly.
+If:
+  PathMatch: generated/.*
+Index:
+  Background: Skip
+Diagnostics:
+  Suppress: "*"

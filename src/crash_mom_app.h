@@ -64,6 +64,7 @@
 #include "overlay_banner.h"
 #include "fps_overlay.h"
 #include "input/prompt_icons.h"
+#include "effects/post_effects.h"
 #include "data/data_patcher.h"
 #include "options/options_menu.h"
 #include "options/options_settings.h"
@@ -256,14 +257,16 @@ class CrashMomApp : public rex::ReXApp {
     more_players_hud::Register();
     // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
     more_players_markers::Register();
-    data_patcher::Install();
     // Two more prompt glyphs in the fonts: the menus' own A and B (input/prompt_icons.h).
     prompt_icons::Register();
+    data_patcher::Install();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();
-    // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     // Keyboard / mouse pictures in the game's button prompts (input/prompt_icons.h).
     prompt_icons::Install();
+    // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).
+    post_effects::Install();
+    // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
@@ -292,11 +295,11 @@ class CrashMomApp : public rex::ReXApp {
     // unless --keyboard_mouse=false. Merged with a real pad into player 1.
     if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {
       kbm_driver->SetPausedCheck([this] { return KeyboardInputPaused(); });
+      // Menus or play: which job each key does (input/bindings.h "PLAY AND MENUS").
+      kbm_driver->SetMenuCheck([] { return menu_input::MenuOnScreen(); });
       kbm_driver->Attach(window());
       // The cheat menu's free camera looks around with the mouse (it reads
       // the keys from the driver).
-      // Menus or play: which job each key does (input/bindings.h "PLAY AND MENUS").
-      kbm_driver->SetMenuCheck([] { return menu_input::MenuOnScreen(); });
       free_camera::AttachWindow(window());
       // Which device plays as which player (input/players.h; the Controls
       // menu's Players tab), replacing the SDK's fixed rule (keyboard + first

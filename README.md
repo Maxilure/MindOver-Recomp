@@ -76,7 +76,7 @@ Every key rebindable (**F6**), menus with keys of their own, any controller SDL 
 <td valign="top">
 
 ### ⚙️ Options in the game's own look
-Pause → **Options**: frame rate, renderer, brightness, V-sync, audio, controls and camera, all live, built from the game's own menu pieces.
+Pause → **Options**: frame rate, renderer, brightness, V-sync, anti-aliasing, texture sharpness, motion blur and depth of field, audio, controls and camera, all live, built from the game's own menu pieces.
 
 </td>
 </tr>

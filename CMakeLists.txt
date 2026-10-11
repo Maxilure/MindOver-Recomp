@@ -75,12 +75,15 @@ set(CRASHMOM_SOURCES
     src/ui/game_font.cpp         # the game's own font read from the disc data, for text we draw ourselves
     src/options/options_page.cpp      # the Options screen's page, rebuilt in the in-game menus package
     src/options/options_settings.cpp  # what the Options screen offers: tabs, rows, live changes, saving
+    src/options/global_options.cpp    # volumes + Invert Axis from settings.toml, not from each save file
     src/options/options_menu.cpp      # Pause -> Options: tabs, rows, values (hooks on the game's menu driver)
+    src/effects/post_effects.cpp # depth of field strength + motion blur settings
     src/data/fight_tree.cpp      # fight trees (.bfig): new nodes, C++ decisions for new front end states
     src/pddi/intercept.cpp       # wraps every call into the game's renderer (PDDI) + D3D
     src/pddi/trace.cpp           # --debug_pddi_trace_dir: log every renderer call of chosen frames
     src/native/native_renderer.cpp  # our Vulkan renderer (F9: emulated <-> native picture)
     src/native/recorder.cpp         # shadow mode: turns the game's renderer calls into a frame list
+    src/native/camera_motion.cpp    # the camera's movement between frames, for the motion blur option
     src/native/texture_cache.cpp    # the game's textures -> Vulkan images (untile, byte swap)
     src/native/write_watch.cpp      # page write tracking: textures re-hashed only when written
     src/native/buffer_cache.cpp     # the game's vertex/index buffers -> Vulkan buffers (uploaded once)
@@ -197,6 +200,7 @@ set(CRASHMOM_SHADERS
     src/native/shaders/bumpmega.frag
     src/native/shaders/depth_copy.vert   # one sample of a multisampled depth/stencil surface -> copies
     src/native/shaders/depth_copy.frag
+    src/native/shaders/depth_copy_single.frag  # the same for a 1x surface (anti-aliasing off)
     src/native/shaders/present.vert      # our frame -> the window's picture
     src/native/shaders/present.frag
 )

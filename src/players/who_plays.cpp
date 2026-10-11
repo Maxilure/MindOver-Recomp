@@ -14,6 +14,7 @@
 
 #include "../guest_memory.h"
 #include "../input/players.h"
+#include "../options/global_options.h"
 
 // The game's own functions the PC versions still call.
 extern "C" REX_FUNC(sub_82258E20);  // save handler: a new main player (r3 handler, r4 0)
@@ -35,15 +36,12 @@ constexpr uint32_t kPlayerMask = 364;     // bit N = player N has one
 constexpr uint32_t kMainController = 372; // the input manager's controller of the main player
 
 // The front end's player defaults (front end = *(uber + 52)).
-constexpr uint32_t kInvertAxis = 8588;   // 4 bytes: each player's Invert Axis (1 = on)
 constexpr uint32_t kFrontEndFlags = 8593; // bit 7 = vibration on
 constexpr uint32_t kDifficulty = 240;    // game object: the default difficulty (1 = Normal)
 
 // "The players changed": starts raised, so the fields are filled once at boot
 // (the 360's system announced its signed-in profile then).
 std::atomic<bool> g_changed{true};
-// The front end whose Invert Axis bytes were set up (once per front end).
-uint32_t g_invert_set_up_for = 0;
 
 uint32_t Load32(uint8_t* base, uint32_t address) {
   const uint8_t* p = GuestPtr(base, address);
@@ -181,9 +179,10 @@ extern "C" REX_FUNC(sub_8227CE70) {
 // profile settings and set the default difficulty (game object +240),
 // each player's Invert Axis (+8588..8591) and vibration (+8593 bit 7); with
 // no profile: Normal, off, on. PC: the same defaults (what the 360 gave a
-// fresh profile too), except Invert Axis: set off once for this front end,
-// then it stays the player's choice (Options -> Controls) instead of being
-// reset at every Press START, quit to menu and join.
+// fresh profile too), except Invert Axis: the player's choice from
+// user/settings.toml (Options -> Controls; global_options.h) instead of off
+// at every Press START, quit to menu and join. The volumes from there too
+// (here = the first moment at boot the audio object exists).
 // -----------------------------------------------------------------------------
 extern "C" REX_FUNC(sub_82266398) {
   const uint32_t fe = ctx.r3.u32;
@@ -202,9 +201,9 @@ extern "C" REX_FUNC(sub_82266398) {
     Store32(base, ctx.r3.u32 + kDifficulty, 1);  // Normal
     ctx = saved;
   }
-  if ((no_main_player || players) && g_invert_set_up_for != fe) {
-    g_invert_set_up_for = fe;
-    std::memset(GuestPtr(base, fe + kInvertAxis), 0, 4);
+  if (no_main_player || players) {
+    global_options::ApplyInvertAxis(base, fe);
+    global_options::ApplyVolumes(ctx, base);
   }
   *GuestPtr(base, fe + kFrontEndFlags) |= 0x80;  // vibration on
 }

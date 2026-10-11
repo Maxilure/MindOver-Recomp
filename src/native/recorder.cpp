@@ -25,14 +25,22 @@
 #include <utility>
 #include <vector>
 
+#include <rex/cvar.h>
 #include <rex/logging.h>
 
 #include "../pddi/intercept.h"
 #include "ab_capture.h"
+#include "camera_motion.h"
 #include "guest.h"
 #include "scan.h"
 
+REXCVAR_DECLARE(int32_t, motion_blur);  // effects/post_effects.cpp
+
 namespace native {
+
+// The longest motion blur smear, in pixels of the 1280x720 picture (a fast
+// pan would otherwise smear across half the screen).
+constexpr float kMotionBlurLongest = 48.0f;
 
 // frame.h: a mesh vertex's layout from its PDDI format flags, in the order
 // the game's declaration builder (0x8243CF28) lays the components out.
@@ -111,6 +119,9 @@ struct State {
   // lit, shadow, particle, water and depth of field materials); CommitDraw
   // appends it to the frame with the draw.
   MaterialBlock block{};
+  // The draw's world matrix (VS c12-c15), read with the material, for the
+  // motion blur's camera vote (camera_motion.h).
+  float world[16] = {};
 
   // Inside xnContext::DrawPrimBuffer: the context and material its
   // xnPrimBuffer::Draw calls (one per material pass) draw with.
@@ -458,6 +469,21 @@ void ReadDofParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, DofP
   p.planes[2] = LoadFloat(base, dev + device::PsConstant(4));  // FarBlurPlaneDistance
   ReadConstants(base, dev, device::PsConstant(73), p.near_far);
   p.flags[0] = PixelBool(base, dev, shader::kDofEnableNearBlurBool) ? kDofNearBlur : 0u;
+
+  // The port's motion blur (camera_motion.h): rides in this pass, which the
+  // game draws every frame right after the 3D scene.
+  const camera_motion::Motion motion =
+      camera_motion::AtPostPass(base, std::clamp(int(REXCVAR_GET(motion_blur)), 0, 3));
+  if (motion.valid) {
+    p.flags[0] |= kDofMotionBlur;
+    p.flags[1] = motion.spheres;
+    std::memcpy(p.reproject, motion.reproject, sizeof(p.reproject));
+    std::memcpy(p.unproject, motion.unproject, sizeof(p.unproject));
+    std::memcpy(p.spheres, motion.sphere, sizeof(p.spheres));
+    std::memcpy(p.heights, motion.height, sizeof(p.heights));
+    p.motion[0] = motion.scale;
+    p.motion[1] = kMotionBlurLongest;
+  }
 }
 
 // A D3D surface's description, from the GPU registers the surface object
@@ -505,6 +531,12 @@ void FlushResolveClears() {
 // by ReadMaterial) if it has one. The vertex layout is known only now, so the
 // "component missing" flags of the block materials are added here.
 void CommitDraw(DrawCommand& d) {
+  // The motion blur's camera vote: 3D draws only (depth tested), not the
+  // full-screen passes (their matrices are the screen's, not the camera's).
+  if (d.depth_test && d.material != Material::kDof && d.material != Material::kFxGrid &&
+      d.material != Material::kShadow && d.material != Material::kBink) {
+    camera_motion::NoteDraw(d.mvp, g.world);
+  }
   if (d.block != DrawCommand::kNoBlock) {
     const VertexLayout& l = d.layout;
     if (d.material == Material::kLitSimple || d.material == Material::kCharacter ||
@@ -602,6 +634,7 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   for (uint32_t i = 0; i < 3; ++i) {
     d.tint[i] = LoadFloat(base, dev + device::VsConstant(100) + 4 * i);
   }
+  ReadConstants(base, dev, device::VsConstant(12), g.world, 4);  // "matWorld" (camera_motion.h)
   d.fade = LoadFloat(base, dev + device::PsConstant(2));
   d.textured = LoadFloat(base, dev + device::PsConstant(20)) > 0.0f;
   // Fog: on/off from the context, the values the shader reads (c70-c72).
@@ -1342,6 +1375,7 @@ void Uninstall() {
 
 void TakeFrame(Frame& out, bool record_next) {
   FlushResolveClears();
+  camera_motion::EndFrame(record_next);
   std::swap(out, g.frame);
   out.number = g.frame_counter++;
   g.frame.Reset();

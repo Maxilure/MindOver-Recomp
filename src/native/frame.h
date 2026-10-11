@@ -354,12 +354,24 @@ struct alignas(16) DofParams {
   // z FarBlurPlaneDistance (c4.x).
   float planes[4];
   float near_far[4];          // PS c73 NearFar (xy)
-  uint32_t flags[4];          // x kDof* flags
-  float padding[256 - 16 - 16];
+  uint32_t flags[4];          // x kDof* flags, y how many player spheres
+  // The port's MOTION BLUR (kDofMotionBlur; camera_motion.h, findings/34),
+  // drawn in the same pass. Not the game's: all ours.
+  float reproject[16];        // this frame's D3D clip position -> last frame's
+  float unproject[16];        // this frame's D3D clip position -> world position
+  // The players' bodies, kept sharp: capsules = xyz the bottom of a
+  // vertical line, w radius; its length in heights[i].
+  float spheres[4][4];
+  float heights[4];
+  // x shutter (share of one frame's movement the smear covers), y longest
+  // smear in pixels.
+  float motion[4];
+  float padding[256 - 16 - 16 - 16 - 16 - 16 - 4 - 4];
 };
 static_assert(sizeof(DofParams) == 1024);
 // DofParams::flags[0] (same bits in shaders/dof_params.glsl).
-constexpr uint32_t kDofNearBlur = 1;  // PS bool b10 bEnableNearBlur
+constexpr uint32_t kDofNearBlur = 1;    // PS bool b10 bEnableNearBlur
+constexpr uint32_t kDofMotionBlur = 2;  // ours: the motion blur is on and this frame has a camera
 
 // The bump mega material's parameters (Material::kBumpMega,
 // shaders/bumpmega_params.glsl), std140, registers and names as in guest.h

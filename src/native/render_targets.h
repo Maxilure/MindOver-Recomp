@@ -69,6 +69,11 @@
 
 namespace native {
 
+// The largest MSAA sample count the native renderer's surfaces can use on
+// this GPU (1 until the renderer started; the Options screen's
+// Anti-aliasing row offers what's up to it). Any thread.
+int MaxSurfaceSamples();
+
 class RenderTargets {
  public:
   // `colour_format` / `depth_format`: what surfaces are made of (the render
@@ -149,9 +154,13 @@ class RenderTargets {
     VkDescriptorSet copy_set = VK_NULL_HANDLE;
   };
   // render_passes_ / scratch_depth_ index of a sample count: 1 -> 0, 2 -> 1,
-  // 4 -> 2 (the game's own MSAA numbering, xenos::MsaaSamples).
+  // 4 -> 2 (the game's own MSAA numbering, xenos::MsaaSamples), 8 -> 3 (only
+  // the anti-aliasing setting asks for it).
   static uint32_t SampleIndex(VkSampleCountFlagBits samples) {
-    return samples == VK_SAMPLE_COUNT_4_BIT ? 2 : samples == VK_SAMPLE_COUNT_2_BIT ? 1 : 0;
+    return samples == VK_SAMPLE_COUNT_8_BIT   ? 3
+           : samples == VK_SAMPLE_COUNT_4_BIT ? 2
+           : samples == VK_SAMPLE_COUNT_2_BIT ? 1
+                                              : 0;
   }
   struct Framebuffer {
     VkImage colour, depth;  // what it was made for (images can be re-created)
@@ -165,7 +174,10 @@ class RenderTargets {
                    VkFormat format = VK_FORMAT_UNDEFINED,
                    VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
   // The sample count a surface of the game's MSAA mode (xenos::MsaaSamples:
-  // 0 = 1x, 1 = 2x, 2 = 4x) gets: the same, if this GPU can do it.
+  // 0 = 1x, 1 = 2x, 2 = 4x) gets: the same, or for a multisampled one what
+  // the `anti_aliasing` setting picks (off / the game's / 4x / 8x), stepping
+  // down to what this GPU can do. Surfaces the game draws at 1x (the post-
+  // processing, menus) stay 1x: their pictures are already smooth.
   VkSampleCountFlagBits SamplesFor(uint8_t msaa) const;
   // The render pass and pipeline of the multisampled depth copy
   // (shaders/depth_copy.*); false if they can't be made (then no MSAA).
@@ -190,7 +202,8 @@ class RenderTargets {
   struct ResolveRect {
     int32_t x0, y0, dx, dy, w, h;
   };
-  // ResolveDepth for a multisampled depth surface: one sample, by shader.
+  // ResolveDepth by shader (shaders/depth_copy*): one sample of a
+  // multisampled depth surface, or a 1x one's pixels.
   void ResolveDepthMultisampled(const ResolveCommand& resolve, const ResolveRect& rect,
                                 Image& src, Image& depth_copy, Image& stencil_copy,
                                 VkCommandBuffer cmd);
@@ -200,7 +213,7 @@ class RenderTargets {
                       VkCommandBuffer cmd);
   bool IsScratch(const Image* image) const {
     return image == &scratch_depth_[0] || image == &scratch_depth_[1] ||
-           image == &scratch_depth_[2];
+           image == &scratch_depth_[2] || image == &scratch_depth_[3];
   }
   void ClearNew(Image& image, VkCommandBuffer cmd);
   // A framebuffer of `pass` on the two images (a surface pair, or the
@@ -210,7 +223,7 @@ class RenderTargets {
   const rex::ui::vulkan::VulkanDevice* device_;
   VkFormat colour_format_, depth_format_;
   VmaAllocator allocator_ = VK_NULL_HANDLE;
-  VkRenderPass render_passes_[3] = {};  // by SampleIndex
+  VkRenderPass render_passes_[4] = {};  // by SampleIndex
   PFN_vkCmdCopyImage cmd_copy_image_ = nullptr;
   PFN_vkCmdClearDepthStencilImage cmd_clear_depth_stencil_image_ = nullptr;
   PFN_vkCmdResolveImage cmd_resolve_image_ = nullptr;
@@ -223,7 +236,8 @@ class RenderTargets {
   VkRenderPass copy_pass_ = VK_NULL_HANDLE;
   VkDescriptorSetLayout copy_set_layout_ = VK_NULL_HANDLE;
   VkPipelineLayout copy_layout_ = VK_NULL_HANDLE;
-  VkPipeline copy_pipeline_ = VK_NULL_HANDLE;
+  VkPipeline copy_pipeline_ = VK_NULL_HANDLE;         // multisampled sources
+  VkPipeline copy_pipeline_single_ = VK_NULL_HANDLE;  // 1x sources (shaders/depth_copy_single.frag)
   VkSampler copy_sampler_ = VK_NULL_HANDLE;
   VkDescriptorPool copy_pool_ = VK_NULL_HANDLE;
 
@@ -241,7 +255,7 @@ class RenderTargets {
   };
   Buffer staging_;
   std::vector<Buffer> buffer_graveyard_;
-  Image scratch_depth_[3];  // by SampleIndex
+  Image scratch_depth_[4];  // by SampleIndex
   std::vector<Framebuffer> framebuffers_;
   // Replaced images and framebuffers, destroyed once the GPU is done.
   std::vector<Image> image_graveyard_;

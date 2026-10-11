@@ -14,6 +14,7 @@
 #include <rex/logging.h>
 
 #include "../data/data_patcher.h"
+#include "../data/fight_tree.h"
 #include "../data/pure3d.h"
 
 namespace options_page {
@@ -42,49 +43,83 @@ constexpr uint32_t kCyan = 0xFF00FFF7;    // titles, messages, prompts (#00FFF7)
 constexpr uint32_t kFadedGreen = 0x8000FF00;  // the tabs beside the current one: half see-through
 
 // Text justification codes (horizontal): 0 left, 1 right, 4 centre.
-constexpr uint32_t kRight = 1, kCentre = 4;
+constexpr uint32_t kLeft = 0, kRight = 1, kCentre = 4;
+// Vertical: every text in the game's pages has 2 (top: a text's lines hang
+// from its box's top).
+constexpr uint32_t kTop = 2;
+
+// The card's glass pictures, the game's own three shapes (found by name from
+// any page: the small and square ones are in package b4c85fe7, loaded all
+// the time; the large one in every in-game menus package and the main
+// menus' package): 4:1 (the save list's panels), 2:1 (the in-game glass
+// panel), 1:1 (the question box). options_menu.cpp shows the one closest to
+// the card's shape of the moment.
+constexpr std::string_view kCardSprites[3] = {"FE_Common_GlassPanel_Rectangle_Small.tga",
+                                              "FE_Common_GlassPanel_Rectangle_Large.tga",
+                                              "FE_Common_GlassPanel_Square.tga"};
+constexpr int kCardAspect[3] = {4, 2, 1};  // width : height of each
+// A picture element's draw mode (the u32 after its box): 1 = stretched to its
+// box, 0 = at its picture's own size, hanging from the box's top.
+constexpr uint32_t kStretchToBox = 1;
+constexpr uint32_t kGlassColour = 0xC8FFFFFF;  // white, 78 % opaque: the in-game glass panel's
+constexpr int kShift = kGlassShift;             // options_page.h
 
 // ---------------------------------------------------------------------------
 // The layout, in Scrooby units (640 x 480, y up, (x, y) = bottom-left).
-// The glass panel behind it spans x 70-570, y 34-388; the game's own
-// "Paused" title sits at y ~356, its "Back" prompt at y 42-69.
+// TWO GLASS PANELS (2026-10-11): the game's own glass panel (500 x 354, at
+// x 70-570 in the original) moves LEFT by kShift, and a glass CARD stands
+// beside it on the right (options_page.h kCard*): the selected row's value,
+// description, warning and picture. Together they are centred on the 16:9
+// picture (x -107-747: past the 4:3 canvas x 0-640, drawn by the game at
+// 1280 x 720 always; the map screen's strip uses it too, x -150-790), the
+// same margin left and right; the main menu's purple frame leaves that room
+// too. The original glass page (shared with the pause menu) is moved by
+// options_menu.cpp while the screen is up; the main menu's copy is drawn by
+// this page (backdrop).
+// The game's own "Paused" title sits at y ~356, its "Back" prompt at y 42-69.
 // ---------------------------------------------------------------------------
 constexpr int kTabY = 312;                          // the row of tabs
 // Three tab names: the current one in the middle (yellow), the previous and
 // next ones (wrapping around) beside it, faded: there is more to either side.
-constexpr int kTabCentreX[3] = {190, 320, 450};     // previous, current, next
+constexpr int kTabCentreX[3] = {190 + kShift, 320 + kShift, 450 + kShift};  // previous, current, next
 constexpr int kTabWidth = 130;
-constexpr int kShoulderCentreX[2] = {105, 540};     // LB / RB pictures
+constexpr int kShoulderCentreX[2] = {105 + kShift, 540 + kShift};  // LB / RB pictures
 constexpr int kRowTopY = 270;                       // row 0's y
-constexpr int kRowStep = 33;                        // rows are this far apart (the pause menu's: 35)
-constexpr int kLabelX = 10, kLabelWidth = 290;      // right aligned: ends at x 300
-// The value column is a SELECTOR: the map screen's arrow picture on both
-// ends (shown on the selected row, options_menu.cpp turns them to point
-// left / right), the value centred between them, the stars too.
-constexpr int kSelectorX = 312, kSelectorEnd = 568;  // the value: 192 units ("Frame Everyone" fits)
-constexpr int kArrowSize = 32, kArrowAboveRow = 2;
-constexpr int kValueX = kSelectorX + kArrowSize, kValueWidth = kSelectorEnd - kArrowSize - kValueX;
-constexpr int kStarStep = 30;                       // stars: 32 x 32, 30 apart (as the game's)
-constexpr int kStarAboveRow = 5;
-constexpr int kStarsX = (kSelectorX + kSelectorEnd) / 2 - (kStarStep * (kStars - 1) + 32) / 2;
+constexpr int kRowStep = 30;                        // rows are this far apart (the pause menu's: 35)
+// A ROW = the name at the glass's left (left aligned) and the value at its
+// right (right aligned), the glass's whole width between them (2026-10-11,
+// a playtest: centred columns with arrows beside the value left odd gaps).
+// No arrows: A (or left / right) changes the value; the selected row jumps.
+constexpr int kRowLeft = 100 + kShift, kRowRight = kRowValueRight;  // glass x 70-570, 30 inside
+constexpr int kLabelX = kRowLeft, kLabelWidth = 250;
+constexpr int kValueWidth = kRowValueWidth, kValueX = kRowRight - kValueWidth;
+constexpr int kStarSize = 32;                       // the star pictures (shrunk by options_menu.cpp)
+constexpr int kStarStep = 24;                       // 24 apart, the last one ending at the row's right
+constexpr int kStarAboveRow = 3;
+constexpr int kStarsX = kRowRight - kStarSize - kStarStep * (kStars - 1);
+constexpr int kArrowSize = 32;                      // the map's arrow picture (page markers)
 constexpr int kLineHeight = 36;                     // a text line's box (the game's rows)
-// The description and warning boxes: full width, centred, drawn smaller by
-// options_menu.cpp (scaled around their centre, so they stay put).
-constexpr int kWarnY = 106, kWarnHeight = 30;
-// The Brightness row's guide (the original's calibration grey scale): a
-// picture is drawn at its own size (320 x 64 units here), hanging from the
-// TOP of its box (checked on a photo, 2026-10-10: the box's size didn't
-// matter). Its top at y 140, centred; options_menu.cpp draws it at 0.6 x
-// around its centre: between the rows and the description, where a warning
-// would go (that row has none).
-constexpr int kGuideX = 160, kGuideY = 104, kGuideWidth = 320, kGuideHeight = 36;
-// PAGES (a tab with more than kRows rows): the map's arrow beside the glass
-// on the right (panel edge x 570), level with the first and the last row,
-// pointing up / down (options_menu.cpp turns them), and "1/2" between them.
-constexpr int kPageArrowX = 574;
-constexpr int kPageTextX = 562, kPageTextWidth = 60;
-constexpr int kDescY = 56, kDescHeight = 60;  // two lines clear the prompts (y 42-69)
-constexpr int kWideX = 20, kWideWidth = 600;
+// PAGES (a tab with more than kRows rows): in the button prompts' line
+// (Back left, Select right; the middle is free), centred on the glass:
+// "1/2" with a small arrow each side (the map's arrow, turned and shrunk
+// by options_menu.cpp), the one with nothing that way faded. (First beside
+// the glass, then a row of its own under the rows: too much room.)
+constexpr int kGlassCentreX = 320 + kShift;
+constexpr int kPageMarkersY = 38;                   // the text's box (prompts: y 42-69)
+constexpr int kPageArrowY = 40;
+constexpr int kPageArrowDX = 34;                    // each arrow's centre from the text's
+constexpr int kPageTextWidth = 60;
+// THE CARD (options_page.h kCard*): its elements are made here at some
+// place; options_menu.cpp sizes the glass and places the texts while the
+// screen is up (the card fits its contents).
+//   OptCardSmall / OptCardLarge / OptCardSquare  the glass (one shown)
+//   OptCardValue  the selected value (or the row's name), yellow
+//   OptGuide      the Brightness row's guide (the original's calibration
+//                 grey scale; a picture is drawn at its own size, 320 x 64
+//                 units here, shrunk by options_menu.cpp)
+//   OptDesc       the description (cyan, small print), lines hang from the top
+//   OptWarn       the warning (yellow, small print)
+constexpr int kGuideWidth = 320, kGuideHeight = 36;
 
 std::atomic<bool> g_patched{false};
 
@@ -102,6 +137,26 @@ void SetBox(Node& n, int x, int y, int w, int h) {
 }
 void SetJustify(Node& text, uint32_t horizontal) {
   pure3d::SetNodeLe32(text, pure3d::NameEnd(text) + 21, horizontal);
+}
+void SetVerticalJustify(Node& text, uint32_t vertical) {
+  pure3d::SetNodeLe32(text, pure3d::NameEnd(text) + 25, vertical);
+}
+// A one-frame picture element showing another picture (by name): its data
+// = name, u32 version, x, y, w, h, u32 frames, u8, u32 justify, u32 colour,
+// u32, f32, u32 count, then `count` picture names (tools/scrooby_dump.py).
+// Returns false if it isn't a one-name picture.
+bool SetPictureSprite(Node& picture, std::string_view sprite) {
+  const size_t count_at = pure3d::NameEnd(picture) + 41;
+  if (picture.data.size() < count_at + 5 || pure3d::NodeLe32(picture, count_at) != 1) return false;
+  const size_t name_at = count_at + 4;
+  const size_t name_end = name_at + 1 + picture.data[name_at];
+  if (name_end > picture.data.size()) return false;
+  Bytes data(picture.data.begin(), picture.data.begin() + long(name_at));
+  const Bytes name = pure3d::PaddedString(sprite);
+  data.insert(data.end(), name.begin(), name.end());
+  data.insert(data.end(), picture.data.begin() + long(name_end), picture.data.end());
+  picture.data = std::move(data);
+  return true;
 }
 void SetTextColour(Node& text, uint32_t bgra_le) {
   // stored B G R A: as a little-endian u32 that's 0xAARRGGBB.
@@ -190,6 +245,25 @@ bool CutInGameParts(Node& page, const Node& map, Parts* parts, std::string* erro
 // The page's elements (the contract with options_menu.cpp: options_page.h).
 std::vector<Node> BuildElements(const Parts& p) {
   std::vector<Node> elements = p.backdrop;
+  // The card's glass first (under its texts): copies of the map's arrow
+  // showing the glass pictures instead, each at its own shape.
+  constexpr const char* kCardNames[3] = {"OptCardSmall", "OptCardLarge", "OptCardSquare"};
+  for (int i = 0; i < 3; ++i) {
+    Node card = p.arrow;
+    pure3d::SetNodeName(card, kCardNames[i]);
+    if (SetPictureSprite(card, kCardSprites[i])) {
+      const int h = kCardWidth / kCardAspect[i];
+      SetBox(card, kCardX, kCardCentreY - h / 2, kCardWidth, h);
+      pure3d::SetNodeLe32(card, pure3d::NameEnd(card) + 29, kGlassColour);
+      // Stretched to its box: the field after the box is 1 on the game's
+      // glass panels and cogs (drawn at their box's size), 0 on the map's
+      // arrow and the calibration grey scale (drawn at their picture's own
+      // size: a 256 x 256 glass drew 257 units wide in a 210 box; photo,
+      // 2026-10-11). tools/scrooby_dump.py calls it "frames".
+      pure3d::SetNodeLe32(card, pure3d::NameEnd(card) + 20, kStretchToBox);
+      elements.push_back(std::move(card));
+    }
+  }
   // The menu: kRows rows, each a copy of the Dialogue row.
   Node menu = p.menu;
   for (int r = 0; r < kRows; ++r) {
@@ -197,13 +271,20 @@ std::vector<Node> BuildElements(const Parts& p) {
     Node item = p.row;
     pure3d::SetNodeName(item, fmt::format("OptRow{}", r));
     item.children[0].children[0] = MakeText(p.label, p.empty, fmt::format("OptLabel{}", r),
-                                            kLabelX, y, kLabelWidth, kLineHeight, kRight, kGreen);
+                                            kLabelX, y, kLabelWidth, kLineHeight, kLeft, kGreen);
     item.children[1].children[0] = MakeText(p.value, p.empty, fmt::format("OptValue{}", r),
-                                            kValueX, y, kValueWidth, kLineHeight, kCentre, kGreen);
+                                            kValueX, y, kValueWidth, kLineHeight, kRight, kGreen);
     menu.children.push_back(std::move(item));
   }
   elements.push_back(std::move(menu));
-  elements.push_back(p.title);
+  // The title moves with the glass.
+  {
+    Node title = p.title;
+    const size_t e = pure3d::NameEnd(title);
+    SetBox(title, int(pure3d::NodeLe32(title, e + 4)) + kShift, int(pure3d::NodeLe32(title, e + 8)),
+           int(pure3d::NodeLe32(title, e + 12)), int(pure3d::NodeLe32(title, e + 16)));
+    elements.push_back(std::move(title));
+  }
   constexpr const char* kTabNames[3] = {"OptTabPrev", "OptTab", "OptTabNext"};
   for (int t = 0; t < 3; ++t) {
     elements.push_back(MakeText(p.label, p.empty, kTabNames[t], kTabCentreX[t] - kTabWidth / 2,
@@ -218,39 +299,36 @@ std::vector<Node> BuildElements(const Parts& p) {
     for (int k = 0; k < kStars; ++k) {
       Node s = p.star;
       pure3d::SetNodeName(s, fmt::format("OptStar{}_{}", r, k));
-      const size_t e = pure3d::NameEnd(s);
-      const int w = int(pure3d::NodeLe32(s, e + 12)), h = int(pure3d::NodeLe32(s, e + 16));
-      SetBox(s, kStarsX + kStarStep * k, kRowTopY - kRowStep * r + kStarAboveRow, w, h);
+      SetBox(s, kStarsX + kStarStep * k, kRowTopY - kRowStep * r + kStarAboveRow, kStarSize, kStarSize);
       elements.push_back(std::move(s));
     }
-    for (int side = 0; side < 2; ++side) {
-      Node a = p.arrow;
-      pure3d::SetNodeName(a, fmt::format("OptArrow{}{}", side == 0 ? 'L' : 'R', r));
-      SetBox(a, side == 0 ? kSelectorX : kSelectorEnd - kArrowSize,
-             kRowTopY - kRowStep * r + kArrowAboveRow, kArrowSize, kArrowSize);
-      elements.push_back(std::move(a));
-    }
   }
-  if (p.guide.id == kChunkPicture) {
-    Node g = p.guide;
-    pure3d::SetNodeName(g, "OptGuide");
-    SetBox(g, kGuideX, kGuideY, kGuideWidth, kGuideHeight);
-    elements.push_back(std::move(g));
-  }
+  // The page markers, in the prompts' line.
   for (int side = 0; side < 2; ++side) {
     Node a = p.arrow;
     pure3d::SetNodeName(a, side == 0 ? "OptPageUp" : "OptPageDown");
-    const int row = side == 0 ? 0 : kRows - 1;
-    SetBox(a, kPageArrowX, kRowTopY - kRowStep * row + kArrowAboveRow, kArrowSize, kArrowSize);
+    const int centre = kGlassCentreX + (side == 0 ? -kPageArrowDX : kPageArrowDX);
+    SetBox(a, centre - kArrowSize / 2, kPageArrowY, kArrowSize, kArrowSize);
     elements.push_back(std::move(a));
   }
-  elements.push_back(MakeText(p.label, p.empty, "OptPage", kPageTextX,
-                              kRowTopY - kRowStep * (kRows - 1) / 2, kPageTextWidth, kLineHeight,
-                              kCentre, kCyan));
-  elements.push_back(MakeText(p.label, p.empty, "OptWarn", kWideX, kWarnY, kWideWidth, kWarnHeight,
-                              kCentre, kYellow));
-  elements.push_back(MakeText(p.label, p.empty, "OptDesc", kWideX, kDescY, kWideWidth, kDescHeight,
-                              kCentre, kCyan));
+  elements.push_back(MakeText(p.label, p.empty, "OptPage", kGlassCentreX - kPageTextWidth / 2,
+                              kPageMarkersY, kPageTextWidth, kLineHeight, kCentre, kCyan));
+  // The card's contents.
+  constexpr int kInsideX = kCardX + kCardPadding, kInsideWidth = kCardWidth - 2 * kCardPadding;
+  elements.push_back(MakeText(p.label, p.empty, "OptCardValue", kInsideX, kCardCentreY,
+                              kInsideWidth, kLineHeight, kCentre, kYellow));
+  if (p.guide.id == kChunkPicture) {
+    Node g = p.guide;
+    pure3d::SetNodeName(g, "OptGuide");
+    SetBox(g, kCardX + kCardWidth / 2 - kGuideWidth / 2, kCardCentreY, kGuideWidth, kGuideHeight);
+    elements.push_back(std::move(g));
+  }
+  for (const auto& [name, colour] : {std::pair{"OptDesc", kCyan}, std::pair{"OptWarn", kYellow}}) {
+    Node t = MakeText(p.label, p.empty, name, kInsideX, kCardCentreY, kInsideWidth, kLineHeight,
+                      kCentre, colour);
+    SetVerticalJustify(t, kTop);
+    elements.push_back(std::move(t));
+  }
   return elements;
 }
 
@@ -535,16 +613,22 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
         // The in-game screen's glass panel page, rebuilt from this page's own
         // pictures (InGame_NV_GlassPanel: panel 500 x 354 at (70, 34), 78 %
         // opaque; cogs at (98, 448) and (39, 395); hinge at (57, 310)).
+        // All moved left by kShift, as options_menu.cpp moves the in-game
+        // page (the card stands on the right).
         Node glass = *panel;
-        SetBox(glass, 70, 34, 500, 354);
-        pure3d::SetNodeLe32(glass, pure3d::NameEnd(glass) + 29, 0xC8FFFFFF);
+        SetBox(glass, 70 + kShift, 34, 500, 354);
+        pure3d::SetNodeLe32(glass, pure3d::NameEnd(glass) + 29, kGlassColour);
         Node cog_a = *cog, cog_b = *cog;
-        pure3d::SetNodeName(cog_a, "OptCog1");
+        // cog_a keeps the PS2 page's name "cog1": the screen's slide-in
+        // (options_menu.cpp, the game's own code) turns it, found by that
+        // name; the panel and hinge keep theirs too, and the layer its
+        // "OptionsMenu" (the slide moves the layer).
+        pure3d::SetNodeName(cog_a, "cog1");
         pure3d::SetNodeName(cog_b, "OptCog2");
-        SetBox(cog_a, 98, 448, 90, 90);
-        SetBox(cog_b, 39, 395, 90, 90);
+        SetBox(cog_a, 98 + kShift, 448, 90, 90);
+        SetBox(cog_b, 39 + kShift, 395, 90, 90);
         Node hinge_copy = *hinge;
-        SetBox(hinge_copy, 57, 310, 100, 150);
+        SetBox(hinge_copy, 57 + kShift, 310, 100, 150);
         p.backdrop = {glass, cog_a, cog_b, hinge_copy};
         layer->children = BuildElements(p);
         return true;
@@ -557,10 +641,71 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// THE SELECTED ROW PULSES ("jumps"), like every selected item in the game
+// ---------------------------------------------------------------------------
+// The pulse is the menu's own update (Scrooby Menu vtable slot 5,
+// sub_8237A070: the selected item's label and value scaled by a sine of a
+// timer at menu +148), which CMenuAction's Update (sub_820D2A00, at
+// 0x820D2A44) calls only when byte +41 of its FEMenu TRACK is set. That
+// comes from the FEMenu item in the state's action list in Frontend.bfig
+// (type 0x7B641ABE: u32, f32, three strings (screen, page, menu: u32
+// length + bytes padded to 4), then four u32): the THIRD u32 is 1 in the
+// pause menu's and the main menu's items (their selections pulse) and 0 in
+// the in-game Options' Xbox branch (node 958) and the main menu's
+// OptionsScreen (96): the original Options rows never pulsed. Both set to 1
+// (read 2026-10-11; first tried: adding an FEMenuCursor track as the pause
+// states have, but its CMenuCursorAction (vtable 0x82023B4C) does nothing on
+// the Xbox: Enter = Update = sub_820E77F0, "return 1").
+constexpr uint32_t kTrackMenu = 0x7B641ABE;
+constexpr size_t kMenuItemPulseField = 2;  // of the four u32 after the strings
+struct PulseFor {
+  int node;
+  std::string_view node_name;
+};
+constexpr PulseFor kPulses[] = {{958, "ContentXenon"}, {96, "OptionsScreen"}};
+std::atomic<bool> g_pulse_patched{false};
+
+uint32_t Be32At(const Bytes& b, size_t p) {
+  return uint32_t(b[p]) << 24 | uint32_t(b[p + 1]) << 16 | uint32_t(b[p + 2]) << 8 | b[p + 3];
+}
+
+bool PatchMenuPulse(const Bytes& original, Bytes* patched) {
+  fight_tree::Tree tree;
+  if (!tree.Load(original)) return false;
+  for (const PulseFor& n : kPulses) {
+    if (n.node > tree.Count() || tree.NameOf(n.node) != n.node_name) {
+      REXLOG_WARN("Options: the selection doesn't pulse (node {} isn't {})", n.node, n.node_name);
+      return false;
+    }
+    Bytes record = tree.Record(n.node);
+    size_t p = 8;
+    while (p + 4 <= record.size() && Be32At(record, p) != kTrackMenu) p += 4;
+    if (p + 12 > record.size()) return false;
+    p += 12;  // type, u32, f32
+    for (int str = 0; str < 3 && p + 4 <= record.size(); ++str) {
+      p += 4 + ((size_t(Be32At(record, p)) + 3) & ~size_t(3));
+    }
+    const size_t field = p + 4 * kMenuItemPulseField;
+    if (field + 4 > record.size()) return false;
+    record[field] = record[field + 1] = record[field + 2] = 0;
+    record[field + 3] = 1;
+    tree.Replace(n.node, record);
+  }
+  *patched = tree.Save();
+  if (!g_pulse_patched.exchange(true)) {
+    REXLOG_INFO("Options: the selected row pulses (FEMenu tracks of front end nodes 958 and 96)");
+  }
+  return true;
+}
+
+
 }  // namespace
 
 void Register() {
   data_patcher::Register("options page", data_patcher::kCategoryFrontend, "", PatchInGameMenus);
+  data_patcher::Register("options selection pulse", data_patcher::kCategoryFightTree, "Frontend",
+                         PatchMenuPulse);
   data_patcher::Register("main menu options", data_patcher::kCategoryFrontend, "cdd70a8c",
                          PatchMainMenu);
 }

@@ -60,6 +60,24 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "The new co-op camera keeps every player in the picture. It needs more testing in "
               "fights, tight places and cutscenes. Turn it off for the original camera."};
     }
+  } else if (name == "motion_blur") {
+    if (AsNumber(value) > 0) {
+      return {"Native renderer only",
+              "Motion blur is this port's own effect (the original has none). Only the native "
+              "renderer draws it: with the emulated picture it does nothing."};
+    }
+  } else if (name == "anti_aliasing") {
+    if (AsNumber(value) != 1) {
+      return {"Native renderer only",
+              "Only the native renderer changes its anti-aliasing: the emulated picture keeps the "
+              "Xbox 360's 2x."};
+    }
+  } else if (name == "texture_sharpness") {
+    if (AsNumber(value) > 0) {
+      return {"Native renderer only",
+              "Only the native renderer sharpens textures: the emulated picture stays as the "
+              "Xbox 360 drew it."};
+    }
   } else if (name == "event_logs") {
     if (!AsBool(value)) {
       return {"Less to go on",

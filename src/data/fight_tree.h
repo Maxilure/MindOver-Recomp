@@ -111,6 +111,9 @@ class Tree {
   static void SetChildCount(Bytes& record, uint32_t count);  // states
   // Removes action `kind` from a state's action list; false if not there.
   static bool RemoveAction(Bytes& record, uint32_t kind);
+  // Puts back node `number`'s record, edited (any size: the records after
+  // it move; nothing in the file points at a record's offset).
+  void Replace(int number, const Bytes& record);
 
  private:
   struct Span {
