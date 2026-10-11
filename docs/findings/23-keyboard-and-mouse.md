@@ -297,3 +297,7 @@ already checks textures), showing the key bound to that button.
 > game's own memory (both renderers, photos), not swapped by the native
 > renderer, with the menus' A and B as two new font glyphs:
 > [findings/37](37-keyboard-mouse-prompts.md).
+
+> **Update 2026-10-11 (later):** the keyboard is no longer a virtual
+> controller in the SDK, menus have keys of their own, and Spin no longer
+> draws stick circles: [findings/38](38-keyboard-mouse-real-keybinds.md).

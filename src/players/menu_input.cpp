@@ -213,6 +213,14 @@ int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
   return MenuOwner(ctx, base, fe, &why);
 }
 bool PlayerPlays(int p) { return Plays(p); }
+bool MenuOnScreen() {
+  if (!more_players::InPlay()) return true;  // the front end (title, main menus), loading
+  const uint32_t game = Read32(kGameGlobal);
+  const uint32_t fe = game ? Read32(game + 52) : 0;
+  if (!fe) return false;
+  return (*Guest(fe + kFrontEndFlags2) & (kMenuOnScreen | kInMainMenus)) != 0 ||
+         (*Guest(fe + kConfirmBox) & kConfirmShowing) != 0 || g_upgrade_screen.load();
+}
 }  // namespace menu_input
 
 // IsButtonPressed: a question for "anyone" goes to the menu's owner.

@@ -47,6 +47,13 @@ Backspace on the menu bar); pick up a controller and its buttons come back.
 Rebinding a key (F6) changes the prompts at once. Key pictures: Xelu's Free
 Controller & Key Prompts (https://thoseawesomeguys.com/prompts/), public domain.
 
+**Real keyboard controls**: menus have keys of their own: Enter / Space to
+choose, Esc / Backspace to go back, Q / E for the Options tabs, X / Y for the
+save list's rename / delete, while Esc still pauses in play. Spin is a real
+key now (no more stick circles behind the scenes): tap it for one spin, hold
+it to keep spinning, and steer while you spin. Your old key settings carry
+over.
+
   while everyone stands still, and keeps some ground around each player in
   view (setting: *Room around players*). After a cutscene with the other
   players far away, it goes straight to everyone instead of zooming out

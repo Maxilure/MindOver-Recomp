@@ -295,6 +295,8 @@ class CrashMomApp : public rex::ReXApp {
       kbm_driver->Attach(window());
       // The cheat menu's free camera looks around with the mouse (it reads
       // the keys from the driver).
+      // Menus or play: which job each key does (input/bindings.h "PLAY AND MENUS").
+      kbm_driver->SetMenuCheck([] { return menu_input::MenuOnScreen(); });
       free_camera::AttachWindow(window());
       // Which device plays as which player (input/players.h; the Controls
       // menu's Players tab), replacing the SDK's fixed rule (keyboard + first

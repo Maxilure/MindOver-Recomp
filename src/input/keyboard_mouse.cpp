@@ -3,11 +3,16 @@
 // =============================================================================
 #include "keyboard_mouse.h"
 
+#include "players.h"
+#include "../players/more_players.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 
 #include <rex/logging.h>
+#include <rex/ppc/context.h>
+#include <rex/ppc/func.h>
 #include <rex/ui/ui_event.h>
 #include <rex/ui/virtual_key.h>
 #include <rex/ui/windowed_app_context.h>
@@ -37,9 +42,10 @@ constexpr auto kWheelPress = std::chrono::milliseconds(60);
 constexpr auto kWheelGap = std::chrono::milliseconds(40);
 constexpr int kWheelMaxQueued = 4;
 
-constexpr float kTwoPi = 6.2831853f;
-// Spin: how far past the last whole circle the stick goes before letting go.
-constexpr float kSpinOvershootTurns = 0.15f;
+// Spin: a "full circle" not asked for within this long is dropped (the
+// fight trees ask while a move can start; a stale one would start a spin
+// seconds after the key, e.g. after a landing).
+constexpr auto kSpinPulseLife = std::chrono::milliseconds(400);
 
 std::atomic<KeyboardMouseDriver*> g_driver{nullptr};
 
@@ -187,6 +193,7 @@ void KeyboardMouseDriver::Press(Input input, bool down) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (down && !held_[input]) {
     pressed_at_[input] = ++press_counter_;  // key repeats don't count
+    in_menu_[input] = MenuOnScreen();      // its job until it's released
   }
   if (down) {
     last_key_down_ = Clock::now().time_since_epoch().count();
@@ -310,6 +317,7 @@ bool KeyboardMouseDriver::DebugTap(std::string_view key_name, int64_t hold_ms) {
   }
   if (!driver->held_[input]) {
     driver->pressed_at_[input] = ++driver->press_counter_;
+    driver->in_menu_[input] = driver->MenuOnScreen();
   }
   driver->held_[input] = true;
   driver->debug_release_[input] = now + std::chrono::milliseconds(hold_ms);
@@ -326,7 +334,13 @@ bool KeyboardMouseDriver::ActionHeld(Action action) const {
 
 uint32_t KeyboardMouseDriver::ActionPressOrder(Action action) const {
   uint32_t order = 0;
+  const Context context = Info(action).context;
   for (Input k : bindings_.keys[action]) {
+    // A key works for the context it was pressed in (bindings.h, "PLAY AND
+    // MENUS"): Escape that opened the pause menu doesn't also close it.
+    if (context != Context::kBoth && in_menu_[k] != (context == Context::kMenu)) {
+      continue;
+    }
     if (k != kNoInput && held_[k] && !(mouse_blocked_ && IsMouseInput(k))) {
       order = std::max(order, pressed_at_[k]);
     }
@@ -355,6 +369,7 @@ void KeyboardMouseDriver::BuildState(Clock::time_point now, X_INPUT_GAMEPAD& pad
     const bool down = now < w.down_until;
     if (down && !held_[input]) {
       pressed_at_[input] = ++press_counter_;
+      in_menu_[input] = MenuOnScreen();
     }
     held_[input] = down;
   }
@@ -383,44 +398,31 @@ void KeyboardMouseDriver::BuildState(Clock::time_point now, X_INPUT_GAMEPAD& pad
   }
   pad.buttons = buttons;
 
-  // Left stick: movement keys, then Walk, then (overriding both) Spin.
+  // Left stick: movement keys, then Walk. (Spin no longer touches the
+  // stick: it's answered as "a full circle done", below.)
   float lx = Axis(kMoveLeft, kMoveRight), ly = Axis(kMoveDown, kMoveUp);
   if (lx != 0.0f && ly != 0.0f) {
     lx *= 0.70710678f;  // a diagonal reaches the stick's circle, not a corner
     ly *= 0.70710678f;
   }
-  if (lx != 0.0f || ly != 0.0f) {
-    last_move_angle_ = std::atan2(ly, lx);
-    if (ActionHeld(kWalk)) {
-      lx *= bindings_.settings.walk_tilt;
-      ly *= bindings_.settings.walk_tilt;
-    }
+  if ((lx != 0.0f || ly != 0.0f) && ActionHeld(kWalk)) {
+    lx *= bindings_.settings.walk_tilt;
+    ly *= bindings_.settings.walk_tilt;
   }
+  // Spin: one circle when pressed, then one every 1 / spin_turns_per_second
+  // while held (TakeSpinCircle hands them to the fight trees).
   const bool spin_held = ActionHeld(kSpin);
-  if (spin_held && !spin_.active) {
-    spin_.active = true;
-    spin_.start = now;
-    spin_.start_angle = last_move_angle_;
-    spin_.end_turns = 0;
+  if (spin_held && !spin_held_) {
+    spin_circles_.push_back(now);
+    next_spin_ = now + SpinPeriod();
+  } else if (spin_held && now >= next_spin_) {
+    spin_circles_.push_back(now);
+    next_spin_ += SpinPeriod();
+    if (next_spin_ < now) next_spin_ = now + SpinPeriod();  // after a long frame
   }
-  if (spin_.active) {
-    const float turns = std::chrono::duration<float>(now - spin_.start).count() *
-                        bindings_.settings.spin_turns_per_second;
-    if (spin_held) {
-      spin_.end_turns = 0;  // (re-)held: keep turning
-    } else if (spin_.end_turns == 0) {
-      spin_.end_turns = std::max(1, static_cast<int>(std::ceil(turns)));  // finish this circle
-    }
-    // A little past the last whole circle (like a thumb overshooting), so the
-    // stick is back where the circle began when it lets go.
-    if (spin_.end_turns > 0 && turns >= float(spin_.end_turns) + kSpinOvershootTurns) {
-      spin_.active = false;
-    } else {
-      // Clockwise (on screen: up, right, down, left), whole stick.
-      const float angle = spin_.start_angle - kTwoPi * (turns - std::floor(turns));
-      lx = std::cos(angle);
-      ly = std::sin(angle);
-    }
+  spin_held_ = spin_held;
+  while (!spin_circles_.empty() && now - spin_circles_.front() > kSpinPulseLife) {
+    spin_circles_.pop_front();
   }
   pad.thumb_lx = ToStickAxis(lx);
   pad.thumb_ly = ToStickAxis(ly);
@@ -451,6 +453,16 @@ X_RESULT KeyboardMouseDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
   if (id != kDevice) {
     return X_ERROR_DEVICE_NOT_CONNECTED;
   }
+  // Connected, but silent: the SDK only learns that a keyboard plays (so its
+  // player counts as having a device: players.h, who_plays, the
+  // lost-controller check). The keys reach the game by MergeInto.
+  if (out_state) {
+    std::memset(out_state, 0, sizeof(*out_state));
+  }
+  return X_ERROR_SUCCESS;
+}
+
+void KeyboardMouseDriver::MergeInto(uint8_t* gamepad) {
   const auto now = Clock::now();
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -467,11 +479,9 @@ X_RESULT KeyboardMouseDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
     }
   }
 
-  // Paused: the game gets a neutral pad (debug taps bypass the focus check:
-  // test runs may not have the focus).
-  // (Not the SDK's is_active(): once dual mode opens, the app sets that for
-  // every driver to "focused and ImGui doesn't want the mouse", which would
-  // freeze the keys too. paused_check_ covers the focus of both windows.)
+  // Paused: nothing from the keys (debug taps bypass the focus check: test
+  // runs may not have the focus). paused_check_ covers the focus of both
+  // windows and ImGui wanting the keyboard / mouse.
   const uint32_t pause = paused_check_ ? paused_check_() : 0;
   const bool paused = !debug_tap && (menu_open_.load() || (pause & kPauseAll));
   mouse_blocked_ = !debug_tap && (pause & kPauseMouse);
@@ -484,13 +494,13 @@ X_RESULT KeyboardMouseDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
     held_[kWheelUp] = held_[kWheelDown] = false;
   }
   if (paused) {
-    spin_.active = false;
+    spin_held_ = false;
+    spin_circles_.clear();
   } else {
     BuildState(now, pad);
   }
 
   if (std::memcmp(&pad, &last_pad_, sizeof(pad)) != 0) {
-    ++packet_number_;  // XInput games compare it to spot a new state
     if (REXCVAR_GET(debug_kbm_trace)) {
       REXLOG_INFO("KBM: buttons {:04X} LT {} RT {} left ({}, {}) right ({}, {})",
                   uint16_t(pad.buttons), int(pad.left_trigger), int(pad.right_trigger),
@@ -498,12 +508,45 @@ X_RESULT KeyboardMouseDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
     }
     last_pad_ = pad;
   }
-  if (out_state) {
-    std::memset(out_state, 0, sizeof(*out_state));
-    out_state->packet_number = packet_number_;
-    out_state->gamepad = pad;
-  }
-  return X_ERROR_SUCCESS;
+
+  // Into the game's state (guest X_INPUT_GAMEPAD, big-endian), like devices
+  // on one player are merged: buttons together, the bigger trigger, and a
+  // stick the keys push replaces the controller's.
+  const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]) | uint16_t(pad.buttons);
+  gamepad[0] = uint8_t(buttons >> 8);
+  gamepad[1] = uint8_t(buttons);
+  gamepad[2] = std::max(gamepad[2], pad.left_trigger);
+  gamepad[3] = std::max(gamepad[3], pad.right_trigger);
+  auto put_stick = [&](int at, int16_t x, int16_t y) {
+    if (x == 0 && y == 0) return;
+    gamepad[at + 0] = uint8_t(uint16_t(x) >> 8);
+    gamepad[at + 1] = uint8_t(uint16_t(x));
+    gamepad[at + 2] = uint8_t(uint16_t(y) >> 8);
+    gamepad[at + 3] = uint8_t(uint16_t(y));
+  };
+  put_stick(4, pad.thumb_lx, pad.thumb_ly);
+  put_stick(8, pad.thumb_rx, pad.thumb_ry);
+}
+
+bool KeyboardMouseDriver::TakeSpinCircle() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (spin_circles_.empty()) return false;
+  spin_circles_.pop_front();
+  return true;
+}
+
+bool KeyboardMouseDriver::MenuOnScreen() const {
+  return menu_check_ && menu_check_();
+}
+
+void KeyboardMouseDriver::SetMenuCheck(std::function<bool()> check) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  menu_check_ = std::move(check);
+}
+
+KeyboardMouseDriver::Clock::duration KeyboardMouseDriver::SpinPeriod() const {
+  return std::chrono::duration_cast<Clock::duration>(
+      std::chrono::duration<float>(1.0f / std::max(0.5f, bindings_.settings.spin_turns_per_second)));
 }
 
 X_RESULT KeyboardMouseDriver::GetDeviceCapabilities(DeviceId id, uint32_t flags,
@@ -543,3 +586,45 @@ X_RESULT KeyboardMouseDriver::GetDeviceKeystroke(DeviceId id, uint32_t flags,
 }
 
 }  // namespace kbm
+
+// -----------------------------------------------------------------------------
+// Spin, the game's way (findings/38). The fight trees ask HasControlDone360
+// (sub_8221E200, r3 = the character's behaviour controller: its vtable slot 92 gives the player's
+// controller object, whose left-stick circle detector at +488 answers
+// sub_82272FB8 -> its "done" byte +40). The detector reports a finished
+// circle ONCE (measured: true for one question, false at the next), so a
+// waiting circle from the Spin key is the same answer.
+// -----------------------------------------------------------------------------
+extern "C" REX_FUNC(__imp__sub_8221E200);
+// An actor (CActor) holds its behaviour controller (here class "Crash", a
+// CScriptBehaviourController) at +0x40: that's what the question gets
+// (measured: P1's Crash at ...A30, the question for ...A70).
+constexpr uint32_t kActorBehaviours = 0x40;
+extern "C" REX_FUNC(sub_8221E200) {
+  const uint32_t character = ctx.r3.u32;
+  __imp__sub_8221E200(ctx, base);
+  if (ctx.r3.u32 & 0xFF) return;  // the stick (a controller) did a circle itself
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  if (!driver || !assignment) return;
+  for (int p = 0; p < 4; ++p) {
+    if (!assignment->KeyboardAnswersFor(uint32_t(p))) continue;
+    // On foot (Crash) or riding a titan: the fight tree asks for whichever is
+    // being controlled.
+    const uint32_t crash = more_players::CharacterOfPlayer(p), titan = more_players::TitanOfPlayer(p);
+    if ((crash && character == crash + kActorBehaviours) ||
+        (titan && character == titan + kActorBehaviours)) {
+      if (driver->TakeSpinCircle()) {
+        ctx.r3.u64 = 1;
+        if (REXCVAR_GET(debug_kbm_trace)) REXLOG_INFO("KBM: Spin: a full circle for player {}", p + 1);
+      }
+      return;
+    }
+  }
+  static bool logged = false;
+  if (!logged) {
+    logged = true;
+    REXLOG_INFO("KBM: HasControlDone360 asked for {:08X}, no keyboard player's character "
+                "(P1 Crash {:08X})", character, more_players::CharacterOfPlayer(0));
+  }
+}

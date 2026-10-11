@@ -42,6 +42,17 @@ bool PlayerAssignment::HasDeviceFor(int player) const {
   return PresentMask() & (1u << player);
 }
 
+bool PlayerAssignment::KeyboardAnswersFor(uint32_t user) const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  const bool everyone_is_player_one = user == 0 && in_play_ && !in_play_();
+  for (const Known& d : devices_) {
+    if (!d.keyboard) continue;
+    const int player = PlayerOf(d);
+    return player == int(user) || (everyone_is_player_one && player >= 0);
+  }
+  return false;
+}
+
 uint32_t PlayerAssignment::PresentMask() const {
   uint32_t mask = 0;
   for (const Known& d : devices_) {

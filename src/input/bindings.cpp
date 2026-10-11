@@ -137,71 +137,86 @@ std::string_view Trim(std::string_view s) {
 constexpr uint16_t kA = X_INPUT_GAMEPAD_A, kB = X_INPUT_GAMEPAD_B;
 constexpr uint16_t kX = X_INPUT_GAMEPAD_X, kY = X_INPUT_GAMEPAD_Y;
 
+constexpr Context kPlay = Context::kPlay, kMenu = Context::kMenu, kBoth = Context::kBoth;
+
 constexpr ActionInfo kActions[kActionCount] = {
-    // id, label, hint, pad, group, output, button, x, y, defaults
-    {"move_up", "Move up", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 0, 1, "W"},
-    {"move_down", "Move down", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 0, -1, "S"},
-    {"move_left", "Move left", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, -1, 0, "A"},
-    {"move_right", "Move right", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 1, 0, "D"},
+    // id, label, hint, pad, group, output, button, x, y, defaults, context
+    {"move_up", "Move up", "Also moves through menus.", "Left stick", Group::kMoving,
+     Output::kLeftStick, 0, 0, 1, "W", kBoth},
+    {"move_down", "Move down", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 0, -1, "S",
+     kBoth},
+    {"move_left", "Move left", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, -1, 0, "A",
+     kBoth},
+    {"move_right", "Move right", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 1, 0, "D",
+     kBoth},
     {"walk", "Walk (hold)",
      "Hold with a direction: the stick leans only part of the way, so Crash goes slower.",
-     "Left stick", Group::kMoving, Output::kWalk, 0, 0, 0, "Control"},
-    {"spin", "Spin (hold)",
-     "Turns the stick in full circles, the way the game says: \"Rotate the Left Analog "
-     "Stick\". On its own: the spin attack. With other buttons: the spin moves (spin + heavy "
-     "attack, spin + jack to jump off a titan...). A quick tap still makes one full circle.",
-     "Left stick circles", Group::kMoving, Output::kSpin, 0, 0, 0, "Q, MMB"},
+     "Left stick", Group::kMoving, Output::kWalk, 0, 0, 0, "Control", kPlay},
+    {"spin", "Spin",
+     "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep "
+     "spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to "
+     "jump off a titan...). Crash still moves with the movement keys while spinning.",
+     "Left stick circles", Group::kMoving, Output::kSpin, 0, 0, 0, "Q, MMB", kPlay},
     {"jump", "Jump", "Press again in the air for a double jump.", "A", Group::kMoving,
-     Output::kButton, kA, 0, 0, "Space"},
+     Output::kButton, kA, 0, 0, "Space", kPlay},
 
     {"light_attack", "Light attack", "", "X", Group::kFighting, Output::kButton, kX, 0, 0,
-     "LMB, J"},
+     "LMB, J", kPlay},
     {"heavy_attack", "Heavy attack", "", "Y", Group::kFighting, Output::kButton, kY, 0, 0,
-     "RMB, K"},
+     "RMB, K", kPlay},
     {"block", "Block (hold)", "Hold to block an enemy's light attack.", "RT",
-     Group::kFighting, Output::kRightTrigger, 0, 0, 0, "Shift"},
+     Group::kFighting, Output::kRightTrigger, 0, 0, 0, "Shift", kPlay},
 
     {"jack", "Jack / unjack",
      "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off.",
-     "B", Group::kTitans, Output::kButton, kB, 0, 0, "E"},
+     "B", Group::kTitans, Output::kButton, kB, 0, 0, "E", kPlay},
     {"titan_special", "Titan special attack",
      "The special attack of the titan you control (watch its mutant meter).", "LT",
-     Group::kTitans, Output::kLeftTrigger, 0, 0, 0, "F"},
+     Group::kTitans, Output::kLeftTrigger, 0, 0, 0, "F", kPlay},
     {"pocket", "Pocket / unpocket", "Store the titan you control, and bring it back later.",
-     "RB", Group::kTitans, Output::kButton, X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "R"},
+     "RB", Group::kTitans, Output::kButton, X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "R", kPlay},
 
     {"map", "Map", "", "Back", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_BACK, 0, 0,
-     "Tab, M"},
-    {"pause", "Pause", "", "Start", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_START, 0, 0,
-     "Escape"},
-    {"menu_confirm", "Menu: confirm", "The A button, for menus (Jump presses A too).", "A",
-     Group::kMenus, Output::kButton, kA, 0, 0, "Return"},
-    {"menu_back", "Menu: back", "The B button, for menus (Jack presses B too).", "B",
-     Group::kMenus, Output::kButton, kB, 0, 0, "Backspace"},
+     "Tab, M", kPlay},
+    {"pause", "Pause", "Opens the pause menu (in menus, Menu: back closes it).", "Start",
+     Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_START, 0, 0, "Escape", kPlay},
+    {"menu_confirm", "Menu: confirm", "Choose the selected item.", "A", Group::kMenus,
+     Output::kButton, kA, 0, 0, "Return, Space", kMenu},
+    {"menu_back", "Menu: back", "Back to the previous screen; in the pause menu: play on.", "B",
+     Group::kMenus, Output::kButton, kB, 0, 0, "Escape, Backspace", kMenu},
+    {"menu_tab_left", "Menu: previous tab", "The Options screen's tabs.", "LB", Group::kMenus,
+     Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, "Q", kMenu},
+    {"menu_tab_right", "Menu: next tab", "", "RB", Group::kMenus, Output::kButton,
+     X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "E", kMenu},
+    {"menu_x", "Menu: X action", "What the menu's X prompt says: rename a save, Dual Mode, "
+     "erase a letter on the name screen.", "X", Group::kMenus, Output::kButton, kX, 0, 0, "X",
+     kMenu},
+    {"menu_y", "Menu: Y action", "What the menu's Y prompt says: delete a save.", "Y",
+     Group::kMenus, Output::kButton, kY, 0, 0, "Y", kMenu},
     {"dpad_up", "D-pad up", "", "D-pad", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_DPAD_UP,
-     0, 0, "Up"},
+     0, 0, "Up", kBoth},
     {"dpad_down", "D-pad down", "", "D-pad", Group::kMenus, Output::kButton,
-     X_INPUT_GAMEPAD_DPAD_DOWN, 0, 0, "Down"},
+     X_INPUT_GAMEPAD_DPAD_DOWN, 0, 0, "Down", kBoth},
     {"dpad_left", "D-pad left", "", "D-pad", Group::kMenus, Output::kButton,
-     X_INPUT_GAMEPAD_DPAD_LEFT, 0, 0, "Left"},
+     X_INPUT_GAMEPAD_DPAD_LEFT, 0, 0, "Left", kBoth},
     {"dpad_right", "D-pad right", "", "D-pad", Group::kMenus, Output::kButton,
-     X_INPUT_GAMEPAD_DPAD_RIGHT, 0, 0, "Right"},
+     X_INPUT_GAMEPAD_DPAD_RIGHT, 0, 0, "Right", kBoth},
 
     {"right_stick_up", "Right stick up", "The camera follows Crash by itself; this is for the "
      "few things that use the right stick.", "Right stick", Group::kOther, Output::kRightStick,
-     0, 0, 1, "Numpad8"},
+     0, 0, 1, "Numpad8", kPlay},
     {"right_stick_down", "Right stick down", "", "Right stick", Group::kOther,
-     Output::kRightStick, 0, 0, -1, "Numpad2"},
+     Output::kRightStick, 0, 0, -1, "Numpad2", kPlay},
     {"right_stick_left", "Right stick left", "", "Right stick", Group::kOther,
-     Output::kRightStick, 0, -1, 0, "Numpad4"},
+     Output::kRightStick, 0, -1, 0, "Numpad4", kPlay},
     {"right_stick_right", "Right stick right", "", "Right stick", Group::kOther,
-     Output::kRightStick, 0, 1, 0, "Numpad6"},
-    {"left_bumper", "Left bumper", "No use in the game found so far.", "LB", Group::kOther,
-     Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, ""},
+     Output::kRightStick, 0, 1, 0, "Numpad6", kPlay},
+    {"left_bumper", "Left bumper", "No use in play found so far.", "LB", Group::kOther,
+     Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, "", kPlay},
     {"left_stick_click", "Left stick click", "No use in the game found so far.", "L3",
-     Group::kOther, Output::kButton, X_INPUT_GAMEPAD_LEFT_THUMB, 0, 0, ""},
+     Group::kOther, Output::kButton, X_INPUT_GAMEPAD_LEFT_THUMB, 0, 0, "", kPlay},
     {"right_stick_click", "Right stick click", "No use in the game found so far.", "R3",
-     Group::kOther, Output::kButton, X_INPUT_GAMEPAD_RIGHT_THUMB, 0, 0, ""},
+     Group::kOther, Output::kButton, X_INPUT_GAMEPAD_RIGHT_THUMB, 0, 0, "", kPlay},
 };
 
 // "LMB, J" -> slots. Unknown names logged, extra keys ignored.
@@ -366,6 +381,10 @@ const ActionInfo& Info(Action action) {
   return kActions[action];
 }
 
+bool ContextsOverlap(Context a, Context b) {
+  return a == Context::kBoth || b == Context::kBoth || a == b;
+}
+
 Bindings Bindings::Defaults() {
   Bindings b;
   for (int a = 0; a < kActionCount; ++a) {
@@ -386,6 +405,9 @@ Action Bindings::Assign(Action action, int slot, Input input) {
   Action previous = kActionCount;
   if (input != kNoInput) {
     for (int a = 0; a < kActionCount; ++a) {
+      if (!ContextsOverlap(kActions[a].context, kActions[action].context)) {
+        continue;  // e.g. Escape: Pause in play, Menu: back in menus
+      }
       for (Input& k : keys[a]) {
         if (k == input && !(a == action)) {
           k = kNoInput;
@@ -424,6 +446,7 @@ Bindings LoadBindings(const std::filesystem::path& path) {
     return b;
   }
   int lines = 0;
+  int version = 1;  // files without the line: written before menus had keys of their own
   std::array<bool, kActionCount> from_file{};  // actions the file sets
   std::string line;
   while (std::getline(file, line)) {
@@ -469,6 +492,10 @@ Bindings LoadBindings(const std::filesystem::path& path) {
       b.players[std::string(key.substr(7))] = std::move(choice);
       continue;
     }
+    if (key == "controls_version") {
+      std::from_chars(value.data(), value.data() + value.size(), version);
+      continue;
+    }
     if (key == "spin_turns_per_second" || key == "walk_tilt") {
       float v = 0.0f;
       std::istringstream(std::string(value)) >> v;
@@ -492,13 +519,15 @@ Bindings LoadBindings(const std::filesystem::path& path) {
       REXLOG_WARN("Controls: unknown setting \"{}\" in {} (skipped)", key, path.string());
     }
   }
-  // One key = one action (the menu's rule). A key on two actions: a line in
+  // One key = one job at a time (the menu's rule; a play action and a menu
+  // action may share it). A key on two overlapping actions: a line in
   // the file beats a default it didn't mention (`jump = "Enter"` takes Enter
   // from Menu: confirm); between two file lines the later one keeps it.
   for (int a = 0; a < kActionCount; ++a) {
     for (int s = 0; s < kSlots; ++s) {
       const Input k = b.keys[a][s];
       for (int other = a + 1; other < kActionCount && k != kNoInput; ++other) {
+        if (!ContextsOverlap(kActions[a].context, kActions[other].context)) continue;
         for (Input& o : b.keys[other]) {
           if (o != k) {
             continue;
@@ -515,6 +544,33 @@ Bindings LoadBindings(const std::filesystem::path& path) {
         }
       }
     }
+  }
+  // Version 1 files (before 2026-10-11): Menu: confirm was only Return and
+  // Menu: back only Backspace, because Space and Escape belonged to Jump and
+  // Pause in every context. Now menus have their own context: give them the
+  // usual PC keys too, where the player hasn't put something else there.
+  if (version < 2) {
+    auto add = [&](Action action, Input input, bool first) {
+      auto& slots = b.keys[action];
+      if (std::find(slots.begin(), slots.end(), input) != slots.end()) return;
+      for (int a = 0; a < kActionCount; ++a) {
+        if (a != action && ContextsOverlap(kActions[a].context, kActions[action].context) &&
+            b.Has(Action(a), input)) {
+          return;  // the player's own choice
+        }
+      }
+      if (slots[kSlots - 1] != kNoInput) return;  // no room
+      if (first) {
+        for (int s = kSlots - 1; s > 0; --s) slots[s] = slots[s - 1];
+        slots[0] = input;
+      } else {
+        *std::find(slots.begin(), slots.end(), kNoInput) = input;
+      }
+      REXLOG_INFO("Controls: {} also on {} (menus have keys of their own now)",
+                  kActions[action].id, InputName(input));
+    };
+    add(kMenuConfirm, V(VK::kSpace), false);
+    add(kMenuBack, V(VK::kEscape), true);
   }
   REXLOG_INFO("Controls: loaded {} ({} settings)", path.string(), lines);
   // What differs from the defaults, so a play log says which keys were used.
@@ -545,10 +601,13 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
          "# Control, Alt, Up/Down/Left/Right, Numpad0-9, LMB, RMB, MMB, Mouse4, Mouse5,\n"
          "# WheelUp, WheelDown (more: src/input/bindings.cpp). F3-F12 and the\n"
          "# backtick key belong to the tools and can't be bound.\n"
-         "# The comment after each line is the Xbox 360 control the game sees.\n\n";
+         "# The comment after each line is the Xbox 360 control the game sees.\n"
+         "# Actions marked [menus] work while a menu is on screen, [play] in play; a key\n"
+         "# may have one of each (Escape: Pause in play, Menu: back in menus).\n\n"
+         "controls_version = 2\n";
   char number[32];
   std::snprintf(number, sizeof(number), "%.2f", b.settings.spin_turns_per_second);
-  out << "spin_turns_per_second = " << number << "   # Spin: full stick circles per second\n";
+  out << "spin_turns_per_second = " << number << "   # Spin held: spins per second\n";
   std::snprintf(number, sizeof(number), "%.2f", b.settings.walk_tilt);
   out << "walk_tilt = " << number << "   # Walk: how far the stick leans (1 = all the way)\n";
   Group group = Group::kOther;
@@ -566,7 +625,11 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
     }
     std::string entry = std::string(info.id) + " = \"" + list + "\"";
     out << entry << std::string(entry.size() < 34 ? 34 - entry.size() : 1, ' ') << "# "
-        << info.pad << "\n";
+        << info.pad
+        << (info.context == Context::kMenu   ? " [menus]"
+            : info.context == Context::kPlay ? " [play]"
+                                             : "")
+        << "\n";
   }
 
   // Players (players.h): only the devices given a player by hand.

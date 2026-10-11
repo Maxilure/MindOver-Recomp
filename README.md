@@ -70,7 +70,7 @@ One scrolling list in the game's own save screen: as many saves as you like, ren
 <td valign="top">
 
 ### ⌨️ Keyboard, mouse and any controller
-Every key rebindable (**F6**), any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
+Every key rebindable (**F6**), menus with keys of their own, any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
 
 </td>
 <td valign="top">
@@ -126,6 +126,11 @@ The launcher also lists your saves, edits settings, shows a live game log and ke
 | Jack / unjack a titan | <kbd>E</kbd> | <kbd>B</kbd> |
 | Titan special / pocket a titan | <kbd>F</kbd> / <kbd>R</kbd> | <kbd>LT</kbd> / <kbd>RB</kbd> |
 | Map / pause | <kbd>Tab</kbd> / <kbd>Esc</kbd> | <kbd>Back</kbd> / <kbd>Start</kbd> |
+| **Menus:** select / back | <kbd>Enter</kbd> or <kbd>Space</kbd> / <kbd>Esc</kbd> or <kbd>Backspace</kbd> | <kbd>A</kbd> / <kbd>B</kbd> |
+| **Menus:** move / tabs | arrow keys or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / <kbd>Q</kbd> <kbd>E</kbd> | D-pad or left stick / <kbd>LB</kbd> <kbd>RB</kbd> |
+| **Menus:** the X / Y prompts (rename, delete a save) | <kbd>X</kbd> / <kbd>Y</kbd> | <kbd>X</kbd> / <kbd>Y</kbd> |
+
+Menus have keys of their own, so <kbd>Esc</kbd> pauses in play and goes back in menus. The game's button prompts show your keys while you play on the keyboard.
 
 <details>
 <summary><b>Port keys</b> (F5 to F10)</summary>

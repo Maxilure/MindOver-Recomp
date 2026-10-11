@@ -105,6 +105,11 @@ namespace menu_input {
 int CurrentMenuOwner(PPCContext& ctx, uint8_t* base);
 // Does player p (0-3) play right now? (Player 1 always does.)
 bool PlayerPlays(int p);
+// Is one of the game's menus on screen: the front end (title, main menus),
+// or in a level the pause / totem / save menus, a question box, the level-up
+// screen? Any thread (reads the front end's flags). The keyboard's keys
+// follow it (input/bindings.h "PLAY AND MENUS").
+bool MenuOnScreen();
 }  // namespace menu_input
 
 namespace more_players_frontend {

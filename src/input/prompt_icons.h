@@ -54,16 +54,18 @@
 // An action without a key keeps the 360 picture.
 //
 // MENUS: on a controller, A both jumps and confirms; on the keyboard those
-// are two keys (Space / Enter, and E / Backspace for B). The menus' prompt
+// are two keys (Space / Enter, E / Escape for B, Q / E for LB / RB...: the
+// menus have keys of their own, input/bindings.h "PLAY AND MENUS"). The menus' prompt
 // bar (page FE_Buttons: "Back ²  Select ±") and the texts in the same menus
 // ("Stun an enemy and Press ² to Jack", Pause -> Tutorials) are on screen
 // TOGETHER, so one picture per character can't be right for both. A data
-// patch of the font package (data/data_patcher.h) adds two glyphs to both
-// fonts, U+E0B1 / U+E0B2 (Unicode's private use area), with pages of their
-// own (copies of the A and B pictures); each frame, the prompt bar's button
-// texts get those characters instead of ± and ² (FrontEndFrame). So the bar
-// shows Enter / Backspace while the texts show Space / E; on a controller all
-// four are the 360's A and B.
+// patch of the font package (data/data_patcher.h) adds six glyphs to both
+// fonts, the menus' A B X Y LB RB (U+E0B1 E0B2 E0B3 E0B4 E0BE E0B8, Unicode's
+// private use area), with pages of their own (copies of those pictures);
+// each frame, the prompt bar's button texts get them instead of the play
+// glyphs (FrontEndFrame), and our own menus write them (MenuGlyph). So the
+// bar shows Enter / Escape while the texts show Space / E; on a controller
+// both are the 360's A and B.
 //
 // --button_prompts: 0 = automatic (the device used last), 1 = always keys,
 // 2 = always the controller's buttons.
@@ -91,6 +93,11 @@ void Install();
 // main thread, in menus and in game): the prompt bar's ± and ² become the
 // menu glyphs.
 void FrontEndFrame(PPCContext& ctx, uint8_t* base);
+
+// The menus' own glyph for a prompt character (± -> menu A, ² -> menu B, ³ ´
+// ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't
+// in). For menus the port builds (options/options_menu.cpp). Any thread.
+char16_t MenuGlyph(char16_t c);
 
 // The pad state the game just got for `user` (guest X_INPUT_GAMEPAD, 12
 // big-endian bytes), from the XInputGetState wrapper (saves/save_library.cpp):

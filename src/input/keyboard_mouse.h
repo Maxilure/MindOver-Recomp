@@ -2,8 +2,8 @@
 // input/keyboard_mouse.h -- play with keyboard and mouse (a virtual 360 pad)
 // =============================================================================
 //
-// WHAT: an input driver that turns keys, mouse buttons and the mouse wheel
-// into the Xbox 360 controller the game expects, using the player's bindings
+// WHAT: turns keys, mouse buttons and the mouse wheel into the controller
+// input the game reads, using the player's bindings
 // (input/bindings.h: WASD to move, Space to jump, mouse buttons to attack...;
 // F6 opens the Controls menu to change them). On by default; a real
 // controller keeps working at the same time (--keyboard_mouse=false turns
@@ -12,7 +12,10 @@
 // WHY OUR OWN (the SDK has --mnk_mode): the SDK's keyboard driver is a
 // generic "keys -> buttons" table. This game needs a few things it can't do:
 //   * SPIN is a stick gesture, not a button ("Rotate the Left Analog Stick"):
-//     the Spin key draws full circles with the virtual stick.
+//     the Spin key answers the game's own "a full circle done?" directly
+//     (TakeSpinCircle; findings/38).
+//   * Menus and play want different keys (Enter / Escape vs Space / E): each
+//     key does the job of the context it was pressed in (bindings.h).
 //   * Modifier keys as game keys: the SDK matches Shift/Ctrl/Alt exactly, so
 //     holding Shift (to block) would silence W/A/S/D. Here every key is just
 //     a key; any combination can be held.
@@ -20,26 +23,25 @@
 //   * Both windows of dual mode (F8) take keys, and a Controls menu can grab
 //     "the next key pressed" to rebind.
 //
-// HOW IT FITS IN: ReXGlue's InputSystem asks every driver for its devices
-// and a "device assignment" which devices feed which player; ours
-// (input/players.h) puts this one on player 1 unless the Players tab says
-// otherwise, together with the first real pad. Devices on one player are
-// merged: buttons OR'ed, sticks take the bigger push. The game polls XInputGetState once per frame (Radical's input
-// manager, sub_8235D188); each poll lands in GetDeviceState, which builds
-// the pad state from the keys held RIGHT THEN.
+// HOW IT FITS IN (since 2026-10-11, findings/38): NOT as a pretend controller
+// of the SDK's input system. The SDK still lists this device (connected and
+// SILENT), so the player assignment (input/players.h) knows a keyboard plays
+// and which player it is. The game polls XInputGetState once per frame
+// (Radical's input manager, sub_8235D188, whose button objects read their
+// values from that state); our wrapper of it (saves/save_library.cpp) calls
+// MergeInto for the sockets the keyboard answers on, which builds the state
+// from the keys held RIGHT THEN, in their contexts, and merges it with the
+// controller's (buttons together, a stick the keys push replaces the pad's).
 //
 // THE STICK FROM KEYS:
 //   * Opposite keys (A and D): the one pressed last wins, so a quick change
 //     of direction never stops Crash dead.
 //   * Diagonals are scaled to the stick's circle (a real stick can't reach
 //     a corner); Walk shortens the push (Settings::walk_tilt).
-//   * Spin, while held: angle = start - 2 pi x turns/s x time (clockwise),
-//     starting from the direction Crash was being pushed, so he doesn't
-//     jerk. On release the circle in progress is finished, plus 0.15 of a
-//     turn (a quick tap = one whole circle, ending past where it began, like
-//     a thumb), then the movement keys take over again. The game
-//     counts a circle at a time and drops the count if the next takes over
-//     1.0 s (findings/23), so turns/s anywhere from ~1.5 works.
+//   * Spin: a press = one "full circle", then one every 1 / turns-per-second
+//     while held, each kept 0.4 s for the fight trees to take (the game's
+//     own detector reports a circle once too). The stick stays with the
+//     movement keys: Crash can be steered while spinning.
 //   * The mouse wheel has no "held": each notch = a short press (60 ms) and
 //     a short gap (40 ms), queued (at most 4), so fast scrolling still gives
 //     separate presses the game can count.
@@ -62,6 +64,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -110,6 +113,18 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   void SetPausedCheck(std::function<uint32_t()> paused);
   // The Controls menu is open: game input paused, cursor shown.
   void SetMenuOpen(bool open);
+  // "Is one of the game's menus on screen?" (the front end, or the pause /
+  // totem / save menus in a level): asked when a key goes down. Any thread.
+  void SetMenuCheck(std::function<bool()> check);
+
+  // The game's XInputGetState for a socket the keyboard answers on (players.h
+  // KeyboardAnswersFor): adds the keys' state to `gamepad` (guest
+  // X_INPUT_GAMEPAD, 12 big-endian bytes). Game threads.
+  void MergeInto(uint8_t* gamepad);
+  // One "full circle of the left stick" from the Spin key, if one is waiting
+  // (consumed). For the fight trees' HasControlDone360 (players/... wrapper
+  // in keyboard_mouse.cpp). Game threads.
+  bool TakeSpinCircle();
 
   // Thread-safe copy / replace of the bindings (the menu edits a copy).
   Bindings bindings() const;
@@ -139,7 +154,8 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   bool InputHeld(Input input) const;
 
   // Debug FIFO (debug_input_script.h): press `key_name` for `hold_ms` as if
-  // typed. Works without focus. False if the name is unknown / no driver.
+  // typed (in the context of that moment). Works without focus. False if the
+  // name is unknown / no driver.
   static bool DebugTap(std::string_view key_name, int64_t hold_ms);
 
   // InputDriver (game threads).
@@ -179,6 +195,8 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   static Input MouseInput(const rex::ui::MouseEvent& e);
   // Builds the pad from the held inputs (lock held).
   void BuildState(Clock::time_point now, rex::input::X_INPUT_GAMEPAD& pad);
+  bool MenuOnScreen() const;                     // lock held
+  Clock::duration SpinPeriod() const;            // lock held
   bool ActionHeld(Action action) const;          // lock held
   uint32_t ActionPressOrder(Action action) const;  // lock held: 0 = not held
   // One stick axis from two opposite actions: +1, -1 or 0 (last pressed wins).
@@ -199,23 +217,20 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
     Clock::time_point down_until{}, gap_until{};
   };
   std::array<WheelPulse, 2> wheel_{};
-  // Spin gesture.
-  struct Spin {
-    bool active = false;
-    Clock::time_point start{};
-    float start_angle = 0.0f;  // radians, 0 = right, pi/2 = up
-    int end_turns = 0;         // > 0: finishing; stop after this many turns
-  } spin_;
-  // Last pushed direction of the left stick (where a spin starts).
-  float last_move_angle_ = 1.5707964f;
-  // What the game saw last (for packet numbers and --debug_kbm_trace).
+  // Per input: pressed while a menu was on screen (its context, bindings.h).
+  std::array<bool, kInputCount> in_menu_{};
+  // Spin: held at the last poll, when the next circle is due, circles waiting.
+  bool spin_held_ = false;
+  Clock::time_point next_spin_{};
+  std::deque<Clock::time_point> spin_circles_;
+  // What the keys added last (prompt_icons.h, --debug_kbm_trace).
   rex::input::X_INPUT_GAMEPAD last_pad_{};
-  uint32_t packet_number_ = 1;
 
   std::atomic<uint32_t> bindings_revision_{0};
   std::atomic<int64_t> last_key_down_{0};
 
   std::function<uint32_t()> paused_check_;
+  std::function<bool()> menu_check_;
   bool mouse_blocked_ = false;  // this poll: mouse buttons / wheel don't count
   std::atomic<bool> menu_open_{false};
 

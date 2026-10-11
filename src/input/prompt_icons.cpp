@@ -96,9 +96,11 @@ struct Prompt {
   Kind kind;
   Action action;
 };
-// The menus' own A and B (prompt_icons.h "Menus"): characters of the Unicode
-// private use area, which no game text contains.
-constexpr char16_t kMenuA = u'\uE0B1', kMenuB = u'\uE0B2';
+// The menus' own A, B, X, Y, LB, RB (prompt_icons.h "Menus"): characters of
+// the Unicode private use area (no game text contains them), numbered after
+// the glyphs they copy.
+constexpr char16_t kMenuA = u'\uE0B1', kMenuB = u'\uE0B2', kMenuX = u'\uE0B3',
+                   kMenuY = u'\uE0B4', kMenuLB = u'\uE0BE', kMenuRB = u'\uE0B8';
 constexpr Prompt kPrompts[] = {
     {u'\u00B1', u'\u00B1', "A", Kind::kKey, kbm::kJump},
     {u'\u00B2', u'\u00B2', "B", Kind::kKey, kbm::kJack},
@@ -116,8 +118,12 @@ constexpr Prompt kPrompts[] = {
     // Added by our font patch (the last pages of each font, in this order).
     {kMenuA, u'\u00B1', "menu A", Kind::kKey, kbm::kMenuConfirm},
     {kMenuB, u'\u00B2', "menu B", Kind::kKey, kbm::kMenuBack},
+    {kMenuX, u'\u00B3', "menu X", Kind::kKey, kbm::kMenuX},
+    {kMenuY, u'\u00B4', "menu Y", Kind::kKey, kbm::kMenuY},
+    {kMenuLB, u'\u00BE', "menu LB", Kind::kKey, kbm::kMenuTabLeft},
+    {kMenuRB, u'\u00B8', "menu RB", Kind::kKey, kbm::kMenuTabRight},
 };
-constexpr size_t kAddedPrompts = 2;  // the last two of kPrompts
+constexpr size_t kAddedPrompts = 6;  // the last six of kPrompts
 constexpr size_t kDiscPrompts = std::size(kPrompts) - kAddedPrompts;
 
 // --- The pages as the disc has them ------------------------------------------
@@ -861,6 +867,11 @@ void OnFrameEnd(void*) {
     }
     for (uint32_t font : g.fonts_loaded) CheckFont(base, font);
     g.fonts_loaded.clear();
+    // New pages show the game's own pictures: draw them below even if
+    // nothing else changed (the second font arrives a frame or two after the
+    // first; without this its pages kept the 360 buttons until the next
+    // device switch).
+    g.revision = UINT32_MAX;
   }
   if (g.pages.empty()) return;
 
@@ -892,14 +903,15 @@ void OnFrameEnd(void*) {
   }
 }
 
-// --- The font patch: two more prompt glyphs for the menus -----------------------
+// --- The font patch: six more prompt glyphs for the menus -----------------------
 // (prompt_icons.h "Menus"). In package\b4c85fe7.p3d, for each of the two fonts:
-//   * the A and B pictures' texture chunks (0x19000) copied, renamed after the
-//     next page numbers ("..._texture_36", "_37"), inserted after the last page:
-//     the loader numbers pages in file order;
-//   * the font's page count (the last u32 of its own data) + 2;
-//   * two glyph records (0x22001: u32 count, 40 bytes each) copied from ± and
-//     ², with the new page (bit 31 = a picture) and kMenuA / kMenuB, inserted
+//   * the A, B, X, Y, LB, RB pictures' texture chunks (0x19000) copied,
+//     renamed after the next page numbers ("..._texture_36" on), inserted
+//     after the last page: the loader numbers pages in file order;
+//   * the font's page count (the last u32 of its own data) + 6;
+//   * six glyph records (0x22001: u32 count, 40 bytes each) copied from the
+//     sources' (kPrompts), with the new page (bit 31 = a picture) and the menu
+//     character, inserted
 //     IN CHARACTER ORDER: the font looks characters up by binary search over
 //     the table as the file has it (0x823C6764), sorted, ending with U+FFFF
 //     (first try: appended after U+FFFF = never found, nothing drawn);
@@ -1029,12 +1041,20 @@ void Register() {
 
 void Install() { pddi::AddFrameEndListener(&OnFrameEnd, nullptr); }
 
+char16_t MenuGlyph(char16_t c) {
+  if (!g_menu_glyphs.load(std::memory_order_relaxed)) return c;
+  for (size_t k = kDiscPrompts; k < std::size(kPrompts); ++k) {
+    if (kPrompts[k].source == c) return kPrompts[k].character;
+  }
+  return c;
+}
+
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return;
   // The menus' prompt bar: page FE_Buttons (always loaded, in the front end
   // and in game), whose BUTTON texts hold just the glyph ("±"), apart from
-  // their labels ("Select"). Found every frame (four lookups by name): pages
-  // come and go with the packages.
+  // their labels ("Select"): their play glyphs become the menu ones. Found
+  // every frame (four lookups by name): pages come and go with the packages.
   const uint32_t page = scrooby::FindPage(ctx, base, "FE_Buttons");
   if (!page) return;
   static constexpr const char* kButtons[] = {"LowerLeftButton", "LowerRightButton",
@@ -1049,9 +1069,9 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
       const uint8_t* c = GuestPtr(base, string + 2 * i);
       char16_t ch = char16_t(c[0] << 8 | c[1]);
       if (!ch) break;
-      if (ch == u'\u00B1') ch = kMenuA, changed = true;
-      if (ch == u'\u00B2') ch = kMenuB, changed = true;
-      value.push_back(ch);
+      const char16_t menu = MenuGlyph(ch);
+      changed = changed || menu != ch;
+      value.push_back(menu);
     }
     if (changed) scrooby::SetText(ctx, base, text, value);
   }
@@ -1094,3 +1114,4 @@ extern "C" REX_FUNC(sub_823C5DA0) {
     prompt_icons::g.fonts_loaded.push_back(font);
   }
 }
+

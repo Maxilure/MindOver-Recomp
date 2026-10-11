@@ -153,13 +153,13 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     // Tunables: applied while dragging, saved on release.
     ImGui::Separator();
     ImGui::SetNextItemWidth(220.0f);
-    ImGui::SliderFloat("Spin speed (stick circles per second)",
+    ImGui::SliderFloat("Spin held (spins per second)",
                        &edit_.settings.spin_turns_per_second, 1.5f, 6.0f, "%.1f");
     if (ImGui::IsItemEdited()) driver->SetBindings(edit_);
     if (ImGui::IsItemDeactivatedAfterEdit()) Save("Spin speed saved.");
     ImGui::SetItemTooltip(
-        "How fast the Spin key turns the stick. The game counts full circles, and forgets "
-        "them if the next one takes longer than a second.");
+        "While Spin is held, how often it counts as one more spin (a press is one at once). "
+        "On a controller each full circle of the left stick is one.");
     ImGui::SetNextItemWidth(220.0f);
     ImGui::SliderFloat("Walk (how far the stick leans)", &edit_.settings.walk_tilt, 0.2f,
                        0.85f, "%.2f");
@@ -295,6 +295,12 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
       ImGui::TableSetColumnIndex(0);
       ImGui::AlignTextToFramePadding();
       ImGui::TextUnformatted(info.label);
+      // Menu-only actions: marked, since their keys may also have a job in
+      // play (bindings.h "PLAY AND MENUS").
+      if (info.context == kbm::Context::kMenu) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(menus)");
+      }
       if (info.hint[0]) {
         ImGui::SetItemTooltip("%s", info.hint);
       }

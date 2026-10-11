@@ -3,6 +3,8 @@
 // =============================================================================
 #include "options_menu.h"
 
+#include "../input/prompt_icons.h"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -281,8 +283,8 @@ void SetUpFixedTexts(PPCContext& ctx, uint8_t* base) {
   scrooby::SetScale(ctx, base, g.tab_prev, kTab);
   scrooby::SetScale(ctx, base, g.tab_text, kSelectedTab);
   scrooby::SetScale(ctx, base, g.tab_next, kTab);
-  scrooby::SetText(ctx, base, g.lb, std::u16string(1, kGlyphLB));
-  scrooby::SetText(ctx, base, g.rb, std::u16string(1, kGlyphRB));
+  scrooby::SetText(ctx, base, g.lb, std::u16string(1, prompt_icons::MenuGlyph(kGlyphLB)));
+  scrooby::SetText(ctx, base, g.rb, std::u16string(1, prompt_icons::MenuGlyph(kGlyphRB)));
   // The arrows are the map screen's DOWN arrow: turned to point left /
   // right (from a fresh transform: the page lives on between visits).
   for (int r = 0; r < kRows; ++r) {
@@ -375,7 +377,7 @@ void Refresh(Env& env) {
   // "Select A" there: blank unless the row offers something).
   const bool x = row.x_action && row.x_shown && row.x_shown(env, current);
   if (x != g.x_showing || x) {
-    scrooby::SetText(ctx, base, g.x_button, x ? std::u16string(1, kGlyphX) : u"");
+    scrooby::SetText(ctx, base, g.x_button, x ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphX)) : u"");
     scrooby::SetText(ctx, base, g.x_text, x ? row.x_label : u"");
     g.x_showing = x;
   }

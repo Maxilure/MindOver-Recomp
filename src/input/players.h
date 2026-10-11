@@ -109,6 +109,11 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // (0-3)? For the game's "who plays" fields (players/who_plays.h) and the lost-controller pause
   // (players/lost_controller.h). Takes the lock; any thread.
   bool HasDeviceFor(int player) const;
+  // Does the keyboard answer on socket `user` (0-3) right now? Its player, and
+  // outside play also socket 1 (DevicesForUser's rule). The keyboard's state
+  // goes into the game by our XInputGetState wrapper (keyboard_mouse.h
+  // MergeInto), not through the SDK. Any thread.
+  bool KeyboardAnswersFor(uint32_t user) const;
 
  private:
   struct Known {

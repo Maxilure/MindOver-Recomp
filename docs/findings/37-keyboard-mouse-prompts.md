@@ -120,6 +120,11 @@ update (`sub_82261C40`), their ± and ² become the new characters. So the bar
 shows Enter and Backspace, the texts Space and E; on a controller all four
 are the 360's A and B again.
 
+> Later the same day ([findings/38](38-keyboard-mouse-real-keybinds.md)): the
+> menus got keys of their own, and the patch adds six menu glyphs (A, B, X,
+> Y, LB, RB: U+E0B1 E0B2 E0B3 E0B4 E0BE E0B8), also used by the port's own
+> Options screen.
+
 ## 4. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked

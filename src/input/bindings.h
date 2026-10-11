@@ -24,8 +24,19 @@
 //     picture (± = A, ³ = X, · = RT, ...). Together: which button does what on
 //     the 360, in the game's own words.
 //   * Spin is not a button: "Rotate the Left Analog Stick" (the game's tip).
-//     A stick-circle detector on the controller object reports full turns.
-//     So our Spin action draws circles with the virtual stick (keyboard_mouse.h).
+//     A stick-circle detector on the player's controller object reports each
+//     full turn ONCE, to the fight trees' HasControlDone360. Our Spin action
+//     answers that question directly (keyboard_mouse.h, findings/38): no stick
+//     circles.
+//
+// PLAY AND MENUS (2026-10-11, findings/38): on a controller one button does
+// two jobs (A jumps and confirms); a keyboard player expects Enter / Escape in
+// menus and Space / E in play. Every action belongs to PLAY, the MENUS, or
+// both (Context); the driver asks "is a menu on screen?" when a key goes down
+// and the key does its job in that context until it's released. So one key may
+// have one play action and one menu action (Escape = Pause in play, Back in
+// menus; Q = Spin, and the previous tab in menus), but never two in the same
+// context (Assign's rule).
 //
 // THE FILE also remembers which device plays as which player (input/
 // players.h): `player.keyboard = 1`, `player.pad:<guid> = 2` (with the
@@ -103,6 +114,10 @@ enum Action : int {
   kPause,
   kMenuConfirm,
   kMenuBack,
+  kMenuTabLeft,   // LB in menus: the Options screen's previous tab
+  kMenuTabRight,  // RB in menus: its next tab
+  kMenuX,         // X in menus: rename a save, Dual Mode, the name screen's backspace
+  kMenuY,         // Y in menus: delete a save
   kDpadUp,
   kDpadDown,
   kDpadLeft,
@@ -127,7 +142,14 @@ enum class Output : uint8_t {
   kLeftStick,     // left stick pushed toward (`x`, `y`)
   kRightStick,    // right stick pushed toward (`x`, `y`)
   kWalk,          // shortens the left stick (Settings::walk_tilt)
-  kSpin,          // turns the left stick in circles (Settings::spin_turns_per_second)
+  kSpin,          // "a full circle of the left stick" for the fight trees (Settings::spin_turns_per_second)
+};
+
+// When an action works (see "PLAY AND MENUS" above).
+enum class Context : uint8_t {
+  kPlay,  // in a level, no menu on screen
+  kMenu,  // the front end, and the pause / totem / save menus in a level
+  kBoth,  // moving (menus answer to the stick too), the D-pad
 };
 
 // Menu sections, in display order.
@@ -144,7 +166,11 @@ struct ActionInfo {
   uint16_t button;        // kButton: X_INPUT_GAMEPAD_*
   int8_t x, y;            // kLeftStick / kRightStick: direction (+y = up)
   const char* defaults;   // default keys, config-file syntax ("LMB, J")
+  Context context;
 };
+// Can two actions' contexts both be active at once (a key may sit on only one
+// of two such actions)?
+bool ContextsOverlap(Context a, Context b);
 const ActionInfo& Info(Action action);
 
 // Up to this many keys per action (the menu's "Key 1" / "Key 2" columns).
@@ -152,9 +178,9 @@ constexpr int kSlots = 2;
 
 // Tunables the Controls menu also shows.
 struct Settings {
-  // Spin: full stick circles per second while the Spin key is held. The game
-  // counts a circle and forgets the count when the next one takes longer than
-  // 1.0 s (findings/23), so anything from ~1.5 up works; ~3 is a brisk thumb.
+  // Spin: how often a HELD Spin key counts as one more full circle of the
+  // stick (a press is one at once). ~3 is a brisk thumb; the game's co-op
+  // counter forgets circles more than 1.0 s apart (findings/23).
   float spin_turns_per_second = 3.0f;
   // Walk: how far the stick leans while Walk is held (1 = all the way).
   float walk_tilt = 0.5f;
@@ -181,8 +207,9 @@ struct Bindings {
   // Is `input` one of `action`'s keys?
   bool Has(Action action, Input input) const;
   // Puts `input` into `action`'s `slot`, taking it away from every other
-  // action first (one key = one action; returns the action that lost it, or
-  // kActionCount if none). kNoInput clears the slot.
+  // action of an overlapping context first (one key = one job at a time;
+  // returns the action that lost it, or kActionCount if none). kNoInput
+  // clears the slot.
   Action Assign(Action action, int slot, Input input);
 };
 

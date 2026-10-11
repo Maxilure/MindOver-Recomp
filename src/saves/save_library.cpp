@@ -36,6 +36,8 @@
 #include "../input/keyboard_mouse.h"
 #include "../options/options_menu.h"
 #include "../input/prompt_icons.h"
+#include "../input/keyboard_mouse.h"
+#include "../input/players.h"
 #include "../overlay_banner.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
@@ -1706,6 +1708,16 @@ extern "C" REX_FUNC(sub_824742F0) {
   using namespace save_library;
   const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
   __imp__sub_824742F0(ctx, base);
+  // The keyboard and mouse, straight into the game's state for the sockets
+  // the keyboard answers on (input/keyboard_mouse.h MergeInto: no pretend
+  // controller in the SDK's input system).
+  if (state && ctx.r3.u32 == 0) {
+    auto* kbm_driver = kbm::KeyboardMouseDriver::Get();
+    auto* assignment = kbm::PlayerAssignment::Get();
+    if (kbm_driver && assignment && assignment->KeyboardAnswersFor(user)) {
+      kbm_driver->MergeInto(GuestPtr(base, state + 4));
+    }
+  }
   // A replay of recorded presses replaces what the device said (input_record.h).
   if (state) {
     uint32_t result = ctx.r3.u32;
