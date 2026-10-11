@@ -114,6 +114,17 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // Thread-safe copy / replace of the bindings (the menu edits a copy).
   Bindings bindings() const;
   void SetBindings(const Bindings& bindings);
+  // Goes up by one at every SetBindings (any thread): the prompt pictures
+  // (prompt_icons.h) redraw the keys when it changes.
+  uint32_t bindings_revision() const { return bindings_revision_.load(); }
+
+  // For the prompt pictures (prompt_icons.h), any thread:
+  //   last_key_down(): when a key, mouse button or wheel notch last went down
+  //   (steady_clock nanoseconds; 0 = never), debug FIFO taps included;
+  //   last_pad(): the pad this driver built at its last poll (what it added to
+  //   its player's state), to tell the keyboard's part from a controller's.
+  int64_t last_key_down() const { return last_key_down_.load(); }
+  rex::input::X_INPUT_GAMEPAD last_pad() const;
 
   // UI thread, for the Controls menu: the next key / mouse button / wheel
   // notch in any attached window is handed to `done` instead of the game
@@ -200,6 +211,9 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // What the game saw last (for packet numbers and --debug_kbm_trace).
   rex::input::X_INPUT_GAMEPAD last_pad_{};
   uint32_t packet_number_ = 1;
+
+  std::atomic<uint32_t> bindings_revision_{0};
+  std::atomic<int64_t> last_key_down_{0};
 
   std::function<uint32_t()> paused_check_;
   bool mouse_blocked_ = false;  // this poll: mouse buttons / wheel don't count

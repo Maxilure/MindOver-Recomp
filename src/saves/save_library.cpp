@@ -35,6 +35,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../options/options_menu.h"
+#include "../input/prompt_icons.h"
 #include "../overlay_banner.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
@@ -1719,6 +1720,8 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (state) input_record::AfterFilters(user, GuestPtr(base, state + 4), ctx.r3.u32);
   // The Options screen's tab buttons (options/options_menu.h).
   if (state && ctx.r3.u32 == 0) options_menu::SeePad(user, GuestPtr(base, state + 4));
+  // A controller used = its buttons back in the prompts (input/prompt_icons.h).
+  if (state && ctx.r3.u32 == 0) prompt_icons::SeePad(user, GuestPtr(base, state + 4));
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

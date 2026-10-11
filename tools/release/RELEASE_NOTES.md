@@ -40,6 +40,13 @@ the main menu): tabs (LB / RB), every change takes effect at once.
   front to back, the camera stays with the player nearest to it. Setting:
   *Stay with the nearest player*.
 - The camera returns to its normal distance after cutscenes, holds still
+**Keyboard and mouse prompts**: while you play on the keyboard and mouse,
+the game's button prompts show YOUR keys and mouse buttons ("Press E to
+Jack", WASD for the stick, the Spin key for spins), in menus too (Enter /
+Backspace on the menu bar); pick up a controller and its buttons come back.
+Rebinding a key (F6) changes the prompts at once. Key pictures: Xelu's Free
+Controller & Key Prompts (https://thoseawesomeguys.com/prompts/), public domain.
+
   while everyone stands still, and keeps some ground around each player in
   view (setting: *Room around players*). After a cutscene with the other
   players far away, it goes straight to everyone instead of zooming out

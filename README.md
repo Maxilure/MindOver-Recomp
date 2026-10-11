@@ -70,7 +70,7 @@ One scrolling list in the game's own save screen: as many saves as you like, ren
 <td valign="top">
 
 ### ⌨️ Keyboard, mouse and any controller
-Every key rebindable (**F6**), any controller SDL knows, both at once or one per player.
+Every key rebindable (**F6**), any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
 
 </td>
 <td valign="top">
@@ -215,7 +215,7 @@ src/                       the port's own native code
   data/                    changed copies of game data, built at run time from your files
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
 launcher/                  the launcher: setup, play, settings, log, updates (no game code)
-assets/                    the port's own pictures (players 3-4's markers)
+assets/                    pictures the port draws: players 3-4's markers, keyboard and mouse prompts
 tools/                     disc extraction, disassembler, play/debug and release scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
 docs/                      guides, and findings about the game's internals
@@ -254,6 +254,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 - **Maxilure**: project lead, direction, ideas, playtesting, art
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static recompiler and runtime that make this possible
 - **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator ReXGlue's runtime and GPU emulation build on
+- **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece (Those Awesome Guys): the keyboard and mouse pictures in the button prompts
 - **Claude** (Anthropic): AI assistant that wrote most of the code and documentation
 - **You?** Every contribution gets listed in [CREDITS.md](CREDITS.md)
 
@@ -263,5 +264,6 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 - The patches in `patches/rexglue-sdk/` modify ReXGlue's source and stay under ReXGlue's **BSD 3-Clause** license, like the SDK itself (which also builds on [Xenia](https://github.com/xenia-project/xenia)'s code).
 - The screenshots in `docs/images/` show the game's own imagery and are not covered by these licenses.
 - The marker pictures in `assets/markers/` were drawn for this port, after the save-slot numbers of *Crash of the Titans* (Radical Entertainment, 2007), to match the game's own markers.
+- The keyboard and mouse pictures in `assets/prompts/keyboard-mouse/` are from [Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/) by Nicolae "Xelu" Berbece, released into the public domain (**CC0**).
 
 <sub>This is an unofficial fan project for game preservation. It is not affiliated with, endorsed by, or sponsored by Activision, Sierra Entertainment, Radical Entertainment, or Microsoft. *Crash Bandicoot* and *Crash: Mind over Mutant* are trademarks of their respective owners. This repository contains no game code, assets or data: you need your own legally obtained copy of the game.</sub>

@@ -136,6 +136,12 @@ Bindings KeyboardMouseDriver::bindings() const {
 void KeyboardMouseDriver::SetBindings(const Bindings& bindings) {
   std::lock_guard<std::mutex> lock(mutex_);
   bindings_ = bindings;
+  ++bindings_revision_;
+}
+
+rex::input::X_INPUT_GAMEPAD KeyboardMouseDriver::last_pad() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return last_pad_;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,6 +187,9 @@ void KeyboardMouseDriver::Press(Input input, bool down) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (down && !held_[input]) {
     pressed_at_[input] = ++press_counter_;  // key repeats don't count
+  }
+  if (down) {
+    last_key_down_ = Clock::now().time_since_epoch().count();
   }
   held_[input] = down;
 }
@@ -265,6 +274,7 @@ void KeyboardMouseDriver::OnMouseWheel(rex::ui::MouseEvent& e) {
   const int notches =
       std::max(1, std::abs(e.scroll_y()) / int(rex::ui::MouseEvent::kScrollPerDetent));
   std::lock_guard<std::mutex> lock(mutex_);
+  last_key_down_ = Clock::now().time_since_epoch().count();
   WheelPulse& w = wheel_[up ? 0 : 1];
   w.queued = std::min(kWheelMaxQueued, w.queued + notches);
 }
@@ -292,6 +302,7 @@ bool KeyboardMouseDriver::DebugTap(std::string_view key_name, int64_t hold_ms) {
   }
   const auto now = Clock::now();
   std::lock_guard<std::mutex> lock(driver->mutex_);
+  driver->last_key_down_ = now.time_since_epoch().count();  // a tap counts as typed
   if (input == kWheelUp || input == kWheelDown) {
     WheelPulse& w = driver->wheel_[input == kWheelUp ? 0 : 1];
     w.queued = std::min(kWheelMaxQueued, w.queued + 1);

@@ -50,6 +50,7 @@ set(CRASHMOM_SOURCES
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
     src/input/players.cpp        # which device plays as which player (local co-op)
     src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
+    src/input/prompt_icons.cpp   # key / mouse pictures in the game's button prompts (Xelu's CC0 prompts)
     src/saves/pc_save_drive.cpp  # the saves as plain PC files: Radical's save drive, natively
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
     src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete
@@ -264,7 +265,7 @@ if(NOT APPLE)
     add_dependencies(crash_mom_stage_libs crash_mom)  # the exe's folder exists by then
 endif()
 
-# The port's own assets (assets/: players 3-4's marker pictures), copied next
+# The port's own assets (assets/: players 3-4's marker pictures, the keyboard / mouse prompt pictures), copied next
 # to the exe on every build (assets/ is read from there at run time).
 add_custom_target(crash_mom_stage_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory

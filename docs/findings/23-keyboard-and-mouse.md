@@ -292,3 +292,8 @@ can be swapped without touching the game's files: when the last input came
 from the keyboard, the native renderer can draw a key picture instead of the
 A / X / RT picture (recognized by its contents, like the texture cache
 already checks textures), showing the key bound to that button.
+
+> **Update 2026-10-11:** done differently: the pictures are redrawn in the
+> game's own memory (both renderers, photos), not swapped by the native
+> renderer, with the menus' A and B as two new font glyphs:
+> [findings/37](37-keyboard-mouse-prompts.md).

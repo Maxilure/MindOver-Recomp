@@ -63,6 +63,7 @@
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
 #include "fps_overlay.h"
+#include "input/prompt_icons.h"
 #include "data/data_patcher.h"
 #include "options/options_menu.h"
 #include "options/options_settings.h"
@@ -256,9 +257,13 @@ class CrashMomApp : public rex::ReXApp {
     // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
     more_players_markers::Register();
     data_patcher::Install();
+    // Two more prompt glyphs in the fonts: the menus' own A and B (input/prompt_icons.h).
+    prompt_icons::Register();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
+    // Keyboard / mouse pictures in the game's button prompts (input/prompt_icons.h).
+    prompt_icons::Install();
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
