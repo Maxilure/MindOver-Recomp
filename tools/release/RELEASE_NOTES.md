@@ -66,6 +66,16 @@ the main menu): tabs (LB / RB), every change takes effect at once.
 - **Invert Axis stays as you set it**: it used to reset to off at every
   Press START, quit to the title and co-op join (the Xbox profile's
   setting).
+- **No more waiting on save screens**: the Xbox held its storage messages
+  for a fixed time, even though saving on a PC takes a few milliseconds.
+  Opening Save Game or Load Game, saving and loading a save now go straight
+  on (about 4 to 7 seconds saved each time), and the "Load successful." /
+  "Save successful." screens no longer wait for A. A quick read or save
+  shows no message at all (no dimmed flash); a slow one shows it after a
+  second and a half. The messages also
+  read "Reading save files...", "Saving..." and "Loading..." instead of
+  asking you not to turn off the Xbox 360. Settings: *save_screen_waits*
+  and *save_success_screens* bring the original timings and screens back.
 
 **Launcher and logs**
 

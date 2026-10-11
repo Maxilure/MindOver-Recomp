@@ -54,6 +54,7 @@ set(CRASHMOM_SOURCES
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
     src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete
     src/saves/rename_screen.cpp  # X on a save: a rename screen of its own in the front end (menus + in game)
+    src/saves/save_screen_waits.cpp  # no Xbox minimum times on the save screens, PC wording
     src/saves/quick_load.cpp     # --load_save: start straight into a save (no intros, title, menus)
     src/players/more_players.cpp  # room for 4 players in the co-op tables, --local_players (findings/26)
     src/players/more_players_hud.cpp  # players 3-4's HUD in the bottom corners (findings/26)

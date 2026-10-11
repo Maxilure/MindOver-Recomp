@@ -68,6 +68,7 @@
 #include "options/options_settings.h"
 #include "saves/rename_screen.h"
 #include "saves/save_library.h"
+#include "saves/save_screen_waits.h"
 #include "native/native_window.h"
 #include "players/lost_controller.h"
 #include "players/more_players.h"
@@ -213,6 +214,8 @@ class CrashMomApp : public rex::ReXApp {
     if (REXCVAR_GET(save_library)) {
       rename_screen::Register();
     }
+    // No Xbox minimum times on the save screens (saves/save_screen_waits.h).
+    save_screen_waits::Install();
     // Pause -> Options: the port's Options screen with tabs (options/options_menu.h):
     // its page replaces the game's in the in-game menus package.
     options_menu::Register();

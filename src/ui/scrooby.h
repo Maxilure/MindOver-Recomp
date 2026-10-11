@@ -54,10 +54,20 @@ uint32_t CallF(GuestFunction function, PPCContext& ctx, uint8_t* base, uint32_t 
 uint32_t GuestAscii(std::string_view text);
 uint32_t GuestUtf16(std::u16string_view text);
 
+// A loaded page by name (the front end's own lookup, sub_821241E8: layer 4,
+// then layer 0), 0 if it isn't loaded.
+uint32_t FindPage(PPCContext& ctx, uint8_t* base, std::string_view name);
+
 // Elements of a page by name (0 if missing).
 uint32_t FindText(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 uint32_t FindPicture(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 uint32_t FindMenu(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
+// A polygon (a flat-coloured shape, e.g. a message page's full-screen dim):
+// the game has no by-name wrapper for it, so ours hashes the name
+// (sub_8232B438, as the others' wrappers do) and asks the page's polygon
+// lookup sub_82371688 (dynamic_cast to pure3d::frontend::Polygon, RTTI
+// 0x824E9878; the Text / Sprite / Menu / Layer lookups sit next to it).
+uint32_t FindPolygon(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 
 // A text's string (no-op on 0). "\n" breaks lines; the font draws button
 // pictures for some characters (findings/23: U+00B1 A, U+00B2 B, U+00B3 X,

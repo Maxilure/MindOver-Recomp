@@ -14,6 +14,9 @@
 
 #include "../guest_memory.h"
 
+extern "C" REX_FUNC(__imp__sub_821241E8);  // front end: find a loaded page (layer, name)
+extern "C" REX_FUNC(__imp__sub_8232B438);  // a name's hash (the page lookups' key)
+extern "C" REX_FUNC(__imp__sub_82371688);  // page: find a polygon by hash
 extern "C" REX_FUNC(__imp__sub_82371AD0);  // page: find a text by name
 extern "C" REX_FUNC(__imp__sub_82371A90);  // page: find a picture by name
 extern "C" REX_FUNC(__imp__sub_82371A50);  // page: find a menu by name
@@ -107,6 +110,25 @@ uint32_t GuestUtf16(std::u16string_view text) {
   }
   bytes.append(2, '\0');
   return GuestBytes(reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size());
+}
+
+uint32_t FindPage(PPCContext& ctx, uint8_t* base, std::string_view name) {
+  const uint32_t guest_name = GuestAscii(name);
+  const uint32_t page = Call(__imp__sub_821241E8, ctx, base, 4, guest_name);
+  return page ? page : Call(__imp__sub_821241E8, ctx, base, 0, guest_name);
+}
+
+uint32_t FindPolygon(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name) {
+  if (!page) return 0;
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = GuestAscii(name);
+  __imp__sub_8232B438(ctx, base);
+  ctx.r4.u64 = ctx.r3.u64;  // the hash, all 64 bits (the lookup compares with cmpld)
+  ctx.r3.u64 = page;
+  __imp__sub_82371688(ctx, base);
+  const uint32_t result = ctx.r3.u32;
+  ctx = saved;
+  return result;
 }
 
 uint32_t FindText(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name) {
