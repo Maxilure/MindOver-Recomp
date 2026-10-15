@@ -27,6 +27,21 @@ engineering, testing, bug reports, corrections, art. See
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
 
+## Art by others
+
+### Nicolae "Xelu" Berbece (Those Awesome Guys): button prompt pictures
+
+- **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)**,
+  released into the public domain (**CC0**). The port draws them into the
+  game's own button prompts and its Options screen
+  (`src/input/prompt_icons.h`, [findings/37](docs/findings/37-keyboard-mouse-prompts.md)):
+  - the keyboard and mouse keys, Light and Dark sets, with the
+    blank keys and the circling arrow beside the Spin key;
+  - the controller buttons of the Xbox Series, PlayStation 5, PlayStation 4
+    and Switch sets (Options -> Controls -> Controller Icons).
+- In `assets/prompts/` (one folder per set, unchanged PNGs; see its
+  [README](assets/prompts/README.md)).
+
 ## Projects this port is built on
 
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static
@@ -45,8 +60,8 @@ engineering, testing, bug reports, corrections, art. See
 - **[{fmt}](https://github.com/fmtlib/fmt)**: text formatting.
 - **[toml++](https://github.com/marzer/tomlplusplus)**: settings and controls
   files.
-- **[stb_image](https://github.com/nothings/stb)**: loading the marker
-  pictures.
+- **[stb_image](https://github.com/nothings/stb)**: loading the marker and
+  button prompt pictures.
 - **[Vulkan Memory Allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)**:
   GPU memory for the native renderer.
 - **Vulkan** and **glslc** (Vulkan SDK): the native renderer and its
