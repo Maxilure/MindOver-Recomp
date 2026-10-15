@@ -5,6 +5,8 @@
 
 #include "players.h"
 #include "../players/more_players.h"
+#include "../gameplay/game_mods.h"
+#include "../guest_memory.h"
 
 #include <algorithm>
 #include <cmath>
@@ -719,6 +721,11 @@ void KeyboardMouseDriver::OnMouseMove(rex::ui::MouseEvent& e) {
   ++pointer_moves_;
 }
 
+bool KeyboardMouseDriver::SpinHeld() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return spin_held_;
+}
+
 bool KeyboardMouseDriver::TakeSpinCircle() {
   std::lock_guard<std::mutex> lock(mutex_);
   if (spin_circles_.empty()) return false;
@@ -786,36 +793,98 @@ X_RESULT KeyboardMouseDriver::GetDeviceKeystroke(DeviceId id, uint32_t flags,
 // circle ONCE (measured: true for one question, false at the next), so a
 // waiting circle from the Spin key is the same answer.
 // -----------------------------------------------------------------------------
+REXCVAR_DECLARE(bool, simple_spinning);  // gameplay/game_mods.cpp
 extern "C" REX_FUNC(__imp__sub_8221E200);
 // An actor (CActor) holds its behaviour controller (here class "Crash", a
 // CScriptBehaviourController) at +0x40: that's what the question gets
 // (measured: P1's Crash at ...A30, the question for ...A70).
 constexpr uint32_t kActorBehaviours = 0x40;
+
+// Is this character's controller LOCKED (cutscenes, in-game scenes that take
+// the player's control)? The game's own answer first walks up to the root
+// controller (sub_82272D68: +36 = parent, root's +516 top byte > 0 = locked)
+// and, when locked, says "no circle" whatever the stick did. The Spin key must
+// obey the same lock: without it, Q spun Crash during cutscenes (2026-10-15).
+// The controller = the behaviour controller's vtable slot 23 (+92), as the
+// question itself gets it (sub_8221E200).
+extern "C" REX_FUNC(__imp__sub_82272D68);
+static bool ControllerLocked(PPCContext& ctx, uint8_t* base, uint32_t behaviours) {
+  auto read32 = [&](uint32_t a) {
+    const uint8_t* p = GuestPtr(base, a);
+    return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
+  };
+  PPCFunc* slot = rex::runtime::ResolveIndirectFunction(read32(read32(behaviours) + 92));
+  if (!slot) return false;
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = behaviours;
+  slot(ctx, base);
+  const uint32_t controller = ctx.r3.u32;
+  bool locked = false;
+  if (controller) {
+    ctx.r3.u64 = controller;
+    __imp__sub_82272D68(ctx, base);
+    locked = (ctx.r3.u32 & 0xFF) != 0;
+  }
+  ctx = saved;
+  return locked;
+}
+
 extern "C" REX_FUNC(sub_8221E200) {
   const uint32_t character = ctx.r3.u32;
   __imp__sub_8221E200(ctx, base);
-  if (ctx.r3.u32 & 0xFF) return;  // the stick (a controller) did a circle itself
-  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
-  kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
-  if (!driver || !assignment) return;
-  for (int p = 0; p < 4; ++p) {
-    if (!assignment->KeyboardAnswersFor(uint32_t(p))) continue;
-    // On foot (Crash) or riding a titan: the fight tree asks for whichever is
-    // being controlled.
+  // Whose character is asking: player p's Crash on foot, or the titan p rides
+  // (the fight tree asks for whichever is being controlled).
+  int player = -1;
+  bool on_foot = false;
+  for (int p = 0; p < 4 && player < 0; ++p) {
     const uint32_t crash = more_players::CharacterOfPlayer(p), titan = more_players::TitanOfPlayer(p);
-    if ((crash && character == crash + kActorBehaviours) ||
-        (titan && character == titan + kActorBehaviours)) {
-      if (driver->TakeSpinCircle()) {
-        ctx.r3.u64 = 1;
-        if (REXCVAR_GET(debug_kbm_trace)) REXLOG_INFO("KBM: Spin: a full circle for player {}", p + 1);
-      }
-      return;
+    if (crash && character == crash + kActorBehaviours) {
+      player = p;
+      on_foot = true;
+    } else if (titan && character == titan + kActorBehaviours) {
+      player = p;
     }
   }
-  static bool logged = false;
-  if (!logged) {
-    logged = true;
-    REXLOG_INFO("KBM: HasControlDone360 asked for {:08X}, no keyboard player's character "
-                "(P1 Crash {:08X})", character, more_players::CharacterOfPlayer(0));
+  if (ctx.r3.u32 & 0xFF) {  // the stick (a controller) did a circle itself
+    if (player >= 0 && on_foot) game_mods::SpinStarted(player);
+    return;
   }
+  if (player < 0) {
+    static bool logged = false;
+    if (!logged) {
+      logged = true;
+      REXLOG_INFO("KBM: HasControlDone360 asked for {:08X}, no player's character "
+                  "(P1 Crash {:08X})", character, more_players::CharacterOfPlayer(0));
+    }
+    return;
+  }
+  // Keep spinning feeds the current spin with Light attack presses: a new
+  // circle now would start a fresh spin and cut it (gameplay/game_mods.h).
+  if (game_mods::Feeding(player)) return;
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  const bool keyboard = driver && assignment && assignment->KeyboardAnswersFor(uint32_t(player));
+  // Our circles (the keyboard's Spin key, simple spinning's LB) obey the
+  // game's own lock, like the stick's: no spins in cutscenes.
+  if (keyboard && !REXCVAR_GET(simple_spinning)) driver->TakeSpinCircle();  // off: dropped
+  if (ControllerLocked(ctx, base, character)) {
+    // Drop what's waiting (it would start a spin the moment the scene ends).
+    const bool dropped = (keyboard && driver->TakeSpinCircle()) | game_mods::TakeButtonSpin(player);
+    if (dropped && REXCVAR_GET(debug_kbm_trace)) {
+      REXLOG_INFO("KBM: Spin: player {}'s controller is locked (a cutscene): no spin", player + 1);
+    }
+    return;
+  }
+  const char* from = nullptr;
+  // The keyboard's Spin key is part of Simple Spinning too (Options ->
+  // Gameplay): off = the key does nothing, like LB (2026-10-15).
+  if (keyboard && REXCVAR_GET(simple_spinning) && driver->TakeSpinCircle()) {
+    from = "the Spin key";
+  } else if (game_mods::TakeButtonSpin(player)) {
+    from = "simple spinning's button";
+  }
+  if (!from) return;
+  ctx.r3.u64 = 1;
+  if (on_foot) game_mods::SpinStarted(player);
+  if (REXCVAR_GET(debug_kbm_trace)) REXLOG_INFO("KBM: Spin: a full circle for player {} ({})", player + 1, from);
 }

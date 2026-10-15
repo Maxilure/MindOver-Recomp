@@ -606,6 +606,19 @@ std::vector<Row> ControlsRows() {
       return button && direction.empty() ? out : out + u".";
     };
     r.unavailable = NoKeyboard;
+    // The Spin key works only with Simple Spinning (Options -> Gameplay):
+    // while it's off the row is GREYED (it can't be rebound: the key does
+    // nothing) and the card says how to spin instead (playtest, 2026-10-15).
+    if (k.action == kbm::kSpin) {
+      r.unavailable = [](Env& env) {
+        const std::u16string keyboard = NoKeyboard(env);
+        if (!keyboard.empty()) return keyboard;
+        return rex::cvar::Query<bool>("simple_spinning")
+                   ? std::u16string()
+                   : std::u16string(u"To spin, rotate a controller's left stick, or turn on Simple "
+                                    u"Spinning (Gameplay tab) to spin with this key.");
+      };
+    }
     rows.push_back(std::move(r));
   }
   rows.push_back(DefaultKeysRow());
@@ -615,6 +628,41 @@ std::vector<Row> ControlsRows() {
 // ---------------------------------------------------------------------------
 // The tabs
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Gameplay: GAME MODIFICATIONS (gameplay/game_mods.h, 2026-10-15). Changes to
+// the original game's rules; every row's first value is the original.
+// ---------------------------------------------------------------------------
+
+std::vector<Row> GameplayRows() {
+  Row friendly_fire = OnOffRow(u"Friendly Fire", "friendly_fire", u"On", u"Off",
+                               u"Players' attacks hurt each other, as in the original game.",
+                               u"A partner's hits pass harmlessly: no damage, combos untouched.");
+  Row partner_hits = OnOffRow(u"Partner Hits", "friendly_hits_break_combo", u"End Combos", u"Keep Combos",
+                              u"Getting hit by a partner ends your hit combo, as in the original game.",
+                              u"A partner's hit doesn't end your combo.");
+  // Nothing to keep when partners can't hit each other at all.
+  partner_hits.unavailable = [](Env&) {
+    return rex::cvar::Query<bool>("friendly_fire") ? std::u16string()
+                                                   : std::u16string(u"Friendly Fire is off: partners can't hit you.");
+  };
+  Row simple_spinning = OnOffRow(u"Simple Spinning", "simple_spinning", u"On", u"Off",
+                                 u"One button spins: LB on a controller, the Spin key on the keyboard.",
+                                 u"Circle the left stick to spin, as in the original game. The "
+                                 u"keyboard's Spin key does nothing.",
+                                 /*off_first=*/true);
+  Row keep_spinning = OnOffRow(u"Keep Spinning", "keep_spinning", u"Hold to Spin", u"Original",
+                               u"Hold Spin (or keep circling the stick) and Crash keeps spinning.",
+                               u"One spin per press. To keep spinning: spin, then press Light Attack "
+                               u"again and again.",
+                               /*off_first=*/true);
+  // Holding the spin needs a spin you can hold: the button of Simple Spinning.
+  keep_spinning.unavailable = [](Env&) {
+    return rex::cvar::Query<bool>("simple_spinning") ? std::u16string()
+                                                     : std::u16string(u"Turn on Simple Spinning first.");
+  };
+  return {friendly_fire, partner_hits, simple_spinning, keep_spinning};
+}
 
 std::vector<Tab> Build() {
   std::vector<Tab> tabs;
@@ -634,6 +682,7 @@ std::vector<Tab> Build() {
         VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   u"How loud hits, crates, footsteps and the rest are.", false)}});
   tabs.push_back({u"Controls", ControlsRows()});
+  tabs.push_back({u"Gameplay", GameplayRows()});
   tabs.push_back(
       {u"Camera",
        {OnOffRow(u"Co-op Camera", "coop_camera", u"Frame Everyone", u"Original",

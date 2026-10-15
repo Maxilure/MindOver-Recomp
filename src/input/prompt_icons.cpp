@@ -60,6 +60,9 @@ REXCVAR_DEFINE_INT32(controller_icons, 0, "CrashMoM",
 // where to store the font it builds.
 extern "C" REX_FUNC(__imp__sub_823C5DA0);
 
+REXCVAR_DECLARE(bool, simple_spinning);  // gameplay/game_mods.cpp
+REXCVAR_DECLARE(bool, keep_spinning);
+
 namespace prompt_icons {
 namespace {
 
@@ -89,6 +92,10 @@ constexpr uint32_t kFormat8 = 2, kFormat8888 = 6;
 uint32_t Load32(uint8_t* base, uint32_t a) {
   const uint8_t* p = GuestPtr(base, a);
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
+}
+void Store32(uint8_t* base, uint32_t a, uint32_t v) {
+  uint8_t* p = GuestPtr(base, a);
+  p[0] = uint8_t(v >> 24); p[1] = uint8_t(v >> 16); p[2] = uint8_t(v >> 8); p[3] = uint8_t(v);
 }
 
 // --- The prompt characters we redraw -----------------------------------------
@@ -152,8 +159,20 @@ constexpr Prompt kPrompts[] = {
     {u'\uE10D', u'\u00B1', "key slot 13", Kind::kSlot, kbm::kJump},
     {u'\uE10E', u'\u00B1', "key slot 14", Kind::kSlot, kbm::kJump},
     {u'\uE10F', u'\u00B1', "key slot 15", Kind::kSlot, kbm::kJump},
+    // BIG SLOTS (2026-10-15): the same, as copies of the LEFT STICK's picture
+    // (its 128 x 128 page): a key drawn there is as big as the stick. For the
+    // spin rows' "OR Q" under "stick + arrow" (playtest: an A-sized Q looked
+    // small next to the stick).
+    {u'\uE110', u'\u00B9', "big key slot 0", Kind::kSlot, kbm::kJump},
+    {u'\uE111', u'\u00B9', "big key slot 1", Kind::kSlot, kbm::kJump},
+    {u'\uE112', u'\u00B9', "big key slot 2", Kind::kSlot, kbm::kJump},
+    {u'\uE113', u'\u00B9', "big key slot 3", Kind::kSlot, kbm::kJump},
 };
-constexpr size_t kSlotCount = 16;
+constexpr size_t kSmallSlots = 16, kBigSlots = 4;
+constexpr size_t kSlotCount = kSmallSlots + kBigSlots;
+// How big a big slot's key is, against the stick's picture (playtest: 1.0 =
+// too big, the A-sized slot = too small).
+constexpr float kBigSlotScale = 0.65f;
 constexpr char16_t kFirstSlot = u'\uE100';
 constexpr size_t kAddedPrompts = 6 + kSlotCount;  // the menu glyphs + the key slots, at the end of kPrompts
 constexpr size_t kDiscPrompts = std::size(kPrompts) - kAddedPrompts;
@@ -850,10 +869,12 @@ std::string DescribeKeys(const Prompt& p, const kbm::Bindings& b) {
       }
       return d;
     }
-    case Kind::kSpin: {
-      const Input in = FirstKey(b, p.action);
-      return in == kbm::kNoInput ? std::string() : "spin " + std::to_string(in);
-    }
+    case Kind::kSpin:
+      // Just the circling arrow (2026-10-15): with the stick picture before it
+      // ("¹¼" = WASD + arrow) it says "circle", the original's gesture. The
+      // Spin key only spins with Simple Spinning (gameplay/game_mods.h), and
+      // then the spin rows get a line of their own with it (SpinRows below).
+      return "spin";
   }
   return {};
 }
@@ -865,10 +886,12 @@ std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, boo
   if (p.kind == Kind::kSlot) {  // the Options rows and card, whatever the device in use
     const std::string& what = g_slots[size_t(p.character - kFirstSlot)].what;
     if (what.size() < 3) return {};
-    if (what[0] == 'K') return std::string(dark ? "D " : "L ") + "key " + what.substr(2);
+    // A big slot: drawn stretched for its narrowed glyph ("W ", see Draw).
+    const std::string wide = p.character >= kFirstSlot + kSmallSlots ? "W " : "";
+    if (what[0] == 'K') return wide + (dark ? "D " : "L ") + "key " + what.substr(2);
     // A controller button: the style's picture, or the game's own ("O").
-    return pad_style == kOriginalStyle ? "O " + what.substr(2)
-                                       : "P " + std::to_string(pad_style) + " " + what.substr(2);
+    return wide + (pad_style == kOriginalStyle ? "O " + what.substr(2)
+                                               : "P " + std::to_string(pad_style) + " " + what.substr(2));
   }
   if (keyboard) {
     const std::string keys = DescribeKeys(p, b);
@@ -911,6 +934,22 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, Box 
   page.height = height;
   page.rgba.assign(size_t(width) * height * 4, 0);
   if (described.size() < 2) return page;
+  if (described[0] == 'W') {
+    // A big key slot: drawn at its shape into kBigSlotScale of the box's
+    // width, then stretched across the whole box: the font squeezes this
+    // page into kBigSlotScale of the stick's width (its record, narrowed by
+    // the font patch), which gives the picture its shape back.
+    const Box narrow{ink.x, ink.y, int(float(ink.w) * kBigSlotScale), ink.h};
+    const Picture drawn = Draw(described.substr(2), width, height, narrow);
+    for (uint32_t y = 0; y < height; ++y) {
+      for (int x = ink.x; x < int(width); ++x) {
+        const int from = ink.x + int(float(x - ink.x) * kBigSlotScale);
+        std::memcpy(&page.rgba[4 * (size_t(y) * width + uint32_t(x))],
+                    &drawn.rgba[4 * (size_t(y) * width + uint32_t(from))], 4);
+      }
+    }
+    return page;
+  }
   if (described[0] == 'C') {
     // The world's B with a key: a whole square key over the coin's square
     // face (THE BUTTON'S SHAPE), which shows the picture from 0.046 to 0.954
@@ -983,6 +1022,23 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, Box 
     Fit(page, KeyPicture(keys[2], 100, set), cell(0, 1));  // left
     Fit(page, KeyPicture(keys[1], 100, set), cell(1, 1));  // down
     Fit(page, KeyPicture(keys[3], 100, set), cell(2, 1));  // right
+  } else if (kind == "spin" && keys.empty()) {
+    // Xelu's circling arrow alone, STRETCHED to twice its width over the
+    // whole "rotate" page (128 x 64): while keys are shown the font draws this
+    // page into a square (NarrowRotate below: the round arrow's width, no gap
+    // after it), which squeezes it back round (playtest, 2026-10-15: centred
+    // at full width it left a big gap).
+    const Picture arrow = Trim(Asset(kArrowFolder, "Directional_Arrow_Full_Circle.png"), kTrimAll);
+    Picture wide;
+    wide.width = arrow.width * 2;
+    wide.height = arrow.height;
+    wide.rgba.resize(size_t(wide.width) * wide.height * 4);
+    for (uint32_t y = 0; y < wide.height; ++y) {
+      for (uint32_t x = 0; x < wide.width; ++x) {
+        std::memcpy(&wide.rgba[4 * (size_t(y) * wide.width + x)], &arrow.rgba[4 * (size_t(y) * arrow.width + x / 2)], 4);
+      }
+    }
+    Fit(page, wide, ink);
   } else if (kind == "spin" && keys.size() == 1) {
     // The Spin key on the left half, Xelu's circling arrow on the right
     // (the "rotate" picture is 128 x 64: two squares).
@@ -1157,6 +1213,17 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
       }
     }
     gp.ink = x1 < 0 ? Box{0, 0, int(gp.width), int(gp.used_height)} : Box{x0, y0, x1 - x0 + 1, y1 - y0 + 1};
+    // A BIG key slot (a copy of the stick's page): a key at the full stick
+    // size was too big (playtest), an A-sized one too small: kBigSlotScale
+    // of the stick's height, centred on it (the stick sits on the line the
+    // same way, so the key stays level with its row). The full width stays:
+    // the font draws this page into kBigSlotScale of the stick's width (the
+    // font patch narrows the record, no gap after the key) and the key is
+    // drawn stretched to match ("W" in Describe / Draw).
+    if (prompt && prompt->kind == Kind::kSlot && prompt->character >= kFirstSlot + kSmallSlots) {
+      const int h = int(float(gp.ink.h) * kBigSlotScale);
+      gp.ink = Box{gp.ink.x, gp.ink.y + (gp.ink.h - h) / 2, gp.ink.w, h};
+    }
   }
   gp.original_rows.resize(size_t(gp.row_pitch) * gp.height);
   for (size_t i = 0; i < gp.original_rows.size(); ++i) {
@@ -1296,6 +1363,56 @@ void CheckWorldTexture(uint8_t* base, uint32_t texture) {
   g.revision = UINT32_MAX;  // drawn at once
 }
 
+// THE ROTATE GLYPH'S WIDTH (2026-10-15). The "rotate" picture ("¼", after
+// the stick in every spin prompt) is 128 x 64: the game's own arrow is that
+// wide. The keyboard's version is Xelu's ROUND arrow, drawn in the page's
+// left square; at full width the empty right half left a gap before the next
+// character. While keys are shown, the font's record for "¼" is made a
+// square: width and advance halved (the gap with them). A picture glyph is
+// drawn as its WHOLE page into that width (the texture's u range is ignored:
+// halving it changed nothing, measured), so the keys' page holds the arrow
+// stretched twice as wide. With the controller's buttons the record gets its
+// numbers back (the game's own wide arrow). Records: TextureFont
+// +72 count, +76 the records (after a 20-byte header; 40 bytes each, as the file's 0x22001 chunk:
+// +28 width, +32 advance, +36 character as a u16), big-endian.
+constexpr uint32_t kFontGlyphCount = 72, kFontGlyphs = 76, kGlyphSize = 40;
+// The records begin 20 bytes after +76's pointer (measured: Titans_Small's
+// first record, the newline's, at +20; then one every 40 bytes, in the order
+// of the sorted character list at +84).
+constexpr uint32_t kGlyphHeader = 20;
+constexpr uint32_t kGlyphWidth = 28, kGlyphAdvance = 32, kGlyphChar = 36;
+struct RotateGlyph {
+  uint32_t record = 0;
+  uint32_t width = 0, advance = 0;  // the game's own, as raw words
+};
+std::map<uint32_t, RotateGlyph> g_rotate;  // by font; main thread (g.mutex)
+
+float WordFloat(uint32_t w) { float f; std::memcpy(&f, &w, 4); return f; }
+uint32_t FloatWord(float f) { uint32_t w; std::memcpy(&w, &f, 4); return w; }
+
+void NarrowRotate(uint8_t* base, uint32_t font, bool narrow) {
+  auto it = g_rotate.find(font);
+  if (it == g_rotate.end()) {
+    RotateGlyph r;
+    const uint32_t count = Load32(base, font + kFontGlyphCount), records = Load32(base, font + kFontGlyphs);
+    for (uint32_t i = 0; records && i < count && i < 1024; ++i) {
+      const uint32_t at = records + kGlyphHeader + kGlyphSize * i;
+      // The loaded record holds its character as a u16 in the word's top half
+      // (measured: "00 20 00 00" for the space).
+      if (Load32(base, at + kGlyphChar) >> 16 != 0x00BC) continue;
+      r = {at, Load32(base, at + kGlyphWidth), Load32(base, at + kGlyphAdvance)};
+      break;
+    }
+    if (!r.record) REXLOG_WARN("Prompt pictures: the rotate glyph wasn't found in font {:08X}", font);
+    it = g_rotate.emplace(font, r).first;
+  }
+  const RotateGlyph& r = it->second;
+  if (!r.record) return;
+  const float width = WordFloat(r.width), advance = WordFloat(r.advance);
+  Store32(base, r.record + kGlyphWidth, narrow ? FloatWord(width / 2) : r.width);
+  Store32(base, r.record + kGlyphAdvance, narrow ? FloatWord(advance - width / 2) : r.advance);
+}
+
 // Once per game frame (main thread).
 void OnFrameEnd(void*) {
   auto* memory = rex::system::kernel_memory();
@@ -1309,7 +1426,10 @@ void OnFrameEnd(void*) {
       g.disc_read = true;
       g.disc = ReadDiscFonts();
     }
-    for (uint32_t font : g.fonts_loaded) CheckFont(base, font);
+    for (uint32_t font : g.fonts_loaded) {
+      g_rotate.erase(font);  // a new font at this address: its records are new too
+      CheckFont(base, font);
+    }
     g.fonts_loaded.clear();
     // New pages show the game's own pictures: draw them below even if
     // nothing else changed (the second font arrives a frame or two after the
@@ -1374,6 +1494,7 @@ void OnFrameEnd(void*) {
     }
     const std::string want = Describe(*gp.prompt, bindings, device == 1, dark, pad_style);
     if (want != gp.shown) Show(base, gp, want);
+    if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, device == 1);
     ++i;
   }
 }
@@ -1384,7 +1505,8 @@ void OnFrameEnd(void*) {
 //     renamed after the next page numbers ("..._texture_36" on), inserted
 //     after the last page: the loader numbers pages in file order;
 //   * the font's page count (the last u32 of its own data) + 6 (+ 16 key
-//     slots since 2026-10-15: copies of the A picture, U+E100..E10F);
+//     slots since 2026-10-15: copies of the A picture, U+E100..E10F, + 4 big
+//     ones, copies of the left stick's, U+E110..E113);
 //   * six (+ 16) glyph records (0x22001: u32 count, 40 bytes each) copied from the
 //     sources' (kPrompts), with the new page (bit 31 = a picture) and the menu
 //     character, inserted
@@ -1461,6 +1583,22 @@ bool PatchFont(pure3d::Node& font) {
     for (int b = 0; b < 4; ++b) {
       r[b] = uint8_t(picture_page >> (8 * b));
       r[36 + b] = uint8_t(character >> (8 * b));
+    }
+    // A big key slot draws into kBigSlotScale of the stick's width (and
+    // advances by that much less): no empty space after its key.
+    if (k >= 6 + kSmallSlots) {
+      float width_f, advance_f;
+      const uint32_t w = pure3d::Le32(&r[28]), a = pure3d::Le32(&r[32]);
+      std::memcpy(&width_f, &w, 4);
+      std::memcpy(&advance_f, &a, 4);
+      const float narrowed = width_f * kBigSlotScale, advance_n = advance_f - (width_f - narrowed);
+      uint32_t wn, an;
+      std::memcpy(&wn, &narrowed, 4);
+      std::memcpy(&an, &advance_n, 4);
+      for (int b = 0; b < 4; ++b) {
+        r[28 + b] = uint8_t(wn >> (8 * b));
+        r[32 + b] = uint8_t(an >> (8 * b));
+      }
     }
     InsertSorted(*glyphs, 40, 36, r);
     // The picture list's entry.
@@ -1636,10 +1774,12 @@ bool KeysShown() { return g_keys_shown.load(); }
 namespace {
 // Lends a slot to `what` (Slot): the one already holding it, else the least
 // recently asked.
-char16_t LendSlot(const std::string& what) {
+char16_t LendSlot(const std::string& what, bool big) {
   std::lock_guard<std::mutex> lock(g.mutex);
-  size_t slot = 0;
-  for (size_t i = 0; i < g_slots.size(); ++i) {
+  // Small slots 0-15 (A-sized), big ones 16-19 (stick-sized).
+  const size_t first = big ? kSmallSlots : 0, end = big ? kSlotCount : kSmallSlots;
+  size_t slot = first;
+  for (size_t i = first; i < end; ++i) {
     if (g_slots[i].what == what) {
       slot = i;
       break;
@@ -1655,12 +1795,12 @@ char16_t LendSlot(const std::string& what) {
 }
 }  // namespace
 
-char16_t KeyGlyph(Input key) {
+char16_t KeyGlyph(Input key, bool big) {
   if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
-  return LendSlot("K " + std::to_string(key));
+  return LendSlot("K " + std::to_string(key), big);
 }
 
-char16_t ButtonGlyph(std::string_view pad) {
+char16_t ButtonGlyph(std::string_view pad, bool big) {
   if (!g_menu_glyphs.load()) return 0;
   // The 360 control names of input/bindings.h (ActionInfo::pad).
   static const std::map<std::string_view, int> kNames = {
@@ -1670,7 +1810,7 @@ char16_t ButtonGlyph(std::string_view pad) {
       {"Left stick circles", kPadLeftStick},    {"Right stick", kPadRightStick},
   };
   const auto it = kNames.find(pad);
-  return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second));
+  return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second), big);
 }
 
 char16_t MenuGlyph(char16_t c) {
@@ -1681,7 +1821,109 @@ char16_t MenuGlyph(char16_t c) {
   return c;
 }
 
+// -----------------------------------------------------------------------------
+// SPIN ROWS (2026-10-15). The game writes spins as "¹¼" (left stick + rotate
+// arrow: circle the stick), in the Tutorials pages (InGame_Tutorial.pag, rows
+// Text0-Text3), the hints in play (InGame.pag HintMessage) and the prompt
+// beside the HUD (InGame_Announcement.pag AnnouncementText: dig spots). Their strings
+// come straight from the text bank (they don't pass through SetString), so
+// they're looked at every front-end frame. With Simple Spinning on, such a
+// text gets a SECOND LINE that spins with the button: "¹¼" there becomes
+// the Spin key (keyboard) or LB (controller), whichever the prompts show;
+// the line starts with "OR" and the button is drawn as big as the stick (a
+// big key slot); with Keep Spinning on, the Old Skool row (spin, then Light
+// attack again and again: "¹¼,³,³,³ . . .") becomes "OR Hold <button>". A
+// text with words gets "Or press <button>" (text-sized) instead. Simple Spinning off = the game's text, back as
+// it was.
+// -----------------------------------------------------------------------------
+namespace {
+
+struct SpunText {
+  std::u16string original;  // the game's text
+  std::u16string shown;     // what we set (original + our line)
+};
+std::map<uint32_t, SpunText> g_spun;  // by text element; game main thread
+
+std::u16string ReadText(uint8_t* base, uint32_t text) {
+  std::u16string value;
+  const uint32_t string = text ? Load32(base, text + kTextString) : 0;
+  for (uint32_t i = 0; string && i < 256; ++i) {
+    const uint8_t* c = GuestPtr(base, string + 2 * i);
+    const char16_t ch = char16_t(c[0] << 8 | c[1]);
+    if (!ch) break;
+    value.push_back(ch);
+  }
+  return value;
+}
+
+// The second line for a text with "¹¼" in it, or "" for none.
+std::u16string SpinLine(const std::u16string& text) {
+  if (!REXCVAR_GET(simple_spinning)) return {};
+  // The button as big as the stick picture it stands for (a big slot) for
+  // the picture rows; text-sized in a sentence.
+  const bool words = std::any_of(text.begin(), text.end(), [](char16_t c) {
+    return (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z');
+  });
+  char16_t button = 0;
+  if (KeysShown()) {
+    if (const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
+      const Input key = FirstKey(driver->bindings(), kbm::kSpin);
+      if (key != kbm::kNoInput) button = KeyGlyph(key, !words);
+    }
+  } else {
+    button = ButtonGlyph("LB", !words);
+  }
+  if (!button) return {};
+  if (words) return u"Or press " + std::u16string(1, button);
+  // "OR" first: the two lines are two ways to do the same move (playtest).
+  const std::u16string spin = u"\u00B9\u00BC";
+  const bool old_skool = text.find(u"\u00B3,\u00B3,\u00B3") != std::u16string::npos;
+  if (old_skool && REXCVAR_GET(keep_spinning)) return u"OR Hold " + std::u16string(1, button);
+  std::u16string line = text;
+  for (size_t at = line.find(spin); at != std::u16string::npos; at = line.find(spin, at + 1)) {
+    line.replace(at, spin.size(), 1, button);
+  }
+  return u"OR " + line;
+}
+
+void SpinRow(PPCContext& ctx, uint8_t* base, uint32_t text) {
+  if (!text) return;
+  const std::u16string now = ReadText(base, text);
+  auto it = g_spun.find(text);
+  // Our own text from last time = its original is still the game's; anything
+  // else = the game wrote a new one.
+  const std::u16string original = it != g_spun.end() && now == it->second.shown ? it->second.original : now;
+  if (original.find(u"\u00B9\u00BC") == std::u16string::npos) {
+    if (it != g_spun.end()) g_spun.erase(it);
+    return;
+  }
+  const std::u16string line = SpinLine(original);
+  const std::u16string wanted = line.empty() ? original : original + u"\n" + line;
+  if (wanted != now) scrooby::SetText(ctx, base, text, wanted);
+  g_spun[text] = {original, wanted};
+}
+
+void SpinRows(PPCContext& ctx, uint8_t* base) {
+  if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame_Tutorial")) {
+    for (const char* name : {"Text0", "Text1", "Text2", "Text3"}) {
+      SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name));
+    }
+  }
+  if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame")) {
+    SpinRow(ctx, base, scrooby::FindText(ctx, base, page, "HintMessage"));
+  }
+  // The prompt beside the HUD (dig spots and the like: "¹¼" under the mojo
+  // count) = the announcement page's one text, placed at run time (found at a
+  // dig spot: "¹¼", shown; the co-op pages' Button text never held a spin).
+  if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame_Announcement")) {
+    SpinRow(ctx, base, scrooby::FindText(ctx, base, page, "AnnouncementText"));
+  }
+}
+
+}  // namespace
+
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
+  SpinRows(ctx, base);
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return;
   // The menus' prompt bar: page FE_Buttons (always loaded, in the front end
   // and in game), whose BUTTON texts hold just the glyph ("±"), apart from

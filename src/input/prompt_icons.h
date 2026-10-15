@@ -119,13 +119,15 @@ char16_t MenuGlyph(char16_t c);
 // lent to the key until 16 others were asked for since; its page shows the
 // key in the chosen key set from the next frame on. 0 = no slots (the font
 // patch isn't in): write the key's name instead. Game main thread.
-char16_t KeyGlyph(uint16_t key);
+// `big` = one of the 4 BIG slots (U+E110..), drawn as large as the left
+// stick's picture (the spin rows' button under "stick + arrow").
+char16_t KeyGlyph(uint16_t key, bool big = false);
 // The same for a CONTROLLER button, by its 360 name as input/bindings.h
 // writes it ("A", "RT", "Back", "Left stick"...): drawn in the Controller
 // Icons style (Automatic: the controller used last; the game's own 360
 // picture when that's the style or nothing better is known). 0 = no slots
 // or an unknown name. Game main thread.
-char16_t ButtonGlyph(std::string_view pad);
+char16_t ButtonGlyph(std::string_view pad, bool big = false);
 
 // Are the prompts showing keys right now (the keyboard / mouse was used last,
 // or --button_prompts says so)? For screens that pick their own prompts

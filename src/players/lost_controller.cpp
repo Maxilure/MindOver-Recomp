@@ -16,6 +16,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../input/players.h"
+#include "../input/prompt_icons.h"
 #include "more_players.h"
 
 REXCVAR_DEFINE_BOOL(lost_controller, true, "CrashMoM",
@@ -154,8 +155,12 @@ std::u16string Message(int phase, int p, bool solo) {
     return u"Player " + n + u"'s controller is back.\nPlayer " + n +
            u": press any button to resume.";
   }
+  // The MENU's Y picture, not the play prompt's: the box is a menu, so on the
+  // keyboard its Y is the menu Y key (Backspace by default), while the play
+  // prompt "´" showed Heavy attack's key (right mouse button), which in a menu
+  // means Back: pressing what the box showed did nothing (2026-10-15).
   return u"Player " + n + u"'s controller disconnected.\nReconnect it, or press " +
-         std::u16string(1, kGlyphY) + u" to drop out Player " + n + u".";
+         std::u16string(1, prompt_icons::MenuGlyph(kGlyphY)) + u" to drop out Player " + n + u".";
 }
 
 void SetText(PPCContext& ctx, uint8_t* base, uint32_t fe, const std::u16string& text) {

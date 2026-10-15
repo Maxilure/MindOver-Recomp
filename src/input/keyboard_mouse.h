@@ -126,6 +126,10 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // (consumed). For the fight trees' HasControlDone360 (players/... wrapper
   // in keyboard_mouse.cpp). Game threads.
   bool TakeSpinCircle();
+  // Is the Spin key held right now (for play: false while paused / in a
+  // menu)? Simple spinning (gameplay/game_mods.h) keeps a spin going while
+  // it is. Game threads.
+  bool SpinHeld() const;
 
   // --- The mouse in menus (input/mouse_menus.h) --------------------------
   // Where the pointer is over the game's picture: 0..1 across its 16:9

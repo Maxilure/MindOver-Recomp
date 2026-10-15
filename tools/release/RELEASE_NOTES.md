@@ -42,6 +42,14 @@ a picture where it helps).
   Original or Strong, in both renderers. Settings that need the Native
   renderer are greyed out while the emulated picture is shown.
 - **Camera**: the co-op camera's settings.
+- **Gameplay** (changes to the game's own rules; each starts as the original,
+  except that a partner's hit no longer ends your combo):
+  **Friendly Fire** off (co-op partners' attacks pass harmlessly),
+  **Partner Hits** (Keep Combos by default: a partner's hit no longer ends
+  your hit combo; End Combos = the original), **Simple Spinning** (one button spins: LB on a controller, the Spin key
+  on the keyboard; the spin tutorials show it in a second row) and **Keep Spinning: Hold to Spin** (hold LB or Spin, or keep
+  circling the stick, and Crash keeps spinning: the game's Old Skool spin
+  with the Light attack presses made for you).
 - **Native Only** (the port's own renderer alone, the lightest) is now the
   default picture; the emulated one is a choice away.
 

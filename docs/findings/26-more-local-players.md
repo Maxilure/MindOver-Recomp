@@ -1344,6 +1344,17 @@ does nothing, plugged back in, A resumes.
 
 ![The game's question box: a lost controller](../images/lost-controller-question-box.jpg)
 
+
+**The drop-out key on the keyboard (2026-10-15).** The message first wrote
+the PLAY prompt for Y ("´"), which on the keyboard shows Heavy attack's key
+(the right mouse button). The box is a menu, though: there the keyboard's Y
+is the menu Y key (Backspace by default) and a right click means Back, so
+pressing what the box showed did nothing. The text now uses the menus' own
+Y picture (`prompt_icons::MenuGlyph`): Backspace on the keyboard, Y on a
+controller. Tested with a fake second controller pulled out and the keyboard
+on player 1: the box showed the Backspace key, and Backspace dropped player
+2 out.
+
 ## 34. The NaN position, found: players 3-4's aim point
 
 Section 20's safety net logged about ten "set to a NaN position" warnings

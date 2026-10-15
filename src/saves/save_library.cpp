@@ -42,6 +42,7 @@
 #include "../input/title_any_button.h"
 #include "../input/name_typing.h"
 #include "../overlay_banner.h"
+#include "../gameplay/game_mods.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
 #include "quick_load.h"
@@ -1760,6 +1761,12 @@ extern "C" REX_FUNC(sub_824742F0) {
   // The Options screen waits for a key: the controllers are quiet (its B =
   // cancel was seen by SeePad above), and stay so until let go.
   if (state) options_menu::FilterPad(user, GuestPtr(base, state + 4));
+  // LAST: simple spinning takes LB, keep spinning adds Light attack presses
+  // (gameplay/game_mods.h). After the prompts' SeePad (LB still counts as
+  // using the controller; our presses don't make a keyboard player's prompts
+  // flip to buttons) and after the recording (a replay goes through this
+  // filter again: recorded presses would come in twice).
+  if (state) game_mods::FilterPad(user, GuestPtr(base, state + 4), ctx.r3.u32 == 0);
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

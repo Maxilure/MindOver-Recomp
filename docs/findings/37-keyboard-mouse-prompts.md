@@ -86,7 +86,7 @@ the two wins. `--button_prompts` = 1 / 2 forces keys / buttons.
 | ½ LT / ¾ LB | Titan special / Left bumper |
 | ¹ left stick | the four Move keys |
 | ¥ right stick | the four Right stick keys |
-| ¼ rotate | the Spin key + a circling arrow (spins are written "¹¼") |
+| ¼ rotate | a circling arrow (spins are written "¹¼": WASD + arrow = "circle"); see s.5 |
 | U+E0B1 / U+E0B2 (ours) | Menu: confirm / Menu: back |
 
 An action without a key keeps the 360 picture.
@@ -223,7 +223,54 @@ measured from the disc's page (the box of its opaque pixels), every
 replacement is cut to its own drawn part and fitted into that box with its
 shape kept: drawn part over drawn part, the same size as the original.
 
-## 5. Tests
+## 5. The rotate picture and the spin rows (2026-10-15)
+
+The keyboard's Spin key spins only with Simple Spinning on
+([findings/40](40-gameplay-options.md) s.4.1), so the "rotate" picture no
+longer shows it: "¹¼" = WASD + Xelu's circling arrow, read as "circle".
+
+* **No gap.** The rotate page is 128 x 64 (the game's own arrow is that
+  wide). A round arrow centred in it left half a page of empty space next
+  to it. While keys are shown, the font's record for "¼" is made a square
+  (width and advance halved), and the keys' page holds the arrow stretched
+  twice as wide, which that square squeezes back round. A picture glyph is
+  drawn as its whole page into its width: the texture's u range in the
+  record is ignored (halving it changed nothing). With a controller the
+  record gets its numbers back. The loaded font keeps the file's records
+  (40 bytes: +28 width, +32 advance, +36 the character as a u16 in the
+  word's top half) 20 bytes after TextureFont +76's pointer, in the order of
+  the sorted character list at +84 (+72 = how many).
+* **A second row.** The Tutorials pages (`InGame_Tutorial.pag`, rows
+  `Text0`-`Text3`), the hints in play (`InGame.pag` `HintMessage`) and the prompt
+  beside the HUD (`InGame_Announcement.pag` `AnnouncementText`, placed under
+  the mojo count at run time: dig spots and the like) get
+  their strings straight from the text bank (they don't pass through the
+  text element's SetString `sub_82373360`: a logging wrapper saw none). So
+  every front-end frame those texts are read; one with "¹¼" in it, while
+  Simple Spinning is on, gets a second line where "¹¼" becomes the Spin key
+  (keys shown) or LB (a controller), after "OR": "WASD ⟳ , LMB, LMB, LMB . . ."
+  over "OR Q , LMB, LMB, LMB . . .". With Keep Spinning on, the Old Skool line
+  becomes "OR Hold Q"; a text with words gets "Or press Q". Off = the game's
+  text.
+* **Big key slots.** The 16 key slots of the font patch (s.4) are copies of
+  the A picture: a Q or LB drawn there looked small under the stick
+  picture. The patch adds 4 more, U+E110..E113, copied from the LEFT STICK's
+  128 x 128 page: a key drawn there is fitted into 65 % of the stick's height
+  (100 % was too big, the A-sized slot too small). The font patch narrows
+  these records to 65 % of the stick's width and advance (no empty space
+  after the key), and the key is drawn stretched across the page so that
+  squeeze gives it its shape back (the rotate arrow's trick). The spin rows
+  use those (`KeyGlyph` / `ButtonGlyph` with `big`); the sentence form keeps
+  a text-sized one.
+
+Tested on the Tutorials pages (Old Skool, Gyro Jackhammer, Spin Dismount):
+keys and controller, Simple Spinning on / off, Keep Spinning on. A dig spot
+on Wumpa Island (reached with the console's `goto`): which text held "¹¼" was
+found by reading the candidates there (the co-op pages' `Button` and
+`CounterButtonPlayerN` didn't; `AnnouncementText` did, shown); then WASD +
+arrow over the Spin key with keys, stick + arrow over LB with a controller.
+
+## 6. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked
 (15 pictures each, menu glyphs included); a fake controller's Start switched
