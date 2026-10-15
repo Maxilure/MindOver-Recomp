@@ -431,6 +431,32 @@ with its `winget` name). By hand, the differences from the Linux steps:
 | `src/debug_frame_capture.*`, `src/debug_input_script.*` | The `--debug_capture_dir` and `--debug_input_script` options above |
 | `tools/play.sh [game flags]` | Playtest launcher: a fresh `logs/play-<date_time>.log` per session, reports crashes and error counts at exit, and how many F10 photos were taken (they go in `photos/`). `--dual`: two windows, the emulated picture in the main one and the native renderer's in a second one (F8 opens/closes it while playing) |
 | `tools/guest_stacks.sh [secs]` | Runs the game under gdb, pauses it after *secs*, and prints which game function (`sub_XXXXXXXX`) every thread is in and what kernel call it waits on. First stop for any hang |
+| `tools/ghidra_import.sh`, `tools/ghidra_decompile.sh <addr>...` | Pseudo-C of game functions from [Ghidra](https://ghidra-sre.org) (optional, see below) |
+
+### Ghidra: reading game functions as pseudo-C (optional)
+
+Ghidra decompiles machine code into C-like pseudo-code: easier to read than
+`xexdis`'s disassembly when working out what a game function does. It needs:
+
+1. **Ghidra 12.1.2** (Arch: `sudo pacman -S ghidra`, installed at
+   `/opt/ghidra`; elsewhere set `GHIDRA_INSTALL_DIR`) and Java 21.
+2. The **XEXLoaderWV** extension (Xbox 360 XEX loader by Warranty Voider,
+   [zeroKilo/XEXLoaderWV](https://github.com/zeroKilo/XEXLoaderWV)), the
+   release zip matching the Ghidra version, unpacked into Ghidra's user
+   folder `~/.config/ghidra/ghidra_<version>_<release>/Extensions/`. The
+   release name is in `/opt/ghidra/Ghidra/application.properties`
+   (`application.release.name`): Arch's package says `DEV`, so its folder is
+   `ghidra_12.1.2_DEV`, not `_PUBLIC`. In the wrong folder the import fails
+   with "No load spec found".
+3. `tools/ghidra_import.sh` once: imports `game/default.xex` (the loader
+   decrypts and decompresses it; language `PowerPC:BE:64:A2ALT-32addr`) and
+   runs the full auto-analysis into `out/ghidra/` (gitignored: the project
+   holds the game's code).
+
+Then `tools/ghidra_decompile.sh 0x82433510` prints the function containing
+that address, named `sub_XXXXXXXX` like the generated code. Each call opens
+the project read-only (~10-20 s). The pseudo-C is a reading aid: types are
+Ghidra's guesses, and the generated C++ plus `xexdis` stay the reference.
 
 ## ReXGlue gotchas we hit (SDK nightly 0.10.0.9, Sep 2026)
 
