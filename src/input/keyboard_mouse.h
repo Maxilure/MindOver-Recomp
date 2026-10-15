@@ -140,6 +140,10 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // A left click made while a menu was on screen, waiting for the menu code
   // to say what it hit (dropped after 0.2 s). Taking it consumes it.
   bool TakeMenuClick();
+  // Wheel notches meant for a LIST that scrolls by itself (the Options
+  // screen's long tabs: options_menu::WheelScrollsList), not turned into
+  // D-pad presses: + = down. Taken (zeroed) by the reader. Game thread.
+  int TakeListWheel();
   // The same without taking it: is a fresh one waiting? `x` / `y` (if given)
   // = where the pointer was when the button went down (0..1 over the
   // picture, as Pointer): a click counts where it was MADE, not where the
@@ -273,6 +277,7 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   bool pointer_seen_ = false;
   // Waiting left click (MenuMouseDown), time it was made; pulses.
   Clock::time_point menu_click_{};
+  int list_wheel_ = 0;  // TakeListWheel
   float menu_click_x_ = 0, menu_click_y_ = 0;
   std::deque<uint16_t> pulses_;
   Clock::time_point pulse_until_{}, pulse_gap_until_{};

@@ -120,6 +120,41 @@ std::vector<int> CapList() {
 
 std::u16string Utf16(const std::string& s) { return std::u16string(s.begin(), s.end()); }
 
+// PICTURES IN THE CARDS (2026-10-15, playtest: "every description with
+// button icons"). A card's text can show keys and controller buttons as
+// pictures: characters of the font's CARD slots (prompt_icons.h SlotSize::
+// kCard: drawn as large as a prompt picture although the card's text is
+// small print). Without the slots (font patch missing) the names are written.
+//   Key(action): the action's first key in the Keyboard Icons style ("" when
+//                the keyboard is off or the action has no key);
+//   KeyOf(input): one given key (F9, Esc...);
+//   Pad(name):   a controller button / stick by its 360 name ("LB", "X",
+//                "Left stick"), in the Controller Icons style.
+std::u16string KeyOf(kbm::Input key) {
+  if (key == kbm::kNoInput) return u"";
+  if (const char16_t g = prompt_icons::KeyGlyph(key, prompt_icons::SlotSize::kCard)) return std::u16string(1, g);
+  return Utf16(kbm::InputLabel(key));
+}
+std::u16string Key(kbm::Action action) {
+  const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  if (!driver) return u"";
+  for (const kbm::Input key : driver->bindings().keys[size_t(action)]) {
+    if (key != kbm::kNoInput) return KeyOf(key);
+  }
+  return u"";
+}
+std::u16string Pad(std::string_view name) {
+  if (const char16_t g = prompt_icons::ButtonGlyph(name, prompt_icons::SlotSize::kCard)) {
+    return std::u16string(1, g);
+  }
+  return Utf16(std::string(name));
+}
+// "[pad] or [key]" for a move both have; the pad alone without a key.
+std::u16string PadOrKey(std::string_view pad, kbm::Action action) {
+  const std::u16string key = Key(action);
+  return key.empty() ? Pad(pad) : Pad(pad) + u" or " + key;
+}
+
 Row FrameRateRow() {
   Row r;
   r.label = u"Frame-rate Cap";
@@ -139,7 +174,7 @@ Row FrameRateRow() {
     if (i >= 0 && i < int(caps.size())) SetFlag("fps_cap", std::to_string(caps[size_t(i)]));
   };
   r.describe = [](Env&, int) {
-    return std::u16string(u"The most pictures a second the game draws. It was made for 30.");
+    return std::u16string(u"The most frames a second the game draws. The original runs at 30.");
   };
   r.warn = [](Env&, int i) {
     const auto caps = CapList();
@@ -180,12 +215,20 @@ Row RendererRow() {
     if (g_hooks.emulated_drawing) g_hooks.emulated_drawing();
   };
   r.describe = [none](Env&, int i) -> std::u16string {
-    if (none() || i == kEmulated) {
-      return u"The Xbox 360's graphics chip, imitated step by step: looks like the original.";
-    }
+    // F9 switches the picture between the two renderers (not with Emulated
+    // Only: the port's renderer is off then).
+    const std::u16string f9 = KeyOf(kbm::ParseInput("F9"));
+    if (none()) return u"The Xbox 360's graphics chip, imitated step by step: looks like the original.";
     switch (i) {
-      case kEmulatedOnly: return u"Only the Xbox 360 imitation: the port's renderer stays off (F9 too).";
-      case kNative: return u"The port's own renderer, made for PC. The imitation keeps drawing beside it.";
+      case kEmulatedOnly:
+        return u"Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and " + f9 +
+               u" doesn't switch.";
+      case kEmulated:
+        return u"The Xbox 360's graphics chip, imitated step by step: looks like the original. " + f9 +
+               u" switches to the port's renderer.";
+      case kNative:
+        return u"The port's own renderer, made for PC. The imitation keeps drawing behind it: " + f9 +
+               u" switches back at once.";
       default: return u"The port's own renderer alone: the lightest on your PC.";
     }
   };
@@ -277,7 +320,7 @@ Row FpsCounterRow() {
   r.describe = [](Env&, int i) -> std::u16string {
     switch (i) {
       case 0: return u"No frame-rate counter.";
-      case 1: return u"The frame rate, at the top of the screen.";
+      case 1: return u"The frame rate, in a corner of the screen (FPS Position).";
       case 2: return u"The frame rate, its average and its slowest 1 % (the 1% low).";
       default: return u"Also how long a frame takes, and how much of it the game works or waits.";
     }
@@ -483,15 +526,18 @@ Row InvertAxisRow() {
 struct KeyRowInfo {
   kbm::Action action;
   const char16_t* text;
-  const char16_t* direction = nullptr;  // after the controller's picture: "Up" (the stick's way)
+  // The controller's way, around its picture: "[stick] up" (the four moves),
+  // "lean [stick] part of the way" (Walk). Null = the picture alone.
+  const char16_t* before = nullptr;
+  const char16_t* after = nullptr;
 };
 constexpr KeyRowInfo kKeyRows[] = {
-    {kbm::kMoveUp, u"Move up.", u"Up"},
-    {kbm::kMoveDown, u"Move down.", u"Down"},
-    {kbm::kMoveLeft, u"Move left.", u"Left"},
-    {kbm::kMoveRight, u"Move right.", u"Right"},
-    {kbm::kWalk, u"Hold while moving to walk instead of run."},
-    {kbm::kSpin, u"The spin attack."},
+    {kbm::kMoveUp, u"Move up.", nullptr, u"up"},
+    {kbm::kMoveDown, u"Move down.", nullptr, u"down"},
+    {kbm::kMoveLeft, u"Move left.", nullptr, u"left"},
+    {kbm::kMoveRight, u"Move right.", nullptr, u"right"},
+    {kbm::kWalk, u"Hold while moving to walk instead of run.", u"lean", u"part of the way"},
+    {kbm::kSpin, u"The spin attack."},  // its controller line: SpinCard below
     {kbm::kJump, u"Jump. Press again in the air to double jump."},
     // Right after Jump: the key players need most after moving and jumping, and
     // the one the floating B over save totems and stunned titans shows.
@@ -503,8 +549,6 @@ constexpr KeyRowInfo kKeyRows[] = {
     {kbm::kPocket, u"Store your titan, and bring it back later."},
     {kbm::kMap, u"Open the map."},
 };
-
-std::u16string Ascii16(std::string_view s) { return std::u16string(s.begin(), s.end()); }
 
 // "Light attack" -> "Light Attack", "Walk (hold)" -> "Walk (Hold)": the
 // Options rows' Title Case.
@@ -533,7 +577,10 @@ Row KeyboardIconsRow() {
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(keyboard_icons)), 0, 1); };
   r.set = [](Env&, int i) { SetFlag("keyboard_icons", std::to_string(i)); };
   r.describe = [](Env&, int i) {
-    return std::u16string(i == 1 ? u"Dark keys in the button prompts." : u"Light keys in the button prompts.");
+    // An example in the style now on (the slots follow it): Jump's key.
+    const std::u16string example = Key(kbm::kJump);
+    return std::u16string(i == 1 ? u"Dark keys in the button prompts" : u"Light keys in the button prompts") +
+           (example.empty() ? u"." : u", like " + example);  // (no "." after a picture: it stood apart)
   };
   return r;
 }
@@ -548,11 +595,14 @@ Row ControllerIconsRow() {
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(controller_icons)), 0, 5); };
   r.set = [](Env&, int i) { SetFlag("controller_icons", std::to_string(i)); };
   r.describe = [](Env&, int i) {
+    // An example in the style now on: the A button (the bottom one).
+    const std::u16string example = u" Now: " + Pad("A") + u" " + Pad("B") + u" " + Pad("X") + u" " + Pad("Y");
     if (i == 0) {
-      return std::u16string(u"The buttons of the controller you play with: PlayStation, Switch or Xbox. "
-                            u"Any other controller: the game's own Xbox 360 buttons.");
+      return u"The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other "
+             u"controller: the game's own Xbox 360 buttons." + example;
     }
-    return std::u16string(i == 1 ? u"The game's own Xbox 360 buttons." : u"These buttons in the prompts, whatever controller you use.");
+    return std::u16string(i == 1 ? u"The game's own Xbox 360 buttons, whatever controller you use."
+                                 : u"These buttons in the prompts, whatever controller you use.") + example;
   };
   return r;
 }
@@ -594,16 +644,20 @@ std::vector<Row> ControlsRows() {
     r.kind = Kind::kKey;
     r.key_action = k.action;
     const std::u16string text = k.text;
-    const std::u16string direction = k.direction ? k.direction : u"";
-    r.describe = [text, direction, action = k.action](Env&, int) {
+    const std::u16string before = k.before ? std::u16string(k.before) + u" " : u"";
+    const std::u16string after = k.after ? u" " + std::u16string(k.after) : u"";
+    r.describe = [text, before, after, action = k.action](Env&, int) -> std::u16string {
       // The controller's button as a picture in the Controller Icons style
-      // (prompt_icons.h ButtonGlyph), else its 360 name; the stick's way
-      // after it for the four moves ("[stick] Up").
-      const char16_t button = prompt_icons::ButtonGlyph(kbm::Info(action).pad);
-      std::u16string out = text + u" Controller: " +
-                           (button ? std::u16string(1, button) : Ascii16(kbm::Info(action).pad));
-      if (!direction.empty()) out += u" " + direction;
-      return button && direction.empty() ? out : out + u".";
+      // (Pad: a card-sized picture), its way around it ("[stick] up").
+      if (action == kbm::kSpin) {
+        // Simple Spinning on: LB too (the stick still works).
+        return text + u" Controller: " +
+               (rex::cvar::Query<bool>("simple_spinning") ? Pad("LB") + u", or circle " + Pad("Left stick")
+                                                          : u"circle " + Pad("Left stick"));
+      }
+      // A sentence ending in a picture gets no full stop (it stood apart,
+      // after the picture's own room: playtest photo).
+      return text + u" Controller: " + before + Pad(kbm::Info(action).pad) + (after.empty() ? u"" : after + u".");
     };
     r.unavailable = NoKeyboard;
     // The Spin key works only with Simple Spinning (Options -> Gameplay):
@@ -615,8 +669,8 @@ std::vector<Row> ControlsRows() {
         if (!keyboard.empty()) return keyboard;
         return rex::cvar::Query<bool>("simple_spinning")
                    ? std::u16string()
-                   : std::u16string(u"To spin, rotate a controller's left stick, or turn on Simple "
-                                    u"Spinning (Gameplay tab) to spin with this key.");
+                   : u"To spin, circle a controller's " + Pad("Left stick") +
+                         u", or turn on Simple Spinning (Gameplay tab) to spin with this key.";
       };
     }
     rows.push_back(std::move(r));
@@ -646,16 +700,29 @@ std::vector<Row> GameplayRows() {
     return rex::cvar::Query<bool>("friendly_fire") ? std::u16string()
                                                    : std::u16string(u"Friendly Fire is off: partners can't hit you.");
   };
-  Row simple_spinning = OnOffRow(u"Simple Spinning", "simple_spinning", u"On", u"Off",
-                                 u"One button spins: LB on a controller, the Spin key on the keyboard.",
-                                 u"Circle the left stick to spin, as in the original game. The "
-                                 u"keyboard's Spin key does nothing.",
+  Row simple_spinning = OnOffRow(u"Simple Spinning", "simple_spinning", u"On", u"Off", u"", u"",
                                  /*off_first=*/true);
-  Row keep_spinning = OnOffRow(u"Keep Spinning", "keep_spinning", u"Hold to Spin", u"Original",
-                               u"Hold Spin (or keep circling the stick) and Crash keeps spinning.",
-                               u"One spin per press. To keep spinning: spin, then press Light Attack "
-                               u"again and again.",
+  // The texts show the buttons (the Spin key as it's bound now).
+  simple_spinning.describe = [](Env&, int i) -> std::u16string {
+    const std::u16string key = Key(kbm::kSpin);
+    if (i == 1) {
+      return u"One button spins: " + Pad("LB") + u" on a controller" +
+             (key.empty() ? std::u16string(u".") : u", " + key + u" on the keyboard.") +
+             u" Circling " + Pad("Left stick") + u" still works.";
+    }
+    return u"Circle " + Pad("Left stick") + u" to spin, as in the original game." +
+           (key.empty() ? std::u16string() : u" " + key + u" does nothing.");
+  };
+  Row keep_spinning = OnOffRow(u"Keep Spinning", "keep_spinning", u"Hold to Spin", u"Original", u"", u"",
                                /*off_first=*/true);
+  keep_spinning.describe = [](Env&, int i) -> std::u16string {
+    if (i == 1) {
+      return u"Hold " + PadOrKey("LB", kbm::kSpin) + u" (or keep circling " + Pad("Left stick") +
+             u") and Crash keeps spinning, until he gets dizzy.";
+    }
+    return u"Spin, then press " + PadOrKey("X", kbm::kLightAttack) +
+           u" again and again to keep spinning, as in the original game.";
+  };
   // Holding the spin needs a spin you can hold: the button of Simple Spinning.
   keep_spinning.unavailable = [](Env&) {
     return rex::cvar::Query<bool>("simple_spinning") ? std::u16string()

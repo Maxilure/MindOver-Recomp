@@ -105,6 +105,9 @@ selectable) the look at item +140 is hit-tested.
   gaps (at least a frame each at 30 fps).
 * **Right click** = B and **wheel** = D-pad up / down, in any menu, as short
   presses (~80 ms each, 50 ms apart, queued).
+  Except the Options screen's long tabs: there the wheel scrolls the list
+  itself, one row per notch, without moving the selection, and stops at the
+  ends ([findings/31](31-options-screen.md) s.3: the sliding list).
 * The mouse buttons in play stay attacks: a key's job is decided when it goes
   down ([findings/38](38-keyboard-mouse-real-keybinds.md) s.3), and clicks
   only queue for menus while a menu is on screen.

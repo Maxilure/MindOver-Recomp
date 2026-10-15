@@ -37,7 +37,8 @@ REXCVAR_DEFINE_BOOL(simple_spinning, false, "CrashMoM",
 REXCVAR_DEFINE_BOOL(keep_spinning, false, "CrashMoM",
                     "With simple_spinning: hold the spin (LB, the Spin key, or a stick kept circling) "
                     "to keep spinning: the game's Old Skool spin (spin, then Light attack again and "
-                    "again) with the Light attack presses made for you. false = the original");
+                    "again), its \"spin again\" decisions answered yes while held (no button is "
+                    "pressed for you). false = the original");
 REXCVAR_DECLARE(bool, debug_coop_trace);
 
 namespace game_mods {
@@ -132,8 +133,7 @@ bool TakeExpected(uint32_t actor, int type, int subtype, Clock::time_point now) 
 // Per player (0-3).
 struct Spin {
   Clock::time_point started{};     // the last spin that began (SpinStarted)
-  bool feeding = false;            // Light attack presses being made
-  Clock::time_point feed_from{};   // the first press's time; then every kPressEvery
+  bool holding = false;            // keep spinning holds this spin (Holding)
   // The left stick's turning (controllers): its angle at the last poll and
   // a smoothed turning speed in turns per second (signed).
   bool have_angle = false;
@@ -152,24 +152,17 @@ Spin g_spin[4];
 // A spin that began this recently can be taken over (the player must keep
 // spinning right after it starts: a held Spin key or a stick still circling).
 constexpr auto kTakeOverWithin = std::chrono::milliseconds(500);
-// Light attack presses: first one this long after the spin starts, then one
-// every kPressEvery, each held kPressHeld (the game reads a press as a change
-// from one frame to the next: 60 ms covers a frame even at 30 fps).
-constexpr auto kFirstPress = std::chrono::milliseconds(150);
-constexpr auto kPressEvery = std::chrono::milliseconds(150);
-constexpr auto kPressHeld = std::chrono::milliseconds(60);
 // A controller "keeps spinning" while its stick is pushed at least this far
 // and turns at least this fast (one circle a second; a spin needs ~1.5).
 constexpr float kStickPushed = 0.6f;
 constexpr float kStickTurning = 1.0f;
 constexpr auto kStillCircling = std::chrono::milliseconds(300);
 
-constexpr uint16_t kButtonX = 0x4000;   // X_INPUT_GAMEPAD_X (Light attack)
 constexpr uint16_t kButtonLB = 0x0100;  // X_INPUT_GAMEPAD_LEFT_SHOULDER (simple spinning's Spin)
 // The spin button, like the keyboard's Spin key: a press = one circle, kept
 // for kCircleLife (a stale one would start a spin long after the press, e.g.
 // on landing); held = one more every kCircleEvery (3 a second, the keyboard's
-// default) while not feeding.
+// default) while not holding.
 constexpr auto kCircleLife = std::chrono::milliseconds(400);
 constexpr auto kCircleEvery = std::chrono::milliseconds(333);
 
@@ -225,10 +218,10 @@ bool TakeButtonSpin(int p) {
   return true;
 }
 
-bool Feeding(int p) {
+bool Holding(int p) {
   if (p < 0 || p >= 4) return false;
   std::lock_guard<std::mutex> lock(g_mutex);
-  return g_spin[p].feeding;
+  return g_spin[p].holding;
 }
 
 void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
@@ -240,7 +233,7 @@ void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   const bool key_held = driver && assignment && assignment->KeyboardAnswersFor(user) && driver->SpinHeld();
   // In a level, no menu: LB is Spin (on foot or riding a titan: titans have
-  // spin moves too, e.g. the Spin Dismount). Feeding Light attacks: on foot only.
+  // spin moves too, e.g. the Spin Dismount). Keep spinning: on foot only.
   const bool playing = more_players::InPlay() && !more_players::Loading() && !menu_input::MenuOnScreen() &&
                        (more_players::CharacterOfPlayer(p) != 0 || more_players::TitanOfPlayer(p) != 0);
   const bool on_foot = playing && more_players::TitanOfPlayer(p) == 0;
@@ -261,42 +254,28 @@ void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   if (button && !s.button_held) {
     s.button_circle = now;
     s.next_button_circle = now + kCircleEvery;
-  } else if (button && now >= s.next_button_circle && !s.feeding) {
+  } else if (button && now >= s.next_button_circle && !s.holding) {
     s.button_circle = now;
     s.next_button_circle = now + kCircleEvery;
   }
   s.button_held = button;
-  const bool was_feeding = s.feeding;
+  const bool was_holding = s.holding;
   // KEEP SPINNING needs simple spinning (the Options row is greyed without it).
   if (!simple || !REXCVAR_GET(keep_spinning) || !on_foot) {
-    s.feeding = false;
+    s.holding = false;
   } else {
     const bool keeps_spinning = key_held || button || now - s.last_turning <= kStillCircling;
     if (!keeps_spinning) {
-      s.feeding = false;
-    } else if (!s.feeding && s.started != Clock::time_point{} && now - s.started <= kTakeOverWithin) {
-      s.feeding = true;
-      s.feed_from = s.started + kFirstPress;
+      s.holding = false;
+    } else if (!s.holding && s.started != Clock::time_point{} && now - s.started <= kTakeOverWithin) {
+      s.holding = true;
     }
   }
-  if (s.feeding != was_feeding && REXCVAR_GET(debug_coop_trace)) {
-    REXLOG_INFO("Gameplay: keep spinning {} for player {}", s.feeding ? "keeps the spin going" : "stopped",
-                p + 1);
+  if (s.holding != was_holding && REXCVAR_GET(debug_coop_trace)) {
+    REXLOG_INFO("Gameplay: keep spinning {} for player {}", s.holding ? "holds the spin" : "let go", p + 1);
   }
-  if (!s.feeding || now < s.feed_from) return;
-  const auto phase = (now - s.feed_from) % kPressEvery;
-  if (phase < kPressHeld) {
-    // OR into the buttons (big-endian u16 at +0): the player's own presses stay.
-    const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]) | kButtonX;
-    gamepad[0] = uint8_t(buttons >> 8);
-    gamepad[1] = uint8_t(buttons);
-  } else {
-    // Between presses X reads released, so the next one is a new press even
-    // if the player holds Light attack themselves.
-    const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]) & ~kButtonX;
-    gamepad[0] = uint8_t(buttons >> 8);
-    gamepad[1] = uint8_t(buttons);
-  }
+  // Nothing is pressed for the player: the spin state's own question is
+  // answered instead (input/keyboard_mouse.cpp, sub_8221E1C8).
 }
 
 }  // namespace game_mods

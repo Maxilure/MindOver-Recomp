@@ -167,9 +167,26 @@ constexpr Prompt kPrompts[] = {
     {u'\uE111', u'\u00B9', "big key slot 1", Kind::kSlot, kbm::kJump},
     {u'\uE112', u'\u00B9', "big key slot 2", Kind::kSlot, kbm::kJump},
     {u'\uE113', u'\u00B9', "big key slot 3", Kind::kSlot, kbm::kJump},
+    // CARD SLOTS (2026-10-15): copies of the A picture's page (64 x 64, which
+    // sits on the text line like a letter), the picture FILLING the page's
+    // width (key, button or stick alike): for pictures inside the Options
+    // cards' small print, where a stick squeezed into the A's own 49-pixel
+    // circle was too small to make out (playtest). (A first version copied
+    // the stick's 128 x 96 page: much too big, and it hung below the line.)
+    {u'\uE114', u'\u00B1', "card slot 0", Kind::kSlot, kbm::kJump},
+    {u'\uE115', u'\u00B1', "card slot 1", Kind::kSlot, kbm::kJump},
+    {u'\uE116', u'\u00B1', "card slot 2", Kind::kSlot, kbm::kJump},
+    {u'\uE117', u'\u00B1', "card slot 3", Kind::kSlot, kbm::kJump},
+    {u'\uE118', u'\u00B1', "card slot 4", Kind::kSlot, kbm::kJump},
+    {u'\uE119', u'\u00B1', "card slot 5", Kind::kSlot, kbm::kJump},
 };
-constexpr size_t kSmallSlots = 16, kBigSlots = 4;
-constexpr size_t kSlotCount = kSmallSlots + kBigSlots;
+constexpr size_t kSmallSlots = 16, kBigSlots = 4, kCardSlots = 6;
+constexpr size_t kSlotCount = kSmallSlots + kBigSlots + kCardSlots;
+constexpr size_t kFirstBig = kSmallSlots, kFirstCard = kSmallSlots + kBigSlots;  // slot numbers
+// A card slot's picture: the page's whole width (a stick, wider than tall,
+// gets all 64), at most this many rows, centred where the A's own circle is
+// (49 rows): a little larger than the game's buttons, still inside a line.
+constexpr int kCardSlotRows = 54;
 // How big a big slot's key is, against the stick's picture (playtest: 1.0 =
 // too big, the A-sized slot = too small).
 constexpr float kBigSlotScale = 0.65f;
@@ -887,7 +904,8 @@ std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, boo
     const std::string& what = g_slots[size_t(p.character - kFirstSlot)].what;
     if (what.size() < 3) return {};
     // A big slot: drawn stretched for its narrowed glyph ("W ", see Draw).
-    const std::string wide = p.character >= kFirstSlot + kSmallSlots ? "W " : "";
+    const size_t slot = size_t(p.character - kFirstSlot);
+    const std::string wide = slot >= kFirstBig && slot < kFirstCard ? "W " : "";
     if (what[0] == 'K') return wide + (dark ? "D " : "L ") + "key " + what.substr(2);
     // A controller button: the style's picture, or the game's own ("O").
     return wide + (pad_style == kOriginalStyle ? "O " + what.substr(2)
@@ -1220,9 +1238,17 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
     // the font draws this page into kBigSlotScale of the stick's width (the
     // font patch narrows the record, no gap after the key) and the key is
     // drawn stretched to match ("W" in Describe / Draw).
-    if (prompt && prompt->kind == Kind::kSlot && prompt->character >= kFirstSlot + kSmallSlots) {
+    const size_t slot = prompt && prompt->kind == Kind::kSlot ? size_t(prompt->character - kFirstSlot) : 0;
+    if (prompt && prompt->kind == Kind::kSlot && slot >= kFirstBig && slot < kFirstCard) {
       const int h = int(float(gp.ink.h) * kBigSlotScale);
       gp.ink = Box{gp.ink.x, gp.ink.y + (gp.ink.h - h) / 2, gp.ink.w, h};
+    }
+    // A CARD slot: the A's box, a little larger: the page's width and
+    // kCardSlotRows rows, centred on the A's circle.
+    if (prompt && prompt->kind == Kind::kSlot && slot >= kFirstCard) {
+      const int rows = std::min(kCardSlotRows, int(gp.used_height));
+      const int top = std::clamp(gp.ink.y + gp.ink.h / 2 - rows / 2, 0, int(gp.used_height) - rows);
+      gp.ink = Box{0, top, int(gp.width), rows};
     }
   }
   gp.original_rows.resize(size_t(gp.row_pitch) * gp.height);
@@ -1586,7 +1612,7 @@ bool PatchFont(pure3d::Node& font) {
     }
     // A big key slot draws into kBigSlotScale of the stick's width (and
     // advances by that much less): no empty space after its key.
-    if (k >= 6 + kSmallSlots) {
+    if (k >= 6 + kFirstBig && k < 6 + kFirstCard) {
       float width_f, advance_f;
       const uint32_t w = pure3d::Le32(&r[28]), a = pure3d::Le32(&r[32]);
       std::memcpy(&width_f, &w, 4);
@@ -1774,10 +1800,11 @@ bool KeysShown() { return g_keys_shown.load(); }
 namespace {
 // Lends a slot to `what` (Slot): the one already holding it, else the least
 // recently asked.
-char16_t LendSlot(const std::string& what, bool big) {
+char16_t LendSlot(const std::string& what, SlotSize size) {
   std::lock_guard<std::mutex> lock(g.mutex);
-  // Small slots 0-15 (A-sized), big ones 16-19 (stick-sized).
-  const size_t first = big ? kSmallSlots : 0, end = big ? kSlotCount : kSmallSlots;
+  // Small slots 0-15 (A-sized), big ones 16-19 (stick-sized), card ones 20-25.
+  const size_t first = size == SlotSize::kBig ? kFirstBig : size == SlotSize::kCard ? kFirstCard : 0;
+  const size_t end = size == SlotSize::kBig ? kFirstCard : size == SlotSize::kCard ? kSlotCount : kFirstBig;
   size_t slot = first;
   for (size_t i = first; i < end; ++i) {
     if (g_slots[i].what == what) {
@@ -1795,12 +1822,12 @@ char16_t LendSlot(const std::string& what, bool big) {
 }
 }  // namespace
 
-char16_t KeyGlyph(Input key, bool big) {
+char16_t KeyGlyph(Input key, SlotSize size) {
   if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
-  return LendSlot("K " + std::to_string(key), big);
+  return LendSlot("K " + std::to_string(key), size);
 }
 
-char16_t ButtonGlyph(std::string_view pad, bool big) {
+char16_t ButtonGlyph(std::string_view pad, SlotSize size) {
   if (!g_menu_glyphs.load()) return 0;
   // The 360 control names of input/bindings.h (ActionInfo::pad).
   static const std::map<std::string_view, int> kNames = {
@@ -1810,7 +1837,7 @@ char16_t ButtonGlyph(std::string_view pad, bool big) {
       {"Left stick circles", kPadLeftStick},    {"Right stick", kPadRightStick},
   };
   const auto it = kNames.find(pad);
-  return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second), big);
+  return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second), size);
 }
 
 char16_t MenuGlyph(char16_t c) {
@@ -1868,10 +1895,10 @@ std::u16string SpinLine(const std::u16string& text) {
   if (KeysShown()) {
     if (const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
       const Input key = FirstKey(driver->bindings(), kbm::kSpin);
-      if (key != kbm::kNoInput) button = KeyGlyph(key, !words);
+      if (key != kbm::kNoInput) button = KeyGlyph(key, words ? SlotSize::kText : SlotSize::kBig);
     }
   } else {
-    button = ButtonGlyph("LB", !words);
+    button = ButtonGlyph("LB", words ? SlotSize::kText : SlotSize::kBig);
   }
   if (!button) return {};
   if (words) return u"Or press " + std::u16string(1, button);

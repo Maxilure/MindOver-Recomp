@@ -103,6 +103,7 @@ bool Font::Load(std::string_view name) {
     if (font.id != kChunkTextureFont || FontName(d, font) != name) continue;
     pages_.clear();
     glyphs_.clear();
+    picture_advance_.clear();
     const std::vector<Chunk> parts = pure3d::ChildrenOf(d, font);
     for (const Chunk& c : parts) {
       if (c.id == kChunkTexture) {
@@ -118,7 +119,11 @@ bool Font::Load(std::string_view name) {
           const uint8_t* r = &d[c.offset + 16 + 40 * i];
           const uint32_t page = Le32(r);
           const uint32_t character = Le32(r + 36);
-          if (page & 0x80000000u || character > 0xFFFF) continue;  // a button picture
+          if (character > 0xFFFF) continue;
+          if (page & 0x80000000u) {  // a button picture: only its width is kept (Measure)
+            picture_advance_[char16_t(character)] = LeFloat(r + 32);
+            continue;
+          }
           Glyph g;
           g.page = page;
           g.u0 = LeFloat(r + 4);
@@ -180,22 +185,35 @@ bool Font::Load(std::string_view name) {
 
 const Glyph* Font::Find(char16_t c) const {
   const auto it = glyphs_.find(c);
-  if (it != glyphs_.end()) return &it->second;
-  // The port's own picture glyphs (input/prompt_icons.h: the menus' buttons
-  // U+E0B1.., the key slots U+E100..), added to the game's fonts by a data
-  // patch, aren't in the disc's font this reads: they measure like the A
-  // button's picture they're copies of.
-  if (c >= 0xE000 && c < 0xE200) {
-    const auto a = glyphs_.find(u'\u00B1');
-    return a != glyphs_.end() ? &a->second : nullptr;
-  }
-  return nullptr;
+  // (Button pictures aren't glyphs we draw: Measure counts them through
+  // PictureAdvance.)
+  return it != glyphs_.end() ? &it->second : nullptr;
+}
+
+float Font::PictureAdvance(char16_t c) const {
+  auto advance_of = [&](char16_t picture) {
+    const auto it = picture_advance_.find(picture);
+    return it != picture_advance_.end() ? it->second : 0.0f;
+  };
+  if (const float a = advance_of(c)) return a;
+  // The port's own picture glyphs (input/prompt_icons.h), added by its font
+  // patch, aren't in the disc's font: they're as wide as the pictures they're
+  // copies of. The big slots (U+E110..E113) copy the left stick's (narrowed
+  // to 0.65: counted whole, a little room to spare), every other one, the
+  // card slots too, the A button's.
+  if (c >= 0xE110 && c < 0xE114) return advance_of(u'\u00B9');
+  if (c >= 0xE000 && c < 0xE200) return advance_of(u'\u00B1');
+  return 0.0f;
 }
 
 float Font::Measure(std::u16string_view text) const {
   float width = 0;
   for (char16_t c : text) {
-    if (const Glyph* g = Find(c)) width += g->advance;
+    if (const Glyph* g = Find(c)) {
+      width += g->advance;
+    } else {
+      width += PictureAdvance(c);
+    }
   }
   return width;
 }

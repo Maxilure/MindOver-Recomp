@@ -160,8 +160,29 @@ Options key rows' card says "Controller: [Cross]" with a PlayStation 5 set;
 with Automatic before any controller was used, or Xbox 360, it is the game's
 own picture of that button, copied from the disc's font page (a stick's
 picture is the top three quarters of its page, fitted with its shape kept).
-The game's fonts as the port reads them from the disc (ui/game_font.h, for
-measuring) don't have the added glyphs: they measure like the A picture.
+**Card slots (2026-10-15).** Inside the Options cards' small print (drawn at
+0.72 x) an A-sized picture, and the game's own left stick most of all, were
+too small to make out (a stick squeezed into the A's 49-pixel circle). Six
+more slots, U+E114 to U+E119, are copies of the A picture's page (64 x 64,
+on the text line like a letter), and their picture fills the page's whole
+width and up to 54 rows, centred on the A's circle: a stick 64 wide, a
+button 54 across, a little larger than the game's own. (A first version
+copied the left stick's 128 x 96 page and filled 80 rows: twice too big in
+a playtest, and it hung below the line.) `KeyGlyph(key, SlotSize::kCard)` /
+`ButtonGlyph(name, SlotSize::kCard)` lend them; every card text that names a
+key or a button now shows it this way ("Controller: [stick] up", "Hold [LB]
+or [Q]...", "[Esc] or [B]: cancel", the Controller Icons card shows A B X Y
+in the chosen style). The other two sizes: `kText` (the 16 A-sized slots of
+the rows) and `kBig` (the 4 stick-sized spin-row slots, section 5).
+
+**Measuring them.** The port measures text with the game's fonts as it reads
+them from the disc (ui/game_font.h). The button pictures' glyphs used to be
+skipped there entirely, so a picture counted as 0 wide and lines with
+pictures ran out of the card. A photo showed the game draws a picture at
+its record's size, like a letter (the left stick's record = 128 font pixels
+wide, about four letters of Titans_Small): the reader now keeps every
+picture's advance, and the port's added glyphs measure like the picture they
+copy (the left stick's for the big slots, the A's for all the others).
 
 **The B floating in the world** (over a save totem, a stunned titan, things
 to use) isn't a font glyph: it's a texture of its own,

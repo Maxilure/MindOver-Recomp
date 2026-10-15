@@ -3,6 +3,8 @@
 // =============================================================================
 #include "keyboard_mouse.h"
 
+#include "../options/options_menu.h"
+
 #include "players.h"
 #include "../players/more_players.h"
 #include "../gameplay/game_mods.h"
@@ -645,11 +647,23 @@ void KeyboardMouseDriver::MenuMouseDown(Input input, Clock::time_point now) {
     case Input(rex::ui::VirtualKey::kRButton):
       if (pulses_.size() < 4) pulses_.push_back(X_INPUT_GAMEPAD_B);
       break;
+    // A list that scrolls by itself (the Options screen's long tabs) takes
+    // the notch: the list moves, the selection doesn't (playtest, 2026-10-15:
+    // a notch as a D-pad press moved the cursor first). Any other menu: a
+    // step up / down.
     case kWheelUp:
-      if (pulses_.size() < 4) pulses_.push_back(X_INPUT_GAMEPAD_DPAD_UP);
+      if (options_menu::WheelScrollsList()) {
+        list_wheel_ = std::max(-8, list_wheel_ - 1);
+      } else if (pulses_.size() < 4) {
+        pulses_.push_back(X_INPUT_GAMEPAD_DPAD_UP);
+      }
       break;
     case kWheelDown:
-      if (pulses_.size() < 4) pulses_.push_back(X_INPUT_GAMEPAD_DPAD_DOWN);
+      if (options_menu::WheelScrollsList()) {
+        list_wheel_ = std::min(8, list_wheel_ + 1);
+      } else if (pulses_.size() < 4) {
+        pulses_.push_back(X_INPUT_GAMEPAD_DPAD_DOWN);
+      }
       break;
     default:
       break;
@@ -724,6 +738,13 @@ void KeyboardMouseDriver::OnMouseMove(rex::ui::MouseEvent& e) {
 bool KeyboardMouseDriver::SpinHeld() const {
   std::lock_guard<std::mutex> lock(mutex_);
   return spin_held_;
+}
+
+int KeyboardMouseDriver::TakeListWheel() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  const int notches = list_wheel_;
+  list_wheel_ = 0;
+  return notches;
 }
 
 bool KeyboardMouseDriver::TakeSpinCircle() {
@@ -858,9 +879,9 @@ extern "C" REX_FUNC(sub_8221E200) {
     }
     return;
   }
-  // Keep spinning feeds the current spin with Light attack presses: a new
-  // circle now would start a fresh spin and cut it (gameplay/game_mods.h).
-  if (game_mods::Feeding(player)) return;
+  // Keep spinning holds the current spin (the wrapper below): a new circle
+  // now would start a fresh spin and cut it (gameplay/game_mods.h).
+  if (game_mods::Holding(player)) return;
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   const bool keyboard = driver && assignment && assignment->KeyboardAnswersFor(uint32_t(player));
@@ -887,4 +908,50 @@ extern "C" REX_FUNC(sub_8221E200) {
   ctx.r3.u64 = 1;
   if (on_foot) game_mods::SpinStarted(player);
   if (REXCVAR_GET(debug_kbm_trace)) REXLOG_INFO("KBM: Spin: a full circle for player {} ({})", player + 1, from);
+}
+
+// -----------------------------------------------------------------------------
+// KEEP SPINNING, the game's way (findings/40 s.4.3). Crash's spin state
+// (Crash.bfig SpinAttack) decides "spin again" in compiled decisions, one per
+// spin upgrade: sub_821A3578 (exit 609), ..3628 (611), ..36D8 (613), ..3788
+// (615), ..3838 (617), ..38E8 (619), ..3998 (621), ..3A48 (623), plus the
+// spinner ones ..3AF8 (627) and ..3C20 (629). Each asks, once the spin has
+// run a moment: CheckInputEvent(PLAYER, ATTACK_LIGHT) (sub_8221F1E8, a
+// PRESS = the Old Skool "Repeatedly Press Light Attack") OR HasLookDone360
+// (sub_8221E1C8: did the RIGHT stick make a circle?); either = spin again
+// (the disc's Lua copy, fighttrees/Crashlua lines 4735-5080, reads the same).
+// While the player holds the spin (game_mods::Holding), the second question
+// is answered "yes" for THOSE call sites only (by return address): no button
+// is faked, so a Light attack the player holds stays theirs, and the right
+// stick's other uses (the co-op power shot) are untouched. The game's own
+// limit still applies: after the last upgrade the spin goes to Alert ->
+// OnePressTooMany -> dizzy.
+// -----------------------------------------------------------------------------
+extern "C" REX_FUNC(__imp__sub_8221E1C8);
+static bool FromSpinAgainDecision(uint32_t return_address) {
+  // The instruction after each decision's `bl 0x8221E1C8` (xexdis).
+  static constexpr uint32_t kSites[] = {0x821A35E8, 0x821A3698, 0x821A3748, 0x821A37F8, 0x821A38A8,
+                                        0x821A3958, 0x821A3A08, 0x821A3AB8, 0x821A3B64, 0x821A3CB0};
+  for (uint32_t site : kSites) {
+    if (return_address == site) return true;
+  }
+  return false;
+}
+
+extern "C" REX_FUNC(sub_8221E1C8) {
+  const uint32_t character = ctx.r3.u32;
+  const uint32_t caller = static_cast<uint32_t>(ctx.lr);
+  __imp__sub_8221E1C8(ctx, base);
+  if ((ctx.r3.u32 & 0xFF) || !FromSpinAgainDecision(caller)) return;
+  int player = -1;
+  for (int p = 0; p < 4 && player < 0; ++p) {
+    const uint32_t crash = more_players::CharacterOfPlayer(p);
+    if (crash && character == crash + kActorBehaviours) player = p;
+  }
+  if (player < 0 || !game_mods::Holding(player)) return;
+  if (ControllerLocked(ctx, base, character)) return;  // a cutscene took control
+  ctx.r3.u64 = 1;
+  if (REXCVAR_GET(debug_kbm_trace)) {
+    REXLOG_INFO("KBM: keep spinning: player {}'s spin goes on (decision {:08X})", player + 1, caller - 4);
+  }
 }

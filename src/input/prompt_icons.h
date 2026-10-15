@@ -113,21 +113,27 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // in). For menus the port builds (options/options_menu.cpp). Any thread.
 char16_t MenuGlyph(char16_t c);
 
+// How big a slot picture is drawn (the font patch's three kinds of slots):
+//   kText = A-sized (16 slots, U+E100..): a key or button among words;
+//   kBig  = as large as the left stick's picture (4 slots, U+E110..): the
+//           spin rows' button under "stick + arrow";
+//   kCard = the left stick's whole page, the picture filling it (6 slots,
+//           U+E114..): pictures inside the Options cards' small print.
+enum class SlotSize { kText, kBig, kCard };
+
 // A picture of `key` (a keyboard key / mouse button, kbm::Input) as a
 // character of the game's fonts, for texts the port writes (the Options
-// screen's key rows): one of 16 KEY SLOTS our font patch adds (U+E100..),
-// lent to the key until 16 others were asked for since; its page shows the
+// screen's key rows and cards): a SLOT our font patch adds, lent to the key
+// until enough others of its size were asked for since; its page shows the
 // key in the chosen key set from the next frame on. 0 = no slots (the font
 // patch isn't in): write the key's name instead. Game main thread.
-// `big` = one of the 4 BIG slots (U+E110..), drawn as large as the left
-// stick's picture (the spin rows' button under "stick + arrow").
-char16_t KeyGlyph(uint16_t key, bool big = false);
+char16_t KeyGlyph(uint16_t key, SlotSize size = SlotSize::kText);
 // The same for a CONTROLLER button, by its 360 name as input/bindings.h
 // writes it ("A", "RT", "Back", "Left stick"...): drawn in the Controller
 // Icons style (Automatic: the controller used last; the game's own 360
 // picture when that's the style or nothing better is known). 0 = no slots
 // or an unknown name. Game main thread.
-char16_t ButtonGlyph(std::string_view pad, bool big = false);
+char16_t ButtonGlyph(std::string_view pad, SlotSize size = SlotSize::kText);
 
 // Are the prompts showing keys right now (the keyboard / mouse was used last,
 // or --button_prompts says so)? For screens that pick their own prompts

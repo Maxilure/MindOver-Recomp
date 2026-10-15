@@ -16,7 +16,9 @@ no game files. The launcher builds the game on your computer, from your disc.
 **An Options screen** in the game's own look (Pause → Options, and new in
 the main menu): tabs (LB / RB), every change takes effect at once. A card
 beside the list explains the selected setting (a second glass panel, with
-a picture where it helps).
+a picture where it helps), showing the keys and controller buttons it talks
+about as pictures. Long tabs slide one row at a time (the mouse wheel too),
+with the row's place shown under the list.
 
 - **Display**: frame-rate cap, renderer (Emulated Only, Emulated, Native,
   Native Only; X on Emulated or Native opens Dual Mode), brightness (the
@@ -48,8 +50,8 @@ a picture where it helps).
   **Partner Hits** (Keep Combos by default: a partner's hit no longer ends
   your hit combo; End Combos = the original), **Simple Spinning** (one button spins: LB on a controller, the Spin key
   on the keyboard; the spin tutorials show it in a second row) and **Keep Spinning: Hold to Spin** (hold LB or Spin, or keep
-  circling the stick, and Crash keeps spinning: the game's Old Skool spin
-  with the Light attack presses made for you).
+  circling the stick, and Crash keeps spinning: the game's Old Skool spin,
+  its "spin again" decision answered directly, so no button is pressed for you).
 - **Native Only** (the port's own renderer alone, the lightest) is now the
   default picture; the emulated one is a choice away.
 

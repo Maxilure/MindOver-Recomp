@@ -8,7 +8,7 @@ the game's menu library). Builds on the menu research of findings/30.
 
 ![Two tabs of the Options screen](../images/options-screen-tabs.jpg)
 
-*Left: the Display tab, page 1 of 2 (the arrows show the selected value
+*(2026-10-15: pages are now a sliding list, section 3.) Left: the Display tab, page 1 of 2 (the arrows show the selected value
 can move both ways; beside the glass: "1/2" and a down arrow). Right: page
 2, the FPS Counter row. (The first layout: since section 7 the description
 sits in a card on the right and the page markers under the rows.)*
@@ -116,14 +116,24 @@ Then:
 What the rows are and do lives in `options_settings.cpp`: label, values,
 description and warning per value, how to read / write / apply each.
 
-**Pages.** A tab shows five rows at a time; a longer one is cut into pages.
-The menu's own up / down (Scrooby `Menu::MoveNext` `sub_8237A668` /
-`MovePrevious` `sub_8237A550`, already hooked by the save list) asks the
-screen first: past the last / first row of a page it turns to the next /
-previous page (wrapping around), the cursor lands on its first / last row,
-and the menu plays its usual sound. Under the rows (first beside the glass): the
-map's arrow (turned over for "up") where there are more rows that way, and
-"1/2" between them.
+**A sliding list (2026-10-15; pages before).** A tab shows seven rows at a
+time; a longer one slides ONE ROW at a time, like the save list. The menu's
+own up / down (Scrooby `Menu::MoveNext` `sub_8237A668` / `MovePrevious`
+`sub_8237A550`, already hooked by the save list) asks the screen first:
+when the next row that can be selected (headings are skipped) is off
+screen, the list slides so it comes in at the bottom (going down) or the top
+(going up, with a heading right above it shown too), and the menu plays its
+usual sound. Past either end of the list it goes around to the other end, as
+the game's menus wrap. The MOUSE WHEEL scrolls the list itself, not the
+selection: while the open tab is longer than the screen
+(`options_menu::WheelScrollsList`) the keyboard driver hands its notches to
+the screen instead of making D-pad presses (`TakeListWheel`), one row a
+notch, stopping at the ends; the cursor stays on its row while that row is
+on screen, and is carried along at the edge when it would leave (the menu's
+cursor is always one of the seven rows shown). Under the rows (first beside the glass): the map's
+arrow (turned over for "up"), faded where there are no more rows that way
+(a click slides the list one row), and between them the selected row's
+place among the rows that can be selected, "9/18" (it was the page, "2/3").
 
 **The prompts.** Lower right: "Select A" (A changes the value; section
 8), set by the screen in game too, where the state's own prompts were Back

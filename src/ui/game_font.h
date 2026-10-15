@@ -90,6 +90,12 @@ class Font {
   };
   std::vector<Page> pages_;
   std::unordered_map<char16_t, Glyph> glyphs_;
+  // The button PICTURES' advances (their glyphs aren't drawn by us, but
+  // Measure must count them: a picture is as wide as its record says, e.g.
+  // the left stick 128 font pixels = four letters; measured on a photo,
+  // 2026-10-15).
+  std::unordered_map<char16_t, float> picture_advance_;
+  float PictureAdvance(char16_t c) const;
   float cell_height_ = 0, cap_height_ = 0;
 };
 

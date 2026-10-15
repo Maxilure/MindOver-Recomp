@@ -24,10 +24,15 @@
 //     (input/prompt_icons.cpp SpinRows).
 //   * keep_spinning (default false = original; needs simple_spinning): HOLD
 //     the spin to keep spinning. The original's continuous spin is the "Old
-//     Skool" move: spin once, then press Light attack again and again. While
-//     on, a spin that was just started keeps getting those Light attack
-//     presses for as long as the player keeps spinning: LB or the Spin key
-//     held, or the left stick still circling.
+//     Skool" move: spin once, then press Light attack again and again. The
+//     spin state's compiled decisions (sub_821A3578..sub_821A3C20, exits
+//     609-623 / 627 / 629) each ask "Light attack pressed?" (CheckInputEvent
+//     sub_8221F1E8, PLAYER 5 / ATTACK_LIGHT 8) OR "did the RIGHT stick make a
+//     circle?" (HasLookDone360 sub_8221E1C8): either one = spin again. We
+//     answer the second question "yes" from those decisions only, while the
+//     player holds the spin (LB or the Spin key held, or the left stick still
+//     circling). NO button is pressed for the player: a Light attack held
+//     through the spin stays theirs (findings/40 s.4.3).
 //
 // HOW THE GAME DECIDES A HIT (found 2026-10-15, findings/40 s.1):
 //   Each character's CDamageableBehaviour (vtable 0x8202D2E4) gets its hits
@@ -52,8 +57,8 @@ namespace game_mods {
 
 // The keyboard's / a controller's state for socket `user` (= player, 0-3),
 // right after the game read it (the XInputGetState wrapper in
-// save_library.cpp): simple spinning takes LB here, keep spinning adds its
-// Light attack presses.
+// save_library.cpp): simple spinning takes LB here, and the stick's
+// circling is followed (keep spinning's "still circling").
 // `gamepad` = the guest X_INPUT_GAMEPAD (big-endian).
 void FilterPad(uint32_t user, uint8_t* gamepad, bool connected);
 
@@ -66,8 +71,10 @@ void SpinStarted(int p);
 // TakeSpinCircle. Game threads.
 bool TakeButtonSpin(int p);
 
-// Keep spinning is feeding player p's spin right now (the keyboard's Spin
-// key then hands out no new circles: a fresh spin would cut the old one).
-bool Feeding(int p);
+// Keep spinning holds player p's spin right now: the spin state's "spin
+// again?" decisions hear yes (input/keyboard_mouse.cpp, the HasLookDone360
+// wrapper). The Spin key / LB then hand out no new circles (a fresh spin
+// would cut the Old Skool spin short).
+bool Holding(int p);
 
 }  // namespace game_mods

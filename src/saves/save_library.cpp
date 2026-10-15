@@ -1571,8 +1571,8 @@ extern "C" REX_FUNC(sub_820CCB08) {
 extern "C" REX_FUNC(sub_8237A668) {
   using namespace save_library;
   const uint32_t menu = ctx.r3.u32;
-  if (options_menu::TurnPage(menu, +1, base)) {  // the Options screen's pages
-    ctx.r3.u64 = 1;
+  if (const int moved = options_menu::TurnPage(menu, +1, base)) {  // the Options screen's sliding list
+    ctx.r3.u64 = moved > 0 ? 1 : 0;
     return;
   }
   if (OwnsSlotMenu(menu)) {
@@ -1596,8 +1596,8 @@ extern "C" REX_FUNC(sub_8237A668) {
 extern "C" REX_FUNC(sub_8237A550) {
   using namespace save_library;
   const uint32_t menu = ctx.r3.u32;
-  if (options_menu::TurnPage(menu, -1, base)) {  // the Options screen's pages
-    ctx.r3.u64 = 1;
+  if (const int moved = options_menu::TurnPage(menu, -1, base)) {  // the Options screen's sliding list
+    ctx.r3.u64 = moved > 0 ? 1 : 0;
     return;
   }
   if (OwnsSlotMenu(menu)) {

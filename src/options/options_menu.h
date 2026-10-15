@@ -50,6 +50,10 @@ void SeePad(uint32_t user, const uint8_t* gamepad);
 
 // The Options screen is up (for other code that wants to stay out of its way).
 bool Open();
+// Does a mouse wheel notch scroll the screen's list (the open tab is longer
+// than the screen) rather than step the selection? Read by the keyboard
+// driver (input/keyboard_mouse.cpp, any thread).
+bool WheelScrollsList();
 
 // A key row is waiting for a new key (A on an action's row, Controls tab):
 // the controllers must say nothing to the game meanwhile. Any thread.
@@ -59,12 +63,14 @@ bool Capturing();
 // buttons that were held then until they're let go. Game threads.
 void FilterPad(uint32_t user, uint8_t* gamepad);
 
-// PAGES: the menu's own move (Scrooby Menu::MoveNext sub_8237A668 / Previous
-// sub_8237A550, hooked by saves/save_library.cpp) asks this first: moving
-// past the last / first row of a tab's page turns to the next / previous page
-// (wrapping around) and returns true (= "moved": the menu plays its sound).
-// False for any other menu, or when the move stays on the page.
-bool TurnPage(uint32_t menu, int direction, uint8_t* base);
+// THE SLIDING LIST (2026-10-15; was pages): the menu's own move (Scrooby
+// Menu::MoveNext sub_8237A668 / Previous sub_8237A550, hooked by
+// saves/save_library.cpp) asks this first. Moving past the last / first row on
+// screen slides the tab's list by one row (headings skipped; past the list's
+// end: around to the other end). Returns 1 = moved (the menu plays its
+// sound), 0 = not ours / the menu's own move on screen. (The mouse wheel
+// doesn't come this way: it scrolls the list itself, WheelScrollsList.)
+int TurnPage(uint32_t menu, int direction, uint8_t* base);
 
 // THE GLASS MOVES LEFT (2026-10-11): the in-game screen's action
 // (CInGameOptionsScreenAction) Enter, after the original (players/

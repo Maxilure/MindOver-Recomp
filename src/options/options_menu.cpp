@@ -135,8 +135,8 @@ struct Screen {
   uint32_t action = 0;  // our CMenuAction while the screen is up
   uint32_t page = 0, menu = 0;
   int tab = 0;          // kept between visits
-  int row_page = 0;     // which kRows rows of the tab are shown (pages)
-  int pending_select = -1;  // a page turned inside the menu's own move: select this after
+  int top = 0;          // the tab's first row on screen: the list SLIDES, one row at a time
+  int pending_select = -1;  // the list slid inside the menu's own move: select this screen row after
   int selection = -1;   // the row the texts were made for
   int focused = -1;     // the row whose focus() was told "on"
   uint16_t seen = 0;    // the owner's buttons at the last Update
@@ -178,6 +178,7 @@ struct Screen {
 };
 Screen g;
 std::atomic<bool> g_open{false};
+std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
 // The in-game screen's CInGameOptionsScreenAction while it's up (its +20
 // page and +32 glass layer: hidden under a question), 0 otherwise.
 uint32_t g_screen_action = 0;
@@ -360,10 +361,17 @@ std::u16string Wrap(const std::u16string& text, float width, float scale, int* l
 
 const std::vector<Row>& Rows() { return options_settings::Tabs()[size_t(g.tab)].rows; }
 
-// PAGES: a tab shows kRows rows at a time; the screen's row r is the tab's
-// row First() + r.
-int PageCount() { return std::max(1, (int(Rows().size()) + kRows - 1) / kRows); }
-int First() { return g.row_page * kRows; }
+// A SLIDING LIST (2026-10-15; was pages of kRows): a tab shows kRows rows
+// at a time, from its row g.top on; the screen's row r is the tab's row
+// First() + r. Stepping past the window's edge slides it by ONE row (like the
+// save list), so the mouse wheel goes through the rows one by one.
+int First() { return g.top; }
+bool Slides() { return int(Rows().size()) > kRows; }
+int LastTop() { return std::max(0, int(Rows().size()) - kRows); }
+bool Selectable(int i) {
+  const auto& rows = Rows();
+  return i >= 0 && i < int(rows.size()) && rows[size_t(i)].kind != Kind::kHeader;
+}
 int VisibleCount() { return std::min(kRows, int(Rows().size()) - First()); }
 // The tab's row under the cursor (screen row `sel`), or null.
 const Row* RowOnScreen(int sel) {
@@ -645,18 +653,24 @@ void Refresh(Env& env) {
       CentrePulse(base, g.value[r], value);
     }
   }
-  // The page markers: only for a tab with more than one page; "page /
-  // pages" and both arrows, faded where there are no more rows that way.
-  const int pages = PageCount();
-  scrooby::SetVisible(base, g.page_up, pages > 1);
-  scrooby::SetVisible(base, g.page_down, pages > 1);
-  if (pages > 1) {
-    scrooby::SetColour(ctx, base, g.page_up, g.row_page > 0 ? kArrowOn : kArrowFaded);
-    scrooby::SetColour(ctx, base, g.page_down, g.row_page + 1 < pages ? kArrowOn : kArrowFaded);
-  }
-  scrooby::SetVisible(base, g.page_text, pages > 1);
-  if (pages > 1) {
-    const std::string text = fmt::format("{}/{}", g.row_page + 1, pages);
+  // The list's markers: only for a tab longer than the screen; "row / rows"
+  // (the selected row among the rows that can be selected: headings don't
+  // count) and both arrows, faded where there are no more rows that way.
+  const bool slides = Slides();
+  g_wheel_list = slides;
+  scrooby::SetVisible(base, g.page_up, slides);
+  scrooby::SetVisible(base, g.page_down, slides);
+  scrooby::SetVisible(base, g.page_text, slides);
+  if (slides) {
+    scrooby::SetColour(ctx, base, g.page_up, g.top > 0 ? kArrowOn : kArrowFaded);
+    scrooby::SetColour(ctx, base, g.page_down, g.top < LastTop() ? kArrowOn : kArrowFaded);
+    int position = 0, count = 0;
+    for (int r = 0; r < int(Rows().size()); ++r) {
+      if (!Selectable(r)) continue;
+      ++count;
+      if (r <= First() + sel) position = count;
+    }
+    const std::string text = fmt::format("{}/{}", position, count);
     scrooby::SetText(ctx, base, g.page_text, std::u16string(text.begin(), text.end()));
   }
   // The card: the selected row's value (its name for star and action rows,
@@ -677,8 +691,15 @@ void Refresh(Env& env) {
     const bool asking = row.key_action == g.capture_action;
     heading = asking ? std::u16string(u"Press a Key") : options_settings::KeysText(row.key_action);
     if (asking) {
+      // Esc as its picture (a card slot, prompt_icons.h), its name without the slots.
+      const kbm::Input esc = kbm::ParseInput("Escape");
+      const char16_t esc_glyph = prompt_icons::KeyGlyph(esc, prompt_icons::SlotSize::kCard);
+      const std::string esc_name = kbm::InputLabel(esc);
+      const char16_t b_glyph = prompt_icons::ButtonGlyph("B", prompt_icons::SlotSize::kCard);
       description = u"Press the new " + std::u16string(g.capture_slot ? u"second " : u"") +
-                    u"key or mouse button for " + row.label + u". Esc: cancel.";
+                    u"key or mouse button for " + row.label + u". " +
+                    (esc_glyph ? std::u16string(1, esc_glyph) : std::u16string(esc_name.begin(), esc_name.end())) +
+                    u" or " + (b_glyph ? std::u16string(1, b_glyph) : std::u16string(u"B")) + u": cancel.";
       warning.clear();
     } else if (g.key_message_row == First() + sel && unavailable.empty()) {
       warning = g.key_message;
@@ -720,7 +741,7 @@ void SwitchTab(Env& env, int delta) {
   const int count = int(options_settings::Tabs().size());
   g.tab = (g.tab + delta + count) % count;
   g.key_message_row = -1;
-  g.row_page = 0;
+  g.top = 0;
   scrooby::Select(env.ctx, env.base, g.menu, 0);
   scrooby::PlaySound(env.ctx, env.base,
                      delta < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
@@ -970,22 +991,50 @@ void FilterPad(uint32_t user, uint8_t* gamepad) {
   gamepad[1] = uint8_t(out);
 }
 
-bool TurnPage(uint32_t menu, int direction, uint8_t* base) {
-  if (!g.action || menu != g.menu) return false;
-  const int pages = PageCount();
-  if (pages <= 1) return false;  // the menu's own wrap-around
-  const int sel = scrooby::Selection(base, g.menu);
-  if (direction > 0 && sel >= VisibleCount() - 1) {
-    g.row_page = (g.row_page + 1) % pages;
-    g.pending_select = 0;
-    return true;
+int TurnPage(uint32_t menu, int direction, uint8_t* base) {
+  if (!g.action || menu != g.menu || !Slides()) return 0;  // short lists: the menu's own move
+  const int count = int(Rows().size());
+  const int current = First() + scrooby::Selection(base, g.menu);
+  // The next row that can be selected that way (headings are skipped).
+  int next = current + direction;
+  while (next >= 0 && next < count && !Selectable(next)) next += direction;
+  if (next < 0 || next >= count) {
+    // Past an end: around to the other end, as the game's menus wrap.
+    next = direction > 0 ? 0 : count - 1;
+    while (next >= 0 && next < count && !Selectable(next)) next -= direction;
+    if (next < 0 || next >= count) return 0;
+    g.top = direction > 0 ? 0 : LastTop();
+  } else if (next >= First() && next < First() + kRows) {
+    return 0;  // on screen: the menu's own move
+  } else if (direction > 0) {
+    g.top = std::min(LastTop(), next - kRows + 1);  // slides down: the row comes in at the bottom
+  } else {
+    g.top = next;  // slides up: the row comes in at the top...
+    // ...with a heading just above it shown too.
+    while (g.top > 0 && !Selectable(g.top - 1)) --g.top;
   }
-  if (direction < 0 && sel <= 0) {
-    g.row_page = (g.row_page + pages - 1) % pages;
-    g.pending_select = VisibleCount() - 1;
-    return true;
+  g.pending_select = next - g.top;
+  return 1;
+}
+
+// The list's arrows clicked, or the mouse wheel: the window slides one row;
+// the cursor stays on its row if that's still on screen, else on the nearest
+// row that is (the menu's cursor is one of the rows on screen).
+void SlideBy(Env& env, int delta) {
+  const int top = std::clamp(g.top + delta, 0, LastTop());
+  if (top == g.top) return;
+  const int current = First() + scrooby::Selection(env.base, g.menu);
+  g.top = top;
+  int keep = current;
+  if (keep < g.top) {  // went off the top: the first selectable row on screen
+    keep = g.top;
+    while (keep < g.top + kRows - 1 && !Selectable(keep)) ++keep;
+  } else if (keep >= g.top + kRows) {  // off the bottom: the last one
+    keep = g.top + kRows - 1;
+    while (keep > g.top && !Selectable(keep)) --keep;
   }
-  return false;
+  g.pending_select = keep - g.top;
+  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kMove);
 }
 
 // The Options states' decisions (in game 956, main menu 96): held while a
@@ -1010,6 +1059,7 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
 }
 
 bool Open() { return g_open.load(std::memory_order_relaxed); }
+bool WheelScrollsList() { return Open() && g_wheel_list.load(std::memory_order_relaxed); }
 
 // ---------------------------------------------------------------------------
 // THE GLASS MOVES LEFT (the card stands on the right: options_page.h)
@@ -1091,7 +1141,7 @@ extern "C" REX_FUNC(sub_820D2828) {
   g.menu = Read32(base, action + kActionMenu);
   g.selection = -1;
   g.focused = -1;
-  g.row_page = 0;
+  g.top = 0;
   g.pending_select = -1;
   g.x_showing = true;  // the first Refresh writes the corners either way
   g.y_showing = true;
@@ -1202,16 +1252,28 @@ extern "C" REX_FUNC(sub_820D2A00) {
   const int owner = Owner(base);
   // The tabs answer to clicks: the previous tab's name or its key hint = LB,
   // the next one's = RB (input/mouse_menus.h).
-  // The page markers' arrows answer to clicks: the previous / next page.
-  if (g.capture_action < 0 && g.asking_row < 0 && PageCount() > 1) {
+  // The list's arrows answer to clicks: the list slides one row that way.
+  if (g.capture_action < 0 && g.asking_row < 0 && Slides()) {
     const uint32_t layer = MainMenuLayer(base);
     const int turn = mouse_menus::TakeClickOver(base, g.page_up, g.page, layer)     ? -1
                      : mouse_menus::TakeClickOver(base, g.page_down, g.page, layer) ? +1
                                                                                      : 0;
     if (turn) {
-      g.row_page = (g.row_page + turn + PageCount()) % PageCount();
-      g.pending_select = 0;  // the new page's rows, the cursor on its first (below)
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+      Env env{ctx, base, Owner(base)};
+      SlideBy(env, turn);  // the new rows and the cursor: below (pending_select)
+    }
+  }
+  // The mouse wheel scrolls the list (keyboard_mouse.cpp sends its notches
+  // here while WheelScrollsList): one row a notch; nothing at the ends.
+  if (auto* driver = kbm::KeyboardMouseDriver::Get()) {
+    const int notches = driver->TakeListWheel();
+    if (notches && g.capture_action < 0 && g.asking_row < 0 && Slides()) {
+      Env env{ctx, base, Owner(base)};
+      const int top = g.top;
+      SlideBy(env, std::clamp(notches, -kRows, kRows));
+      if (g.top != top) {
+        REXLOG_INFO("Options: the wheel scrolled the list to row {} (of {})", g.top + 1, int(Rows().size()));
+      }
     }
   }
   if (auto* driver = kbm::KeyboardMouseDriver::Get(); driver && g.capture_action < 0) {
@@ -1238,8 +1300,8 @@ extern "C" REX_FUNC(sub_820D2A00) {
   if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) return;
   Env env{ctx, base, owner};
   if (g.pending_select >= 0) {
-    // A page turned in the menu's own up / down (TurnPage): the new page's rows
-    // first, then the cursor on its first / last row.
+    // The list slid in the menu's own up / down (TurnPage) or by an arrow:
+    // the new rows first, then the cursor on its row.
     g.selection = -1;
     scrooby::Select(ctx, base, g.menu, 0);
     Refresh(env);

@@ -129,9 +129,9 @@ Measured: a 150 ms LB tap = one spin (`KBM: Spin: a full circle for player 1
 Where it runs: the game's XInputGetState wrapper (`sub_824742F0`,
 `save_library.cpp`) applies it LAST, after the input recording and after
 the prompts' controller check. Before that order, LB (taken away here) never
-counted as using the controller, and Keep Spinning's own Light attack
-presses switched a keyboard player's prompts to controller buttons; a replay
-would also have got the recorded presses twice.
+counted as using the controller (and Keep Spinning's first version, which
+made Light attack presses, switched a keyboard player's prompts to
+controller buttons; s.4.3).
 
 ### 4.2 Cutscenes lock the spin (the keyboard's too)
 
@@ -150,32 +150,73 @@ cutscene): no spin` lines, no spin. Before the walk, Q spun as usual.
 
 ### 4.3 Keep Spinning: hold to spin
 
-Needs Simple Spinning (the row is greyed out until it's on). With Hold to
-Spin on:
+Needs Simple Spinning (the row is greyed out until it's on).
 
-* when a spin starts for a player's Crash on foot (the
-  `HasControlDone360` wrapper `sub_8221E200` answers yes, from a real stick
-  circle or the Spin key), and the player **keeps spinning** within 0.5 s,
-  the port presses **Light attack** for them: the first press 150 ms after
-  the spin starts, then one every 150 ms, each held 60 ms (X reads released
-  in between, so each is a new press). The presses go into the player's
-  controller state in the game's XInputGetState wrapper (`sub_824742F0`,
-  `save_library.cpp`), after the keyboard's keys are merged in;
-* "keeps spinning" = the Spin key or LB held, or the left stick still
-  circling: pushed at least 60 % of the way and turning at least once a
-  second (speed smoothed over 0.15 s; a fast turn seen within the last 0.3 s
-  still counts, so a thumb that cuts a corner doesn't stop it);
-* while it feeds a spin, the Spin key hands out no new circles (a fresh
-  spin would cut the Old Skool spin short);
-* it stops at once when the player stops, a menu opens, or the player rides
-  a titan (titans have their own moves for Light attack).
+**How the game keeps a spin going.** Crash's spin is the state `SpinAttack`
+of his fight tree (`fighttrees/Crash.bfig`). Its branches are one per spin
+upgrade (`SpinUpgrade7` .. `SpinUpgrade1`, `NoUpgrade`), then `Alert` and the
+spinner ones; each re-enters the spin through an `ExitSpin`. The compiled
+decisions (the 360 runs C++ compiled from the tree, like the walking state
+of findings/22):
 
-Measured on Wumpa Island: Spin held 3 s = one circle, then the Old Skool
-spin (arms out, a different pose from the basic spin) for the whole hold;
-the feeding stopped when the key was let go. The left stick circled for
-5.5 s = the same, from one circle; LB held 3 s = the same. After about 2.5 s of non-stop spinning
-Crash gets **dizzy** (stars over his head) and stops: the Old Skool move's
-own rule, left as it is.
+| Decision | Returns | Asks `HasLookDone360` at |
+|---|---|---|
+| `sub_821A3578` | 609 | `0x821A35E4` |
+| `sub_821A3628` | 611 | `0x821A3694` |
+| `sub_821A36D8` | 613 | `0x821A3744` |
+| `sub_821A3788` | 615 | `0x821A37F4` |
+| `sub_821A3838` | 617 | `0x821A38A4` |
+| `sub_821A38E8` | 619 | `0x821A3954` |
+| `sub_821A3998` | 621 | `0x821A3A04` |
+| `sub_821A3A48` | 623 | `0x821A3AB4` |
+| `sub_821A3AF8` | 627 (spinner) | `0x821A3B60` |
+| `sub_821A3C20` | 629 (spinner) | `0x821A3CAC` |
+
+Each one, once the spin has run a moment (`f1` above a constant, the
+script's "20"), asks in order: **`CheckInputEvent(PLAYER, ATTACK_LIGHT)`**
+(`sub_8221F1E8`, r4 = 5, r5 = 8: a Light attack PRESS, the Old Skool
+"Repeatedly Press Light Attack"), a Wii shake (`sub_820E6FC0`, never true
+here), then **`HasLookDone360`** (`sub_8221E1C8`: did the RIGHT stick just
+make a full circle?). Any yes, and not on a bouncy platform
+(`sub_8215DAE8`), = spin again. The disc's Lua copy of the tree
+(`fighttrees/Crashlua`, source lines 4735-5080) reads the same.
+
+**What Keep Spinning does.** It answers the right-stick question "yes" from
+those ten call sites only (the wrapper checks the return address), while the
+player holds the spin. No button is pressed for the player: a Light attack
+held through the spin stays theirs and starts nothing when the spin ends,
+and the right stick's other uses (the co-op power shot) are untouched. The
+game's own rules still decide the rest: which upgrade branch plays, and the
+dizzy ending.
+
+The first version (2026-10-15) pressed Light attack for the player instead
+(a press every 150 ms in the controller state). Such a made-up press mixed
+with the player's own: a Light attack held when the spin ended went on into
+a Light attack. Replaced the same day.
+
+* "Holds the spin" = a spin started for a player's Crash on foot (the
+  `HasControlDone360` wrapper `sub_8221E200` answered yes, from a real stick
+  circle, LB or the Spin key) and within 0.5 s the player is still holding:
+  the Spin key or LB held, or the left stick still circling (pushed at least
+  60 % of the way and turning at least once a second, speed smoothed over
+  0.15 s; a fast turn seen within the last 0.3 s still counts, so a thumb
+  that cuts a corner doesn't stop it);
+* while it holds, the Spin key and LB hand out no new circles (a fresh spin
+  would cut the Old Skool spin short);
+* it stops at once when the player lets go, a menu opens, or the player rides
+  a titan (titans have their own moves); a locked controller (cutscene) gets
+  no yes either (s.4.2).
+
+Measured on Wumpa Island (keyboard, `--debug_kbm_trace` logs `keep spinning:
+player 1's spin goes on (decision ...)`): Spin held 4.5 s = one circle, then
+the Old Skool spin (arms out, a different pose from the basic spin), then
+after about 2.5 s of non-stop spinning Crash gets **dizzy** (stars over his
+head): the game's own rule, the same as mashing Light attack in the original
+(compared with Keep Spinning off and real presses). Spin held 1.2 s with
+Light attack held from 0.3 s to 5.3 s: the spin plays out, then Crash stands
+in his fighting stance with the button still down, the same as the original
+with that input (one run once showed a handstand animation there, not seen
+again in the repeat or in any original-rules run).
 
 ## 5. Not done / not tested
 
