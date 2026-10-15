@@ -40,7 +40,10 @@ with the row's place shown under the list.
   **texture sharpness** (crisper textures in the distance) and **motion blur** (new, the port's own: Off, Low, Medium, High) for the
   Native renderer: motion blur smears the scenery when the camera moves
   while the players stay sharp; the original game had none, so it starts
-  off. **Depth of field** (the game's gentle blur of the distance): Off,
+  off. Also Native only: **sharpening** (a contrast-adaptive filter over
+  the picture: Off, Low, Medium, High) and **shadow softness** (how wide the
+  characters' shadows fade at their edge: Sharper, Original, Softer,
+  Softest). **Depth of field** (the game's gentle blur of the distance): Off,
   Original or Strong, in both renderers. Settings that need the Native
   renderer are greyed out while the emulated picture is shown.
 - **Camera**: the co-op camera's settings.

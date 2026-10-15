@@ -23,6 +23,14 @@ REXCVAR_DEFINE_INT32(motion_blur, 0, "CrashMoM",
                      "Motion blur, the port's own (the original has none), native renderer only: "
                      "0 off, 1 low, 2 medium, 3 high")
     .range(0, 3);
+REXCVAR_DEFINE_INT32(shadow_softness, 1, "CrashMoM",
+                     "Soft character shadows' edge, native renderer only: 0 sharper, 1 original, "
+                     "2 softer, 3 softest")
+    .range(0, 3);
+REXCVAR_DEFINE_INT32(sharpening, 0, "CrashMoM",
+                     "Sharpening filter over the finished picture (contrast-adaptive), native renderer "
+                     "only: 0 off, 1 low, 2 medium, 3 high")
+    .range(0, 3);
 
 namespace post_effects {
 namespace {

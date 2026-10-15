@@ -34,7 +34,8 @@
 #include "guest.h"
 #include "scan.h"
 
-REXCVAR_DECLARE(int32_t, motion_blur);  // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, motion_blur);      // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, shadow_softness);  // effects/post_effects.cpp
 
 namespace native {
 
@@ -868,6 +869,13 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
     std::memcpy(p.mvp, d.mvp, sizeof(p.mvp));
     ReadConstants(base, dev, device::PsConstant(2), &p.offsets[0][0], 9);
     ReadConstants(base, dev, device::PsConstant(30), &p.weights[0][0], 9);
+    // SHADOW SOFTNESS (findings/41): how far the 9 taps reach, x the game's
+    // own offsets (about +-2 pixels): sharper 0.5, original 1, softer 1.5,
+    // softest 2. shadow.frag fills the wider kernels with extra rings. (3x
+    // was tried: a blur spreads the same darkness over a wider edge, and
+    // thin shadows, the sun overhead, faded almost away.)
+    constexpr float kSoftness[4] = {0.5f, 1.0f, 1.5f, 2.0f};
+    p.softness[0] = kSoftness[std::clamp(int(REXCVAR_GET(shadow_softness)), 0, 3)];
     d.block = 0;
   }
   return true;

@@ -78,6 +78,18 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "Only the native renderer sharpens textures: the emulated picture stays as the "
               "Xbox 360 drew it."};
     }
+  } else if (name == "sharpening") {
+    if (AsNumber(value) > 0) {
+      return {"Native renderer only",
+              "Only the native renderer sharpens the picture: the emulated picture stays as the "
+              "Xbox 360 drew it."};
+    }
+  } else if (name == "shadow_softness") {
+    if (AsNumber(value) != 1) {
+      return {"Native renderer only",
+              "Only the native renderer changes the shadows' edge: the emulated picture keeps the "
+              "Xbox 360's."};
+    }
   } else if (name == "event_logs") {
     if (!AsBool(value)) {
       return {"Less to go on",

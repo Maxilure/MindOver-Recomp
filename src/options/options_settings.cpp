@@ -423,6 +423,30 @@ Row TextureSharpnessRow() {
   return r;
 }
 
+// SHADOW SOFTNESS (findings/41): how wide the characters' soft shadows fade
+// at their edge (the shadow material's blur), native only.
+Row ShadowSoftnessRow() {
+  Row r = LevelRow(u"Shadow Softness", "shadow_softness", {u"Sharper", u"Original", u"Softer", u"Softest"},
+                   {u"Shadows under the characters get a crisper edge.",
+                    u"Shadows fade at their edge like the Xbox 360's.",
+                    u"Shadows fade over a wider edge.",
+                    u"The softest shadows, fading the widest."});
+  NeedsNative(r);
+  return r;
+}
+
+// SHARPENING (findings/41): a contrast-adaptive sharpening filter over the
+// whole finished picture (our present pass), native only.
+Row SharpeningRow() {
+  Row r = LevelRow(u"Sharpening", "sharpening", {u"Off (original)", u"Low", u"Medium", u"High"},
+                   {u"No sharpening, like the original game.",
+                    u"Fine detail a little crisper. Hard edges stay clean.",
+                    u"Crisper detail across the picture.",
+                    u"The crispest picture: may look grainy in places."});
+  NeedsNative(r);
+  return r;
+}
+
 // DEPTH OF FIELD (findings/15): the game's own gentle blur of the distance,
 // scaled on the way into its renderer, so both pictures follow.
 Row DepthOfFieldRow() {
@@ -739,7 +763,8 @@ std::vector<Tab> Build() {
       {u"Display",
        {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), FullscreenRow(), FpsCounterRow(),
         FpsPositionRow()}});
-  tabs.push_back({u"Graphics", {AntiAliasingRow(), TextureSharpnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
+  tabs.push_back({u"Graphics", {AntiAliasingRow(), TextureSharpnessRow(), SharpeningRow(),
+                                 ShadowSoftnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
       {u"Audio",
        {VolumeRow(u"Dialogue", {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},

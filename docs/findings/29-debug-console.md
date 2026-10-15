@@ -44,6 +44,7 @@ connection doesn't block commands sent on another.
 | `pos [p]`, `goto <p> <x> <y> <z>` | where a player is; teleport (`~` keeps a coordinate, `~5` adds 5) |
 | `photo` | F10; replies with the saved files once they're written |
 | `fkey <Key>` | an app shortcut (F5 cheats, F6 controls, F9 renderer...) as if pressed |
+| `flag <name> [value]` | a setting's value, or set it live like the Options screen (not saved; findings/41) |
 | `replay <file> [from] [to]` | play back recorded presses (section 3) |
 | anything else | a live input line, exactly like the FIFO's (`down`, `key Return`, `cheat god on`, `p2.start`) |
 

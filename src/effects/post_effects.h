@@ -1,7 +1,7 @@
 // =============================================================================
 // effects/post_effects.h -- the picture's effects as SETTINGS: depth of
-// field (the game's own, both renderers), anti-aliasing and motion blur
-// (native renderer only)
+// field (the game's own, both renderers), anti-aliasing, motion blur, shadow
+// softness and sharpening (native renderer only)
 // =============================================================================
 //
 // DEPTH OF FIELD (findings/15): the game blurs the distance a little every
@@ -22,6 +22,15 @@
 // 3 high) is read by the native renderer's recorder (native/camera_motion.h,
 // shaders/dof.frag). The Xbox 360 game never had motion blur (findings/21),
 // so the emulated picture can't show it.
+//
+// SHADOW SOFTNESS (findings/41): `shadow_softness` (0 sharper, 1 original,
+// 2 softer, 3 softest) widens or narrows the 9-tap blur the game's
+// xnShadowShader runs over its stencil mask (native/recorder.cpp passes the
+// scale, shaders/shadow.frag spreads the taps). Native renderer only.
+//
+// SHARPENING (findings/41): `sharpening` (0 off, 1 low, 2 medium, 3 high) =
+// a contrast-adaptive sharpening pass (AMD's FidelityFX CAS idea) inside the
+// native renderer's present pass (shaders/present.frag). Native only.
 // =============================================================================
 
 #pragma once

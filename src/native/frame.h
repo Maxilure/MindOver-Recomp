@@ -276,11 +276,14 @@ constexpr uint32_t kLitNoColour = 4096;       // ... the vertex has no colour (w
 // std140 like LitParams. The game's pixel shader blurs a copy of the stencil
 // buffer with 9 taps: offsets in texture coordinates (PS c2-c10, .xy) and
 // per-channel weights (PS c30-c38). See findings/12.
+// `softness.x` = the shadow_softness setting's tap scale (ours, findings/41):
+// 1 = the game's own blur, below 1 a sharper edge, above 1 a wider one.
 struct alignas(16) ShadowParams {
   float mvp[16];          // VS c4-c7
   float offsets[9][4];    // xy used
   float weights[9][4];
-  float padding[256 - 16 - 72];
+  float softness[4];      // x used
+  float padding[256 - 16 - 72 - 4];
 };
 static_assert(sizeof(ShadowParams) == 1024);
 

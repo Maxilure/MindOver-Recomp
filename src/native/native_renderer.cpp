@@ -80,6 +80,8 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "Debug: the native renderer samples the emulated GPU's resolved textures "
                     "instead of its own. Needs --readback_resolve=full (the emulator then copies "
                     "each resolve back into guest memory)");
+// The sharpening filter's strength (present pass, docs/findings/41).
+REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
 // hashed every frame (the old way): to measure the difference, or to rule
@@ -673,6 +675,10 @@ bool NativeRenderer::Initialize() {
   VkPipelineLayoutCreateInfo present_layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
   present_layout_info.setLayoutCount = 1;
   present_layout_info.pSetLayouts = &present_set_layout_;
+  // The sharpening strength (shaders/present.frag, PresentPush).
+  VkPushConstantRange present_push{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float)};
+  present_layout_info.pushConstantRangeCount = 1;
+  present_layout_info.pPushConstantRanges = &present_push;
   if (dfn.vkCreatePipelineLayout(device, &present_layout_info, nullptr, &present_layout_) !=
       VK_SUCCESS) {
     return false;
@@ -2135,6 +2141,12 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   dfn.vkCmdBindPipeline(slot.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, present_pipeline_);
   dfn.vkCmdBindDescriptorSets(slot.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, present_layout_, 0, 1,
                               &present_set_, 0, nullptr);
+  // SHARPENING (the `sharpening` setting, findings/41): its strength for the
+  // contrast-adaptive filter in present.frag; 0 = off (the plain copy).
+  constexpr float kSharpness[4] = {0.0f, 0.3f, 0.6f, 1.0f};
+  const float sharpness = kSharpness[std::clamp(int(REXCVAR_GET(sharpening)), 0, 3)];
+  dfn.vkCmdPushConstants(slot.cmd, present_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                         sizeof(sharpness), &sharpness);
   dfn.vkCmdDraw(slot.cmd, 3, 1, 0, 0);
   dfn.vkCmdEndRenderPass(slot.cmd);
 

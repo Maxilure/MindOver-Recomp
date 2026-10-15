@@ -73,6 +73,8 @@
 //   photo                    F10: a photo of the next frame (both pictures while
 //                            ours is drawn); replies with the saved files'
 //                            paths once written (PNG + draw list)
+//   flag <name> [value]      a setting (any --flag): its value, or set it live
+//                            (like the Options screen does; not saved)
 //   anything else            a live input line, like the FIFO's ("down",
 //                            "key Return", "cheat god on", "p2.start 500")
 //

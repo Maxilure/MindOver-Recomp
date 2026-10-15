@@ -38,6 +38,7 @@
 #endif
 
 #include <fmt/format.h>
+#include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/memory.h>
 #include <rex/system/kernel_state.h>
@@ -937,6 +938,18 @@ std::string FKey(const std::vector<std::string_view>& w) {
   return "";
 }
 
+// flag <name> [value]: reads a setting, or sets it live (the same call the
+// Options screen makes; nothing is written to settings.toml). For tests of
+// the picture settings without driving the menus.
+std::string FlagCommand(const std::vector<std::string_view>& w) {
+  if (w.size() < 2) throw Error{"flag <name> [value]"};
+  const std::string name(w[1]);
+  if (w.size() >= 3 && !rex::cvar::SetFlagByName(name, std::string(w[2]))) {
+    throw Error{fmt::format("can't set {}", name)};
+  }
+  return fmt::format("{} = {}\n", name, rex::cvar::GetFlagByName(name));
+}
+
 const char kHelp[] =
     "state | players | frontend | eval <expr> | read <expr> [type] [count] |\n"
     "write <expr> <type> <value> | wait ms <N> | wait state <N> [ms] | wait exit [ms] |\n"
@@ -944,7 +957,8 @@ const char kHelp[] =
     "snap <name> <expr> <bytes> | diff <name> [update] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
-    "track <file> [frames] | track stop | track | xbox | <any FIFO input line>\n"
+    "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"
+    "<any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
 
 // One command line -> its reply (throws Error).
@@ -972,6 +986,7 @@ std::string Run(std::string_view line) {
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);
   if (verb == "fkey") return FKey(w);
+  if (verb == "flag") return FlagCommand(w);
   if (verb == "clock") return ClockCommand(w);
   if (verb == "track") return TrackCommand(w);
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
