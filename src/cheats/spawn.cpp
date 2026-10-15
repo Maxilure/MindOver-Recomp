@@ -485,7 +485,7 @@ void Tick(PPCContext& ctx, uint8_t* base, bool in_level) {
 }
 
 bool DebugCommand(std::string_view arguments) {
-  // spawn <template> [player 1-4] [count] [ko]
+  // spawn <template> [player 1-4] [count] [ko]   (template "Characters:Roller", or just "Roller")
   std::vector<std::string> words;
   size_t at = 0;
   while (at < arguments.size()) {
@@ -499,6 +499,10 @@ bool DebugCommand(std::string_view arguments) {
   const int player = words.size() > 1 ? std::atoi(words[1].c_str()) - 1 : 0;
   const int count = words.size() > 2 ? std::atoi(words[2].c_str()) : 1;
   const bool knocked_out = words.size() > 3 && words[3] == "ko";
+  // A bare name ("Phantom") = a character ("Characters:Phantom"): the
+  // template names carry their group, and "Phantom" alone matches no section
+  // ("can't be spawned here"), an easy slip at the console.
+  if (words[0].find(':') == std::string::npos) words[0] = "Characters:" + words[0];
   Request(words[0], player, count, knocked_out);
   return true;
 }

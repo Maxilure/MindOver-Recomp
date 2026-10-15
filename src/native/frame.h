@@ -166,6 +166,7 @@ enum class Material : uint8_t {
   kDof,        // xnDOFShader: depth of field, one full-screen pass (shaders/dof.*)
   kFxGrid,     // xnFxGridShader: screen-wide glow / tint grids (simple.vert + fxgrid.frag)
   kBumpMega,   // xnBumpMegaShader: normal-mapped, see-through surfaces (shaders/bumpmega.*)
+  kMotionTrail,  // xnMotionTrailShader: attack ribbons, texture x colour (shaders/simple.*)
 };
 
 // How a texture is sampled, from the sampler's half of the GPU fetch

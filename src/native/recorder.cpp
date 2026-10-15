@@ -608,8 +608,11 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   const bool dof = vtable == shader::kDofShaderVtable;
   const bool fx_grid = vtable == shader::kFxGridShaderVtable;
   const bool bump_mega = vtable == shader::kBumpMegaShaderVtable;
+  // The attack ribbons (xnMotionTrailShader): texture x vertex colour, drawn
+  // with the simple material's shaders (guest.h, shader::kMotionTrailShaderVtable).
+  const bool motion_trail = vtable == shader::kMotionTrailShaderVtable;
   if (!bink && !character && !simple && !shadow && !reflect && !particle && !water && !dof &&
-      !fx_grid && !bump_mega) {
+      !fx_grid && !bump_mega && !motion_trail) {
     const char* cls = pddi::ClassOfVtable(vtable);
     ReportOnce(std::string("material class ") + (cls ? cls : "?"));
     return false;
@@ -624,6 +627,7 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
                : dof       ? Material::kDof
                : fx_grid   ? Material::kFxGrid
                : bump_mega ? Material::kBumpMega
+               : motion_trail ? Material::kMotionTrail
                : lit       ? Material::kLitSimple
                            : Material::kSimple;
 
@@ -639,8 +643,8 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   d.fade = LoadFloat(base, dev + device::PsConstant(2));
   d.textured = LoadFloat(base, dev + device::PsConstant(20)) > 0.0f;
   // Fog: on/off from the context, the values the shader reads (c70-c72).
-  // (The fx grid's shaders have no fog.)
-  if (!bink && !fx_grid) {
+  // (The fx grid's and the motion trail's shaders have no fog.)
+  if (!bink && !fx_grid && !motion_trail) {
     const uint32_t fog = Load32(base, xn_context + context::kFogState);
     d.fog = Load8(base, fog + 4) != 0;
     if (d.fog) {
@@ -687,10 +691,10 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   if (particle) {
     d.textured = true;
   }
-  // Water, the depth of field, the fx grid and bump mega take all their
-  // textures from D3D's sampler copies (below).
+  // Water, the depth of field, the fx grid, bump mega and the motion trail
+  // take all their textures from D3D's sampler copies (below).
   const uint32_t xn_texture =
-      bink || shadow || water || dof || fx_grid || bump_mega
+      bink || shadow || water || dof || fx_grid || bump_mega || motion_trail
           ? 0
           : Load32(base, material + (character  ? shader::kCharacterDiffuse
                                      : reflect  ? shader::kReflectDiffuse
@@ -812,6 +816,22 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
     d.fx_add = PixelBool(base, dev, shader::kFxGridAddBool);
   }
 
+  if (motion_trail) {
+    // The trail's picture (sampler 0, the D3D texture the context holds at
+    // +0x440) x the vertex colour; no tint, fade or fog in its shaders, so
+    // the simple vertex / pixel shaders get a white tint and no fade.
+    // Without its picture the draw is skipped.
+    d.tint[0] = d.tint[1] = d.tint[2] = 1.0f;
+    d.fade = 1.0f;
+    if (!ReadDeviceTexture(base, dev, shader::kMotionTrailSampler, d.texture)) {
+      ReportOnce("motion trail without its texture");
+      return false;
+    }
+    d.textured = true;
+    d.palette = GuestTexture{};
+    d.texture_sampler = ReadSampler(base, dev, shader::kMotionTrailSampler);
+  }
+
   // Blending and alpha test, from the xn shaders' state cache (guest.h).
   const uint32_t cache = Load32(base, material + shader::kStateCache);
   // The factors are kept in PDDI's numbering; D3D gets them through the
@@ -828,10 +848,11 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   d.alpha_func = uint8_t(Load32(base, cache + 224) & 7);
   d.alpha_ref = LoadFloat(base, material + shader::kAlphaRef);
   const uint32_t blend_mode = Load32(base, material + shader::kBlendMode);
-  // (The reflect, water, fx grid and bump mega shaders have no additive /
+  // (The reflect, water, fx grid, bump mega and motion trail shaders have no additive /
   // subtractive fade: their setups set no b80/b81.)
   d.fade_rgb =
-      !reflect && !water && !fx_grid && !bump_mega && (blend_mode == 2 || blend_mode == 3);
+      !reflect && !water && !fx_grid && !bump_mega && !motion_trail &&
+      (blend_mode == 2 || blend_mode == 3);
 
   // The lit materials' lights, surface colours... (CommitDraw stores them).
   if (lit || character || reflect) {

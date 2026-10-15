@@ -57,6 +57,9 @@ with the row's place shown under the list.
   its "spin again" decision answered directly, so no button is pressed for you).
 - **Native Only** (the port's own renderer alone, the lightest) is now the
   default picture; the emulated one is a choice away.
+- **Attack trails** in the Native renderer: the pale streaks some titans'
+  attacks sweep behind them (the Phantom's punches, the Roller's rolling
+  charge) were missing; they're drawn now, like the original.
 
 **Keyboard and mouse prompts**: while you play on the keyboard and mouse,
 the game's button prompts show YOUR keys and mouse buttons ("Press E to

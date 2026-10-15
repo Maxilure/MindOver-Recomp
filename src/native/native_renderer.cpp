@@ -230,6 +230,7 @@ static_assert(sizeof(native::MaterialBlock) % kUniformAlignment == 0);
 const char* MaterialName(native::Material m) {
   switch (m) {
     case native::Material::kSimple: return "xnSimpleShader";
+    case native::Material::kMotionTrail: return "xnMotionTrailShader";
     case native::Material::kBink: return "xnBinkShader";
     case native::Material::kLitSimple: return "xnSimpleShader (lit)";
     case native::Material::kCharacter: return "xnCharacterRimShader";
@@ -1150,6 +1151,7 @@ VkPipeline NativeRenderer::GetPipeline(const native::DrawCommand& draw, bool has
   size_t vs_size = sizeof(kSimpleVs), fs_size = sizeof(kSimpleFs);
   switch (draw.material) {
     case native::Material::kSimple:
+    case native::Material::kMotionTrail:  // the same shaders (guest.h)
       use({0, 1, 2});
       break;
     case native::Material::kBink:
@@ -1664,6 +1666,7 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
              bind(2, d.chroma[1], linear_clamp);
         break;
       case native::Material::kSimple:
+      case native::Material::kMotionTrail:
         if (d.textured) {
           ok = bind(0, d.texture, texture_state, texture_size) &&
                (!palettized || bind(1, d.palette, point_clamp));

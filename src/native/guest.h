@@ -405,6 +405,23 @@ constexpr uint32_t kFxGridShaderVtable = 0x82016B1C;
 constexpr uint32_t kFxGridScreenSampler = 0;
 constexpr uint32_t kFxGridAddBool = 10;  // PS bool b10: add the colour (else multiply)
 
+// xnMotionTrailShader (vtable 0x820163CC): the ribbons swept behind some
+// titans' attacks (fight trees Strong / Bear: TriggerCharacterMotionTrail,
+// e.g. the Phantom's punches, the Roller's rolling boost; docs/findings/42).
+// Its draw setup (slot 14, 0x8242EB70):
+//   sampler 0 = the D3D texture the context holds at +0x440 (0x8242FEE0
+//       returns it; the trail's picture, e.g. motionTrail_01_64), set with
+//       SetTexture 0x823066D0 (flags 0x80000000, like the fx grid's)
+//   vertex shader 0x8258E348 = motiontrailvp, pixel shader 0x8258E34C =
+//       motiontrail; sampler states 0x8242D760 / 0x8242D810 for sampler 0
+//   then the common state (0x8242DA28) and the blend setter 0x8242D8C8
+// motiontrailvp (debug file): position x matMVP (c4-c7), colour and uv
+// passed on (no tint). motiontrail (microcode only, --dump_shaders), the
+// whole shader:  oC0 = tex2D(s0 "MotionTrailTex", uv) x colour
+// No fog, no fade: the simple material with a white tint draws exactly that.
+constexpr uint32_t kMotionTrailShaderVtable = 0x820163CC;
+constexpr uint32_t kMotionTrailSampler = 0;
+
 // xnBumpMegaShader (vtable 0x82016E1C): the "do everything" normal-mapped
 // surface (the TK blocks, see-through ice; docs/findings/20).
 // Found by the area scan (scan.h) in playtests; register names from

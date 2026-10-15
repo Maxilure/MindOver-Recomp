@@ -20,6 +20,7 @@
 // Inputs: buttons  a b x y start back lb rb up down left right (d-pad)
 //         sticks   lsup lsdown lsleft lsright (left stick, full tilt)
 //                  rsup rsdown rsleft rsright (right stick)
+//         triggers lt rt (pressed all the way)
 //         combine with "+", e.g. lsright+a (run right and jump)
 //
 // 1) Timeline: --debug_input_script="<ms>:<inputs>[:<hold_ms>],..."

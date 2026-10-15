@@ -54,6 +54,8 @@ constexpr uint32_t kStickLUp = 1u << 16, kStickLDown = 1u << 17;
 constexpr uint32_t kStickLLeft = 1u << 18, kStickLRight = 1u << 19;
 constexpr uint32_t kStickRUp = 1u << 20, kStickRDown = 1u << 21;
 constexpr uint32_t kStickRLeft = 1u << 22, kStickRRight = 1u << 23;
+// Triggers, pressed all the way (LT = the titan special, RT = block).
+constexpr uint32_t kTriggerL = 1u << 24, kTriggerR = 1u << 25;
 
 // Input name -> bit (buttons are X_INPUT_GAMEPAD_* from rex/input/input.h).
 uint32_t InputFromName(std::string_view name) {
@@ -69,6 +71,7 @@ uint32_t InputFromName(std::string_view name) {
       {"lsup", kStickLUp},    {"lsdown", kStickLDown}, {"lsleft", kStickLLeft},
       {"lsright", kStickLRight}, {"rsup", kStickRUp},  {"rsdown", kStickRDown},
       {"rsleft", kStickRLeft},   {"rsright", kStickRRight},
+      {"lt", kTriggerL},         {"rt", kTriggerR},
   };
   for (const Entry& e : kInputs) {
     if (e.name == name) {
@@ -373,6 +376,8 @@ X_RESULT ScriptedInputDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
     out_state->gamepad.thumb_ly = Axis(inputs, kStickLDown, kStickLUp);
     out_state->gamepad.thumb_rx = Axis(inputs, kStickRLeft, kStickRRight);
     out_state->gamepad.thumb_ry = Axis(inputs, kStickRDown, kStickRUp);
+    out_state->gamepad.left_trigger = (inputs & kTriggerL) ? 0xFF : 0;
+    out_state->gamepad.right_trigger = (inputs & kTriggerR) ? 0xFF : 0;
   }
   return X_ERROR_SUCCESS;
 }
