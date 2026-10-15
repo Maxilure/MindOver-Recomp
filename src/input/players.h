@@ -114,6 +114,12 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // goes into the game by our XInputGetState wrapper (keyboard_mouse.h
   // MergeInto), not through the SDK. Any thread.
   bool KeyboardAnswersFor(uint32_t user) const;
+  // The device key ("pad:<guid>[:n]") of the first controller answering on
+  // socket `user` (DevicesForUser's rule: outside play, any controller on
+  // socket 1), "" if none. For the prompt pictures' Automatic style
+  // (prompt_icons.h: the controller's maker and model are in its GUID). Any
+  // thread.
+  std::string PadKeyFor(uint32_t user) const;
 
  private:
   struct Known {

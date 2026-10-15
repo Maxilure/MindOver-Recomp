@@ -92,6 +92,7 @@ void KeyboardMouseDriver::Attach(rex::ui::Window* window) {
     return;
   }
   windows_.push_back(window);
+  app_context_ = &window->app_context();
   window->AddInputListener(this, kZOrder);
   window->AddListener(this);
   // The pointer hides after a few seconds without mouse movement (the SDK's
@@ -155,14 +156,17 @@ rex::input::X_INPUT_GAMEPAD KeyboardMouseDriver::last_pad() const {
 // ---------------------------------------------------------------------------
 
 void KeyboardMouseDriver::Capture(std::function<void(Input)> done) {
+  std::lock_guard<std::mutex> lock(capture_mutex_);
   capture_done_ = std::move(done);
 }
 
 void KeyboardMouseDriver::CancelCapture() {
+  std::lock_guard<std::mutex> lock(capture_mutex_);
   capture_done_ = nullptr;
 }
 
 bool KeyboardMouseDriver::capturing() const {
+  std::lock_guard<std::mutex> lock(capture_mutex_);
   return static_cast<bool>(capture_done_);
 }
 
@@ -172,12 +176,24 @@ bool KeyboardMouseDriver::InputHeld(Input input) const {
 }
 
 bool KeyboardMouseDriver::HandleDown(Input input) {
-  if (!capture_done_ || input == kNoInput || IsReservedInput(input)) {
-    return false;  // not capturing, or a tool key: let it do its job
+  if (input == kNoInput || input >= kInputCount || IsReservedInput(input)) {
+    return false;  // a tool key: let it do its job
   }
-  // Move the callback out first: it may start the next capture.
-  auto done = std::move(capture_done_);
-  capture_done_ = nullptr;
+  {
+    // A key already held = its key repeat (the OS repeats a held key's
+    // "down"): the Enter that opened the in-game capture would be caught at
+    // once otherwise. The wheel has no "held".
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (held_[input]) return false;
+  }
+  std::function<void(Input)> done;
+  {
+    // Move the callback out first: it may start the next capture.
+    std::lock_guard<std::mutex> lock(capture_mutex_);
+    if (!capture_done_) return false;  // not capturing
+    done = std::move(capture_done_);
+    capture_done_ = nullptr;
+  }
   done(input == static_cast<Input>(rex::ui::VirtualKey::kEscape) ? kNoInput : input);
   return true;
 }
@@ -239,6 +255,45 @@ void KeyboardMouseDriver::OnKeyDown(rex::ui::KeyEvent& e) {
     return;
   }
   Press(input, true);
+}
+
+void KeyboardMouseDriver::OnKeyChar(rex::ui::KeyEvent& e) {
+  if (!text_mode_.load()) return;
+  const char32_t c = char32_t(uint32_t(e.virtual_key()));
+  if (c < 0x20 || c == 0x7F) return;  // control characters: the keys' own jobs
+  std::lock_guard<std::mutex> lock(typed_mutex_);
+  if (typed_.size() < 64) typed_.push_back(c);
+  e.set_handled(true);
+}
+
+void KeyboardMouseDriver::SetTextMode(bool on) {
+  if (text_mode_.exchange(on) == on) return;
+  {
+    std::lock_guard<std::mutex> lock(typed_mutex_);
+    typed_.clear();
+  }
+  // The windows' text input (SDL_StartTextInput / Stop), on the UI thread.
+  if (app_context_) {
+    app_context_->CallInUIThread([this, on] {
+      for (rex::ui::Window* w : windows_) w->SetTextInputActive(on);
+    });
+  }
+  REXLOG_INFO("Keyboard: {}", on ? "typing (a name screen)" : "playing again");
+}
+
+std::u32string KeyboardMouseDriver::TakeTyped() {
+  std::lock_guard<std::mutex> lock(typed_mutex_);
+  std::u32string out;
+  out.swap(typed_);
+  return out;
+}
+
+bool KeyboardMouseDriver::DebugType(std::string_view text) {
+  KeyboardMouseDriver* driver = Get();
+  if (!driver || !driver->text_mode_.load()) return false;
+  std::lock_guard<std::mutex> lock(driver->typed_mutex_);
+  for (const char c : text) driver->typed_.push_back(char32_t(uint8_t(c)));
+  return true;
 }
 
 void KeyboardMouseDriver::OnKeyUp(rex::ui::KeyEvent& e) {
@@ -313,6 +368,9 @@ bool KeyboardMouseDriver::DebugTap(std::string_view key_name, int64_t hold_ms) {
   if (!driver || input == kNoInput) {
     return false;
   }
+  // A waiting capture takes the tap, as it would a typed key (tests of the
+  // Keys tab drive it this way).
+  if (driver->HandleDown(input)) return true;
   const auto now = Clock::now();
   std::lock_guard<std::mutex> lock(driver->mutex_);
   driver->last_key_down_ = now.time_since_epoch().count();  // a tap counts as typed
@@ -386,6 +444,23 @@ void KeyboardMouseDriver::BuildState(Clock::time_point now, X_INPUT_GAMEPAD& pad
       in_menu_[input] = MenuOnScreen();
     }
     held_[input] = down;
+  }
+
+  // Text mode: the keys type (SetTextMode); only these are buttons.
+  if (text_mode_.load()) {
+    using VK = rex::ui::VirtualKey;
+    auto down = [&](VK k) { return held_[Input(k)]; };
+    uint16_t typing = 0;
+    if (down(VK::kUp)) typing |= X_INPUT_GAMEPAD_DPAD_UP;
+    if (down(VK::kDown)) typing |= X_INPUT_GAMEPAD_DPAD_DOWN;
+    if (down(VK::kLeft)) typing |= X_INPUT_GAMEPAD_DPAD_LEFT;
+    if (down(VK::kRight)) typing |= X_INPUT_GAMEPAD_DPAD_RIGHT;
+    if (down(VK::kReturn)) typing |= X_INPUT_GAMEPAD_START;
+    if (down(VK::kEscape)) typing |= X_INPUT_GAMEPAD_B;
+    // (Backspace erases through input/name_typing.cpp, with key repeat.)
+    pad.buttons = typing;
+    spin_held_ = false;
+    return;
   }
 
   // Buttons and triggers. (X_INPUT_GAMEPAD is the guest's big-endian layout:

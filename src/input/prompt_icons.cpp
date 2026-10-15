@@ -9,6 +9,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <map>
@@ -34,6 +35,7 @@
 #include "../ui/scrooby.h"
 #include "bindings.h"
 #include "keyboard_mouse.h"
+#include "players.h"
 
 // stb_image (from the SDK's source tree), private to this file.
 #define STB_IMAGE_STATIC
@@ -44,6 +46,13 @@
 REXCVAR_DEFINE_INT32(button_prompts, 0, "CrashMoM",
                      "Button prompts: 0 = the device used last, 1 = keyboard and mouse keys, "
                      "2 = controller buttons");
+REXCVAR_DEFINE_INT32(keyboard_icons, 0, "CrashMoM",
+                     "Keyboard and mouse prompt pictures: 0 = light keys, 1 = dark keys");
+REXCVAR_DEFINE_INT32(controller_icons, 0, "CrashMoM",
+                     "Controller prompt pictures: 0 = automatic (by the controller in use: "
+                     "PlayStation 5 / 4, Switch, Xbox One / Series; any other = the game's own), "
+                     "1 = the game's own Xbox 360 buttons, 2 = Xbox Series, 3 = PlayStation 5, "
+                     "4 = PlayStation 4, 5 = Switch");
 
 // Pure3D's TextureFontLoader::LoadObject (vtable 0x8200E420 slot 5): r4 =
 // where to store the font it builds.
@@ -86,6 +95,7 @@ enum class Kind : uint8_t {
   kKey,    // one key: `action`'s
   kStick,  // four keys from `action` on (up, down, left, right in Action order)
   kSpin,   // `action`'s key and a circling arrow
+  kSlot,   // a KEY SLOT: whatever key KeyGlyph() lent it (the Options rows)
 };
 struct Prompt {
   char16_t character;
@@ -122,8 +132,28 @@ constexpr Prompt kPrompts[] = {
     {kMenuY, u'\u00B4', "menu Y", Kind::kKey, kbm::kMenuY},
     {kMenuLB, u'\u00BE', "menu LB", Kind::kKey, kbm::kMenuTabLeft},
     {kMenuRB, u'\u00B8', "menu RB", Kind::kKey, kbm::kMenuTabRight},
+    // KEY SLOTS (2026-10-15): pictures of ANY key, lent out by KeyGlyph() for
+    // the Options screen's key rows (copies of the A picture until then).
+    {u'\uE100', u'\u00B1', "key slot 0", Kind::kSlot, kbm::kJump},
+    {u'\uE101', u'\u00B1', "key slot 1", Kind::kSlot, kbm::kJump},
+    {u'\uE102', u'\u00B1', "key slot 2", Kind::kSlot, kbm::kJump},
+    {u'\uE103', u'\u00B1', "key slot 3", Kind::kSlot, kbm::kJump},
+    {u'\uE104', u'\u00B1', "key slot 4", Kind::kSlot, kbm::kJump},
+    {u'\uE105', u'\u00B1', "key slot 5", Kind::kSlot, kbm::kJump},
+    {u'\uE106', u'\u00B1', "key slot 6", Kind::kSlot, kbm::kJump},
+    {u'\uE107', u'\u00B1', "key slot 7", Kind::kSlot, kbm::kJump},
+    {u'\uE108', u'\u00B1', "key slot 8", Kind::kSlot, kbm::kJump},
+    {u'\uE109', u'\u00B1', "key slot 9", Kind::kSlot, kbm::kJump},
+    {u'\uE10A', u'\u00B1', "key slot 10", Kind::kSlot, kbm::kJump},
+    {u'\uE10B', u'\u00B1', "key slot 11", Kind::kSlot, kbm::kJump},
+    {u'\uE10C', u'\u00B1', "key slot 12", Kind::kSlot, kbm::kJump},
+    {u'\uE10D', u'\u00B1', "key slot 13", Kind::kSlot, kbm::kJump},
+    {u'\uE10E', u'\u00B1', "key slot 14", Kind::kSlot, kbm::kJump},
+    {u'\uE10F', u'\u00B1', "key slot 15", Kind::kSlot, kbm::kJump},
 };
-constexpr size_t kAddedPrompts = 6;  // the last six of kPrompts
+constexpr size_t kSlotCount = 16;
+constexpr char16_t kFirstSlot = u'\uE100';
+constexpr size_t kAddedPrompts = 6 + kSlotCount;  // the menu glyphs + the key slots, at the end of kPrompts
 constexpr size_t kDiscPrompts = std::size(kPrompts) - kAddedPrompts;
 
 // --- The pages as the disc has them ------------------------------------------
@@ -243,16 +273,18 @@ struct Picture {
   bool empty() const { return rgba.empty(); }
 };
 
-std::filesystem::path AssetFolder() {
-  return rex::filesystem::GetExecutableFolder() / "assets" / "prompts" / "keyboard-mouse";
+// assets/prompts/<folder>: keyboard-mouse (Light), keyboard-mouse-dark,
+// xbox-series, ps5, ps4, switch (assets/prompts/README.md).
+std::filesystem::path AssetFolder(const std::string& folder) {
+  return rex::filesystem::GetExecutableFolder() / "assets" / "prompts" / folder;
 }
 
-// One PNG of the asset folder, decoded once and kept.
-const Picture& Asset(const std::string& file) {
+// One PNG of an asset folder, decoded once and kept.
+const Picture& Asset(const std::string& folder, const std::string& file) {
   static std::map<std::string, Picture> cache;
-  auto [it, added] = cache.try_emplace(file);
+  auto [it, added] = cache.try_emplace(folder + "/" + file);
   if (added) {
-    const std::filesystem::path path = AssetFolder() / file;
+    const std::filesystem::path path = AssetFolder(folder) / file;
     int w = 0, h = 0, n = 0;
     if (stbi_uc* px = stbi_load(path.string().c_str(), &w, &h, &n, 4)) {
       it->second.width = uint32_t(w);
@@ -328,16 +360,28 @@ void Over(Picture& dst, const Picture& src, int x, int y) {
   }
 }
 
+// The two keyboard sets (--keyboard_icons): Xelu's Light and Dark keys. The
+// circling arrow beside the Spin key is the Light folder's in both.
+struct KeySet {
+  const char* folder;
+  const char* suffix;  // "_Key_Light.png"
+  const char* blank;   // the empty key, for keys the set has no picture of
+  uint8_t letter;      // the grey of Xelu's letters on that blank key
+};
+constexpr KeySet kLightKeys{"keyboard-mouse", "_Key_Light.png", "Blank_White_Normal.png", 64};
+constexpr KeySet kDarkKeys{"keyboard-mouse-dark", "_Key_Dark.png", "Blank_Black_Normal.png", 225};
+constexpr const char* kArrowFolder = "keyboard-mouse";
+
 // Xelu's picture of a key (file in the asset folder), or "" if the set has
 // none (then a blank key with the key's name is drawn: Labelled()).
 // Names = bindings.cpp's config names. Xelu's file names are the CHARACTER on
 // the key cap: "Slash" shows "\", "Question" the "/?" key, "Mark_Left/Right"
 // the "<" ">" of the comma / period keys, "Tilda" the backtick key.
-std::string PictureFile(Input input) {
+std::string PictureFile(Input input, const KeySet& set) {
   const std::string name = kbm::InputName(input);
-  if (name.size() == 1) return name + "_Key_Light.png";  // A-Z, 0-9
+  if (name.size() == 1) return name + set.suffix;  // A-Z, 0-9
   if (name.rfind("Numpad", 0) == 0 && name.size() == 7) {
-    return name.substr(6) + "_Key_Light.png";  // Numpad0-9 = the digit
+    return name.substr(6) + set.suffix;  // Numpad0-9 = the digit
   }
   static const std::map<std::string, std::string> kFiles = {
       {"LMB", "Mouse_Left"},          {"RMB", "Mouse_Right"},
@@ -362,10 +406,10 @@ std::string PictureFile(Input input) {
       {"NumLock", "Num_Lock"},        {"PrintScreen", "Print_Screen"},
   };
   if (name.size() >= 2 && name[0] == 'F' && std::isdigit(static_cast<unsigned char>(name[1]))) {
-    return name + "_Key_Light.png";  // F1-F12 (F13+ have no picture: a label)
+    return name + set.suffix;  // F1-F12 (F13+ have no picture: a label)
   }
   const auto it = kFiles.find(name);
-  return it != kFiles.end() ? it->second + "_Key_Light.png" : std::string();
+  return it != kFiles.end() ? it->second + set.suffix : std::string();
 }
 
 // A short name for a blank key: the rest of the keys and the side mouse
@@ -394,8 +438,8 @@ game_font::Font* LabelFont() {
 
 // Xelu's blank key with `text` written on it in the game's font, dark like
 // Xelu's letters, size x size.
-Picture Labelled(const std::string& text, uint32_t size) {
-  Picture key = Resize(Asset("Blank_White_Normal.png"), size, size);
+Picture Labelled(const std::string& text, uint32_t size, const KeySet& set) {
+  Picture key = Resize(Asset(set.folder, set.blank), size, size);
   game_font::Font* font = LabelFont();
   if (!font || key.empty()) return key;
   std::u16string line(text.begin(), text.end());
@@ -426,7 +470,7 @@ Picture Labelled(const std::string& text, uint32_t size) {
         const uint8_t a = layers.fill[(size_t(ty) * layers.width + tx) * 4 + 3];
         uint8_t* d = &key.rgba[(size_t(y) * size + x) * 4];
         // Xelu's letter colour (dark grey) over the cap, by the glyph's alpha.
-        for (int ch = 0; ch < 3; ++ch) d[ch] = uint8_t(d[ch] + (64 - d[ch]) * a / 255);
+        for (int ch = 0; ch < 3; ++ch) d[ch] = uint8_t(d[ch] + (set.letter - d[ch]) * a / 255);
       }
     }
     pen += g->advance * scale;
@@ -448,14 +492,113 @@ Picture Crop(const Picture& src, uint32_t margin) {
   return out;
 }
 
+// Up to `margin` pixels off each side, but never into the picture: as many
+// as its emptiest-side border has (alpha 0). Xelu's letter keys leave ~13 px,
+// but the wide keys and some buttons reach the edge (Space 2 px, Shift / Ctrl
+// / Backspace / Enter 4, the mouse and LT 4, the Switch sticks 5): a plain
+// 6 px cut clipped them (playtest, 2026-10-15). The same cut on every side
+// keeps the shape.
+Picture Trim(const Picture& src, uint32_t margin) {
+  if (src.empty()) return src;
+  uint32_t x0 = src.width, y0 = src.height, x1 = 0, y1 = 0;
+  for (uint32_t y = 0; y < src.height; ++y) {
+    for (uint32_t x = 0; x < src.width; ++x) {
+      if (src.rgba[(size_t(y) * src.width + x) * 4 + 3] == 0) continue;
+      x0 = std::min(x0, x);
+      y0 = std::min(y0, y);
+      x1 = std::max(x1, x + 1);
+      y1 = std::max(y1, y + 1);
+    }
+  }
+  if (x1 <= x0) return src;  // empty
+  margin = std::min({margin, x0, y0, src.width - x1, src.height - y1});
+  return Crop(src, margin);
+}
+
 // The picture of one key, size x size. Xelu's 100 px keys leave ~13 px of
 // empty border; the 360 buttons fill ~77% of their page. Cutting 6 px off
 // each side makes a letter key about as big as the button it replaces
 // (the wide keys, Space / Enter / Shift, only reach the sides).
-Picture KeyPicture(Input input, uint32_t size) {
-  const std::string file = PictureFile(input);
-  if (!file.empty() && !Asset(file).empty()) return Resize(Crop(Asset(file), 6), size, size);
-  return Resize(Crop(Labelled(ShortLabel(input), 100), 6), size, size);
+Picture KeyPicture(Input input, uint32_t size, const KeySet& set) {
+  const std::string file = PictureFile(input, set);
+  if (!file.empty() && !Asset(set.folder, file).empty()) {
+    return Resize(Trim(Asset(set.folder, file), 6), size, size);
+  }
+  return Resize(Trim(Labelled(ShortLabel(input), 100, set), 6), size, size);
+}
+
+// --- Controller sets (--controller_icons) ---------------------------------------
+// Xelu's buttons for the other controllers, by the 360 button each prompt
+// glyph stands for (positions, not letters: the 360's A is the BOTTOM
+// button, which is Cross on a PlayStation and B on a Switch). The "rotate"
+// arrow keeps the game's own picture (it isn't a button).
+enum PadButton { kPadA, kPadB, kPadX, kPadY, kPadBack, kPadStart, kPadRT, kPadRB, kPadLT, kPadLB,
+                 kPadLeftStick, kPadRightStick, kPadButtons };
+struct PadSet {
+  const char* folder;
+  const char* name;  // the log's
+  const char* files[kPadButtons];
+};
+// Style numbers: --controller_icons 2..5 = kPadSets[0..3].
+constexpr PadSet kPadSets[] = {
+    {"xbox-series", "Xbox Series",
+     {"XboxSeriesX_A", "XboxSeriesX_B", "XboxSeriesX_X", "XboxSeriesX_Y", "XboxSeriesX_View",
+      "XboxSeriesX_Menu", "XboxSeriesX_RT", "XboxSeriesX_RB", "XboxSeriesX_LT", "XboxSeriesX_LB",
+      "XboxSeriesX_Left_Stick", "XboxSeriesX_Right_Stick"}},
+    {"ps5", "PlayStation 5",
+     {"PS5_Cross", "PS5_Circle", "PS5_Square", "PS5_Triangle", "PS5_Share", "PS5_Options", "PS5_R2",
+      "PS5_R1", "PS5_L2", "PS5_L1", "PS5_Left_Stick", "PS5_Right_Stick"}},
+    {"ps4", "PlayStation 4",
+     {"PS4_Cross", "PS4_Circle", "PS4_Square", "PS4_Triangle", "PS4_Share", "PS4_Options", "PS4_R2",
+      "PS4_R1", "PS4_L2", "PS4_L1", "PS4_Left_Stick", "PS4_Right_Stick"}},
+    {"switch", "Switch",
+     {"Switch_B", "Switch_A", "Switch_Y", "Switch_X", "Switch_Minus", "Switch_Plus", "Switch_RT",
+      "Switch_RB", "Switch_LT", "Switch_LB", "Switch_Left_Stick", "Switch_Right_Stick"}},
+};
+constexpr int kOriginalStyle = -1;  // the game's own 360 pictures
+
+// Which button a prompt glyph (its disc source) shows, -1 = none (rotate).
+int PadButtonOf(char16_t source) {
+  switch (source) {
+    case u'\u00B1': return kPadA;
+    case u'\u00B2': return kPadB;
+    case u'\u00B3': return kPadX;
+    case u'\u00B4': return kPadY;
+    case u'\u00B5': return kPadBack;
+    case u'\u00B6': return kPadStart;
+    case u'\u00B7': return kPadRT;
+    case u'\u00B8': return kPadRB;
+    case u'\u00BD': return kPadLT;
+    case u'\u00BE': return kPadLB;
+    case u'\u00B9': return kPadLeftStick;
+    case u'\u00A5': return kPadRightStick;
+    default: return -1;
+  }
+}
+
+// AUTOMATIC: the controller's maker and model, from its SDL GUID (the
+// players' device key "pad:<32 hex digits>[:n]"): bytes 4-5 = USB vendor,
+// 8-9 = product, little-endian. Sony 054C: DualSense 0CE6 / DualSense Edge
+// 0DF2 = PS5, the rest (DualShock 4 05C4 / 09CC...) = PS4. Nintendo 057E =
+// Switch. Microsoft 045E: the 360 pads (028E, 028F, 0719) = the game's own
+// pictures, the rest (Xbox One / Series) = Xbox Series. Anyone else (a
+// generic or third-party pad) = the game's own 360 look.
+int StyleOfPad(const std::string& key) {
+  if (key.rfind("pad:", 0) != 0 || key.size() < 4 + 20) return kOriginalStyle;
+  auto byte = [&](size_t i) { return uint32_t(std::stoul(key.substr(4 + 2 * i, 2), nullptr, 16)); };
+  uint32_t vendor = 0, product = 0;
+  try {
+    vendor = byte(4) | byte(5) << 8;
+    product = byte(8) | byte(9) << 8;
+  } catch (...) {
+    return kOriginalStyle;
+  }
+  switch (vendor) {
+    case 0x054C: return product == 0x0CE6 || product == 0x0DF2 ? 1 : 2;
+    case 0x057E: return 3;
+    case 0x045E: return product == 0x028E || product == 0x028F || product == 0x0719 ? kOriginalStyle : 0;
+    default: return kOriginalStyle;
+  }
 }
 
 // --- 256 colours ---------------------------------------------------------------
@@ -569,6 +712,17 @@ Paletted Quantize(const Picture& pic) {
   return out;
 }
 
+// The key slots' keys (KeyGlyph), under g.mutex: the key, when it was last
+// asked for (the least recently asked slot is lent out next) and a revision
+// (a change = the pages are drawn again).
+struct Slot {
+  Input key = kbm::kNoInput;
+  uint64_t asked = 0;
+};
+std::array<Slot, kSlotCount> g_slots;
+uint64_t g_slot_clock = 0;
+uint32_t g_slot_revision = 0, g_slot_drawn = UINT32_MAX;
+
 // --- What a page should show -----------------------------------------------------
 
 // The first key of `action` (kNoInput: none). Bindings come from the driver.
@@ -581,7 +735,7 @@ Input FirstKey(const kbm::Bindings& b, Action action) {
 
 // A description of the picture a page should show, "" = the game's own.
 // Equal descriptions = equal pictures (the cache key, with the size).
-std::string Describe(const Prompt& p, const kbm::Bindings& b) {
+std::string DescribeKeys(const Prompt& p, const kbm::Bindings& b) {
   switch (p.kind) {
     case Kind::kKey: {
       const Input in = FirstKey(b, p.action);
@@ -604,12 +758,45 @@ std::string Describe(const Prompt& p, const kbm::Bindings& b) {
   return {};
 }
 
+// What a page should show for the device in use: "" = the game's own
+// picture; keys: "L key 32" / "D key 32" (the set's letter first); a
+// controller set: "P <set> <button>".
+std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, bool dark, int pad_style) {
+  if (p.kind == Kind::kSlot) {  // always a key (the Options rows), in the key set chosen
+    const Input key = g_slots[size_t(p.character - kFirstSlot)].key;
+    return key == kbm::kNoInput ? std::string() : std::string(dark ? "D " : "L ") + "key " + std::to_string(key);
+  }
+  if (keyboard) {
+    const std::string keys = DescribeKeys(p, b);
+    return keys.empty() ? keys : std::string(dark ? "D " : "L ") + keys;
+  }
+  const int button = PadButtonOf(p.source);
+  if (pad_style == kOriginalStyle || button < 0) return {};
+  return "P " + std::to_string(pad_style) + " " + std::to_string(button);
+}
+
 // Draws what Describe() described, at the page's size.
-Picture Draw(const std::string& what, uint32_t width, uint32_t height, uint32_t used_height) {
+Picture Draw(const std::string& described, uint32_t width, uint32_t height, uint32_t used_height) {
   Picture page;
   page.width = width;
   page.height = height;
   page.rgba.assign(size_t(width) * height * 4, 0);
+  if (described.size() < 2) return page;
+  if (described[0] == 'P') {
+    // A controller button: Xelu's picture over the square part of the page
+    // (a stick's page is 128 x 128 with 96 rows used), cut like the keys.
+    int style = 0, button = 0;
+    std::sscanf(described.c_str() + 2, "%d %d", &style, &button);
+    if (style < 0 || style >= int(std::size(kPadSets)) || button < 0 || button >= kPadButtons) return page;
+    const PadSet& set = kPadSets[style];
+    const Picture& pic = Asset(set.folder, std::string(set.files[button]) + ".png");
+    if (pic.empty()) return page;
+    const uint32_t size = std::min(width, used_height);
+    Over(page, Resize(Trim(pic, 6), size, size), int(width - size) / 2, int(used_height - size) / 2);
+    return page;
+  }
+  const KeySet& set = described[0] == 'D' ? kDarkKeys : kLightKeys;
+  const std::string what = described.substr(2);
   std::vector<Input> keys;
   const size_t space = what.find(' ');
   const std::string kind = what.substr(0, space);
@@ -621,24 +808,24 @@ Picture Draw(const std::string& what, uint32_t width, uint32_t height, uint32_t 
   if (kind == "key" && keys.size() == 1) {
     // One key over the whole (square) page, like the 360 button pictures.
     const uint32_t size = std::min(width, used_height);
-    Over(page, KeyPicture(keys[0], size), int(width - size) / 2, int(used_height - size) / 2);
+    Over(page, KeyPicture(keys[0], size, set), int(width - size) / 2, int(used_height - size) / 2);
   } else if (kind == "stick" && keys.size() == 4) {
     // Up above left / down / right, the usual WASD shape, inside the part
     // of the page the glyph shows (the stick pictures use the top 96 rows of
     // 128: their glyph's v starts at 0.25 from the bottom).
     const uint32_t size = std::min(width / 3, used_height / 2);
     const int x0 = int(width - 3 * size) / 2, y0 = int(used_height - 2 * size) / 2;
-    Over(page, KeyPicture(keys[0], size), x0 + int(size), y0);                  // up
-    Over(page, KeyPicture(keys[2], size), x0, y0 + int(size));                  // left
-    Over(page, KeyPicture(keys[1], size), x0 + int(size), y0 + int(size));      // down
-    Over(page, KeyPicture(keys[3], size), x0 + 2 * int(size), y0 + int(size));  // right
+    Over(page, KeyPicture(keys[0], size, set), x0 + int(size), y0);                  // up
+    Over(page, KeyPicture(keys[2], size, set), x0, y0 + int(size));                  // left
+    Over(page, KeyPicture(keys[1], size, set), x0 + int(size), y0 + int(size));      // down
+    Over(page, KeyPicture(keys[3], size, set), x0 + 2 * int(size), y0 + int(size));  // right
   } else if (kind == "spin" && keys.size() == 1) {
     // The Spin key on the left half, Xelu's circling arrow on the right
     // (the "rotate" picture is 128 x 64: two squares).
     const uint32_t size = std::min(width / 2, used_height);
-    Over(page, KeyPicture(keys[0], size), 0, int(used_height - size) / 2);
+    Over(page, KeyPicture(keys[0], size, set), 0, int(used_height - size) / 2);
     const uint32_t arrow = size * 7 / 8;
-    Over(page, Resize(Asset("Directional_Arrow_Full_Circle.png"), arrow, arrow),
+    Over(page, Resize(Asset(kArrowFolder, "Directional_Arrow_Full_Circle.png"), arrow, arrow),
          int(width / 2 + (width / 2 - arrow) / 2), int(used_height - arrow) / 2);
   }
   return page;
@@ -673,7 +860,11 @@ struct State {
   // What the pages show (to notice a change cheaply).
   int device = -1;  // 0 controller, 1 keyboard
   uint32_t revision = UINT32_MAX;
+  std::string look;  // the sets in use ("L", "D", "P1"...), to notice a change
+  bool dark = false;  // the key set (the key slots use it whatever the device)
 } g;
+std::atomic<uint32_t> g_pad_user{0};  // the socket a controller was used on last
+std::atomic<bool> g_keys_shown{false};  // KeysShown()
 
 std::atomic<int64_t> g_pad_activity{0};  // steady_clock ns of the last controller input
 // The game's fonts in memory -> their names (mouse_menus.h measures texts).
@@ -888,13 +1079,35 @@ void OnFrameEnd(void*) {
   if (driver && setting != 2) {
     device = setting == 1 || driver->last_key_down() >= g_pad_activity.load() ? 1 : 0;
   }
+  g_keys_shown = device == 1;
   const uint32_t revision = driver ? driver->bindings_revision() : 0;
-  if (device == g.device && revision == g.revision) return;
-  if (device != g.device) {
-    REXLOG_INFO("Prompt pictures: {}", device ? "keyboard and mouse keys" : "controller buttons");
+  // The sets: Light / Dark keys, the controller's style (Automatic: the
+  // model of the controller used last, PadKeyFor its socket).
+  const bool dark = REXCVAR_GET(keyboard_icons) == 1;
+  int pad_style = kOriginalStyle;
+  const int32_t pad_setting = REXCVAR_GET(controller_icons);
+  if (pad_setting >= 2 && pad_setting < 2 + int(std::size(kPadSets))) {
+    pad_style = pad_setting - 2;
+  } else if (pad_setting == 0) {
+    if (const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get()) {
+      pad_style = StyleOfPad(assignment->PadKeyFor(g_pad_user.load()));
+    }
+  }
+  const std::string look = device ? (dark ? "D" : "L") : "P" + std::to_string(pad_style);
+  if (device == g.device && revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision &&
+      dark == g.dark) {
+    return;
+  }
+  g_slot_drawn = g_slot_revision;
+  g.dark = dark;
+  if (device != g.device || look != g.look) {
+    REXLOG_INFO("Prompt pictures: {}", device ? (dark ? "keyboard and mouse keys (dark)" : "keyboard and mouse keys")
+                                       : pad_style == kOriginalStyle ? std::string("controller buttons (the game's own)")
+                                       : std::string("controller buttons: ") + kPadSets[pad_style].name);
   }
   g.device = device;
   g.revision = revision;
+  g.look = look;
 
   const kbm::Bindings bindings = driver ? driver->bindings() : kbm::Bindings{};
   for (size_t i = 0; i < g.pages.size();) {
@@ -904,19 +1117,20 @@ void OnFrameEnd(void*) {
       g.pages.erase(g.pages.begin() + std::ptrdiff_t(i));
       continue;
     }
-    const std::string want = device ? Describe(*gp.prompt, bindings) : std::string();
+    const std::string want = Describe(*gp.prompt, bindings, device == 1, dark, pad_style);
     if (want != gp.shown) Show(base, gp, want);
     ++i;
   }
 }
 
-// --- The font patch: six more prompt glyphs for the menus -----------------------
+// --- The font patch: six more prompt glyphs for the menus, and 16 key slots -------
 // (prompt_icons.h "Menus"). In package\b4c85fe7.p3d, for each of the two fonts:
 //   * the A, B, X, Y, LB, RB pictures' texture chunks (0x19000) copied,
 //     renamed after the next page numbers ("..._texture_36" on), inserted
 //     after the last page: the loader numbers pages in file order;
-//   * the font's page count (the last u32 of its own data) + 6;
-//   * six glyph records (0x22001: u32 count, 40 bytes each) copied from the
+//   * the font's page count (the last u32 of its own data) + 6 (+ 16 key
+//     slots since 2026-10-15: copies of the A picture, U+E100..E10F);
+//   * six (+ 16) glyph records (0x22001: u32 count, 40 bytes each) copied from the
 //     sources' (kPrompts), with the new page (bit 31 = a picture) and the menu
 //     character, inserted
 //     IN CHARACTER ORDER: the font looks characters up by binary search over
@@ -1054,6 +1268,27 @@ std::string FontNameAt(uint32_t font) {
   return it != g_font_names.end() ? it->second : std::string();
 }
 
+bool KeysShown() { return g_keys_shown.load(); }
+
+char16_t KeyGlyph(Input key) {
+  if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
+  std::lock_guard<std::mutex> lock(g.mutex);
+  size_t slot = 0;
+  for (size_t i = 0; i < g_slots.size(); ++i) {
+    if (g_slots[i].key == key) {
+      slot = i;
+      break;
+    }
+    if (g_slots[i].asked < g_slots[slot].asked) slot = i;  // least recently asked
+  }
+  if (g_slots[slot].key != key) {
+    g_slots[slot].key = key;
+    ++g_slot_revision;
+  }
+  g_slots[slot].asked = ++g_slot_clock;
+  return char16_t(kFirstSlot + slot);
+}
+
 char16_t MenuGlyph(char16_t c) {
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return c;
   for (size_t k = kDiscPrompts; k < std::size(kPrompts); ++k) {
@@ -1091,7 +1326,6 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
 }
 
 void SeePad(uint32_t user, const uint8_t* gamepad) {
-  (void)user;
   // Guest X_INPUT_GAMEPAD: u16 buttons, u8 LT, u8 RT, s16 LX, LY, RX, RY (big-endian).
   const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]);
   auto stick = [&](int i) { return int16_t(uint16_t(gamepad[4 + 2 * i] << 8 | gamepad[5 + 2 * i])); };
@@ -1112,7 +1346,10 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
   if (!kb_sticks) {
     for (int i = 0; i < 4; ++i) pad = pad || std::abs(int(stick(i))) > 12000;
   }
-  if (pad) g_pad_activity = Clock::now().time_since_epoch().count();
+  if (pad) {
+    g_pad_activity = Clock::now().time_since_epoch().count();
+    g_pad_user = user;
+  }
 }
 
 }  // namespace prompt_icons

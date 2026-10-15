@@ -51,6 +51,14 @@ void SeePad(uint32_t user, const uint8_t* gamepad);
 // The Options screen is up (for other code that wants to stay out of its way).
 bool Open();
 
+// A key row is waiting for a new key (A on an action's row, Controls tab):
+// the controllers must say nothing to the game meanwhile. Any thread.
+bool Capturing();
+// From the XInputGetState wrapper, after SeePad (which still sees a B =
+// cancel): zeroes the pad while Capturing(), and afterwards hides the
+// buttons that were held then until they're let go. Game threads.
+void FilterPad(uint32_t user, uint8_t* gamepad);
+
 // PAGES: the menu's own move (Scrooby Menu::MoveNext sub_8237A668 / Previous
 // sub_8237A550, hooked by saves/save_library.cpp) asks this first: moving
 // past the last / first row of a tab's page turns to the next / previous page

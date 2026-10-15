@@ -197,5 +197,5 @@ Options click + moves over Tutorials = Options (after the 1 s slide); 6 clicks
 at 100 ms + 8 at 80 ms on an Options row = 14 changes; quit question hover +
 No; save list hover + the Back word.
 
-Not covered yet: the name screen's on-screen keyboard (its cursor is the
-screen's own, not a Scrooby menu selection), typing a name on the keyboard.
+The name screen's on-screen keyboard (its cursor is the screen's own, not a
+Scrooby menu selection) and typing a name on the keyboard: findings/38 s.5.

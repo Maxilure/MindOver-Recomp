@@ -57,6 +57,7 @@
 #include "session_log.h"
 #include "crash_report.h"
 #include "debug/write_watchpoints.h"
+#include "input/name_typing.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
 #include "input/players.h"
@@ -216,6 +217,9 @@ class CrashMomApp : public rex::ReXApp {
     if (REXCVAR_GET(save_library)) {
       rename_screen::Register();
     }
+    // The name screen's space key picture (input/name_typing.h): after the
+    // rename route, whose patch copies the keyboard's pictures in game.
+    name_typing::Register();
     // No Xbox minimum times on the save screens (saves/save_screen_waits.h).
     save_screen_waits::Install();
     // Pause -> Options: the port's Options screen with tabs (options/options_menu.h):
@@ -230,10 +234,6 @@ class CrashMomApp : public rex::ReXApp {
         hooks.emulated_drawing = [renderer] { renderer->UpdateEmulatedDrawing(); };
         hooks.emulated_only = [renderer] { return renderer->emulated_only(); };
       }
-      // Rebind Keys: the F6 window (ImGui runs on the UI thread).
-      hooks.open_controls = [this] {
-        app_context().CallInUIThread([] { controls_menu::Toggle(); });
-      };
       // V-sync: the windows' swapchains made again (their present mode is
       // picked then), as a resize does; on the UI thread.
       hooks.refresh_present = [this] {

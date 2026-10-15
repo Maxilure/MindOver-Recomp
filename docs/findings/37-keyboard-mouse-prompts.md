@@ -125,7 +125,39 @@ are the 360's A and B again.
 > Y, LB, RB: U+E0B1 E0B2 E0B3 E0B4 E0BE E0B8), also used by the port's own
 > Options screen.
 
-## 4. Tests
+## 4. Styles, Automatic, and key pictures anywhere (2026-10-15)
+
+**Styles.** Options -> Controls has **Keyboard Icons** (Light / Dark,
+`--keyboard_icons`) and **Controller Icons** (Automatic / Xbox 360 / Xbox
+Series / PlayStation 5 / PlayStation 4 / Switch, `--controller_icons`). The
+controller sets are Xelu's too (assets/prompts/README.md). They go into the
+same pages the keys do: while a controller is the device in use and a style
+other than the game's own is chosen, every button page gets that set's
+picture of the same 360 button, BY POSITION (the 360's A is the bottom
+button: Cross on a PlayStation, B on a Switch; Back = View / Share / Minus,
+Start = Menu / Options / Plus). The "rotate" arrow keeps the game's own
+picture. A page's description says which set ("L key 32", "D key 32",
+"P 1 0" = PlayStation 5's bottom button), so a change of set redraws it.
+
+**Automatic** reads the controller's maker and model from its SDL GUID (the
+players' device key `pad:<32 hex digits>`: bytes 4-5 = USB vendor, 8-9 =
+product, little-endian): Sony 054C with a DualSense (0CE6, Edge 0DF2) =
+PlayStation 5, other Sony pads = PlayStation 4; Nintendo 057E = Switch;
+Microsoft 045E = Xbox Series, except the 360 pads (028E, 028F, 0719) = the
+game's own; any other maker (generic and third-party pads) = the game's own
+360 look. The controller is the first one answering on the socket a
+controller was used on last (`PlayerAssignment::PadKeyFor`).
+
+**Key slots.** The font patch (section 3) adds 16 more glyphs, U+E100 to
+U+E10F, each with its own page (copies of the A picture). `KeyGlyph(key)`
+lends one to any key (the least recently asked slot is reused) and the next
+frame paints that key into its page, in the chosen key set, whatever the
+device in use. The Options screen's key rows write their keys this way, so
+they show as pictures in the game's own text (the card keeps the names).
+The game's fonts as the port reads them from the disc (ui/game_font.h, for
+measuring) don't have the added glyphs: they measure like the A picture.
+
+## 5. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked
 (15 pictures each, menu glyphs included); a fake controller's Start switched

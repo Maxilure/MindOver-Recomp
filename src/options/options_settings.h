@@ -46,7 +46,11 @@ struct Env {
 enum class Kind {
   kChoice,  // a list of values, left / right walks it (no wrap)
   kStars,   // 0-5 stars (the game's volume rows)
-  kAction,  // A does something (Rebind Keys)
+  kAction,  // A does something (Default Keys)
+  kKey,     // a keyboard / mouse action's keys (the Controls tab): A / X =
+            // press a new first / second key, Y = remove one (options_menu.cpp)
+  kHeader,  // a heading between rows (the keys' "Keyboard and Mouse Keys"):
+            // the label only, in the titles' cyan, never selected
 };
 
 struct Row {
@@ -64,6 +68,9 @@ struct Row {
   std::function<std::u16string(Env&, int)> warn;
   // kAction: pressing A on the row.
   std::function<void(Env&)> activate;
+  // kAction: a question asked first in the game's Yes / No box ("Put every
+  // key back?"); activate() runs only on Yes. Empty = no question.
+  std::u16string confirm;
   // kStars rows: called when the row gets / loses the cursor (Music plays
   // its preview while selected, as in the original screen).
   std::function<void(Env&, bool)> focus;
@@ -71,6 +78,8 @@ struct Row {
   // native-renderer effect while the emulated picture is shown): drawn
   // see-through, its value can't change, the reason as the card's warning.
   std::function<std::u16string(Env&)> unavailable;
+  // kKey: which keyboard / mouse action (kbm::Action, input/bindings.h).
+  int key_action = -1;
   // Show the Brightness guide (the calibration grey scale) on this row.
   bool guide = false;
   // An X button action on this row (the prompt bottom right while the row is
@@ -88,6 +97,15 @@ struct Tab {
 // The tabs, built once.
 const std::vector<Tab>& Tabs();
 
+// The keys of a keyboard / mouse action as a row shows them ("Left Mouse,
+// J"; "None"), and the action's name as the rows write it ("Light Attack").
+// For the Controls tab's key rows (options_menu.cpp).
+std::u16string KeysText(int action);
+// The same keys as PICTURES (input/prompt_icons.h KeyGlyph: one font
+// character per key, space between), "" when there are none or no pictures.
+std::u16string KeyPictures(int action);
+std::u16string ActionName(int action);
+
 // What the screen needs from the rest of the port (set by CrashMomApp).
 struct Hooks {
   // The native renderer: null functions = there is none (not Vulkan).
@@ -95,8 +113,6 @@ struct Hooks {
   std::function<void(bool)> show_native;     // = F9
   std::function<void()> emulated_drawing;    // NativeRenderer::UpdateEmulatedDrawing
   std::function<bool()> emulated_only;       // --emulated_only (the native renderer idle, F9 / F8 locked)
-  // Opens the F6 Controls window (keys); runs on the UI thread.
-  std::function<void()> open_controls;
   // The window's swapchain made again (a new present mode: V-sync).
   std::function<void()> refresh_present;
   // Dual mode (F8): the second window with the native picture, opened or

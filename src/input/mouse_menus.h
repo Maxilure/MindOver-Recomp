@@ -70,5 +70,10 @@ bool PointerOver(uint8_t* base, uint32_t element, uint32_t page = 0, uint32_t la
 // Goes up at every pointer move (hover only follows a pointer that moved).
 uint32_t PointerMoves();
 bool TakeClickOver(uint8_t* base, uint32_t element, uint32_t page = 0, uint32_t layer = 0);
+// The same for a CELL around an element: `half_w` / `half_h` canvas units
+// either side of the centre of its box (the name screen's on-screen keys:
+// a key's letter is thin, its cell isn't). Hidden elements never match.
+bool PointerNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page = 0);
+bool TakeClickNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page = 0);
 
 }  // namespace mouse_menus

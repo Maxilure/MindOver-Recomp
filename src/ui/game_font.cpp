@@ -180,7 +180,16 @@ bool Font::Load(std::string_view name) {
 
 const Glyph* Font::Find(char16_t c) const {
   const auto it = glyphs_.find(c);
-  return it != glyphs_.end() ? &it->second : nullptr;
+  if (it != glyphs_.end()) return &it->second;
+  // The port's own picture glyphs (input/prompt_icons.h: the menus' buttons
+  // U+E0B1.., the key slots U+E100..), added to the game's fonts by a data
+  // patch, aren't in the disc's font this reads: they measure like the A
+  // button's picture they're copies of.
+  if (c >= 0xE000 && c < 0xE200) {
+    const auto a = glyphs_.find(u'\u00B1');
+    return a != glyphs_.end() ? &a->second : nullptr;
+  }
+  return nullptr;
 }
 
 float Font::Measure(std::u16string_view text) const {

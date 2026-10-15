@@ -161,8 +161,8 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
         "While Spin is held, how often it counts as one more spin (a press is one at once). "
         "On a controller each full circle of the left stick is one.");
     ImGui::SetNextItemWidth(220.0f);
-    ImGui::SliderFloat("Walk (how far the stick leans)", &edit_.settings.walk_tilt, 0.2f,
-                       0.85f, "%.2f");
+    ImGui::SliderFloat("Walk (how far the stick leans)", &edit_.settings.walk_tilt,
+                       kbm::kWalkTiltMin, kbm::kWalkTiltMax, "%.2f");
     if (ImGui::IsItemEdited()) driver->SetBindings(edit_);
     if (ImGui::IsItemDeactivatedAfterEdit()) Save("Walk saved.");
 

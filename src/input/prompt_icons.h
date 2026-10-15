@@ -69,6 +69,16 @@
 //
 // --button_prompts: 0 = automatic (the device used last), 1 = always keys,
 // 2 = always the controller's buttons.
+//
+// STYLES (2026-10-15): --keyboard_icons 0 / 1 = Xelu's Light / Dark keys;
+// --controller_icons = which controller's buttons: 0 automatic (by the maker
+// and model of the controller used last, read from its SDL GUID: Sony
+// DualSense = PlayStation 5, other Sony = PlayStation 4, Nintendo = Switch,
+// Xbox One / Series = Xbox Series; a 360 pad or any other maker = the game's
+// own pictures), 1 the game's own Xbox 360 buttons, 2 Xbox Series, 3
+// PlayStation 5, 4 PlayStation 4, 5 Switch (Xelu's sets, assets/prompts/).
+// The controller sets go into the same pages the keys do, by button
+// POSITION (the 360's A, the bottom button, is Cross / Switch's B).
 // =============================================================================
 #pragma once
 
@@ -80,6 +90,8 @@
 struct PPCContext;
 
 REXCVAR_DECLARE(int32_t, button_prompts);
+REXCVAR_DECLARE(int32_t, keyboard_icons);
+REXCVAR_DECLARE(int32_t, controller_icons);
 
 namespace prompt_icons {
 
@@ -99,6 +111,19 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't
 // in). For menus the port builds (options/options_menu.cpp). Any thread.
 char16_t MenuGlyph(char16_t c);
+
+// A picture of `key` (a keyboard key / mouse button, kbm::Input) as a
+// character of the game's fonts, for texts the port writes (the Options
+// screen's key rows): one of 16 KEY SLOTS our font patch adds (U+E100..),
+// lent to the key until 16 others were asked for since; its page shows the
+// key in the chosen key set from the next frame on. 0 = no slots (the font
+// patch isn't in): write the key's name instead. Game main thread.
+char16_t KeyGlyph(uint16_t key);
+
+// Are the prompts showing keys right now (the keyboard / mouse was used last,
+// or --button_prompts says so)? For screens that pick their own prompts
+// (input/name_typing.h). Any thread.
+bool KeysShown();
 
 // The name ("Titans_Large", "Titans_Small") of the game's font object at
 // `font` (a pure3d::TextureFont the loader built), "" if it isn't one of

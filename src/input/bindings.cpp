@@ -183,7 +183,7 @@ constexpr ActionInfo kActions[kActionCount] = {
     {"menu_confirm", "Menu: confirm", "Choose the selected item.", "A", Group::kMenus,
      Output::kButton, kA, 0, 0, "Return, Space", kMenu},
     {"menu_back", "Menu: back", "Back to the previous screen; in the pause menu: play on.", "B",
-     Group::kMenus, Output::kButton, kB, 0, 0, "Escape, Backspace", kMenu},
+     Group::kMenus, Output::kButton, kB, 0, 0, "Escape", kMenu},
     {"menu_tab_left", "Menu: previous tab", "The Options screen's tabs.", "LB", Group::kMenus,
      Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, "Q", kMenu},
     {"menu_tab_right", "Menu: next tab", "", "RB", Group::kMenus, Output::kButton,
@@ -191,8 +191,8 @@ constexpr ActionInfo kActions[kActionCount] = {
     {"menu_x", "Menu: X action", "What the menu's X prompt says: rename a save, Dual Mode, "
      "erase a letter on the name screen.", "X", Group::kMenus, Output::kButton, kX, 0, 0, "X",
      kMenu},
-    {"menu_y", "Menu: Y action", "What the menu's Y prompt says: delete a save.", "Y",
-     Group::kMenus, Output::kButton, kY, 0, 0, "Y", kMenu},
+    {"menu_y", "Menu: Y action", "What the menu's Y prompt says: delete a save, remove a key "
+     "(Options -> Controls).", "Y", Group::kMenus, Output::kButton, kY, 0, 0, "Backspace", kMenu},
     {"dpad_up", "D-pad up", "", "D-pad", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_DPAD_UP,
      0, 0, "Up", kBoth},
     {"dpad_down", "D-pad down", "", "D-pad", Group::kMenus, Output::kButton,
@@ -502,7 +502,10 @@ Bindings LoadBindings(const std::filesystem::path& path) {
       if (key == "spin_turns_per_second") {
         b.settings.spin_turns_per_second = std::clamp(v, 1.0f, 8.0f);
       } else {
-        b.settings.walk_tilt = std::clamp(v, 0.2f, 0.85f);
+        // Files from before 2026-10-15 hold 0.5 (the old default, inside the
+        // game's dead zone): those get the new default.
+        b.settings.walk_tilt = v < kWalkTiltMin - 0.15f ? Settings{}.walk_tilt
+                                                        : std::clamp(v, kWalkTiltMin, kWalkTiltMax);
       }
       continue;
     }
@@ -572,6 +575,41 @@ Bindings LoadBindings(const std::filesystem::path& path) {
     add(kMenuConfirm, V(VK::kSpace), false);
     add(kMenuBack, V(VK::kEscape), true);
   }
+  // Version 2 files (before 2026-10-15): Backspace was a second Menu: back
+  // and the Y key was Menu: Y. Backspace is the menus' "remove / delete" now
+  // (Options -> Controls: remove a key; the save list: delete a save), as a
+  // keyboard player expects. Only where the file still has the old layout:
+  // Backspace leaves Menu: back if Escape (or another key) stays there, and
+  // Menu: Y goes from Y to Backspace if it was only Y.
+  if (version < 3) {
+    const Input backspace = V(VK::kBack), y = V(VK::kY);
+    auto& back = b.keys[kMenuBack];
+    const bool back_kept = std::any_of(back.begin(), back.end(),
+                                       [&](Input k) { return k != kNoInput && k != backspace; });
+    if (back_kept && b.Has(kMenuBack, backspace)) {
+      for (Input& k : back) {
+        if (k == backspace) k = kNoInput;
+      }
+      if (back[0] == kNoInput) std::swap(back[0], back[1]);
+      REXLOG_INFO("Controls: Backspace isn't Menu: back any more (it removes / deletes in menus)");
+    }
+    // (Empty too: a file without a menu_y line got the new default
+    // Backspace, which its menu_back line took back while loading.)
+    auto& menu_y = b.keys[kMenuY];
+    if ((menu_y[0] == y || menu_y[0] == kNoInput) && menu_y[1] == kNoInput &&
+        !b.Has(kMenuBack, backspace)) {
+      bool free = true;
+      for (int a = 0; a < kActionCount; ++a) {
+        if (a != kMenuY && ContextsOverlap(kActions[a].context, Context::kMenu) && b.Has(Action(a), backspace)) {
+          free = false;
+        }
+      }
+      if (free) {
+        menu_y[0] = backspace;
+        REXLOG_INFO("Controls: Menu: Y is Backspace now (was Y)");
+      }
+    }
+  }
   REXLOG_INFO("Controls: loaded {} ({} settings)", path.string(), lines);
   // What differs from the defaults, so a play log says which keys were used.
   const Bindings defaults = Bindings::Defaults();
@@ -604,7 +642,7 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
          "# The comment after each line is the Xbox 360 control the game sees.\n"
          "# Actions marked [menus] work while a menu is on screen, [play] in play; a key\n"
          "# may have one of each (Escape: Pause in play, Menu: back in menus).\n\n"
-         "controls_version = 2\n";
+         "controls_version = 3\n";
   char number[32];
   std::snprintf(number, sizeof(number), "%.2f", b.settings.spin_turns_per_second);
   out << "spin_turns_per_second = " << number << "   # Spin held: spins per second\n";

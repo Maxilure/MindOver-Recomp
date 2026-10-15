@@ -18,6 +18,7 @@
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 
+#include "../data/fight_tree.h"
 #include "../guest_memory.h"
 #include "../ui/game_font.h"
 #include "../ui/scrooby.h"
@@ -35,7 +36,14 @@ extern "C" REX_FUNC(__imp__sub_82371198);  // element: scale around its centre (
 extern "C" REX_FUNC(__imp__sub_82371CE0);  // text element: string from the text list by key
 extern "C" REX_FUNC(__imp__sub_82370A58);  // element: reset its transform
 extern "C" REX_FUNC(__imp__sub_820CE2C8);  // CInGameOptionsScreenAction: a slide step
+extern "C" REX_FUNC(__imp__sub_8225F758);  // ShowConfirmMessage (front end, r4 text name, f1 timer)
+extern "C" REX_FUNC(__imp__sub_823574E8);  // make heap r3 current, returns the previous
+extern "C" REX_FUNC(__imp__sub_8211AF40);  // the front end's decision dispatcher (the game's)
 extern "C" REX_FUNC(__imp__sub_82370FD0);  // element: scale (f1 x, f2 y, f3 z) around its centre  // FindPage(layer, page name): a loaded Scrooby page
+
+// The main menu copy's "OptionsMenu" layer (0 in game): defined with the
+// main menu's code below.
+uint32_t MainMenuLayer(const uint8_t* base);
 
 namespace options_menu {
 namespace {
@@ -82,7 +90,9 @@ constexpr uint16_t kPadRB = 0x0200;
 constexpr uint16_t kPadA = 0x1000;
 constexpr uint16_t kPadB = 0x2000;
 constexpr uint16_t kPadX = 0x4000;
+constexpr uint16_t kPadY = 0x8000;
 constexpr char16_t kGlyphX = u'\u00B3';  // the font's X button picture
+constexpr char16_t kGlyphY = u'\u00B4';  // the font's Y button picture
 constexpr char16_t kGlyphA = u'\u00B1';  // the font's A button picture
 constexpr const char* kSelectTextKey = "FE_Button_Text_Select";  // the prompts' "Select" (text list key)
 
@@ -146,6 +156,21 @@ struct Screen {
   uint32_t select_button = 0, select_text = 0;
   uint32_t x_button = 0, x_text = 0;
   bool x_showing = false;
+  // The upper left corner: the Keys tab's Y ("Remove Key").
+  uint32_t y_button = 0, y_text = 0;
+  bool y_showing = false;
+  // THE KEYS TAB (2026-10-15): the action whose key is being asked for
+  // (-1 = none) and which of its two keys; the card's line about the last
+  // change (e.g. a key taken from another action), for the row it was made on.
+  int capture_action = -1, capture_slot = 0;
+  std::u16string key_message;
+  int key_message_row = -1;  // index into the tab's rows
+  // A row's question (Row::confirm) in the game's Yes / No box: the row
+  // (index into the tab's rows) and the selection to keep meanwhile.
+  int asking_row = -1, asking_selection = 0;
+  // A row's name colour as the data has it (unselected green), found at
+  // Enter: a slot that showed a heading gets it back (below).
+  uint32_t row_colour = 0;
   // All eight prompts of FE_Buttons, moved with the glass while the screen
   // is up (their x positions as found, put back at Exit).
   std::array<uint32_t, 8> prompts{};
@@ -153,6 +178,17 @@ struct Screen {
 };
 Screen g;
 std::atomic<bool> g_open{false};
+// The in-game screen's CInGameOptionsScreenAction while it's up (its +20
+// page and +32 glass layer: hidden under a question), 0 otherwise.
+uint32_t g_screen_action = 0;
+// The titles' cyan (findings/30 s.5): a heading row's colour.
+constexpr uint32_t kHeadingColour = 0xFF00F6EF;
+constexpr uint32_t kElementColour = 80;  // an element's colour word (0xAARRGGBB; scrooby.h)
+// The key a capture got (UI thread writes, game thread reads): an Input,
+// or one of these.
+constexpr int kCaptureNone = -3, kCaptureWaiting = -2, kCaptureCancelled = -1;
+std::atomic<int> g_capture_result{kCaptureNone};
+std::atomic<bool> g_capturing{false};  // read by the controller filter (Capturing())
 
 uint32_t Read32(const uint8_t* base, uint32_t a) {
   const uint8_t* p = GuestPtr(base, a);
@@ -356,6 +392,7 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     // 2026-10-10 with the debug console).
     const uint32_t item = scrooby::Item(base, g.menu, r);
     g.label[r] = item ? Read32(base, item + kItemLook) : 0;
+    if (r == kRows - 1 && g.label[r]) g.row_colour = Read32(base, g.label[r] + kElementColour);
     g.value[r] = item ? Read32(base, item + kItemValue) : 0;
     for (int k = 0; k < kStars; ++k) {
       g.star[r][k] = FindPicture(ctx, base, g.page, fmt::format("OptStar{}_{}", r, k));
@@ -380,6 +417,8 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
   g.select_text = FindText(ctx, base, buttons, "LowerRightText");
   g.x_button = FindText(ctx, base, buttons, "UpperRightButton");
   g.x_text = FindText(ctx, base, buttons, "UpperRightText");
+  g.y_button = FindText(ctx, base, buttons, "UpperLeftButton");
+  g.y_text = FindText(ctx, base, buttons, "UpperLeftText");
   constexpr const char* kPrompts[8] = {"LowerLeftButton",  "LowerLeftText",  "LowerRightButton",
                                        "LowerRightText",   "UpperLeftButton", "UpperLeftText",
                                        "UpperRightButton", "UpperRightText"};
@@ -537,6 +576,18 @@ void ApplyGreying(Env& env) {
   for (int r = 0; r < kRows; ++r) {
     const Row* row = RowOnScreen(r);
     if (!row) continue;
+    if (row->kind == Kind::kHeader) {  // (the menu recolours its items: every frame)
+      scrooby::SetColour(env.ctx, env.base, g.label[r], kHeadingColour);
+      continue;
+    }
+    // The slot showed the heading on another page: the menu only recolours
+    // an item when the selection moves, so the cyan stayed on whichever row
+    // took the slot ("Jump", "Map": playtest, 2026-10-15). Back to the rows'
+    // own colour (a selected row's yellow is the menu's and differs).
+    if (g.row_colour && g.label[r] &&
+        (Read32(env.base, g.label[r] + kElementColour) & 0xFFFFFF) == (kHeadingColour & 0xFFFFFF)) {
+      scrooby::SetColour(env.ctx, env.base, g.label[r], g.row_colour);
+    }
     const uint8_t alpha = Unavailable(env, *row).empty() ? kRowSolid : kRowGreyed;
     scrooby::SetAlpha(env.ctx, env.base, g.label[r], alpha);
     scrooby::SetAlpha(env.ctx, env.base, g.value[r], alpha);
@@ -562,7 +613,7 @@ void Refresh(Env& env) {
   for (int r = 0; r < kRows; ++r) {
     const Row* row = RowOnScreen(r);
     const bool used = row != nullptr;
-    scrooby::SetSelectable(base, scrooby::Item(base, g.menu, r), used);
+    scrooby::SetSelectable(base, scrooby::Item(base, g.menu, r), used && row->kind != Kind::kHeader);
     scrooby::SetVisible(base, g.label[r], used);
     scrooby::SetVisible(base, g.value[r], used);
     const bool stars = row && row->kind == Kind::kStars;
@@ -581,6 +632,14 @@ void Refresh(Env& env) {
         const auto values = row->values(env);
         const int i = std::clamp(row->get(env), 0, int(values.size()) - 1);
         value = values.empty() ? u"" : values[size_t(i)];
+      } else if (row->kind == Kind::kKey) {
+        // The keys as pictures (the names are on the card), else as names.
+        if (row->key_action == g.capture_action) {
+          value = u"Press a Key";
+        } else {
+          value = options_settings::KeyPictures(row->key_action);
+          if (value.empty()) value = options_settings::KeysText(row->key_action);
+        }
       }
       scrooby::SetText(ctx, base, g.value[r], value);
       CentrePulse(base, g.value[r], value);
@@ -611,16 +670,38 @@ void Refresh(Env& env) {
   }
   // A greyed-out row: its reason is the warning.
   const std::u16string unavailable = Unavailable(env, row);
-  LayOutCard(ctx, base, heading, row.guide, row.describe ? row.describe(env, current) : u"",
-             !unavailable.empty() ? unavailable : row.warn ? row.warn(env, current) : u"");
+  std::u16string description = row.describe ? row.describe(env, current) : u"";
+  std::u16string warning = !unavailable.empty() ? unavailable : row.warn ? row.warn(env, current) : u"";
+  if (row.kind == Kind::kKey) {
+    // The keys as the heading; while one is asked for, what to do.
+    const bool asking = row.key_action == g.capture_action;
+    heading = asking ? std::u16string(u"Press a Key") : options_settings::KeysText(row.key_action);
+    if (asking) {
+      description = u"Press the new " + std::u16string(g.capture_slot ? u"second " : u"") +
+                    u"key or mouse button for " + row.label + u". Esc: cancel.";
+      warning.clear();
+    } else if (g.key_message_row == First() + sel && unavailable.empty()) {
+      warning = g.key_message;
+    }
+  }
+  LayOutCard(ctx, base, heading, row.guide, description, warning);
   ApplyGreying(env);
   // The row's X action in the upper right corner (blank unless the row
   // offers something).
-  const bool x = row.x_action && row.x_shown && row.x_shown(env, current);
+  // A key row: X = a second key, Y = remove one (not while a key is asked
+  // for: then only Esc means anything).
+  const bool key_row = row.kind == Kind::kKey && unavailable.empty() && g.capture_action < 0;
+  const bool x = key_row || (row.x_action && row.x_shown && row.x_shown(env, current));
   if (x != g.x_showing || x) {
     scrooby::SetText(ctx, base, g.x_button, x ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphX)) : u"");
-    scrooby::SetText(ctx, base, g.x_text, x ? row.x_label : u"");
+    scrooby::SetText(ctx, base, g.x_text, !x ? u"" : key_row ? u"Second Key" : row.x_label);
     g.x_showing = x;
+  }
+  if (key_row != g.y_showing || key_row) {
+    scrooby::SetText(ctx, base, g.y_button,
+                     key_row ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphY)) : u"");
+    scrooby::SetText(ctx, base, g.y_text, key_row ? u"Remove Key" : u"");
+    g.y_showing = key_row;
   }
   // The Music row plays its preview while it has the cursor (in game: the
   // main menu has its own music playing).
@@ -638,6 +719,7 @@ void SwitchTab(Env& env, int delta) {
   Unfocus(env);
   const int count = int(options_settings::Tabs().size());
   g.tab = (g.tab + delta + count) % count;
+  g.key_message_row = -1;
   g.row_page = 0;
   scrooby::Select(env.ctx, env.base, g.menu, 0);
   scrooby::PlaySound(env.ctx, env.base,
@@ -667,7 +749,226 @@ bool ChangeValue(Env& env, int delta, bool wrap = false) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// The Keys tab: asking for a key (2026-10-15)
+// ---------------------------------------------------------------------------
+// A (or a click) on an action's row asks for its first key, X for a second
+// one: the keyboard driver's capture hands the next key / mouse button /
+// wheel notch to us instead of the game (Esc = cancel), and while it waits
+// the controllers say nothing to the game (Capturing(): the XInputGetState
+// wrapper), so a pad's B cancels instead of leaving the screen. The new key
+// goes in with Bindings::Assign, which takes it from any other action it was
+// on in an overlapping context (one key, one job): the card says so. The
+// keys are in effect at once (SetBindings) and written to controls.toml.
+
+void StartCapture(Env& env, int action, int slot) {
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  if (!driver || action < 0) return;
+  g.capture_action = action;
+  g.capture_slot = slot;
+  g.key_message_row = -1;
+  g_capture_result = kCaptureWaiting;
+  g_capturing = true;
+  driver->Capture([](kbm::Input input) {
+    g_capture_result = input == kbm::kNoInput ? kCaptureCancelled : int(input);
+  });
+  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kChange);
+  REXLOG_INFO("Options: asking for {}'s {} key", kbm::Info(kbm::Action(action)).id, slot ? "second" : "first");
+  Refresh(env);
+}
+
+// Writes a changed set of keys: in effect at once, and to the file.
+void KeepKeys(const kbm::Bindings& b) {
+  if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) driver->SetBindings(b);
+  kbm::SaveBindings(b, kbm::ControlsFilePath());
+}
+
+// The menus' own actions (Pause, Menu: ..., the D-pad = arrow keys) aren't
+// listed and their keys can't be taken: the menu action of an overlapping
+// context that holds `key`, or kActionCount if none does. (A key on a menu
+// action only, e.g. Enter, can still be a PLAY key: Jump on Enter keeps
+// Enter = confirm in menus; contexts, input/bindings.h.)
+kbm::Action MenuKeyOwner(const kbm::Bindings& b, int action, kbm::Input key) {
+  for (int a = 0; a < kbm::kActionCount; ++a) {
+    const kbm::ActionInfo& info = kbm::Info(kbm::Action(a));
+    if (a == action || info.group != kbm::Group::kMenus || a == kbm::kMap) continue;
+    if (!kbm::ContextsOverlap(info.context, kbm::Info(kbm::Action(action)).context)) continue;
+    if (b.Has(kbm::Action(a), key)) return kbm::Action(a);
+  }
+  return kbm::kActionCount;
+}
+
+// The capture's end: `result` = the key (an Input) or kCaptureCancelled.
+void EndCapture(Env& env, int result) {
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  const int action = g.capture_action;
+  g.capture_action = -1;
+  g_capturing = false;
+  g_capture_result = kCaptureNone;
+  if (driver) driver->CancelCapture();  // (nothing waiting after a key arrived)
+  g.key_message_row = First() + scrooby::Selection(env.base, g.menu);
+  if (result < 0 || !driver || action < 0) {
+    g.key_message = u"Not changed.";
+    REXLOG_INFO("Options: key change cancelled");
+  } else if (const kbm::Action owner = MenuKeyOwner(driver->bindings(), action, kbm::Input(result));
+             owner < kbm::kActionCount) {
+    // A key the menus need (the arrows, Enter, Escape, Backspace, Q / E...):
+    // taking it would leave a menu without its key. Not changed.
+    const std::string label = kbm::InputLabel(kbm::Input(result));
+    g.key_message = std::u16string(label.begin(), label.end()) + u" is the menus' " +
+                    options_settings::ActionName(owner) + u": pick another key.";
+    REXLOG_INFO("Options: {} refused for {} (the menus' {})", kbm::InputName(kbm::Input(result)),
+                kbm::Info(kbm::Action(action)).id, kbm::Info(owner).id);
+  } else {
+    kbm::Bindings b = driver->bindings();
+    const kbm::Input key = kbm::Input(result);
+    const kbm::Action lost = b.Assign(kbm::Action(action), g.capture_slot, key);
+    KeepKeys(b);
+    const std::u16string name = options_settings::ActionName(action);
+    const std::string label = kbm::InputLabel(key);
+    const std::u16string key_text(label.begin(), label.end());
+    g.key_message = lost < kbm::kActionCount
+                        ? key_text + u" was " + options_settings::ActionName(lost) +
+                              u"'s key: it's " + name + u"'s now."
+                        : std::u16string();
+    REXLOG_INFO("Options: {} key {} = {}{}", kbm::Info(kbm::Action(action)).id, g.capture_slot + 1,
+                kbm::InputName(key),
+                lost < kbm::kActionCount ? std::string(" (taken from ") + kbm::Info(lost).id + ")" : "");
+  }
+  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kChange);
+  Refresh(env);
+}
+
+// Y on an action's row: its second key goes, or its first when it has one
+// key only.
+void RemoveKey(Env& env, int action) {
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  if (!driver || action < 0) return;
+  kbm::Bindings b = driver->bindings();
+  const int slot = b.keys[size_t(action)][1] != kbm::kNoInput ? 1 : 0;
+  const kbm::Input key = b.keys[size_t(action)][size_t(slot)];
+  g.key_message_row = First() + scrooby::Selection(env.base, g.menu);
+  if (key == kbm::kNoInput) {
+    g.key_message = u"No key to remove.";
+  } else {
+    b.Assign(kbm::Action(action), slot, kbm::kNoInput);
+    if (slot == 1 && b.keys[size_t(action)][0] == kbm::kNoInput) {
+      std::swap(b.keys[size_t(action)][0], b.keys[size_t(action)][1]);
+    }
+    KeepKeys(b);
+    const std::string label = kbm::InputLabel(key);
+    g.key_message = std::u16string(label.begin(), label.end()) + u" removed.";
+    REXLOG_INFO("Options: {} key {} removed", kbm::Info(kbm::Action(action)).id, kbm::InputName(key));
+  }
+  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kMove);
+  Refresh(env);
+}
+
+// ---------------------------------------------------------------------------
+// A row's question (Row::confirm: Default Keys), in the game's own Yes / No
+// box, the one "Are you sure you want to quit?" uses: the front end's object
+// at +172 (players/lost_controller.cpp has the map): ShowConfirmMessage
+// sub_8225F758(front end, text name, f1 timer -1 = none) shows it, its text
+// element (front end +192) gets our words (heap 7 current, as the box's own
+// code does: scrooby::SetText), its update reads left / right / A from the
+// menu's owner, and on an answer sets +44 bit 0x40 = Yes and hides itself
+// (+4 bit 0x40 clear). While it asks, the Options state's decision (in game
+// 956, main menu 96) is held (B would leave the screen under the box) and
+// the rows keep their selection.
+constexpr uint32_t kBox = 172, kBoxFlags = 4, kBoxAnswer = 44, kBoxTextElement = 192;
+constexpr uint8_t kBoxShowing = 0x40, kBoxYes = 0x40;
+constexpr uint32_t kAnyTextName = 0x82023570;  // "InGame_Pause_Paused": a name the box can look up
+constexpr uint32_t kFrontEndHeap = 7;
+
+// The page's own content hidden under the box (it's see-through: the rows
+// and the card read through the question). Refresh shows the rows and the
+// card again; the rest comes back here.
+void ShowContent(uint8_t* base, bool shown) {
+  for (int r = 0; r < kRows; ++r) {
+    scrooby::SetVisible(base, g.label[r], shown);
+    scrooby::SetVisible(base, g.value[r], shown);
+    for (int k = 0; k < kStars; ++k) {
+      if (!shown) scrooby::SetVisible(base, g.star[r][k], false);
+    }
+  }
+  for (const uint32_t e : {g.tab_prev, g.tab_text, g.tab_next, g.lb, g.rb, g.desc, g.warn, g.card_value,
+                           g.page_up, g.page_down, g.page_text, g.guide}) {
+    if (e) scrooby::SetVisible(base, e, shown);
+  }
+  for (const uint32_t e : g.card_glass) {
+    if (e && !shown) scrooby::SetVisible(base, e, false);
+  }
+  // The rest of the screen too (an empty glass panel behind the question
+  // looked broken: playtest photo, 2026-10-15), as the pause menu is gone
+  // under "Are you sure you want to quit?": in game the screen's page and
+  // its glass layer (panel, cogs, hinge, "P1 Paused"), in the main menu the
+  // "OptionsMenu" layer; the prompt bar's Back / Select.
+  if (g_screen_action) {
+    for (const uint32_t field : {20u, 32u}) {
+      if (const uint32_t e = Read32(base, g_screen_action + field)) scrooby::SetVisible(base, e, shown);
+    }
+  }
+  if (const uint32_t layer = MainMenuLayer(base)) scrooby::SetVisible(base, layer, shown);
+  for (const uint32_t e : g.prompts) {
+    if (e) scrooby::SetVisible(base, e, shown);
+  }
+}
+
+void Ask(Env& env, int row_index, const std::u16string& question) {
+  const uint32_t fe = FrontEnd(env.base);
+  if (!fe) return;
+  *GuestPtr(env.base, fe + kBox + kBoxAnswer) &= uint8_t(~kBoxYes);
+  const uint32_t heap = scrooby::Call(__imp__sub_823574E8, env.ctx, env.base, kFrontEndHeap);
+  {
+    const PPCContext saved = env.ctx;
+    env.ctx.r3.u64 = fe;
+    env.ctx.r4.u64 = kAnyTextName;
+    env.ctx.f1.f64 = -1.0;
+    __imp__sub_8225F758(env.ctx, env.base);
+    env.ctx = saved;
+  }
+  scrooby::Call(__imp__sub_823574E8, env.ctx, env.base, heap);
+  scrooby::SetText(env.ctx, env.base, Read32(env.base, fe + kBoxTextElement), question);
+  g.asking_row = row_index;
+  g.asking_selection = scrooby::Selection(env.base, g.menu);
+  ShowContent(env.base, false);
+  REXLOG_INFO("Options: asking \"{}\"", std::string(question.begin(), question.end()));
+}
+
+// While asking: -1 = still asking, 0 = No, 1 = Yes.
+int Answer(uint8_t* base) {
+  const uint32_t fe = FrontEnd(base);
+  if (!fe) return 0;
+  if (*GuestPtr(base, fe + kBox + kBoxFlags) & kBoxShowing) return -1;
+  return (*GuestPtr(base, fe + kBox + kBoxAnswer) & kBoxYes) ? 1 : 0;
+}
+
 }  // namespace
+
+bool Capturing() { return g_capturing.load(std::memory_order_relaxed); }
+
+namespace {
+// Controller buttons held when a capture ended: hidden from the game until
+// let go (the B that cancelled would otherwise close the screen at once).
+std::array<std::atomic<uint16_t>, 4> g_hidden{};
+}  // namespace
+
+void FilterPad(uint32_t user, uint8_t* gamepad) {
+  if (user >= g_hidden.size() || !gamepad) return;
+  const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]);
+  if (Capturing()) {
+    g_hidden[user] = buttons;
+    std::memset(gamepad, 0, 12);
+    return;
+  }
+  uint16_t hidden = g_hidden[user].load(std::memory_order_relaxed);
+  if (!hidden) return;
+  hidden &= buttons;  // let go = seen again from the next press on
+  g_hidden[user] = hidden;
+  const uint16_t out = buttons & ~hidden;
+  gamepad[0] = uint8_t(out >> 8);
+  gamepad[1] = uint8_t(out);
+}
 
 bool TurnPage(uint32_t menu, int direction, uint8_t* base) {
   if (!g.action || menu != g.menu) return false;
@@ -687,7 +988,20 @@ bool TurnPage(uint32_t menu, int direction, uint8_t* base) {
   return false;
 }
 
-void Register() { options_page::Register(); }
+// The Options states' decisions (in game 956, main menu 96): held while a
+// row's question is in the box (its B must not close the screen under it).
+constexpr int32_t kOptionsStates[] = {956, 96};
+
+void Register() {
+  options_page::Register();
+  for (const int32_t state : kOptionsStates) {
+    fight_tree::SetFrontEndDecision(state, [](PPCContext& ctx, uint8_t* base) -> int32_t {
+      if (g.asking_row >= 0) return -1;  // stay
+      __imp__sub_8211AF40(ctx, base);
+      return int32_t(ctx.r3.u32);
+    });
+  }
+}
 
 void SeePad(uint32_t user, const uint8_t* gamepad) {
   if (user < g_pad.size()) {
@@ -731,6 +1045,7 @@ void ShrinkInGame(PPCContext& ctx, uint8_t* base, uint32_t action) {
 }  // namespace
 
 void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action) {
+  g_screen_action = action;
   if (!options_page::Available() || g_moved_glass[0]) return;
   const uint32_t page = Read32(base, action + kScreenGlassPage);
   if (!page) return;
@@ -778,7 +1093,8 @@ extern "C" REX_FUNC(sub_820D2828) {
   g.focused = -1;
   g.row_page = 0;
   g.pending_select = -1;
-  g.x_showing = true;  // the first Refresh writes the corner either way
+  g.x_showing = true;  // the first Refresh writes the corners either way
+  g.y_showing = true;
   const int owner = Owner(base);
   g.seen = g_pad[size_t(owner)].load(std::memory_order_relaxed);
   FindElements(ctx, base);
@@ -871,8 +1187,10 @@ extern "C" REX_FUNC(sub_820D2A00) {
   // ours with the main menu copy's shrunk layer too.
   int mouse_row = -1;  // a row clicked with the mouse this frame
   if (g.action && action == g.action) {
-    StarMouse(ctx, base, Owner(base));
-    mouse_row = mouse_menus::HoverAndTakeClick(ctx, base, g.menu, g.page, MainMenuLayer(base));
+    if (g.capture_action < 0) {  // asking for a key: the mouse is the key's
+      StarMouse(ctx, base, Owner(base));
+      mouse_row = mouse_menus::HoverAndTakeClick(ctx, base, g.menu, g.page, MainMenuLayer(base));
+    }
   } else {
     mouse_menus::OnMenuUpdate(ctx, base, action);
   }
@@ -884,7 +1202,19 @@ extern "C" REX_FUNC(sub_820D2A00) {
   const int owner = Owner(base);
   // The tabs answer to clicks: the previous tab's name or its key hint = LB,
   // the next one's = RB (input/mouse_menus.h).
-  if (auto* driver = kbm::KeyboardMouseDriver::Get()) {
+  // The page markers' arrows answer to clicks: the previous / next page.
+  if (g.capture_action < 0 && g.asking_row < 0 && PageCount() > 1) {
+    const uint32_t layer = MainMenuLayer(base);
+    const int turn = mouse_menus::TakeClickOver(base, g.page_up, g.page, layer)     ? -1
+                     : mouse_menus::TakeClickOver(base, g.page_down, g.page, layer) ? +1
+                                                                                     : 0;
+    if (turn) {
+      g.row_page = (g.row_page + turn + PageCount()) % PageCount();
+      g.pending_select = 0;  // the new page's rows, the cursor on its first (below)
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    }
+  }
+  if (auto* driver = kbm::KeyboardMouseDriver::Get(); driver && g.capture_action < 0) {
     if (mouse_menus::TakeClickOver(base, g.tab_prev, g.page, MainMenuLayer(base)) || mouse_menus::TakeClickOver(base, g.lb, g.page, MainMenuLayer(base))) {
       driver->Pulse(kPadLB);
     } else if (mouse_menus::TakeClickOver(base, g.tab_next, g.page, MainMenuLayer(base)) || mouse_menus::TakeClickOver(base, g.rb, g.page, MainMenuLayer(base))) {
@@ -893,6 +1223,10 @@ extern "C" REX_FUNC(sub_820D2A00) {
   }
   RunWithoutSpecialCode(__imp__sub_820D2A00, ctx, base);
   const PPCContext saved = ctx;  // our calls below must not change what Update returned
+  // A question in the box: the rows under it don't move.
+  if (g.asking_row >= 0 && scrooby::Selection(base, g.menu) != g.asking_selection) {
+    scrooby::Select(ctx, base, g.menu, g.asking_selection);
+  }
   // The selected row's name: yellow, not pulsing (the menu's pulse, run
   // just now, undone: CentrePulse).
   {
@@ -917,6 +1251,38 @@ extern "C" REX_FUNC(sub_820D2A00) {
   const uint16_t pressed = pad & ~g.seen;
   g.seen = pad;
   bool refresh = false;
+  // A question in the box: its answer, nothing else meanwhile.
+  if (g.asking_row >= 0) {
+    const int answer = Answer(base);
+    if (answer >= 0) {
+      const int row_index = g.asking_row;
+      g.asking_row = -1;
+      const auto& rows = Rows();
+      if (answer == 1 && row_index < int(rows.size()) && rows[size_t(row_index)].activate) {
+        rows[size_t(row_index)].activate(env);
+        g.key_message_row = -1;
+    g.asking_row = -1;
+      }
+      REXLOG_INFO("Options: the question was answered {}", answer == 1 ? "Yes" : "No");
+      ShowContent(base, true);
+      g.selection = -1;
+      Refresh(env);
+    }
+    ctx = saved;
+    return;
+  }
+  // Asking for a key: it arrives (UI thread), or the controller's B
+  // cancels; nothing else happens meanwhile.
+  if (g.capture_action >= 0) {
+    const int result = g_capture_result.load();
+    if (result != kCaptureWaiting) {
+      EndCapture(env, result);
+    } else if (pressed & kPadB) {
+      EndCapture(env, kCaptureCancelled);
+    }
+    ctx = saved;
+    return;
+  }
   if (pressed & kPadLB) {
     SwitchTab(env, -1);
   } else if (pressed & (kPadRB | kPadBack)) {
@@ -933,6 +1299,20 @@ extern "C" REX_FUNC(sub_820D2A00) {
   if (g.main_menu && (pressed & kPadB) && !CloseMainMenuOptions(ctx, base)) {
     *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
   }
+  // The Keys tab: X = a second key, Y = remove one.
+  if (const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
+      row && row->kind == Kind::kKey && Unavailable(env, *row).empty()) {
+    if (pressed & kPadX) {
+      StartCapture(env, row->key_action, 1);
+      ctx = saved;
+      return;
+    }
+    if (pressed & kPadY) {
+      RemoveKey(env, row->key_action);
+      ctx = saved;
+      return;
+    }
+  }
   if (pressed & kPadX) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
     if (row && row->x_action && row->x_shown && row->x_shown(env, row->get ? row->get(env) : 0)) {
@@ -947,8 +1327,22 @@ extern "C" REX_FUNC(sub_820D2A00) {
   // no pretend A press, so quick clicks all count).
   if ((pressed & kPadA) || mouse_row >= 0) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
-    if (row && row->kind == Kind::kAction) {
-      if (row->activate && Unavailable(env, *row).empty()) row->activate(env);
+    if (row && row->kind == Kind::kKey) {
+      if (Unavailable(env, *row).empty()) {
+        StartCapture(env, row->key_action, 0);
+        ctx = saved;
+        return;
+      }
+    } else if (row && row->kind == Kind::kAction) {
+      if (row->activate && Unavailable(env, *row).empty()) {
+        if (!row->confirm.empty()) {
+          Ask(env, First() + scrooby::Selection(base, g.menu), row->confirm);
+        } else {
+          row->activate(env);
+          refresh = true;
+        }
+        scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      }
     } else if (row) {
       refresh |= ChangeValue(env, +1, /*wrap=*/true);
     }
@@ -971,6 +1365,18 @@ extern "C" REX_FUNC(sub_820D2F08) {
       scrooby::SetText(ctx, base, g.x_text, u"");
       g.x_showing = false;
     }
+    if (g.y_showing) {
+      scrooby::SetText(ctx, base, g.y_button, u"");
+      scrooby::SetText(ctx, base, g.y_text, u"");
+      g.y_showing = false;
+    }
+    if (g.capture_action >= 0) {  // (the screen can't close while asking: just in case)
+      if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->CancelCapture();
+      g.capture_action = -1;
+      g_capturing = false;
+      g_capture_result = kCaptureNone;
+    }
+    g.key_message_row = -1;
     if (!g.main_menu) {  // in game the pause menu sets its own corners again
       scrooby::SetText(ctx, base, g.select_button, u"");
       scrooby::SetText(ctx, base, g.select_text, u"");
@@ -998,6 +1404,7 @@ extern "C" REX_FUNC(sub_820D2F08) {
 // pause menu's own slide turns them again).
 extern "C" REX_FUNC(__imp__sub_820CDD60);  // CInGameOptionsScreenAction: Exit
 extern "C" REX_FUNC(sub_820CDD60) {
+  g_screen_action = 0;
   if (g_moved_glass[0]) {
     for (size_t i = 0; i < g_moved_glass.size(); ++i) {
       const uint32_t e = g_moved_glass[i];

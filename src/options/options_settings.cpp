@@ -4,6 +4,8 @@
 #include "options_settings.h"
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -22,6 +24,9 @@
 #include "../frame_rate.h"
 #include "../game_folder.h"
 #include "../guest_memory.h"
+#include "../input/bindings.h"
+#include "../input/keyboard_mouse.h"
+#include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
 #include "global_options.h"
 
@@ -462,17 +467,138 @@ Row InvertAxisRow() {
   return r;
 }
 
-Row RebindRow() {
+// ---------------------------------------------------------------------------
+// Keyboard and mouse keys (the Controls tab; 2026-10-15)
+// ---------------------------------------------------------------------------
+// The keys themselves live in user/controls.toml (input/bindings.h), the
+// same file the F6 window edits; the rows change them through the keyboard
+// driver's copy (SetBindings: in effect at once) and write the file at every
+// change, as F6 does. Only the moves you make IN PLAY are listed: the menus'
+// keys (Enter, Esc, Backspace, Q / E, the arrows) stay as they are, so a
+// player can never lock themselves out of the menus, and the controller's
+// leftovers with no use in the game (D-pad, right stick, LB, stick clicks)
+// stay in F6 only (playtest, 2026-10-15).
+
+// The moves listed, in order, with what each does (one short sentence each).
+struct KeyRowInfo {
+  kbm::Action action;
+  const char16_t* text;
+};
+constexpr KeyRowInfo kKeyRows[] = {
+    {kbm::kMoveUp, u"Move up."},
+    {kbm::kMoveDown, u"Move down."},
+    {kbm::kMoveLeft, u"Move left."},
+    {kbm::kMoveRight, u"Move right."},
+    {kbm::kWalk, u"Hold while moving to walk instead of run."},
+    {kbm::kSpin, u"The spin attack."},
+    {kbm::kJump, u"Jump. Press again in the air to double jump."},
+    {kbm::kLightAttack, u"A quick attack."},
+    {kbm::kHeavyAttack, u"A strong attack."},
+    {kbm::kBlock, u"Hold to block attacks."},
+    {kbm::kJack, u"Jump on a stunned titan to control it. Again to get off."},
+    {kbm::kTitanSpecial, u"Your titan's special attack."},
+    {kbm::kPocket, u"Store your titan, and bring it back later."},
+    {kbm::kMap, u"Open the map."},
+};
+
+std::u16string Ascii16(std::string_view s) { return std::u16string(s.begin(), s.end()); }
+
+// "Light attack" -> "Light Attack", "Walk (hold)" -> "Walk (Hold)": the
+// Options rows' Title Case.
+std::u16string TitleCase(std::string_view s) {
+  std::u16string out;
+  bool start = true;
+  for (const char c : s) {
+    out.push_back(start && c >= 'a' && c <= 'z' ? char16_t(c - 'a' + 'A') : char16_t(c));
+    start = c == ' ' || c == '(' || c == '-' || c == '/';
+  }
+  return out;
+}
+
+std::u16string NoKeyboard(Env&) {
+  return kbm::KeyboardMouseDriver::Get() ? std::u16string()
+                                         : std::u16string(u"The keyboard and mouse are turned off.");
+}
+
+// The pictures in the game's button prompts (input/prompt_icons.h): one
+// style for the keys, one for controllers. The prompts still follow the
+// device used last (keys after a key press, buttons after a controller's).
+Row KeyboardIconsRow() {
   Row r;
-  r.label = u"Rebind Keys";
-  r.kind = Kind::kAction;
-  r.describe = [](Env&, int) {
-    return std::u16string(u"Press ± to choose the keyboard and mouse keys (F6).");
-  };
-  r.activate = [](Env&) {
-    if (g_hooks.open_controls) g_hooks.open_controls();
+  r.label = u"Keyboard Icons";
+  r.values = [](Env&) { return std::vector<std::u16string>{u"Light", u"Dark"}; };
+  r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(keyboard_icons)), 0, 1); };
+  r.set = [](Env&, int i) { SetFlag("keyboard_icons", std::to_string(i)); };
+  r.describe = [](Env&, int i) {
+    return std::u16string(i == 1 ? u"Dark keys in the button prompts." : u"Light keys in the button prompts.");
   };
   return r;
+}
+
+Row ControllerIconsRow() {
+  Row r;
+  r.label = u"Controller Icons";
+  r.values = [](Env&) {
+    return std::vector<std::u16string>{u"Automatic", u"Xbox 360", u"Xbox Series", u"PlayStation 5",
+                                       u"PlayStation 4", u"Switch"};
+  };
+  r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(controller_icons)), 0, 5); };
+  r.set = [](Env&, int i) { SetFlag("controller_icons", std::to_string(i)); };
+  r.describe = [](Env&, int i) {
+    if (i == 0) {
+      return std::u16string(u"The buttons of the controller you play with: PlayStation, Switch or Xbox. "
+                            u"Any other controller: the game's own Xbox 360 buttons.");
+    }
+    return std::u16string(i == 1 ? u"The game's own Xbox 360 buttons." : u"These buttons in the prompts, whatever controller you use.");
+  };
+  return r;
+}
+
+Row DefaultKeysRow() {
+  Row r;
+  r.label = u"Default Keys";
+  r.kind = Kind::kAction;
+  r.describe = [](Env&, int) {
+    return std::u16string(u"Every keyboard and mouse key back as it came.");
+  };
+  r.unavailable = NoKeyboard;
+  r.confirm = u"Revert Keybinds to Defaults?";
+  r.activate = [](Env&) {
+    kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+    if (!driver) return;
+    // Who plays as which player stays: only the keys and the Spin / Walk
+    // tunables go back.
+    kbm::Bindings b = kbm::Bindings::Defaults();
+    b.players = driver->bindings().players;
+    driver->SetBindings(b);
+    kbm::SaveBindings(b, kbm::ControlsFilePath());
+    REXLOG_INFO("Options: every key back to its default");
+  };
+  return r;
+}
+
+std::vector<Row> ControlsRows() {
+  std::vector<Row> rows{InvertAxisRow(), KeyboardIconsRow(), ControllerIconsRow()};
+  // The keys start under a heading of their own (a row that can't be
+  // selected: options_menu.cpp draws it in the titles' cyan).
+  Row heading;
+  heading.label = u"Keyboard and Mouse Keys";
+  heading.kind = Kind::kHeader;
+  rows.push_back(std::move(heading));
+  for (const KeyRowInfo& k : kKeyRows) {
+    Row r;
+    r.label = ActionName(k.action);
+    r.kind = Kind::kKey;
+    r.key_action = k.action;
+    const std::u16string text = k.text;
+    r.describe = [text, action = k.action](Env&, int) {
+      return text + u" Controller: " + Ascii16(kbm::Info(action).pad) + u".";
+    };
+    r.unavailable = NoKeyboard;
+    rows.push_back(std::move(r));
+  }
+  rows.push_back(DefaultKeysRow());
+  return rows;
 }
 
 // ---------------------------------------------------------------------------
@@ -496,7 +622,7 @@ std::vector<Tab> Build() {
                   u"How loud the music plays.", true),
         VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   u"How loud hits, crates, footsteps and the rest are.", false)}});
-  tabs.push_back({u"Controls", {InvertAxisRow(), RebindRow()}});
+  tabs.push_back({u"Controls", ControlsRows()});
   tabs.push_back(
       {u"Camera",
        {OnOffRow(u"Co-op Camera", "coop_camera", u"Frame Everyone", u"Original",
@@ -524,6 +650,39 @@ std::string TomlValue(const rex::cvar::FlagEntry& flag, const std::string& value
 const std::vector<Tab>& Tabs() {
   static const std::vector<Tab> tabs = Build();
   return tabs;
+}
+
+
+std::u16string KeysText(int action) {
+  const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  if (!driver || action < 0 || action >= kbm::kActionCount) return u"";
+  const kbm::Bindings b = driver->bindings();
+  std::u16string text;
+  for (const kbm::Input key : b.keys[size_t(action)]) {
+    if (key == kbm::kNoInput) continue;
+    if (!text.empty()) text += u", ";
+    text += TitleCase(kbm::InputLabel(key));
+  }
+  return text.empty() ? u"None" : text;
+}
+
+std::u16string KeyPictures(int action) {
+  const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  if (!driver || action < 0 || action >= kbm::kActionCount) return u"";
+  const kbm::Bindings b = driver->bindings();
+  std::u16string text;
+  for (const kbm::Input key : b.keys[size_t(action)]) {
+    if (key == kbm::kNoInput) continue;
+    const char16_t glyph = prompt_icons::KeyGlyph(key);
+    if (!glyph) return u"";  // no key slots: the names instead
+    if (!text.empty()) text += u" ";
+    text += glyph;
+  }
+  return text;
+}
+
+std::u16string ActionName(int action) {
+  return TitleCase(kbm::Info(kbm::Action(action)).label);
 }
 
 void SetHooks(Hooks hooks) { g_hooks = std::move(hooks); }

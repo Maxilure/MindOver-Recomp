@@ -40,6 +40,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/title_any_button.h"
+#include "../input/name_typing.h"
 #include "../overlay_banner.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
@@ -867,6 +868,15 @@ uint16_t MenuButtonsDown(PPCContext& ctx, uint8_t* base, uint16_t mask) {
     rex::input::X_INPUT_STATE state{};
     input->GetState(uint32_t(p), &state);
     down |= uint16_t(state.gamepad.buttons) & mask;
+    // The keyboard isn't in the SDK's input system since 2026-10-11
+    // (input/keyboard_mouse.h: its keys go into the game's own XInputGetState
+    // reads): its last pad, on the socket it answers for. Without this X
+    // (rename) and Backspace (delete) did nothing on the keyboard here.
+    const auto* assignment = kbm::PlayerAssignment::Get();
+    if (auto* driver = kbm::KeyboardMouseDriver::Get();
+        driver && assignment && assignment->KeyboardAnswersFor(uint32_t(p))) {
+      down |= uint16_t(driver->last_pad().buttons) & mask;
+    }
   }
   return down;
 }
@@ -1747,6 +1757,9 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (state && ctx.r3.u32 == 0) options_menu::SeePad(user, GuestPtr(base, state + 4));
   // A controller used = its buttons back in the prompts (input/prompt_icons.h).
   if (state && ctx.r3.u32 == 0) prompt_icons::SeePad(user, GuestPtr(base, state + 4));
+  // The Options screen waits for a key: the controllers are quiet (its B =
+  // cancel was seen by SeePad above), and stay so until let go.
+  if (state) options_menu::FilterPad(user, GuestPtr(base, state + 4));
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump
@@ -1796,11 +1809,18 @@ extern "C" REX_FUNC(sub_820D58B8) {
       CallGame(__imp__sub_820D66E0, ctx, base, self);
     }
   }
+  // Typing on the keyboard, the mouse on the keys (input/name_typing.h).
+  if (Read32(base, self + kNameScreenState) == kNameScreenTyping) {
+    name_typing::Frame(ctx, base, self);
+  } else {
+    name_typing::Leave();
+  }
   __imp__sub_820D58B8(ctx, base);
 }
 extern "C" REX_FUNC(sub_820D5958) {
   using namespace save_library;
   g_backspace_prompt = false;
+  name_typing::Leave();
   __imp__sub_820D5958(ctx, base);
 }
 

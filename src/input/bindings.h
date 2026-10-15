@@ -176,6 +176,9 @@ const ActionInfo& Info(Action action);
 // Up to this many keys per action (the menu's "Key 1" / "Key 2" columns).
 constexpr int kSlots = 2;
 
+// Walk's allowed lean (Settings::walk_tilt).
+constexpr float kWalkTiltMin = 0.7f, kWalkTiltMax = 0.9f;
+
 // Tunables the Controls menu also shows.
 struct Settings {
   // Spin: how often a HELD Spin key counts as one more full circle of the
@@ -183,7 +186,11 @@ struct Settings {
   // counter forgets circles more than 1.0 s apart (findings/23).
   float spin_turns_per_second = 3.0f;
   // Walk: how far the stick leans while Walk is held (1 = all the way).
-  float walk_tilt = 0.5f;
+  // The game ignores a stick leaning less than about 0.65 (measured
+  // 2026-10-15, Crash on foot: 0.5 and 0.6 = standing still, 0.7 = a slow
+  // walk, 0.8 = about a third of a run): the old default 0.5 made Walk stop
+  // Crash instead. Allowed: kWalkTiltMin..kWalkTiltMax.
+  float walk_tilt = 0.75f;
 };
 
 // A device's player choice (input/players.h), remembered with the name it

@@ -216,6 +216,16 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
     }
     return ok;
   }
+  // "type <text>": characters typed on a name screen (keyboard text mode,
+  // input/name_typing.h), as SDL's text input would hand them.
+  if (view.substr(0, 5) == "type ") {
+    if (kbm::KeyboardMouseDriver::DebugType(view.substr(5))) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+      return true;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (no name screen up)", line);
+    return false;
+  }
   // "mouse <x> <y>": the pointer over the picture (0..1 across, 0..1 down),
   // as if the mouse moved there (input/mouse_menus.h). Clicks: "key LMB".
   if (view.substr(0, 6) == "mouse ") {

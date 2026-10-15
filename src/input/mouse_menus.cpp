@@ -310,6 +310,33 @@ bool TakeClickOver(uint8_t* base, uint32_t element, uint32_t page, uint32_t laye
 }
 
 namespace {
+// An element's cell: `half_w` / `half_h` around its box's centre, on its page.
+Rect Cell(const uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page) {
+  const Rect box = Box(base, element);
+  if (box.empty()) return {};
+  const float cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
+  return OnPage(base, {cx - half_w, cy - half_h, cx + half_w, cy + half_h}, page);
+}
+}  // namespace
+
+bool PointerNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page) {
+  float cx, cy;
+  uint32_t moves;
+  return PointerCanvas(&cx, &cy, &moves) && Cell(base, element, half_w, half_h, page).contains(cx, cy);
+}
+
+bool TakeClickNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page) {
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  float px = 0, py = 0;
+  if (!driver || !driver->PeekMenuClick(&px, &py)) return false;
+  if (!Cell(base, element, half_w, half_h, page)
+           .contains((px * 1280.0f - 160.0f) / 1.5f, (1.0f - py) * 480.0f)) {
+    return false;
+  }
+  return driver->TakeMenuClick();
+}
+
+namespace {
 // The shared body: hover, and a click on an item. press_a: the click presses
 // A (the game's menus); else it's only reported (the port's own menus).
 int HoverAndClickImpl(PPCContext& ctx, uint8_t* base, uint32_t menu, const uint32_t* targets,

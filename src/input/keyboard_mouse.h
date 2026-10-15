@@ -69,6 +69,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -164,9 +165,12 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   int64_t last_key_down() const { return last_key_down_.load(); }
   rex::input::X_INPUT_GAMEPAD last_pad() const;
 
-  // UI thread, for the Controls menu: the next key / mouse button / wheel
-  // notch in any attached window is handed to `done` instead of the game
-  // (Esc hands kNoInput = cancelled). Tool keys (F6, F9...) keep working.
+  // For the Controls menu (F6, UI thread) and the in-game Keys tab (game
+  // thread; options/options_menu.cpp): the next key / mouse button / wheel
+  // notch in any attached window is handed to `done` (on the UI thread)
+  // instead of the game (Esc hands kNoInput = cancelled). Tool keys (F6,
+  // F9...) keep working; a key already held (its key REPEATS, e.g. the Enter
+  // that opened the capture) doesn't count. Any thread.
   void Capture(std::function<void(Input)> done);
   void CancelCapture();
   bool capturing() const;
@@ -180,6 +184,20 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // typed (in the context of that moment). Works without focus. False if the
   // name is unknown / no driver.
   static bool DebugTap(std::string_view key_name, int64_t hold_ms);
+
+  // --- TEXT MODE: typing a name (input/name_typing.h) ----------------------
+  // While on, the keys TYPE instead of playing: the window's text input is on
+  // (SDL hands typed characters, in the keyboard's layout, with Shift), every
+  // typed character is kept for TakeTyped(), and the only buttons the keys
+  // make are the arrows (D-pad), Enter (Start = done) and Escape (B = back);
+  // Backspace is name_typing's (it erases, repeating while held). Mouse
+  // pulses (clicks on the on-screen keys) still go through. Any thread.
+  void SetTextMode(bool on);
+  bool text_mode() const { return text_mode_.load(); }
+  // The characters typed since the last call (Unicode code points). Game thread.
+  std::u32string TakeTyped();
+  // Debug FIFO "type <text>": as if typed (only while text mode is on).
+  static bool DebugType(std::string_view text);
 
   // InputDriver (game threads).
   rex::X_STATUS Setup() override;
@@ -196,6 +214,7 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // WindowInputListener / WindowListener (UI thread).
   void OnKeyDown(rex::ui::KeyEvent& e) override;
   void OnKeyUp(rex::ui::KeyEvent& e) override;
+  void OnKeyChar(rex::ui::KeyEvent& e) override;
   void OnMouseDown(rex::ui::MouseEvent& e) override;
   void OnMouseUp(rex::ui::MouseEvent& e) override;
   void OnMouseMove(rex::ui::MouseEvent& e) override;
@@ -271,9 +290,21 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   bool mouse_blocked_ = false;  // this poll: mouse buttons / wheel don't count
   std::atomic<bool> menu_open_{false};
 
+  // The waiting "press a key" (Capture). Its own lock: the in-game Rebind
+  // screen (options/options_menu.cpp) arms and cancels it from the GAME
+  // thread, the keys arrive on the UI thread (the F6 window: UI thread too).
+  mutable std::mutex capture_mutex_;
+  std::function<void(Input)> capture_done_;
+
+  // Text mode (SetTextMode): the flag, the typed characters, and where to
+  // run the window calls (SDL's text input is UI-thread only).
+  std::atomic<bool> text_mode_{false};
+  std::mutex typed_mutex_;
+  std::u32string typed_;
+  rex::ui::WindowedAppContext* app_context_ = nullptr;  // set at Attach
+
   // UI thread only.
   std::vector<rex::ui::Window*> windows_;
-  std::function<void(Input)> capture_done_;
   Input swallow_mouse_up_ = kNoInput;  // the button that ended a capture
 };
 

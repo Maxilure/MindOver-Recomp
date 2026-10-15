@@ -24,8 +24,13 @@ a picture where it helps).
   the main menu), V-sync (no tearing, the game held to your monitor's
   refresh rate), fullscreen, and a frame-rate counter in the game's font,
   on screen everywhere, in any corner.
-- **Audio** and **Controls**: the game's own volumes and Invert Axis; Rebind
-  Keys opens the keyboard / mouse window (F6). They're now ONE setting for
+- **Audio** and **Controls**: the game's own volumes and Invert Axis, the
+  button prompt pictures (Light or Dark keys; for controllers Automatic,
+  which shows PlayStation, Switch or Xbox buttons to match the controller in
+  your hands, or a set of your choice), and every keyboard / mouse key you
+  play with, shown as key pictures and rebound right there (two keys per
+  move, Backspace removes one, Default Keys puts them all back). The volumes and Invert Axis
+  are now ONE setting for
   the whole game, no longer stored in save files: on the Xbox 360 each save
   carried its own volumes, so loading a save or starting a New Game changed
   them.
@@ -62,6 +67,17 @@ volume.
 
 **Press any button**: the title screen starts on any controller button, any
 key or a mouse click, and says so ("Press Any Button").
+
+**Type names on the keyboard**: on the name screen (New Game, renaming a
+save) just type; Backspace erases, Enter is Done, Esc goes back. The mouse
+works on the on-screen keyboard, and its old erase key is now a SPACE key.
+Rename (X) and Delete (Backspace) in the save list work on the keyboard
+again.
+
+**Walk works**: holding Walk (Ctrl) stopped Crash instead of slowing him
+(the stick leaned less than the game notices). In menus, Backspace now
+removes / deletes (a key in Options, a save in the save list) instead of
+going back; Escape goes back.
 
 **Co-op** (the co-op camera is experimental and needs more testing)
 

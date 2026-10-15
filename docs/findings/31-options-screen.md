@@ -213,8 +213,7 @@ menu plays its own music).
 * Keyboard on / off: the keyboard driver is made at start-up only.
 * Resolution above 720p: doesn't exist yet. (Motion blur joined on
   2026-10-11: Graphics tab, findings/34.)
-* A game-style Rebind Keys screen (the row opens the F6 window for now),
-  animated previews of the settings.
+* Animated previews of the settings. (The keys: section 9.)
 
 ## 6. Volumes and Invert Axis: one setting, not one per save
 
@@ -396,3 +395,73 @@ in the middle, and the glass had room for more rows. Now:
   the page's scale puts it, both undone at Exit. (Moving only their
   positions first made each button overlap its word: the gaps shrank, the
   pictures and words didn't.)
+
+## 9. The keys, in the Controls tab (2026-10-15)
+
+The Controls tab holds everything about playing with the keyboard and
+mouse: Invert Axis, **Keyboard Icons** and **Controller Icons** (the
+prompt pictures' sets, [findings/37](37-keyboard-mouse-prompts.md) s.4), one row per
+move you make in play (Move x4, Walk, Spin, Jump, Light / Heavy Attack,
+Block, Jack, Titan Special, Pocket, Map) with its keys as the value
+as pictures (the key slots of findings/37 s.4; the card names them: "Left
+Mouse, J"), and **Default Keys** (3 pages of 7). The rows are the
+keyboard driver's actions ([findings/38](38-keyboard-mouse-real-keybinds.md));
+the menus' own keys (Pause, Menu: ..., the D-pad = arrow keys) and the
+controller's leftovers with no use in the game (right stick, LB, stick
+clicks) aren't listed: they stay in the F6 window, so the menus always keep
+their keys. A first version had a separate Keys tab with every action and a
+"Rebind Keys" row jumping to it (playtest: the row was pointless, the menu
+keys shouldn't change, the descriptions were uneven); each row now has one
+short sentence plus its controller button.
+
+* **A (or a click) on a move's row asks for its key**: the value and the
+  card say "Press a Key", and the keyboard driver's capture (the one F6
+  uses: `KeyboardMouseDriver::Capture`, now armed from the game thread under
+  its own lock) hands the next key, mouse button or wheel notch to the
+  screen instead of the game. **X** asks for a second key, **Backspace**
+  (the menus' Y, so a controller's Y too) removes one. Esc cancels, and so
+  does a controller's B: while a key is asked for, the XInputGetState
+  wrapper zeroes the controllers (`options_menu::FilterPad`, after the
+  screen has seen the pad), and the buttons held at the end stay hidden
+  until let go (the B that cancelled used to reach the game a frame later
+  and close the screen).
+* **One key, one job**: the key is put in with `Bindings::Assign`, which
+  takes it from any other move of an overlapping context, and the card
+  says so ("K was Heavy Attack's key: it's Move Up's now"). A key one of the
+  menus' actions holds is REFUSED instead ("Up arrow is the menus' D-Pad
+  Up: pick another key"): Move Up on the Up arrow had taken it from the
+  D-pad, and the arrows stopped moving through menus. A key that's only a
+  menu key in the other context stays allowed (Jump on Enter: Enter still
+  confirms in menus).
+* A key repeat no longer counts as the new key (the held Enter that opened
+  the question was caught at once): `HandleDown` ignores a key that is
+  already down.
+* Changes work at once (`SetBindings`) and are written to `controls.toml`
+  (the same file F6 writes).
+* **Default Keys** asks in the game's own Yes / No box (the quit question's,
+  front end +172: `ShowConfirmMessage` `sub_8225F758` with any text name,
+  then our words in its text element at front end +192 under heap 7; the
+  answer = box +44 bit 0x40 once the box's "showing" bit +4 0x40 drops).
+  While it asks, the Options state's decision (in game 956, main menu 96)
+  is held at "stay" through `fight_tree::SetFrontEndDecision` (B would close
+  the screen under the box), the rows keep their selection, and the page's
+  content is hidden (the box is see-through: the rows read through the
+  question). Yes = every key and the Spin / Walk tunables back to their
+  defaults; who plays as which player stays.
+
+Second playtest (same day): the question reads "Revert Keybinds to
+Defaults?"; the rest of the screen is hidden under it too (an empty glass
+panel behind the box looked broken): in game the screen action's page (+20)
+and glass layer (+32), in the main menu the "OptionsMenu" layer, and the
+prompt bar, all through the element "visible" bit (+110 0x80), which pages
+and layers have as well. A heading row "Keyboard and Mouse Keys" (the
+titles' cyan, never selected: the menu's up / down step over it) parts the
+settings from the keys. The page markers' arrows take mouse clicks. Move
+rows say "Move up." etc.; Spin's row no longer says "hold to keep spinning"
+(holding the key re-sends a stick circle, which ends the spin in the game).
+
+Tested with the debug console (key taps go through the capture like typed
+keys now), in game and in the main menu: a key set and taken from another
+move, a second key, Backspace removing both, Esc and a controller's B
+cancelling (the screen stays), the Up arrow refused, Default Keys answered
+Yes by a mouse click (the file back to the defaults) and No; 0 errors.
