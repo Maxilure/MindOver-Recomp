@@ -493,10 +493,12 @@ constexpr KeyRowInfo kKeyRows[] = {
     {kbm::kWalk, u"Hold while moving to walk instead of run."},
     {kbm::kSpin, u"The spin attack."},
     {kbm::kJump, u"Jump. Press again in the air to double jump."},
+    // Right after Jump: the key players need most after moving and jumping, and
+    // the one the floating B over save totems and stunned titans shows.
+    {kbm::kJack, u"Use a save totem, or jump on a stunned titan. Again to get off."},
     {kbm::kLightAttack, u"A quick attack."},
     {kbm::kHeavyAttack, u"A strong attack."},
     {kbm::kBlock, u"Hold to block attacks."},
-    {kbm::kJack, u"Jump on a stunned titan to control it. Again to get off."},
     {kbm::kTitanSpecial, u"Your titan's special attack."},
     {kbm::kPocket, u"Store your titan, and bring it back later."},
     {kbm::kMap, u"Open the map."},

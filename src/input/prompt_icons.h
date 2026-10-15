@@ -41,7 +41,7 @@
 // must match exactly): a page we can't recognise is left alone (logged).
 //
 // WHICH KEY FOR WHICH PICTURE (bindings.h actions; the first key of each):
-//   ± A    Jump             ² B    Jack / unjack
+//   ± A    Jump             ² B    Jack / use
 //   ³ X    Light attack     ´ Y    Heavy attack
 //   µ Back Map              ¶ Start Pause
 //   · RT   Block            ¸ RB   Pocket

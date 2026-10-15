@@ -141,7 +141,7 @@ slots. Default layout:
 | Light attack | X | Left mouse, J |
 | Heavy attack | Y | Right mouse, K |
 | Block (hold) | RT | Shift |
-| Jack / unjack | B | E |
+| Jack / use (save totems too) | B | E |
 | Titan special attack | LT | F |
 | Pocket / unpocket | RB | R |
 | Map | Back | Tab, M |

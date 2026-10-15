@@ -167,8 +167,11 @@ constexpr ActionInfo kActions[kActionCount] = {
     {"block", "Block (hold)", "Hold to block an enemy's light attack.", "RT",
      Group::kFighting, Output::kRightTrigger, 0, 0, 0, "Shift", kPlay},
 
-    {"jack", "Jack / unjack",
-     "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off.",
+    // "Use" too: the 360's B also uses save totems (the game draws one shared
+    // floating B picture over totems and stunned titans), so this one key does both.
+    {"jack", "Jack / use",
+     "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. "
+     "Also uses save totems.",
      "B", Group::kTitans, Output::kButton, kB, 0, 0, "E", kPlay},
     {"titan_special", "Titan special attack",
      "The special attack of the titan you control (watch its mutant meter).", "LT",

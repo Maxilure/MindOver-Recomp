@@ -123,7 +123,7 @@ The launcher also lists your saves, edits settings, shows a live game log and ke
 | Light / heavy attack | left / right mouse button | <kbd>X</kbd> / <kbd>Y</kbd> |
 | Spin | <kbd>Q</kbd> or middle mouse button | rotate the left stick |
 | Block | <kbd>Shift</kbd> | <kbd>RT</kbd> |
-| Jack / unjack a titan | <kbd>E</kbd> | <kbd>B</kbd> |
+| Jack / unjack a titan, use a save totem | <kbd>E</kbd> | <kbd>B</kbd> |
 | Titan special / pocket a titan | <kbd>F</kbd> / <kbd>R</kbd> | <kbd>LT</kbd> / <kbd>RB</kbd> |
 | Map / pause | <kbd>Tab</kbd> / <kbd>Esc</kbd> | <kbd>Back</kbd> / <kbd>Start</kbd> |
 | **Menus:** select / back | <kbd>Enter</kbd> or <kbd>Space</kbd> / <kbd>Esc</kbd> or <kbd>Backspace</kbd> | <kbd>A</kbd> / <kbd>B</kbd> |

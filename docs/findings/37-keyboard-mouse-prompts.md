@@ -79,7 +79,7 @@ the two wins. `--button_prompts` = 1 / 2 forces keys / buttons.
 | Glyph | Picture (first key of the action) |
 |---|---|
 | ± A | Jump |
-| ² B | Jack / unjack |
+| ² B | Jack / use (save totems too) |
 | ³ X / ´ Y | Light / heavy attack |
 | µ Back / ¶ Start | Map / Pause |
 | · RT / ¸ RB | Block / Pocket |
