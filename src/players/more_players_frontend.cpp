@@ -33,6 +33,7 @@
 #include "more_players_hud.h"
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
+#include "../input/title_any_button.h"
 
 #include <cstring>
 
@@ -190,6 +191,8 @@ extern "C" REX_FUNC(sub_82261C40) {
   prompt_icons::FrontEndFrame(ctx, base);
   // The prompt bar answers to the mouse (input/mouse_menus.h).
   mouse_menus::FrontEndFrame(ctx, base);
+  // The title's "Press Any Button" (input/title_any_button.h).
+  title_any_button::FrontEndFrame(ctx, base);
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) {
     for (int k : {kCombo, kLockOn, kCounter}) CallVirtual(ctx, base, g_objects[k][i], 3, 0, dt);

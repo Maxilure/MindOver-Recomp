@@ -60,8 +60,9 @@ constexpr int kMaxPlayers = 4;
 // automatic answer after that many seconds, -1 = none, then shown),
 // ResetConfirmMessage, IsConfirmMessageDone. The box: +4 flags (0x80 set up,
 // 0x40 showing), +16 its Yes / No menu (selection byte +152), +24 the
-// countdown text, +28 state (1 open, 2 closing), +36 fade (0..1, grows with
-// the frame time in its update sub_8225DE68), +40 the timer, +44 answer flags;
+// countdown text, +28 state (0 / 1 open, 2 closing: input/mouse_menus.cpp),
+// +36 fade (0..1, grows with the frame time in its update sub_8225DE68), +40
+// the timer, +44 answer flags;
 // sub_8225E1D8 = done + hidden. Its update reads left / right / A through
 // IsButtonPressed: with every pad muted here it never answers by itself.
 constexpr uint32_t kBox = 172;

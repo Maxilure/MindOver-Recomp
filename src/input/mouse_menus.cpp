@@ -75,6 +75,17 @@ constexpr auto kClickMemory = std::chrono::milliseconds(5000);
 constexpr uint32_t kGameGlobal = 0x8259B190, kFrontEnd = 52;
 constexpr uint32_t kBox = 172, kBoxFlags = 4, kBoxMenu = 16;
 constexpr uint8_t kBoxShowing = 0x40;
+// The box's state (u32 +28): 2 = closing (0 while the quit question is open,
+// read with the debug console; 1 is set by ShowConfirmMessage's other users,
+// players/lost_controller.cpp). A or B sets 2 (0x8225E0E4);
+// the box then fades out and only at the END of the fade reads which answer
+// is selected (its menu's selection byte +152 == 1 = Yes, 0x8225DF78). The
+// first version let the pointer go on selecting during that fade (the box
+// took the mouse as long as it SHOWED): a click on No and a flick of the
+// mouse over Yes quit the game (playtest 2026-10-15). Now the box takes the
+// mouse only while it's open; a click is remembered through the fade.
+constexpr uint32_t kBoxState = 28;
+constexpr uint32_t kBoxClosing = 2;
 // Front end +8592 bit 0x40 = "menus take input": cleared by the game while a
 // screen slides in or out, set again once the next one is up (the Options
 // screen's own slide uses it too: options_menu.cpp kMenuFlags).
@@ -219,6 +230,7 @@ struct Click {
 } g_click;
 
 uint32_t QuestionMenu(const uint8_t* base);  // below
+bool QuestionOpen(const uint8_t* base);
 
 // Ages the remembered click (every front-end update and menu update).
 void AgeClick(const uint8_t* base) {
@@ -231,7 +243,7 @@ void AgeClick(const uint8_t* base) {
   }
   if (driver && driver->PulseBusy()) return;  // the press hasn't gone out yet
   if (g_click.press_out == std::chrono::steady_clock::time_point{}) g_click.press_out = now;
-  const bool input = MenusTakeInput(base) || QuestionMenu(base) != 0;  // a box takes its own
+  const bool input = MenusTakeInput(base) || QuestionOpen(base);  // a box takes its own
   if (!input) {
     g_click.slid = true;  // a slide: remembered until the next screen is up
   } else if (g_click.slid || now - g_click.press_out > kClickSettle) {
@@ -262,6 +274,13 @@ uint32_t QuestionMenu(const uint8_t* base) {
   const uint32_t fe = game ? Read32(base, game + kFrontEnd) : 0;
   if (!fe || !(*GuestPtr(base, fe + kBox + kBoxFlags) & kBoxShowing)) return 0;
   return Read32(base, fe + kBox + kBoxMenu);
+}
+
+// The question box is showing and not closing (see kBoxState).
+bool QuestionOpen(const uint8_t* base) {
+  if (!QuestionMenu(base)) return false;
+  const uint32_t fe = Read32(base, Read32(base, kGameGlobal) + kFrontEnd);
+  return Read32(base, fe + kBox + kBoxState) != kBoxClosing;
 }
 
 }  // namespace
@@ -317,8 +336,9 @@ int HoverAndClickImpl(PPCContext& ctx, uint8_t* base, uint32_t menu, const uint3
   const uint32_t question = QuestionMenu(base);
   if (question && menu != question) return -1;
   // The front end's "menus take input" (a screen sliding: no); a question box
-  // answers on its own while it shows (the flag stays clear under it).
-  const bool takes_input = MenusTakeInput(base) || menu == question;
+  // answers on its own while it's open (the flag stays clear under it), not
+  // while it closes (it reads its answer at the end: kBoxState).
+  const bool takes_input = MenusTakeInput(base) || (menu == question && QuestionOpen(base));
   // The item at a canvas point (-1: none).
   const int count = scrooby::ItemCount(base, menu);
   auto item_at = [&](float x, float y) {

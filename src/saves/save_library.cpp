@@ -39,6 +39,7 @@
 #include "../input/prompt_icons.h"
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
+#include "../input/title_any_button.h"
 #include "../overlay_banner.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
@@ -1738,6 +1739,8 @@ extern "C" REX_FUNC(sub_824742F0) {
     std::memset(GuestPtr(base, state + 4), 0, 12);
   }
   if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  // The title screen starts on any button (input/title_any_button.h).
+  if (state && ctx.r3.u32 == 0) title_any_button::FilterPad(user, GuestPtr(base, state + 4), base);
   // The session's input recording: what the game gets, after every filter.
   if (state) input_record::AfterFilters(user, GuestPtr(base, state + 4), ctx.r3.u32);
   // The Options screen's tab buttons (options/options_menu.h).

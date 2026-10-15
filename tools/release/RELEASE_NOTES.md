@@ -60,6 +60,9 @@ button prompts ("Back", "Rename"...), the Options tabs and the game's Yes / No
 questions are clickable too, and on the Audio tab a click on a star sets that
 volume.
 
+**Press any button**: the title screen starts on any controller button, any
+key or a mouse click, and says so ("Press Any Button").
+
 **Co-op** (the co-op camera is experimental and needs more testing)
 
 - **No more frozen partners**: a player far from the camera used to stop

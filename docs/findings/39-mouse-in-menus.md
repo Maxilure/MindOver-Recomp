@@ -131,12 +131,48 @@ selectable) the look at item +140 is hit-tested.
   box went to that pause menu instead (the pointer was over its "Options"
   row) and pressed A on whatever the box had selected; now, while a box
   shows, only its own Yes / No answer to the mouse.
+  **The box reads its answer when it has FADED OUT, not at the press.** A or
+  B sets its state (u32 at box +28) to 2 = closing (`0x8225E0E4`); the
+  fade runs, and only at its end does the update read the Yes / No menu's
+  selection (+152: 1 = Yes, `0x8225DF78`). The box first took the mouse as
+  long as it showed, so a click on No and a flick of the pointer over Yes
+  during the fade answered Yes (the "Are you sure you want to quit?" box
+  quit the game): the same trap as the screens' slides above. Now a box
+  takes the mouse only while its state isn't 2 (it reads 0 the first time
+  the quit question opens, 1 after that), and the click is remembered
+  through the fade like a screen's. Checked with the debug console: No
+  clicked, pointer moved onto Yes 30-100 ms later, state 2 with the
+  selection still 0 (No), back in the pause menu; the same after Enter on
+  No; a click on Yes quits.
 
 **The boot movies**: the front end counts as a menu ([findings/38](38-keyboard-mouse-real-keybinds.md)
 s.3), so Escape had become "back" there, which the boot movies ignore: Escape
 no longer skipped them. The boot states (3 BootUp, 41 LicenseScreen, 44
 LoadPersistentPostBootUp, 51 Movie, 53 LoadingTitleScreen) now count as play:
 Escape is Start again and skips them.
+
+**The title screen: any button** (`input/title_any_button.*`). The Xbox
+title asked for START ("Press START") and took A as well. Now any
+controller button or trigger, any key (bound or not) and any mouse button
+start the game:
+
+* The title's check is in the front end's input update (`sub_82264988`,
+  `0x822651DC`): while front end +8594 bit 0x10 is set (the title waits for
+  START: 0x18 at the title, 0x28 in the main menu, read with the debug
+  console), a controller's START makes it player 1 (findings/25 s.3). A
+  filter on every XInputGetState the game makes turns a NEW press of
+  anything on a socket into a 150 ms START while the bit is up (a key: the
+  keyboard driver's "last key down" time moved, on the socket the keyboard
+  plays on), and hides every other button then. After the title, buttons
+  still held from it stay hidden until let go: an Enter held through the
+  title is not an A in the main menu (checked: Enter held 6 s, the main
+  menu stays; the next Enter opens New Game).
+* The text is page `GameStart_Title.pag` (package cdd70a8c), text
+  `PressStart` (400 x 41, centred, Titans_Small). Its English string "Press
+  START" is 11 characters, too short to write "Press Any Button" over it in
+  the text bank (the save messages' way, findings/33), so the front-end
+  update sets the element's string while the front end is in state 55 (the
+  title), only when it reads "Press START": other languages keep theirs.
 
 ## 3. Tests
 
