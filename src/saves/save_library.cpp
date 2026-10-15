@@ -35,6 +35,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../options/options_menu.h"
+#include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
@@ -1455,6 +1456,15 @@ extern "C" REX_FUNC(sub_820CCA38) {
     }
     if (idle) {
       ApplyResult(ctx, base, manager, screen);
+    }
+    // The mouse: a panel's glass under the pointer selects it, a click
+    // chooses it (input/mouse_menus.h). Menu item i = panel i.
+    if (idle && list_active && g.slot_menu) {
+      if (const uint32_t page = FindPage(ctx, base, "FE_GameSlot")) {
+        uint32_t glass[kPanels];
+        for (int panel = 0; panel < kPanels; ++panel) glass[panel] = PanelElements(ctx, base, page, panel)[0];
+        mouse_menus::HoverAndClick(ctx, base, g.slot_menu, glass);
+      }
     }
     // Back from the delete question with a save gone: the list again.
     if (g.refresh_pending && idle && list_active) {

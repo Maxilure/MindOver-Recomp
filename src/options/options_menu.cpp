@@ -3,6 +3,8 @@
 // =============================================================================
 #include "options_menu.h"
 
+#include "../input/keyboard_mouse.h"
+#include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 
 #include <algorithm>
@@ -819,14 +821,76 @@ extern "C" REX_FUNC(sub_820D2828) {
               owner + 1, g.tab);
 }
 
+// The main menu copy's "OptionsMenu" layer (drawn at kMainMenuScale), 0 in
+// game; defined with the main menu's code below. For the mouse's hit tests.
+uint32_t MainMenuLayer(const uint8_t* base);
+
+namespace {
+// The mouse on a volume row's STARS (input/mouse_menus.h): the pointer moving
+// over a star selects its row; a click on star k (1-5) sets the volume to k,
+// and a click on the first star of a row already at 1 mutes it (0).
+uint32_t g_star_moves = 0;
+void StarMouse(PPCContext& ctx, uint8_t* base, int owner) {
+  const uint32_t layer = MainMenuLayer(base);
+  int star_row = -1, star = -1;
+  for (int r = 0; r < kRows && star_row < 0; ++r) {
+    const Row* row = RowOnScreen(r);
+    if (!row || row->kind != Kind::kStars) continue;
+    for (int k = 0; k < kStars; ++k) {
+      if (mouse_menus::PointerOver(base, g.star[r][k], g.page, layer)) {
+        star_row = r;
+        star = k;
+        break;
+      }
+    }
+  }
+  const uint32_t moves = mouse_menus::PointerMoves();
+  const bool moved = moves != g_star_moves;
+  g_star_moves = moves;
+  if (star_row < 0) return;
+  Env env{ctx, base, owner};
+  if (mouse_menus::TakeClickOver(base, g.star[star_row][star], g.page, layer)) {
+    if (scrooby::Selection(base, g.menu) != star_row) scrooby::Select(ctx, base, g.menu, star_row);
+    const Row& row = *RowOnScreen(star_row);
+    if (row.get && row.set && Unavailable(env, row).empty()) {
+      const int now = row.get(env);
+      const int level = (star == 0 && now == 1) ? 0 : star + 1;
+      if (level != now) row.set(env, level);  // the row plays its own sound
+    }
+    Refresh(env);
+  } else if (moved && scrooby::Selection(base, g.menu) != star_row) {
+    scrooby::Select(ctx, base, g.menu, star_row);
+    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+  }
+}
+}  // namespace
+
 extern "C" REX_FUNC(sub_820D2A00) {
   const uint32_t action = ctx.r3.u32;
+  // The mouse in menus: hover / click on this menu's items (input/mouse_menus.h);
+  // ours with the main menu copy's shrunk layer too.
+  int mouse_row = -1;  // a row clicked with the mouse this frame
+  if (g.action && action == g.action) {
+    StarMouse(ctx, base, Owner(base));
+    mouse_row = mouse_menus::HoverAndTakeClick(ctx, base, g.menu, g.page, MainMenuLayer(base));
+  } else {
+    mouse_menus::OnMenuUpdate(ctx, base, action);
+  }
   if (!g.action || action != g.action) {
     __imp__sub_820D2A00(ctx, base);
     return;
   }
   const uint32_t fe = FrontEnd(base);
   const int owner = Owner(base);
+  // The tabs answer to clicks: the previous tab's name or its key hint = LB,
+  // the next one's = RB (input/mouse_menus.h).
+  if (auto* driver = kbm::KeyboardMouseDriver::Get()) {
+    if (mouse_menus::TakeClickOver(base, g.tab_prev, g.page, MainMenuLayer(base)) || mouse_menus::TakeClickOver(base, g.lb, g.page, MainMenuLayer(base))) {
+      driver->Pulse(kPadLB);
+    } else if (mouse_menus::TakeClickOver(base, g.tab_next, g.page, MainMenuLayer(base)) || mouse_menus::TakeClickOver(base, g.rb, g.page, MainMenuLayer(base))) {
+      driver->Pulse(kPadRB);
+    }
+  }
   RunWithoutSpecialCode(__imp__sub_820D2A00, ctx, base);
   const PPCContext saved = ctx;  // our calls below must not change what Update returned
   // The selected row's name: yellow, not pulsing (the menu's pulse, run
@@ -866,7 +930,7 @@ extern "C" REX_FUNC(sub_820D2A00) {
   // The main menu's copy: B = back: the panel slides out first (the
   // screen's action, below), then the state's decision sees the cancel
   // flag; without its slide, the flag at once.
-  if (g.main_menu && (pressed & kPadB) && !CloseMainMenuOptions(base)) {
+  if (g.main_menu && (pressed & kPadB) && !CloseMainMenuOptions(ctx, base)) {
     *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
   }
   if (pressed & kPadX) {
@@ -879,7 +943,9 @@ extern "C" REX_FUNC(sub_820D2A00) {
   // A: an action row (Rebind Keys) does its thing; any other row takes its
   // next value, the first again after the last (no arrows to aim at:
   // left / right still step either way and stop at the ends).
-  if (pressed & kPadA) {
+  // A, or a mouse click on a row (input/mouse_menus.h: handled here at once,
+  // no pretend A press, so quick clicks all count).
+  if ((pressed & kPadA) || mouse_row >= 0) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
     if (row && row->kind == Kind::kAction) {
       if (row->activate && Unavailable(env, *row).empty()) row->activate(env);
@@ -965,7 +1031,8 @@ extern "C" REX_FUNC(sub_820CE2C8) {
 // OptionsScreen state 96 (the engine follows any exit's target, not only a
 // child of the current state: saves/rename_screen.cpp).
 extern "C" REX_FUNC(__imp__sub_8211B6C8);  // MainMenuScreen's decision
-extern "C" REX_FUNC(__imp__sub_821239C8);  // GetMenuIndex(_, page name, menu name)
+extern "C" REX_FUNC(sub_821239C8);  // GetMenuIndex(_, page name, menu name): through the
+                                    // mouse's wrapper (input/mouse_menus.cpp: a clicked item)
 
 namespace {
 constexpr uint32_t kMainMenuPageName = 0x82023674;  // "GameStart_Start_Xenon"
@@ -984,7 +1051,7 @@ extern "C" REX_FUNC(sub_8211B6C8) {
   const PPCContext saved = ctx;
   ctx.r4.u64 = kMainMenuPageName;
   ctx.r5.u64 = kMainMenuMenuName;
-  __imp__sub_821239C8(ctx, base);
+  sub_821239C8(ctx, base);
   const int index = int(ctx.r3.s32);
   ctx = saved;
   // (Calibration, 89, is no longer in the list: options_page.cpp.)
@@ -1091,6 +1158,13 @@ void Sound(PPCContext& ctx, uint8_t* base, uint32_t fe, uint32_t name) {
   __imp__sub_82261800(ctx, base);
   ctx = saved;
 }
+}  // namespace
+
+uint32_t MainMenuLayer(const uint8_t* base) {
+  return g_main_action ? Read32(base, g_main_action + kOptLayer) : 0;
+}
+
+namespace {
 // The page's smaller size, after a slide step (or once at Enter).
 void ShrinkMainMenuPage(PPCContext& ctx, uint8_t* base, uint32_t action) {
   if (const uint32_t layer = Read32(base, action + kOptLayer)) {
@@ -1100,13 +1174,19 @@ void ShrinkMainMenuPage(PPCContext& ctx, uint8_t* base, uint32_t action) {
 }  // namespace
 
 namespace options_menu {
-bool CloseMainMenuOptions(uint8_t* base) {
+bool CloseMainMenuOptions(PPCContext& ctx, uint8_t* base) {
   if (!g_main_action || Read32(base, g_main_action + kOptLayer) == 0) return false;
   if (Read32(base, g_main_action + kOptState) != kStateOpen) return true;  // sliding: wait
   uint8_t* state = GuestPtr(base, g_main_action + kOptState);
   state[0] = state[1] = state[2] = 0;
   state[3] = uint8_t(kStateClosingCancel);
-  if (const uint32_t fe = FrontEnd(base)) *GuestPtr(base, fe + kMenuFlags) &= uint8_t(~kMenusTakeInput);
+  if (const uint32_t fe = FrontEnd(base)) {
+    *GuestPtr(base, fe + kMenuFlags) &= uint8_t(~kMenusTakeInput);
+    // The slide out with its sounds, as the slide in (a playtest: the exit
+    // was silent; the original's B starts the same slide with them).
+    Sound(ctx, base, fe, kSoundBack);
+    Sound(ctx, base, fe, kSoundArmWipe);
+  }
   return true;
 }
 }  // namespace options_menu

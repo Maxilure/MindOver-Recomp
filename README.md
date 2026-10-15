@@ -129,6 +129,7 @@ The launcher also lists your saves, edits settings, shows a live game log and ke
 | **Menus:** select / back | <kbd>Enter</kbd> or <kbd>Space</kbd> / <kbd>Esc</kbd> or <kbd>Backspace</kbd> | <kbd>A</kbd> / <kbd>B</kbd> |
 | **Menus:** move / tabs | arrow keys or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / <kbd>Q</kbd> <kbd>E</kbd> | D-pad or left stick / <kbd>LB</kbd> <kbd>RB</kbd> |
 | **Menus:** the X / Y prompts (rename, delete a save) | <kbd>X</kbd> / <kbd>Y</kbd> | <kbd>X</kbd> / <kbd>Y</kbd> |
+| **Menus with the mouse** | point to select, left click to choose (also the prompts and tabs), right click to go back, wheel to scroll | |
 
 Menus have keys of their own, so <kbd>Esc</kbd> pauses in play and goes back in menus. The game's button prompts show your keys while you play on the keyboard.
 

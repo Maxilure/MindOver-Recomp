@@ -54,6 +54,12 @@ key now (no more stick circles behind the scenes): tap it for one spin, hold
 it to keep spinning, and steer while you spin. Your old key settings carry
 over.
 
+**The mouse in menus**: point at a menu item to select it and click to
+choose it, right click to go back, scroll with the wheel. The save list, the
+button prompts ("Back", "Rename"...), the Options tabs and the game's Yes / No
+questions are clickable too, and on the Audio tab a click on a star sets that
+volume.
+
 **Co-op** (the co-op camera is experimental and needs more testing)
 
 - **No more frozen partners**: a player far from the camera used to stop

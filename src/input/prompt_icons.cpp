@@ -676,6 +676,9 @@ struct State {
 } g;
 
 std::atomic<int64_t> g_pad_activity{0};  // steady_clock ns of the last controller input
+// The game's fonts in memory -> their names (mouse_menus.h measures texts).
+std::mutex g_font_names_mutex;
+std::map<uint32_t, std::string> g_font_names;
 // A font with the menu glyphs was found (our font patch served and checked):
 // only then may the prompt bar use them (else they'd draw nothing).
 std::atomic<bool> g_menu_glyphs{false};
@@ -799,6 +802,10 @@ void CheckFont(uint8_t* base, uint32_t font) {
                 disc.name, found.size(), patched ? ", menu glyphs included" : "");
     for (GuestPage& gp : found) g.pages.push_back(std::move(gp));
     if (patched) g_menu_glyphs = true;
+    {
+      std::lock_guard<std::mutex> names(g_font_names_mutex);
+      g_font_names[font] = disc.name;
+    }
     return;
   }
 }
@@ -1040,6 +1047,12 @@ void Register() {
 }
 
 void Install() { pddi::AddFrameEndListener(&OnFrameEnd, nullptr); }
+
+std::string FontNameAt(uint32_t font) {
+  std::lock_guard<std::mutex> lock(g_font_names_mutex);
+  const auto it = g_font_names.find(font);
+  return it != g_font_names.end() ? it->second : std::string();
+}
 
 char16_t MenuGlyph(char16_t c) {
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return c;

@@ -73,6 +73,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include <rex/cvar.h>
 
@@ -98,6 +99,11 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't
 // in). For menus the port builds (options/options_menu.cpp). Any thread.
 char16_t MenuGlyph(char16_t c);
+
+// The name ("Titans_Large", "Titans_Small") of the game's font object at
+// `font` (a pure3d::TextureFont the loader built), "" if it isn't one of
+// them. For measuring texts (input/mouse_menus.h). Any thread.
+std::string FontNameAt(uint32_t font);
 
 // The pad state the game just got for `user` (guest X_INPUT_GAMEPAD, 12
 // big-endian bytes), from the XInputGetState wrapper (saves/save_library.cpp):

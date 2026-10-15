@@ -51,6 +51,7 @@ set(CRASHMOM_SOURCES
     src/input/players.cpp        # which device plays as which player (local co-op)
     src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
     src/input/prompt_icons.cpp   # key / mouse pictures in the game's button prompts (Xelu's CC0 prompts)
+    src/input/mouse_menus.cpp    # the mouse in the game's menus: hover selects, click chooses, right click = back
     src/saves/pc_save_drive.cpp  # the saves as plain PC files: Radical's save drive, natively
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
     src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete

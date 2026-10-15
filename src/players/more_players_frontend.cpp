@@ -31,6 +31,7 @@
 // =============================================================================
 #include "more_players.h"
 #include "more_players_hud.h"
+#include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 
 #include <cstring>
@@ -187,6 +188,8 @@ extern "C" REX_FUNC(sub_82261C40) {
   __imp__sub_82261C40(ctx, base);
   // The menus' prompt bar gets the menu glyphs (input/prompt_icons.h).
   prompt_icons::FrontEndFrame(ctx, base);
+  // The prompt bar answers to the mouse (input/mouse_menus.h).
+  mouse_menus::FrontEndFrame(ctx, base);
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) {
     for (int k : {kCombo, kLockOn, kCounter}) CallVirtual(ctx, base, g_objects[k][i], 3, 0, dt);

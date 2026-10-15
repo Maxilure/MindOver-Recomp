@@ -68,6 +68,6 @@ void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action);
 // The main menu's Options: B starts the panel's slide-out (the PS2 screen
 // action's closing, whose end sets the cancel flag). False if the page has
 // no slide (then the caller sets the flag itself).
-bool CloseMainMenuOptions(uint8_t* base);
+bool CloseMainMenuOptions(PPCContext& ctx, uint8_t* base);
 
 }  // namespace options_menu

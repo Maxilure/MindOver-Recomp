@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cstdio>
 #include <cstring>
 #include <string_view>
 
@@ -214,6 +215,17 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
       ok = false;
     }
     return ok;
+  }
+  // "mouse <x> <y>": the pointer over the picture (0..1 across, 0..1 down),
+  // as if the mouse moved there (input/mouse_menus.h). Clicks: "key LMB".
+  if (view.substr(0, 6) == "mouse ") {
+    float x = -1, y = -1;
+    if (std::sscanf(line.c_str() + 6, "%f %f", &x, &y) == 2 && kbm::KeyboardMouseDriver::DebugPointer(x, y)) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+      return true;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (mouse <x 0-1> <y 0-1>)", line);
+    return false;
   }
   // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
   if (view.substr(0, 6) == "cheat ") {

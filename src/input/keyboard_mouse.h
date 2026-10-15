@@ -126,6 +126,29 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // in keyboard_mouse.cpp). Game threads.
   bool TakeSpinCircle();
 
+  // --- The mouse in menus (input/mouse_menus.h) --------------------------
+  // Where the pointer is over the game's picture: 0..1 across its 16:9
+  // picture (the presenter's centred fit), and a counter that goes up at
+  // every move (hover only follows a pointer that moved). False if no
+  // pointer has been seen over a game window. Any thread.
+  bool Pointer(float* x, float* y, uint32_t* moves) const;
+  // A left click made while a menu was on screen, waiting for the menu code
+  // to say what it hit (dropped after 0.2 s). Taking it consumes it.
+  bool TakeMenuClick();
+  // The same without taking it: is a fresh one waiting? `x` / `y` (if given)
+  // = where the pointer was when the button went down (0..1 over the
+  // picture, as Pointer): a click counts where it was MADE, not where the
+  // pointer went in the frame or two before a menu looks at it.
+  bool PeekMenuClick(float* x = nullptr, float* y = nullptr) const;
+  // Presses `buttons` (X_INPUT_GAMEPAD_*) for a moment (~80 ms), queued after
+  // any earlier ones: a click's A, a right click's B, a wheel notch's D-pad.
+  void Pulse(uint16_t buttons);
+  // Is a pulse being pressed or waiting? (The click lock in mouse_menus ends
+  // once the click's press has reached the game.)
+  bool PulseBusy() const;
+  // Debug FIFO "mouse <x> <y>" (0..1 over the picture): moves the pointer.
+  static bool DebugPointer(float x, float y);
+
   // Thread-safe copy / replace of the bindings (the menu edits a copy).
   Bindings bindings() const;
   void SetBindings(const Bindings& bindings);
@@ -175,6 +198,7 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   void OnKeyUp(rex::ui::KeyEvent& e) override;
   void OnMouseDown(rex::ui::MouseEvent& e) override;
   void OnMouseUp(rex::ui::MouseEvent& e) override;
+  void OnMouseMove(rex::ui::MouseEvent& e) override;
   void OnMouseWheel(rex::ui::MouseEvent& e) override;
   void OnLostFocus(rex::ui::UISetupEvent& e) override;
   void OnClosing(rex::ui::UIEvent& e) override;
@@ -217,6 +241,19 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
     Clock::time_point down_until{}, gap_until{};
   };
   std::array<WheelPulse, 2> wheel_{};
+  // What a key going down does in a menu beyond its bindings (the mouse:
+  // left click queued for the menu, right click = B, wheel = D-pad). Lock held.
+  void MenuMouseDown(Input input, Clock::time_point now);
+  // Pointer (Pointer()): 0..1 over the picture, moves counter.
+  float pointer_x_ = 0.5f, pointer_y_ = 0.5f;
+  uint32_t pointer_moves_ = 0;
+  bool pointer_seen_ = false;
+  // Waiting left click (MenuMouseDown), time it was made; pulses.
+  Clock::time_point menu_click_{};
+  float menu_click_x_ = 0, menu_click_y_ = 0;
+  std::deque<uint16_t> pulses_;
+  Clock::time_point pulse_until_{}, pulse_gap_until_{};
+  uint16_t pulse_now_ = 0;
   // Per input: pressed while a menu was on screen (its context, bindings.h).
   std::array<bool, kInputCount> in_menu_{};
   // Spin: held at the last poll, when the next circle is due, circles waiting.

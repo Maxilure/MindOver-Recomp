@@ -59,6 +59,7 @@
 // and answered for, owner, caller), START presses, owner changes, interactions.
 // =============================================================================
 #include "more_players.h"
+#include "../data/fight_tree.h"
 
 #include "../input/players.h"
 #include "../options/options_menu.h"
@@ -215,7 +216,19 @@ int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
 }
 bool PlayerPlays(int p) { return Plays(p); }
 bool MenuOnScreen() {
-  if (!more_players::InPlay()) return true;  // the front end (title, main menus), loading
+  if (!more_players::InPlay()) {
+    // The front end: menus, except the boot's cards and movies (states 3
+    // BootUp, 41 LicenseScreen, 44 LoadPersistentPostBootUp, 51 Movie, 53
+    // LoadingTitleScreen; notes/scratch-tools/fig_tree.py): there the keys
+    // keep their play jobs, so Escape is Start and skips them as before
+    // (in menu context it was "back", which the movies ignore).
+    switch (fight_tree::CurrentFrontEnd().state) {
+      case 3: case 41: case 44: case 51: case 53:
+        return false;
+      default:
+        return true;
+    }
+  }
   const uint32_t game = Read32(kGameGlobal);
   const uint32_t fe = game ? Read32(game + 52) : 0;
   if (!fe) return false;
