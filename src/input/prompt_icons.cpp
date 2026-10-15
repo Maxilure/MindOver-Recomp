@@ -10,9 +10,11 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -155,6 +157,24 @@ constexpr size_t kSlotCount = 16;
 constexpr char16_t kFirstSlot = u'\uE100';
 constexpr size_t kAddedPrompts = 6 + kSlotCount;  // the menu glyphs + the key slots, at the end of kPrompts
 constexpr size_t kDiscPrompts = std::size(kPrompts) - kAddedPrompts;
+// The world's B (State::textures_loaded): the B button, Jack on the keyboard.
+constexpr Prompt kWorldB{0, u'\u00B2', "world B", Kind::kKey, kbm::kJack};
+constexpr std::string_view kWorldPackage = "package\\bca1bc0b.p3d";
+constexpr std::string_view kWorldTexture = "FE_360_b_button_64.tga";
+// WORLD B: THE BUTTON'S MATERIAL (2026-10-15). The B is drawn on a 12-sided
+// coin mesh (THE BUTTON'S SHAPE, below) by the material "HUD_button_circle_m"
+// (chunk 0x11000 in the same package): opaque, ALPHA TEST OFF (ATST 0), so
+// every pixel is solid and a see-through one is drawn as its colour: black.
+// The red ball's dark rim on screen is exactly that (with the B's picture
+// emptied, a black 12-gon remained; filled with magenta, a magenta 12-gon).
+// The data patch switches the material's alpha test ON (ATST 1; its compare
+// ACMP 4 = greater, threshold ACTH 0.5): our pictures keep their transparency
+// and their see-through parts are left out.
+constexpr std::string_view kWorldMaterial = "HUD_button_circle_m";
+constexpr uint32_t kCategoryJoinedAssets = 10;  // data_patcher category of its package
+constexpr std::string_view kWorldMesh = "evil_circle_geoShape";  // THE BUTTON'S SHAPE (below)
+constexpr uint32_t kChunkMesh = 0x10000, kChunkPrimGroup = 0x10020, kChunkPositions = 0x10005, kChunkUvs = 0x10007;
+constexpr uint32_t kChunkShader = 0x11000, kChunkShaderInt = 0x11003;
 
 // --- The pages as the disc has them ------------------------------------------
 
@@ -262,6 +282,76 @@ std::vector<DiscFont> ReadDiscFonts() {
     if (!font.pages.empty()) fonts.push_back(std::move(font));
   }
   return fonts;
+}
+
+// A texture of the world's B as the disc has it (in kWorldPackage).
+// THE BUTTON'S SHAPE (2026-10-15). The B's mesh, "evil_circle_geoShape", is
+// a 12-sided coin (radius 0.36, 0.27 thick, the front a shallow dome) whose
+// texture coordinates are a flat projection (u = 0.5 + 1.261 x, v = 0.5 -
+// 1.261 y): on screen a 12-sided window onto the 64 x 64 picture, radius 0.454
+// of it. A key picture is square, so the data patch makes the coin's faces
+// SQUARE (each rim corner moved out to the square: those at 0 / 90 / 180 /
+// 270 degrees to the edge middles, the pairs at 30 / 60 degrees etc. both to
+// their quadrant's corner; texture coordinates by the same projection), and
+// bakes the 12-sided window into the game's own B picture instead: its
+// pixels outside that window get a see-through palette colour (with the
+// material's alpha test on, they're left out), every other colour is made
+// opaque (the material drew them all opaque: the dark rim around the ball is
+// "see-through" black inside the window). So the game's B looks exactly as
+// before, and a key is a whole square key.
+constexpr float kCoinWindow = 0.454f;  // the 12-sided window's corner radius, fraction of the picture
+
+// Bakes the window into the game's B: `indices` w x h (either row order: the
+// window is symmetric), `palette` BGRA x `colours`. The see-through colour =
+// the first palette entry no pixel uses. False if there's none.
+bool BakeWorldButton(uint8_t* indices, uint32_t w, uint32_t h, uint8_t* palette, size_t colours) {
+  std::array<bool, 256> used{};
+  for (size_t i = 0; i < size_t(w) * h; ++i) used[indices[i]] = true;
+  size_t clear = colours;
+  for (size_t i = 0; i < colours && clear == colours; ++i) {
+    if (!used[i]) clear = i;
+  }
+  if (clear == colours) return false;
+  for (size_t i = 0; i < colours; ++i) palette[4 * i + 3] = 255;
+  std::fill(palette + 4 * clear, palette + 4 * clear + 4, uint8_t(0));
+  // Inside the 12-gon (corners at 0, 30, 60... degrees): within its inner
+  // radius along each edge's normal (15, 45, 75... degrees), half a pixel to spare.
+  const float r = kCoinWindow * float(w) * std::cos(15.0f * 3.14159265f / 180.0f) + 0.5f;
+  for (uint32_t y = 0; y < h; ++y) {
+    for (uint32_t x = 0; x < w; ++x) {
+      const float dx = x + 0.5f - w / 2.0f, dy = y + 0.5f - h / 2.0f;
+      bool inside = true;
+      for (int k = 0; k < 6 && inside; ++k) {
+        const float a = (15.0f + 30.0f * float(k)) * 3.14159265f / 180.0f;
+        inside = std::abs(dx * std::cos(a) + dy * std::sin(a)) <= r;
+      }
+      if (!inside) indices[size_t(y) * w + x] = uint8_t(clear);
+    }
+  }
+  return true;
+}
+
+std::optional<DiscPage> ReadWorldTexture(std::string_view name) {
+  pure3d::Bytes d;
+  std::string error;
+  pure3d::Chunk root;
+  std::vector<pure3d::Chunk> top;
+  if (!data_patcher::ReadArchiveFile(std::string(kWorldPackage), &d, &error) || !pure3d::Parse(d, &root, &top)) {
+    REXLOG_WARN("Prompt pictures: can't read {} ({})", kWorldPackage, error);
+    return std::nullopt;
+  }
+  for (const pure3d::Chunk& c : top) {
+    if (c.id != kChunkTexture || pure3d::NameOf(d, c) != name) continue;
+    DiscPage dp;
+    if (DecodeTga(d, c, dp)) {
+      // As the data patch serves it (THE BUTTON'S SHAPE): baked.
+      if (dp.palette.size() >= 4 * size_t(dp.colours) && BakeWorldButton(dp.indices.data(), dp.width, dp.height, dp.palette.data(), dp.colours)) {
+        return dp;
+      }
+    }
+  }
+  REXLOG_WARN("Prompt pictures: no {} in {}", name, kWorldPackage);
+  return std::nullopt;
 }
 
 // --- Pictures ------------------------------------------------------------------
@@ -515,16 +605,19 @@ Picture Trim(const Picture& src, uint32_t margin) {
   return Crop(src, margin);
 }
 
-// The picture of one key, size x size. Xelu's 100 px keys leave ~13 px of
-// empty border; the 360 buttons fill ~77% of their page. Cutting 6 px off
-// each side makes a letter key about as big as the button it replaces
-// (the wide keys, Space / Enter / Shift, only reach the sides).
+constexpr uint32_t kTrimAll = 1000;  // Trim: every empty border
+
+// The picture of one key, its drawn part only (Xelu's 100 px keys leave
+// ~13 px of empty border), at `size` % of Xelu's size: Fit places it where
+// the original picture is drawn (THE SIZE OF A PICTURE).
 Picture KeyPicture(Input input, uint32_t size, const KeySet& set) {
   const std::string file = PictureFile(input, set);
   if (!file.empty() && !Asset(set.folder, file).empty()) {
-    return Resize(Trim(Asset(set.folder, file), 6), size, size);
+    const Picture cut = Trim(Asset(set.folder, file), kTrimAll);
+    return Resize(cut, uint32_t(cut.width * size / 100), uint32_t(cut.height * size / 100));
   }
-  return Resize(Trim(Labelled(ShortLabel(input), 100, set), 6), size, size);
+  const Picture cut = Trim(Labelled(ShortLabel(input), 100, set), kTrimAll);
+  return Resize(cut, uint32_t(cut.width * size / 100), uint32_t(cut.height * size / 100));
 }
 
 // --- Controller sets (--controller_icons) ---------------------------------------
@@ -556,6 +649,11 @@ constexpr PadSet kPadSets[] = {
       "Switch_RB", "Switch_LT", "Switch_LB", "Switch_Left_Stick", "Switch_Right_Stick"}},
 };
 constexpr int kOriginalStyle = -1;  // the game's own 360 pictures
+
+// Each button's prompt glyph on the disc (its 360 picture), by PadButton.
+constexpr char16_t kButtonGlyphs[kPadButtons] = {u'\u00B1', u'\u00B2', u'\u00B3', u'\u00B4',
+                                                u'\u00B5', u'\u00B6', u'\u00B7', u'\u00B8',
+                                                u'\u00BD', u'\u00BE', u'\u00B9', u'\u00A5'};
 
 // Which button a prompt glyph (its disc source) shows, -1 = none (rotate).
 int PadButtonOf(char16_t source) {
@@ -715,8 +813,10 @@ Paletted Quantize(const Picture& pic) {
 // The key slots' keys (KeyGlyph), under g.mutex: the key, when it was last
 // asked for (the least recently asked slot is lent out next) and a revision
 // (a change = the pages are drawn again).
+// A slot holds a key ("K <input>": KeyGlyph) or a controller button
+// ("B <PadButton>": ButtonGlyph, drawn in the Controller Icons style).
 struct Slot {
-  Input key = kbm::kNoInput;
+  std::string what;
   uint64_t asked = 0;
 };
 std::array<Slot, kSlotCount> g_slots;
@@ -762,26 +862,88 @@ std::string DescribeKeys(const Prompt& p, const kbm::Bindings& b) {
 // picture; keys: "L key 32" / "D key 32" (the set's letter first); a
 // controller set: "P <set> <button>".
 std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, bool dark, int pad_style) {
-  if (p.kind == Kind::kSlot) {  // always a key (the Options rows), in the key set chosen
-    const Input key = g_slots[size_t(p.character - kFirstSlot)].key;
-    return key == kbm::kNoInput ? std::string() : std::string(dark ? "D " : "L ") + "key " + std::to_string(key);
+  if (p.kind == Kind::kSlot) {  // the Options rows and card, whatever the device in use
+    const std::string& what = g_slots[size_t(p.character - kFirstSlot)].what;
+    if (what.size() < 3) return {};
+    if (what[0] == 'K') return std::string(dark ? "D " : "L ") + "key " + what.substr(2);
+    // A controller button: the style's picture, or the game's own ("O").
+    return pad_style == kOriginalStyle ? "O " + what.substr(2)
+                                       : "P " + std::to_string(pad_style) + " " + what.substr(2);
   }
   if (keyboard) {
     const std::string keys = DescribeKeys(p, b);
-    return keys.empty() ? keys : std::string(dark ? "D " : "L ") + keys;
+    if (keys.empty()) return keys;
+    return std::string(&p == &kWorldB ? "C " : "") + (dark ? "D " : "L ") + keys;
   }
   const int button = PadButtonOf(p.source);
   if (pad_style == kOriginalStyle || button < 0) return {};
   return "P " + std::to_string(pad_style) + " " + std::to_string(button);
 }
 
+// THE SIZE OF A PICTURE (playtest 2026-10-15: every replacement looked
+// bigger than the game's own buttons). Each page's original picture covers
+// only part of the page: the 360 face buttons 49 of 64 pixels (x / y 7-55),
+// the sticks 93 x 72 of their 128 x 128 page, the world's B nearly all of
+// its 64. A replacement is cut to its own drawn part (Trim) and fitted, its
+// shape kept, into the box the ORIGINAL covers (GuestPage::ink, measured
+// from the disc's page): drawn part to drawn part, so the sizes match.
+struct Box {
+  int x = 0, y = 0, w = 0, h = 0;  // picture pixels, rows top first
+};
+
+// `pic` fitted into `box` (centred, shape kept), drawn over `page`.
+void Fit(Picture& page, const Picture& pic, const Box& box) {
+  if (pic.empty() || box.w <= 0 || box.h <= 0) return;
+  const float k = std::min(float(box.w) / float(pic.width), float(box.h) / float(pic.height));
+  const uint32_t w = std::max(1u, uint32_t(std::lround(pic.width * k)));
+  const uint32_t h = std::max(1u, uint32_t(std::lround(pic.height * k)));
+  Over(page, Resize(pic, w, h), box.x + (box.w - int(w)) / 2, box.y + (box.h - int(h)) / 2);
+}
+
+// The fonts as the disc has them (read once fonts are loaded; State below,
+// under its mutex: Draw runs inside OnFrameEnd).
+const std::vector<DiscFont>& DiscFonts();
+
 // Draws what Describe() described, at the page's size.
-Picture Draw(const std::string& described, uint32_t width, uint32_t height, uint32_t used_height) {
+Picture Draw(const std::string& described, uint32_t width, uint32_t height, Box ink) {
   Picture page;
   page.width = width;
   page.height = height;
   page.rgba.assign(size_t(width) * height * 4, 0);
   if (described.size() < 2) return page;
+  if (described[0] == 'C') {
+    // The world's B with a key: a whole square key over the coin's square
+    // face (THE BUTTON'S SHAPE), which shows the picture from 0.046 to 0.954
+    // of its width: the key fills that.
+    const int margin = int(std::lround((0.5f - kCoinWindow) * float(width)));
+    const Box face{margin, margin, int(width) - 2 * margin, int(height) - 2 * margin};
+    return Draw(described.substr(2), width, height, face);
+  }
+  if (described[0] == 'O') {
+    // A controller button as the game draws it (its 360 picture from the
+    // disc's font, the page of that button's glyph), fitted to the page with
+    // its shape kept (a stick's picture is the top 3/4 of a 128 x 128 page).
+    const int button = std::atoi(described.c_str() + 2);
+    const std::vector<DiscFont>& disc = DiscFonts();
+    if (button < 0 || button >= kPadButtons || disc.empty()) return page;
+    const auto at = disc[0].page_of.find(kButtonGlyphs[button]);
+    if (at == disc[0].page_of.end()) return page;
+    const DiscPage& dp = disc[0].pages.at(at->second);
+    const bool stick = button == kPadLeftStick || button == kPadRightStick;
+    Picture pic;
+    pic.width = dp.width;
+    pic.height = stick ? dp.height * 3 / 4 : dp.height;
+    pic.rgba.resize(size_t(pic.width) * pic.height * 4);
+    for (uint32_t i = 0; i < pic.width * pic.height; ++i) {
+      const uint8_t* bgra = &dp.palette[4 * size_t(std::min<uint32_t>(dp.indices[i], dp.colours - 1))];
+      pic.rgba[4 * size_t(i) + 0] = bgra[2];
+      pic.rgba[4 * size_t(i) + 1] = bgra[1];
+      pic.rgba[4 * size_t(i) + 2] = bgra[0];
+      pic.rgba[4 * size_t(i) + 3] = bgra[3];
+    }
+    Fit(page, Trim(pic, kTrimAll), ink);
+    return page;
+  }
   if (described[0] == 'P') {
     // A controller button: Xelu's picture over the square part of the page
     // (a stick's page is 128 x 128 with 96 rows used), cut like the keys.
@@ -791,8 +953,7 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, uint
     const PadSet& set = kPadSets[style];
     const Picture& pic = Asset(set.folder, std::string(set.files[button]) + ".png");
     if (pic.empty()) return page;
-    const uint32_t size = std::min(width, used_height);
-    Over(page, Resize(Trim(pic, 6), size, size), int(width - size) / 2, int(used_height - size) / 2);
+    Fit(page, Trim(pic, kTrimAll), ink);
     return page;
   }
   const KeySet& set = described[0] == 'D' ? kDarkKeys : kLightKeys;
@@ -806,27 +967,29 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, uint
     at = next;
   }
   if (kind == "key" && keys.size() == 1) {
-    // One key over the whole (square) page, like the 360 button pictures.
-    const uint32_t size = std::min(width, used_height);
-    Over(page, KeyPicture(keys[0], size, set), int(width - size) / 2, int(used_height - size) / 2);
+    // One key where the 360 button picture was.
+    Fit(page, KeyPicture(keys[0], 100, set), ink);
   } else if (kind == "stick" && keys.size() == 4) {
-    // Up above left / down / right, the usual WASD shape, inside the part
-    // of the page the glyph shows (the stick pictures use the top 96 rows of
-    // 128: their glyph's v starts at 0.25 from the bottom).
-    const uint32_t size = std::min(width / 3, used_height / 2);
-    const int x0 = int(width - 3 * size) / 2, y0 = int(used_height - 2 * size) / 2;
-    Over(page, KeyPicture(keys[0], size, set), x0 + int(size), y0);                  // up
-    Over(page, KeyPicture(keys[2], size, set), x0, y0 + int(size));                  // left
-    Over(page, KeyPicture(keys[1], size, set), x0 + int(size), y0 + int(size));      // down
-    Over(page, KeyPicture(keys[3], size, set), x0 + 2 * int(size), y0 + int(size));  // right
+    // Up above left / down / right, the usual WASD shape, where the stick
+    // picture was.
+    const uint32_t size = uint32_t(std::min(ink.w / 3, ink.h / 2));
+    const int x0 = ink.x + (ink.w - 3 * int(size)) / 2, y0 = ink.y + (ink.h - 2 * int(size)) / 2;
+    // Each key in its cell, a little apart (their empty borders are cut off).
+    auto cell = [&](int cx, int cy) {
+      const int gap = std::max(1, int(size) / 16);
+      return Box{x0 + cx * int(size) + gap, y0 + cy * int(size) + gap, int(size) - 2 * gap, int(size) - 2 * gap};
+    };
+    Fit(page, KeyPicture(keys[0], 100, set), cell(1, 0));  // up
+    Fit(page, KeyPicture(keys[2], 100, set), cell(0, 1));  // left
+    Fit(page, KeyPicture(keys[1], 100, set), cell(1, 1));  // down
+    Fit(page, KeyPicture(keys[3], 100, set), cell(2, 1));  // right
   } else if (kind == "spin" && keys.size() == 1) {
     // The Spin key on the left half, Xelu's circling arrow on the right
     // (the "rotate" picture is 128 x 64: two squares).
-    const uint32_t size = std::min(width / 2, used_height);
-    Over(page, KeyPicture(keys[0], size, set), 0, int(used_height - size) / 2);
-    const uint32_t arrow = size * 7 / 8;
-    Over(page, Resize(Asset(kArrowFolder, "Directional_Arrow_Full_Circle.png"), arrow, arrow),
-         int(width / 2 + (width / 2 - arrow) / 2), int(used_height - arrow) / 2);
+    const int half = ink.w / 2;
+    Fit(page, KeyPicture(keys[0], 100, set), Box{ink.x, ink.y, half, ink.h});
+    Fit(page, Trim(Asset(kArrowFolder, "Directional_Arrow_Full_Circle.png"), kTrimAll),
+        Box{ink.x + half + half / 16, ink.y + ink.h / 16, half * 7 / 8, ink.h * 7 / 8});
   }
   return page;
 }
@@ -838,6 +1001,7 @@ struct GuestPage {
   uint32_t font = 0, texture = 0, xn = 0;  // to check it's still the same page
   uint32_t index_fetch1 = 0;               // the D3D texture's fetch word 1 (address)
   uint32_t width = 0, height = 0, used_height = 0;
+  Box ink;  // where the original picture is drawn (THE SIZE OF A PICTURE)
   uint32_t index_address = 0, row_pitch = 0;
   uint8_t index_xor = 0;     // the endian swap of single bytes (address ^ this)
   bool flipped = false;      // guest row y = disc row height - 1 - y
@@ -852,6 +1016,15 @@ struct GuestPage {
 struct State {
   std::mutex mutex;
   std::vector<uint32_t> fonts_loaded;  // from the loader hook, not checked yet
+  // THE WORLD'S B (2026-10-15): the red B button floating over a save totem,
+  // a stunned titan, things to use (texture FE_360_b_button_64.tga in
+  // package bca1bc0b, a 64 x 64 8-bit palettized picture like the prompt
+  // pages). Textures as the texture loader builds them, not checked yet; the
+  // disc's picture; the texture's vtable (to notice it was freed).
+  std::vector<uint32_t> textures_loaded;
+  bool world_read = false;
+  std::optional<DiscPage> world_disc;
+  uint32_t world_vtable = 0;
   std::vector<DiscFont> disc;
   bool disc_read = false;
   std::vector<GuestPage> pages;
@@ -862,9 +1035,11 @@ struct State {
   uint32_t revision = UINT32_MAX;
   std::string look;  // the sets in use ("L", "D", "P1"...), to notice a change
   bool dark = false;  // the key set (the key slots use it whatever the device)
+  int pad_style = -2;  // the controller set (the button slots use it whatever the device)
 } g;
 std::atomic<uint32_t> g_pad_user{0};  // the socket a controller was used on last
 std::atomic<bool> g_keys_shown{false};  // KeysShown()
+const std::vector<DiscFont>& DiscFonts() { return g.disc; }
 
 std::atomic<int64_t> g_pad_activity{0};  // steady_clock ns of the last controller input
 // The game's fonts in memory -> their names (mouse_menus.h measures texts).
@@ -883,6 +1058,112 @@ void WriteGuest(uint8_t* base, uint32_t address, const uint8_t* data, uint32_t s
                                            address, size, true, false);
   }
   std::memcpy(GuestPtr(base, address), data, size);
+}
+
+// Checks one prompt texture of the game against its disc picture `dp` and
+// records where its pixels and palette are (CheckFont, CheckWorldTexture).
+// `font` = the font it's a page of (0: a texture of its own). False = not as
+// expected (logged; left alone).
+bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prompt, const DiscPage& dp,
+              const std::string& name, GuestPage* out, bool quiet = false) {
+  GuestPage& gp = *out;
+  gp.prompt = prompt;
+  gp.name = name;
+  gp.font = font;
+  gp.texture = texture;
+  gp.xn = gp.texture ? Load32(base, gp.texture + kTexturePddi) : 0;
+  const uint32_t d3d = gp.xn ? Load32(base, gp.xn + kXnD3DTexture) : 0;
+  if (!d3d || Load32(base, gp.xn + kXnPaletteMode) != 1) {
+    if (!quiet) REXLOG_WARN("Prompt pictures: {} isn't a palettized texture: left alone", gp.name);
+    return false;
+  }
+  const uint32_t palette =
+      Load32(base, gp.xn + kXnPalettes + 4 * (Load32(base, gp.xn + kXnPaletteIndex) & 15));
+  uint32_t f[6], pf[6];
+  for (int i = 0; i < 6; ++i) {
+    f[i] = Load32(base, d3d + kD3DFetch + 4 * i);
+    pf[i] = palette ? Load32(base, palette + kD3DFetch + 4 * i) : 0;
+  }
+  gp.index_fetch1 = f[1];
+  gp.width = (f[2] & 0x1FFF) + 1;
+  gp.height = ((f[2] >> 13) & 0x1FFF) + 1;
+  const bool tiled = (f[0] >> 31) != 0, palette_tiled = (pf[0] >> 31) != 0;
+  if ((f[1] & 0x3F) != kFormat8 || tiled || !palette || (pf[1] & 0x3F) != kFormat8888 ||
+      palette_tiled || gp.width != dp.width || gp.height != dp.height) {
+    if (!quiet) REXLOG_WARN("Prompt pictures: {} isn't laid out as expected (fetch {:08X} {:08X} {:08X}, "
+                "palette {:08X} {:08X}): left alone",
+                gp.name, f[0], f[1], f[2], pf[0], pf[1]);
+    return false;
+  }
+  // Linear rows: pitch in 32-texel units, rows padded to 256 bytes.
+  gp.row_pitch = ((((f[0] >> 22) & 0x1FF) << 5) + 255) & ~255u;
+  gp.index_address = f[1] & 0xFFFFF000u;
+  const uint32_t endian = (f[1] >> 6) & 3;  // 0 none, 1 8in16, 2 8in32, 3 16in32
+  gp.index_xor = endian == 1 ? 1 : endian == 2 ? 3 : endian == 3 ? 2 : 0;
+  gp.palette_address = pf[1] & 0xFFFFF000u;
+  // The pixels must be the disc's (either row order).
+  auto texel = [&](uint32_t x, uint32_t y) {
+    return *GuestPtr(base, (gp.index_address + y * gp.row_pitch + x) ^ gp.index_xor);
+  };
+  bool match[2] = {true, true};
+  for (uint32_t y = 0; y < gp.height; ++y) {
+    for (uint32_t x = 0; x < gp.width; ++x) {
+      const uint8_t want = dp.indices[size_t(y) * gp.width + x];
+      match[0] = match[0] && texel(x, y) == want;
+      match[1] = match[1] && texel(x, gp.height - 1 - y) == want;
+    }
+  }
+  if (!match[0] && !match[1]) {
+    if (!quiet) REXLOG_WARN("Prompt pictures: {}'s pixels aren't the disc's: left alone", gp.name);
+    return false;
+  }
+  gp.flipped = !match[0];
+  // The palette: find where each of the disc's B, G, R, A sits in the
+  // guest's 4 bytes per entry (the GPU's byte order + D3D's swizzle).
+  const uint8_t* raw = GuestPtr(base, gp.palette_address);
+  bool palette_ok = true;
+  for (int c = 0; c < 4 && palette_ok; ++c) {
+    gp.palette_byte[c] = -1;
+    for (int b = 0; b < 4 && gp.palette_byte[c] < 0; ++b) {
+      bool same = true;
+      for (uint32_t i = 0; i < dp.colours && same; ++i) {
+        same = raw[4 * i + b] == dp.palette[4 * i + c];
+      }
+      // A byte already taken by another channel can't be this one too.
+      for (int k = 0; k < c && same; ++k) same = gp.palette_byte[k] != b;
+      if (same) gp.palette_byte[c] = b;
+    }
+    palette_ok = gp.palette_byte[c] >= 0;
+  }
+  if (!palette_ok) {
+    if (!quiet) REXLOG_WARN("Prompt pictures: {}'s palette isn't the disc's: left alone", gp.name);
+    return false;
+  }
+  // The part of the page the glyph shows: the stick pictures use the
+  // top 3/4 (their glyph's v starts at 0.25), every other the whole page.
+  gp.used_height = prompt->kind == Kind::kStick ? gp.height * 3 / 4 : gp.height;
+  // Where the original picture is drawn (THE SIZE OF A PICTURE): the disc
+  // page's opaque part, inside the rows the glyph shows.
+  {
+    int x0 = int(gp.width), y0 = int(gp.used_height), x1 = -1, y1 = -1;
+    for (uint32_t y = 0; y < gp.used_height && y < dp.height; ++y) {
+      for (uint32_t x = 0; x < gp.width && x < dp.width; ++x) {
+        const uint8_t index = dp.indices[size_t(y) * dp.width + x];
+        if (index >= dp.colours || dp.palette[4 * size_t(index) + 3] <= 16) continue;
+        x0 = std::min(x0, int(x));
+        y0 = std::min(y0, int(y));
+        x1 = std::max(x1, int(x));
+        y1 = std::max(y1, int(y));
+      }
+    }
+    gp.ink = x1 < 0 ? Box{0, 0, int(gp.width), int(gp.used_height)} : Box{x0, y0, x1 - x0 + 1, y1 - y0 + 1};
+  }
+  gp.original_rows.resize(size_t(gp.row_pitch) * gp.height);
+  for (size_t i = 0; i < gp.original_rows.size(); ++i) {
+    gp.original_rows[i] = *GuestPtr(base, gp.index_address + uint32_t(i));
+  }
+  gp.original_palette.assign(raw, raw + 1024);
+  return true;
 }
 
 // Checks one font the loader built against the disc's fonts and records its
@@ -907,86 +1188,9 @@ void CheckFont(uint8_t* base, uint32_t font) {
       const uint32_t index =
           k < kDiscPrompts ? source->second : disc.page_count + uint32_t(k - kDiscPrompts);
       GuestPage gp;
-      gp.prompt = prompt;
-      gp.name = disc.name + " " + prompt->name;
-      gp.font = font;
-      gp.texture = Load32(base, array + 4 * index);
-      gp.xn = gp.texture ? Load32(base, gp.texture + kTexturePddi) : 0;
-      const uint32_t d3d = gp.xn ? Load32(base, gp.xn + kXnD3DTexture) : 0;
-      if (!d3d || Load32(base, gp.xn + kXnPaletteMode) != 1) {
-        REXLOG_WARN("Prompt pictures: {} isn't a palettized texture: left alone", gp.name);
+      if (!MakePage(base, font, Load32(base, array + 4 * index), prompt, dp, disc.name + " " + prompt->name, &gp)) {
         continue;
       }
-      const uint32_t palette =
-          Load32(base, gp.xn + kXnPalettes + 4 * (Load32(base, gp.xn + kXnPaletteIndex) & 15));
-      uint32_t f[6], pf[6];
-      for (int i = 0; i < 6; ++i) {
-        f[i] = Load32(base, d3d + kD3DFetch + 4 * i);
-        pf[i] = palette ? Load32(base, palette + kD3DFetch + 4 * i) : 0;
-      }
-      gp.index_fetch1 = f[1];
-      gp.width = (f[2] & 0x1FFF) + 1;
-      gp.height = ((f[2] >> 13) & 0x1FFF) + 1;
-      const bool tiled = (f[0] >> 31) != 0, palette_tiled = (pf[0] >> 31) != 0;
-      if ((f[1] & 0x3F) != kFormat8 || tiled || !palette || (pf[1] & 0x3F) != kFormat8888 ||
-          palette_tiled || gp.width != dp.width || gp.height != dp.height) {
-        REXLOG_WARN("Prompt pictures: {} isn't laid out as expected (fetch {:08X} {:08X} {:08X}, "
-                    "palette {:08X} {:08X}): left alone",
-                    gp.name, f[0], f[1], f[2], pf[0], pf[1]);
-        continue;
-      }
-      // Linear rows: pitch in 32-texel units, rows padded to 256 bytes.
-      gp.row_pitch = ((((f[0] >> 22) & 0x1FF) << 5) + 255) & ~255u;
-      gp.index_address = f[1] & 0xFFFFF000u;
-      const uint32_t endian = (f[1] >> 6) & 3;  // 0 none, 1 8in16, 2 8in32, 3 16in32
-      gp.index_xor = endian == 1 ? 1 : endian == 2 ? 3 : endian == 3 ? 2 : 0;
-      gp.palette_address = pf[1] & 0xFFFFF000u;
-      // The pixels must be the disc's (either row order).
-      auto texel = [&](uint32_t x, uint32_t y) {
-        return *GuestPtr(base, (gp.index_address + y * gp.row_pitch + x) ^ gp.index_xor);
-      };
-      bool match[2] = {true, true};
-      for (uint32_t y = 0; y < gp.height; ++y) {
-        for (uint32_t x = 0; x < gp.width; ++x) {
-          const uint8_t want = dp.indices[size_t(y) * gp.width + x];
-          match[0] = match[0] && texel(x, y) == want;
-          match[1] = match[1] && texel(x, gp.height - 1 - y) == want;
-        }
-      }
-      if (!match[0] && !match[1]) {
-        REXLOG_WARN("Prompt pictures: {}'s pixels aren't the disc's: left alone", gp.name);
-        continue;
-      }
-      gp.flipped = !match[0];
-      // The palette: find where each of the disc's B, G, R, A sits in the
-      // guest's 4 bytes per entry (the GPU's byte order + D3D's swizzle).
-      const uint8_t* raw = GuestPtr(base, gp.palette_address);
-      bool palette_ok = true;
-      for (int c = 0; c < 4 && palette_ok; ++c) {
-        gp.palette_byte[c] = -1;
-        for (int b = 0; b < 4 && gp.palette_byte[c] < 0; ++b) {
-          bool same = true;
-          for (uint32_t i = 0; i < dp.colours && same; ++i) {
-            same = raw[4 * i + b] == dp.palette[4 * i + c];
-          }
-          // A byte already taken by another channel can't be this one too.
-          for (int k = 0; k < c && same; ++k) same = gp.palette_byte[k] != b;
-          if (same) gp.palette_byte[c] = b;
-        }
-        palette_ok = gp.palette_byte[c] >= 0;
-      }
-      if (!palette_ok) {
-        REXLOG_WARN("Prompt pictures: {}'s palette isn't the disc's: left alone", gp.name);
-        continue;
-      }
-      // The part of the page the glyph shows: the stick pictures use the
-      // top 3/4 (their glyph's v starts at 0.25), every other the whole page.
-      gp.used_height = prompt->kind == Kind::kStick ? gp.height * 3 / 4 : gp.height;
-      gp.original_rows.resize(size_t(gp.row_pitch) * gp.height);
-      for (size_t i = 0; i < gp.original_rows.size(); ++i) {
-        gp.original_rows[i] = *GuestPtr(base, gp.index_address + uint32_t(i));
-      }
-      gp.original_palette.assign(raw, raw + 1024);
       found.push_back(std::move(gp));
     }
     REXLOG_INFO("Prompt pictures: {} found ({} prompt pictures checked against the disc{})",
@@ -1003,13 +1207,18 @@ void CheckFont(uint8_t* base, uint32_t font) {
 
 // Is the page still the one we checked (the font not unloaded / replaced)?
 bool StillThere(uint8_t* base, const GuestPage& gp) {
-  if (Load32(base, gp.font) != kTextureFontVtable) return false;
-  const uint32_t array = Load32(base, gp.font + kFontPages);
-  bool listed = false;
-  for (uint32_t i = 0, n = Load32(base, gp.font + kFontPageCount); i < n && i < 256; ++i) {
-    listed = listed || Load32(base, array + 4 * i) == gp.texture;
+  if (gp.font) {
+    if (Load32(base, gp.font) != kTextureFontVtable) return false;
+    const uint32_t array = Load32(base, gp.font + kFontPages);
+    bool listed = false;
+    for (uint32_t i = 0, n = Load32(base, gp.font + kFontPageCount); i < n && i < 256; ++i) {
+      listed = listed || Load32(base, array + 4 * i) == gp.texture;
+    }
+    if (!listed) return false;
+  } else if (Load32(base, gp.texture) != g.world_vtable) {
+    return false;  // (a texture of its own: freed / reused for something else)
   }
-  if (!listed || Load32(base, gp.texture + kTexturePddi) != gp.xn) return false;
+  if (Load32(base, gp.texture + kTexturePddi) != gp.xn) return false;
   const uint32_t d3d = Load32(base, gp.xn + kXnD3DTexture);
   return d3d && Load32(base, d3d + kD3DFetch + 4) == gp.index_fetch1;
 }
@@ -1022,10 +1231,11 @@ void Show(uint8_t* base, GuestPage& gp, const std::string& what) {
   } else {
     const std::string key =
         what + " @" + std::to_string(gp.width) + "x" + std::to_string(gp.height) + "/" +
-        std::to_string(gp.used_height);
+        std::to_string(gp.used_height) + " ink " + std::to_string(gp.ink.x) + "," + std::to_string(gp.ink.y) +
+        "," + std::to_string(gp.ink.w) + "," + std::to_string(gp.ink.h);
     auto it = g.drawn.find(key);
     if (it == g.drawn.end()) {
-      it = g.drawn.emplace(key, Quantize(Draw(what, gp.width, gp.height, gp.used_height))).first;
+      it = g.drawn.emplace(key, Quantize(Draw(what, gp.width, gp.height, gp.ink))).first;
     }
     const Paletted& p = it->second;
     // Rows into a copy of the guest's storage (padding bytes kept), in the
@@ -1050,6 +1260,42 @@ void Show(uint8_t* base, GuestPage& gp, const std::string& what) {
   gp.shown = what;
 }
 
+// A texture the loader built: the world's B? Only a 64 x 64 palettized one
+// is looked at closely (MakePage compares every pixel with the disc's),
+// quietly: nearly every texture is something else. Once found, it's a page
+// like the prompts' (drawn below with the B button's / Jack's picture).
+void CheckWorldTexture(uint8_t* base, uint32_t texture) {
+  if (!g.world_disc || !texture) return;
+  const uint32_t xn = Load32(base, texture + kTexturePddi);
+  const uint32_t d3d = xn ? Load32(base, xn + kXnD3DTexture) : 0;
+  if (!d3d || Load32(base, xn + kXnPaletteMode) != 1) return;
+  const uint32_t size = Load32(base, d3d + kD3DFetch + 8);
+  if ((size & 0x1FFF) + 1 != g.world_disc->width || ((size >> 13) & 0x1FFF) + 1 != g.world_disc->height) return;
+  for (const GuestPage& gp : g.pages) {
+    if (gp.texture == texture) return;  // known already
+  }
+  GuestPage gp;
+  if (!MakePage(base, 0, texture, &kWorldB, *g.world_disc, "world B", &gp, /*quiet=*/true)) return;
+  // The palette's byte order: this red ball's palette has identical blue and
+  // green columns, so MakePage's check can't tell those two apart (our
+  // pictures would come out with blue and green swapped). The font pages
+  // are k_8_8_8_8 palettes laid out the same way: their order.
+  for (const GuestPage& font_page : g.pages) {
+    if (font_page.font) {
+      std::copy(std::begin(font_page.palette_byte), std::end(font_page.palette_byte), std::begin(gp.palette_byte));
+      break;
+    }
+  }
+  // UPSIDE DOWN: the game DRAWS this texture upside down (a B looks the same
+  // either way up, so nobody could tell): an "A" written the disc's way came
+  // out as "∀" (playtest photo). So the pictures go in the other way up.
+  gp.flipped = !gp.flipped;
+  g.world_vtable = Load32(base, texture);
+  REXLOG_INFO("Prompt pictures: the world's B button found (texture {:08X})", texture);
+  g.pages.push_back(std::move(gp));
+  g.revision = UINT32_MAX;  // drawn at once
+}
+
 // Once per game frame (main thread).
 void OnFrameEnd(void*) {
   auto* memory = rex::system::kernel_memory();
@@ -1070,6 +1316,14 @@ void OnFrameEnd(void*) {
     // first; without this its pages kept the 360 buttons until the next
     // device switch).
     g.revision = UINT32_MAX;
+  }
+  if (!g.textures_loaded.empty()) {
+    if (!g.world_read) {
+      g.world_read = true;
+      g.world_disc = ReadWorldTexture(kWorldTexture);
+    }
+    for (const uint32_t texture : g.textures_loaded) CheckWorldTexture(base, texture);
+    g.textures_loaded.clear();
   }
   if (g.pages.empty()) return;
 
@@ -1095,11 +1349,12 @@ void OnFrameEnd(void*) {
   }
   const std::string look = device ? (dark ? "D" : "L") : "P" + std::to_string(pad_style);
   if (device == g.device && revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision &&
-      dark == g.dark) {
+      dark == g.dark && pad_style == g.pad_style) {
     return;
   }
   g_slot_drawn = g_slot_revision;
   g.dark = dark;
+  g.pad_style = pad_style;
   if (device != g.device || look != g.look) {
     REXLOG_INFO("Prompt pictures: {}", device ? (dark ? "keyboard and mouse keys (dark)" : "keyboard and mouse keys")
                                        : pad_style == kOriginalStyle ? std::string("controller buttons (the game's own)")
@@ -1227,6 +1482,111 @@ bool PatchFont(pure3d::Node& font) {
   return true;
 }
 
+// THE BUTTON'S SHAPE: the coin's faces made square (one prim group:
+// positions 0x10005 = u32 count + x y z floats, texture coordinates 0x10007
+// = u32 count + u32 channel + u v floats). The texture projection is read
+// from the coin itself (a rim corner's u / x and v / y).
+bool SquareCoin(pure3d::Node& group) {
+  pure3d::Node* positions = nullptr;
+  pure3d::Node* uvs = nullptr;
+  for (pure3d::Node& c : group.children) {
+    if (c.id == kChunkPositions) positions = &c;
+    if (c.id == kChunkUvs) uvs = &c;
+  }
+  if (!positions || !uvs || positions->data.size() < 4 || uvs->data.size() < 8) return false;
+  const uint32_t n = pure3d::NodeLe32(*positions, 0);
+  if (pure3d::NodeLe32(*uvs, 0) != n || positions->data.size() < 4 + 12 * size_t(n) ||
+      uvs->data.size() < 8 + 8 * size_t(n)) {
+    return false;
+  }
+  auto get = [](const pure3d::Node& node, size_t at) {
+    float f;
+    std::memcpy(&f, &node.data[at], 4);
+    return f;
+  };
+  auto put = [](pure3d::Node& node, size_t at, float f) { std::memcpy(&node.data[at], &f, 4); };
+  // The projection: from the rim corner furthest along x and along y.
+  float ku = 0, kv = 0, radius = 0;
+  for (uint32_t i = 0; i < n; ++i) {
+    const float x = get(*positions, 4 + 12 * i), y = get(*positions, 8 + 12 * i);
+    const float u = get(*uvs, 8 + 8 * i), v = get(*uvs, 12 + 8 * i);
+    if (std::abs(x) > 0.1f && std::abs(y) < 1e-3f) ku = (u - 0.5f) / x;
+    if (std::abs(y) > 0.1f && std::abs(x) < 1e-3f) kv = (v - 0.5f) / y;
+    radius = std::max(radius, std::hypot(x, y));
+  }
+  if (ku == 0 || kv == 0 || radius < 0.01f) return false;
+  for (uint32_t i = 0; i < n; ++i) {
+    float x = get(*positions, 4 + 12 * i), y = get(*positions, 8 + 12 * i);
+    if (std::hypot(x, y) < 0.5f * radius) continue;  // a face's centre
+    // Rim corners: on an axis = an edge's middle (stays); between = the corner.
+    if (std::abs(x) > 1e-3f * radius && std::abs(y) > 1e-3f * radius) {
+      x = std::copysign(radius, x);
+      y = std::copysign(radius, y);
+    }
+    put(*positions, 4 + 12 * i, x);
+    put(*positions, 8 + 12 * i, y);
+    put(*uvs, 8 + 8 * i, 0.5f + ku * x);
+    put(*uvs, 12 + 8 * i, 0.5f + kv * y);
+  }
+  return true;
+}
+
+// WORLD B: THE BUTTON'S MATERIAL (above): the material's alpha test on;
+// THE BUTTON'S SHAPE: the B baked, the coin square. Package bca1bc0b.
+bool PatchWorldButton(const pure3d::Bytes& original, pure3d::Bytes* patched) {
+  pure3d::Chunk root;
+  std::vector<pure3d::Chunk> top;
+  if (!pure3d::Parse(original, &root, &top)) return false;
+  pure3d::Bytes children;
+  int done = 0;
+  for (const pure3d::Chunk& c : top) {
+    const std::string_view name = pure3d::NameOf(original, c);
+    if (c.id == kChunkShader && name == kWorldMaterial) {
+      pure3d::Node shader = pure3d::ToNode(original, c);
+      for (pure3d::Node& param : shader.children) {
+        // An int parameter: four-letter name, then a u32 (little-endian).
+        if (param.id == kChunkShaderInt && param.data.size() >= 8 &&
+            std::string_view(reinterpret_cast<const char*>(param.data.data()), 4) == "ATST") {
+          pure3d::SetNodeLe32(param, 4, 1);
+          ++done;
+        }
+      }
+      const pure3d::Bytes bytes = pure3d::ToBytes(shader);
+      children.insert(children.end(), bytes.begin(), bytes.end());
+    } else if (c.id == kChunkTexture && name == kWorldTexture) {
+      pure3d::Node texture = pure3d::ToNode(original, c);
+      for (pure3d::Node& image : texture.children) {
+        for (pure3d::Node& pixels : image.children) {
+          if (pixels.id != kChunkImageData || pixels.data.size() < 4 + 18) continue;
+          uint8_t* tga = pixels.data.data() + 4;
+          const size_t colours = size_t(tga[5] | tga[6] << 8), at = 18 + tga[0];
+          const uint32_t w = tga[12] | tga[13] << 8, h = tga[14] | tga[15] << 8;
+          if (tga[1] != 1 || tga[7] != 32 || tga[16] != 8 || at + 4 * colours + size_t(w) * h > pixels.data.size() - 4) continue;
+          if (BakeWorldButton(tga + at + 4 * colours, w, h, tga + at, colours)) ++done;
+        }
+      }
+      const pure3d::Bytes bytes = pure3d::ToBytes(texture);
+      children.insert(children.end(), bytes.begin(), bytes.end());
+    } else if (c.id == kChunkMesh && name == kWorldMesh) {
+      pure3d::Node mesh = pure3d::ToNode(original, c);
+      for (pure3d::Node& group : mesh.children) {
+        if (group.id == kChunkPrimGroup && SquareCoin(group)) ++done;
+      }
+      const pure3d::Bytes bytes = pure3d::ToBytes(mesh);
+      children.insert(children.end(), bytes.begin(), bytes.end());
+    } else {
+      const pure3d::Bytes bytes = pure3d::Copy(original, c);
+      children.insert(children.end(), bytes.begin(), bytes.end());
+    }
+  }
+  if (done < 3) {
+    REXLOG_WARN("Prompt pictures: {} isn't as expected: the world's B stays as it was", kWorldPackage);
+    return false;
+  }
+  *patched = pure3d::WithChildren(original, root, children);
+  return true;
+}
+
 bool PatchFonts(const pure3d::Bytes& original, pure3d::Bytes* patched) {
   pure3d::Chunk root;
   std::vector<pure3d::Chunk> top;
@@ -1258,6 +1618,9 @@ bool PatchFonts(const pure3d::Bytes& original, pure3d::Bytes* patched) {
 void Register() {
   data_patcher::Register("menu button glyphs", data_patcher::kCategoryFrontend, "b4c85fe7",
                          &PatchFonts);
+  // (bca1bc0b is a "joined_assets" package, type 9 in levels/GlobalPackages
+  // .p3d: the path builder's category = type + 1 = 10, not the menus' 6.)
+  data_patcher::Register("world button alpha test", kCategoryJoinedAssets, "bca1bc0b", &PatchWorldButton);
 }
 
 void Install() { pddi::AddFrameEndListener(&OnFrameEnd, nullptr); }
@@ -1270,23 +1633,44 @@ std::string FontNameAt(uint32_t font) {
 
 bool KeysShown() { return g_keys_shown.load(); }
 
-char16_t KeyGlyph(Input key) {
-  if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
+namespace {
+// Lends a slot to `what` (Slot): the one already holding it, else the least
+// recently asked.
+char16_t LendSlot(const std::string& what) {
   std::lock_guard<std::mutex> lock(g.mutex);
   size_t slot = 0;
   for (size_t i = 0; i < g_slots.size(); ++i) {
-    if (g_slots[i].key == key) {
+    if (g_slots[i].what == what) {
       slot = i;
       break;
     }
     if (g_slots[i].asked < g_slots[slot].asked) slot = i;  // least recently asked
   }
-  if (g_slots[slot].key != key) {
-    g_slots[slot].key = key;
+  if (g_slots[slot].what != what) {
+    g_slots[slot].what = what;
     ++g_slot_revision;
   }
   g_slots[slot].asked = ++g_slot_clock;
   return char16_t(kFirstSlot + slot);
+}
+}  // namespace
+
+char16_t KeyGlyph(Input key) {
+  if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
+  return LendSlot("K " + std::to_string(key));
+}
+
+char16_t ButtonGlyph(std::string_view pad) {
+  if (!g_menu_glyphs.load()) return 0;
+  // The 360 control names of input/bindings.h (ActionInfo::pad).
+  static const std::map<std::string_view, int> kNames = {
+      {"A", kPadA},       {"B", kPadB},         {"X", kPadX},          {"Y", kPadY},
+      {"Back", kPadBack}, {"Start", kPadStart}, {"RT", kPadRT},        {"RB", kPadRB},
+      {"LT", kPadLT},     {"LB", kPadLB},       {"Left stick", kPadLeftStick},
+      {"Left stick circles", kPadLeftStick},    {"Right stick", kPadRightStick},
+  };
+  const auto it = kNames.find(pad);
+  return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second));
 }
 
 char16_t MenuGlyph(char16_t c) {
@@ -1353,6 +1737,20 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
 }
 
 }  // namespace prompt_icons
+
+// TextureLoader::LoadObject (vtable 0x8200D710 slot 5): every texture as
+// it's built, through r4 like the font loader below; the frame end looks for
+// the world's B among them (prompt_icons State::textures_loaded).
+extern "C" REX_FUNC(__imp__sub_823AFB00);
+extern "C" REX_FUNC(sub_823AFB00) {
+  const uint32_t out = ctx.r4.u32;
+  __imp__sub_823AFB00(ctx, base);
+  const uint32_t texture = out ? prompt_icons::Load32(base, out) : 0;
+  if (texture) {
+    std::lock_guard<std::mutex> lock(prompt_icons::g.mutex);
+    if (prompt_icons::g.textures_loaded.size() < 4096) prompt_icons::g.textures_loaded.push_back(texture);
+  }
+}
 
 // TextureFontLoader::LoadObject: the game's fonts, as they're loaded.
 extern "C" REX_FUNC(sub_823C5DA0) {

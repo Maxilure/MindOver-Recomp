@@ -483,12 +483,13 @@ Row InvertAxisRow() {
 struct KeyRowInfo {
   kbm::Action action;
   const char16_t* text;
+  const char16_t* direction = nullptr;  // after the controller's picture: "Up" (the stick's way)
 };
 constexpr KeyRowInfo kKeyRows[] = {
-    {kbm::kMoveUp, u"Move up."},
-    {kbm::kMoveDown, u"Move down."},
-    {kbm::kMoveLeft, u"Move left."},
-    {kbm::kMoveRight, u"Move right."},
+    {kbm::kMoveUp, u"Move up.", u"Up"},
+    {kbm::kMoveDown, u"Move down.", u"Down"},
+    {kbm::kMoveLeft, u"Move left.", u"Left"},
+    {kbm::kMoveRight, u"Move right.", u"Right"},
     {kbm::kWalk, u"Hold while moving to walk instead of run."},
     {kbm::kSpin, u"The spin attack."},
     {kbm::kJump, u"Jump. Press again in the air to double jump."},
@@ -591,8 +592,16 @@ std::vector<Row> ControlsRows() {
     r.kind = Kind::kKey;
     r.key_action = k.action;
     const std::u16string text = k.text;
-    r.describe = [text, action = k.action](Env&, int) {
-      return text + u" Controller: " + Ascii16(kbm::Info(action).pad) + u".";
+    const std::u16string direction = k.direction ? k.direction : u"";
+    r.describe = [text, direction, action = k.action](Env&, int) {
+      // The controller's button as a picture in the Controller Icons style
+      // (prompt_icons.h ButtonGlyph), else its 360 name; the stick's way
+      // after it for the four moves ("[stick] Up").
+      const char16_t button = prompt_icons::ButtonGlyph(kbm::Info(action).pad);
+      std::u16string out = text + u" Controller: " +
+                           (button ? std::u16string(1, button) : Ascii16(kbm::Info(action).pad));
+      if (!direction.empty()) out += u" " + direction;
+      return button && direction.empty() ? out : out + u".";
     };
     r.unavailable = NoKeyboard;
     rows.push_back(std::move(r));

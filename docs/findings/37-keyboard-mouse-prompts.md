@@ -154,8 +154,74 @@ lends one to any key (the least recently asked slot is reused) and the next
 frame paints that key into its page, in the chosen key set, whatever the
 device in use. The Options screen's key rows write their keys this way, so
 they show as pictures in the game's own text (the card keeps the names).
+A slot can also hold a CONTROLLER button (`ButtonGlyph("A")`, by its 360
+name): drawn in the Controller Icons style whatever the device in use, so the
+Options key rows' card says "Controller: [Cross]" with a PlayStation 5 set;
+with Automatic before any controller was used, or Xbox 360, it is the game's
+own picture of that button, copied from the disc's font page (a stick's
+picture is the top three quarters of its page, fitted with its shape kept).
 The game's fonts as the port reads them from the disc (ui/game_font.h, for
 measuring) don't have the added glyphs: they measure like the A picture.
+
+**The B floating in the world** (over a save totem, a stunned titan, things
+to use) isn't a font glyph: it's a texture of its own,
+`FE_360_b_button_64.tga` in package `bca1bc0b.p3d` (64 x 64, 8-bit
+palettized, no mipmaps), drawn as a billboard with a green glow behind it.
+Pure3D's TextureLoader (vtable 0x8200D710, slot 5 = LoadObject
+`sub_823AFB00`, the texture through r4 like the font loader's) is wrapped:
+every texture it builds is looked at once at the frame end; a 64 x 64
+palettized one whose pixels are the disc's B (read from the package) becomes
+one more prompt page, standing for the B button / Jack. So it shows the Jack
+key (E by default) on the keyboard, the chosen controller set's B position
+(Circle, A on a Switch...) on a controller, and the game's own B otherwise.
+A page that isn't part of a font counts as gone when the texture object's
+vtable changes. **The game draws this texture upside down**: a B looks the
+same either way up, so it never showed, but an "A" written the disc's way
+came out as "∀"; the pictures go into it the other way up. Its palette has
+identical blue and green columns (a red ball), so the byte order check can't
+tell those two apart: the font pages' order is used.
+
+**The button's material and shape.** The B is drawn on a mesh,
+`evil_circle_geoShape`: a 12-sided coin (radius 0.36, 0.27 thick, the front a
+shallow dome) whose texture coordinates are a flat projection (u = 0.5 +
+1.261 x, v = 0.5 - 1.261 y), so on screen it is a 12-sided window onto the
+64 x 64 picture. Its material, `HUD_button_circle_m` (chunk 0x11000 in the
+same package), is opaque with alpha test off (`ATST 0`): every pixel inside
+the window is solid, a "see-through" one is drawn as its colour, black. The
+red ball's dark rim on screen is exactly that. (With the B's picture emptied
+a black 12-gon remained; filled with magenta, a magenta 12-gon.) So any
+picture there was masked to that 12-sided shape with dark corners.
+
+A data patch of the package (a "joined_assets" package: type 9 in
+`levels/GlobalPackages.p3d`, so path category 10, not the menus' 6) makes a
+key a whole square key while the game's own B stays exactly as it was:
+
+* the material's alpha test on (`ATST 1`; compare `ACMP 4` = greater,
+  threshold `ACTH 0.5`), so see-through pixels are left out;
+* the coin's faces SQUARE: each rim corner moved out to the square (those at
+  0 / 90 / 180 / 270 degrees to the edge middles, the pairs at 30 / 60
+  degrees etc. both to their quadrant's corner), texture coordinates by the
+  same projection (read from the mesh itself);
+* the 12-sided window BAKED into the game's B picture: every palette colour
+  opaque (as the material drew them), and the pixels outside the window
+  given an unused palette entry made fully transparent. On the square coin
+  the game's B shows the same 12-sided disc with its dark rim as before.
+
+A key is drawn over the whole square face (0.046 to 0.954 of the picture);
+its own transparent corners are left out. Controller buttons are round with
+transparent corners: they look as on the 12-sided coin. (Tried first, each
+leaving a dark silhouette or a circle: a dark badge, cutting the glow's
+middle out, a key covering the box, spreading the key's edge, a round button
+in the key's colour, a key shrunk to fit inside the 12-gon.)
+
+**The size of a picture.** The game's own pictures don't fill their pages:
+the 360 face buttons cover 49 of 64 pixels (7-55), the sticks 93 x 72 of
+their 128 x 128 page, the world's B nearly all of its 64. The first version
+drew every replacement over the whole page, about 11% bigger than the
+button it replaced (playtest). Now each page's original drawn part is
+measured from the disc's page (the box of its opaque pixels), every
+replacement is cut to its own drawn part and fitted into that box with its
+shape kept: drawn part over drawn part, the same size as the original.
 
 ## 5. Tests
 

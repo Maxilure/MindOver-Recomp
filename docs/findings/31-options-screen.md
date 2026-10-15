@@ -404,7 +404,8 @@ prompt pictures' sets, [findings/37](37-keyboard-mouse-prompts.md) s.4), one row
 move you make in play (Move x4, Walk, Spin, Jump, Light / Heavy Attack,
 Block, Jack, Titan Special, Pocket, Map) with its keys as the value
 as pictures (the key slots of findings/37 s.4; the card names them: "Left
-Mouse, J"), and **Default Keys** (3 pages of 7). The rows are the
+Mouse, J"; the controller's button as a picture in the Controller Icons
+style), and **Default Keys** (3 pages of 7). The rows are the
 keyboard driver's actions ([findings/38](38-keyboard-mouse-real-keybinds.md));
 the menus' own keys (Pause, Menu: ..., the D-pad = arrow keys) and the
 controller's leftovers with no use in the game (right stick, LB, stick
