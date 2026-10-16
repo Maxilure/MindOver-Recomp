@@ -17,7 +17,9 @@
 //      (the stored depth is the game's reversed one; the sprite's depth is
 //      its clip-space z, the same distance the fog uses).
 //   2. colour = texture x vertex colour; alpha = texture alpha x vertex alpha
-//      x soft^2 x fade (c2.x). The game really squares `soft`.
+//      x soft^2 x fade (c2.x). The game really squares `soft`. A palettized
+//      sprite is filtered with texel corners at 0 and 1 (uv x (size - 1),
+//      palette.glsl SamplePalettizedCorner; findings/43).
 //   3. Additive / subtractive sprites (bools b80 / b81: alpha does nothing
 //      there) scale their colour by the same soft^2 x fade instead.
 //   4. Distance fog (b69, c70-c72). Normal sprites blend towards the fog
@@ -73,7 +75,7 @@ void main() {
   vec4 tex = vec4(1.0);
   if (ParticleFlag(kParticleTextured) && !ParticleFlag(kParticleWhiteTex)) {
     tex = ParticleFlag(kParticlePalettized)
-              ? SamplePalettized(u_texture, u_palette, particle.fog_range_texture_size.zw, in_uv)
+              ? SamplePalettizedCorner(u_texture, u_palette, particle.fog_range_texture_size.zw, in_uv)
               : ParticleFlag(kParticleBaseMip)     ? textureLod(u_texture, in_uv, 0.0)    // F12
               : ParticleFlag(kParticleSmallestMip) ? textureLod(u_texture, in_uv, 100.0)  // F12
                                                    : texture(u_texture, in_uv);

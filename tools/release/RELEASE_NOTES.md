@@ -60,6 +60,9 @@ with the row's place shown under the list.
 - **Attack trails** in the Native renderer: the pale streaks some titans'
   attacks sweep behind them (the Phantom's punches, the Roller's rolling
   charge) were missing; they're drawn now, like the original.
+- **Glows** in the Native renderer: big attack glows (a Stinky's punch, the
+  Phantom's time shift) were a little too dim towards their edge; they now
+  match the original.
 
 **Keyboard and mouse prompts**: while you play on the keyboard and mouse,
 the game's button prompts show YOUR keys and mouse buttons ("Press E to
