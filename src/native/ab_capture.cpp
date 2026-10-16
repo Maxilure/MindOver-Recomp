@@ -442,6 +442,27 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
       }
       std::fprintf(file, " fxshadows %u", l.counts[2]);
     }
+    // Bump mega: which of its features this draw uses (the game's PS bools
+    // b10-b16 + what the vertex lacks, frame.h kBumpMega*) and their numbers,
+    // so a photo tells which parts of bumpmega.frag were on screen.
+    if (d.material == Material::kBumpMega && d.block < frame.blocks.size()) {
+      const BumpMegaParams& b = frame.blocks[d.block].bump_mega;
+      const uint32_t f = b.flags[0];
+      std::fprintf(file, " | bump flags 0x%X%s%s%s%s%s%s%s%s%s%s fxshadows %u", f,
+                   f & kBumpMegaRim ? " rim" : "", f & kBumpMegaRefract ? " refract" : "",
+                   f & kBumpMegaReflect ? " reflect" : "",
+                   f & kBumpMegaReflectMask ? " reflect-mask" : "",
+                   f & kBumpMegaPalette ? " pal" : "", f & kBumpMegaPalette2 ? " pal-normal" : "",
+                   f & kBumpMegaRefractModulated ? " refract-x-colour" : "",
+                   f & kBumpMegaFog ? " fog" : "", f & kBumpMegaNoNormalMap ? " no-normal-map" : "",
+                   f & kBumpMegaNoColour ? " no-colour" : "", b.flags[1]);
+      std::fprintf(file,
+                   " | refract bump %.3f bright %.3f tile %.1f | reflect bump %.3f colour %.2f %.2f "
+                   "%.2f %.2f | rim %.2f %.2f %.2f",
+                   b.bump[0], b.bump[3], b.bump[2], b.bump[1], b.reflect_colour[0],
+                   b.reflect_colour[1], b.reflect_colour[2], b.reflect_colour[3], b.rim_colour[0],
+                   b.rim_colour[1], b.rim_colour[2]);
+    }
     // Particles: the soft edge's numbers (particle.frag).
     if (d.material == Material::kParticle && d.block < frame.blocks.size()) {
       const ParticleParams& p = frame.blocks[d.block].particle;

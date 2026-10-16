@@ -44,6 +44,8 @@ const uint kFlagFxAdd = 128u;
 // (lit_params.glsl; only world, point_*, shadow_spheres and counts.yz are
 // filled). Without this flag that block is a zeroed one: don't read it.
 const uint kFlagLights = 256u;
+// Debug (F11, spotter.h): paint the draw magenta (the motion trails).
+const uint kFlagHighlight = 512u;
 
 // The GPU's alpha test (the game's materials set it in their state cache):
 // true = keep the pixel. Compare function and reference from `params`.

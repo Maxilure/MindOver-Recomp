@@ -631,6 +631,16 @@ RenderTargets::Image* RenderTargets::EnsureSurface(const Surface& surface, VkCom
     // Only 8-bit RGBA (format 0, and 1 = the same with gamma) so far.
     ReportOnce("colour surface format " + std::to_string(surface.format) + " (drawn as RGBA8)");
   }
+  // Once per colour format: which ones the game draws into (findings/44
+  // s.5: so far only format 0, 8-bit RGBA).
+  if (!surface.depth) {
+    static uint32_t formats_seen = 0;
+    if (!(formats_seen & (1u << (surface.format & 31)))) {
+      formats_seen |= 1u << (surface.format & 31);
+      REXLOG_INFO("NativeRenderer: colour surface format {} first seen ({}x{}, msaa {}, at {:08X})",
+                  surface.format, surface.width, surface.height, surface.msaa, surface.guest);
+    }
+  }
   const VkSampleCountFlagBits samples = SamplesFor(surface.msaa);
   Image& image = surfaces_[surface.guest];
   if (image.image && image.width == surface.width && image.height == surface.height &&

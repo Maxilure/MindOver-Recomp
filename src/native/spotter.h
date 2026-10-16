@@ -30,7 +30,8 @@
 // whatever their texture, fade or soft-particle factor say, so a particle
 // our renderer draws INVISIBLY still shows up (added 2026-09-29 for the
 // Ratcicle titan's missing cyan glow). Flags: kBumpMegaHighlight,
-// kParticleHighlight.
+// kParticleHighlight; motion trails (findings/42): the simple shader's
+// kFlagHighlight (native_renderer.cpp).
 //
 // To hunt another material: add a row to kHunted in spotter.cpp (its setup
 // address must be in src/pddi/functions.inc).
@@ -50,7 +51,7 @@ void Uninstall();
 
 // Which material F11 paints magenta right now. Any thread (the recorder asks
 // per draw).
-enum class Highlight { kOff = 0, kBumpMega = 1, kParticles = 2 };
+enum class Highlight { kOff = 0, kBumpMega = 1, kParticles = 2, kMotionTrails = 3 };
 Highlight Highlighting();
 
 // F12 (bind_particle_experiment): PARTICLE EXPERIMENTS, for a particle that

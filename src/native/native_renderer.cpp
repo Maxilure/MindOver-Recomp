@@ -186,6 +186,8 @@ constexpr uint32_t kFlagFxAdd = 128;  // fx grid: add the colour, else multiply 
 // Proximity lights / Fx shadows on: they're in the draw's LitParams block
 // (the recorder gives a simple draw one only then; simple_params.glsl).
 constexpr uint32_t kFlagLights = 256;
+// Debug (F11, spotter.h): this draw is painted magenta (motion trails).
+constexpr uint32_t kFlagHighlight = 512;
 
 // Push constants of the Bink material (shaders/bink.*): the game's movie
 // pixel shader constants c0..c3, and the game's screen size (its movie quad
@@ -1882,6 +1884,10 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     if (command.type == native::Command::Type::kResolve) {
       render_targets_->Resolve(frame_.resolves[command.index], cmd);
       in_pass = false;
+      // A resolve may run a pass of its own (the multisampled depth copy)
+      // with its own pipeline bound: the next draw binds its pipeline again
+      // even if it's the one used before the resolve.
+      bound = VK_NULL_HANDLE;
       continue;
     }
     if (command.type == native::Command::Type::kClear) {
@@ -1996,7 +2002,12 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
                         (d.layout.colour == native::VertexLayout::kAbsent ? kFlagNoColour : 0) |
                         (d.layout.uv == native::VertexLayout::kAbsent ? kFlagNoUv : 0) |
                         (d.fog ? kFlagFog : 0) | (d.fx_add ? kFlagFxAdd : 0) |
-                        (d.block != native::DrawCommand::kNoBlock ? kFlagLights : 0);
+                        (d.block != native::DrawCommand::kNoBlock ? kFlagLights : 0) |
+                        (d.material == native::Material::kMotionTrail &&
+                                 native::spotter::Highlighting() ==
+                                     native::spotter::Highlight::kMotionTrails
+                             ? kFlagHighlight
+                             : 0);
       params.flags[1] = d.alpha_func;
       dfn.vkCmdPushConstants(cmd, draw_layout_,
                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,

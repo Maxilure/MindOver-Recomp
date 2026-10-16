@@ -91,5 +91,10 @@ void main() {
   if ((flags & kFlagAlphaTest) != 0u && !AlphaTest(colour.a)) {
     discard;
   }
+  // Debug (F11): solid magenta where the draw covers anything, so even a
+  // faint additive trail shows exactly where it is.
+  if ((flags & kFlagHighlight) != 0u) {
+    colour = vec4(1.0, 0.0, 1.0, 1.0);
+  }
   out_colour = colour;
 }
