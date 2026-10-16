@@ -66,6 +66,12 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "Motion blur is this port's own effect (the original has none). Only the native "
               "renderer draws it: with the emulated picture it does nothing."};
     }
+  } else if (name == "render_resolution") {
+    if (AsNumber(value) > 0) {
+      return {"Native renderer only",
+              "Only the native renderer draws at a higher resolution: the emulated picture stays "
+              "720p. 4K is heavy: it needs a strong graphics card."};
+    }
   } else if (name == "anti_aliasing") {
     if (AsNumber(value) != 1) {
       return {"Native renderer only",

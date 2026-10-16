@@ -391,6 +391,19 @@ Row MotionBlurRow() {
   return r;
 }
 
+// RENDER RESOLUTION (findings/45): how many pixels the native renderer draws
+// the game with (its surfaces x 1 / 1.5 / 2 / 3), native only.
+Row RenderResolutionRow() {
+  Row r = LevelRow(u"Resolution", "render_resolution",
+                   {u"720p (original)", u"1080p", u"1440p", u"4K"},
+                   {u"Drawn at 1280 x 720, like the Xbox 360.",
+                    u"Drawn at 1920 x 1080: sharper on a Full HD screen.",
+                    u"Drawn at 2560 x 1440: sharper still, heavier on your graphics card.",
+                    u"Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."});
+  NeedsNative(r);
+  return r;
+}
+
 // ANTI-ALIASING (findings/35): the MSAA sample count of the game's
 // multisampled 3D surfaces, native only. Values up to what this GPU can do
 // (they're in order, so the list is just cut).
@@ -763,7 +776,7 @@ std::vector<Tab> Build() {
       {u"Display",
        {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), FullscreenRow(), FpsCounterRow(),
         FpsPositionRow()}});
-  tabs.push_back({u"Graphics", {AntiAliasingRow(), TextureSharpnessRow(), SharpeningRow(),
+  tabs.push_back({u"Graphics", {RenderResolutionRow(), AntiAliasingRow(), TextureSharpnessRow(), SharpeningRow(),
                                  ShadowSoftnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
       {u"Audio",

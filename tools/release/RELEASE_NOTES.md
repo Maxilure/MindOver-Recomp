@@ -36,7 +36,9 @@ with the row's place shown under the list.
   the whole game, no longer stored in save files: on the Xbox 360 each save
   carried its own volumes, so loading a save or starting a New Game changed
   them.
-- **Graphics**: **anti-aliasing** (Off, 2x like the original, 4x, 8x),
+- **Graphics**: **resolution** (720p like the original, 1080p, 1440p, 4K: the
+  Native renderer draws the whole game with that many pixels, menus and HUD
+  included), **anti-aliasing** (Off, 2x like the original, 4x, 8x),
   **texture sharpness** (crisper textures in the distance) and **motion blur** (new, the port's own: Off, Low, Medium, High) for the
   Native renderer: motion blur smears the scenery when the camera moves
   while the players stay sharp; the original game had none, so it starts

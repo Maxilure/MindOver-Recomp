@@ -475,31 +475,9 @@ bool NativeRenderer::Initialize() {
   tracker_ = std::make_unique<rex::ui::vulkan::VulkanSubmissionTracker>(device_);
 
   // --- Our frame image: the finished picture (the surface the game resolves
-  //     into its frontbuffer is copied here), sampled by the present pass ---
-  VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-  image_info.imageType = VK_IMAGE_TYPE_2D;
-  image_info.format = kFrameFormat;
-  image_info.extent = {kWidth, kHeight, 1};
-  image_info.mipLevels = 1;
-  image_info.arrayLayers = 1;
-  image_info.samples = VK_SAMPLE_COUNT_1_BIT;
-  image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-  // TRANSFER_SRC: room for reading frames back later (captures, A/B diffs).
-  image_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-  image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  if (!rex::ui::vulkan::util::CreateDedicatedAllocationImage(
-          device_, image_info, rex::ui::vulkan::util::MemoryPurpose::kDeviceLocal, frame_image_,
-          frame_memory_)) {
-    return false;
-  }
-  VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-  view_info.image = frame_image_;
-  view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  view_info.format = kFrameFormat;
-  view_info.subresourceRange = rex::ui::vulkan::util::InitializeSubresourceRange();
-  if (dfn.vkCreateImageView(device, &view_info, nullptr, &frame_view_) != VK_SUCCESS) {
+  //     into its frontbuffer is copied here), sampled by the present pass.
+  //     The game's size until the first frame asks for another ---
+  if (!CreateFrameImage(kWidth, kHeight)) {
     return false;
   }
 
@@ -945,9 +923,7 @@ void NativeRenderer::DestroyVulkanObjects() {
   DestroyAndNullHandle(dfn.vkDestroyPipelineLayout, device, draw_layout_);
   DestroyAndNullHandle(dfn.vkDestroyDescriptorSetLayout, device, draw_set_layout_);
 
-  DestroyAndNullHandle(dfn.vkDestroyImageView, device, frame_view_);
-  DestroyAndNullHandle(dfn.vkDestroyImage, device, frame_image_);
-  DestroyAndNullHandle(dfn.vkFreeMemory, device, frame_memory_);
+  DestroyFrameImage();
 }
 
 // -----------------------------------------------------------------------------
@@ -1304,10 +1280,78 @@ VkSampler NativeRenderer::GetSampler(const native::SamplerState& game_state) {
   return sampler;
 }
 
+bool NativeRenderer::CreateFrameImage(uint32_t width, uint32_t height) {
+  const VulkanDevice::Functions& dfn = device_->functions();
+  VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+  image_info.imageType = VK_IMAGE_TYPE_2D;
+  image_info.format = kFrameFormat;
+  image_info.extent = {width, height, 1};
+  image_info.mipLevels = 1;
+  image_info.arrayLayers = 1;
+  image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+  image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+  // TRANSFER_SRC: room for reading frames back later (captures, A/B diffs).
+  image_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+  image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  if (!rex::ui::vulkan::util::CreateDedicatedAllocationImage(
+          device_, image_info, rex::ui::vulkan::util::MemoryPurpose::kDeviceLocal, frame_image_,
+          frame_memory_)) {
+    return false;
+  }
+  VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+  view_info.image = frame_image_;
+  view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  view_info.format = kFrameFormat;
+  view_info.subresourceRange = rex::ui::vulkan::util::InitializeSubresourceRange();
+  if (dfn.vkCreateImageView(device_->device(), &view_info, nullptr, &frame_view_) !=
+      VK_SUCCESS) {
+    return false;
+  }
+  frame_width_ = width;
+  frame_height_ = height;
+  frame_layout_ = VK_IMAGE_LAYOUT_UNDEFINED;  // starts black (RecordScene)
+  return true;
+}
+
+void NativeRenderer::DestroyFrameImage() {
+  using rex::ui::vulkan::util::DestroyAndNullHandle;
+  const VulkanDevice::Functions& dfn = device_->functions();
+  const VkDevice device = device_->device();
+  DestroyAndNullHandle(dfn.vkDestroyImageView, device, frame_view_);
+  DestroyAndNullHandle(dfn.vkDestroyImage, device, frame_image_);
+  DestroyAndNullHandle(dfn.vkFreeMemory, device, frame_memory_);
+  frame_width_ = frame_height_ = 0;
+}
+
+bool NativeRenderer::ResizeFrameImage(uint32_t width, uint32_t height) {
+  // Rare (the Render Resolution setting changed): wait for all our work,
+  // which may still sample the old image through present_set_.
+  tracker_->AwaitAllSubmissionsCompletion();
+  DestroyFrameImage();
+  if (!CreateFrameImage(width, height)) {
+    REXLOG_ERROR("NativeRenderer: can't create a {}x{} frame image", width, height);
+    return false;
+  }
+  VkDescriptorImageInfo image_desc{present_sampler_, frame_view_,
+                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+  VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+  write.dstSet = present_set_;
+  write.dstBinding = 0;
+  write.descriptorCount = 1;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write.pImageInfo = &image_desc;
+  device_->functions().vkUpdateDescriptorSets(device_->device(), 1, &write, 0, nullptr);
+  REXLOG_INFO("NativeRenderer: render resolution {}x{}", width, height);
+  return true;
+}
+
 VkFramebuffer NativeRenderer::GetPresentFramebuffer(uint64_t image_version,
                                                     VkImageView image_view) {
   for (const PresentFramebuffer& fb : present_framebuffers_) {
-    if (fb.image_version == image_version && fb.view == image_view) {
+    if (fb.image_version == image_version && fb.view == image_view &&
+        fb.width == out_width_ && fb.height == out_height_) {
       return fb.framebuffer;
     }
   }
@@ -1330,14 +1374,15 @@ VkFramebuffer NativeRenderer::GetPresentFramebuffer(uint64_t image_version,
   info.renderPass = present_pass_;
   info.attachmentCount = 1;
   info.pAttachments = &image_view;
-  info.width = kWidth;
-  info.height = kHeight;
+  info.width = out_width_;
+  info.height = out_height_;
   info.layers = 1;
   VkFramebuffer framebuffer = VK_NULL_HANDLE;
   if (dfn.vkCreateFramebuffer(device_->device(), &info, nullptr, &framebuffer) != VK_SUCCESS) {
     return VK_NULL_HANDLE;
   }
-  present_framebuffers_.push_back({image_version, image_view, framebuffer, 0});
+  present_framebuffers_.push_back(
+      {image_version, image_view, framebuffer, 0, out_width_, out_height_});
   return framebuffer;
 }
 
@@ -1482,10 +1527,15 @@ void NativeRenderer::OnFrameEnd() {
     ForgetPresentFramebuffers();  // they were the other presenter's
     last_target_ = target;
   }
-  // The presenter picks one of its guest-output images and calls us back
-  // right away, on this thread; we must submit our work before returning.
+  // This frame's render scale (the Render Resolution setting) and picture size.
+  frame_scale_ = native::RenderScaleSetting();
+  out_width_ = uint32_t(native::ScaleSize(int32_t(kWidth), frame_scale_));
+  out_height_ = uint32_t(native::ScaleSize(int32_t(kHeight), frame_scale_));
+  // The presenter picks one of its guest-output images (of that size) and
+  // calls us back right away, on this thread; we must submit our work
+  // before returning.
   target->RefreshGuestOutput(
-      kWidth, kHeight, 16, 9, [this](rex::ui::Presenter::GuestOutputRefreshContext& context) {
+      out_width_, out_height_, 16, 9, [this](rex::ui::Presenter::GuestOutputRefreshContext& context) {
         return RecordAndSubmit(
             static_cast<VulkanPresenter::VulkanGuestOutputRefreshContext&>(context));
       });
@@ -1869,9 +1919,11 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   // The game's viewport (usually the whole surface). Vulkan wants a positive
   // size and depths within 0..1 (min > max is fine: the game's flipped
   // depth range).
+  // In the game's pixels, at the render scale (render_targets.h).
+  const float scale = render_targets_->scale();
   auto to_vulkan = [&](const native::Viewport& v) {
-    VkViewport out{v.x, v.y, v.width, v.height, std::clamp(v.min_z, 0.0f, 1.0f),
-                   std::clamp(v.max_z, 0.0f, 1.0f)};
+    VkViewport out{v.x * scale, v.y * scale, v.width * scale, v.height * scale,
+                   std::clamp(v.min_z, 0.0f, 1.0f), std::clamp(v.max_z, 0.0f, 1.0f)};
     if (out.width <= 0.0f || out.height <= 0.0f) {
       const VkExtent2D extent = render_targets_->pass_extent();
       out.x = out.y = 0.0f;
@@ -1916,10 +1968,10 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       VkClearRect rects[16];
       uint32_t rect_count = 0;
       for (const auto& r : c.rects) {
-        const int32_t x0 = std::clamp(r[0], 0, int32_t(extent.width));
-        const int32_t y0 = std::clamp(r[1], 0, int32_t(extent.height));
-        const int32_t x1 = std::clamp(r[2], x0, int32_t(extent.width));
-        const int32_t y1 = std::clamp(r[3], y0, int32_t(extent.height));
+        const int32_t x0 = std::clamp(native::ScaleSize(r[0], scale), 0, int32_t(extent.width));
+        const int32_t y0 = std::clamp(native::ScaleSize(r[1], scale), 0, int32_t(extent.height));
+        const int32_t x1 = std::clamp(native::ScaleSize(r[2], scale), x0, int32_t(extent.width));
+        const int32_t y1 = std::clamp(native::ScaleSize(r[3], scale), y0, int32_t(extent.height));
         if (x1 > x0 && y1 > y0 && rect_count < 16) {
           rects[rect_count++] = {{{x0, y0}, {uint32_t(x1 - x0), uint32_t(y1 - y0)}}, 0, 1};
         }
@@ -2033,8 +2085,8 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       frontbuffer = r.dest;
     }
   }
-  if (render_targets_->CopyToImage(frontbuffer, frame_image_, frame_layout_, kWidth, kHeight,
-                                   cmd)) {
+  if (render_targets_->CopyToImage(frontbuffer, frame_image_, frame_layout_, frame_width_,
+                                   frame_height_, cmd)) {
     frame_layout_ = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   } else if (frame_layout_ == VK_IMAGE_LAYOUT_UNDEFINED) {
     // Nothing shown yet: start from black, in the layout the present pass samples.
@@ -2095,6 +2147,11 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
     buffer_cache_->BeginFrame(completed);
   }
   render_targets_->BeginFrame(completed);
+  render_targets_->SetScale(frame_scale_);
+  if ((frame_width_ != out_width_ || frame_height_ != out_height_) &&
+      !ResizeFrameImage(out_width_, out_height_)) {
+    return false;
+  }
   vertex_pool_->Reclaim(completed);
   uniform_pool_->Reclaim(completed);
   // The tracker's current index is the one this submission's fence completes.
@@ -2143,8 +2200,8 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   RecordScene(slot.cmd, submission, slot.descriptor_pool);
 
   // 2. Present: sample our frame into the presenter's image.
-  const VkViewport viewport{0.0f, 0.0f, float(kWidth), float(kHeight), 0.0f, 1.0f};
-  const VkRect2D scissor{{0, 0}, {kWidth, kHeight}};
+  const VkViewport viewport{0.0f, 0.0f, float(out_width_), float(out_height_), 0.0f, 1.0f};
+  const VkRect2D scissor{{0, 0}, {out_width_, out_height_}};
   VkRenderPassBeginInfo present_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   present_begin.renderPass = present_pass_;
   present_begin.framebuffer = present_framebuffer;

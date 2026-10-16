@@ -47,6 +47,18 @@
 //     A GPU that can't do a sample count (drawing, or sampling depth and
 //     stencil from it) gets 1x surfaces instead (logged once).
 //
+// RENDER SCALE (the `render_resolution` setting, findings/45): every surface
+// and every resolve destination is made `scale` times the game's size (1,
+// 1.5, 2 or 3: 720p, 1080p, 1440p, 4K), and every rectangle the game names
+// in its own pixels (resolves here; viewports and clears in the renderer)
+// is scaled the same way. The game never knows: its draws land in clip
+// space, its textures are sampled by 0..1 coordinates, and its pixel-sized
+// shader constants (blur steps, 1/screen) stay in ITS pixels, so effects
+// keep their look, just with more pixels. Edges are scaled one by one and
+// rounded (Scaled), so neighbouring tiling strips still meet exactly.
+// A new scale takes effect at the next frame's Prepare: images of the old
+// size are re-created (cleared) like any surface that changed size.
+//
 // LIMITS (for now): colour surfaces are all RGBA8 (the hub's are A8R8G8B8);
 // only render target 0 is drawn: the game only ever sets target 1 to
 // nothing (its motion blur is switched off on the Xbox, docs/findings/21),
@@ -74,6 +86,13 @@ namespace native {
 // Anti-aliasing row offers what's up to it). Any thread.
 int MaxSurfaceSamples();
 
+// The render scale the `render_resolution` setting asks for (1, 1.5, 2, 3).
+float RenderScaleSetting();
+// A size in the game's pixels at `scale` (rounded to the nearest pixel).
+inline int32_t ScaleSize(int32_t v, float scale) {
+  return int32_t(float(v) * scale + 0.5f);
+}
+
 class RenderTargets {
  public:
   // `colour_format` / `depth_format`: what surfaces are made of (the render
@@ -100,6 +119,11 @@ class RenderTargets {
   // Start of a frame's recording: frees what the GPU finished with
   // (`completed` = last finished submission).
   void BeginFrame(uint64_t completed);
+
+  // The render scale of the frame being recorded (RENDER SCALE above); set
+  // before Prepare, constant for the whole frame.
+  void SetScale(float scale) { scale_ = scale; }
+  float scale() const { return scale_; }
 
   // Before the frame's draws are prepared: an image for every surface and
   // every resolve destination of `frame` (new ones are cleared to black /
@@ -220,8 +244,12 @@ class RenderTargets {
   // depth copy's two outputs), cached until either image is retired.
   VkFramebuffer GetFramebuffer(Image& first, Image& second, VkRenderPass pass);
 
+  // A size or position in the game's pixels -> in our images' pixels.
+  int32_t Scaled(int32_t v) const { return ScaleSize(v, scale_); }
+
   const rex::ui::vulkan::VulkanDevice* device_;
   VkFormat colour_format_, depth_format_;
+  float scale_ = 1.0f;  // RENDER SCALE
   VmaAllocator allocator_ = VK_NULL_HANDLE;
   VkRenderPass render_passes_[4] = {};  // by SampleIndex
   PFN_vkCmdCopyImage cmd_copy_image_ = nullptr;

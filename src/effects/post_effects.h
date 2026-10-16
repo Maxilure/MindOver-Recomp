@@ -1,6 +1,6 @@
 // =============================================================================
 // effects/post_effects.h -- the picture's effects as SETTINGS: depth of
-// field (the game's own, both renderers), anti-aliasing, motion blur, shadow
+// field (the game's own, both renderers), render resolution, anti-aliasing, motion blur, shadow
 // softness and sharpening (native renderer only)
 // =============================================================================
 //
@@ -17,6 +17,12 @@
 // game's 2x, 2 4x, 3 8x) picks the MSAA sample count of the surfaces the game
 // multisamples, in the native renderer (native/render_targets.cpp,
 // SamplesFor). The emulated picture keeps the Xbox's 2x.
+//
+// RENDER RESOLUTION (findings/45): `render_resolution` (0 720p = the
+// original, 1 1080p, 2 1440p, 3 4K) scales every surface and resolved
+// texture of the native renderer by 1 / 1.5 / 2 / 3 (native/render_targets.h
+// "RENDER SCALE"): the game still thinks in its 1280x720 pixels, we draw
+// more of them. The emulated picture stays 720p.
 //
 // MOTION BLUR (findings/34): the flag `motion_blur` (0 off, 1 low, 2 medium,
 // 3 high) is read by the native renderer's recorder (native/camera_motion.h,

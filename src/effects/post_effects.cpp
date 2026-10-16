@@ -19,6 +19,10 @@ REXCVAR_DEFINE_INT32(anti_aliasing, 1, "CrashMoM",
                      "Anti-aliasing (MSAA) of the 3D scene, native renderer only: 0 off, "
                      "1 original (2x, like the Xbox 360), 2 4x, 3 8x")
     .range(0, 3);
+REXCVAR_DEFINE_INT32(render_resolution, 0, "CrashMoM",
+                     "Render resolution of the 3D scene and menus, native renderer only: 0 720p "
+                     "(original), 1 1080p, 2 1440p, 3 4K (2160p)")
+    .range(0, 3);
 REXCVAR_DEFINE_INT32(motion_blur, 0, "CrashMoM",
                      "Motion blur, the port's own (the original has none), native renderer only: "
                      "0 off, 1 low, 2 medium, 3 high")

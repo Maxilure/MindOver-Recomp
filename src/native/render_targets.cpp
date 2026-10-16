@@ -17,9 +17,16 @@
 #include "guest.h"
 #include "scan.h"
 
-REXCVAR_DECLARE(int32_t, anti_aliasing);  // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, anti_aliasing);      // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, render_resolution);  // effects/post_effects.cpp
 
 namespace native {
+
+float RenderScaleSetting() {
+  // 720p (the game's own 1280x720), 1080p, 1440p, 4K.
+  constexpr float kScales[4] = {1.0f, 1.5f, 2.0f, 3.0f};
+  return kScales[std::clamp(int(REXCVAR_GET(render_resolution)), 0, 3)];
+}
 
 namespace {
 // The multisampled depth copy's shaders (SPIR-V, compiled at build time from
@@ -642,23 +649,25 @@ RenderTargets::Image* RenderTargets::EnsureSurface(const Surface& surface, VkCom
     }
   }
   const VkSampleCountFlagBits samples = SamplesFor(surface.msaa);
+  // Our image is the surface at the render scale (RENDER SCALE).
+  const uint32_t width = uint32_t(Scaled(int32_t(surface.width)));
+  const uint32_t height = uint32_t(Scaled(int32_t(surface.height)));
   Image& image = surfaces_[surface.guest];
-  if (image.image && image.width == surface.width && image.height == surface.height &&
+  if (image.image && image.width == width && image.height == height &&
       image.depth == surface.depth && image.samples == samples) {
     return &image;
   }
   if (image.image) {
     RETIRE(image);
   }
-  if (!CreateImage(image, surface.width, surface.height, surface.depth, VK_FORMAT_UNDEFINED,
-                   samples)) {
-    REXLOG_ERROR("NativeRenderer: can't create a {}x{} {}x MSAA surface image", surface.width,
-                 surface.height, uint32_t(samples));
+  if (!CreateImage(image, width, height, surface.depth, VK_FORMAT_UNDEFINED, samples)) {
+    REXLOG_ERROR("NativeRenderer: can't create a {}x{} {}x MSAA surface image", width, height,
+                 uint32_t(samples));
     surfaces_.erase(surface.guest);
     return nullptr;
   }
-  REXLOG_DEBUG("NativeRenderer: surface {:08X}: {}x{} {} {}x MSAA", surface.guest,
-               surface.width, surface.height, surface.depth ? "depth" : "colour",
+  REXLOG_DEBUG("NativeRenderer: surface {:08X}: {}x{} {} {}x MSAA", surface.guest, width,
+               height, surface.depth ? "depth" : "colour",
                uint32_t(samples));
   ClearNew(image, cmd);
   return &image;
@@ -693,12 +702,16 @@ RenderTargets::Image* RenderTargets::EnsureTexture(const GuestTexture& texture,
                                                    VkCommandBuffer cmd) {
   uint32_t width, height;
   TextureSize(texture, width, height);
+  width = uint32_t(Scaled(int32_t(width)));  // at the render scale
+  height = uint32_t(Scaled(int32_t(height)));
   return EnsureColourImage(textures_, TextureKey(texture), width, height, colour_format_, cmd);
 }
 
 bool RenderTargets::EnsureDepthCopies(const GuestTexture& texture, VkCommandBuffer cmd) {
   uint32_t width, height;
   TextureSize(texture, width, height);
+  width = uint32_t(Scaled(int32_t(width)));  // at the render scale
+  height = uint32_t(Scaled(int32_t(height)));
   const uint32_t key = TextureKey(texture);
   return EnsureColourImage(depth_copies_, key, width, height, VK_FORMAT_R32_SFLOAT, cmd) &&
          EnsureColourImage(stencil_copies_, key, width, height, VK_FORMAT_R8_UNORM, cmd);
@@ -877,12 +890,14 @@ void RenderTargets::Resolve(const ResolveCommand& r, VkCommandBuffer cmd) {
   Image& src = src_it->second;
   Image& dst = dst_it->second;
   // Clamp the rectangle to both images.
-  const int32_t x0 = std::clamp(r.x0, 0, int32_t(src.width));
-  const int32_t y0 = std::clamp(r.y0, 0, int32_t(src.height));
-  const int32_t x1 = std::clamp(r.x1, x0, int32_t(src.width));
-  const int32_t y1 = std::clamp(r.y1, y0, int32_t(src.height));
-  const int32_t dx = std::clamp(r.dest_x, 0, int32_t(dst.width));
-  const int32_t dy = std::clamp(r.dest_y, 0, int32_t(dst.height));
+  // (The game's rectangle in its pixels, at the render scale: each edge
+  // scaled alone so neighbouring strips still meet.)
+  const int32_t x0 = std::clamp(Scaled(r.x0), 0, int32_t(src.width));
+  const int32_t y0 = std::clamp(Scaled(r.y0), 0, int32_t(src.height));
+  const int32_t x1 = std::clamp(Scaled(r.x1), x0, int32_t(src.width));
+  const int32_t y1 = std::clamp(Scaled(r.y1), y0, int32_t(src.height));
+  const int32_t dx = std::clamp(Scaled(r.dest_x), 0, int32_t(dst.width));
+  const int32_t dy = std::clamp(Scaled(r.dest_y), 0, int32_t(dst.height));
   const int32_t w = std::min(x1 - x0, int32_t(dst.width) - dx);
   const int32_t h = std::min(y1 - y0, int32_t(dst.height) - dy);
   if (w <= 0 || h <= 0) {
@@ -962,12 +977,14 @@ void RenderTargets::ResolveDepth(const ResolveCommand& r, VkCommandBuffer cmd) {
   Image& src = src_it->second;
   // Clamp the rectangle to both images (the copies share one size).
   const Image& dst_size = stencil_it->second;
-  const int32_t x0 = std::clamp(r.x0, 0, int32_t(src.width));
-  const int32_t y0 = std::clamp(r.y0, 0, int32_t(src.height));
-  const int32_t x1 = std::clamp(r.x1, x0, int32_t(src.width));
-  const int32_t y1 = std::clamp(r.y1, y0, int32_t(src.height));
-  const int32_t dx = std::clamp(r.dest_x, 0, int32_t(dst_size.width));
-  const int32_t dy = std::clamp(r.dest_y, 0, int32_t(dst_size.height));
+  // (The game's rectangle in its pixels, at the render scale: each edge
+  // scaled alone so neighbouring strips still meet.)
+  const int32_t x0 = std::clamp(Scaled(r.x0), 0, int32_t(src.width));
+  const int32_t y0 = std::clamp(Scaled(r.y0), 0, int32_t(src.height));
+  const int32_t x1 = std::clamp(Scaled(r.x1), x0, int32_t(src.width));
+  const int32_t y1 = std::clamp(Scaled(r.y1), y0, int32_t(src.height));
+  const int32_t dx = std::clamp(Scaled(r.dest_x), 0, int32_t(dst_size.width));
+  const int32_t dy = std::clamp(Scaled(r.dest_y), 0, int32_t(dst_size.height));
   const int32_t w = std::min(x1 - x0, int32_t(dst_size.width) - dx);
   const int32_t h = std::min(y1 - y0, int32_t(dst_size.height) - dy);
   if (w <= 0 || h <= 0) {

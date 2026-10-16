@@ -179,8 +179,9 @@ class NativeRenderer {
   using VulkanPresenter = rex::ui::vulkan::VulkanPresenter;
   using VulkanDevice = rex::ui::vulkan::VulkanDevice;
 
-  // Our frame's size and format. Fixed for now; resolution options come
-  // later (the presenter accepts any size).
+  // The game's screen size, in ITS pixels (everything it hands us is in
+  // these). Our picture is this times the render scale (the
+  // `render_resolution` setting, render_targets.h "RENDER SCALE").
   static constexpr uint32_t kWidth = 1280;
   static constexpr uint32_t kHeight = 720;
   static constexpr VkFormat kFrameFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -213,6 +214,12 @@ class NativeRenderer {
   // holds as many as ONE presenter rotates through, and ages them by image
   // version, which two presenters number separately.
   void ForgetPresentFramebuffers();
+  // Our frame image at `width` x `height` (made at start, re-made when the
+  // render resolution changes: waits for the GPU first) + the present
+  // pass's descriptor pointing at it.
+  bool CreateFrameImage(uint32_t width, uint32_t height);
+  void DestroyFrameImage();
+  bool ResizeFrameImage(uint32_t width, uint32_t height);
 
   // A colour-only pass (the present pass).
   VkRenderPass CreateRenderPass(VkFormat format, VkAttachmentLoadOp load_op,
@@ -280,7 +287,11 @@ class NativeRenderer {
   VkDeviceMemory frame_memory_ = VK_NULL_HANDLE;
   VkImageView frame_view_ = VK_NULL_HANDLE;
   VkImageLayout frame_layout_ = VK_IMAGE_LAYOUT_UNDEFINED;
-  // The game's surfaces and resolved textures (render_targets.h).
+  uint32_t frame_width_ = 0, frame_height_ = 0;  // its size
+  // This frame's render scale and picture size (picked in OnFrameEnd, used
+  // by everything RecordAndSubmit records).
+  float frame_scale_ = 1.0f;
+  uint32_t out_width_ = kWidth, out_height_ = kHeight;  // The game's surfaces and resolved textures (render_targets.h).
   VkFormat depth_format_ = VK_FORMAT_UNDEFINED;
   // The GPU can bilinear-filter R32_SFLOAT images (the depth copies).
   bool depth_copy_linear_ = false;
@@ -347,6 +358,7 @@ class NativeRenderer {
     VkImageView view;
     VkFramebuffer framebuffer;
     uint64_t last_submission;  // tracker index of its last use
+    uint32_t width, height;    // the guest-output image's size it was made for
   };
   std::vector<PresentFramebuffer> present_framebuffers_;
 
