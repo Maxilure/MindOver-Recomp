@@ -1744,3 +1744,35 @@ jump_address_on_true = 0x822A253C
 address = 0x822A2540
 name = "MorePlayersLoopChar16"
 registers = ["r30", "r11"]
+
+# PATH FOLLOWERS ABOVE 30 FPS (src/ground_physics.cpp CrashMomPathMoveMinimum, docs/findings/22
+# s.9, 2026-10-16): THE SOFT-LOCK. CPathFollowingBehaviour's step sender sub_82159618 drops a step
+# with |step|^2 <= (game speed)^2 x 1.6667e-05 (f8, constant 0x820472F0) after the path's remaining
+# distance was already counted down. At 180 fps the space station's sinking arena floor steps 0.0028
+# units < 0.0041 -> its movement is lost and it never reaches the bottom. The hook scales f8 by
+# (frame time x 30)^2 below 1/30 s (frame time from the wrapped Update sub_82158830).
+# Verified with xexdis 0x82159618-0x821596E0: f8 only feeds this compare.
+[[entrypoint.midasm_hook]]
+address = 0x82159670
+name = "CrashMomPathMoveMinimum"
+registers = ["f8"]
+
+# The same minimum in the physics' "move by" message handler sub_8217E6B0 (adds a path step to the
+# position): f7 = (game speed)^2 x 1.6667e-05 vs the squared step f6. r31 = the CPhysicsBehaviour.
+# Verified with xexdis 0x8217E6B0-0x8217E788: f7 only feeds this compare.
+[[entrypoint.midasm_hook]]
+address = 0x8217E72C
+name = "CrashMomMoveByMinimum"
+registers = ["f7", "r31"]
+
+# MOVING PLATFORMS ABOVE 30 FPS (src/ground_physics.cpp CrashMomPlatformMoveMinimum,
+# docs/findings/22 s.9, 2026-10-16). The physics' transform handler sub_8217E850 moves a
+# level-driven object only if its step is over a FIXED minimum: |old - new|^2 > 1e-05
+# (f0 from 0x82020020, compared with f13 here). At 180 fps the space station's sinking
+# arena floor steps 0.0028 units < 0.0032 -> never moves = soft-lock. The hook scales f0
+# by (frame time x 30)^2 below 1/30 s. r30 = the CPhysicsBehaviour (frame time +0xA4).
+# Verified with xexdis 0x8217E8F0-0x8217E9C0: f0 reloaded at 0x8217E9BC, unused between.
+[[entrypoint.midasm_hook]]
+address = 0x8217E984
+name = "CrashMomPlatformMoveMinimum"
+registers = ["f0", "r30"]

@@ -492,7 +492,19 @@ std::string FloatText(uint32_t bits) {
 }
 
 std::string DiffCommand(const std::vector<std::string_view>& w) {
-  if (w.size() < 2) throw Error{"diff <name> [update]"};
+  if (w.size() < 2) throw Error{"diff <name> [update] [> <file>]"};
+  // "> <file>": EVERY changed word goes into that file (one line each, same
+  // format), the reply only counts them: for diffs of megabytes of heap.
+  std::string file;
+  bool update = false;
+  for (size_t i = 2; i < w.size(); ++i) {
+    if (w[i] == "update") update = true;
+    else if (w[i] == ">" && i + 1 < w.size()) file = std::string(w[++i]);
+  }
+  std::FILE* f = nullptr;
+  if (!file.empty() && !(f = std::fopen(file.c_str(), "w"))) {
+    throw Error{fmt::format("can't write {}", file)};
+  }
   std::lock_guard lock(g_snaps_mutex);
   auto it = g_snaps.find(w[1]);
   if (it == g_snaps.end()) throw Error{fmt::format("no snap \"{}\"", w[1])};
@@ -506,14 +518,20 @@ std::string DiffCommand(const std::vector<std::string_view>& w) {
     };
     const uint32_t a = word(&snap.bytes[off]), b = word(&now[off]);
     if (a == b) continue;
-    if (++changed <= 400) {
+    ++changed;
+    if (f) {
+      std::fprintf(f, "+%zu (0x%08X): 0x%08X%s -> 0x%08X%s\n", off, uint32_t(snap.address + off), a,
+                   FloatText(a).c_str(), b, FloatText(b).c_str());
+    } else if (changed <= 400) {
       out += fmt::format("+{} (0x{:08X}): 0x{:08X}{} -> 0x{:08X}{}\n", off, snap.address + off, a,
                          FloatText(a), b, FloatText(b));
     }
   }
+  if (f) std::fclose(f);
   out += fmt::format("{} of {} words changed{}\n", changed, now.size() / 4,
-                     changed > 400 ? " (first 400 listed)" : "");
-  if (w.size() > 2 && w[2] == "update") snap.bytes = now;  // the next diff compares to now
+                     f ? " (all written to " + file + ")"
+                       : changed > 400 ? std::string(" (first 400 listed)") : std::string());
+  if (update) snap.bytes = now;  // the next diff compares to now
   return out;
 }
 
@@ -954,7 +972,7 @@ const char kHelp[] =
     "state | players | frontend | eval <expr> | read <expr> [type] [count] |\n"
     "write <expr> <type> <value> | wait ms <N> | wait state <N> [ms] | wait exit [ms] |\n"
     "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> |\n"
-    "snap <name> <expr> <bytes> | diff <name> [update] | replay <file> [from] [to] | replay stop |\n"
+    "snap <name> <expr> <bytes> | diff <name> [update] [> file] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
     "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"

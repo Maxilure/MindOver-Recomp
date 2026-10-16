@@ -103,6 +103,47 @@
 //   C,ms,actor,k,new_object,old_object,caller
 //   S,ms,actor,answer_given,ms_since_contact_lost,lost_by,caller
 //   G,ms,actor,gravity,max_fall_speed      (once per actor, first seen)
+// MOVING PLATFORMS ABOVE 30 FPS (2026-10-16, docs/findings/22 s.9): a
+// separate bug, a soft-lock. The space station level's round arena has a
+// floor of rings that SINK at 0.5 units/s while enemies attack; at 180 fps
+// they moved a few centimetres and stopped (player stuck on the top ring).
+// The rings follow a path: CPathFollowingBehaviour (vtable 0x8202FA1C,
+// Update = slot 4 sub_82158830, f1 = frame time). Each frame its step
+// sub_82159428 counts the path's remaining distance down by speed x dt and
+// hands the step to sub_82159618, which SENDS it to the object only if
+//     |step|^2 > (game speed)^2 x 1.6667e-05    (constant 0x820472F0,
+//                                               compare at 0x82159670)
+// = 0.0041 units. At 30 fps the floor steps 0.5 / 30 = 0.0167: sent. At 180
+// it steps 0.0028: DROPPED, though the distance left was already counted
+// down, so the floor loses that movement for good and never reaches the
+// end of its path. It only moved on frames slower than ~8 ms, rarer and
+// rarer as the fight emptied out and the frame rate steadied.
+// The step then reaches the object's CPhysicsBehaviour as a "move by"
+// message, and its handler sub_8217E6B0 checks THE SAME minimum again
+// (|step|^2 > (game speed)^2 x 1.6667e-05, compare at 0x8217E72C) before
+// adding it to the position: dropped again at 180 fps. These two are the
+// only reads of the constant.
+// The same kind of minimum sits one step later: the physics' transform
+// handler sub_8217E850 moves the world matrix (and tells the riders) only
+// when |matrix - new position|^2 > 1e-05 (0.0032 units, constant
+// 0x82020020, compare at 0x8217E984). There the step isn't lost (the gap
+// grows until it passes), but the object moves in jerky every-other-frame
+// hops above ~160 fps.
+// HOW FOUND: replays of a playtest's recording (input_record.h) with Native
+// Only at 30 vs 180 (the emulated GPU can't reach 180, which hid it); the
+// console's snap + diff (diffs can now go to a file) found the rings (x -190,
+// z 157); temporary probes on the physics position writers gave the call
+// stack into the path follower; Ghidra pseudo-C + xexdis showed the minima.
+// THE FIX: both minima scaled by (frame time x 30)^2 when a frame is shorter
+// than 1/30 s, so each is the same SPEED the original had at 30 fps:
+//   CrashMomPathMoveMinimum (0x82159670, f8): frame time from the path
+//     follower's Update (wrapped below, kept while it runs);
+//   CrashMomMoveByMinimum (0x8217E72C, f7): the same frame time when the
+//     step comes from a path follower, else the physics' +0xA4;
+//   CrashMomPlatformMoveMinimum (0x8217E984, f0): frame time = the physics'
+//     +0xA4 (stored by this frame's Update).
+// --platform_move_fix=false turns all three off (A/B tests).
+//
 // ms = since the trace started; actor = the CPhysicsBehaviour's guest
 // address (Crash = the one with gravity -60 that moves when the player
 // walks); x,y,z = the physics position (y up); objects are guest addresses
@@ -130,6 +171,8 @@
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
+#include <rex/system/kernel_state.h>
+#include <rex/system/xmemory.h>
 #include "guest_memory.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
@@ -138,6 +181,10 @@ REXCVAR_DEFINE_INT32(ground_grace_ms, 40, "CrashMoM",
                      "Above 30 fps: a ground contact lost for less than this many ms isn't "
                      "reported to the game's move logic, so Crash doesn't 'fall' for a split "
                      "second stepping down; 0 = off (src/ground_physics.cpp)");
+REXCVAR_DEFINE_BOOL(platform_move_fix, true, "CrashMoM",
+                    "Above 30 fps: moving floors and platforms (e.g. the space station's sinking "
+                    "arena) keep moving; the game drops steps under a fixed size, which every "
+                    "step is at high fps (src/ground_physics.cpp)");
 REXCVAR_DEFINE_STRING(debug_ground_trace, "", "CrashMoM",
                       "Debug: write ground contact changes, physics updates of moving "
                       "characters and the 'not on ground' answers the game logic gets to this CSV file "
@@ -415,4 +462,72 @@ extern "C" REX_FUNC(sub_82182400) {
                  old_object, caller);
     FlushNowAndThen();
   }
+}
+
+// MOVING PLATFORMS ABOVE 30 FPS (see the header): at 0x8217E984 the handler
+// compares the squared step (f13) with its minimum (f0 = 1e-05); r30 = the
+// CPhysicsBehaviour, its frame time at +0xA4. f0 isn't used again before
+// it's reloaded (0x8217E9BC), so scaling it here only changes this compare.
+
+// The path follower's Update (CPathFollowingBehaviour slot 4): r3 = this,
+// f1 = frame time; remembered while it runs for CrashMomPathMoveMinimum
+// (its step goes out from inside this call). Game main thread only.
+namespace ground_physics {
+namespace {
+double g_path_frame_time = 0.0;  // 0 = not inside a path follower's Update
+
+// A minimum step (a squared distance per frame, tuned for 30 fps) scaled to
+// a frame of `dt` seconds: x (dt x 30)^2 when the frame is shorter than
+// 1/30 s, i.e. the same minimum SPEED. Nothing changes at 30 fps or slower.
+void ScaleMinimumStep(PPCRegister& minimum, double dt) {
+  if (!REXCVAR_GET(platform_move_fix)) return;
+  constexpr double kOriginalFrame = 1.0 / 30.0;
+  if (!(dt > 0.0) || dt >= kOriginalFrame) return;
+  const double scale = dt / kOriginalFrame;
+  minimum.f64 *= scale * scale;
+}
+
+// A CPhysicsBehaviour's frame time, stored by its last Update (+0xA4).
+double PhysicsFrameTime(uint32_t physics) {
+  auto* memory = rex::system::kernel_memory();
+  if (!memory || !physics) return 0.0;
+  uint32_t bits;
+  std::memcpy(&bits, GuestPtr(memory->virtual_membase(), physics + 0xA4), 4);
+  bits = std::byteswap(bits);
+  float dt;
+  std::memcpy(&dt, &bits, 4);
+  return dt;
+}
+}  // namespace
+}  // namespace ground_physics
+
+extern "C" REX_FUNC(__imp__sub_82158830);
+extern "C" REX_FUNC(sub_82158830) {
+  const double saved = ground_physics::g_path_frame_time;
+  ground_physics::g_path_frame_time = ctx.f1.f64;
+  __imp__sub_82158830(ctx, base);
+  ground_physics::g_path_frame_time = saved;
+}
+
+// The path follower's minimum step (see the header): f8 = (game speed)^2 x
+// 1.6667e-05, compared with the squared step (f31) at 0x82159670; f8 isn't
+// used after the compare.
+void CrashMomPathMoveMinimum(PPCRegister& f8) {
+  ground_physics::ScaleMinimumStep(f8, ground_physics::g_path_frame_time);
+}
+
+// The physics' "move by" handler's minimum (see the header): f7 = (game
+// speed)^2 x 1.6667e-05, compared with the squared step (f6) at 0x8217E72C;
+// r31 = the CPhysicsBehaviour. f7 isn't used after the compare.
+void CrashMomMoveByMinimum(PPCRegister& f7, PPCRegister& r31) {
+  double dt = ground_physics::g_path_frame_time;
+  if (!(dt > 0.0)) dt = ground_physics::PhysicsFrameTime(r31.u32);
+  ground_physics::ScaleMinimumStep(f7, dt);
+}
+
+// The physics' transform handler's minimum (see the header): at 0x8217E984
+// f0 = 1e-05 is compared with the squared move (f13); r30 = the
+// CPhysicsBehaviour. f0 is reloaded (0x8217E9BC) before any other use.
+void CrashMomPlatformMoveMinimum(PPCRegister& f0, PPCRegister& r30) {
+  ground_physics::ScaleMinimumStep(f0, ground_physics::PhysicsFrameTime(r30.u32));
 }

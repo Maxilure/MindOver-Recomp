@@ -149,6 +149,14 @@ going back; Escape goes back.
   asking you not to turn off the Xbox 360. Settings: *save_screen_waits*
   and *save_success_screens* bring the original timings and screens back.
 
+**Fixes**
+
+- **Above 30 fps, moving floors no longer stop.** In the space station, a
+  round arena's floor sinks ring by ring while enemies attack; above about
+  120 fps it moved a few centimetres and stopped, leaving no way forward. The game ignored movements smaller than
+  a fixed size per frame, and at a high frame rate every step was smaller.
+  That minimum is now scaled to the frame time, the same as at 30 fps.
+
 **Launcher and logs**
 
 - **Report a problem** in the launcher: one click packs the logs of the

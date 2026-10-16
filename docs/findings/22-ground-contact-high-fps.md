@@ -216,3 +216,68 @@ Open: where the flat contacts on the slope come from (the collision mesh
 under the slope, or an edge contact between its triangles); the contact
 normal at each response (contact record +68, restitution +84) answers it.
 ![Vertical speed on the slope at 30 and 180 fps](../images/slope-skip-30-vs-180.png)
+
+
+## 9. Moving floors that stop above 30 fps (a soft-lock)
+
+2026-10-16. A different bug in the same physics, found in playtesting at
+180 fps with the Native Only picture. In the space station level, a round
+arena's floor is a set of rings that **sink** at 0.5 units per second while
+enemies attack; reaching the bottom is the way on. At 180 fps the rings
+moved a few centimetres and stopped for good. At 30 and 60 fps they sink
+normally. With the emulated picture, 180 fps didn't show it, only because
+the emulated GPU can't actually reach 180 there, so frames were longer.
+
+### What moves the floor
+
+The rings follow a path: `CPathFollowingBehaviour` (vtable 0x8202FA1C,
+update = slot 4, `sub_82158830`, f1 = frame time). Each frame its step
+(`sub_82159428`) counts the path's remaining distance down by speed x frame
+time and sends the step to the ring's physics as a "move by" message. The
+physics adds it to its position; the physics update then moves the world
+matrix and tells whatever rides the ring.
+
+### Three minimum steps, all tuned for 30 fps
+
+| Where | Check | Minimum per frame |
+|---|---|---|
+| path follower's sender `sub_82159618` (0x82159670) | step² > (game speed)² x 1.6667e-05 | 0.0041 units |
+| physics "move by" handler `sub_8217E6B0` (0x8217E72C) | the same | 0.0041 units |
+| physics transform handler `sub_8217E850` (0x8217E984) | moved² > 1e-05 | 0.0032 units |
+
+At 30 fps the floor steps 0.5 / 30 = 0.0167 units per frame and passes all
+three. At 180 fps it steps 0.0028 and fails the first two. The step is
+**dropped**, but the path's remaining distance was already counted down, so
+that movement is lost. The floor only moved on frames longer than about
+8 ms (enemies on screen), rarer and rarer as the fight emptied out and the
+frame rate steadied, until it stopped. The third check doesn't lose
+movement (the gap grows until it passes) but makes moving objects hop every
+other frame above ~160 fps.
+
+### The fix
+
+Three midasm hooks (`src/ground_physics.cpp`, manifest entries next to each
+address) scale each minimum by (frame time x 30)² when a frame is shorter
+than 1/30 s. The minimum then stands for the same **speed** the original
+had at 30 fps, at any frame rate; at 30 fps and slower nothing changes. The
+frame time comes from the path follower's update (wrapped) or from the
+physics object (+0xA4, written by its update). `--platform_move_fix=false`
+turns all three off.
+
+Measured by replaying a playtest's recorded inputs into the arena, Native
+Only picture, god mode on, ring height 36 s after the start:
+
+| Run | Ring height |
+|---|---|
+| 180 fps, fix off | −0.21 (stuck) |
+| 180 fps, fix on | −10.0 (the bottom) |
+| 60 fps, fix on | −5.2 (on its way, like the original) |
+
+### How it was found
+
+The input recording (`input_record.h`) of the playtest that got stuck,
+replayed at 30 and 180 fps. The debug console's `snap` + `diff` (a diff can
+now go to a file: `diff <name> > <file>`) found the objects whose height
+fell while x and z stayed at the arena's centre. Temporary probes on the
+physics position writers gave the call stack into the path follower, and
+Ghidra's pseudo-C plus `xexdis` showed the three minima.
