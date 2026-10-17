@@ -118,6 +118,9 @@ going back; Escape goes back.
   to the maximum and slowly back in.
 - The purple walls that close a fight now light up when players 3 or 4
   come near them, not only players 1 and 2.
+- Players 3 and 4 now appear in the short victory scenes after a titan
+  fight, next to players 1 and 2, and the camera pulls back so everyone is
+  in the picture.
 - When player 1 drops out and only players 3 or 4 are left, the camera
   now follows them and they can start story scenes. Before, the camera
   stood still and the story couldn't go on.

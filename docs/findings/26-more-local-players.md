@@ -1502,3 +1502,44 @@ Tested with fake controllers on Wumpa Island: player 3 joins, player 1
 drops out (focus 2), the camera follows player 3, player 3 walking into the
 lab starts the cutscene, play goes on after it, and player 1 can join
 again.
+
+## 39. Players 3-4 in the victory scenes
+
+**The scene.** After a titan fight the level script poses the players for a
+short in-engine shot, e.g. the Ratcicle's (`levels/L1/objectives_era1`):
+`DO_TeleportPlayer(L1_R8_VictoryLocator3, L1_R8_VictoryLocator4)` then
+`WAIT_PlayCinematic(CAM_l1_r8_ratcicle_victory)`. Every victory scene is
+built the same way, each with its own two spots and camera.
+
+**Two players.** DO_TeleportPlayer's action (vtable 0x820405C0, update
+`sub_8229DE30`) moves two bodies (the titan a player rides, else their
+Crash) in `sub_8229E3C8`: the focus player's (game object +0x28) to the
+first spot, the other to the second. Per spot: a 4 x 4 matrix from the
+locator (`sub_822FE2A8`: rotation +0xC, position +0x1C), the body adjusts
+the position row (`sub_8229E250`, message 0x11), a teleport message from
+the matrix (`sub_820B7DF0`, flag byte +0x54 from the action's +0x18), sent
+with `sub_820B0B70`. The update's first call also sends message 8 ("hold
+still", vector (0, 1, 0)) to players 1-2's bodies when the action waits for
+a fade (+0x18 bit 0x40): a "p < 2" loop. The camera shot is framed for two.
+
+**The change** (`players/victory_scenes.cpp`). After the original, players
+3-4 in game get the same teleport, on the line through the two spots:
+player 3 beyond the first, player 4 beyond the second, at the spots' own
+spacing (2.5-5 units), facing the same way; and the "hold still" message.
+A teleport that moved one of them arms the next cinematic (within 15 s).
+`WAIT_PlayCinematic` (`CRequirementPlayCinematic`, update `sub_822A36D0`)
+hands the camera's name to the cinematic manager (game +0x6C), whose +0x2C
+has bit 0x10, 0x40 or 0x80 set while it plays. During that shot, before
+each rebuild of the camera (VectorCamera, `sub_82373D18`), the camera moves
+straight back along its direction by the least distance that puts every
+player's feet and head inside 85% of the half-width and 80-88% of the
+half-height (per point at camera-space (x, y, z): k >= |x| / (m tan) - z).
+The shot's direction and movement stay the game's. With 1-2 players nothing
+changes.
+
+The bodies come from the port's 4-player `sub_8226FC88`; the first build
+called the original (`__imp__`, players 1-2 only), so players 3-4 were
+skipped without a trace (now logged).
+
+**Checked** on the Ratcicle's victory with four players: players 3-4 stand
+beside players 1-2 and the shot pulls back so all four are in it.

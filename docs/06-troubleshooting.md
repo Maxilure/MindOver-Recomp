@@ -124,6 +124,16 @@ the window in that case.
 launcher's Settings tab, press **Default** next to it. To reset everything,
 delete `user/settings.toml` (the launcher writes a new one).
 
+**The game hangs while starting (or freezes when a controller is plugged
+in)**: a controller that has stopped answering holds the game up while it
+asks every connected controller what it is. Seen with a DualSense over USB
+whose connection had failed (on Linux, `journalctl -k` shows it
+reconnecting over and over with errors `-110` or `-71`). Unplug the
+controller and the game starts. To fix the controller: reset it (a
+DualSense has a small reset button in a hole on the back: press it for
+about 5 seconds), then use another cable or USB port, not a hub, or connect
+it over Bluetooth.
+
 **Achievements stopped showing**: after a cheat that changes progress (F5),
 achievements are switched off until you restart the game. This is on
 purpose.
