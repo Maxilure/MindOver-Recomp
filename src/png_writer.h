@@ -2,7 +2,8 @@
 // png_writer.h -- save a picture as a .png file, with no library
 // =============================================================================
 //
-// For the F10 photos (native/ab_capture.h): a PNG opens in every image
+// For the F10 photos (native/ab_capture.h) and pictures put into game data
+// (players/spin_colours.cpp): a PNG opens in every image
 // viewer and browser, unlike the PPM files the debug captures use.
 //
 // PNG in brief: an 8-byte signature, then "chunks" (length, 4-letter type,
@@ -20,9 +21,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <vector>
 
 // Writes `width` x `height` pixels as an 8-bit RGB PNG. `pixels` holds 4
 // bytes per pixel (red, green, blue, ignored), `stride` bytes per row.
 // False if the file can't be written.
 bool WritePng(const std::filesystem::path& path, const uint8_t* pixels, uint32_t width,
               uint32_t height, size_t stride);
+
+// The same in memory: the PNG file's bytes. `alpha` = 8-bit RGBA (the 4th
+// byte kept), else RGB. (For pictures the port puts into game data.)
+std::vector<uint8_t> EncodePng(const uint8_t* pixels, uint32_t width, uint32_t height, size_t stride,
+                               bool alpha);

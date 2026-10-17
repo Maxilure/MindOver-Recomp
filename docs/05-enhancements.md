@@ -126,7 +126,8 @@ Old School look, player 1 included), Back turns to the next player's page,
 Crash also comes in six colours for anyone (red, yellow, green, blue,
 purple, pink, after the Crash of the Titans short "Have Another"); player 2
 stays the original white Carbon Crash by default, players 3-4 start green
-and purple, and the hair follows every outfit.
+and purple, the hair follows every outfit, and each coloured Crash spins in his own
+colour.
 
 ![Four players in their outfits, and player 3's page at the chest](images/outfits-four-players.jpg)
 

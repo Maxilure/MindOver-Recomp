@@ -39,31 +39,28 @@ void PutBigEndian32(std::vector<uint8_t>& out, uint32_t v) {
 }
 
 // One chunk: length, type, data, CRC-32 of type + data.
-void WriteChunk(std::FILE* f, const char type[4], const std::vector<uint8_t>& data) {
-  std::vector<uint8_t> chunk;
-  chunk.reserve(data.size() + 12);
-  PutBigEndian32(chunk, uint32_t(data.size()));
-  chunk.insert(chunk.end(), type, type + 4);
-  chunk.insert(chunk.end(), data.begin(), data.end());
-  PutBigEndian32(chunk, Crc32(chunk.data() + 4, data.size() + 4));
-  std::fwrite(chunk.data(), 1, chunk.size(), f);
+void AppendChunk(std::vector<uint8_t>& out, const char type[4], const std::vector<uint8_t>& data) {
+  const size_t start = out.size();
+  PutBigEndian32(out, uint32_t(data.size()));
+  out.insert(out.end(), type, type + 4);
+  out.insert(out.end(), data.begin(), data.end());
+  PutBigEndian32(out, Crc32(out.data() + start + 4, data.size() + 4));
 }
 
 }  // namespace
 
-bool WritePng(const std::filesystem::path& path, const uint8_t* pixels, uint32_t width,
-              uint32_t height, size_t stride) {
-  // The raw image data: each row = filter byte 0 ("none") + R, G, B per pixel.
-  const size_t row_bytes = 1 + size_t(width) * 3;
+std::vector<uint8_t> EncodePng(const uint8_t* pixels, uint32_t width, uint32_t height, size_t stride,
+                               bool alpha) {
+  // The raw image data: each row = filter byte 0 ("none") + R, G, B (, A) per pixel.
+  const size_t channels = alpha ? 4 : 3;
+  const size_t row_bytes = 1 + size_t(width) * channels;
   std::vector<uint8_t> raw(row_bytes * height);
   for (uint32_t y = 0; y < height; ++y) {
     uint8_t* dst = raw.data() + y * row_bytes;
     const uint8_t* src = pixels + y * stride;
     dst[0] = 0;
     for (uint32_t x = 0; x < width; ++x) {
-      dst[1 + x * 3 + 0] = src[x * 4 + 0];
-      dst[1 + x * 3 + 1] = src[x * 4 + 1];
-      dst[1 + x * 3 + 2] = src[x * 4 + 2];
+      for (size_t c = 0; c < channels; ++c) dst[1 + x * channels + c] = src[x * 4 + c];
     }
   }
   // The zlib stream: header (0x78 0x01: deflate, 32 KB window, no preset
@@ -91,19 +88,26 @@ bool WritePng(const std::filesystem::path& path, const uint8_t* pixels, uint32_t
   }
   PutBigEndian32(idat, (adler_b << 16) | adler_a);
 
+  std::vector<uint8_t> png = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+  std::vector<uint8_t> ihdr;
+  PutBigEndian32(ihdr, width);
+  PutBigEndian32(ihdr, height);
+  // 8 bits, colour type 6 (RGBA) or 2 (RGB), deflate, filter 0, no interlace
+  ihdr.insert(ihdr.end(), {8, uint8_t(alpha ? 6 : 2), 0, 0, 0});
+  AppendChunk(png, "IHDR", ihdr);
+  AppendChunk(png, "IDAT", idat);
+  AppendChunk(png, "IEND", {});
+  return png;
+}
+
+bool WritePng(const std::filesystem::path& path, const uint8_t* pixels, uint32_t width,
+              uint32_t height, size_t stride) {
+  const std::vector<uint8_t> png = EncodePng(pixels, width, height, stride, false);
   std::FILE* f = std::fopen(path.string().c_str(), "wb");
   if (!f) {
     return false;
   }
-  static const uint8_t kSignature[8] = {0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
-  std::fwrite(kSignature, 1, sizeof(kSignature), f);
-  std::vector<uint8_t> ihdr;
-  PutBigEndian32(ihdr, width);
-  PutBigEndian32(ihdr, height);
-  ihdr.insert(ihdr.end(), {8, 2, 0, 0, 0});  // 8 bits, RGB, deflate, filter 0, no interlace
-  WriteChunk(f, "IHDR", ihdr);
-  WriteChunk(f, "IDAT", idat);
-  WriteChunk(f, "IEND", {});
+  std::fwrite(png.data(), 1, png.size(), f);
   const bool ok = std::ferror(f) == 0;
   std::fclose(f);
   return ok;

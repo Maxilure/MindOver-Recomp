@@ -584,6 +584,15 @@ void Register() {
   RegisterHair();
 }
 
+int ColourIndex(int outfit) {
+  for (int i = 0; i < kColourCount; ++i) {
+    if (kColours[i].outfit == outfit) return i;
+  }
+  return -1;
+}
+int ColourCount() { return kColourCount; }
+float ColourHue(int index) { return index >= 0 && index < kColourCount ? kColours[index].body.h : 0.0f; }
+
 int OutfitOf(int p) {
   if (p < 0 || p >= kMaxPlayers) return 0;
   if (p == g_wearing_player) return g_wearing_outfit;

@@ -63,6 +63,13 @@ inline bool IsCarbon(int outfit) { return outfit >= kCarbon && outfit <= kLastOu
 // runs: CrashMomApp).
 void Register();
 
+// The coloured Crashes in the chest's order (0-5), for the spin effects
+// (players/spin_colours.h): an outfit's index (-1 = not a coloured Crash),
+// how many there are, and one's fur hue (degrees).
+int ColourIndex(int outfit);
+int ColourCount();
+float ColourHue(int index);
+
 // Player p's outfit as the port sees it (0-10 the game's skins, 11 Carbon, 12-17 colours).
 int OutfitOf(int p);
 

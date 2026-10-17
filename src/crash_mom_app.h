@@ -76,6 +76,7 @@
 #include "players/lost_controller.h"
 #include "players/more_players.h"
 #include "players/outfits.h"
+#include "players/spin_colours.h"
 #include "players/more_players_hud.h"
 
 class CrashMomApp : public rex::ReXApp {
@@ -259,6 +260,7 @@ class CrashMomApp : public rex::ReXApp {
     // Players 3-4's own marker pictures, from <user data>/markers (players/more_players_markers.cpp).
     more_players_markers::Register();
     outfits::Register();  // coloured Crashes + every outfit's hair (players/outfits.h)
+    spin_colours::Register();  // their spin effects in their colour (players/spin_colours.h)
     // Two more prompt glyphs in the fonts: the menus' own A and B (input/prompt_icons.h).
     prompt_icons::Register();
     data_patcher::Install();

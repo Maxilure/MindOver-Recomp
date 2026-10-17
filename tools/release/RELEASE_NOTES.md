@@ -157,7 +157,8 @@ comes in Red, Yellow, Green, Blue, Purple and Pink, for anyone, after the
 Crash of the Titans short "Have Another" (fur, chest and tattoos each in
 their own shade, the hair too); player 2 is still the original white Carbon
 Crash by default and players 3-4 start in green and purple (*carbon_colours*
-= false: white only). Carbon Crash's hair now matches his fur. Picks are kept per
+= false: white only). Carbon Crash's hair now matches his fur, and each coloured Crash spins in
+his own colour. Picks are kept per
 player in the settings, whichever save is loaded.
 
 **Fixes**

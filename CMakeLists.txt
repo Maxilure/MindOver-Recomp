@@ -73,6 +73,7 @@ set(CRASHMOM_SOURCES
     src/players/coop_camera.cpp  # the co-op camera: frames every player (camera rework)
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/players/outfits.cpp     # every player picks an outfit at the chest (findings/46)
+    src/players/spin_colours.cpp  # coloured Crashes spin in their colour (findings/46 s.4)
     src/players/who_plays.cpp    # no profiles: who plays = which controllers play (the game's sign-in, PC version)
     src/players/lost_controller.cpp  # a player's controller is gone: pause + message anyone answers (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time

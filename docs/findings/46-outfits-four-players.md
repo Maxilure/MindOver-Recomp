@@ -199,6 +199,44 @@ Update. The first try hooked slots 7 and 8 themselves: the scene draws
 through slot 6, and the hair kept its old texture. The orange Crash keeps the
 original hair; the white Carbon gets cream roots and dusty-brown spikes.
 
+### 3.4 The spin in each colour
+
+Crash's spin attack and spin jump are EFFECTS in the always-loaded package
+`bca1bc0b`, started by his fight tree: a `CharacterEffect` track (its type
+in `Crash.bfig` = the name's h*31+c hash, 0x2B4155FA) names the effect and
+the joint it rides. Crash's are warm (yellow `FFD525` and orange `FF7D1B`
+sparks, an orange `842A02` glow); Coco's are her own (`cha_fx_coco_*`,
+purple and pink). An effect is a set of top-level chunks tied by NAME: the
+effect (0x123000, lists its parts), a skeleton of attachment points
+(0x23000), animations (0x121000), particle systems (0x1580c with emitters
+0x15900), billboards (0x17006), meshes (0x10000), and the glow's material
+and texture (`Crash_Spin_m`, `Crash_Spin.tga`: three PNG pictures). 34
+chunks hold a spin name.
+
+A data patch (`players/spin_colours.cpp`) copies each of them once per
+colour, right after itself, with the names changed IN PLACE to the same
+length (`crash_spin` -> `crshN_spin`, `Crash_Spin` -> `CrshN_Spin`,
+`crash_coopswitch1` -> `crshN_coopswitch1`, N = 1-6), so the copies point
+at each other and no name field changes size, and turns their warm colours
+(hue 0-70) toward the Crash's: new hue = the Crash's fur hue + (hue - 25) /
+2, saturation kept, then the colour is made as bright to the eye
+(luminance) as the original x 1.15, turning toward white past full
+brightness (a first version kept the HSV value: blue and purple spins looked
+dim next to the original's yellow, which is far brighter at the same value). Colours
+live in three places: mesh vertex colours (0x10008: u32 count + u32 colours),
+colour channels (0x121109, "COOL" colour over life and "CLR" start colour:
+version, fourcc, count n, n u16 frames, n u32 colours), and the PNG
+pictures; all colours are B G R A bytes. The blue parts stay blue (Coco's
+effect has the same blue).
+
+When a coloured Crash's `CCharacterEffectAction` starts (vtable
+0x820221D4 slot 4, `sub_820C47B8`; track = action +8, its name key at
+track +0xC; the character = *(action +0xC) +0x10), a track that names one
+of the six spin effects names that colour's copy for the length of the
+call. The orange Crash, the white Carbon and Coco keep the game's own.
+
+![The spin in each colour](../images/outfits-spin-colours.jpg)
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a
