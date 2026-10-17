@@ -177,7 +177,56 @@ start the game:
   update sets the element's string while the front end is in state 55 (the
   title), only when it reads "Press START": other languages keep theirs.
 
-## 3. Tests
+## 3. Movie cutscenes: any button brings up "Skip"
+
+`input/movie_skip.*`. The cartoon cutscenes played inside a level (for
+example the one after talking to Coco on Wumpa Island) show a "Skip" prompt with
+the A button in the lower right corner (page `InGame_MovieSkip.pag` in
+`InGame.prj`). On the Xbox only START brings it up, and on the keyboard
+nothing did: during the movie the front end reports a menu on screen
+(+8594 bit 0x80), so the keyboard is in its menu context, where Escape is
+Back (B) and Enter / Space are A. Neither is START, and A does nothing while
+the prompt is hidden. Escape still skipped the boot movies because outside
+play the game takes A or START directly.
+
+How the game does it: the movie runs in `CMoviePlayerBehaviour` (vtable
+0x820334E4), whose Update (slot 4, `sub_82187EF0`) asks the input events
+"just pressed" (`sub_82274BE8(game +56, 2, event, 1)`: event 36 = START,
+12 = A). Its `CMoviePlayer` (behaviour +36, vtable 0x82041C4C) keeps the
+prompt's state in byte +296 bit 0x20 (read by `sub_822C49F0`, set by
+`sub_822C49D8`); the player's update shows the skip page while it is set.
+
+| game state | prompt | START | A |
+|---|---|---|---|
+| 5 (a level) | hidden | shows it, 2 s timer (behaviour +52 = 2.0 from 0x8201FB74) | nothing |
+| 5 | shown | hides it | stops the movie (player slot 6) + the front end's sound |
+| other (boot) | none | stops the movie | stops the movie |
+
+The port wraps the Update only to watch it: after each call it notes whether
+a movie plays in a level with the prompt hidden. While it does, the title
+screen's any-button filter (section 2) does the same job here: a new press of
+any controller button, trigger, key or mouse button becomes a 150 ms START,
+and the other buttons are hidden. A button still held when the prompt appears
+stays hidden until it is let go, so the press that brought the prompt up
+never skips by itself. With the prompt shown, the input is untouched: the
+game's own A skips, and START hides the prompt again.
+
+One side effect had to be handled: the button prompts pick keyboard or
+controller pictures by which device was used last, and the START made from
+a key press looked like a controller press. The filter now reports the
+buttons it adds for a key, and the prompt pictures ignore them. After a key
+the prompt shows the keyboard's menu key, and after a controller button it
+shows A.
+
+Tests (debug console + input FIFO, Wumpa Island save, the Coco cutscene,
+keyboard on player 1): Escape -> prompt with the key picture, hidden again
+after 2 s; a controller A while hidden -> prompt with the A picture, the movie
+keeps playing; Enter -> prompt (no skip), Enter again -> skipped (front end
+492 -> 494). Before the change, Escape and Enter showed nothing and a
+controller X did nothing, while START showed it. Title screen: any key still
+goes to the main menu.
+
+## 4. Tests
 
 Debug console: `mouse <x> <y>` (0..1 over the picture) moves the pointer,
 `key LMB` / `key RMB` / `key WheelDown` click and scroll. On a copy of the

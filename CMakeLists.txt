@@ -53,6 +53,7 @@ set(CRASHMOM_SOURCES
     src/input/prompt_icons.cpp   # key / mouse pictures in the game's button prompts (Xelu's CC0 prompts)
     src/input/name_typing.cpp       # typing a name on the keyboard, the mouse on the on-screen keys
     src/input/title_any_button.cpp  # the title screen starts on any button ("Press Any Button")
+    src/input/movie_skip.cpp  # any button brings up a movie's "Skip" prompt in a level
     src/input/mouse_menus.cpp    # the mouse in the game's menus: hover selects, click chooses, right click = back
     src/saves/pc_save_drive.cpp  # the saves as plain PC files: Radical's save drive, natively
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")

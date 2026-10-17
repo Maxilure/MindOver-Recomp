@@ -89,6 +89,11 @@ volume.
 **Press any button**: the title screen starts on any controller button, any
 key or a mouse click, and says so ("Press Any Button").
 
+**Skipping movie cutscenes**: during the cartoon cutscenes in a level, any
+button, key or mouse click brings up the "Skip" prompt; A (Enter or Space on
+the keyboard) then skips. Before, only a controller's START brought it up,
+so on the keyboard these cutscenes couldn't be skipped.
+
 **Type names on the keyboard**: on the name screen (New Game, renaming a
 save) just type; Backspace erases, Enter is Done, Esc goes back. The mouse
 works on the on-screen keyboard, and its old erase key is now a SPACE key.

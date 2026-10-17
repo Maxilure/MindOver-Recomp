@@ -1978,7 +1978,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   }
 }
 
-void SeePad(uint32_t user, const uint8_t* gamepad) {
+void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours) {
   // Guest X_INPUT_GAMEPAD: u16 buttons, u8 LT, u8 RT, s16 LX, LY, RX, RY (big-endian).
   const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]);
   auto stick = [&](int i) { return int16_t(uint16_t(gamepad[4 + 2 * i] << 8 | gamepad[5 + 2 * i])); };
@@ -1986,11 +1986,13 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
   // state): what's left came from a controller. Sticks count only while the
   // keyboard leaves them alone, well past XInput's dead zone (7,849), so a
   // drifting stick doesn't count.
-  uint16_t kb_buttons = 0;
+  // Our own filters' buttons (the START a key press becomes on the title or
+  // for a movie's Skip prompt) aren't a controller either.
+  uint16_t kb_buttons = ours;
   bool kb_sticks = false, kb_triggers = false;
   if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
     const rex::input::X_INPUT_GAMEPAD kb = driver->last_pad();
-    kb_buttons = kb.buttons;
+    kb_buttons |= kb.buttons;
     kb_sticks = kb.thumb_lx != 0 || kb.thumb_ly != 0 || kb.thumb_rx != 0 || kb.thumb_ry != 0;
     kb_triggers = kb.left_trigger != 0 || kb.right_trigger != 0;
   }

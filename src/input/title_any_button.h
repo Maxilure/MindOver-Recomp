@@ -24,6 +24,10 @@
 //     the way the save messages are reworded (saves/save_screen_waits.cpp),
 //     so FrontEndFrame sets the text element's string while the front end is
 //     in state 55 (the title).
+//
+// THE SAME FILTER serves a movie's Skip prompt in a level (2026-10-17,
+// input/movie_skip.h): while it is hidden, any press becomes START, which is
+// what brings it up.
 // =============================================================================
 #pragma once
 
@@ -36,7 +40,9 @@ namespace title_any_button {
 // From the game's XInputGetState wrapper, after the keyboard's merge and the
 // input replay: `gamepad` = the guest X_INPUT_GAMEPAD (12 big-endian bytes)
 // of socket `user`. Game threads.
-void FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base);
+// Returns the buttons it ADDED (its START; 0 = none), so the prompt pictures
+// don't take them for a controller (prompt_icons::SeePad).
+uint16_t FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base);
 
 // Every front-end update (players/more_players_frontend.cpp): the title's
 // "Press Any Button" text. Main thread.

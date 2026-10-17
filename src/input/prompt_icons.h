@@ -147,7 +147,9 @@ std::string FontNameAt(uint32_t font);
 
 // The pad state the game just got for `user` (guest X_INPUT_GAMEPAD, 12
 // big-endian bytes), from the XInputGetState wrapper (saves/save_library.cpp):
-// input the keyboard didn't make = a controller was used. Game threads.
-void SeePad(uint32_t user, const uint8_t* gamepad);
+// input the keyboard didn't make = a controller was used. `ours` = buttons a
+// filter of ours added (title_any_button's START for a key press): not a
+// controller either. Game threads.
+void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours = 0);
 
 }  // namespace prompt_icons

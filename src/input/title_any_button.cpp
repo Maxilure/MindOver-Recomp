@@ -16,6 +16,7 @@
 #include "../guest_memory.h"
 #include "../ui/scrooby.h"
 #include "keyboard_mouse.h"
+#include "movie_skip.h"
 #include "players.h"
 
 namespace title_any_button {
@@ -61,6 +62,7 @@ struct Socket {
   bool last_trigger = false;      // either trigger past the threshold then
   int64_t seen_key_down = 0;      // the keyboard's last_key_down() seen then
   Clock::time_point start_until{};  // our START press lasts until then
+  bool start_from_key = false;    // that START stands for a key / mouse press
   uint16_t hidden = 0;            // buttons held from the title: hidden until let go
 };
 std::mutex g_mutex;
@@ -68,41 +70,55 @@ std::array<Socket, 4> g_sockets;
 
 }  // namespace
 
-void FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base) {
-  if (!gamepad || user >= g_sockets.size()) return;
+uint16_t FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base) {
+  if (!gamepad || user >= g_sockets.size()) return 0;
   const uint32_t fe = FrontEnd(base);
   const bool title = fe && (*GuestPtr(base, fe + kFrontEndFlags2) & kTitleWaits);
+  // A movie in a level with its Skip prompt hidden waits for START the same
+  // way (input/movie_skip.h): any press brings the prompt up.
+  const bool movie = !title && movie_skip::WaitsForAnyButton();
   const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]);
   const bool trigger =
       gamepad[kTriggerLeft] > kTriggerPressed || gamepad[kTriggerRight] > kTriggerPressed;
   // The keyboard and mouse: ANY key or mouse button, bound or not (an
   // unbound key adds nothing to the pad), on the socket the keyboard plays on.
   int64_t key_down = 0;
+  uint16_t kb_buttons = 0;  // the keyboard's own buttons merged into this state
   const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
-  if (driver && assignment && assignment->KeyboardAnswersFor(user)) key_down = driver->last_key_down();
+  if (driver && assignment && assignment->KeyboardAnswersFor(user)) {
+    key_down = driver->last_key_down();
+    kb_buttons = driver->last_pad().buttons;
+  }
 
   std::lock_guard lock(g_mutex);
   Socket& s = g_sockets[user];
   const auto now = Clock::now();
-  const bool pressed = (buttons & ~s.last_buttons) != 0 || (trigger && !s.last_trigger) ||
-                       (key_down != 0 && key_down != s.seen_key_down);
+  const uint16_t new_buttons = buttons & ~s.last_buttons;
+  const bool trigger_pressed = trigger && !s.last_trigger;
+  const bool key_pressed = key_down != 0 && key_down != s.seen_key_down;
+  const bool pressed = new_buttons != 0 || trigger_pressed || key_pressed;
   s.last_buttons = buttons;
   s.last_trigger = trigger;
   s.seen_key_down = key_down;
-  if (title) {
+  if (title || movie) {
     if (pressed && now >= s.start_until) {
       s.start_until = now + kStartHold;
-      REXLOG_INFO("Title: a button on socket {}: START", user);
+      // A key, with no new controller button beside it (the keyboard's own
+      // buttons are merged into this state: Escape = B during a movie).
+      s.start_from_key = key_pressed && (new_buttons & ~kb_buttons) == 0 && !trigger_pressed;
+      REXLOG_INFO("{}: a button on socket {}: START", title ? "Title" : "Movie skip", user);
     }
-    // Only START reaches the title (B, Back... do nothing of their own here);
-    // what's held now stays hidden afterwards until let go.
+    // Only START reaches the title / the hidden Skip prompt (B, Back... do
+    // nothing of their own here); what's held now stays hidden afterwards
+    // until let go (the A that brought the prompt up doesn't also skip).
     const uint16_t out = now < s.start_until ? rex::input::X_INPUT_GAMEPAD_START : 0;
     gamepad[0] = uint8_t(out >> 8);
     gamepad[1] = uint8_t(out);
     gamepad[kTriggerLeft] = gamepad[kTriggerRight] = 0;
     s.hidden = buttons;
-    return;
+    // A START standing for a key press isn't a controller (prompt pictures).
+    return s.start_from_key ? out : 0;
   }
   s.start_until = {};
   if (s.hidden) {
@@ -111,6 +127,7 @@ void FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base) {
     gamepad[0] = uint8_t(out >> 8);
     gamepad[1] = uint8_t(out);
   }
+  return 0;
 }
 
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
