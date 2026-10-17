@@ -291,7 +291,91 @@ found by reading the candidates there (the co-op pages' `Button` and
 `CounterButtonPlayerN` didn't; `AnnouncementText` did, shown); then WASD +
 arrow over the Spin key with keys, stick + arrow over LB with a controller.
 
-## 6. Tests
+## 6. Each player's own pictures (2026-10-17)
+
+![Player 1 on the keyboard, players 2-4 in PlayStation style: the corners and each player's pause menu](../images/per-player-button-prompts.jpg)
+
+With players on different devices, the prompt pictures used to follow
+whoever pressed something last: one shared set of pages, repainted for
+everyone. Player 2 pressing a button on a PlayStation pad turned player 1's
+keyboard prompts into PlayStation buttons and back again, many times a
+minute.
+
+**Who owns a picture now.** Each player has a LOOK: keys (their keyboard,
+when it plays as them and was used after their controller) or their
+controller's buttons, in the Controller Icons style (Automatic = the maker
+and model of THEIR controller). The game's own glyphs follow player 1's look
+only, and every text that isn't anyone's in particular (hints, the message
+bar, tutorials in play) keeps them. Outside play every
+device answers as player 1 (input/players.h), so the title and main menus
+follow whichever device was used last, as before.
+
+**Texts that belong to one player** get that player's pictures:
+
+| text | page / element | owner |
+|---|---|---|
+| "Join Game" corner + its button, the countdown | `InGame_CoOp_Player1`-`4`: `Message`, `Button` | that corner's player |
+| counter prompt beside the HUD (the Y) | `InGame.pag`: `CounterButtonPlayer1`-`4` | that player |
+| menu prompt bar ("Back", "Select"...) | `FE_Buttons`: the four `*Button` texts | the menu's owner (who paused, who used the totem: findings/26 s.21) |
+| Tutorials pages opened from a pause menu | `InGame_Tutorial`: `Text0`-`3` | the menu's owner |
+
+The corners' button is set again by the HUD every frame while the corners
+show "Join Game" (the first ~10 s of a level): the HUD update `sub_8226A998`
+-> `sub_82269480` writes the text bank's string after the front end's update
+(found with the console's `who` on the text's string word +156). The texts
+are therefore rewritten after the HUD update too (the port's wrapper of
+`sub_8226A998`), not only in the front-end update.
+
+**Player slots.** A text of player 2-4 gets PLAYER SLOTS instead of the
+game's characters: ten more glyphs in the small font (U+E120-E129, copies of
+the A page) whose pictures are lent out per look and glyph. Two players
+with the same look share a slot (two PlayStation pads: one Circle), and a
+player whose look is player 1's needs none (the game's own glyph already
+shows the right picture). The least recently asked slot is lent out next;
+the owned texts are rewritten every frame, so a slot that changes picture is
+noticed at once.
+
+**64 pages.** A first version gave players 2-4 a full copy of all 19 prompt
+glyphs each (57 more pages per font). Player 2's B drew, but player 3's, 4's
+and player 2's menu buttons drew nothing. The font's draw keeps per-page
+tables in fixed globals of 64 entries (0x8257E6E0 glyph counts, 0x8257E7E0,
+0x8257F0E0, 0x8257F1E0 vertex lists, 256 bytes apart; batching at
+0x823C4324, draw `sub_823C4FA0`), and it clears and fills them for every
+page of the font, so pages past 64 are lost AND overwrite the next table.
+The large font was already 4 pages over with the key slots added in section
+4 (36 disc pages + 32 ours). Now:
+
+| font | disc | menu glyphs | key slots | player slots | total |
+|---|---|---|---|---|---|
+| Titans_Small | 22 | 6 | 26 (16 text, 4 big, 6 card) | 10 | 64 |
+| Titans_Large | 36 | 6 | 20 (no card slots: the Options cards use the small font) | none | 62 |
+
+The font patch refuses to go past 64.
+
+A slot whose look has no picture of its own (a 360 pad, or Automatic with a
+360 or unknown pad = the game's own 360 buttons) is drawn with the game's
+360 picture of THAT button, from the disc's font page (the key slots' "O"
+pictures). Playtest: a first version left such a slot as it was, a copy of
+the A page, so a 360-style player 4 saw "A Back / A Select".
+
+**The floating B.** The B over a save totem, a stunned titan or something
+to use is one texture (`FE_360_b_button_64.tga`, section 4) shared by every
+such icon, so it shows one picture at a time. It shows the look of the
+player it appeared for: the icons are `CIconBehaviour` (vtable 0x8203248C:
++28 its object, +116 its drawable, +120 shown), switched on and off by
+`sub_82179130(icon, show)`. When an icon turns on, the playing player
+nearest to its object (their Crash or the titan they ride) owns it, and the
+B shows the owner of the icon shown first among those still up. Player 2 on
+a controller walks up to a totem first = their B; player 1 on the keyboard
+arriving later changes nothing until the icon goes away; player 1 alone at
+the totem = their key. No icon up = player 1's look.
+
+Known limits: a stick drawn in a player slot is A-sized (the slots copy the
+A page); the rotate arrow after it stays player 1's; two icons up at once
+for two players show the first one's picture on both (one texture: the
+side-by-side buttons are a later step).
+
+## 7. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked
 (15 pictures each, menu glyphs included); a fake controller's Start switched
@@ -300,6 +384,19 @@ pages (mouse buttons for the attacks, WASD + Q + arrow for the spins, E to
 jack, R to pocket) in both pictures; the pause menu's bar with the menu
 glyphs: Enter / Backspace in both pictures, A / B with the controller in the
 native one.
+
+Each player's own pictures (section 6), keyboard on player 1, fake
+controllers on players 2-3 (`--debug_fake_pads=2`), Controller Icons =
+PlayStation 5: the corners of players 2-4 show the PlayStation Circle by
+"Join Game" while player 1's prompts stay keys; player 2 pauses -> Circle
+"Back" / Cross "Select"; player 1 pauses -> Esc / Enter; player 2's
+Tutorials -> Triangle in the text; player 3's counter prompt -> Triangle;
+player 1's own controller and keys still switch player 1's pictures, and
+player 3's X doesn't. Player 2 with a 360-style fake pad (Automatic): their
+pause bar shows the 360's B "Back" and A "Select". The save totem by Crash's
+house: player 2 walks up first -> the 360 B (player 1 on keys); player 2
+leaves, player 1 arrives -> E. Both fonts within 64 pages (Small 55 prompt pictures
+checked, Large 39).
 
 Known limits: texts still name the controller ("Rotate the Left Stick and
 Press Unjack"); the key pictures are as big as the 64 x 64 pages (the same

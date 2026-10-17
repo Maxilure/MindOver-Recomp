@@ -105,6 +105,7 @@ enum class Kind : uint8_t {
   kStick,  // four keys from `action` on (up, down, left, right in Action order)
   kSpin,   // `action`'s key and a circling arrow
   kSlot,   // a KEY SLOT: whatever key KeyGlyph() lent it (the Options rows)
+  kPlayerSlot,  // a PLAYER SLOT: one player's picture of a prompt (PlayerGlyph, below)
 };
 struct Prompt {
   char16_t character;
@@ -114,13 +115,16 @@ struct Prompt {
   const char* name;  // the 360 control, for the log
   Kind kind;
   Action action;
+  // Added to the small font only (Titans_Small): the font has room for 64
+  // pages (below, "64 PAGES"), the large one for fewer of ours.
+  bool small_only = false;
 };
 // The menus' own A, B, X, Y, LB, RB (prompt_icons.h "Menus"): characters of
 // the Unicode private use area (no game text contains them), numbered after
 // the glyphs they copy.
 constexpr char16_t kMenuA = u'\uE0B1', kMenuB = u'\uE0B2', kMenuX = u'\uE0B3',
                    kMenuY = u'\uE0B4', kMenuLB = u'\uE0BE', kMenuRB = u'\uE0B8';
-constexpr Prompt kPrompts[] = {
+constexpr Prompt kBasePrompts[] = {
     {u'\u00B1', u'\u00B1', "A", Kind::kKey, kbm::kJump},
     {u'\u00B2', u'\u00B2', "B", Kind::kKey, kbm::kJack},
     {u'\u00B3', u'\u00B3', "X", Kind::kKey, kbm::kLightAttack},
@@ -173,12 +177,25 @@ constexpr Prompt kPrompts[] = {
     // cards' small print, where a stick squeezed into the A's own 49-pixel
     // circle was too small to make out (playtest). (A first version copied
     // the stick's 128 x 96 page: much too big, and it hung below the line.)
-    {u'\uE114', u'\u00B1', "card slot 0", Kind::kSlot, kbm::kJump},
-    {u'\uE115', u'\u00B1', "card slot 1", Kind::kSlot, kbm::kJump},
-    {u'\uE116', u'\u00B1', "card slot 2", Kind::kSlot, kbm::kJump},
-    {u'\uE117', u'\u00B1', "card slot 3", Kind::kSlot, kbm::kJump},
-    {u'\uE118', u'\u00B1', "card slot 4", Kind::kSlot, kbm::kJump},
-    {u'\uE119', u'\u00B1', "card slot 5", Kind::kSlot, kbm::kJump},
+    {u'\uE114', u'\u00B1', "card slot 0", Kind::kSlot, kbm::kJump, true},
+    {u'\uE115', u'\u00B1', "card slot 1", Kind::kSlot, kbm::kJump, true},
+    {u'\uE116', u'\u00B1', "card slot 2", Kind::kSlot, kbm::kJump, true},
+    {u'\uE117', u'\u00B1', "card slot 3", Kind::kSlot, kbm::kJump, true},
+    {u'\uE118', u'\u00B1', "card slot 4", Kind::kSlot, kbm::kJump, true},
+    {u'\uE119', u'\u00B1', "card slot 5", Kind::kSlot, kbm::kJump, true},
+    // PLAYER SLOTS (2026-10-17): one player's own picture of a prompt glyph,
+    // lent out by PlayerGlyph() (below, "EACH PLAYER'S OWN PICTURES"); copies
+    // of the A picture's page. Small font only.
+    {u'\uE120', u'\u00B1', "player slot 0", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE121', u'\u00B1', "player slot 1", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE122', u'\u00B1', "player slot 2", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE123', u'\u00B1', "player slot 3", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE124', u'\u00B1', "player slot 4", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE125', u'\u00B1', "player slot 5", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE126', u'\u00B1', "player slot 6", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE127', u'\u00B1', "player slot 7", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE128', u'\u00B1', "player slot 8", Kind::kPlayerSlot, kbm::kJump, true},
+    {u'\uE129', u'\u00B1', "player slot 9", Kind::kPlayerSlot, kbm::kJump, true},
 };
 constexpr size_t kSmallSlots = 16, kBigSlots = 4, kCardSlots = 6;
 constexpr size_t kSlotCount = kSmallSlots + kBigSlots + kCardSlots;
@@ -191,8 +208,35 @@ constexpr int kCardSlotRows = 54;
 // too big, the A-sized slot = too small).
 constexpr float kBigSlotScale = 0.65f;
 constexpr char16_t kFirstSlot = u'\uE100';
-constexpr size_t kAddedPrompts = 6 + kSlotCount;  // the menu glyphs + the key slots, at the end of kPrompts
-constexpr size_t kDiscPrompts = std::size(kPrompts) - kAddedPrompts;
+constexpr size_t kPlayerSlots = 10;
+constexpr char16_t kFirstPlayerSlot = u'\uE120';
+constexpr size_t kBaseAdded = 6 + kSlotCount + kPlayerSlots;  // menu glyphs, key slots, player slots
+constexpr size_t kDiscPrompts = std::size(kBasePrompts) - kBaseAdded;
+
+// 64 PAGES (2026-10-17): a font's pages can't go past 64. The font's draw
+// (sub_823C4FA0 and the glyph batching around 0x823C4324) keeps per-page
+// tables in fixed globals of 64 entries each (0x8257E6E0 glyph counts,
+// 0x8257E7E0, 0x8257F0E0, 0x8257F1E0 vertex lists: 256 bytes apart), and
+// clears / fills them for EVERY page of the font: a 65th page writes into
+// the next table. Found when a full copy of the prompt glyphs per player
+// (19 x 3 more pages) drew nothing past page 64 (and wrote over those
+// tables). The disc's fonts have 22 (Titans_Small) and 36 (Titans_Large)
+// pages; ours: Small 22 + 6 menu glyphs + 26 key slots + 10 player slots =
+// 64, Large 36 + 6 + 20 key slots (no card slots, no player slots) = 62.
+constexpr uint32_t kMaxFontPages = 64;
+
+// The prompts a font gets: the disc's, then the ones our font patch adds (in
+// this order, after the disc's pages); the large font skips small_only ones.
+std::vector<const Prompt*> PromptsFor(bool large) {
+  std::vector<const Prompt*> v;
+  for (const Prompt& p : kBasePrompts) {
+    if (!(large && p.small_only)) v.push_back(&p);
+  }
+  return v;
+}
+size_t AddedPrompts(bool large) { return PromptsFor(large).size() - kDiscPrompts; }
+// Which font by its disc page count (Titans_Large 36, Titans_Small 22).
+bool IsLargeFont(uint32_t disc_pages) { return disc_pages > 30; }
 // The world's B (State::textures_loaded): the B button, Jack on the keyboard.
 constexpr Prompt kWorldB{0, u'\u00B2', "world B", Kind::kKey, kbm::kJack};
 constexpr std::string_view kWorldPackage = "package\\bca1bc0b.p3d";
@@ -305,7 +349,7 @@ std::vector<DiscFont> ReadDiscFonts() {
         if (!(page & 0x80000000u)) continue;  // a letter, not a picture
         const uint32_t index = page & 0xFFFF;
         for (size_t k = 0; k < kDiscPrompts; ++k) {
-          const Prompt& prompt = kPrompts[k];
+          const Prompt& prompt = kBasePrompts[k];
           if (prompt.character != character || index >= textures.size()) continue;
           DiscPage dp;
           if (DecodeTga(d, *textures[index], dp)) {
@@ -859,6 +903,25 @@ std::array<Slot, kSlotCount> g_slots;
 uint64_t g_slot_clock = 0;
 uint32_t g_slot_revision = 0, g_slot_drawn = UINT32_MAX;
 
+// What one player's prompts show (LookOf).
+struct Look {
+  bool keys = false;               // keyboard keys (else the controller's buttons)
+  bool dark = false;               // the key set: Xelu's Dark (else Light)
+  int pad_style = kOriginalStyle;  // the controller set (kPadSets; -1 = the game's own)
+  std::string Name() const { return keys ? (dark ? "D" : "L") : "P" + std::to_string(pad_style); }
+};
+
+// The player slots' pictures (PlayerGlyph), under g.mutex: a look and the
+// prompt glyph it shows (a disc glyph or a menu one; 0 = not lent yet), when
+// it was last asked for (the least recently asked is lent out next).
+struct PlayerSlot {
+  std::string key;  // Look::Name() + the glyph: what the slot holds
+  Look look;
+  char16_t glyph = 0;
+  uint64_t asked = 0;
+};
+std::array<PlayerSlot, kPlayerSlots> g_player_slot;
+
 // --- What a page should show -----------------------------------------------------
 
 // The first key of `action` (kNoInput: none). Bindings come from the driver.
@@ -892,6 +955,9 @@ std::string DescribeKeys(const Prompt& p, const kbm::Bindings& b) {
       // Spin key only spins with Simple Spinning (gameplay/game_mods.h), and
       // then the spin rows get a line of their own with it (SpinRows below).
       return "spin";
+    case Kind::kSlot:
+    case Kind::kPlayerSlot:
+      break;  // (Describe answers for slots itself)
   }
   return {};
 }
@@ -900,6 +966,20 @@ std::string DescribeKeys(const Prompt& p, const kbm::Bindings& b) {
 // picture; keys: "L key 32" / "D key 32" (the set's letter first); a
 // controller set: "P <set> <button>".
 std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, bool dark, int pad_style) {
+  if (p.kind == Kind::kPlayerSlot) {  // one player's picture of a glyph, in their look
+    const PlayerSlot& slot = g_player_slot[size_t(p.character - kFirstPlayerSlot)];
+    for (size_t k = 0; slot.glyph && k < kDiscPrompts + 6; ++k) {  // the disc's glyphs + the menu ones
+      if (kBasePrompts[k].character != slot.glyph) continue;
+      const std::string d = Describe(kBasePrompts[k], b, slot.look.keys, slot.look.dark, slot.look.pad_style);
+      if (!d.empty()) return d;
+      // "" = the game's own picture, which for a slot (a copy of the A page)
+      // would be the A: the game's 360 picture of THIS button instead (the
+      // playtest's "A Back / A Select" for a player with a 360-style pad).
+      const int button = PadButtonOf(kBasePrompts[k].source);
+      return button < 0 ? std::string() : "O " + std::to_string(button);
+    }
+    return {};
+  }
   if (p.kind == Kind::kSlot) {  // the Options rows and card, whatever the device in use
     const std::string& what = g_slots[size_t(p.character - kFirstSlot)].what;
     if (what.size() < 3) return {};
@@ -1105,23 +1185,50 @@ struct State {
   // Cache: Describe() + size -> the 256-colour picture.
   std::map<std::string, Paletted> drawn;
   // What the pages show (to notice a change cheaply).
-  int device = -1;  // 0 controller, 1 keyboard
   uint32_t revision = UINT32_MAX;
-  std::string look;  // the sets in use ("L", "D", "P1"...), to notice a change
-  bool dark = false;  // the key set (the key slots use it whatever the device)
-  int pad_style = -2;  // the controller set (the button slots use it whatever the device)
+  std::string look;  // player 1's Look::Name() (the game's own glyphs), to notice a change
 } g;
-std::atomic<uint32_t> g_pad_user{0};  // the socket a controller was used on last
 std::atomic<bool> g_keys_shown{false};  // KeysShown()
 const std::vector<DiscFont>& DiscFonts() { return g.disc; }
 
-std::atomic<int64_t> g_pad_activity{0};  // steady_clock ns of the last controller input
+// steady_clock ns of the last controller input, per socket (= per player in
+// play; outside play every device answers on socket 0 = player 1).
+std::array<std::atomic<int64_t>, 4> g_pad_activity{};
 // The game's fonts in memory -> their names (mouse_menus.h measures texts).
 std::mutex g_font_names_mutex;
 std::map<uint32_t, std::string> g_font_names;
 // A font with the menu glyphs was found (our font patch served and checked):
 // only then may the prompt bar use them (else they'd draw nothing).
 std::atomic<bool> g_menu_glyphs{false};
+// The small font's player slots were found (PlayerGlyph lends them).
+std::atomic<bool> g_player_slots{false};
+
+// PLAYER p's LOOK (0-3): keys or the controller's buttons, and which set.
+// p's devices = what answers on socket p (input/players.h): the keyboard if
+// it plays as p, p's controller(s); of those, the one used last (the
+// keyboard's last key against p's last controller input). Player 1's look =
+// the game's own glyphs (shared texts: hints, tutorials, the message bar).
+// Outside play every device answers as player 1, so any device counts there.
+Look LookOf(uint32_t p) {
+  Look l;
+  const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  const int32_t setting = REXCVAR_GET(button_prompts);
+  l.dark = REXCVAR_GET(keyboard_icons) == 1;
+  const bool keyboard = driver && assignment && assignment->KeyboardAnswersFor(p);
+  if (driver && setting != 2 && p < g_pad_activity.size()) {
+    l.keys = setting == 1 || (keyboard && driver->last_key_down() >= g_pad_activity[p].load());
+  }
+  // The controller's style: chosen, or (Automatic) the maker and model of p's
+  // controller (PadKeyFor socket p).
+  const int32_t pad_setting = REXCVAR_GET(controller_icons);
+  if (pad_setting >= 2 && pad_setting < 2 + int(std::size(kPadSets))) {
+    l.pad_style = pad_setting - 2;
+  } else if (pad_setting == 0 && assignment) {
+    l.pad_style = StyleOfPad(assignment->PadKeyFor(p));
+  }
+  return l;
+}
 
 // Writes host bytes into guest memory that may be graphics memory: the SDK's
 // watchers (the emulated GPU's texture cache, our native renderer's write
@@ -1269,11 +1376,13 @@ void CheckFont(uint8_t* base, uint32_t font) {
   // Which disc font: the one with as many pages (36 Large, 22 Small), or two
   // more when our font patch was served (the menu glyphs' pages, at the end).
   for (const DiscFont& disc : g.disc) {
-    const bool patched = page_count == disc.page_count + kAddedPrompts;
+    const bool large = IsLargeFont(disc.page_count);
+    const bool patched = page_count == disc.page_count + AddedPrompts(large);
     if (page_count != disc.page_count && !patched) continue;
     std::vector<GuestPage> found;
-    for (size_t k = 0; k < std::size(kPrompts); ++k) {
-      const Prompt* prompt = &kPrompts[k];
+    const std::vector<const Prompt*> prompts = PromptsFor(large);
+    for (size_t k = 0; k < prompts.size(); ++k) {
+      const Prompt* prompt = prompts[k];
       const auto source = disc.page_of.find(prompt->source);
       if (source == disc.page_of.end() || (k >= kDiscPrompts && !patched)) continue;
       // Each page must hold its source's picture (an added page = a copy).
@@ -1290,6 +1399,7 @@ void CheckFont(uint8_t* base, uint32_t font) {
                 disc.name, found.size(), patched ? ", menu glyphs included" : "");
     for (GuestPage& gp : found) g.pages.push_back(std::move(gp));
     if (patched) g_menu_glyphs = true;
+    if (patched && !large) g_player_slots = true;
     {
       std::lock_guard<std::mutex> names(g_font_names_mutex);
       g_font_names[font] = disc.name;
@@ -1411,13 +1521,15 @@ struct RotateGlyph {
   uint32_t record = 0;
   uint32_t width = 0, advance = 0;  // the game's own, as raw words
 };
-std::map<uint32_t, RotateGlyph> g_rotate;  // by font; main thread (g.mutex)
+// By font and character (the game's ¼ and players 2-4's copies of it); main
+// thread (g.mutex).
+std::map<std::pair<uint32_t, char16_t>, RotateGlyph> g_rotate;
 
 float WordFloat(uint32_t w) { float f; std::memcpy(&f, &w, 4); return f; }
 uint32_t FloatWord(float f) { uint32_t w; std::memcpy(&w, &f, 4); return w; }
 
-void NarrowRotate(uint8_t* base, uint32_t font, bool narrow) {
-  auto it = g_rotate.find(font);
+void NarrowRotate(uint8_t* base, uint32_t font, char16_t character, bool narrow) {
+  auto it = g_rotate.find({font, character});
   if (it == g_rotate.end()) {
     RotateGlyph r;
     const uint32_t count = Load32(base, font + kFontGlyphCount), records = Load32(base, font + kFontGlyphs);
@@ -1425,18 +1537,62 @@ void NarrowRotate(uint8_t* base, uint32_t font, bool narrow) {
       const uint32_t at = records + kGlyphHeader + kGlyphSize * i;
       // The loaded record holds its character as a u16 in the word's top half
       // (measured: "00 20 00 00" for the space).
-      if (Load32(base, at + kGlyphChar) >> 16 != 0x00BC) continue;
+      if (Load32(base, at + kGlyphChar) >> 16 != character) continue;
       r = {at, Load32(base, at + kGlyphWidth), Load32(base, at + kGlyphAdvance)};
       break;
     }
-    if (!r.record) REXLOG_WARN("Prompt pictures: the rotate glyph wasn't found in font {:08X}", font);
-    it = g_rotate.emplace(font, r).first;
+    if (!r.record) {
+      REXLOG_WARN("Prompt pictures: the rotate glyph {:04X} wasn't found in font {:08X}", uint32_t(character), font);
+    }
+    it = g_rotate.emplace(std::make_pair(font, character), r).first;
   }
   const RotateGlyph& r = it->second;
   if (!r.record) return;
   const float width = WordFloat(r.width), advance = WordFloat(r.advance);
   Store32(base, r.record + kGlyphWidth, narrow ? FloatWord(width / 2) : r.width);
   Store32(base, r.record + kGlyphAdvance, narrow ? FloatWord(advance - width / 2) : r.advance);
+}
+
+// THE FLOATING B'S OWNER (2026-10-17). The B over a save totem, a stunned
+// titan, a thing to use is ONE texture shared by every such icon, so it can
+// only show one player's picture at a time: the player it appeared for.
+// The icons are CIconBehaviour (vtable 0x8203248C; +28 its object, +116 its
+// drawable, +120 shown), switched by sub_82179130(icon, show). When an icon
+// turns ON, the playing player NEAREST to its object (their Crash, or the
+// titan they ride) owns it; the B shows the look of the owner of the icon
+// shown FIRST among those still up ("whoever comes near first": player 4 on
+// an Xbox pad walks up to a totem = Xbox B, even if player 1 on the keyboard
+// arrives a moment later). No icon up = player 1's look.
+constexpr uint32_t kIconVtable = 0x8203248C;
+constexpr uint32_t kIconObject = 28, kIconShown = 120;
+struct IconOwner {
+  uint32_t icon = 0;
+  int player = 0;
+};
+std::mutex g_icons_mutex;
+std::vector<IconOwner> g_icons;  // in the order they were shown
+
+// Player p's body (the titan they ride, else their Crash) position.
+bool BodyAt(uint8_t* base, int p, float out[3]) {
+  const uint32_t titan = more_players::TitanOfPlayer(p);
+  const uint32_t actor = titan ? titan : more_players::CharacterOfPlayer(p);
+  if (!actor) return false;
+  const uint32_t matrix = Load32(base, actor + 44);  // world matrix, position at +48
+  if (matrix < 0x40000000) return false;
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = Load32(base, matrix + 48 + 4 * i);
+    std::memcpy(&out[i], &w, 4);
+  }
+  return std::isfinite(out[0]) && std::isfinite(out[1]) && std::isfinite(out[2]);
+}
+
+// Who the floating B is for now (OnFrameEnd; drops icons that went away).
+int WorldButtonOwner(uint8_t* base) {
+  std::lock_guard<std::mutex> lock(g_icons_mutex);
+  std::erase_if(g_icons, [base](const IconOwner& o) {
+    return Load32(base, o.icon) != kIconVtable || !*GuestPtr(base, o.icon + kIconShown);
+  });
+  return g_icons.empty() ? 0 : g_icons.front().player;
 }
 
 // Once per game frame (main thread).
@@ -1453,7 +1609,8 @@ void OnFrameEnd(void*) {
       g.disc = ReadDiscFonts();
     }
     for (uint32_t font : g.fonts_loaded) {
-      g_rotate.erase(font);  // a new font at this address: its records are new too
+      // A new font at this address: its records are new too.
+      std::erase_if(g_rotate, [font](const auto& entry) { return entry.first.first == font; });
       CheckFont(base, font);
     }
     g.fonts_loaded.clear();
@@ -1473,40 +1630,21 @@ void OnFrameEnd(void*) {
   }
   if (g.pages.empty()) return;
 
-  // Keys or the controller's buttons?
-  int device = 0;
-  const int32_t setting = REXCVAR_GET(button_prompts);
-  if (driver && setting != 2) {
-    device = setting == 1 || driver->last_key_down() >= g_pad_activity.load() ? 1 : 0;
-  }
-  g_keys_shown = device == 1;
+  // Player 1's look: the game's own glyphs (every shared text). Players
+  // 2-4's pictures live in the player slots, each with its own look.
+  const Look l = LookOf(0);
+  const Look world = LookOf(uint32_t(WorldButtonOwner(base)));
   const uint32_t revision = driver ? driver->bindings_revision() : 0;
-  // The sets: Light / Dark keys, the controller's style (Automatic: the
-  // model of the controller used last, PadKeyFor its socket).
-  const bool dark = REXCVAR_GET(keyboard_icons) == 1;
-  int pad_style = kOriginalStyle;
-  const int32_t pad_setting = REXCVAR_GET(controller_icons);
-  if (pad_setting >= 2 && pad_setting < 2 + int(std::size(kPadSets))) {
-    pad_style = pad_setting - 2;
-  } else if (pad_setting == 0) {
-    if (const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get()) {
-      pad_style = StyleOfPad(assignment->PadKeyFor(g_pad_user.load()));
-    }
-  }
-  const std::string look = device ? (dark ? "D" : "L") : "P" + std::to_string(pad_style);
-  if (device == g.device && revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision &&
-      dark == g.dark && pad_style == g.pad_style) {
-    return;
-  }
+  g_keys_shown = l.keys;
+  const std::string look = l.Name() + " " + world.Name();
+  if (revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision) return;
   g_slot_drawn = g_slot_revision;
-  g.dark = dark;
-  g.pad_style = pad_style;
-  if (device != g.device || look != g.look) {
-    REXLOG_INFO("Prompt pictures: {}", device ? (dark ? "keyboard and mouse keys (dark)" : "keyboard and mouse keys")
-                                       : pad_style == kOriginalStyle ? std::string("controller buttons (the game's own)")
-                                       : std::string("controller buttons: ") + kPadSets[pad_style].name);
+  if (look != g.look || g.revision == UINT32_MAX) {
+    REXLOG_INFO("Prompt pictures: {}", l.keys ? (l.dark ? "keyboard and mouse keys (dark)" : "keyboard and mouse keys")
+                                       : l.pad_style == kOriginalStyle ? std::string("controller buttons (the game's own)")
+                                       : std::string("controller buttons: ") + kPadSets[l.pad_style].name);
+    if (world.Name() != l.Name()) REXLOG_INFO("Prompt pictures: the floating B in another player's look ({})", world.Name());
   }
-  g.device = device;
   g.revision = revision;
   g.look = look;
 
@@ -1518,9 +1656,11 @@ void OnFrameEnd(void*) {
       g.pages.erase(g.pages.begin() + std::ptrdiff_t(i));
       continue;
     }
-    const std::string want = Describe(*gp.prompt, bindings, device == 1, dark, pad_style);
+    // The floating B: its owner's look (THE FLOATING B'S OWNER above).
+    const Look& use = gp.prompt == &kWorldB ? world : l;
+    const std::string want = Describe(*gp.prompt, bindings, use.keys, use.dark, use.pad_style);
     if (want != gp.shown) Show(base, gp, want);
-    if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, device == 1);
+    if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, gp.prompt->character, l.keys);
     ++i;
   }
 }
@@ -1585,15 +1725,19 @@ bool PatchFont(pure3d::Node& font) {
   const uint32_t glyph_count = pure3d::NodeLe32(*glyphs, 0);
   if (page_count != pages.size() || glyphs->data.size() < 4 + 40 * size_t(glyph_count)) return false;
   // ± and ²'s glyph records.
-  std::vector<uint8_t> records[kAddedPrompts];
+  const bool large = IsLargeFont(page_count);
+  const std::vector<const Prompt*> prompts = PromptsFor(large);
+  const size_t added_count = AddedPrompts(large);
+  if (page_count + added_count > kMaxFontPages) return false;  // "64 PAGES"
+  std::vector<std::vector<uint8_t>> records(added_count);
   for (uint32_t i = 0; i < glyph_count; ++i) {
     const uint8_t* r = &glyphs->data[4 + 40 * i];
-    for (size_t k = 0; k < kAddedPrompts; ++k) {
-      if (pure3d::Le32(r + 36) == kPrompts[kDiscPrompts + k].source) records[k].assign(r, r + 40);
+    for (size_t k = 0; k < added_count; ++k) {
+      if (pure3d::Le32(r + 36) == prompts[kDiscPrompts + k]->source) records[k].assign(r, r + 40);
     }
   }
   std::vector<pure3d::Node> added;
-  for (size_t k = 0; k < kAddedPrompts; ++k) {
+  for (size_t k = 0; k < added_count; ++k) {
     if (records[k].empty()) return false;
     const uint32_t source_page = pure3d::Le32(&records[k][0]) & 0xFFFF;
     if (source_page >= pages.size()) return false;
@@ -1605,7 +1749,7 @@ bool PatchFont(pure3d::Node& font) {
     added.push_back(std::move(copy));
     // Its glyph record: the new page and character.
     std::vector<uint8_t>& r = records[k];
-    const uint32_t picture_page = page | 0x80000000u, character = kPrompts[kDiscPrompts + k].character;
+    const uint32_t picture_page = page | 0x80000000u, character = prompts[kDiscPrompts + k]->character;
     for (int b = 0; b < 4; ++b) {
       r[b] = uint8_t(picture_page >> (8 * b));
       r[36 + b] = uint8_t(character >> (8 * b));
@@ -1631,7 +1775,7 @@ bool PatchFont(pure3d::Node& font) {
     if (pictures && pictures->data.size() >= 4) {
       const uint32_t n = pure3d::NodeLe32(*pictures, 0);
       for (uint32_t i = 0; i < n && 4 + 8 * size_t(i + 1) <= pictures->data.size(); ++i) {
-        if (pure3d::NodeLe32(*pictures, 4 + 8 * i) != kPrompts[kDiscPrompts + k].source) continue;
+        if (pure3d::NodeLe32(*pictures, 4 + 8 * i) != prompts[kDiscPrompts + k]->source) continue;
         std::vector<uint8_t> entry(pictures->data.begin() + 4 + 8 * i,
                                    pictures->data.begin() + 4 + 8 * (i + 1));
         for (int b = 0; b < 4; ++b) entry[b] = uint8_t(character >> (8 * b));
@@ -1640,7 +1784,7 @@ bool PatchFont(pure3d::Node& font) {
       }
     }
   }
-  pure3d::SetNodeLe32(font, count_at, page_count + uint32_t(kAddedPrompts));
+  pure3d::SetNodeLe32(font, count_at, page_count + uint32_t(added_count));
   font.children.insert(font.children.begin() + std::ptrdiff_t(pages.back() + 1), added.begin(),
                        added.end());
   return true;
@@ -1822,6 +1966,74 @@ char16_t LendSlot(const std::string& what, SlotSize size) {
 }
 }  // namespace
 
+// EACH PLAYER'S OWN PICTURES (2026-10-17). The game's prompt glyphs are one
+// set of pages, so they show one device at a time: with players on
+// different devices, whoever pressed something last repainted every prompt
+// on screen, everyone's. Now the game's own glyphs follow PLAYER 1's devices
+// only (shared texts), and a text that belongs to player 2-4 gets PLAYER
+// SLOTS: copies of the A page holding that player's picture of the glyph
+// (their keyboard key or their controller's button, in their look). A slot
+// is lent per look and glyph, not per player: two players on PlayStation
+// pads share their Circle. A player whose look is player 1's needs no slot
+// (the game's own glyph shows the same picture). 10 slots (the 64-page
+// limit, "64 PAGES"); the least recently asked is lent out next, and the
+// texts using slots are rewritten every frame (FrontEndFrame / HudFrame), so
+// a slot taken over by another picture is noticed at once.
+namespace {
+char16_t PlayerGlyph(const Look& look, char16_t glyph) {
+  std::lock_guard<std::mutex> lock(g.mutex);
+  const std::string key = look.Name() + ":" + std::to_string(uint32_t(glyph));
+  size_t slot = 0;
+  for (size_t i = 0; i < kPlayerSlots; ++i) {
+    if (g_player_slot[i].key == key) {
+      slot = i;
+      break;
+    }
+    if (g_player_slot[i].asked < g_player_slot[slot].asked) slot = i;
+  }
+  PlayerSlot& ps = g_player_slot[slot];
+  if (ps.key != key) {
+    ps.key = key;
+    ps.look = look;
+    ps.glyph = glyph;
+    ++g_slot_revision;  // drawn at the next frame end
+  }
+  ps.asked = ++g_slot_clock;
+  return char16_t(kFirstPlayerSlot + slot);
+}
+
+// A prompt glyph a player slot can show: the disc's (but the rotate arrow,
+// whose record the keys narrow) and the menu ones.
+bool SlotGlyph(char16_t c) {
+  for (size_t k = 0; k < kDiscPrompts + 6; ++k) {
+    if (kBasePrompts[k].character == c) return kBasePrompts[k].kind != Kind::kSpin;
+  }
+  return false;
+}
+
+// What a player slot character stands for (its glyph), else `c` itself.
+char16_t BaseGlyph(char16_t c) {
+  if (c < kFirstPlayerSlot || c >= kFirstPlayerSlot + kPlayerSlots) return c;
+  std::lock_guard<std::mutex> lock(g.mutex);
+  const char16_t glyph = g_player_slot[c - kFirstPlayerSlot].glyph;
+  return glyph ? glyph : c;
+}
+
+// A text as player p's (0-3): its prompt glyphs in p's pictures (player
+// slots), or the game's own glyphs for player 1 / a player who looks like
+// player 1 / no slots in the font.
+std::u16string ForPlayer(std::u16string text, int p) {
+  for (char16_t& c : text) c = BaseGlyph(c);
+  if (p <= 0 || p > 3 || !g_player_slots.load(std::memory_order_relaxed)) return text;
+  const Look look = LookOf(uint32_t(p));
+  if (look.Name() == LookOf(0).Name()) return text;
+  for (char16_t& c : text) {
+    if (SlotGlyph(c)) c = PlayerGlyph(look, c);
+  }
+  return text;
+}
+}  // namespace
+
 char16_t KeyGlyph(Input key, SlotSize size) {
   if (key == kbm::kNoInput || !g_menu_glyphs.load()) return 0;
   return LendSlot("K " + std::to_string(key), size);
@@ -1842,8 +2054,8 @@ char16_t ButtonGlyph(std::string_view pad, SlotSize size) {
 
 char16_t MenuGlyph(char16_t c) {
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return c;
-  for (size_t k = kDiscPrompts; k < std::size(kPrompts); ++k) {
-    if (kPrompts[k].source == c) return kPrompts[k].character;
+  for (size_t k = kDiscPrompts; k < kDiscPrompts + 6; ++k) {  // the six menu glyphs
+    if (kBasePrompts[k].source == c) return kBasePrompts[k].character;
   }
   return c;
 }
@@ -1913,27 +2125,33 @@ std::u16string SpinLine(const std::u16string& text) {
   return u"OR " + line;
 }
 
-void SpinRow(PPCContext& ctx, uint8_t* base, uint32_t text) {
+// One text: its spin line (above) and its prompt characters as player
+// `player`'s (0-3; ForPlayer: the texts that belong to one player).
+void SpinRow(PPCContext& ctx, uint8_t* base, uint32_t text, int player = 0) {
   if (!text) return;
   const std::u16string now = ReadText(base, text);
   auto it = g_spun.find(text);
   // Our own text from last time = its original is still the game's; anything
-  // else = the game wrote a new one.
-  const std::u16string original = it != g_spun.end() && now == it->second.shown ? it->second.original : now;
-  if (original.find(u"\u00B9\u00BC") == std::u16string::npos) {
-    if (it != g_spun.end()) g_spun.erase(it);
-    return;
-  }
-  const std::u16string line = SpinLine(original);
-  const std::u16string wanted = line.empty() ? original : original + u"\n" + line;
+  // else = the game wrote a new one (in the game's characters; ForPlayer(.., 0)
+  // only matters for a text of ours another player's copy wrote).
+  const std::u16string original =
+      it != g_spun.end() && now == it->second.shown ? it->second.original : ForPlayer(now, 0);
+  const bool spin = original.find(u"\u00B9\u00BC") != std::u16string::npos;
+  const std::u16string line = spin ? SpinLine(original) : std::u16string();
+  const std::u16string wanted = ForPlayer(line.empty() ? original : original + u"\n" + line, player);
   if (wanted != now) scrooby::SetText(ctx, base, text, wanted);
-  g_spun[text] = {original, wanted};
+  if (wanted == original) {
+    if (it != g_spun.end()) g_spun.erase(it);
+  } else {
+    g_spun[text] = {original, wanted};
+  }
 }
 
-void SpinRows(PPCContext& ctx, uint8_t* base) {
+void SpinRows(PPCContext& ctx, uint8_t* base, int owner) {
+  // The Tutorials pages: opened from a pause menu, they belong to its owner.
   if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame_Tutorial")) {
     for (const char* name : {"Text0", "Text1", "Text2", "Text3"}) {
-      SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name));
+      SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name), owner);
     }
   }
   if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame")) {
@@ -1947,14 +2165,46 @@ void SpinRows(PPCContext& ctx, uint8_t* base) {
   }
 }
 
+// EACH PLAYER'S TEXTS (2026-10-17): the texts that belong to one player get
+// that player's prompt characters (ForPlayer): the co-op corner (pages
+// InGame_CoOp_Player1-4, texts Message and Button: "Join Game" and its
+// button, the countdown...) and the counter prompt beside each HUD
+// (InGame.pag CounterButtonPlayer1-4; players 3-4's pages / texts are
+// players/more_players_hud.cpp's copies). Looked at every front-end frame
+// AND after every HUD update (HudFrame): while the corners show "Join Game"
+// (the first ~10 s of a level), the HUD (sub_8226A998 -> sub_82269480) sets
+// their button from the text bank EVERY frame, after the front end's update
+// (found with the console's `who` on the text's string word +156).
+void PlayerTexts(PPCContext& ctx, uint8_t* base) {
+  const uint32_t ingame = scrooby::FindPage(ctx, base, "InGame");
+  for (int p = 0; p < 4; ++p) {
+    const std::string digit = std::to_string(p + 1);
+    if (const uint32_t page = scrooby::FindPage(ctx, base, ("InGame_CoOp_Player" + digit).c_str())) {
+      for (const char* name : {"Message", "Button"}) SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name), p);
+    }
+    if (ingame) SpinRow(ctx, base, scrooby::FindText(ctx, base, ingame, ("CounterButtonPlayer" + digit).c_str()), p);
+  }
+}
+
 }  // namespace
 
+void HudFrame(PPCContext& ctx, uint8_t* base) {
+  if (g_menu_glyphs.load(std::memory_order_relaxed)) PlayerTexts(ctx, base);
+}
+
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
-  SpinRows(ctx, base);
+  // Whose menu is up (who paused...; menu_input.cpp): its prompts are theirs.
+  const int owner =
+      g_menu_glyphs.load(std::memory_order_relaxed) && menu_input::MenuOnScreen()
+          ? std::max(0, menu_input::CurrentMenuOwner(ctx, base))
+          : 0;
+  SpinRows(ctx, base, owner);
   if (!g_menu_glyphs.load(std::memory_order_relaxed)) return;
+  PlayerTexts(ctx, base);
   // The menus' prompt bar: page FE_Buttons (always loaded, in the front end
   // and in game), whose BUTTON texts hold just the glyph ("±"), apart from
-  // their labels ("Select"): their play glyphs become the menu ones. Found
+  // their labels ("Select"): their play glyphs become the menu ones, in the
+  // menu OWNER's pictures (player slots: player 2 paused = player 2's). Found
   // every frame (four lookups by name): pages come and go with the packages.
   const uint32_t page = scrooby::FindPage(ctx, base, "FE_Buttons");
   if (!page) return;
@@ -1964,17 +2214,17 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     const uint32_t text = scrooby::FindText(ctx, base, page, name);
     const uint32_t string = text ? Load32(base, text + kTextString) : 0;
     if (!string) continue;
-    std::u16string value;
-    bool changed = false;
+    std::u16string now, value;
     for (uint32_t i = 0; i < 64; ++i) {
       const uint8_t* c = GuestPtr(base, string + 2 * i);
-      char16_t ch = char16_t(c[0] << 8 | c[1]);
+      const char16_t ch = char16_t(c[0] << 8 | c[1]);
       if (!ch) break;
-      const char16_t menu = MenuGlyph(ch);
-      changed = changed || menu != ch;
-      value.push_back(menu);
+      now.push_back(ch);
+      value.push_back(MenuGlyph(BaseGlyph(ch)));
     }
-    if (changed) scrooby::SetText(ctx, base, text, value);
+    // The menu owner's pictures (player 2-4 paused: their buttons).
+    value = ForPlayer(value, owner);
+    if (value != now) scrooby::SetText(ctx, base, text, value);
   }
 }
 
@@ -2002,8 +2252,7 @@ void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours) {
     for (int i = 0; i < 4; ++i) pad = pad || std::abs(int(stick(i))) > 12000;
   }
   if (pad) {
-    g_pad_activity = Clock::now().time_since_epoch().count();
-    g_pad_user = user;
+    if (user < g_pad_activity.size()) g_pad_activity[user] = Clock::now().time_since_epoch().count();
   }
 }
 
@@ -2013,6 +2262,37 @@ void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours) {
 // it's built, through r4 like the font loader below; the frame end looks for
 // the world's B among them (prompt_icons State::textures_loaded).
 extern "C" REX_FUNC(__imp__sub_823AFB00);
+// CIconBehaviour: show / hide (r4) its floating button (THE FLOATING B'S
+// OWNER): an icon that turns on gets the nearest playing player as owner.
+extern "C" REX_FUNC(__imp__sub_82179130);
+extern "C" REX_FUNC(sub_82179130) {
+  using namespace prompt_icons;
+  const uint32_t icon = ctx.r3.u32;
+  const bool was = icon && *GuestPtr(base, icon + kIconShown);
+  __imp__sub_82179130(ctx, base);
+  if (!icon || was || !*GuestPtr(base, icon + kIconShown)) return;
+  const uint32_t object = Load32(base, icon + kIconObject);
+  const uint32_t matrix = object ? Load32(base, object + 44) : 0;
+  if (matrix < 0x40000000) return;
+  float at[3];
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = Load32(base, matrix + 48 + 4 * i);
+    std::memcpy(&at[i], &w, 4);
+  }
+  int owner = 0;
+  float best = INFINITY;
+  for (int p = 0; p < more_players::LocalPlayerCount(); ++p) {
+    float body[3];
+    if (!menu_input::PlayerPlays(p) || !BodyAt(base, p, body)) continue;
+    const float dx = body[0] - at[0], dy = body[1] - at[1], dz = body[2] - at[2];
+    const float d = dx * dx + dy * dy + dz * dz;
+    if (d < best) best = d, owner = p;
+  }
+  std::lock_guard<std::mutex> lock(g_icons_mutex);
+  g_icons.push_back({icon, owner});
+  REXLOG_INFO("Prompt pictures: a floating button appeared ({:08X}), for player {}", icon, owner + 1);
+}
+
 extern "C" REX_FUNC(sub_823AFB00) {
   const uint32_t out = ctx.r4.u32;
   __imp__sub_823AFB00(ctx, base);

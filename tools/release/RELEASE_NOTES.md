@@ -94,6 +94,14 @@ button, key or mouse click brings up the "Skip" prompt; A (Enter or Space on
 the keyboard) then skips. Before, only a controller's START brought it up,
 so on the keyboard these cutscenes couldn't be skipped.
 
+**Each player's own button pictures**: in co-op, every player's prompts show
+their own device: the "Join Game" corners, the counter prompts beside each
+HUD, and a paused player's menu buttons and tutorials. Player 2 on a
+PlayStation pad sees Circle and Cross while player 1 keeps keyboard keys.
+The floating button over totems and titans shows the button of the player
+who walked up to it first. Before, whoever pressed something last switched
+everyone's pictures. Shared texts (hints, the message bar) follow player 1.
+
 **Type names on the keyboard**: on the name screen (New Game, renaming a
 save) just type; Backspace erases, Enter is Done, Esc goes back. The mouse
 works on the on-screen keyboard, and its old erase key is now a SPACE key.

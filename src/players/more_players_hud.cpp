@@ -43,6 +43,7 @@
 // =============================================================================
 #include "more_players_hud.h"
 #include "more_players.h"
+#include "../input/prompt_icons.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -466,6 +467,9 @@ extern "C" REX_FUNC(sub_8226A998) {
       if (CallVirtual(ctx, base, d, 6) & 0xFF) CallVirtual(ctx, base, d, 4);
     }
   }
+  // Each player's corner and counter prompt in THEIR button pictures (the
+  // update above just set them in the game's shared ones; input/prompt_icons.h).
+  prompt_icons::HudFrame(ctx, base);
 }
 // Show / hide (slot 5 with r4).
 extern "C" REX_FUNC(sub_8226AA48) {

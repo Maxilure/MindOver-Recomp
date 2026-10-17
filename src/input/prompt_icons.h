@@ -67,6 +67,13 @@
 // bar shows Enter / Escape while the texts show Space / E; on a controller
 // both are the 360's A and B.
 //
+// EACH PLAYER'S OWN (2026-10-17, findings/37 s.6): the game's own glyphs
+// follow PLAYER 1's devices (shared texts); the texts that belong to one
+// player (the "Join Game" corners, the counter prompts, the menu owner's
+// prompt bar and tutorials) get that player's pictures through PLAYER SLOTS
+// (10 glyphs of the small font, lent per look and glyph). A font holds at
+// most 64 pages (the draw's per-page tables), which sets the slot count.
+//
 // --button_prompts: 0 = automatic (the device used last), 1 = always keys,
 // 2 = always the controller's buttons.
 //
@@ -107,6 +114,11 @@ void Install();
 // main thread, in menus and in game): the prompt bar's ± and ² become the
 // menu glyphs.
 void FrontEndFrame(PPCContext& ctx, uint8_t* base);
+
+// After every HUD update (players/more_players_hud.cpp, sub_8226A998; main
+// thread): the HUD's per-player texts get their player's prompt pictures
+// again (the HUD rewrites some of them every frame).
+void HudFrame(PPCContext& ctx, uint8_t* base);
 
 // The menus' own glyph for a prompt character (± -> menu A, ² -> menu B, ³ ´
 // ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't
