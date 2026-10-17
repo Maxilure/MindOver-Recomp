@@ -164,6 +164,7 @@ struct Requests {
   float hurt[kPlayers] = {};  // debug FIFO only: damage through the game's own path
   int combo[kPlayers] = {};   // debug FIFO only: hits on the combo meter (findings/26 s.25)
   bool counter[kPlayers] = {};  // debug FIFO only: show the "counter now" prompt (findings/26 s.27)
+  bool respawn = false;  // debug FIFO only: respawn every player, as a Crash <-> Coco outfit pick does
   bool free_jack[kPlayers] = {};
   bool step = false;
 };
@@ -229,6 +230,7 @@ bool IsPlayerBody(uint32_t actor) {
 
 // The game functions we call (generated; __imp__ = the original even when we
 // override the name).
+extern "C" REX_FUNC(__imp__sub_8227C5A0);  // the game's "respawn the players" (r3 game, r4 player)
 extern "C" REX_FUNC(__imp__sub_82177D38);  // CUpgradeableBehaviour: buy the steps its mojo covers
 extern "C" REX_FUNC(__imp__sub_821349E0);  // CDamageableBehaviour: change hitpoints by f1
 extern "C" REX_FUNC(__imp__sub_822FFA40);  // CTimeManager::GetScale
@@ -501,6 +503,11 @@ void Tick(PPCContext& ctx, uint8_t* base) {
       }
     }
   }
+  if (requests.respawn && in_level) {
+    // The outfit chest's Crash <-> Coco path (players/outfits.cpp): every player rebuilt.
+    CallGame(__imp__sub_8227C5A0, ctx, base, Read32(0x8259B190), 0);
+    REXLOG_INFO("Cheats: players respawned (test)");
+  }
 
   for (auto it = g_killed.begin(); it != g_killed.end();) {
     it = --it->second <= 0 ? g_killed.erase(it) : std::next(it);
@@ -633,6 +640,10 @@ bool DebugCommand(std::string_view command) {
   else if (verb == "counter" && player_ok) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.counter[player] = true;
+  }
+  else if (verb == "respawn") {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_requests.respawn = true;
   }
   else if (verb == "freecam") free_camera::SetEnabled(on);
   else if (verb == "freecam_keys") free_camera::SetKeysMoveCamera(on);

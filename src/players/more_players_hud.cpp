@@ -423,13 +423,37 @@ extern "C" REX_FUNC(sub_8226A8A8) {
   __imp__sub_8226A8A8(ctx, base);
   if (auto* extra = ExtraOf(controller)) for (uint32_t d : *extra) CallVirtual(ctx, base, d, 2);
 }
+// A display's state machine (sub_82268660, state at +148): 2 = steady; when its
+// bound character (+128) is no longer the player's, 3-4 fade it out, 5 BINDS
+// the player's titan or Crash (sub_82268D60: +128 = it, +132 = a pointer to its
+// variable 18, the health float), 6, then 1 sweeps it in reading *(+132).
+// Players 1-2's characters are back the moment a respawn makes them; players
+// 3-4's come with OUR spawn events a few frames later, so state 5 bound
+// nothing: +132 = 0 and state 1 read address 0 = crash (2026-10-17: player 1
+// switched Carbon Crash -> Coco in the outfit chest = a respawn of everyone,
+// with 4 players). Now a display in state 5 WAITS while its player has no
+// character and no titan, and one that got bound to nothing anyway goes back
+// to 5.
+constexpr uint32_t kDisplayState = 148, kDisplayHealth = 132;
+bool DisplayWaits(uint32_t d) {
+  const uint32_t state = Read32(d + kDisplayState);
+  if ((state == 1 || state == 2) && !Read32(d + kDisplayHealth)) Write32(d + kDisplayState, 5);
+  if (Read32(d + kDisplayState) != 5) return false;
+  const int p = int(Read32(d + kDisplayPlayer));
+  return !more_players::CharacterOfPlayer(p) && !more_players::TitanOfPlayer(p);
+}
+
 // Update (slot 3 with the frame time f1), while the controller is on (+4 bit 0x80).
 extern "C" REX_FUNC(sub_8226A908) {
   const uint32_t controller = ctx.r3.u32;
   const double dt = ctx.f1.f64;
   __imp__sub_8226A908(ctx, base);
   if (!(*Guest(controller + 4) & 0x80)) return;
-  if (auto* extra = ExtraOf(controller)) for (uint32_t d : *extra) CallVirtual(ctx, base, d, 3, 0, dt);
+  if (auto* extra = ExtraOf(controller)) {
+    for (uint32_t d : *extra) {
+      if (!DisplayWaits(d)) CallVirtual(ctx, base, d, 3, 0, dt);
+    }
+  }
 }
 // Draw: slot 4 of each that says yes to slot 6. Nothing while the cheat menu
 // hides the HUD (cheats/cheats.h).
