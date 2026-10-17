@@ -121,6 +121,11 @@ struct Hooks {
 };
 void SetHooks(Hooks hooks);
 
+// Sets a port flag by name (the F4 settings' parsing and checks) and
+// remembers it for SaveChanged. For settings changed outside the Options
+// screen (the outfits picked at the chest, players/outfits.h).
+void SetFlagToSave(const char* name, const std::string& value);
+
 // Writes the port flags changed since the last call to user/settings.toml.
 void SaveChanged();
 

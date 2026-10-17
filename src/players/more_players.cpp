@@ -30,8 +30,6 @@ extern "C" REX_FUNC(__imp__sub_82266130);  // front end: controller of player r4
 extern "C" REX_FUNC(__imp__sub_82266150);  // front end: player r4's controller = r5
 extern "C" REX_FUNC(__imp__sub_82266178);  // front end: every player's controller = -1
 extern "C" REX_FUNC(__imp__sub_82275210);  // (what the setter calls when a controller is removed)
-extern "C" REX_FUNC(__imp__sub_8229F8B8);  // player r3's character
-extern "C" REX_FUNC(__imp__sub_8229F8A0);  // player r3's character = r4
 extern "C" REX_FUNC(__imp__sub_82283670);  // level: create the spawn event of player r4
 extern "C" REX_FUNC(__imp__sub_8227E890);  // the game's operator new (r3 = size)
 extern "C" REX_FUNC(__imp__sub_8229C550);  // CActionSpawnPlayer constructor (this, player, r5, name)
@@ -108,7 +106,6 @@ constexpr uint32_t kBlockSize = kBlockListB + 2 * kListBytes;
 
 uint32_t g_block = 0;           // guest address of our block (0 = not installed)
 int32_t g_controllers[kMaxPlayers - 2] = {-1, -1};  // players 3-4's controllers
-uint32_t g_characters[kMaxPlayers - 2] = {0, 0};     // players 3-4's characters (0 = Carbon Crash)
 int g_building_spawn_for = -1;  // while players 3-4's spawn event is built as player 2: which player
 
 // THE HOST OF EACH PLAYER'S MASK, by PLAYER NUMBER (not by object: a level
@@ -672,36 +669,11 @@ extern "C" REX_FUNC(sub_822705D0) {
   __imp__sub_82357E00(ctx, base);
 }
 
-// Characters (0x8259B1C0, per player): the number of the character a player
-// plays: 0 = Crash (with a player number other than 1 the game swaps in
-// player 2's texture: Carbon Crash, the white variant), 9 = Coco, who takes
-// player 2's place later in the story (seen in a save from the Ice Prison
-// way). Players 3-4 keep their own, Carbon Crash (0) until something sets it
-// (a first version copied player 2's: two Cocos). Outfits picked in Crash's
-// house set it for players 1-2 (sub_8229F8A0).
-extern "C" REX_FUNC(sub_8229F8B8) {
-  const uint32_t player = ctx.r3.u32;
-  if (player >= 2 && player < kMaxPlayers) {
-    ctx.r3.u64 = g_characters[player - 2];
-  } else if (player == 1 && g_building_spawn_for >= 2) {
-    ctx.r3.u64 = g_characters[g_building_spawn_for - 2];  // the event is built as player 2
-  } else {
-    __imp__sub_8229F8B8(ctx, base);
-  }
-  {  // --debug_coop_trace: each player's character number, once per value
-    static std::set<std::pair<uint32_t, uint32_t>> seen;
-    if (REXCVAR_GET(debug_coop_trace) && seen.insert({player, ctx.r3.u32}).second) {
-      REXLOG_INFO("Co-op: player {}'s character = {}", player + 1, ctx.r3.u32);
-    }
-  }
-}
-extern "C" REX_FUNC(sub_8229F8A0) {
-  if (ctx.r3.u32 >= 2) {
-    if (ctx.r3.u32 < kMaxPlayers) g_characters[ctx.r3.u32 - 2] = ctx.r4.u32;
-    return;
-  }
-  __imp__sub_8229F8A0(ctx, base);
-}
+// Characters (0x8259B1C0, per player): which character / outfit each player
+// wears. Owned by players/outfits.cpp since the outfits work (2026-10-16:
+// every player picks at the chest in Crash's house); it overrides
+// sub_8229F8B8 / sub_8229F8A0 and asks BuildingSpawnFor() below (players
+// 3-4's spawn events are built AS player 2 and ask for player 2's character).
 
 // A level creates its players' spawn events (r3 = level, r4 = player, r5, r6 =
 // name). After player 2's: players 3..N, built as player 2 and renumbered.
@@ -1439,6 +1411,8 @@ void MorePlayersMultiplierRead(PPCRegister& index, PPCRegister& value) {
 }
 
 // Player p's character, for the other modules (more_players.h).
+int more_players::BuildingSpawnFor() { return g_building_spawn_for; }
+
 uint32_t more_players::CharacterOfPlayer(int p) {
   return p >= 0 && p < kMaxPlayers ? CharacterOf(p) : 0;
 }

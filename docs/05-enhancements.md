@@ -120,6 +120,16 @@ its own question box says so; any player can drop that player out, and once
 the controller is back that player presses a button to resume (section 33). Next: more camera testing (fights, titans, bosses, tight
 spaces) and the game's off-screen catch-up for players 3-4.
 
+Every player has their own outfit (findings/46): the chest in Crash's house
+offers all of them to everyone (Crash's outfits, Carbon Crash, Coco and her
+Old School look, player 1 included), Back turns to the next player's page,
+Crash also comes in six colours for anyone (red, yellow, green, blue,
+purple, pink, after the Crash of the Titans short "Have Another"); player 2
+stays the original white Carbon Crash by default, players 3-4 start green
+and purple, and the hair follows every outfit.
+
+![Four players in their outfits, and player 3's page at the chest](images/outfits-four-players.jpg)
+
 ![Players 1, 4 and 3's markers](images/markers-players-three-four.jpg)
 
 ![Four players, each "counter now" Y beside its own HUD](images/four-players-counter-prompts.jpg)

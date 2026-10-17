@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "data_patcher.h"
+#include <rex/cvar.h>
 #include "../guest_memory.h"
 
 #include <algorithm>
@@ -12,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <set>
 #include <memory>
 #include <mutex>
 #include <utility>
@@ -230,6 +232,10 @@ bool Served(uint32_t category, std::string_view name) {
 
 // The file path (r3 = category, r4 = name, r5 = 512-byte buffer, built
 // "<folder>/<name>.<extension>"): a file with a patch -> its changed copy.
+REXCVAR_DEFINE_BOOL(debug_data_paths, false, "CrashMoM",
+                    "Debug: log every data file path the game builds (category, name, path), once "
+                    "each: which category a package loads through (src/data/data_patcher.cpp)");
+
 extern "C" REX_FUNC(sub_822E3828) {
   using namespace data_patcher;
   const uint32_t category = ctx.r3.u32;
@@ -240,6 +246,13 @@ extern "C" REX_FUNC(sub_822E3828) {
     return;
   }
   const std::string name_text(reinterpret_cast<const char*>(GuestPtr(base, name)));
+  if (REXCVAR_GET(debug_data_paths)) {  // once per category + name
+    static std::set<std::string> seen;
+    if (seen.insert(std::to_string(category) + "/" + name_text).second) {
+      REXLOG_INFO("Data paths: category {} name {} -> {}", category, name_text,
+                  reinterpret_cast<const char*>(GuestPtr(base, out)));
+    }
+  }
   if (!AnyPatchFor(category, name_text)) {
     return;
   }

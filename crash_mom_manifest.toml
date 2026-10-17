@@ -1776,3 +1776,27 @@ registers = ["f7", "r31"]
 address = 0x8217E984
 name = "CrashMomPlatformMoveMinimum"
 registers = ["f0", "r30"]
+
+# OUTFITS FOR PLAYERS 1-4 (src/players/outfits.cpp, docs/findings/46, 2026-10-16). The chest's skin
+# screen (CSkinScreenAction) keeps its page's player at this +0x84 (0/1), which also picks the page's
+# layout. OPENING: the player at the chest (front end +0x2230, sub_82263638) is stored here; we keep
+# the real player ourselves and store the layout (player & 1). r3 is reloaded right after (0x820E008C).
+[[entrypoint.midasm_hook]]
+address = 0x820E0088
+name = "OutfitsChestOpen"
+registers = ["r3"]
+# BACK ("Goto Player N"): the game turns the page with r4 = (page == 0) (cntlzw) stored here; ours =
+# the next player on foot (1 -> 2 -> 3 -> 4 -> 1), stored as its layout. r4 is passed to sub_82263630
+# next (the front end's player choosing), which we answer with the real player (lr 0x820E1908).
+[[entrypoint.midasm_hook]]
+address = 0x820E18FC
+name = "OutfitsChestNextPage"
+registers = ["r4", "r31"]
+# THE PREVIEW: sub_820E0A30 creates the preview's controller (sub_8211AA50) with r5 = an animation set
+# chosen by PAGE (0x825A0A78 + 8 x page: Crash's / Coco's) and r6 = the page. With every outfit on every
+# page it must follow the shown outfit (Coco on page 1 got Crash's moves: null read in sub_82351340).
+# Verified with xexdis 0x820E0A54-0x820E0AB0 (r5 = r29 at 0x820E0A9C, r6 loaded at 0x820E0AA0).
+[[entrypoint.midasm_hook]]
+address = 0x820E0AA8
+name = "OutfitsPreviewCharacter"
+registers = ["r5", "r6"]

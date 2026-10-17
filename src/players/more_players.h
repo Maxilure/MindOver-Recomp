@@ -87,6 +87,10 @@ bool Loading();
 // Player p's character (Crash), 0 if none (the game object's list / ours).
 uint32_t CharacterOfPlayer(int p);
 
+// While players 3-4's spawn event is built (as player 2): which player (2-3),
+// else -1. The outfits (players/outfits.cpp) answer for that player.
+int BuildingSpawnFor();
+
 // The titan player p has jacked (rides), 0 if on foot / none.
 uint32_t TitanOfPlayer(int p);
 

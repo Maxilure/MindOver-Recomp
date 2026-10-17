@@ -149,6 +149,17 @@ going back; Escape goes back.
   asking you not to turn off the Xbox 360. Settings: *save_screen_waits*
   and *save_success_screens* bring the original timings and screens back.
 
+**Outfits for every player.** The chest in Crash's house now dresses all
+four players: every outfit for everyone (Crash, Carbon Crash, Greeny, Bluey,
+Reddy, Snipe, Ratcicle, Magmadon, Skeleton, Spike, Coco, Old School), Coco
+for player 1 too, and Back pages through each player on foot. Crash also
+comes in Red, Yellow, Green, Blue, Purple and Pink, for anyone, after the
+Crash of the Titans short "Have Another" (fur, chest and tattoos each in
+their own shade, the hair too); player 2 is still the original white Carbon
+Crash by default and players 3-4 start in green and purple (*carbon_colours*
+= false: white only). Carbon Crash's hair now matches his fur. Picks are kept per
+player in the settings, whichever save is loaded.
+
 **Fixes**
 
 - **Above 30 fps, moving floors no longer stop.** In the space station, a

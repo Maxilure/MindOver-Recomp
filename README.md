@@ -56,7 +56,7 @@ Runs at **60 fps** with the original game speed. 120, 144 and uncapped work too 
 <td valign="top">
 
 ### 👥 Up to four players
-Co-op for **four** instead of two: HUDs, markers and loading screens for players 3 and 4, and a co-op camera that keeps everyone in view *(experimental)*.
+Co-op for **four** instead of two: HUDs, markers and loading screens for players 3 and 4, every outfit for every player (Coco for player 1 too, Crash in six colours), and a co-op camera that keeps everyone in view *(experimental)*.
 
 </td>
 <td valign="top">

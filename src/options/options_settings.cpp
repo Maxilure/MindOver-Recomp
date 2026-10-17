@@ -852,6 +852,8 @@ std::u16string ActionName(int action) {
 
 void SetHooks(Hooks hooks) { g_hooks = std::move(hooks); }
 
+void SetFlagToSave(const char* name, const std::string& value) { SetFlag(name, value); }
+
 void SaveChanged() {
   std::set<std::string> changed;
   {
