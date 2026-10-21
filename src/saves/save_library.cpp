@@ -1420,6 +1420,29 @@ extern "C" REX_FUNC(sub_82259B70) {
   g.in_autosave = false;
 }
 
+extern "C" REX_FUNC(__imp__sub_8227F130);
+namespace save_library {
+// THE TEXTS' HEAP (2026-10-17): the screen's Enter copies each panel text
+// (name, date, play time, %) into the front end's heap (7, ~100 KB); a
+// copy that doesn't fit leaves its text EMPTY (only the difficulty, a text
+// bank string, stays): what a leak of text copies looked like (ui/scrooby.cpp
+// TEXT OWNERSHIP FIX). Logged at every visit: sub_8227F130(heap, &used,
+// &total, &c) = the game's heap report (used bytes, size, a third number).
+void LogTextHeap(PPCContext& ctx, uint8_t* base, const char* when) {
+  static uint32_t out = 0;
+  if (!out) out = rex::system::kernel_memory()->SystemHeapAlloc(16);
+  if (!out) return;
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = 7;
+  ctx.r4.u64 = out;
+  ctx.r5.u64 = out + 4;
+  ctx.r6.u64 = out + 8;
+  __imp__sub_8227F130(ctx, base);
+  ctx = saved;
+  REXLOG_INFO("Saves: front-end heap {}: {} of {} bytes used", when, Read32(base, out), Read32(base, out + 4));
+}
+}  // namespace save_library
+
 // The slot screen's Enter (r3 = the CGameSlotScreenAction), unless it's our
 // own refill. The front end also closes and reopens the screen around its
 // overwrite prompt, so this isn't always a new visit: the pick and the
@@ -1442,6 +1465,7 @@ extern "C" REX_FUNC(sub_820CC188) {
     ClearPreview(base, manager, preview);
   }
   if (visit) {
+    LogTextHeap(ctx, base, "after the list");  // the panels' texts are in
     DecoratePanels(ctx, base);
   }
 }

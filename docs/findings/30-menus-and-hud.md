@@ -255,3 +255,48 @@ in-game Options screen is the same pattern on the glass panel.
 * The track decoding and the annotated pictures were made with scratch
   scripts (hash names over the bfig's track records; boxes drawn with the
   formula of section 1 over F10 photos from a debug-console run).
+
+## 9. A text's string: owned or borrowed (a leak, fixed)
+
+A Scrooby text element keeps its string in two words: `+152` is the
+string it owns or borrows, `+156` the one drawn. Bit `0x20` of byte `+179`
+says "`+152` is my own copy". The game sets texts three ways:
+
+| Function | What it does |
+|---|---|
+| `sub_82373360` (UTF-16) / `sub_82373278` (ASCII) | free an owned copy, copy the new string into the CURRENT heap, set the flag |
+| `sub_823731D0(text, string)` | point `+152` at a borrowed string (0 = back to the text bank's default); the flag is left as it was |
+| `sub_82371C58` (text bank id) | only `+156` |
+
+The original game never mixes the copying setters with `sub_823731D0` on
+one text, so the pointer setter has no reason to free anything. The port
+did mix them: each player's own button pictures (`input/prompt_icons.cpp`,
+`PlayerTexts`) copy a one-character string into the co-op corners' Button
+texts, and while those corners fade out the HUD (`sub_82269480`) points the
+same texts back to 0 every frame. Every copy was dropped without being
+freed: about 16 bytes per text, three texts, every frame. The front end's
+heap (heap 7, 104,864 bytes, where menu texts keep their copies) filled
+within minutes, and from then on every new text copy failed:
+
+* the save list's panels came up with only the difficulty and the picture
+  (name, date, play time and % are copies; the difficulty is a text bank
+  string),
+* "Join Game" lost its button picture, the Delete / Rename prompts theirs.
+
+It only happened with a player whose button pictures differ from player
+1's (for example player 1 on the keyboard and a controller of another make
+on player 4): otherwise nothing is rewritten.
+
+**How it was found.** A log line at every save list visit (the game's heap
+report `sub_8227F130(7, &used, &total, ...)`) showed the heap full when the
+panels were empty (103,688 of 104,864 bytes used; 11-12 KB normally). A
+temporary wrapper of the game's allocator (`sub_8227E890`) and free
+(`sub_82357598`) kept every heap-7 block with its caller: 5,739 live 4-byte
+blocks from the text copier, called from our HUD hook. The debug console's
+`who` on one text's `+152` showed the other writer: `sub_823731D0` from
+`sub_82269480+0x26C`, every frame.
+
+**Fix** (`ui/scrooby.cpp`): `sub_823731D0` is wrapped: an owned copy is
+freed and the flag cleared before the original runs, as the copying setters
+do. The heap stays at ~11.5 KB through the same test (fake controllers 2-4
+with another picture style), and the save list fills in.

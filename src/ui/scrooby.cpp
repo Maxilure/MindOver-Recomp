@@ -228,3 +228,41 @@ void PlaySound(PPCContext& ctx, uint8_t* base, Sound sound) {
 }
 
 }  // namespace scrooby
+
+// -----------------------------------------------------------------------------
+// TEXT OWNERSHIP FIX (2026-10-17, findings/30 s.9)
+// -----------------------------------------------------------------------------
+// A Scrooby text keeps its string in two words: +152 = the string it OWNS or
+// borrows, +156 = the one drawn; byte +179 bit 0x20 = "+152 is my own copy".
+// The copying setters (sub_82373360 UTF-16, sub_82373278 ASCII) free an
+// owned copy before taking a new one. sub_823731D0(text, string) does NOT:
+// it only POINTS +152 at a borrowed string (0 = back to the text bank's
+// default) and leaves the flag. The game never mixes the two on one text,
+// so that was harmless, until the port copied its own strings into texts
+// the game also points (the co-op corners' "Join Game" button, each
+// player's own picture: input/prompt_icons.cpp PlayerTexts). The HUD
+// (sub_82269480) points that text back to 0 EVERY frame while it shows,
+// and every copy of ours was dropped unfreed: 4 bytes + heap overhead, 3
+// texts, every frame -> the front end's 100 KB heap (7) full within
+// minutes (found with a temporary allocation tracker + the console's
+// `who`). Then every new text copy failed: the save list's panels came up
+// empty (no name, date, time, %), "Join Game" lost its button, the Delete /
+// Rename prompts their pictures. Fix: free an owned copy first (as the
+// copying setters do), then the original.
+extern "C" REX_FUNC(__imp__sub_823731D0);
+extern "C" REX_FUNC(__imp__sub_8227E9D8);  // the game's free (r3 = block)
+extern "C" REX_FUNC(sub_823731D0) {
+  const uint32_t text = ctx.r3.u32;
+  if (text) {
+    uint8_t* flags = GuestPtr(base, text + 179);
+    const uint32_t owned = scrooby::Read32(base, text + 152);
+    if ((*flags & 0x20) && owned) {
+      const PPCContext saved = ctx;
+      ctx.r3.u64 = owned;
+      __imp__sub_8227E9D8(ctx, base);
+      ctx = saved;
+    }
+    *flags &= ~0x20;  // +152 is borrowed from here on
+  }
+  __imp__sub_823731D0(ctx, base);
+}
