@@ -120,6 +120,13 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // again (the HUD rewrites some of them every frame).
 void HudFrame(PPCContext& ctx, uint8_t* base);
 
+// THE FLOATING B, ONE PER PLAYER (2026-10-17): while `object` (a drawable
+// being drawn) is the coin of a floating button an owner was found for,
+// the shader's texture `from_xn` (the game's B) is to be drawn as `to_xn`
+// (the owner's copy). For players/outfits.cpp's per-object texture swap
+// (the same one that gives each outfit its hair). Game main thread.
+bool WorldButtonSwap(uint8_t* base, uint32_t object, uint32_t& from_xn, uint32_t& to_xn);
+
 // The menus' own glyph for a prompt character (± -> menu A, ² -> menu B, ³ ´
 // ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't
 // in). For menus the port builds (options/options_menu.cpp). Any thread.

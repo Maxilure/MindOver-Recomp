@@ -1165,6 +1165,7 @@ struct GuestPage {
   std::vector<uint8_t> original_palette;  // the guest's 1 KB palette
   std::string shown;                      // Describe() of what's in memory ("" = original)
   std::string name;                       // "Titans_Small A" (log)
+  int world_player = -1;                  // a copy of the world's B: whose (0-3); -1 = the game's own
 };
 
 struct State {
@@ -1474,8 +1475,10 @@ void CheckWorldTexture(uint8_t* base, uint32_t texture) {
   if (!d3d || Load32(base, xn + kXnPaletteMode) != 1) return;
   const uint32_t size = Load32(base, d3d + kD3DFetch + 8);
   if ((size & 0x1FFF) + 1 != g.world_disc->width || ((size >> 13) & 0x1FFF) + 1 != g.world_disc->height) return;
+  int world_found = 0;  // world B textures already known (the original first, then the copies)
   for (const GuestPage& gp : g.pages) {
     if (gp.texture == texture) return;  // known already
+    if (!gp.font && StillThere(base, gp)) ++world_found;
   }
   GuestPage gp;
   if (!MakePage(base, 0, texture, &kWorldB, *g.world_disc, "world B", &gp, /*quiet=*/true)) return;
@@ -1494,7 +1497,11 @@ void CheckWorldTexture(uint8_t* base, uint32_t texture) {
   // out as "∀" (playtest photo). So the pictures go in the other way up.
   gp.flipped = !gp.flipped;
   g.world_vtable = Load32(base, texture);
-  REXLOG_INFO("Prompt pictures: the world's B button found (texture {:08X})", texture);
+  gp.world_player = world_found - 1;  // the original, then players 1-4's copies (PatchWorldButton)
+  if (gp.world_player > 3) return;
+  if (gp.world_player >= 0) gp.name = "world B player " + std::to_string(gp.world_player + 1);
+  REXLOG_INFO("Prompt pictures: the world's B button found (texture {:08X}){}", texture,
+              gp.world_player >= 0 ? " = player " + std::to_string(gp.world_player + 1) + "'s copy" : "");
   g.pages.push_back(std::move(gp));
   g.revision = UINT32_MAX;  // drawn at once
 }
@@ -1564,7 +1571,7 @@ void NarrowRotate(uint8_t* base, uint32_t font, char16_t character, bool narrow)
 // an Xbox pad walks up to a totem = Xbox B, even if player 1 on the keyboard
 // arrives a moment later). No icon up = player 1's look.
 constexpr uint32_t kIconVtable = 0x8203248C;
-constexpr uint32_t kIconObject = 28, kIconShown = 120;
+constexpr uint32_t kIconObject = 28, kIconDrawable = 116, kIconShown = 120;
 struct IconOwner {
   uint32_t icon = 0;
   int player = 0;
@@ -1633,10 +1640,15 @@ void OnFrameEnd(void*) {
   // Player 1's look: the game's own glyphs (every shared text). Players
   // 2-4's pictures live in the player slots, each with its own look.
   const Look l = LookOf(0);
+  // The game's own B: the look of the first icon's owner. (Each player's
+  // copy is painted below, but nothing draws with the copies yet: the coin
+  // is drawn by Pure3D's render loop, not the object draws WorldButtonSwap
+  // sits in. notes/plans.md s.3c HANDOFF.)
   const Look world = LookOf(uint32_t(WorldButtonOwner(base)));
   const uint32_t revision = driver ? driver->bindings_revision() : 0;
   g_keys_shown = l.keys;
-  const std::string look = l.Name() + " " + world.Name();
+  std::string look = l.Name() + " " + world.Name();
+  for (uint32_t p = 0; p < 4; ++p) look += " " + LookOf(p).Name();  // the B copies' looks
   if (revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision) return;
   g_slot_drawn = g_slot_revision;
   if (look != g.look || g.revision == UINT32_MAX) {
@@ -1657,7 +1669,8 @@ void OnFrameEnd(void*) {
       continue;
     }
     // The floating B: its owner's look (THE FLOATING B'S OWNER above).
-    const Look& use = gp.prompt == &kWorldB ? world : l;
+    const Look own = gp.world_player >= 0 ? LookOf(uint32_t(gp.world_player)) : Look{};
+    const Look& use = gp.prompt != &kWorldB ? l : gp.world_player >= 0 ? own : world;
     const std::string want = Describe(*gp.prompt, bindings, use.keys, use.dark, use.pad_style);
     if (want != gp.shown) Show(base, gp, want);
     if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, gp.prompt->character, l.keys);
@@ -1875,6 +1888,21 @@ bool PatchWorldButton(const pure3d::Bytes& original, pure3d::Bytes* patched) {
       }
       const pure3d::Bytes bytes = pure3d::ToBytes(texture);
       children.insert(children.end(), bytes.begin(), bytes.end());
+      // EACH PLAYER'S B (2026-10-17): four copies, "..._p1" to "_p4", right
+      // after it. Nothing in the game uses them; the package loads them like
+      // any texture, CheckWorldTexture finds them after the original (same
+      // pixels) and paints each in its player's look. MEANT for each icon's
+      // coin to be drawn with its owner's copy (WorldButtonSwap, through the
+      // outfits' per-object texture swap), but that swap never sees the coin
+      // yet (OnFrameEnd: drawn by Pure3D's render loop): not visible so far.
+      const std::string base_name(name);
+      for (int p = 1; p <= 4; ++p) {
+        pure3d::Node copy = texture;
+        const std::string dot = base_name.substr(base_name.rfind('.'));
+        RenamePage(copy, base_name, base_name.substr(0, base_name.rfind('.')) + "_p" + std::to_string(p) + dot);
+        const pure3d::Bytes copy_bytes = pure3d::ToBytes(copy);
+        children.insert(children.end(), copy_bytes.begin(), copy_bytes.end());
+      }
     } else if (c.id == kChunkMesh && name == kWorldMesh) {
       pure3d::Node mesh = pure3d::ToNode(original, c);
       for (pure3d::Node& group : mesh.children) {
@@ -2262,6 +2290,27 @@ void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours) {
 // it's built, through r4 like the font loader below; the frame end looks for
 // the world's B among them (prompt_icons State::textures_loaded).
 extern "C" REX_FUNC(__imp__sub_823AFB00);
+namespace prompt_icons {
+bool WorldButtonSwap(uint8_t* base, uint32_t object, uint32_t& from_xn, uint32_t& to_xn) {
+  int owner = -1;
+  {
+    std::lock_guard<std::mutex> lock(g_icons_mutex);
+    for (const IconOwner& o : g_icons) {
+      if (Load32(base, o.icon + kIconDrawable) == object) owner = o.player;
+    }
+  }
+  if (owner < 0) return false;
+  std::lock_guard<std::mutex> lock(g.mutex);
+  from_xn = to_xn = 0;
+  for (const GuestPage& gp : g.pages) {
+    if (gp.font || gp.prompt != &kWorldB) continue;
+    if (gp.world_player < 0) from_xn = gp.xn;
+    if (gp.world_player == owner) to_xn = gp.xn;
+  }
+  return from_xn && to_xn;
+}
+}  // namespace prompt_icons
+
 // CIconBehaviour: show / hide (r4) its floating button (THE FLOATING B'S
 // OWNER): an icon that turns on gets the nearest playing player as owner.
 extern "C" REX_FUNC(__imp__sub_82179130);

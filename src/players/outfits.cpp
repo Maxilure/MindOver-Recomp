@@ -52,6 +52,7 @@
 // =============================================================================
 
 #include "outfits.h"
+#include "../input/prompt_icons.h"
 
 #include <algorithm>
 #include <array>
@@ -815,6 +816,11 @@ void DrawWithHair(PPCContext& ctx, uint8_t* base, void (*draw)(PPCContext&, uint
       g_hair_to = FindTexture(ctx, base, section->second, NameKey(ctx, base, FurName(*c)));
       if (!g_hair_from || !g_hair_to) g_hair_from = g_hair_to = 0;
     }
+  }
+  // A floating button's coin: its owner's B (input/prompt_icons.h).
+  if (!g_hair_from) {
+    uint32_t from = 0, to = 0;
+    if (prompt_icons::WorldButtonSwap(base, object, from, to)) g_hair_from = from, g_hair_to = to;
   }
   draw(ctx, base);
   if (g_hair_shader) Write32(g_hair_shader + kSimpleTexture, g_hair_from);
