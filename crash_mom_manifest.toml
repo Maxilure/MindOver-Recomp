@@ -1594,7 +1594,7 @@ registers = ["r31"]
 [[entrypoint.midasm_hook]]
 address = 0x8225E52C
 name = "MorePlayersCounterTextScale"
-registers = ["f1"]
+registers = ["f1", "r31"]
 [[entrypoint.midasm_hook]]
 address = 0x8225E6A4
 name = "MorePlayersCounterStarSize"

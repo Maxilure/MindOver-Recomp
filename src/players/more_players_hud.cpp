@@ -46,6 +46,7 @@
 #include "../input/prompt_icons.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <map>
@@ -458,6 +459,10 @@ extern "C" REX_FUNC(sub_8226A908) {
 }
 // Draw: slot 4 of each that says yes to slot 6. Nothing while the cheat menu
 // hides the HUD (cheats/cheats.h).
+namespace more_players_frontend {
+uint32_t ObjectOf(int kind, uint32_t front_end, int player);  // more_players_frontend.cpp
+}
+void UpdateCounterLayout(PPCContext& ctx, uint8_t* base);  // below (counter prompts)
 extern "C" REX_FUNC(sub_8226A998) {
   if (cheats::HudHidden()) return;
   const uint32_t controller = ctx.r3.u32;
@@ -467,6 +472,7 @@ extern "C" REX_FUNC(sub_8226A998) {
       if (CallVirtual(ctx, base, d, 6) & 0xFF) CallVirtual(ctx, base, d, 4);
     }
   }
+  UpdateCounterLayout(ctx, base);
   // Each player's corner and counter prompt in THEIR button pictures (the
   // update above just set them in the game's shared ones; input/prompt_icons.h).
   prompt_icons::HudFrame(ctx, base);
@@ -711,29 +717,84 @@ constexpr float kCounterCentreAboveY = 58.0f;  // the star's centre above the pr
 void MorePlayersHudNameCounter(PPCRegister& o, PPCRegister& n) { NameFor(kCounterButton, o, n); }
 // The prompt's size with 3-4 players: the Y text's scale (set-up, before
 // sub_82371198) and the red star's half size (its draw). Two players: as is.
-void MorePlayersCounterTextScale(PPCRegister& scale) {
-  if (more_players::LocalPlayerCount() > 2) scale.f64 *= kCounterScale;
+// Which layout a prompt uses: players 3-4's always (they exist only in the
+// four-player layout), players 1-2's while player 3 or 4 is in the game
+// (more_players::FourPlayerLayout; the game's own place otherwise).
+bool CounterIsOurs(uint32_t player) {
+  return more_players::LocalPlayerCount() > 2 && (player >= 2 || more_players::FourPlayerLayout());
+}
+void MorePlayersCounterTextScale(PPCRegister& scale, PPCRegister& prompt) {
+  if (CounterIsOurs(Read32(prompt.u32 + 8))) scale.f64 *= kCounterScale;
 }
 void MorePlayersCounterStarSize(PPCRegister& half_size) {
-  if (more_players::LocalPlayerCount() > 2) half_size.f64 *= kCounterScale;
+  if (more_players::FourPlayerLayout()) half_size.f64 *= kCounterScale;
 }
-void MorePlayersCounterPosition(PPCRegister& prompt) {
-  if (more_players::LocalPlayerCount() <= 2) return;  // the game's own place
-  const uint32_t d = prompt.u32;
+
+// A prompt's base place as the game's set-up chose it (x, y, mirror at +24 /
+// +28 / +32), kept so the game's own place can come back.
+struct CounterBase { float x, y, mirror; };
+std::map<uint32_t, CounterBase> g_counter_base;
+
+void PlaceCounter(uint32_t d, bool ours) {
+  const auto base = g_counter_base.find(d);
+  if (base == g_counter_base.end()) return;
   const uint32_t player = Read32(d + 8);
-  if (player >= 4) return;
+  CounterBase b = base->second;
+  if (!ours) {
+    WriteFloat(d + 24, b.x);
+    WriteFloat(d + 28, b.y);
+    WriteFloat(d + 32, b.mirror);
+    return;
+  }
   if (player == 3) {
     // player 2's side: the set-up gave player 4 the LEFT corner (only player
     // number 1 takes the right path). Not copied from player 2's prompt:
     // players 3-4's prompts are set up BEFORE players 1-2's (2026-10-06: a
     // copy read player 2's x = 0, mirror 1, and player 4's star stood bottom
     // LEFT).
-    WriteFloat(d + 24, ReadFloat(kCornerXSum) - ReadFloat(d + 24));
-    WriteFloat(d + 32, -1.0f);
+    b.x = ReadFloat(kCornerXSum) - b.x;
+    b.mirror = -1.0f;
   }
-  WriteFloat(d + 24, ReadFloat(d + 24) + ReadFloat(d + 32) * kCounterBesideBar);
+  WriteFloat(d + 24, b.x + b.mirror * kCounterBesideBar);
+  WriteFloat(d + 32, b.mirror);
   // the portrait's centre: players 1-2 under the top, players 3-4 mirrored
   const float top_centre = TopBaseY() - (kPortraitTop + kPortraitBottom) / 2.0f;
   const float centre = player < 2 ? top_centre : kScreenHeight - top_centre;
   WriteFloat(d + 28, centre - kCounterCentreAboveY);
 }
+
+void MorePlayersCounterPosition(PPCRegister& prompt) {
+  const uint32_t d = prompt.u32;
+  const uint32_t player = Read32(d + 8);
+  if (player >= 4) return;
+  g_counter_base[d] = {ReadFloat(d + 24), ReadFloat(d + 28), ReadFloat(d + 32)};
+  if (CounterIsOurs(player)) PlaceCounter(d, true);
+}
+
+// Every frame (the HUD draw): when the layout flips, every prompt moves to
+// its other place and gets its text's other size (the set-up's own call,
+// sub_82371198 on the text at +16, scale 1.2 from 0x82020C28).
+extern "C" REX_FUNC(__imp__sub_82371198);
+void UpdateCounterLayout(PPCContext& ctx, uint8_t* base) {
+  static int last = -1;
+  const int now = more_players::FourPlayerLayout() ? 1 : 0;
+  if (now == last) return;
+  const bool first = last < 0;
+  last = now;
+  if (first) return;  // the set-ups already chose
+  const uint32_t game = Read32(0x8259B190);
+  const uint32_t fe = game ? Read32(game + 52) : 0;
+  for (int p = 0; p < 2; ++p) {  // players 3-4's keep our layout
+    const uint32_t d = more_players_frontend::ObjectOf(2 /*kCounter*/, fe, p);
+    if (!d) continue;
+    PlaceCounter(d, now == 1);
+    if (const uint32_t text = Read32(d + 16)) {
+      const PPCContext saved = ctx;
+      ctx.r3.u64 = text;
+      ctx.f1.f64 = double(ReadFloat(0x82020C28)) * (now == 1 ? kCounterScale : 1.0f);
+      __imp__sub_82371198(ctx, base);
+      ctx = saved;
+    }
+  }
+}
+

@@ -300,12 +300,17 @@ extern "C" REX_FUNC(sub_82166240) {
 // 2's (found 2026-10-05 from a playtest screenshot: no meter for players
 // 3-4). With 3-4 players: the side by player & 1 (players 1 / 3 left, 2 / 4
 // right, like their HUDs) and the height next to the player's own HUD
-// (more_players_hud::ComboMeterY). With two players the game's own place.
+// (more_players_hud::ComboMeterY). Players 1-2 alone: the game's own place.
 extern "C" REX_FUNC(__imp__sub_8225D798);
 extern "C" REX_FUNC(sub_8225D798) {
-  if (more_players::LocalPlayerCount() <= 2) { __imp__sub_8225D798(ctx, base); return; }
   const uint32_t meter = ctx.r3.u32, out = ctx.r4.u32;
   const uint32_t player = Read32(meter + 3148);
+  // The game's own places for players 1-2 until player 3 or 4 joins
+  // (more_players::FourPlayerLayout: they come back 10 s after the last left).
+  if (more_players::LocalPlayerCount() <= 2 || (player < 2 && !more_players::FourPlayerLayout())) {
+    __imp__sub_8225D798(ctx, base);
+    return;
+  }
   Write32(meter + 3148, player & 1);  // the original only picks the side from it
   __imp__sub_8225D798(ctx, base);
   Write32(meter + 3148, player);

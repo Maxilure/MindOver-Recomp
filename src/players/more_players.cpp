@@ -4,6 +4,7 @@
 #include "more_players.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -214,6 +215,20 @@ void Install() {
 }
 
 int LocalPlayerCount() { return LocalPlayers(); }
+
+bool FourPlayerLayout() {
+  if (LocalPlayers() <= 2) return false;
+  static bool active = false;
+  static std::chrono::steady_clock::time_point last_present;
+  const auto now = std::chrono::steady_clock::now();
+  if (Read32(kState + 8) != 0 || Read32(kState + 12) != 0) {
+    active = true;
+    last_present = now;
+  } else if (active && now - last_present > std::chrono::seconds(10)) {
+    active = false;
+  }
+  return active;
+}
 
 bool InPlay() {
   // Game state (the game global's +8, sub_82248EA8): 5 = a level is played

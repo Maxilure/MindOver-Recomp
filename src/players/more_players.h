@@ -75,6 +75,13 @@ void Install();
 // How many local players levels make room for (--local_players, 2-4).
 int LocalPlayerCount();
 
+// THE FOUR-PLAYER HUD LAYOUT (combo meters, the counter prompt's "Y"): the
+// positions chosen for players 3-4 apply while player 3 or 4 is in the game
+// (joined: mask or on foot), and for 10 s after the last of them left; with
+// only players 1-2 for that long the game's own places come back. Call it
+// every frame (the HUD update does); other callers just read it.
+bool FourPlayerLayout();
+
 // Is a level being played (game state 5, its pause and menus included)?
 // Safe from any thread.
 bool InPlay();
