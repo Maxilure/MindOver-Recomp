@@ -184,6 +184,11 @@ player in the settings, whichever save is loaded.
   120 fps it moved a few centimetres and stopped, leaving no way forward. The game ignored movements smaller than
   a fixed size per frame, and at a high frame rate every step was smaller.
   That minimum is now scaled to the frame time, the same as at 30 fps.
+- **No more flickering behind clear ice.** In the ice caves, a frozen figure
+  behind a sheet of ice vanished and came back while explosions were on
+  screen (the original game did this too). The game sorts see-through
+  objects with rules that can contradict each other, so the explosions
+  reshuffled them; the port now sorts them in one steady order.
 
 **Launcher and logs**
 

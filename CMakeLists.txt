@@ -97,6 +97,7 @@ set(CRASHMOM_SOURCES
     src/native/buffer_cache.cpp     # the game's vertex/index buffers -> Vulkan buffers (uploaded once)
     src/native/render_targets.cpp   # the game's render targets (surfaces) + resolves -> Vulkan images
     src/native/ab_capture.cpp       # F10 photos + debug: the same frame from both renderers
+    src/native/translucent_sort.cpp # see-through objects: a draw order that does not flicker
     src/native/native_window.cpp    # F8 / --native_window: a 2nd window with the native picture
     src/native/spotter.cpp          # loud log banners when a hunted material (bump) shows up
     src/native/scan.cpp             # with --trace: the first time a gap shows up, record the frame
