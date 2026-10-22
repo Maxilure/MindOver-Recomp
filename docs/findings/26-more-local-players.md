@@ -1543,3 +1543,40 @@ skipped without a trace (now logged).
 
 **Checked** on the Ratcicle's victory with four players: players 3-4 stand
 beside players 1-2 and the shot pulls back so all four are in it.
+
+## 40. Players 3-4's mojo flies to their own portrait
+
+**The flight.** A collected mojo first flies to the player who took it, then
+toward that player's portrait. Both legs are the collectable's own update
+(`Collectable`, a script behaviour controller, vtable 0x82034DF4; update
+slot 21 `sub_82198738`, a state machine at `+0xC8`). State 5 ("to the HUD")
+moves the mojo each frame toward a point 4 units in front of the camera:
+
+    target = camera + 4 x (forward + 0.25 x up + 0.5 x sign x (forward x up))
+
+with the camera's position and axes read from the camera object
+(`*(*(game + 0x4C) + 0x1BC)`, position +0xD8, forward +0xE4, up +0xF0).
+`sign` is +1 for player 1 (top left) and -1 for every other player (top
+right), the player coming from `sub_8226FCD8` (the collector's player, kept
+in r25). On arrival the same state pulses that player's HUD count
+(`sub_8226AB78`, already 4-player: section 18). So players 3-4's mojo flew to
+player 2's portrait.
+
+**The change** (`players/more_players_hud.cpp`, two midasm hooks): at
+0x82198DF0, right after the sign is chosen (f13), players 3-4 get it by
+`p & 1` (player 3 left, player 4 right, like their HUDs); at 0x82198E88,
+after the up share is loaded (f0 = 0.25 from `[r26 + 1444]`), players 3-4
+get -0.25: their portraits sit in the bottom corners, as far from the
+bottom edge as players 1-2's are from the top. Players 1-2: unchanged.
+
+**How it was found.** A mojo spawned for player 3 (F5 spawn
+`Collectables:c_mojoXL`; the spawn result now names the actor) and the
+console's `who` on its world matrix: the writes come from the physics
+transform, sent as a message from the collectable's update, whose state 5
+holds the formula.
+
+**Checked** (Wumpa Island, four players, the camera still): the flight's end
+point for player 1 (362.4, 8.9, -265.8); player 3 the same spot 2 units
+lower (362.4, 7.0, -265.8): bottom left; player 4 on player 2's side and
+low (358.9, 6.9, -268.4): bottom right. A slowed-down photo series shows
+player 4's mojo dropping toward the bottom-right portrait.

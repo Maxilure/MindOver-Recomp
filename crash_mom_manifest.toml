@@ -1527,6 +1527,20 @@ registers = ["r10", "r3"]
 address = 0x8226802C
 name = "MorePlayersHudPosition"
 registers = ["r31"]
+# A COLLECTED MOJO'S FLIGHT TO ITS PLAYER'S PORTRAIT (2026-10-22): the collectable's update
+# (sub_82198738, state 5) aims at a point 4 units in front of the camera: forward + 0.25 x up
+# + 0.5 x side x (+1 player 1 / -1 anyone else), side = forward x up. Player 3's and 4's mojo
+# flew to player 2's portrait (top right). r25 = the collector's player (sub_8226FCD8).
+# 0x82198DF0: f13 = the side sign just chosen ("player != 0 -> -1") -> players 3-4: by p & 1.
+[[entrypoint.midasm_hook]]
+address = 0x82198DF0
+name = "MorePlayersMojoFlightSide"
+registers = ["r25", "f13"]
+# 0x82198E88: f0 = the up share 0.25 just loaded ([r26+1444]) -> players 3-4: -0.25 (bottom).
+[[entrypoint.midasm_hook]]
+address = 0x82198E88
+name = "MorePlayersMojoFlightHeight"
+registers = ["r25", "f0"]
 
 # =============================================================================
 # THE FRONT END'S PER-PLAYER OBJECTS FOR PLAYERS 3-4 (src/players/more_players_frontend.cpp,

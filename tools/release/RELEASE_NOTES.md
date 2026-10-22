@@ -204,6 +204,10 @@ earlier version takes the picks made before.
   screen (the original game did this too). The game sorts see-through
   objects with rules that can contradict each other, so the explosions
   reshuffled them; the port now sorts them in one steady order.
+- **Players 3 and 4's mojo flies to their own portrait.** A collected mojo
+  flies to its player, then to that player's portrait; players 3 and 4's
+  went to player 2's (top right). Now player 3's goes to the bottom left and
+  player 4's to the bottom right.
 
 **Launcher and logs**
 

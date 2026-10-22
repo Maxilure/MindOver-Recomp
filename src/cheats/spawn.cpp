@@ -259,6 +259,7 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
           CallGame(__imp__sub_82357020, ctx, base, g_scratch + kScratchTemplate, 0));
   const uint32_t inventory = Read32(kInventoryManager);
   int made = 0;
+  uint32_t last_actor = 0;  // for the log (console tests: `who` on it)
   for (int i = 0; i < request.count; ++i) {
     // The creation's own test (sub_821686C0): the section exists AND is
     // ready ("ready" on a missing section would read through a null pointer).
@@ -319,6 +320,7 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
     }
     if (!actor) break;
     ++made;
+    last_actor = actor;
     // (The start state does it now; the meter route below stays for a
     // template without a start state.)
     if (request.knocked_out && start_state.empty()) g_to_stun.push_back({actor, 0, 0});
@@ -327,8 +329,8 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
     SetResult(fmt::format("{} can't be spawned here (not in the game's packages, or it didn't load)",
                           request.template_name));
   } else {
-    SetResult(fmt::format("{} x {} spawned{}", made, request.template_name,
-                          request.knocked_out ? ", knocked out" : ""));
+    SetResult(fmt::format("{} x {} spawned{} (last actor {:08X})", made, request.template_name,
+                          request.knocked_out ? ", knocked out" : "", last_actor));
   }
 }
 

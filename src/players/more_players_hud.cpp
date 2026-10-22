@@ -798,3 +798,24 @@ void UpdateCounterLayout(PPCContext& ctx, uint8_t* base) {
   }
 }
 
+// =============================================================================
+// A collected mojo's flight to its player's portrait (2026-10-22)
+// =============================================================================
+// The collectable's update (sub_82198738, state 5 "fly to the HUD") steers
+// the mojo to a point 4 units in front of the camera: forward + 0.25 x up +
+// 0.5 x sign x (forward x up), sign +1 for player 1 (the top-left portrait)
+// and -1 for ANY other player (top right). Players 3-4's mojo flew to player
+// 2's portrait. Now: the side by player & 1 (players 1 / 3 left, 2 / 4 right,
+// like their HUDs) and players 3-4 aim DOWN (their portraits sit in the
+// bottom corners, as far from the bottom edge as players 1-2's are from the
+// top: the up share mirrored, -0.25). Found from a playtest note; `who` on a
+// spawned mojo's matrix led to the collectable's update, whose state 5 picks
+// the sign from sub_8226FCD8 (the collector's player, kept in r25).
+void MorePlayersMojoFlightSide(PPCRegister& r25, PPCRegister& f13) {
+  const int32_t p = int32_t(r25.u32);
+  if (p >= 2 && p < 4) f13.f64 = (p & 1) ? -1.0 : 1.0;
+}
+void MorePlayersMojoFlightHeight(PPCRegister& r25, PPCRegister& f0) {
+  const int32_t p = int32_t(r25.u32);
+  if (p >= 2 && p < 4) f0.f64 = -std::fabs(f0.f64);
+}
