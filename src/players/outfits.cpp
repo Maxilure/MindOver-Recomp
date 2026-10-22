@@ -122,6 +122,9 @@ extern "C" REX_FUNC(__imp__sub_8236ACB8);
 extern "C" REX_FUNC(__imp__sub_820D8908);  // a section's texture by name key (r3 section, r4 64-bit key)
 extern "C" REX_FUNC(__imp__sub_822B6FB8);  // CCharacterObject: draws its model (r3 the object)
 extern "C" REX_FUNC(__imp__sub_822B6DB0);  // CCharacterObject slot 11: draws its +28 drawable  // name key from a string (r3 key, r4 string)
+extern "C" REX_FUNC(__imp__sub_8229F810);  // skin r3 -> its package's name
+extern "C" REX_FUNC(__imp__sub_8236AC90);  // a name handle (r3 the handle, r4 the name)
+extern "C" REX_FUNC(__imp__sub_823C9A70);  // lets a name handle go (r3)
 
 namespace outfits {
 namespace {
@@ -615,11 +618,60 @@ using namespace outfits;
 
 // --- 1. Who wears what --------------------------------------------------------
 
+// --- 1b. The cutscenes' Crash (bug report 2026-10-21, save "test11") ---
+// A cutscene actor flagged "the player" (its +0x44 bit 0x10) gets its MODEL
+// from player 1's skin package: sub_8223E8A0 asks sub_8229F8B8(0) at
+// 0x8223E93C, turns the skin into a package name (sub_8229F810) and finds
+// that section; the actor itself is built from the cutscene's CRASH
+// template (sub_8223F0B8). In the game player 1 is always a Crash, so the
+// package always fit. With player 1 in Coco's outfit the Crash template got
+// Coco's package: its character object stayed null and the model set-up
+// read it (sub_820B0DF8 -> sub_8210AE80 -> sub_822B7BE0, a read of
+// 0x00000194; crash-2026-10-21_180345.txt). Crash models (Purple, Carbon...)
+// were fine. HOW WE FOUND IT: the crash log's game stack + xexdis of
+// sub_8223E8A0 (the li r3,0 / bl sub_8229F8B8 pair).
+// Our answer there: the first player (1, then 2-4) whose outfit is a Crash
+// model AND whose package is loaded; else plain Crash (0) if his is loaded.
+constexpr uint32_t kAskCutscenePlayer = 0x8223E940;  // return address of that call
+// Is skin `skin`'s package loaded (the same lookup sub_8223E8A0 makes)?
+bool SkinPackageLoaded(PPCContext& ctx, uint8_t* base, uint32_t skin) {
+  static uint32_t handle = 0;  // guest room for the 4-byte name handle
+  if (!handle) handle = rex::system::kernel_memory()->SystemHeapAlloc(16);
+  if (!handle) return false;
+  const uint32_t name = CallGame(__imp__sub_8229F810, ctx, base, skin);
+  CallGame(__imp__sub_8236AC90, ctx, base, handle, name);
+  const uint32_t inventory = CallGame(__imp__sub_822E3FA8, ctx, base, 0, handle);
+  const uint32_t section = CallGame(__imp__sub_822E4680, ctx, base, inventory, handle);
+  CallGame(__imp__sub_823C9A70, ctx, base, handle);
+  return section != 0;
+}
+uint32_t CutsceneCrashSkin(PPCContext& ctx, uint8_t* base) {
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    if (p > 0 && !menu_input::PlayerPlays(p)) continue;
+    const uint32_t skin = GameSkin(OutfitOf(p));
+    if (!IsCoco(skin) && SkinPackageLoaded(ctx, base, skin)) return skin;
+  }
+  if (!SkinPackageLoaded(ctx, base, 0)) {
+    // Every player is Coco and Crash's own package isn't in memory: the
+    // game's crash would follow. Logged so a report shows it.
+    REXLOG_WARN("Outfits: a cutscene wants Crash but no Crash package is loaded (every player is Coco?)");
+  }
+  return 0;
+}
+
 extern "C" REX_FUNC(sub_8229F8B8) {
   const uint32_t lr = uint32_t(ctx.lr);
   int p = int(ctx.r3.u32);
   if (lr == kAskOpening || lr == kAskPageTurn) {
     ctx.r3.u64 = uint32_t(OutfitOf(g_page_player));  // the screen sees Carbon as 11
+    return;
+  }
+  if (lr == kAskCutscenePlayer) {
+    const uint32_t skin = CutsceneCrashSkin(ctx, base);
+    static uint32_t logged = ~0u;
+    if (skin != logged) REXLOG_INFO("Outfits: the cutscenes' Crash wears skin {}", skin);
+    logged = skin;
+    ctx.r3.u64 = skin;
     return;
   }
   const int building = more_players::BuildingSpawnFor();

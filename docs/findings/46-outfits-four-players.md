@@ -237,6 +237,29 @@ call. The orange Crash, the white Carbon and Coco keep the game's own.
 
 ![The spin in each colour](../images/outfits-spin-colours.jpg)
 
+## 3c. Cutscenes with player 1 as Coco
+
+Some in-engine cutscenes (the Ice Prison ones, for example) show "the
+player's Crash". The cutscene builds that actor from its own CRASH template
+but takes the MODEL from player 1's skin package: sub_8223E8A0 asks
+sub_8229F8B8(0) at 0x8223E93C, turns the skin into a package name
+(sub_8229F810) and finds that inventory section. In the original game
+player 1 is always a Crash model, so the package always fits. With player 1
+in Coco's outfit, the Crash template got Coco's package, its character object
+stayed null, and the model set-up read it (sub_820B0DF8 -> sub_8210AE80 ->
+sub_822B7BE0: a read of guest 0x194). Crash models (Carbon, the colours,
+the costumes) were never affected.
+
+Found from the crash report's game stack, then xexdis of sub_8223E8A0
+(the `li r3,0` / `bl sub_8229F8B8` pair).
+
+Fix (outfits.cpp, section 1b): at that one call site (return address
+0x8223E940) the answer is the skin of the first player, 1 to 4, whose outfit
+is a Crash model and whose package is loaded (the same section lookup the
+cutscene makes); otherwise plain Crash (0). If no Crash package is loaded at
+all (every player in Coco's outfit) a warning is logged: that case is not
+handled yet.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a
