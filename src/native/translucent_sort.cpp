@@ -1,5 +1,5 @@
 // =============================================================================
-// translucent_sort.cpp -- see-through objects drawn in one steady order
+// translucent_sort.cpp -- see-through objects drawn in a steady order
 //                         (--translucent_sort_fix, on by default)
 // =============================================================================
 //
@@ -21,9 +21,10 @@
 //   +0x28 the drawable, +0x30 its prim-group record (+4 = the PrimGroup)
 //   +0x58 byte: the sort LAYER (a float x 64; higher layers draw first)
 //
-// THE GAME'S COMPARE (sub_823AD928), for a and b in the same layer:
-//   1. spheres apart in depth  -> the farther one first
-//   2. boxes apart in depth    -> the farther one first
+// THE GAME'S COMPARE (sub_823AD928, Compare() below), a and b:
+//   0. different layers         -> the higher layer first
+//   1. spheres apart in depth   -> the farther one first
+//   2. boxes apart in depth     -> the farther one first
 //   3. otherwise (they overlap) -> the SMALLER sphere first; equal radius ->
 //      the farther centre first
 // Each rule is sensible alone, but together they can go round in a circle
@@ -32,27 +33,33 @@
 // list, not just on the two objects. Found by a dump of the list (this
 // file's debug output) in the cave of the flicker: the frozen figure is a
 // small entry (radius 2.5, depth 36-46) INSIDE a big flat ice sheet's
-// bounds (radius 16, depth 27-56); compared directly the figure goes first
-// (rule 3), which shows it through the ice. An explosion's particle
-// systems add entries that, with rules 1-2, close a circle; in those
-// frames qsort put the sheet first. The sheet writes depth, so the figure
-// behind it then fails the depth test = gone (draw lists of the user's
-// photo burst: 18 of 18 frames, "figure first" = visible, "sheet first" =
-// gone, the camera identical).
+// bounds (radius 16, depth 27-56): rule 3 puts the figure first, which
+// shows it through the ice. An explosion's particle systems add entries
+// that close a circle through rules 1-2; in those frames qsort put the
+// sheet first. The sheet writes depth, so the figure behind it then fails
+// the depth test = gone (draw lists of a photo burst: 18 of 18 frames,
+// "figure first" = visible, "sheet first" = gone, the camera identical).
 //
-// THE FIX: our own sort with ONE ranking that can't go round in a circle:
-//   layer (high first), then the box's NEAR edge (min z, farther first),
-//   then radius (smaller first: the game's rule 3 for equal near edges),
-//   then the sphere centre (farther first), then the game's own collection
-//   order (a stable sort).
-// It agrees with the game's rules 1 and 2 always (an entry entirely behind
-// another has the farther near edge), and with rule 3 whenever one object
-// sits inside the other (the inner one's near edge is the farther one), as
-// the frozen figure inside the ice does. Only partly overlapping pairs can
-// come out differently from what qsort happened to give, and those had no
-// fixed answer before either. The draw order now depends only on where the
-// objects are: no more flicker. --translucent_sort_fix=false = the game's
-// own qsort (for comparing).
+// THE FIX: every pair is decided by the game's OWN compare (an exact copy),
+// and the order is built from those decisions (a topological sort): each
+// step draws the entry that no remaining entry must come before. Without a
+// circle that is exactly the order the game's rules ask for, the same one
+// qsort gives in calm frames. Only when the rules go round in a circle does
+// every remaining entry have someone "before" it; then the entry whose box
+// NEAR edge is farthest goes next (an entry entirely behind another always
+// has the farther near edge, so this follows rules 1-2), and the rest goes
+// on from there. In the cave: the explosion entries behind the figure have
+// the farther near edges, so they go first and break the circle; then the
+// figure, then the sheet, as rule 3 wants.
+//
+// A FIRST VERSION (same day) ranked every entry by its near edge alone. It
+// fixed the explosion case but made a new flicker while the camera moved:
+// the ice sheet and a second ice layer around the figure start at the same
+// depth (27.05), so rounding picked their order frame by frame (rule 3
+// always says "sheet first"; the sharp/faint alternation of the figure seen
+// through them). Keeping the game's own pairwise decisions avoids such ties.
+//
+// --translucent_sort_fix=false = the game's own qsort (for comparing).
 // =============================================================================
 
 #include <rex/cvar.h>
@@ -60,7 +67,6 @@
 #include <rex/logging.h>
 #include <rex/memory.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -70,7 +76,7 @@
 #include "guest.h"
 
 REXCVAR_DEFINE_BOOL(translucent_sort_fix, true, "CrashMoM",
-                    "See-through objects (ice, glass, particles) drawn in one steady order: no "
+                    "See-through objects (ice, glass, particles) drawn in a steady order: no "
                     "flicker when explosions are on screen (false = the game's own sort)");
 
 extern "C" REX_FUNC(__imp__sub_823ADA00);  // TranslucentTraversal slot 3: the qsort
@@ -95,7 +101,7 @@ constexpr uint32_t kListCount = 0x18;
 
 // Debug aid: while a PDDI trace records a frame (--debug_pddi_trace_dir +
 // F10 / its trigger file), the sorted list goes into the log, one line per
-// entry, in drawing order. How the flicker's two objects were identified.
+// entry, in drawing order. How the flicker's objects were identified.
 void DumpList(const uint8_t* base, uint32_t traversal) {
   const uint32_t list = Load32(base, traversal + kListArray);
   const uint32_t count = Load32(base, traversal + kListCount);
@@ -115,17 +121,27 @@ void DumpList(const uint8_t* base, uint32_t traversal) {
   }
 }
 
-// One entry's ranking (see the header): read once, then sorted on the host.
-struct Key {
-  uint32_t entry;  // guest pointer, written back in the new order
+// What the compare reads of one entry, copied to the host once.
+struct Entry {
+  uint32_t guest;  // the entry's guest address, written back in the new order
   uint8_t layer;
-  float near_z;    // box min z: the near edge
-  float radius;
-  float centre_z;
+  float centre_z, radius, min_z, max_z;
 };
 
-// A NaN would break the ranking (every comparison false): count it as 0.
-float Sane(float v) { return std::isnan(v) ? 0.0f : v; }
+// The game's compare sub_823AD928, line for line (checked against the
+// disassembly): > 0 = a draws AFTER b, < 0 = a draws BEFORE b. It never
+// answers 0. (The layer bytes are compared as byte x 1/64 floats there:
+// the same order as the bytes.)
+int Compare(const Entry& a, const Entry& b) {
+  if (a.layer != b.layer) return a.layer < b.layer ? 1 : -1;
+  if (a.centre_z + a.radius <= b.centre_z - b.radius) return 1;   // 1. a's sphere nearer
+  if (b.centre_z + b.radius <= a.centre_z - a.radius) return -1;
+  if (a.max_z <= b.min_z) return 1;                               // 2. a's box nearer
+  if (b.max_z <= a.min_z) return -1;
+  if (a.radius > b.radius) return 1;                              // 3. bigger one later
+  if (a.radius < b.radius) return -1;
+  return a.centre_z < b.centre_z ? 1 : -1;                        //    equal: nearer later
+}
 
 }  // namespace
 
@@ -135,25 +151,71 @@ extern "C" REX_FUNC(sub_823ADA00) {
     __imp__sub_823ADA00(ctx, base);
   } else {
     const uint32_t list = Load32(base, traversal + kListArray);
-    const uint32_t count = Load32(base, traversal + kListCount);
-    if (list && count > 1) {
-      static thread_local std::vector<Key> keys;  // main thread only; kept to avoid reallocating
-      keys.clear();
-      keys.reserve(count);
-      for (uint32_t i = 0; i < count; ++i) {
+    const uint32_t n = Load32(base, traversal + kListCount);
+    if (list && n > 1) {
+      // Main thread only; kept between frames to avoid reallocating.
+      static thread_local std::vector<Entry> entries;
+      static thread_local std::vector<uint8_t> before;  // n x n: [i * n + j] = i draws before j
+      static thread_local std::vector<uint32_t> waiting;  // entries that must draw before i
+      static thread_local std::vector<uint8_t> done;
+      entries.clear();
+      for (uint32_t i = 0; i < n; ++i) {
         const uint32_t e = Load32(base, list + 4 * i);
-        keys.push_back({e, Load8(base, e + kLayer), Sane(LoadFloat(base, e + kBoxMinZ)),
-                        Sane(LoadFloat(base, e + kRadius)), Sane(LoadFloat(base, e + kCentreZ))});
+        entries.push_back({e, Load8(base, e + kLayer), LoadFloat(base, e + kCentreZ),
+                           LoadFloat(base, e + kRadius), LoadFloat(base, e + kBoxMinZ),
+                           LoadFloat(base, e + kBoxMaxZ)});
       }
-      // "a draws before b". Stable: equal keys keep the collection order.
-      std::stable_sort(keys.begin(), keys.end(), [](const Key& a, const Key& b) {
-        if (a.layer != b.layer) return a.layer > b.layer;
-        if (a.near_z != b.near_z) return a.near_z > b.near_z;
-        if (a.radius != b.radius) return a.radius < b.radius;
-        return a.centre_z > b.centre_z;
-      });
-      for (uint32_t i = 0; i < count; ++i) {
-        rex::memory::store_and_swap<uint32_t>(GuestPtr(base, list + 4 * i), keys[i].entry);
+      // Every pair decided once by the game's compare (a few thousand
+      // compares for the usual 40-150 entries).
+      before.assign(size_t(n) * n, 0);
+      waiting.assign(n, 0);
+      for (uint32_t i = 0; i < n; ++i) {
+        for (uint32_t j = i + 1; j < n; ++j) {
+          if (Compare(entries[i], entries[j]) < 0) {
+            before[size_t(i) * n + j] = 1;
+            ++waiting[j];
+          } else {
+            before[size_t(j) * n + i] = 1;
+            ++waiting[i];
+          }
+        }
+      }
+      // Build the order: next = an entry nobody remaining must precede
+      // (without a circle there is exactly one); in a circle, choose within
+      // the highest remaining LAYER (layers never form circles: the game
+      // draws them strictly one after the other), the farthest near edge;
+      // near edges within kSameEdge count as equal (layers of one ice wall
+      // share their front, 29.04 and 29.04), and then the game's own
+      // decision for that pair wins.
+      constexpr float kSameEdge = 0.01f;  // game units (about a centimetre)
+      done.assign(n, 0);
+      for (uint32_t k = 0; k < n; ++k) {
+        int top_layer = -1;
+        for (uint32_t i = 0; i < n; ++i) {
+          if (!done[i] && entries[i].layer > top_layer) top_layer = entries[i].layer;
+        }
+        uint32_t best = UINT32_MAX;
+        for (uint32_t i = 0; i < n; ++i) {
+          if (done[i] || entries[i].layer != top_layer) continue;
+          if (best == UINT32_MAX) {
+            best = i;
+            continue;
+          }
+          const bool free_i = waiting[i] == 0, free_best = waiting[best] == 0;
+          const float edge_i = entries[i].min_z, edge_best = entries[best].min_z;
+          if (free_i != free_best) {
+            if (free_i) best = i;
+          } else if (!(std::fabs(edge_i - edge_best) <= kSameEdge)) {
+            if (edge_i > edge_best) best = i;  // (a NaN edge never wins here)
+          } else if (before[size_t(i) * n + best]) {
+            best = i;  // equal edges: the game's own decision for these two
+          }
+        }
+        done[best] = 1;
+        rex::memory::store_and_swap<uint32_t>(GuestPtr(base, list + 4 * k), entries[best].guest);
+        for (uint32_t j = 0; j < n; ++j) {
+          if (!done[j] && before[size_t(best) * n + j]) --waiting[j];
+        }
       }
     }
   }

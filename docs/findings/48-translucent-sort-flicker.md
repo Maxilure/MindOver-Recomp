@@ -68,27 +68,38 @@ frames `qsort` happened to put the sheet first.
 
 ## 3. The fix
 
-`sub_823ADA00` is replaced. The same list is sorted with one ranking that
-cannot go round in a circle (a stable sort):
+`sub_823ADA00` is replaced. Every pair of entries is decided by an exact
+copy of the game's compare (checked against the disassembly). The order is
+then built from those decisions: each step draws an entry that no remaining
+entry must come before.
 
-1. layer, high first (as the game);
-2. the box's near edge (min z), farther first;
-3. radius, smaller first (the game's rule 3 when the near edges are equal);
-4. sphere centre, farther first;
-5. the order the game collected the entries in.
+- Without a circle there is exactly one such entry at every step, so the
+  result is the order the game's rules ask for. It is the same order `qsort`
+  gives in calm frames (checked entry for entry).
+- In a circle every remaining entry has something "before" it. The next one
+  is then picked within the highest remaining layer (layers never form
+  circles), taking the entry whose box near edge (min z) is farthest. An entry
+  entirely behind another always has the farther near edge, so this follows
+  rules 1 and 2. Near edges within about a centimetre count as equal, and the
+  game's own decision for that pair wins.
 
-This ranking always agrees with the game's rules 1 and 2: an entry entirely
-behind another has the farther near edge. It also agrees with rule 3 whenever
-one object sits inside the other, as the figure does in the ice, because the
-inner object's near edge is the farther one. Only partly overlapping pairs
-can come out differently from what `qsort` used to give, and those had no
-fixed answer before. In a calm frame of the cave the new order is
-entry-for-entry the same as the game's.
+In the cave the frozen figure must precede the sheet (rule 3) and its near
+edge (36) is farther than the sheet's (27), so the figure is always drawn
+first, whatever the explosions add.
 
-Checked on a copy of the save: 71 photos of a masked player firing into the
-tunnel, the figure drawn before the sheet in every frame, no errors in the
-log. Because the fix changes the game's own draw order, it applies to both
-pictures. `--translucent_sort_fix=false` (or the console's
+A first version ranked every entry by its near edge alone. It fixed the
+explosion case but made a new flicker while a player walked: the sheet and a
+second ice layer around the figure (mesh 51, radius 16.9) share their front
+plane (both near edges 27.05, or 29.04 from another camera position), so
+rounding picked their order frame by frame. The figure behind them looked
+sharp in one order and faint in the other. Walking adds large particle
+entries (radius around 210, the footstep dust's bounds), so circles form
+often there. Keeping the game's own pair decisions, plus the tie rule above,
+gives the same order in every frame: 41 photos and 25 list dumps of a walk,
+layers always in order, the sheet always before the second layer.
+
+The fix changes the game's own draw order, so it applies to both pictures.
+`--translucent_sort_fix=false` (or the console's
 `flag translucent_sort_fix false`) brings back the game's `qsort` for
 comparisons.
 
