@@ -107,8 +107,12 @@ so on the keyboard these cutscenes couldn't be skipped.
 their own device: the "Join Game" corners, the counter prompts beside each
 HUD, and a paused player's menu buttons and tutorials. Player 2 on a
 PlayStation pad sees Circle and Cross while player 1 keeps keyboard keys.
-The floating button over totems and titans shows the button of the player
-who walked up to it first. Before, whoever pressed something last switched
+The floating button over totems and titans shows each nearby player's own
+button: a keyboard player and a controller player at the same totem get a
+key and a B side by side, three or four on a small arc (players with the
+same kind of controller share one button; Native renderer). Only players
+close enough to use it get one: the game's own list for totems and other
+things to use. Before, whoever pressed something last switched
 everyone's pictures. Shared texts (hints, the message bar) follow player 1.
 
 **Type names on the keyboard**: on the name screen (New Game, renaming a

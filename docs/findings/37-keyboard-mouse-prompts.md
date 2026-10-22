@@ -360,20 +360,64 @@ the A page, so a 360-style player 4 saw "A Back / A Select".
 
 **The floating B.** The B over a save totem, a stunned titan or something
 to use is one texture (`FE_360_b_button_64.tga`, section 4) shared by every
-such icon, so it shows one picture at a time. It shows the look of the
-player it appeared for: the icons are `CIconBehaviour` (vtable 0x8203248C:
-+28 its object, +116 its drawable, +120 shown), switched on and off by
-`sub_82179130(icon, show)`. When an icon turns on, the playing player
-nearest to its object (their Crash or the titan they ride) owns it, and the
-B shows the owner of the icon shown first among those still up. Player 2 on
-a controller walks up to a totem first = their B; player 1 on the keyboard
-arriving later changes nothing until the icon goes away; player 1 alone at
-the totem = their key. No icon up = player 1's look.
+such icon. Each icon belongs to a player: the icons are `CIconBehaviour`
+(vtable 0x8203248C: +28 its object, +32 its own world matrix, +116 its
+drawable, +120 shown), switched on and off by `sub_82179130(icon, show)`;
+when one turns on, the playing player nearest to its object (their Crash or
+the titan they ride) owns it.
+
+Each icon is DRAWN with its owner's copy of the B (2026-10-22). The data patch
+of the package adds four copies of the texture (`..._p1` to `_p4`); each is
+painted in its player's look like the original. The coin is drawn by Pure3D's
+render loop, not the character draws (the first try hooked those and never
+matched), so the swap sits where every `xnSimpleShader` is set up
+(`HairSetupDraw`, 0x82441EA8): the draw's WORLD matrix (VS c12-c15) is already
+in the device when the set-up runs and equals the icon's own matrix at +32
+exactly, so the nearest shown icon is the one being drawn; for that set-up
+alone the shader's texture (+92) is its owner's copy, put back right after
+(the shader holds a reference). Player 2 on a controller at a totem sees
+their button while player 1 on the keyboard stands elsewhere. Pictures drawn
+without the native renderer's recorder (emulated only) fall back to the
+first owner's look.
+
+SIDE BY SIDE (2026-10-22). When players with different looks stand at the
+same icon (a keyboard player and a controller player at a totem), the icon
+shows one coin per DIFFERENT look next to each other: the B and the key.
+Players sharing a look (two Xbox Series pads) share one coin, and each coin's
+texture is the copy of the B painted for the first player of that look.
+
+Who counts (2026-10-22): only players the GAME would let use it. A totem or
+other thing to use carries a `CInteractableBehaviour` (vtable 0x8202EA6C,
+its object at +28 like every behaviour) that keeps its own list of the
+bodies close enough: up to 4 entries of 8 bytes at +32 (the body, then a
+countdown), the list's end at +64. `sub_82149C60` adds or refreshes a body
+each time its interactor reports in (message 18 / 2), and the Update
+(`sub_82149808`, wrapped to remember the interactables) counts down and
+drops the ones that left. A player counts while their Crash (or the titan
+they ride) is in that list. The first version took everyone within 12 units:
+a player across the lawn still got a coin; at the Wumpa Island totem the
+game's list holds a player within about 1.5-2 units. An icon with no
+interactable (a stunned titan's B: the jack check is Crash's own) takes
+players within the distance its owner stood at when the game showed it
+(+15%). Nobody counted (the owner just left): the owner's coin alone. Each
+change is logged ("floating button ...: players near [1 3], 2 coin(s)").
+
+THE ARC (2026-10-22): three or four coins sit on the top of a circle,
+neighbours 0.5 rad apart with the chord between them = the coin spacing,
+the outer coins at the icon's own height and the middle ones higher (clip
+y gets `s x row 3` like x, scaled by the screen's aspect so the arc stays
+round). Two coins stay level. `WorldButtonSwap`
+builds the group (`CoinGroup`) when the coin's material is set up and gives the
+first coin's texture to the shader, which keeps it until the frame ends
+(`WorldButtonRestore`: the native renderer reads the material's texture at the
+draw). The native recorder (`CommitCoins`, recorder.cpp) then commits the
+coin once per group member: the matrix's row 0 gets `s x row 3` (a clip-space
+x shift of `s` in NDC, so the spacing holds at any distance: 1.15 x the coin's
+width, centred on the icon; row 1 likewise for the arc) and the other coins' textures. The emulated picture
+(not the native one) shows a single coin, the first look's.
 
 Known limits: a stick drawn in a player slot is A-sized (the slots copy the
-A page); the rotate arrow after it stays player 1's; two icons up at once
-for two players show the first one's picture on both (one texture: the
-side-by-side buttons are a later step).
+A page); the rotate arrow after it stays player 1's.
 
 ## 7. Tests
 

@@ -1575,6 +1575,10 @@ constexpr uint32_t kIconObject = 28, kIconDrawable = 116, kIconShown = 120;
 struct IconOwner {
   uint32_t icon = 0;
   int player = 0;
+  // How far its owner stood from its object when it appeared: the game's own
+  // range for it, as near as we can tell (side-by-side coins of an icon the
+  // game keeps no "who may use it" list for, e.g. a stunned titan's B).
+  float range = 0;
 };
 std::mutex g_icons_mutex;
 std::vector<IconOwner> g_icons;  // in the order they were shown
@@ -1609,6 +1613,7 @@ void OnFrameEnd(void*) {
   uint8_t* base = memory->virtual_membase();
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   std::lock_guard<std::mutex> lock(g.mutex);
+  WorldButtonRestore(base);
 
   if (!g.fonts_loaded.empty()) {
     if (!g.disc_read) {
@@ -1640,10 +1645,9 @@ void OnFrameEnd(void*) {
   // Player 1's look: the game's own glyphs (every shared text). Players
   // 2-4's pictures live in the player slots, each with its own look.
   const Look l = LookOf(0);
-  // The game's own B: the look of the first icon's owner. (Each player's
-  // copy is painted below, but nothing draws with the copies yet: the coin
-  // is drawn by Pure3D's render loop, not the object draws WorldButtonSwap
-  // sits in. notes/plans.md s.3c HANDOFF.)
+  // The game's own B: the look of the first icon's owner (the fallback for
+  // a coin that WorldButtonSwap can't match to an icon). Each player's copy
+  // is painted below and drawn on the coins that player owns.
   const Look world = LookOf(uint32_t(WorldButtonOwner(base)));
   const uint32_t revision = driver ? driver->bindings_revision() : 0;
   g_keys_shown = l.keys;
@@ -2291,25 +2295,208 @@ void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours) {
 // the world's B among them (prompt_icons State::textures_loaded).
 extern "C" REX_FUNC(__imp__sub_823AFB00);
 namespace prompt_icons {
-bool WorldButtonSwap(uint8_t* base, uint32_t object, uint32_t& from_xn, uint32_t& to_xn) {
-  int owner = -1;
-  {
-    std::lock_guard<std::mutex> lock(g_icons_mutex);
-    for (const IconOwner& o : g_icons) {
-      if (Load32(base, o.icon + kIconDrawable) == object) owner = o.player;
-    }
+// A floating button's coin is being set up (outfits.cpp HairSetupDraw: r3 =
+// its xnSimpleShader, `xn_context` = the mesh draw's context). Which texture
+// does it get, and how many coins are there?
+//
+// The game's one B texture is shared by every icon, but the draw's world
+// matrix (VS c12-c15, already set when the material's set-up runs) is exactly
+// the icon's own matrix (icon +32, translation at +80), so the nearest SHOWN
+// icon is the one being drawn. Its coins: every player who may use it (the
+// game's own list, WHO MAY USE IT below; plus the owner), one coin per DIFFERENT
+// look: a keyboard player and a controller player at the same totem get a
+// key and a B side by side; players sharing a look share one coin. Each
+// coin's texture is its look's player's copy of the B (PatchWorldButton).
+// The shader gets the first coin's now (set-up reads it; the native renderer
+// reads +92 at the draw, so it stays until the frame ends, WorldButtonRestore);
+// the native renderer draws the others (CurrentCoinGroup, recorder.cpp).
+// Returns false if `shader` isn't the world B's material.
+namespace {
+CoinGroup g_coins;
+uint32_t g_coin_shader = 0, g_coin_original = 0;
+constexpr float kCoinRange = 12.0f;  // world units from the icon's object (last resort)
+}  // namespace
+
+// WHO MAY USE IT (2026-10-22). A player gets a coin only while the GAME
+// would let them use the thing: the interactable on the icon's object keeps
+// its own list of the bodies close enough. CInteractableBehaviour (vtable
+// 0x8202EA6C, object at +28 like every behaviour): +32 an inline list of up
+// to 4 entries (8 bytes: the body (an ObjPtr: the actor), a countdown f32),
+// +64 the list's end. sub_82149C60 adds or refreshes a body each time its
+// interactor reports in (message 18 / 2); the Update (sub_82149808) counts
+// the countdowns down and drops the expired ones. So "in the list" = in
+// range right now, by the game's own rule. Found 2026-10-22: a player far
+// across the lawn still got a coin at a totem from the 12-unit guess.
+// The interactables are remembered as their Update runs (main thread).
+constexpr uint32_t kInteractableVtable = 0x8202EA6C;
+std::mutex g_interactables_mutex;
+std::vector<uint32_t> g_interactables;
+
+void NoteInteractable(uint32_t it) {
+  std::lock_guard<std::mutex> lock(g_interactables_mutex);
+  if (std::find(g_interactables.begin(), g_interactables.end(), it) == g_interactables.end()) {
+    g_interactables.push_back(it);
   }
-  if (owner < 0) return false;
+}
+
+// The interactable on `object` (0 = none), forgetting the ones that went away.
+uint32_t InteractableOf(uint8_t* base, uint32_t object) {
+  std::lock_guard<std::mutex> lock(g_interactables_mutex);
+  std::erase_if(g_interactables, [base](uint32_t it) { return Load32(base, it) != kInteractableVtable; });
+  for (uint32_t it : g_interactables) {
+    if (Load32(base, it + 28) == object) return it;
+  }
+  return 0;
+}
+
+// Is player p's body (their Crash, or the titan they ride) in the list?
+bool InInteractableList(uint8_t* base, uint32_t it, int p) {
+  const uint32_t crash = more_players::CharacterOfPlayer(p), titan = more_players::TitanOfPlayer(p);
+  const uint32_t end = Load32(base, it + 64);
+  if (end < it + 32 || end > it + 32 + 4 * 8) return false;
+  for (uint32_t e = it + 32; e < end; e += 8) {
+    const uint32_t body = Load32(base, e);
+    if (body && (body == crash || body == titan)) return true;
+  }
+  return false;
+}
+
+const CoinGroup& CurrentCoinGroup() { return g_coins; }
+
+bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32_t& from_xn,
+                     uint32_t& to_xn) {
+  if (!xn_context) return false;
+  const uint32_t current = Load32(base, shader + 92);
+  const uint32_t dev = Load32(base, xn_context + 400);  // xnContext +400 = the D3D device
+  if (dev < 0x40000000) return false;
+  float at[3];
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = Load32(base, dev + 1920 + 16 * 15 + 4 * i);  // VS c15 = world translation
+    std::memcpy(&at[i], &w, 4);
+  }
   std::lock_guard<std::mutex> lock(g.mutex);
-  from_xn = to_xn = 0;
+  const GuestPage* original = nullptr;
+  uint32_t copy[4] = {};
   for (const GuestPage& gp : g.pages) {
     if (gp.font || gp.prompt != &kWorldB) continue;
-    if (gp.world_player < 0) from_xn = gp.xn;
-    if (gp.world_player == owner) to_xn = gp.xn;
+    if (gp.world_player < 0) original = &gp;
+    else if (gp.world_player < 4) copy[gp.world_player] = gp.xn;
   }
-  return from_xn && to_xn;
+  if (!original) return false;
+  bool ours = original->xn == current;
+  for (uint32_t c : copy) ours = ours || (c && c == current);
+  if (!ours) return false;
+  from_xn = current;
+  to_xn = original->xn;
+  g_coins = CoinGroup{};
+  g_coin_shader = shader;
+  g_coin_original = original->xn;
+  // The nearest shown icon: this coin's.
+  int owner = -1;
+  uint32_t icon_object = 0;
+  float icon_range = 0;
+  float best = 0.25f;  // squared distance in world units: the same matrix to the last digit
+  {
+    std::lock_guard<std::mutex> icons(g_icons_mutex);
+    for (const IconOwner& o : g_icons) {
+      float d2 = 0;
+      for (int i = 0; i < 3; ++i) {
+        const uint32_t w = Load32(base, o.icon + 32 + 48 + 4 * i);
+        float v;
+        std::memcpy(&v, &w, 4);
+        d2 += (v - at[i]) * (v - at[i]);
+      }
+      if (d2 < best) {
+        best = d2, owner = o.player, icon_range = o.range;
+        icon_object = Load32(base, o.icon + kIconObject);
+      }
+    }
+  }
+  if (owner < 0) return true;  // not an icon we know: the game's own B
+  // Who stands near it.
+  float centre[3] = {at[0], at[1], at[2]};
+  if (icon_object) {
+    if (const uint32_t m = Load32(base, icon_object + 44); m > 0x40000000) {
+      for (int i = 0; i < 3; ++i) {
+        const uint32_t w = Load32(base, m + 48 + 4 * i);
+        std::memcpy(&centre[i], &w, 4);
+      }
+    }
+  }
+  const uint32_t interactable = icon_object ? InteractableOf(base, icon_object) : 0;
+  if (!interactable) {
+    static uint32_t logged = 0;
+    if (logged != icon_object) {
+      logged = icon_object;
+      REXLOG_INFO("Prompt pictures: a floating button ({:08X}) without an interactable: coins within {:.2f}",
+                  icon_object, icon_range);
+    }
+  }
+  std::string seen[4];
+  int count = 0;
+  uint32_t players_near = 0;  // bit p: player p may use it (for the log)
+  for (int p = 0; p < 4 && count < 4; ++p) {
+    float body[3];
+    bool near = false;
+    if (!menu_input::PlayerPlays(p)) {
+    } else if (interactable) {
+      near = InInteractableList(base, interactable, p);
+    } else {
+      // No list: within the range the game showed it at (its owner's
+      // distance then, 15% to spare for steps and turns).
+      const float range = icon_range > 0 ? icon_range * 1.15f : kCoinRange;
+      near = BodyAt(base, p, body) &&
+             (body[0] - centre[0]) * (body[0] - centre[0]) + (body[1] - centre[1]) * (body[1] - centre[1]) +
+                     (body[2] - centre[2]) * (body[2] - centre[2]) <=
+                 range * range;
+    }
+    if (!near) continue;  // the owner too: they may have walked off while another stays
+    players_near |= 1u << p;
+    const std::string look = LookOf(uint32_t(p)).Name();
+    bool known = false;
+    for (int i = 0; i < count; ++i) known = known || seen[i] == look;
+    if (known || !copy[p]) continue;
+    seen[count] = look;
+    g_coins.xn[count++] = copy[p];
+  }
+  if (count == 0 && copy[owner]) g_coins.xn[count++] = copy[owner];  // nobody counted: the owner's, as before
+  g_coins.count = count;
+  if (count > 0) to_xn = g_coins.xn[0];
+  {  // who may use it: logged when that changes
+    static std::map<uint32_t, uint32_t> last_near;  // per icon object (several can be up at once)
+    if (last_near.size() > 64) last_near.clear();
+    auto [it, fresh] = last_near.try_emplace(icon_object, players_near);
+    if (fresh || it->second != players_near) {
+      it->second = players_near;
+      std::string who;
+      for (int p = 0; p < 4; ++p) {
+        if (players_near & (1u << p)) who += fmt::format("{}{}", who.empty() ? "" : " ", p + 1);
+      }
+      REXLOG_INFO("Prompt pictures: floating button {:08X}: players near [{}], {} coin(s)", icon_object, who,
+                  count);
+    }
+  }
+  return true;
+}
+
+// The frame's end: the world B's material gets its own texture back (it holds
+// a reference: what's there when the material goes must be its own).
+void WorldButtonRestore(uint8_t* base) {
+  g_coins = CoinGroup{};
+  if (!g_coin_shader) return;
+  if (Load32(base, g_coin_shader) == 0x82017E64u && Load32(base, g_coin_shader + 92) != g_coin_original) {
+    Store32(base, g_coin_shader + 92, g_coin_original);
+  }
+  g_coin_shader = 0;
 }
 }  // namespace prompt_icons
+
+// CInteractableBehaviour Update (vtable slot 4): remembered for WHO MAY USE IT.
+extern "C" REX_FUNC(__imp__sub_82149808);
+extern "C" REX_FUNC(sub_82149808) {
+  prompt_icons::NoteInteractable(ctx.r3.u32);
+  __imp__sub_82149808(ctx, base);
+}
 
 // CIconBehaviour: show / hide (r4) its floating button (THE FLOATING B'S
 // OWNER): an icon that turns on gets the nearest playing player as owner.
@@ -2338,8 +2525,9 @@ extern "C" REX_FUNC(sub_82179130) {
     if (d < best) best = d, owner = p;
   }
   std::lock_guard<std::mutex> lock(g_icons_mutex);
-  g_icons.push_back({icon, owner});
-  REXLOG_INFO("Prompt pictures: a floating button appeared ({:08X}), for player {}", icon, owner + 1);
+  g_icons.push_back({icon, owner, std::isfinite(best) ? std::sqrt(best) : 0.0f});
+  REXLOG_INFO("Prompt pictures: a floating button appeared ({:08X}), for player {} ({:.2f} away)", icon,
+              owner + 1, g_icons.back().range);
 }
 
 extern "C" REX_FUNC(sub_823AFB00) {

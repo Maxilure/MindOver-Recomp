@@ -125,7 +125,16 @@ void HudFrame(PPCContext& ctx, uint8_t* base);
 // the shader's texture `from_xn` (the game's B) is to be drawn as `to_xn`
 // (the owner's copy). For players/outfits.cpp's per-object texture swap
 // (the same one that gives each outfit its hair). Game main thread.
-bool WorldButtonSwap(uint8_t* base, uint32_t object, uint32_t& from_xn, uint32_t& to_xn);
+struct CoinGroup {
+  int count = 0;       // coins to draw side by side (0 = just the game's one)
+  uint32_t xn[4] = {};  // each one's texture (an xnTexture: the player's copy of the B)
+};
+// What WorldButtonSwap decided for the coin being set up now, until the
+// frame ends (the native renderer reads it at the draw: recorder.cpp).
+const CoinGroup& CurrentCoinGroup();
+void WorldButtonRestore(uint8_t* base);  // each frame end: the material gets its own texture back
+bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32_t& from_xn,
+                     uint32_t& to_xn);
 
 // The menus' own glyph for a prompt character (± -> menu A, ² -> menu B, ³ ´
 // ¾ ¸ likewise), or `c` itself (another character, or the font patch isn't

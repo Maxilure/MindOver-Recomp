@@ -888,9 +888,20 @@ uint32_t FindTexture(PPCContext& ctx, uint8_t* base, uint32_t section, uint32_t 
 
 void HairSetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   const uint32_t shader = ctx.r3.u32;
+
   if (g_hair_to && Read32(shader + kSimpleTexture) == g_hair_from) {
     Write32(shader + kSimpleTexture, g_hair_to);
     g_hair_shader = shader;
+  }
+  // A floating button's coin: its owner's copy of the B, for this set-up only.
+  uint32_t coin_from = 0, coin_to = 0;
+  if (prompt_icons::WorldButtonSwap(base, shader, native::recorder::CurrentMeshContext(), coin_from,
+                                    coin_to)) {
+    // Stays until the frame ends (prompt_icons WorldButtonRestore): the native
+    // renderer reads the material's texture at the draw, after this set-up.
+    if (coin_to != coin_from) Write32(shader + kSimpleTexture, coin_to);
+    original(ctx, base);
+    return;
   }
   original(ctx, base);
 }
@@ -922,11 +933,6 @@ void DrawWithHair(PPCContext& ctx, uint8_t* base, void (*draw)(PPCContext&, uint
       g_hair_to = FindTexture(ctx, base, section->second, NameKey(ctx, base, FurName(*c)));
       if (!g_hair_from || !g_hair_to) g_hair_from = g_hair_to = 0;
     }
-  }
-  // A floating button's coin: its owner's B (input/prompt_icons.h).
-  if (!g_hair_from) {
-    uint32_t from = 0, to = 0;
-    if (prompt_icons::WorldButtonSwap(base, object, from, to)) g_hair_from = from, g_hair_to = to;
   }
   draw(ctx, base);
   if (g_hair_shader) Write32(g_hair_shader + kSimpleTexture, g_hair_from);

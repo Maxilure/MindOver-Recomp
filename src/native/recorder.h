@@ -49,4 +49,9 @@ void Uninstall();
 // little CPU per draw, so it's off while the emulated picture is shown).
 void TakeFrame(Frame& out, bool record_next);
 
+// The xnContext of the mesh draw in progress (inside xnContext::DrawPrimBuffer,
+// so also during the material's set-up), 0 outside one or when the recorder
+// isn't installed. Main thread.
+uint32_t CurrentMeshContext();
+
 }  // namespace native::recorder

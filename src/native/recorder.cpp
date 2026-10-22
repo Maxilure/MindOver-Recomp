@@ -13,10 +13,12 @@
 // =============================================================================
 
 #include "recorder.h"
+#include "../input/prompt_icons.h"
 #include "../guest_memory.h"
 #include "spotter.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <iterator>
 #include <string>
@@ -1305,6 +1307,53 @@ void OnDrawPrimBuffer(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   g.mesh_material = saved_material;
 }
 
+// SIDE-BY-SIDE FLOATING BUTTONS (input/prompt_icons.h, CoinGroup): the game
+// draws one coin per icon; when players with different button looks stand at
+// the same icon it has more than one. The coin being drawn (its texture is
+// the group's first) is shifted and copies of it with the other coins'
+// textures are committed beside it. The shift is a fixed fraction of the
+// screen at the coin's own distance: clip x += s * w (the matrix is the
+// vertex shader's column-major mat4: its row 0 gets s x row 3), so the coins
+// keep their spacing as the camera moves in and out (3-4 coins: an arc). `d` itself becomes the group's first coin.
+void CommitCoins(const uint8_t* base, DrawCommand& d) {
+  const prompt_icons::CoinGroup& group = prompt_icons::CurrentCoinGroup();
+  if (group.count < 2 || !d.textured) return;
+  if (Load32(base, g.mesh_material + shader::kSimpleTexture) != group.xn[0]) return;
+  // The centre of the coin in clip space has w = mvp[15] (16.5 over a totem);
+  // a coin is about 0.09 of the screen's half width across there.
+  constexpr float kCoinNdcAtUnitW = 0.09f * 16.5f;
+  const float w = d.mvp[15];
+  if (!(w > 0.1f)) return;
+  const float gap = 1.15f * kCoinNdcAtUnitW / w;
+  // THE ARC (2026-10-22): 3-4 coins sit on the top of a circle, the middle
+  // ones higher, so the number of coins reads at a glance. Neighbours are
+  // kStep radians apart on a circle whose chord between neighbours is `gap`;
+  // the outer coins keep the icon's own height. Clip y is scaled by the
+  // screen's aspect (16:9) so the arc is round on screen. 2 coins: level.
+  constexpr float kStep = 0.5f;
+  const float radius = gap / (2.0f * std::sin(kStep / 2.0f));
+  const float edge = float(group.count - 1) / 2.0f * kStep;
+  auto shifted = [&](int i) {
+    DrawCommand c = d;
+    const float theta = (float(i) - float(group.count - 1) / 2.0f) * kStep;
+    const float sx = radius * std::sin(theta);
+    const float sy = radius * (std::cos(theta) - std::cos(edge)) * (16.0f / 9.0f);
+    for (int k = 0; k < 4; ++k) {
+      c.mvp[4 * k] += sx * c.mvp[4 * k + 3];      // row 0 += sx x row 3 (column-major)
+      c.mvp[4 * k + 1] += sy * c.mvp[4 * k + 3];  // row 1 += sy x row 3
+    }
+    return c;
+  };
+  for (int i = 1; i < group.count; ++i) {
+    DrawCommand c = shifted(i);
+    GuestTexture palette;
+    if (!ReadXnTexture(base, group.xn[i], c.texture, palette)) continue;
+    c.palette = palette;
+    CommitDraw(c);
+  }
+  d = shifted(0);
+}
+
 // --- xnPrimBuffer::Draw (0x82443BD0) ------------------------------------------
 // r3 = the xnPrimBuffer. The original binds its buffers (SetIndices,
 // SetVertexDeclaration, SetStreamSource) and draws all its indices (or
@@ -1362,6 +1411,7 @@ void OnPrimBufferDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
         }
         if (stride >= 12 && stride <= 255 && d.vertex_buffer.present() &&
             (d.index_count || d.vertex_count) && ok) {
+          if (d.material == Material::kSimple) CommitCoins(base, d);
           CommitDraw(d);
         } else if (ok) {
           ReportOnce("a mesh with an unexpected layout or no vertex buffer");
@@ -1419,6 +1469,8 @@ void TakeFrame(Frame& out, bool record_next) {
     NoteSurface(base, g.targets.depth, true);
   }
 }
+
+uint32_t CurrentMeshContext() { return g.mesh_context; }
 
 }  // namespace recorder
 }  // namespace native
