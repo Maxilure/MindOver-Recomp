@@ -4,6 +4,7 @@
 // Each override below says what the ORIGINAL method did (findings/32) and how
 // ours does the same with a plain file. Argument registers are the original's.
 #include "pc_save_drive.h"
+#include "../players/outfits.h"
 
 #include <algorithm>
 #include <array>
@@ -91,6 +92,7 @@ struct OpenFile {
   bool created = false;        // made by this Open: Commit writes the size header
   bool writable = false;
   bool dirty = false;          // written since the last flush to disk
+  std::vector<uint8_t> trailer;  // the port's bytes after the game's (save_files.h): not shown to the game
 };
 struct Find {
   bool used = false;
@@ -123,7 +125,15 @@ bool SafeName(const std::string& name) {
 bool Flush(OpenFile& f) {
   if (!f.dirty) return true;
   std::string error;
-  if (!save_files::ReplaceFile(f.path, f.data, &error)) {
+  // The game's bytes, then the port's trailer: the current outfit picks for
+  // a file the game wrote (a save), the file's own for any other write.
+  std::vector<uint8_t> out = f.data;
+  const std::vector<uint8_t> trailer =
+      f.writable && f.data.size() == save_files::kGameFileSize
+          ? save_files::MakeTrailer(outfits::CurrentPickBytes())
+          : f.trailer;
+  out.insert(out.end(), trailer.begin(), trailer.end());
+  if (!save_files::ReplaceFile(f.path, out, &error)) {
     REXLOG_ERROR("PC save drive: COULD NOT WRITE {}: {}", f.path.string(), error);
     return false;
   }
@@ -227,6 +237,12 @@ extern "C" REX_FUNC(sub_823690D8) {
       REXLOG_ERROR("PC save drive: can't read {}", path.string());
       SetError(base, drive, kFailure);
       return;
+    }
+    // The port's trailer (save_files.h) lies after the game's bytes: the header
+    // counts the game's part only. The game never sees it.
+    if (header == save_files::kGameFileSize && f.data.size() > header) {
+      f.trailer.assign(f.data.begin() + header, f.data.end());
+      f.data.resize(header);
     }
     if (f.data.size() < 4 || header != f.data.size()) {
       // The game shows it as corrupt. The file itself is never touched.

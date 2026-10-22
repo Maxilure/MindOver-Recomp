@@ -29,13 +29,15 @@
 //     (CCharacterRenderBehaviour's draw, +0xE4); the HAIR (its own material,
 //     shared by every Crash) follows the outfit too;
 //   * Back pages through every player on foot (1 -> 2 -> 3 -> 4 -> 1);
-//   * a picked outfit is kept per player in user/settings.toml
-//     (outfit_player1..4; -1 = as the game decides: player 1 orange Crash,
+//   * a picked outfit is kept per player AND PER SAVE
+//     (in the save file's trailer; outfit_player1..4 in settings.toml are
+//     only what older saves start from; -1 = as the game decides: player 1 orange Crash,
 //     players 2-4 Carbon Crash or the story's Coco). Saves keep the game's
 //     own two numbers unchanged.
 // =============================================================================
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 #include <rex/cvar.h>
@@ -72,5 +74,14 @@ float ColourHue(int index);
 
 // Player p's outfit as the port sees it (0-10 the game's skins, 11 Carbon, 12-17 colours).
 int OutfitOf(int p);
+
+// PICKS PER SAVE (2026-10-22), kept in the save file itself (a trailer after
+// the game's bytes, see outfits.cpp and saves/save_files.h). Called by the
+// save list: a save was loaded / a New Game starts. CurrentPickBytes = what
+// the PC save drive writes into the trailer of every save file it writes
+// (one signed byte per player, -1 = no pick).
+void OnSaveLoaded(int number);
+void OnNewGame();
+std::array<int8_t, 4> CurrentPickBytes();
 
 }  // namespace outfits

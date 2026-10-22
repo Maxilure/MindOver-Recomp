@@ -260,6 +260,23 @@ cutscene makes); otherwise plain Crash (0). If no Crash package is loaded at
 all (every player in Coco's outfit) a warning is logged: that case is not
 handled yet.
 
+## 3d. Picks per save file
+
+The picks used to be global (settings.toml), so a pick made in one save showed
+in every other. They now live in the save file itself: a 10-byte trailer after
+the game's 20,205 bytes ("MORE", version 1, count 4, then one signed byte per
+player, -1 = no pick). The size word at the start still says 0x4EED (it counts
+the game's part), the PC save drive hides the trailer from the game and
+writes it after every save it writes, so the game's bytes stay exactly as the
+game made them and a file without the trailer is a normal save. Load = the
+trailer becomes the current picks (a save without one takes the old global
+settings once); New Game = no picks; a pick at the chest is kept in memory and
+reaches the file with the next save, like the rest of the progress; backups,
+deleted saves and copies carry it along because it is the file. Code:
+outfits.cpp (`OnSaveLoaded`, `OnNewGame`, `CurrentPickBytes`),
+save_files.cpp (`ReadOutfitTrailer`, `MakeTrailer`), pc_save_drive.cpp
+(Open splits the trailer off, Flush appends it).
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a

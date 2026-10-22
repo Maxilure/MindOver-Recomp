@@ -45,6 +45,7 @@
 #include "../gameplay/game_mods.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
+#include "../players/outfits.h"
 #include "quick_load.h"
 #include "rename_screen.h"
 #include "save_files.h"
@@ -1370,6 +1371,7 @@ extern "C" REX_FUNC(sub_82259858) {
     g.game_number = g.op_number;
     g.picked = false;
     save_files::MarkPlayed(g.op_number);
+    outfits::OnSaveLoaded(g.op_number);  // before the spawn asks who wears what
     REXLOG_INFO("Saves: loading save {}", g.op_number);
   }
   __imp__sub_82259858(ctx, base);
@@ -1709,6 +1711,7 @@ extern "C" REX_FUNC(sub_8211B8E8) {
   const int32_t exit = int32_t(ctx.r3.u32);
   if (exit >= kDifficultyFirst && exit <= kDifficultyLast) {
     g.new_game = true;
+    outfits::OnNewGame();  // a story from the start: nobody has picked anything
   } else if (exit == kDifficultyBack) {
     g.new_game = false;
   }

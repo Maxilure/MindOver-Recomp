@@ -29,6 +29,13 @@
 //             block +20  the NAME typed at New Game, 32 UTF-16 (BE) characters
 //           ...
 //   +20178  27 bytes, the same in every file (no checksum anywhere).
+//   +20205  OUR TRAILER (since 2026-10-22, optional, 10 bytes): the port's
+//           own per-save data that the game has no room for: "MORE", u8
+//           version 1, u8 count 4, then the four players' outfit picks (signed
+//           bytes, -1 = none; players/outfits.h). The size word at +0 still
+//           says 0x4EED: it counts the game's part only. The PC save drive
+//           hides the trailer from the game and writes it after every save;
+//           a file without it is a normal save.
 // So a rename only rewrites the 64 name bytes at file offset 24.
 //
 // THE OLD LAYOUT (the emulated Xbox's content folders, until 2026-10-10):
@@ -56,6 +63,7 @@
 // =============================================================================
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -87,6 +95,13 @@ bool Exists(int number);
 
 // The highest N with a save, 0 if there is none.
 int HighestNumber();
+
+// The outfit picks in save N's trailer (see the file layout above). False if
+// the save has none.
+inline constexpr size_t kGameFileSize = 0x4EED;  // the game's part of a save file
+bool ReadOutfitTrailer(int number, std::array<int8_t, 4>* picks);
+// The bytes of a trailer holding `picks` (written after the game's bytes).
+std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks);
 
 // Every save ("CrashMOM GameSlot N.sav", N >= 1), most recently played first.
 struct SaveInfo {

@@ -183,7 +183,9 @@ their own shade, the hair too); player 2 is still the original white Carbon
 Crash by default and players 3-4 start in green and purple (*carbon_colours*
 = false: white only). Carbon Crash's hair now matches his fur, and each coloured Crash spins in
 his own colour. Picks are kept per
-player in the settings, whichever save is loaded.
+player and per save file (kept in the save file itself, after the game's own
+bytes): a New Game starts with the story's own outfits, and a save from an
+earlier version takes the picks made before.
 
 **Fixes**
 

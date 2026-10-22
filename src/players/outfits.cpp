@@ -59,6 +59,9 @@
 #include <atomic>
 #include <cmath>
 #include <chrono>
+#include <fstream>
+#include <map>
+#include <sstream>
 #include <cstring>
 #include <functional>
 #include <string>
@@ -74,8 +77,9 @@
 
 #include "../data/data_patcher.h"
 #include "../data/pure3d.h"
-#include "../options/options_settings.h"
+#include "../saves/save_files.h"
 #include "../pddi/intercept.h"
+#include "../native/recorder.h"
 #include "../ui/scrooby.h"
 #include "more_players.h"
 
@@ -274,11 +278,6 @@ uint32_t CallGame(GuestFunction f, PPCContext& ctx, uint8_t* base, uint32_t r3, 
   return result;
 }
 
-const char* FlagName(int p) {
-  static const char* names[kMaxPlayers] = {"outfit_player1", "outfit_player2", "outfit_player3",
-                                           "outfit_player4"};
-  return names[p];
-}
 // The game's number for an outfit (Carbon = Crash's model).
 uint32_t GameSkin(int outfit) { return IsCarbon(outfit) ? 0u : uint32_t(outfit); }
 bool IsCoco(uint32_t skin) { return skin == 9 || skin == 10; }
@@ -297,20 +296,42 @@ bool SkinUnlocked(uint32_t skin) {
   }
   return false;
 }
-// The outfit a player picked at the chest (settings.toml), -1 = none. The
-// pick is kept for every save, but it only counts while the loaded save has
-// it unlocked: a pick of Coco made in a late save, then a New Game or an
-// early save, played Coco before the story gives her (2026-10-17). There the
-// player wears what the save says; the pick comes back in saves that have it.
+// THE PICKS ARE PER SAVE (2026-10-22), IN THE SAVE FILE ITSELF. The save
+// file is the game's 0x4EED bytes followed by a small trailer of ours (the
+// layout is in saves/save_files.h): "MORE", a version, and one signed byte
+// per player (-1 = no pick, as the game decides). The game never sees it:
+// the PC save drive keeps it apart and writes it back after the game's bytes
+// (saves/pc_save_drive.cpp calls SaveTrailer when a file is written).
+//   * a save is LOADED  -> its trailer becomes the current picks. A save
+//     without one (every save from before this existed) takes the picks the
+//     old global settings hold (outfit_player1..4, no longer written), so
+//     nothing changes for it; its next save gets the trailer;
+//   * New Game          -> no picks (the story's own outfits);
+//   * a pick at the chest -> the current picks; they reach the file with the
+//     next save, like the rest of the progress;
+//   * a save is WRITTEN (Create New Save, overwrite) -> the trailer holds the
+//     current picks.
+// Backups, deleted saves and copies of a save carry it along (it's the file).
+std::array<int, kMaxPlayers> g_picks = {-2, -2, -2, -2};  // -2 = not read from the settings yet
+std::mutex g_picks_mutex;
+
+std::array<int, kMaxPlayers> LegacyPicks() {
+  return {REXCVAR_GET(outfit_player1), REXCVAR_GET(outfit_player2), REXCVAR_GET(outfit_player3),
+          REXCVAR_GET(outfit_player4)};
+}
+std::array<int, kMaxPlayers>& CurrentPicks() {
+  if (g_picks[0] == -2) g_picks = LegacyPicks();
+  return g_picks;
+}
+
+// The outfit a player wears by choice, -1 = none. It only counts while the
+// loaded save has it unlocked: a pick of Coco made in a late save, then a
+// New Game or an early save, played Coco before the story gives her
+// (2026-10-17). There the player wears what the save says.
 int Picked(int p) {
-  int picked = -1;
-  switch (p) {
-    case 0: picked = REXCVAR_GET(outfit_player1); break;
-    case 1: picked = REXCVAR_GET(outfit_player2); break;
-    case 2: picked = REXCVAR_GET(outfit_player3); break;
-    case 3: picked = REXCVAR_GET(outfit_player4); break;
-    default: return -1;
-  }
+  if (p < 0 || p >= kMaxPlayers) return -1;
+  std::lock_guard guard(g_picks_mutex);
+  const int picked = CurrentPicks()[p];
   if (picked < 0 || picked > kLastOutfit) return -1;
   return SkinUnlocked(GameSkin(picked)) ? picked : -1;
 }
@@ -612,6 +633,37 @@ int OutfitOf(int p) {
   return kCarbon;
 }
 
+// --- Per-save picks (see Picked) ---------------------------------------------
+
+void OnSaveLoaded(int number) {
+  // (Read the file before taking our lock: the save drive's thread holds the
+  // files' lock and then asks for ours when it writes.)
+  std::array<int8_t, kMaxPlayers> stored{};
+  const bool has_trailer = save_files::ReadOutfitTrailer(number, &stored);
+  std::lock_guard guard(g_picks_mutex);
+  if (has_trailer) {
+    for (int p = 0; p < kMaxPlayers; ++p) g_picks[p] = stored[p];
+    REXLOG_INFO("Outfits: save {} has its own picks ({} {} {} {})", number, g_picks[0], g_picks[1],
+                g_picks[2], g_picks[3]);
+  } else {
+    // A save from before the picks were per save: it keeps what was global.
+    g_picks = LegacyPicks();
+    REXLOG_INFO("Outfits: save {} has no picks of its own yet: the old global ones ({} {} {} {})",
+                number, g_picks[0], g_picks[1], g_picks[2], g_picks[3]);
+  }
+}
+void OnNewGame() {
+  std::lock_guard guard(g_picks_mutex);
+  g_picks = {-1, -1, -1, -1};
+}
+std::array<int8_t, kMaxPlayers> CurrentPickBytes() {
+  std::lock_guard guard(g_picks_mutex);
+  std::array<int, kMaxPlayers>& now = CurrentPicks();
+  std::array<int8_t, kMaxPlayers> out{};
+  for (int p = 0; p < kMaxPlayers; ++p) out[p] = int8_t(std::clamp(now[p], -1, kLastOutfit));
+  return out;
+}
+
 }  // namespace outfits
 
 using namespace outfits;
@@ -695,8 +747,10 @@ extern "C" REX_FUNC(sub_8229F8A0) {
   const int p = int(ctx.r3.u32);
   if (p == g_applying) {
     // A pick at the chest: kept as the player's outfit (settings.toml).
-    options_settings::SetFlagToSave(FlagName(p), std::to_string(g_applying_outfit));
-    options_settings::SaveChanged();
+    {
+      std::lock_guard guard(g_picks_mutex);
+      CurrentPicks()[p] = g_applying_outfit;  // reaches the file with the next save
+    }
     REXLOG_INFO("Outfits: player {} wears outfit {}", p + 1, g_applying_outfit);
   }
   if (p >= 2 && p < kMaxPlayers) {

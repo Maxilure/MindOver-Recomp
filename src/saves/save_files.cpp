@@ -300,6 +300,22 @@ bool ReplaceFile(const fs::path& path, const std::vector<uint8_t>& data, std::st
   return true;
 }
 
+std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks) {
+  std::vector<uint8_t> t = {'M', 'O', 'R', 'E', 1, 4};
+  for (int8_t p : picks) t.push_back(uint8_t(p));
+  return t;
+}
+
+bool ReadOutfitTrailer(int number, std::array<int8_t, 4>* picks) {
+  std::lock_guard guard(Lock());
+  std::vector<uint8_t> data;
+  if (number < 1 || !ReadAll(FileOf(number), data) || data.size() < kFileSize + 10) return false;
+  const uint8_t* t = data.data() + kFileSize;
+  if (t[0] != 'M' || t[1] != 'O' || t[2] != 'R' || t[3] != 'E' || t[4] != 1 || t[5] != 4) return false;
+  for (int i = 0; i < 4; ++i) (*picks)[i] = int8_t(t[6 + i]);
+  return true;
+}
+
 bool Rename(int number, std::u16string_view name, std::string* error) {
   std::lock_guard guard(Lock());
   if (name.size() > kMaxNameLength) {
@@ -316,7 +332,7 @@ bool Rename(int number, std::u16string_view name, std::string* error) {
   const uint32_t size_word = uint32_t(data.size() >= 4 ? data[0] << 24 | data[1] << 16 |
                                                              data[2] << 8 | data[3]
                                                        : 0);
-  if (data.size() != kFileSize || size_word != kFileSize) {
+  if (data.size() < kFileSize || size_word != kFileSize) {  // (a trailer may follow)
     *error = fmt::format("{} isn't a save of the expected size ({} bytes)", save.string(),
                          data.size());
     return false;
