@@ -78,6 +78,11 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "Only the native renderer changes its anti-aliasing: the emulated picture keeps the "
               "Xbox 360's 2x."};
     }
+  } else if (name == "smooth_cutouts") {
+    if (AsNumber(value) > 0) {
+      return {"Native renderer only",
+              "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."};
+    }
   } else if (name == "texture_sharpness") {
     if (AsNumber(value) > 0) {
       return {"Native renderer only",

@@ -425,6 +425,19 @@ Row AntiAliasingRow() {
   return r;
 }
 
+// SMOOTH LEAVES AND FENCES (findings/35 s.3): the cut-out shapes' edges (alpha
+// tested, so the multisampling can't smooth them) get coverage from their
+// alpha, native only; needs anti-aliasing on.
+Row SmoothCutoutsRow() {
+  Row r = LevelRow(u"Smooth Leaves", "smooth_cutouts", {u"Off (original)", u"On"},
+                   {u"Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the "
+                    u"original game.",
+                    u"Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing "
+                    u"on."});
+  NeedsNative(r);
+  return r;
+}
+
 // TEXTURE SHARPNESS (findings/36): a more detailed mip level for the
 // mipmapped textures (the native renderer's samplers), native only.
 Row TextureSharpnessRow() {
@@ -788,7 +801,7 @@ std::vector<Tab> Build() {
       {u"Display",
        {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), FullscreenRow(), FpsCounterRow(),
         FpsPositionRow()}});
-  tabs.push_back({u"Graphics", {RenderResolutionRow(), AntiAliasingRow(), TextureSharpnessRow(), SharpeningRow(),
+  tabs.push_back({u"Graphics", {RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(), TextureSharpnessRow(), SharpeningRow(),
                                  ShadowSoftnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
       {u"Audio",

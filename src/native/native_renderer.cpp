@@ -82,6 +82,7 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "each resolve back into guest memory)");
 // The sharpening filter's strength (present pass, docs/findings/41).
 REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, smooth_cutouts);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
 // hashed every frame (the old way): to measure the difference, or to rule
@@ -381,6 +382,13 @@ NativeRenderer::PipelineKey NativeRenderer::MakePipelineKey(const native::DrawCo
   PipelineKey key{};
   key.samples = uint8_t(samples);
   key.material = uint8_t(d.material);
+  // Smooth cut-outs (leaves, fences): an opaque alpha-tested draw of the simple or
+  // lit-simple material ("alpha > reference" = Xbox compare function 4) on a
+  // multisampled surface gets coverage from its alpha instead of a hard discard.
+  key.alpha_to_coverage = samples != VK_SAMPLE_COUNT_1_BIT && REXCVAR_GET(smooth_cutouts) != 0 &&
+                          d.alpha_test && d.alpha_func == 4 && !d.blend.enable &&
+                          (d.material == native::Material::kSimple ||
+                           d.material == native::Material::kLitSimple);
   key.topology = uint8_t(d.topology);
   if (d.blend.enable) {
     key.blend_enable = 1;
@@ -1000,7 +1008,8 @@ VkPipeline BuildPipeline(const rex::ui::vulkan::VulkanDevice* device_, VkPipelin
                          VkCullModeFlags cull_mode = VK_CULL_MODE_NONE,
                          VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
                          const VkPipelineDepthStencilStateCreateInfo* depth_stencil = nullptr,
-                         VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT) {
+                         VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT,
+                         bool alpha_to_coverage = false) {
   const auto& dfn = device_->functions();
   const VkDevice device = device_->device();
   VkShaderModule vs_module = rex::ui::vulkan::util::CreateShaderModule(device_, vs, vs_size);
@@ -1016,6 +1025,13 @@ VkPipeline BuildPipeline(const rex::ui::vulkan::VulkanDevice* device_, VkPipelin
     stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     stages[1].module = fs_module;
     stages[1].pName = "main";
+    // Smooth cut-outs (smooth_cutouts): the fragment shader's specialization
+    // constant 0 turns its alpha-test discard into a coverage-shaped alpha, and
+    // the multisample state turns that alpha into the pixel's samples.
+    const VkBool32 a2c_value = VK_TRUE;
+    const VkSpecializationMapEntry a2c_entry{0, 0, sizeof(VkBool32)};
+    const VkSpecializationInfo a2c_info{1, &a2c_entry, sizeof(a2c_value), &a2c_value};
+    if (alpha_to_coverage) stages[1].pSpecializationInfo = &a2c_info;
     VkPipelineInputAssemblyStateCreateInfo input_assembly{
         VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
     input_assembly.topology = topology;
@@ -1035,6 +1051,7 @@ VkPipeline BuildPipeline(const rex::ui::vulkan::VulkanDevice* device_, VkPipelin
     // multisampling, like the Xbox's: coverage and depth per sample, the
     // pixel shader once per pixel (no sample shading).
     multisample.rasterizationSamples = samples;
+    multisample.alphaToCoverageEnable = alpha_to_coverage ? VK_TRUE : VK_FALSE;
     VkPipelineColorBlendStateCreateInfo blend{
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
     blend.attachmentCount = 1;
@@ -1219,7 +1236,8 @@ VkPipeline NativeRenderer::GetPipeline(const native::DrawCommand& draw, bool has
   VkPipeline pipeline =
       BuildPipeline(device_, draw_layout_, render_targets_->render_pass(samples), vs, vs_size,
                     fs, fs_size, vertex_input, ToTopology(draw.topology), blend,
-                    ToFacing(key.cull).cull, ToFacing(key.cull).front, &depth, samples);
+                    ToFacing(key.cull).cull, ToFacing(key.cull).front, &depth, samples,
+                    key.alpha_to_coverage != 0);
   if (!pipeline) {
     REXLOG_ERROR("NativeRenderer: can't create a pipeline (material {}, stride {})", key.material,
                  key.stride);

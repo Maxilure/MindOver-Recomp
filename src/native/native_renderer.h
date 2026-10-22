@@ -240,7 +240,8 @@ class NativeRenderer {
     uint8_t stencil_back[4];
     uint8_t binormal_offset, tangent_offset;
     uint8_t samples;    // the render target's MSAA sample count (VkSampleCountFlagBits)
-    uint8_t unused[5];  // keeps the size a multiple of 8 for the hash
+    uint8_t alpha_to_coverage;  // see MakePipelineKey
+    uint8_t unused[4];  // keeps the size a multiple of 8 for the hash
     bool operator==(const PipelineKey& o) const { return std::memcmp(this, &o, sizeof(*this)) == 0; }
   };
   static_assert(sizeof(PipelineKey) == 32);

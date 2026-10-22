@@ -101,10 +101,23 @@ solid again (the tab switch refreshes every row).
 * `src/options/options_settings.*`, `options_menu.cpp`: the row,
   `Row::unavailable`, the greying. `src/ui/scrooby.*`: `SetAlpha`.
 
+## 5b. Smooth leaves (alpha to coverage)
+
+MSAA smooths polygon edges, not the edges an alpha test cuts inside a texture
+(bushes, leaves, fences: `atest 1 4 0.5` in the photo draw lists = "keep if
+alpha > 0.5", Xbox compare function 4). The Options row Smooth Leaves
+(`smooth_cutouts`, off = the original, native only, greyed otherwise) makes
+those draws, when they're opaque simple / lit-simple draws on a multisampled
+surface, use alpha to coverage: the pipeline gets `alphaToCoverageEnable` and
+the fragment shader a specialization constant (`kAlphaToCoverage`, simple.frag
+and lit.frag) that replaces the discard by a one-pixel soft edge
+`clamp((a - ref) / fwidth(a) + 0.5)` whose alpha the GPU turns into samples.
+It's part of the pipeline key (`alpha_to_coverage`), so switching it live just
+builds the other pipelines. At 2x there are only three coverage levels, so
+the gain grows with 4x / 8x. `docs/images/smooth-leaves-off-on.jpg`: the same
+frozen frame, off / on, 4x zoom.
+
 ## 6. Ideas for later
 
-* Alpha-tested leaves and fences: MSAA smooths polygon edges, not the edges
-  an alpha test cuts inside a texture. Alpha to coverage (the alpha decides
-  how many samples a pixel covers) would smooth those at 4x and 8x; not
-  what the original does, so it would be its own choice.
+* (DONE 2026-10-22, below) Alpha-tested leaves and fences.
 * A post-process smoothing (FXAA / SMAA) for the 1x passes or weaker GPUs.

@@ -47,6 +47,11 @@ layout(location = 3) in vec3 in_world_position;  // only with kFlagLights
 
 layout(location = 0) out vec4 out_colour;
 
+// Smooth cut-outs (smooth_cutouts): set when the pipeline has alpha-to-coverage
+// on (native_renderer.cpp). The "alpha > reference" test then becomes a soft
+// edge one pixel wide whose alpha the GPU turns into MSAA coverage.
+layout(constant_id = 0) const bool kAlphaToCoverage = false;
+
 void main() {
   uint flags = params.flags.x;
   vec4 colour = in_colour;
@@ -88,8 +93,13 @@ void main() {
   if ((flags & kFlagFadeRgb) != 0u) {
     colour.rgb *= fade;
   }
-  if ((flags & kFlagAlphaTest) != 0u && !AlphaTest(colour.a)) {
-    discard;
+  if ((flags & kFlagAlphaTest) != 0u) {
+    if (kAlphaToCoverage && params.flags.y == 4u) {
+      float ref = params.alpha_ref_fog_colour.x;
+      colour.a = clamp((colour.a - ref) / max(fwidth(colour.a), 1e-4) + 0.5, 0.0, 1.0);
+    } else if (!AlphaTest(colour.a)) {
+      discard;
+    }
   }
   // Debug (F11): solid magenta where the draw covers anything, so even a
   // faint additive trail shows exactly where it is.

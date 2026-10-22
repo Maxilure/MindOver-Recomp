@@ -42,6 +42,9 @@ layout(location = 4) in float in_fog_depth;
 
 layout(location = 0) out vec4 out_colour;
 
+// Smooth cut-outs: see simple.frag.
+layout(constant_id = 0) const bool kAlphaToCoverage = false;
+
 void main() {
   // 1. Directional lights.
   vec3 n = in_normal;
@@ -92,8 +95,13 @@ void main() {
   if (fade_rgb) {
     colour.rgb *= fade;
   }
-  if (LitFlag(kLitAlphaTest) && !AlphaTestPasses(colour.a)) {
-    discard;
+  if (LitFlag(kLitAlphaTest)) {
+    if (kAlphaToCoverage && lit.more.x == 4u) {
+      float ref = lit.fog_fade_alpha.w;
+      colour.a = clamp((colour.a - ref) / max(fwidth(colour.a), 1e-4) + 0.5, 0.0, 1.0);
+    } else if (!AlphaTestPasses(colour.a)) {
+      discard;
+    }
   }
   out_colour = colour;
 }

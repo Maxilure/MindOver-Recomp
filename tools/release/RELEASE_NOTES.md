@@ -38,7 +38,8 @@ with the row's place shown under the list.
   them.
 - **Graphics**: **resolution** (720p like the original, 1080p, 1440p, 4K: the
   Native renderer draws the whole game with that many pixels, menus and HUD
-  included), **anti-aliasing** (Off, 2x like the original, 4x, 8x),
+  included), **anti-aliasing** (Off, 2x like the original, 4x, 8x), **smooth leaves** (soft
+  edges on leaves, fences and other cut-out shapes; Native only, off by default),
   **texture sharpness** (crisper textures in the distance) and **motion blur** (new, the port's own: Off, Low, Medium, High) for the
   Native renderer: motion blur smears the scenery when the camera moves
   while the players stay sharp; the original game had none, so it starts
