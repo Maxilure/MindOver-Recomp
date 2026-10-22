@@ -86,6 +86,14 @@ button prompts ("Back", "Rename"...), the Options tabs and the game's Yes / No
 questions are clickable too, and on the Audio tab a click on a star sets that
 volume.
 
+**Aiming with the mouse, and the Wii pointer**: riding as a mask, the
+aiming reticle follows the mouse (Options → Controls → Mouse Aiming: Off
+keeps the original movement keys). In every menu the pointer is a glowing
+bubble, like the Wii version's. With Mouse Aiming set to **Crosshair** the
+bubble stays the pointer in play too: it stretches as it moves, grows over
+things you can aim at, and switches on the Wii version's own pointer code
+that the Xbox 360 game still carries, which pulls in mojo where it points.
+
 **Press any button**: the title screen starts on any controller button, any
 key or a mouse click, and says so ("Press Any Button").
 

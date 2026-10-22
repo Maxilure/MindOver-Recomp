@@ -667,8 +667,20 @@ Row DefaultKeysRow() {
   return r;
 }
 
+// MOUSE AIMING (findings/47): how a keyboard-and-mouse player aims as a mask,
+// and the Wii-style cursor in play (input/mouse_reticle.h, ui/wii_cursor.h).
+Row MouseAimingRow() {
+  Row r = LevelRow(u"Mouse Aiming", "mouse_reticle", {u"Off", u"Reticle", u"Crosshair"},
+                   {u"As a mask, the aiming reticle moves with the movement keys, like the original game.",
+                    u"As a mask, the aiming reticle follows the mouse.",
+                    u"The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that "
+                    u"grows over targets and pulls in mojo, like the Wii version's pointer."});
+  r.unavailable = NoKeyboard;
+  return r;
+}
+
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), KeyboardIconsRow(), ControllerIconsRow()};
+  std::vector<Row> rows{InvertAxisRow(), KeyboardIconsRow(), ControllerIconsRow(), MouseAimingRow()};
   // The keys start under a heading of their own (a row that can't be
   // selected: options_menu.cpp draws it in the titles' cyan).
   Row heading;

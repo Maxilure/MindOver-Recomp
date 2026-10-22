@@ -114,6 +114,14 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   void SetPausedCheck(std::function<uint32_t()> paused);
   // The Controls menu is open: game input paused, cursor shown.
   void SetMenuOpen(bool open);
+  // The aiming reticle follows the pointer this frame (input/mouse_reticle.h):
+  // the system pointer is HIDDEN (the reticle is the pointer), not merely
+  // auto-hidden. Called every frame while aiming; ~0.2 s after the last call
+  // the pointer is back to normal (MergeInto checks, every poll), so it shows
+  // again in the pause menu and every other menu. Game thread.
+  void HidePointerWhileAiming();
+  // Is the Controls menu (F6) open? (The pointer must stay itself there.) Any thread.
+  bool menu_open() const { return menu_open_.load(); }
   // "Is one of the game's menus on screen?" (the front end, or the pause /
   // totem / save menus in a level): asked when a key goes down. Any thread.
   void SetMenuCheck(std::function<bool()> check);
@@ -298,6 +306,13 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   std::function<bool()> menu_check_;
   bool mouse_blocked_ = false;  // this poll: mouse buttons / wheel don't count
   std::atomic<bool> menu_open_{false};
+  // HidePointerWhileAiming: hidden now, and until when (steady clock ticks).
+  std::atomic<bool> aim_hidden_{false};
+  std::atomic<int64_t> aim_hidden_until_{0};
+  // The windows' pointer as the state says: shown while the Controls menu is
+  // open, hidden while aiming, else auto-hidden. Runs on the UI thread
+  // (deferred: callers may be game threads holding locks).
+  void ApplyPointerVisibility();
 
   // The waiting "press a key" (Capture). Its own lock: the in-game Rebind
   // screen (options/options_menu.cpp) arms and cancels it from the GAME

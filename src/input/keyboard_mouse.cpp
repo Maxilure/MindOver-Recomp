@@ -133,10 +133,24 @@ void KeyboardMouseDriver::SetMenuOpen(bool open) {
     std::lock_guard<std::mutex> lock(mutex_);
     ReleaseAll();
   }
-  for (rex::ui::Window* window : windows_) {
-    window->SetCursorVisibility(open ? rex::ui::Window::CursorVisibility::kVisible
-                                     : rex::ui::Window::CursorVisibility::kAutoHidden);
-  }
+  ApplyPointerVisibility();
+}
+
+void KeyboardMouseDriver::HidePointerWhileAiming() {
+  const auto until = Clock::now() + std::chrono::milliseconds(200);
+  aim_hidden_until_.store(until.time_since_epoch().count());
+  if (!aim_hidden_.exchange(true)) ApplyPointerVisibility();
+}
+
+void KeyboardMouseDriver::ApplyPointerVisibility() {
+  if (!app_context_) return;
+  app_context_->CallInUIThreadDeferred([this] {
+    using Visibility = rex::ui::Window::CursorVisibility;
+    const Visibility v = menu_open_.load()    ? Visibility::kVisible
+                         : aim_hidden_.load() ? Visibility::kHidden
+                                              : Visibility::kAutoHidden;
+    for (rex::ui::Window* window : windows_) window->SetCursorVisibility(v);
+  });
 }
 
 Bindings KeyboardMouseDriver::bindings() const {
@@ -557,6 +571,11 @@ X_RESULT KeyboardMouseDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
 
 void KeyboardMouseDriver::MergeInto(uint8_t* gamepad) {
   const auto now = Clock::now();
+  // Aiming stopped (no HidePointerWhileAiming for a while): the pointer back.
+  if (aim_hidden_.load() && now.time_since_epoch().count() > aim_hidden_until_.load() &&
+      aim_hidden_.exchange(false)) {
+    ApplyPointerVisibility();
+  }
   std::lock_guard<std::mutex> lock(mutex_);
 
   // Debug taps end on their own.

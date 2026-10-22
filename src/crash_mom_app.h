@@ -64,6 +64,7 @@
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
 #include "fps_overlay.h"
+#include "ui/wii_cursor.h"
 #include "input/prompt_icons.h"
 #include "effects/post_effects.h"
 #include "data/data_patcher.h"
@@ -266,6 +267,8 @@ class CrashMomApp : public rex::ReXApp {
     data_patcher::Install();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();
+    // The Wii-style gameplay cursor for the mouse (ui/wii_cursor.h): when to show it.
+    wii_cursor::Install();
     // Keyboard / mouse pictures in the game's button prompts (input/prompt_icons.h).
     prompt_icons::Install();
     // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).
@@ -341,6 +344,8 @@ class CrashMomApp : public rex::ReXApp {
     overlay_banner::Create(drawer);
     // The frame-rate counter over the picture, in the game's font (fps_overlay.h).
     fps_overlay::Create(drawer, immediate_drawer());
+    // The Wii-style gameplay cursor on the mouse pointer (ui/wii_cursor.h).
+    wii_cursor::Create(drawer, immediate_drawer());
     // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.
     controls_menu::Create(drawer);
     // F5: the Cheats menu (cheats/cheat_menu.h), closed at first.

@@ -55,6 +55,7 @@ set(CRASHMOM_SOURCES
     src/input/title_any_button.cpp  # the title screen starts on any button ("Press Any Button")
     src/input/movie_skip.cpp  # any button brings up a movie's "Skip" prompt in a level
     src/input/mouse_menus.cpp    # the mouse in the game's menus: hover selects, click chooses, right click = back
+    src/input/mouse_reticle.cpp  # a masked keyboard player aims the reticle with the mouse
     src/saves/pc_save_drive.cpp  # the saves as plain PC files: Radical's save drive, natively
     src/saves/save_files.cpp     # the save files on disk: find, rename, set aside ("delete")
     src/saves/save_library.cpp   # any number of saves in one scrolling list, rename / delete
@@ -81,6 +82,7 @@ set(CRASHMOM_SOURCES
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time
     src/ui/scrooby.cpp           # helpers to drive the game's own menu library (find / set texts, menus)
     src/ui/game_font.cpp         # the game's own font read from the disc data, for text we draw ourselves
+    src/ui/wii_cursor.cpp        # the Wii-style gameplay cursor (a bubble on the mouse pointer, crosshair mode)
     src/options/options_page.cpp      # the Options screen's page, rebuilt in the in-game menus package
     src/options/options_settings.cpp  # what the Options screen offers: tabs, rows, live changes, saving
     src/options/global_options.cpp    # volumes + Invert Axis from settings.toml, not from each save file
