@@ -376,9 +376,26 @@ in the device when the set-up runs and equals the icon's own matrix at +32
 exactly, so the nearest shown icon is the one being drawn; for that set-up
 alone the shader's texture (+92) is its owner's copy, put back right after
 (the shader holds a reference). Player 2 on a controller at a totem sees
-their button while player 1 on the keyboard stands elsewhere. Pictures drawn
-without the native renderer's recorder (emulated only) fall back to the
-first owner's look.
+their button while player 1 on the keyboard stands elsewhere. Both pictures
+get it (the set-up is the game's; the swap only needs the recorder's note of
+the mesh draw's context, which runs in every mode).
+
+TWO ICONS AT ONCE (2026-10-23). With two players at two different things in
+Crash's house (the chest and the tiki face), both coins showed ONE player's
+picture (E on both, or the controller button on both). The log had one
+"floating button ... players near" line per frame for two icons up: the
+second coin's set-up never ran. `xnContext::DrawPrimBuffer` (0x82430878)
+applies each pass of a material through 0x8243C0D0 / 0x8243C198, which
+compare the material's key (+12) with the last one applied (global
+0x824EE830); the same material again skips the shader binding and, for a
+one-pass material, the set-up (vtable slot 14) too. Every coin uses the one
+B material and the game draws them back to back, so the second coin kept the
+first coin's texture (and, in the native picture, its coin group). Now the
+recorder's DrawPrimBuffer handler sets that global to -1 (as the game's own
+reset at 0x8243C250 does) before any draw of the B material
+(`prompt_icons::IsCoinMaterial`: an `xnSimpleShader` whose texture is the B
+or one of its four copies), so each coin is set up for its own icon. Cost:
+one shader bind per coin.
 
 SIDE BY SIDE (2026-10-22). When players with different looks stand at the
 same icon (a keyboard player and a controller player at a totem), the icon
@@ -419,6 +436,22 @@ width, centred on the icon; row 1 likewise for the arc) and the other coins' tex
 Known limits: a stick drawn in a player slot is A-sized (the slots copy the
 A page); the rotate arrow after it stays player 1's.
 
+**The countdown under a player's picture (2026-10-23).** A dead player's
+corner read "Please Wait" + a button picture instead of "Please Wait 5 .. 1".
+The corner (`sub_82269480`, once per HUD display per frame) shows the
+countdown by formatting the seconds into the display's own buffer (+8) and
+pointing its Button text (+20) at it, but only while that text points at
+nothing (`sub_823721D8` = the text's +152; 0x822696B0). In "Join Game" it
+points the text back to 0 and sets the button from the text bank. The
+player texts above give the Button a copy of its player's picture after
+every HUD update, so when a countdown began the text still held that copy:
+the number was never shown. Found with the console's `who` on +152 (writes:
+the corner's reset at 0x822696F4 and the port's copy via `sub_82373360`).
+Now `sub_82269480` is wrapped: before it runs, a Button holding the port's
+own copy is pointed back to 0 (the copy freed, findings/30 s.9), the corner
+decides as the original does, and the player texts then convert what it
+chose (a number has no prompt characters and is left alone).
+
 ## 7. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked
@@ -441,6 +474,18 @@ pause bar shows the 360's B "Back" and A "Select". The save totem by Crash's
 house: player 2 walks up first -> the 360 B (player 1 on keys); player 2
 leaves, player 1 arrives -> E. Both fonts within 64 pages (Small 55 prompt pictures
 checked, Large 39).
+
+Floating buttons in Crash's house (2026-10-23), four players: keyboard on
+player 1, fake controllers 2-4 with `--debug_fake_pad_styles=ps5,switch,xbox-series`
+(a debug flag: each fake controller's picture style under Controller Icons =
+Automatic) and `--controller_icons=0`. Positions of the interactables
+(`goto`): tiki face (3.33, 0, 1.8), chest (7.36, 0, 2.0), TV (10.87, 0, -3.87),
+one by the front table (3.75, 0, -6). Player 1 at the face + player 2 at the
+chest: E and Circle (before: E on both). Players 1-4 at four different
+things: E, Circle, the Switch's A (its button in the 360 B's place), the Xbox
+Series B, in both pictures. All four at the face: four coins on the arc.
+Players 2 and 3 killed (`cheat kill`): "Please Wait 5", 4, 3, 2 in each
+corner, then "Join Game" with each one's own button.
 
 Known limits: texts still name the controller ("Rotate the Left Stick and
 Press Unjack"); the key pictures are as big as the 64 x 64 pages (the same

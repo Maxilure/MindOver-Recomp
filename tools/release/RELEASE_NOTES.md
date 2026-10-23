@@ -112,8 +112,10 @@ button: a keyboard player and a controller player at the same totem get a
 key and a B side by side, three or four on a small arc (players with the
 same kind of controller share one button; Native renderer). Only players
 close enough to use it get one: the game's own list for totems and other
-things to use. Before, whoever pressed something last switched
-everyone's pictures. Shared texts (hints, the message bar) follow player 1.
+things to use. Players at different things at the same time (the chest and
+the tiki face in Crash's house) each see their own button, and a dead
+player's corner counts down "Please Wait 5 .. 1" as in the original. Before,
+whoever pressed something last switched everyone's pictures. Shared texts (hints, the message bar) follow player 1.
 
 **Type names on the keyboard**: on the name screen (New Game, renaming a
 save) just type; Backspace erases, Enter is Done, Esc goes back. The mouse

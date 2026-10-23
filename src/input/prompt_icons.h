@@ -132,6 +132,10 @@ struct CoinGroup {
 // What WorldButtonSwap decided for the coin being set up now, until the
 // frame ends (the native renderer reads it at the draw: recorder.cpp).
 const CoinGroup& CurrentCoinGroup();
+// Is `material` (a mesh draw's xnSimpleShader) a floating button's coin? Then
+// the draw must run its set-up again (recorder.cpp, OnDrawPrimBuffer): see
+// FORGET THE LAST MATERIAL in prompt_icons.cpp. Any thread; cheap.
+bool IsCoinMaterial(uint8_t* base, uint32_t material);
 void WorldButtonRestore(uint8_t* base);  // each frame end: the material gets its own texture back
 bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32_t& from_xn,
                      uint32_t& to_xn);

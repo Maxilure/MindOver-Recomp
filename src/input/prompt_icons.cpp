@@ -55,6 +55,14 @@ REXCVAR_DEFINE_INT32(controller_icons, 0, "CrashMoM",
                      "PlayStation 5 / 4, Switch, Xbox One / Series; any other = the game's own), "
                      "1 = the game's own Xbox 360 buttons, 2 = Xbox Series, 3 = PlayStation 5, "
                      "4 = PlayStation 4, 5 = Switch");
+REXCVAR_DEFINE_STRING(debug_fake_pad_styles, "", "CrashMoM",
+                      "Debug: the button pictures of --debug_fake_pads' controllers 2, 3, 4 (with "
+                      "Controller Icons = automatic), comma-separated: xbox-series, ps5, ps4, switch, 360 "
+                      "(e.g. \"ps5,switch,xbox-series\": every test player in a look of their own)");
+
+// Point a Scrooby text at a borrowed string (0 = its text bank default);
+// ui/scrooby.cpp's wrapper frees an owned copy first.
+extern "C" REX_FUNC(sub_823731D0);
 
 // Pure3D's TextureFontLoader::LoadObject (vtable 0x8200E420 slot 5): r4 =
 // where to store the font it builds.
@@ -762,6 +770,20 @@ int PadButtonOf(char16_t source) {
 // pictures, the rest (Xbox One / Series) = Xbox Series. Anyone else (a
 // generic or third-party pad) = the game's own 360 look.
 int StyleOfPad(const std::string& key) {
+  // A debug fake controller ("debug-pad-2".."4"): the style --debug_fake_pad_styles
+  // gives it (tests of per-player pictures with every player in another look).
+  if (key.rfind("debug-pad-", 0) == 0 && key.size() == 11) {
+    std::string_view list = REXCVAR_GET(debug_fake_pad_styles);
+    for (int n = key.back() - '2'; n > 0 && !list.empty(); --n) {
+      const size_t comma = list.find(',');
+      list = comma == std::string_view::npos ? std::string_view{} : list.substr(comma + 1);
+    }
+    const std::string_view name = list.substr(0, list.find(','));
+    for (int i = 0; i < int(std::size(kPadSets)); ++i) {
+      if (name == kPadSets[i].folder) return i;
+    }
+    return kOriginalStyle;  // "360", empty or unknown: the game's own
+  }
   if (key.rfind("pad:", 0) != 0 || key.size() < 4 + 20) return kOriginalStyle;
   auto byte = [&](size_t i) { return uint32_t(std::stoul(key.substr(4 + 2 * i, 2), nullptr, 16)); };
   uint32_t vendor = 0, product = 0;
@@ -1606,6 +1628,8 @@ int WorldButtonOwner(uint8_t* base) {
   return g_icons.empty() ? 0 : g_icons.front().player;
 }
 
+void RefreshWorldXn();  // FORGET THE LAST MATERIAL (below)
+
 // Once per game frame (main thread).
 void OnFrameEnd(void*) {
   auto* memory = rex::system::kernel_memory();
@@ -1639,6 +1663,7 @@ void OnFrameEnd(void*) {
     }
     for (const uint32_t texture : g.textures_loaded) CheckWorldTexture(base, texture);
     g.textures_loaded.clear();
+    RefreshWorldXn();
   }
   if (g.pages.empty()) return;
 
@@ -1680,6 +1705,7 @@ void OnFrameEnd(void*) {
     if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, gp.prompt->character, l.keys);
     ++i;
   }
+  RefreshWorldXn();  // (a page may have gone)
 }
 
 // --- The font patch: six more prompt glyphs for the menus, and 16 key slots -------
@@ -2218,6 +2244,33 @@ void PlayerTexts(PPCContext& ctx, uint8_t* base) {
   }
 }
 
+// THE COUNTDOWN UNDER OUR PICTURE (2026-10-23). A dead player's corner
+// read "Please Wait" + a button picture instead of "Please Wait 5 .. 1". The
+// corner (sub_82269480, once per display per frame) shows the countdown by
+// formatting the seconds into the display's own buffer (+8) and pointing the
+// Button text at it, but ONLY when the text points at nothing yet
+// (sub_823721D8 = its +152; 0x822696B0). Otherwise ("Join Game") it points
+// the text back to 0 and sets the button from the text bank. PlayerTexts
+// above gives the Button text a COPY of its player's picture after every HUD
+// update, so when a countdown began the text still held our copy: the game
+// skipped its number and our picture stayed. Found with the console's `who`
+// on the text's +152 (writes: the corner's reset at 0x822696F4, our copy via
+// sub_82373360). Now the corner gets the game's own state back first: our
+// copy is dropped (pointed to 0, freed: scrooby.cpp TEXT OWNERSHIP FIX), the
+// corner decides as on the 360, then PlayerTexts converts what it chose
+// (a number has no prompt characters: left alone).
+void GiveBackToGame(PPCContext& ctx, uint8_t* base, uint32_t text) {
+  if (!text) return;
+  const auto it = g_spun.find(text);
+  if (it == g_spun.end()) return;
+  // Only our own copy (owned, +179 bit 0x20, still what we set): never the
+  // game's number buffer or a string it pointed at since.
+  if ((*GuestPtr(base, text + 179) & 0x20) && ReadText(base, text) == it->second.shown) {
+    scrooby::Call(sub_823731D0, ctx, base, text, 0);
+  }
+  g_spun.erase(it);
+}
+
 }  // namespace
 
 void HudFrame(PPCContext& ctx, uint8_t* base) {
@@ -2362,6 +2415,46 @@ bool InInteractableList(uint8_t* base, uint32_t it, int p) {
 }
 
 const CoinGroup& CurrentCoinGroup() { return g_coins; }
+
+// FORGET THE LAST MATERIAL (2026-10-23). Two floating buttons up at once
+// (two players at two things in Crash's house: the chest and the tiki face)
+// showed ONE player's picture on both. xnContext::DrawPrimBuffer (0x82430878)
+// applies a material's pass through 0x8243C0D0 / 0x8243C198, which compare the
+// material's key (+12) with the last one applied (global 0x824EE830): the
+// same material again = its set-up (vtable slot 14, where WorldButtonSwap
+// picks the coin's texture) is SKIPPED for a one-pass material. Every coin
+// shares the one B material and the game draws them back to back, so the
+// second coin kept the first's texture (and the native renderer its coin
+// group). Found from the log: one "floating button ... players near" line
+// per frame for two icons up. The fix: before a coin's DrawPrimBuffer the
+// global is set to -1, as the game's own reset does (0x8243C250), so each
+// coin gets its own set-up (and its owner's picture) in BOTH renderers.
+constexpr uint32_t kLastMaterialKey = 0x824EE830;
+namespace {
+std::array<std::atomic<uint32_t>, 5> g_world_xn{};  // the game's B + players 1-4's copies (0 = none)
+
+void RefreshWorldXn() {  // with g.mutex held
+  uint32_t xn[5] = {};
+  for (const GuestPage& gp : g.pages) {
+    if (gp.font || gp.prompt != &kWorldB || gp.world_player > 3) continue;
+    xn[gp.world_player + 1] = gp.xn;
+  }
+  for (int i = 0; i < 5; ++i) g_world_xn[i].store(xn[i], std::memory_order_relaxed);
+}
+}  // namespace
+
+bool IsCoinMaterial(uint8_t* base, uint32_t material) {
+  if (!material || !g_world_xn[0].load(std::memory_order_relaxed)) return false;
+  if (Load32(base, material) != 0x82017E64u) return false;  // xnSimpleShader's vtable
+  const uint32_t texture = Load32(base, material + 92);
+  for (const auto& xn : g_world_xn) {
+    if (texture && xn.load(std::memory_order_relaxed) == texture) {
+      Store32(base, kLastMaterialKey, 0xFFFFFFFFu);
+      return true;
+    }
+  }
+  return false;
+}
 
 bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32_t& from_xn,
                      uint32_t& to_xn) {
@@ -2551,3 +2644,12 @@ extern "C" REX_FUNC(sub_823C5DA0) {
   }
 }
 
+// The HUD display's co-op corner ("Join Game" / "Please Wait N", r3 = the
+// display; +20 its Button text): THE COUNTDOWN UNDER OUR PICTURE.
+extern "C" REX_FUNC(__imp__sub_82269480);
+extern "C" REX_FUNC(sub_82269480) {
+  if (prompt_icons::g_menu_glyphs.load(std::memory_order_relaxed) && ctx.r3.u32) {
+    prompt_icons::GiveBackToGame(ctx, base, prompt_icons::Load32(base, ctx.r3.u32 + 20));
+  }
+  __imp__sub_82269480(ctx, base);
+}

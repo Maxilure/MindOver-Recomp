@@ -46,7 +46,9 @@ std::string PlayerAssignment::PadKeyFor(uint32_t user) const {
   std::lock_guard<std::mutex> lock(mutex_);
   const bool everyone_is_player_one = user == 0 && in_play_ && !in_play_();
   for (const Known& d : devices_) {
-    if (d.keyboard || d.key.rfind("pad:", 0) != 0) continue;  // (fake pads have no key)
+    // Real controllers ("pad:<guid>") and --debug_fake_pads' ("debug-pad-N":
+    // prompt_icons gives those the styles of --debug_fake_pad_styles).
+    if (d.keyboard || (d.key.rfind("pad:", 0) != 0 && d.key.rfind("debug-pad-", 0) != 0)) continue;
     const int player = PlayerOf(d);
     if (player == int(user) || (everyone_is_player_one && player >= 0)) return d.key;
   }

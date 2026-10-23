@@ -1299,6 +1299,9 @@ void OnDrawPrimBuffer(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   if (!material) {
     material = Load32(base, ctx.r3.u32 + context::kDefaultShader);
   }
+  // A floating button's coin: its set-up must run again (prompt_icons.cpp,
+  // FORGET THE LAST MATERIAL), or a second coin keeps the first's picture.
+  prompt_icons::IsCoinMaterial(base, material);
   const uint32_t saved_context = g.mesh_context, saved_material = g.mesh_material;
   g.mesh_context = ctx.r3.u32;
   g.mesh_material = material;
