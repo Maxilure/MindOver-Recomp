@@ -120,6 +120,18 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // the pointer is back to normal (MergeInto checks, every poll), so it shows
   // again in the pause menu and every other menu. Game thread.
   void HidePointerWhileAiming();
+  // THE POINTER'S RULE, set every game frame by ui/wii_cursor.cpp (2026-10-23):
+  //   ui_window = one of our interactive ImGui windows is open (F5 cheats, F6
+  //               controls, F2 save box, the SDK's F4 settings / console...):
+  //               the system pointer SHOWS (it was hidden by the bubble or by
+  //               the SDK's auto-hide, which only reveals it on the next move);
+  //   in_play   = a level is played and none of the game's menus is on screen:
+  //               the pointer is HIDDEN (with Mouse Aiming Off it used to come
+  //               back with every mouse move).
+  // Otherwise (the game's menus without the bubble, e.g. only pads play):
+  // auto-hidden as before. Aiming / the bubble hide it as before
+  // (HidePointerWhileAiming), unless a ui_window is open. Any thread.
+  void SetPointerRule(bool ui_window, bool in_play);
   // Is the Controls menu (F6) open? (The pointer must stay itself there.) Any thread.
   bool menu_open() const { return menu_open_.load(); }
   // "Is one of the game's menus on screen?" (the front end, or the pause /
@@ -309,8 +321,11 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // HidePointerWhileAiming: hidden now, and until when (steady clock ticks).
   std::atomic<bool> aim_hidden_{false};
   std::atomic<int64_t> aim_hidden_until_{0};
-  // The windows' pointer as the state says: shown while the Controls menu is
-  // open, hidden while aiming, else auto-hidden. Runs on the UI thread
+  // SetPointerRule's two answers.
+  std::atomic<bool> ui_window_{false}, in_play_{false};
+  // The windows' pointer as the state says: shown while the Controls menu or
+  // another ImGui window is open, hidden while aiming and in play, else
+  // auto-hidden. Runs on the UI thread
   // (deferred: callers may be game threads holding locks).
   void ApplyPointerVisibility();
 

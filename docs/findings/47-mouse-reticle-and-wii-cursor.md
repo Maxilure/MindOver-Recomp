@@ -102,11 +102,28 @@ frame-rate counter, so it follows the pointer with no frame of delay.
 When it shows is decided once per game frame: a socket the keyboard plays
 on; in a menu always, in play only in crosshair mode; not while the
 keyboard's player is a mask in a level (they aim: the reticle shows, the Wii
-version also hid its cursor then), nor over the port's own ImGui windows
-(F6, F5), where the system pointer stays.
-The system pointer is hidden while either the cursor or the reticle stands in
-for it and comes back about 0.2 s after the last frame that needed that, so
-menus always have it.
+version also hid its cursor then), nor while one of the port's own ImGui
+windows is open (F5, F6, F2, the SDK's F4 / console).
+
+The SYSTEM pointer follows one rule, also decided per game frame
+(`KeyboardMouseDriver::SetPointerRule`), in this order:
+
+1. one of our interactive ImGui windows is open (hovered or not): **shown**.
+   A window counts if it was drawn last frame or this one and takes mouse
+   input; banners, toasts and the build stamp all carry `NoInputs`, and
+   ImGui's fallback window is skipped;
+2. the cursor or the reticle stands in for it, or a level is played with
+   none of the game's menus on screen: **hidden** (whatever Mouse Aiming
+   says);
+3. otherwise (the game's menus while only pads play): the SDK's auto-hide.
+
+The first version only forced it visible for F6 and only hid it while
+standing in: over F5 the pointer stayed hidden by the bubble, and the SDK's
+auto-hide (it hides right away and reveals on the next mouse move) brought it
+back in play with Mouse Aiming Off at every move. The log line
+`Mouse pointer: shown / hidden / auto-hidden` marks each change. Checked
+(Mouse Aiming Off, keyboard player): play = hidden, F5 open = shown, closed =
+hidden, pause menu = hidden (bubble), F5 over it = shown, crosshair = hidden.
 
 ## 5. The game's own cursor, switched on
 

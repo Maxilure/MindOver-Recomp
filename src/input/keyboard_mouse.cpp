@@ -142,13 +142,28 @@ void KeyboardMouseDriver::HidePointerWhileAiming() {
   if (!aim_hidden_.exchange(true)) ApplyPointerVisibility();
 }
 
+void KeyboardMouseDriver::SetPointerRule(bool ui_window, bool in_play) {
+  const bool changed_ui = ui_window_.exchange(ui_window) != ui_window;
+  const bool changed_play = in_play_.exchange(in_play) != in_play;
+  if (changed_ui || changed_play) ApplyPointerVisibility();
+}
+
 void KeyboardMouseDriver::ApplyPointerVisibility() {
   if (!app_context_) return;
   app_context_->CallInUIThreadDeferred([this] {
     using Visibility = rex::ui::Window::CursorVisibility;
-    const Visibility v = menu_open_.load()    ? Visibility::kVisible
-                         : aim_hidden_.load() ? Visibility::kHidden
-                                              : Visibility::kAutoHidden;
+    // Our ImGui windows first: they are clicked with the system pointer.
+    const Visibility v = (menu_open_.load() || ui_window_.load()) ? Visibility::kVisible
+                         : (aim_hidden_.load() || in_play_.load()) ? Visibility::kHidden
+                                                                   : Visibility::kAutoHidden;
+    // Each change in the log (testing: the pointer never shows in photos).
+    static Visibility last = Visibility(-1);
+    if (v != last) {
+      last = v;
+      REXLOG_INFO("Mouse pointer: {}", v == Visibility::kVisible  ? "shown"
+                                       : v == Visibility::kHidden ? "hidden"
+                                                                  : "auto-hidden");
+    }
     for (rex::ui::Window* window : windows_) window->SetCursorVisibility(v);
   });
 }

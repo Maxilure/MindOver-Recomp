@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <imgui.h>
+#include <imgui_internal.h>  // the context's window list (InteractiveWindowOpen)
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 #include <rex/logging.h>
@@ -92,6 +93,12 @@ std::atomic<bool> g_show{false};
 // An ImGui window of ours (F5 cheats...) wants the mouse: the system pointer
 // stays itself there (written by the overlay, UI thread).
 std::atomic<bool> g_imgui_mouse{false};
+// One of our INTERACTIVE ImGui windows is open (F5, F6, F2, the SDK's F4 /
+// console / achievements...), hovered or not: the system pointer shows and
+// the bubble steps aside (two pointers at once looked wrong). Overlays that
+// take no input (banners, toasts, the build stamp) all carry NoInputs and
+// don't count. Written by the overlay (UI thread).
+std::atomic<bool> g_imgui_window{false};
 
 // THE GAME'S OWN CURSOR (findings/47 s.5): every Crash is built with a
 // CGameplayCursorBehaviour (players 1-4 alike), set up (slot 2, sub_8213FEA0:
@@ -147,7 +154,9 @@ int KeyboardPlayerOnFoot() {
 // windows (F6 Controls, F5 cheats) want the pointer.
 bool ShouldShow() {
   const bool menu = !more_players::InPlay() || menu_input::MenuOnScreen();
-  if ((!menu && mouse_reticle::Mode() != 2) || g_imgui_mouse.load()) return false;
+  if ((!menu && mouse_reticle::Mode() != 2) || g_imgui_mouse.load() || g_imgui_window.load()) {
+    return false;
+  }
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   const kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get();
   if (!driver || driver->menu_open() || !players) return false;
@@ -165,6 +174,13 @@ bool ShouldShow() {
 void OnFrameEnd(void*) {
   const bool show = ShouldShow();
   g_show.store(show);
+  // The system pointer's rule (keyboard_mouse.h SetPointerRule): shown while
+  // an ImGui window of ours is open, hidden in play (whatever Mouse Aiming
+  // says: Off had it back with every move).
+  if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
+    const bool in_play = more_players::InPlay() && !menu_input::MenuOnScreen();
+    driver->SetPointerRule(g_imgui_window.load(), in_play);
+  }
   // The bubble stands in for the system pointer: hidden while it shows (it
   // comes back ~0.2 s after the last frame that asked, keyboard_mouse.h).
   if (show) {
@@ -222,6 +238,27 @@ bool LoadTexture(const char* name, std::vector<uint8_t>* rgba, int* w, int* h) {
   return false;
 }
 
+// Is one of our interactive ImGui windows open? Asked while drawing: a window
+// counts if it was shown last frame or is shown this one (the dialogs draw in
+// turn, so ones after ours haven't begun yet). Skipped: windows that take no
+// input (NoMouseInputs: banners, toasts, the build stamp), children,
+// tooltips, and ImGui's own fallback window "Debug##Default" (begun by every
+// frame, shown only if something draws outside a window).
+bool InteractiveWindowOpen() {
+  const ImGuiContext* g = ImGui::GetCurrentContext();
+  if (!g) return false;
+  for (const ImGuiWindow* w : g->Windows) {
+    if (!(w->Active || w->WasActive) || w->Hidden) continue;
+    if (w->Flags & (ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_ChildWindow |
+                    ImGuiWindowFlags_Tooltip)) {
+      continue;
+    }
+    if (w->IsFallbackWindow) continue;
+    return true;
+  }
+  return false;
+}
+
 class CursorDialog : public rex::ui::ImGuiDialog {
  public:
   CursorDialog(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate)
@@ -234,6 +271,7 @@ class CursorDialog : public rex::ui::ImGuiDialog {
   void OnDraw(ImGuiIO& io) override {
     const Clock::time_point now = Clock::now();
     g_imgui_mouse.store(io.WantCaptureMouse);
+    g_imgui_window.store(InteractiveWindowOpen());
     if (!g_show.load() || !TextureReady()) {
       trail_.clear();
       have_last_ = false;  // it comes back round, not flung from where it was
