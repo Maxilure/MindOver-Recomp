@@ -46,6 +46,28 @@
 //   byte +168. With 0x04 the frame function steps 1e-7 s per frame (the
 //   picture keeps rendering, nothing moves, the camera manager still runs);
 //   0x02 on top = one 1/60 s step, then the game clears it.
+//   UNLOCKS (2026-10-23, findings/27 s.10). The game keeps four "unlocked"
+//   lists as plain globals, each a run of ids ending at -1, filled from the
+//   save when it loads, reset by New Game and written back by every save:
+//     outfits      0x825A72A8, 11 slots, ids 0-10 (EPlayerSkin order: Crash,
+//                  Greeny, Bluey, Reddy, Parafox, Ratcicle, Shurtle, Skeleton,
+//                  Spike, Coco, Old School Coco); test sub_8229F858
+//     concept art  0x825982C8, 12 slots, ids 0-11 (EConceptArt_kidsart..last)
+//     enemy info   0x825982F8, 20 slots, ids 0-19 (EEnemyInfo_CHIRATTA..CORTEX)
+//     tutorials    0x825983D0, 34 slots, ids 0-33 (ETutorialType_MOJO..
+//                  YUKTOPUS_SPECIAL; the list = tutorials already SEEN, for
+//                  the review screen: showing one adds it, nothing skips a
+//                  tutorial because it's in the list (sub_822956C0))
+//   The level scripts' DO_Unlock* actions (CActionUnlockSkin slot 2
+//   sub_8229F6D8, ...ConceptArt sub_8229EC98, ...EnemyInfo sub_8229EEF0,
+//   ...Tutorial sub_8229FB70) each put ONE id in the first free slot; we do
+//   the same for every missing id (ids are contiguous: checked against the
+//   script enum registration, every value 0..N-1 present). The game's skin
+//   unlock has an extra step for Coco (9): it also MAKES PLAYER 2 COCO and
+//   respawns; the cheat leaves that out (players keep what they wear; Coco is
+//   picked at the chest) but sets the same "Coco unlocked" byte 0x825AB1C8
+//   (only saved / loaded, nothing else reads it). Progress cheat: kept by the
+//   next save, achievements off.
 //   HIDE HUD. The HUD controller's draw (sub_8226A998: every player's
 //   portrait, health and special bars, mojo icon; players/more_players_hud.cpp
 //   wraps it) is skipped. Texts on the HUD's menu page (the mojo count) stay.
@@ -85,6 +107,8 @@ struct Snapshot {
   bool in_level = false;  // a level is played (cheats only work then)
   int total_mojo = 0;     // EStatInt_MojoCount (every mojo ever collected)
   bool hud_hidden = false;
+  // Unlocked / total per UnlockKind (in a level only).
+  int unlocked[4] = {}, unlock_total[4] = {};
   PlayerInfo players[kPlayers];
 };
 
@@ -104,6 +128,12 @@ void RequestKill(int player);
 // (until the next jack). On foot only.
 void RequestFreeJack(int player);
 void RequestStepFrame();           // with Freeze on: one 1/60 s step
+
+// UNLOCKS: everything of a kind becomes unlocked in the loaded game (kept
+// once the game saves). In a level only.
+enum class UnlockKind { kOutfits, kConceptArt, kEnemyInfo, kTutorials, kCount };
+const char* UnlockName(UnlockKind kind);  // "Outfits", ...
+void RequestUnlockAll(UnlockKind kind);
 
 // Switches (any thread).
 void SetGodMode(bool on);
@@ -131,7 +161,7 @@ void NoteProgressCheat();
 // Debug FIFO (debug_input_script.h): "cheat <command>" for test runs without
 // clicking the menu. Commands: god on|off, freeze on|off, step, speed <x>,
 // hud on|off, levelup <player 1-4>, maxlevel <p>, mojo <p> <amount>, refill <p>,
-// freejack <p>, kill <p>, hurt <p> <amount> (test damage through the game's own path),
+// freejack <p>, kill <p>, unlock outfits|art|enemies|tutorials|all, hurt <p> <amount> (test damage through the game's own path),
 // freecam on|off, freecam_keys on|off, freecam_reset, info (logs the
 // snapshot), spawn <template> [player] [count] [ko] (spawn.h). False if unknown. ("cheat menu" = F5, handled by the FIFO.)
 bool DebugCommand(std::string_view command);

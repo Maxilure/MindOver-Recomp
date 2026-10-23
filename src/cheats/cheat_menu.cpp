@@ -104,6 +104,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::SetItemTooltip("Enemies and enemy titans stop thinking: no attacks, no moving.\n"
                           "They can still be hit and beaten.");
 
+    DrawUnlocks(snap);
     DrawTime();
     DrawCamera();
 
@@ -117,7 +118,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
       ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.35f, 1.0f),
                          "Achievements are off until the game restarts (cheats used).");
     } else {
-      ImGui::TextDisabled("Level ups, mojo, health and god mode turn achievements off");
+      ImGui::TextDisabled("Level ups, mojo, health, unlocks and god mode turn achievements off");
       ImGui::TextDisabled("until the game restarts.");
     }
   }
@@ -264,6 +265,32 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     const std::string result = spawn::LastResult();
     if (!result.empty()) ImGui::TextDisabled("Last: %s", result.c_str());
     ImGui::TextDisabled("Not in this level? It's loaded first (takes a moment).");
+  }
+
+  // mutex_ held. The game's unlock lists (cheats.h, UNLOCKS).
+  void DrawUnlocks(const cheats::Snapshot& snap) {
+    Section("Unlocks");
+    ImGui::BeginDisabled(!snap.in_level);
+    constexpr int kKinds = int(cheats::UnlockKind::kCount);
+    for (int k = 0; k < kKinds; ++k) {
+      const auto kind = static_cast<cheats::UnlockKind>(k);
+      if (k) ImGui::SameLine();
+      // "Outfits 4/11"; the ## part keeps the id steady while the count changes.
+      const std::string label = std::string(cheats::UnlockName(kind)) + " " +
+                                std::to_string(snap.unlocked[k]) + "/" +
+                                std::to_string(snap.unlock_total[k]) + "##unlock" +
+                                std::to_string(k);
+      if (ImGui::Button(label.c_str())) cheats::RequestUnlockAll(kind);
+      ImGui::SetItemTooltip("Unlocked / all. Click to unlock all of them.");
+    }
+    if (ImGui::Button("Unlock everything")) {
+      for (int k = 0; k < kKinds; ++k) cheats::RequestUnlockAll(static_cast<cheats::UnlockKind>(k));
+    }
+    ImGui::SetItemTooltip(
+        "Every outfit (Coco and the titan suits included: pick them at the chest),\n"
+        "concept art, enemy info and tutorial page, in the game being played.\n"
+        "Kept when the game saves. Nobody's outfit changes by itself.");
+    ImGui::EndDisabled();
   }
 
   // mutex_ held.

@@ -139,7 +139,7 @@ Menus have keys of their own, so <kbd>Esc</kbd> pauses in play and goes back in 
 
 | Key | What it does |
 |---|---|
-| <kbd>F5</kbd> | Cheats menu, for testing: level ups, god mode, free camera, spawning |
+| <kbd>F5</kbd> | Cheats menu, for testing: level ups, god mode, free camera, spawning, unlock everything |
 | <kbd>F6</kbd> | Controls: change keys, pick which device plays as which player |
 | <kbd>F9</kbd> | Switch between the emulated picture and the port's renderer |
 | <kbd>F10</kbd> | Save a photo of the game into `user/photos/` |

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <mutex>
 #include <map>
 #include <set>
@@ -75,6 +76,23 @@ constexpr uint32_t kDmgHitpoints = 64, kDmgMaxHitpoints = 68;
 // The frame function's call of CTimeManager::GetScale returns here
 // (sub_8227C5D8, `bl 0x822FFA40` at 0x8227C698): our once-per-frame moment.
 constexpr uint32_t kFrameFunctionScaleReturn = 0x8227C69C;
+
+// The game's "unlocked" lists (cheats.h, UNLOCKS): start, slot count = id
+// count (ids 0..count-1), -1 = end.
+struct UnlockList {
+  const char* name;
+  uint32_t address;
+  int count;
+};
+constexpr UnlockList kUnlockLists[] = {
+    {"Outfits", 0x825A72A8, 11},
+    {"Concept art", 0x825982C8, 12},
+    {"Enemy info", 0x825982F8, 20},
+    {"Tutorials", 0x825983D0, 34},
+};
+static_assert(std::size(kUnlockLists) == size_t(UnlockKind::kCount));
+constexpr int kSkinCoco = 9;
+constexpr uint32_t kCocoUnlockedByte = 0x825AB1C8;  // set by sub_8229F8E8
 
 // --- Guest memory -------------------------------------------------------------
 
@@ -166,6 +184,7 @@ struct Requests {
   bool counter[kPlayers] = {};  // debug FIFO only: show the "counter now" prompt (findings/26 s.27)
   bool respawn = false;  // debug FIFO only: respawn every player, as a Crash <-> Coco outfit pick does
   bool free_jack[kPlayers] = {};
+  bool unlock[size_t(UnlockKind::kCount)] = {};
   bool step = false;
 };
 
@@ -419,6 +438,37 @@ void GiveFreeJack(PPCContext& ctx, uint8_t* base, int p, uint32_t titan) {
 // for more (its next requirement appears a frame or more after the last).
 int g_crash_max_frames[kPlayers] = {};
 
+// Is id in the list (the game's own tests, e.g. sub_8229F858)?
+bool InUnlockList(const UnlockList& list, int id) {
+  for (int i = 0; i < list.count; ++i) {
+    const uint32_t v = Read32(list.address + 4 * i);
+    if (v == 0xFFFFFFFFu) return false;
+    if (v == uint32_t(id)) return true;
+  }
+  return false;
+}
+int UnlockedCount(const UnlockList& list) {
+  int n = 0;
+  for (int id = 0; id < list.count; ++id) n += InUnlockList(list, id) ? 1 : 0;
+  return n;
+}
+// Every missing id into the first free slot, like the game's DO_Unlock*
+// actions do one at a time. Returns how many were added.
+int UnlockEverything(const UnlockList& list) {
+  int added = 0;
+  for (int id = 0; id < list.count; ++id) {
+    if (InUnlockList(list, id)) continue;
+    for (int i = 0; i < list.count; ++i) {
+      if (Read32(list.address + 4 * i) == 0xFFFFFFFFu) {
+        Write32(list.address + 4 * i, uint32_t(id));
+        ++added;
+        break;
+      }
+    }
+  }
+  return added;
+}
+
 // Once per game frame (see the GetScale hook below).
 void Tick(PPCContext& ctx, uint8_t* base) {
   const uint32_t uber = Read32(kUberGlobal);
@@ -503,6 +553,16 @@ void Tick(PPCContext& ctx, uint8_t* base) {
       }
     }
   }
+  for (size_t k = 0; k < size_t(UnlockKind::kCount); ++k) {
+    if (!requests.unlock[k] || !in_level) continue;
+    const UnlockList& list = kUnlockLists[k];
+    const int added = UnlockEverything(list);
+    if (k == size_t(UnlockKind::kOutfits) && InUnlockList(list, kSkinCoco)) {
+      *Guest(kCocoUnlockedByte) = 1;
+    }
+    REXLOG_INFO("Cheats: unlocked all {} ({} added, {}/{} now)", list.name, added,
+                UnlockedCount(list), list.count);
+  }
   if (requests.respawn && in_level) {
     // The outfit chest's Crash <-> Coco path (players/outfits.cpp): every player rebuilt.
     CallGame(__imp__sub_8227C5A0, ctx, base, Read32(0x8259B190), 0);
@@ -526,6 +586,12 @@ void Tick(PPCContext& ctx, uint8_t* base) {
     }
   }
   snapshot.hud_hidden = g_hud_hidden.load();
+  if (in_level) {
+    for (size_t k = 0; k < size_t(UnlockKind::kCount); ++k) {
+      snapshot.unlocked[k] = UnlockedCount(kUnlockLists[k]);
+      snapshot.unlock_total[k] = kUnlockLists[k].count;
+    }
+  }
   std::lock_guard<std::mutex> lock(g_mutex);
   g_snapshot = std::move(snapshot);
 }
@@ -574,6 +640,15 @@ void RequestFreeJack(int player) {
   MarkCheated();
   std::lock_guard<std::mutex> lock(g_mutex);
   if (player >= 0 && player < kPlayers) g_requests.free_jack[player] = true;
+}
+const char* UnlockName(UnlockKind kind) {
+  return size_t(kind) < size_t(UnlockKind::kCount) ? kUnlockLists[size_t(kind)].name : "?";
+}
+void RequestUnlockAll(UnlockKind kind) {
+  if (size_t(kind) >= size_t(UnlockKind::kCount)) return;
+  MarkCheated();
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_requests.unlock[size_t(kind)] = true;
 }
 void RequestStepFrame() {
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -629,6 +704,16 @@ bool DebugCommand(std::string_view command) {
   } else if (verb == "refill" && player_ok) RequestRefillHealth(player);
   else if (verb == "freejack" && player_ok) RequestFreeJack(player);
   else if (verb == "kill" && player_ok) RequestKill(player);
+  else if (verb == "unlock" && count > 1) {
+    const std::string_view what = words[1];
+    const bool all = what == "all";
+    bool known = all;
+    if (all || what == "outfits") { RequestUnlockAll(UnlockKind::kOutfits); known = true; }
+    if (all || what == "art") { RequestUnlockAll(UnlockKind::kConceptArt); known = true; }
+    if (all || what == "enemies") { RequestUnlockAll(UnlockKind::kEnemyInfo); known = true; }
+    if (all || what == "tutorials") { RequestUnlockAll(UnlockKind::kTutorials); known = true; }
+    if (!known) return false;
+  }
   else if (verb == "hurt" && player_ok && count > 2) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.hurt[player] += std::strtof(std::string(words[2]).c_str(), nullptr);

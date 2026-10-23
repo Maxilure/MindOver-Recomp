@@ -21,6 +21,7 @@ the game's own upgrade screen, started by its level script.*
 | Character (player 1-4) | Shows what the player is (on foot, in a titan with its name, or a mask riding another player), the level, the mojo collected toward the next upgrade and its price, health. Buttons: **Level up**, **Max level**, **+100 / +1,000 / +10,000 mojo**, **Refill health**, **Kill**, **Free jack** |
 | Spawn | A titan or an enemy from a list (or any template by name, experimental), 1-5 of them, beyond the chosen player as the camera sees it, loaded first if the level doesn't have it; titans optionally **knocked out** (one hit puts them down, ready to jack) |
 | Everyone | **God mode**: no player's Crash or titan loses health; **No AI**: enemies stop thinking |
+| Unlocks | One button per list (**Outfits**, **Concept art**, **Enemy info**, **Tutorials**, each showing unlocked / all) and **Unlock everything** (section 10) |
 | Time | **Game speed** 0.1x to 4x, **Freeze**, **Step one frame** |
 | Camera | **Free camera**: fly the view with W A S D, E / Q (up / down), Shift (fast), Ctrl (slow), right mouse button held or arrow keys to look; "Keys move the camera" off leaves the view in place and gives the keys back to the game |
 | Screen | **Hide the HUD** |
@@ -401,12 +402,52 @@ hand.
 
 Spawning and free jack count as progress cheats (achievements off).
 
-## 10. Test commands (debug FIFO)
+## 10. Unlocks (outfits, concept art, enemy info, tutorials)
+
+The game keeps four "unlocked" lists as plain globals. Each is a run of ids
+that ends at -1; it is filled from the save when the save loads, emptied by
+New Game and written back by every save:
+
+| List | Address | Slots = ids | Id order (script enum) | Game's "is it unlocked?" |
+|---|---|---|---|---|
+| Outfits (skins) | 0x825A72A8 | 11 (0-10) | Crash, Greeny, Bluey, Reddy, Parafox, Ratcicle, Shurtle, Skeleton, Spike, Coco, Old School Coco | sub_8229F858 |
+| Concept art | 0x825982C8 | 12 (0-11) | EConceptArt_kidsart .. EConceptArt_last | sub_8229ED00 |
+| Enemy info | 0x825982F8 | 20 (0-19) | EEnemyInfo_CHIRATTA .. EEnemyInfo_CORTEX | sub_8229EF58 |
+| Tutorials | 0x825983D0 | 34 (0-33) | ETutorialType_MOJO .. ETutorialType_YUKTOPUS_SPECIAL | (review screen) |
+
+How we found them: the level scripts unlock things through the actions
+`DO_UnlockSkin` / `DO_UnlockConceptArt` / `DO_UnlockEnemyInfo` /
+`DO_UnlockTutorial` (classes CActionUnlock*, found by RTTI); slot 2 of each
+(sub_8229F6D8, sub_8229EC98, sub_8229EEF0, sub_8229FB70) puts its one id in
+the first free slot of its list. The ids have no gaps: the script enum
+registration passes every value 0..N-1 in order.
+
+- **Tutorials** is a list of tutorials already SEEN (showing one, sub_822956C0,
+  adds it), read by the pause menu's Tutorials screen. Nothing skips a
+  tutorial because it is listed, so unlocking them hides no pop-up. That
+  screen pages through ids 0-12 only (Mojo .. Spin Dismount: 13 pages); the
+  co-op and titan-special ids are not on it.
+- **Unlocking Coco** (skin 9) in the game also makes player 2 Coco and
+  respawns the players. The cheat leaves that step out (nobody's outfit
+  changes; Coco is picked at the chest) but sets the same "Coco unlocked"
+  byte 0x825AB1C8 (only saved and loaded; nothing else reads it).
+- Concept art and enemy info are pages of the house's menu package
+  (GameStart_ConceptArt, GameStart_EnemyInfo; findings/30); their screens
+  ask the checks in the table.
+
+The menu's **Unlocks** row has one button per list ("Outfits 4/11" =
+unlocked / all) and **Unlock everything**. Like the game's own unlocks, the
+cheat only changes the game in progress: the next save keeps it. It counts as
+a progress cheat (achievements off until a restart). Checked on an early
+save: outfits 4 -> 11, concept art 1 -> 12, enemy info 1 -> 20, tutorials
+0 -> 34, the Tutorials screen then shows all 13 of its pages, 0 errors.
+
+## 11. Test commands (debug FIFO)
 
 For runs without clicking, `--debug_input_fifo` takes `cheat <command>`:
 `god on|off`, `freeze on|off`, `step`, `speed <x>`, `hud on|off`,
 `noai on|off`, `levelup <player>`, `maxlevel <player>`, `mojo <player> <amount>`,
-`refill <player>`, `kill <player>`, `freejack <player>`, `hurt <player> <amount>` (damage
+`refill <player>`, `kill <player>`, `freejack <player>`, `unlock outfits|art|enemies|tutorials|all`, `hurt <player> <amount>` (damage
 through the game's own path), `combo <player> [hits]` (hits on a combo meter,
 findings/26 s.25), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `freecam_keys on|off`, `freecam_reset`, `info` (the
 menu's numbers in the log), `menu` (opens / closes the window). The free
