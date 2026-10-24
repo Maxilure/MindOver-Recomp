@@ -90,6 +90,12 @@ REXCVAR_DEFINE_BOOL(coop_camera_near_focus, true, "CrashMoM",
                     "Co-op camera: front to back, the camera stays with the player NEAREST to it instead of "
                     "the middle of the players (false); a player further into the picture just looks smaller. "
                     "Left / right and height still use the middle");
+REXCVAR_DEFINE_BOOL(coop_camera_pinned_rooms, true, "CrashMoM",
+                    "Co-op camera: in rooms whose camera never moves in the original (Crash's house), stay near "
+                    "its spot and widen the view instead of backing off (backing off there shows the outside)");
+REXCVAR_DEFINE_BOOL(coop_camera_walls, true, "CrashMoM",
+                    "Co-op camera: never back off through a wall (the scenery behind the camera); false = back "
+                    "off freely (indoors it can end up outside the room)");
 REXCVAR_DEFINE_BOOL(debug_coop_camera_trace, false, "CrashMoM",
                     "Debug: log the game camera, the players and the camera volume's numbers (co-op camera)");
 REXCVAR_DEFINE_INT32(debug_coop_camera_trace_every, 10, "CrashMoM",
@@ -172,6 +178,43 @@ constexpr int kSettleFrames = 15;
 // crept back to 19.5 over ~3 s: the "zoom out + readjust" after the NV lab
 // cutscene with partners left behind.
 constexpr float kSnapSeconds = 1.0f;
+// A LEVEL CHANGE / TELEPORT (added 2026-10-23): the players' middle moving
+// more than kJumpUnits in ONE camera frame. Found: walking out of Crash's
+// house, our camera stayed on under the loading screen and its smoothed
+// centre was still in the house, 360 units away; at the first frames of
+// Wumpa Island it glided across the map, the players looked like they were at
+// the edge of the picture (urgency 1), the fit pushed the distance to ~35 and
+// the game's smoother took ~4 s to come back to 12 with both players standing
+// together at the door. Now such a jump cuts: the centre jumps to the players,
+// and the distance stays the GAME'S own until the game's camera has stopped
+// gliding into the new level (kLiveStill frames with an unchanged direction),
+// then snaps to the fit (kSnapSeconds) on that settled view.
+constexpr float kJumpUnits = 20.0f;
+// WALLS (added 2026-10-23): the camera never backs off through the scenery.
+// The original never needs it: each volume's zoom range is designed for its
+// room (Crash's house: min = max = 6, it never moves). Ours backs off to fit
+// everyone and, with two players at opposite walls of the house, went to 12.9
+// units: outside the house, the sky beside it on screen. Each camera frame the
+// game's own scenery ray (sub_8224C7F8, query flag 0x80 = scenery only: the
+// one the Wii cursor uses to place its mojo collector, findings/47) runs from
+// where the GAME'S OWN distance puts the camera (inside the room by design;
+// kWallRayLift up) outward along the camera's line; a hit caps the distance
+// kWallMargin before it. Furniture between the players and the camera
+// doesn't count (a ray from the players hit the house's table). The test is skipped while the fit needs nothing more than the game's
+// distance.
+constexpr float kWallRayLift = 1.0f, kWallMargin = 0.6f;
+// PINNED ROOMS (added 2026-10-23): a camera volume whose designed zoom range
+// is a single value (min == max: Crash's house 6 / 6) is one the designers
+// never let move. Its room is built for that one spot: the house has no wall
+// on the camera's side at all (a stage set), so no ray finds one, and from
+// 8 units back (6 by design) the floor's edge and the sky show. There the
+// camera stays at kPinnedReach x the designed distance (1 = exactly; 1.15 still showed the sky in a corner), and when
+// that isn't enough for everyone the FIELD OF VIEW widens instead (up to
+// kMaxFovScale on the tangent: 64 -> ~82 degrees at 16:9), from the camera's
+// own spot, eased (kFovOut / kFovIn per second). Volumes with a range (most
+// of the outdoors: 12-20, 14-20) back off as before.
+constexpr float kPinnedReach = 1.0f, kMaxFovScale = 1.4f;
+constexpr float kFovOut = 4.0f, kFovIn = 1.5f;
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
 uint32_t Read32(uint32_t a) {
@@ -245,7 +288,8 @@ float g_frame_dt = 0.0f;    // seconds since the previous camera frame
 struct View {
   bool valid = false;
   Vec position, direction, up;
-  float tan_x = 0.62f, tan_y = 0.35f;
+  float tan_x = 0.62f, tan_y = 0.35f;  // the GAME'S field of view (tangents of the half angles)
+  float fov_scale = 1.0f;               // ours on top (PINNED ROOMS): the drawn view = tan x this
 } g_view;
 uint32_t g_volume = 0;     // the last CCameraVolumeBehaviour seen
 // The volume's zoom ran since the last camera rebuild = the view being built
@@ -286,6 +330,15 @@ bool UsingSteadyView() {
 // The view the fit, the urgency and the near focus measure on: the steady one
 // while snapping and the game's camera is still gliding, else the live one.
 const View& FitView() { return UsingSteadyView() ? g_steady_view : g_view; }
+// LEVEL CHANGE / TELEPORT (kJumpUnits): last frame's raw centre, and "hold the
+// game's distance until its camera stops gliding".
+Vec g_prev_raw;
+bool g_prev_raw_valid = false;
+bool g_hold_for_still = false;
+// PINNED ROOMS: the field-of-view scale wanted this frame and the eased one drawn.
+float g_fov_want = 1.0f, g_fov_scale = 1.0f;
+// WALLS: the farthest distance the scenery allows this frame (1e30 = none).
+float g_wall = 1e30f;
 float g_game_zoom = 0.0f;  // the game's own zoom this frame, and ours (debug trace)
 float g_our_zoom = 0.0f;
 int g_trace_count = 0;
@@ -379,6 +432,36 @@ void UpdatePlayers(bool volume_view) {
       if (nearest < 1e29f) raw = raw + f * (nearest - Dot(raw, f));
     }
   }
+  // LEVEL CHANGE / TELEPORT (kJumpUnits): cut to the players, keep the game's
+  // distance while its camera glides in (CoopCameraDistance), then snap.
+  const bool jumped = g_prev_raw_valid && Length(raw - g_prev_raw) > kJumpUnits;
+  g_prev_raw = raw;
+  g_prev_raw_valid = true;
+  if (g_active && jumped) {
+    g_hold_for_still = true;
+    g_after_cutscene = false;
+    g_steady_valid = false;  // (the old level's view)
+    g_offset_valid = false;
+    g_fit = 0.0f;
+    g_snap_left = 0.0f;
+    g_centre = raw;
+    g_centre_velocity = {};
+    return;
+  }
+  if (g_hold_for_still) {
+    if (!g_active) {
+      g_hold_for_still = false;
+    } else if (g_view.valid && g_live_still_frames >= kLiveStill && g_volume &&
+               int32_t(Read32(g_volume + 264)) >= 0 &&
+               Length(g_view.position - raw) < 2.0f * std::max(g_game_zoom, 6.0f) + 4.0f) {
+      // (Near the players too: under the loading screen the game's camera
+      // stands still back in the OLD level, which looked "arrived" and gave a
+      // 45-unit fit on that far view.)
+      g_hold_for_still = false;  // the game's camera has arrived: snap to the fit on this view
+      g_snap_left = kSnapSeconds;
+      g_offset_valid = false;
+    }
+  }
   if (!was_active && g_after_cutscene && g_active) {
     // Back from a cutscene / scripted shot: the picture cut anyway, so start
     // on the players' centre right away (kSnapSeconds). Gliding from the
@@ -442,8 +525,8 @@ void UpdateUrgency() {
         edge = 2.0f;
         continue;
       }
-      edge = std::max({edge, std::fabs(Dot(v, r) / (depth * view.tan_x)),
-                       std::fabs(Dot(v, u) / (depth * view.tan_y))});
+      edge = std::max({edge, std::fabs(Dot(v, r) / (depth * view.tan_x * view.fov_scale)),
+                       std::fabs(Dot(v, u) / (depth * view.tan_y * view.fov_scale))});
     }
   }
   const float now = std::clamp((edge - kUrgentFrom) / (1.0f - kUrgentFrom), 0.0f, 1.0f);
@@ -479,24 +562,81 @@ int PlayerOfActor(uint32_t actor) {
   return -1;
 }
 
+// Where the camera sits relative to the centre (unit vector): the averaged
+// offset (not last frame's raw position: see STEADY in the header).
+Vec OffsetDirection(const View& view) {
+  const Vec d = Normalized(view.direction);
+  const Vec r = Normalized(Cross(view.up, d));
+  const Vec u = Cross(d, r);
+  Vec offset = g_offset_valid ? r * g_offset_local.x + u * g_offset_local.y + d * g_offset_local.z
+                              : view.position - g_centre;
+  if (Length(offset) < 1e-3f) offset = d * -1.0f;
+  return Normalized(offset);
+}
+
+bool AllFit(float dist, float fov_scale, const View& view, Vec d, Vec r, Vec u, Vec offset);
+float FitDistanceUncapped(float game_zoom, float max_d, const View& view, Vec d, Vec r, Vec u, Vec offset);
+
+// The current camera volume's designed zoom range (+388 min, +392 max of its
+// 424-byte record in the camera manager *(*(0x8259B190)+44), records from +8
+// to +12; the volume behaviour's +264 = its index). False if unknown.
+bool VolumeZoomRange(float& zoom_min, float& zoom_max) {
+  if (!g_volume) return false;
+  const int32_t index = int32_t(Read32(g_volume + 264));
+  const uint32_t uber = Read32(0x8259B190);
+  const uint32_t manager = uber ? Read32(uber + 44) : 0;
+  if (index < 0 || !manager) return false;
+  const uint32_t begin = Read32(manager + 8), end = Read32(manager + 12);
+  if (begin < 0x40000000 || end <= begin || uint32_t(index) >= (end - begin) / 424) return false;
+  zoom_min = ReadFloat(begin + 424 * uint32_t(index) + 388);
+  zoom_max = ReadFloat(begin + 424 * uint32_t(index) + 392);
+  return std::isfinite(zoom_min) && std::isfinite(zoom_max) && zoom_max > 0.0f;
+}
+
+
 // The smallest camera distance (target -> camera) at which every player in
 // game is inside the picture, the camera keeping its current angle: from the
 // last view, the camera sits on the line target + offset x d (offset = where
 // the camera was relative to the centre, normalised), looking along its
 // direction. Bisection between the game's own distance and the maximum.
 float FitDistance(float game_zoom) {
-  const float max_d = std::max(game_zoom, float(REXCVAR_GET(coop_camera_max_distance)));
+  float max_d = std::max(game_zoom, float(REXCVAR_GET(coop_camera_max_distance)));
+  g_fov_want = 1.0f;
   const View& view = FitView();
   if (!view.valid) return game_zoom;
   const Vec d = Normalized(view.direction);
   const Vec r = Normalized(Cross(view.up, d));  // screen right
   const Vec u = Cross(d, r);                       // screen up
-  // Where the camera sits relative to the centre: the averaged offset (not
-  // last frame's raw position: see STEADY in the header).
-  Vec offset = g_offset_valid ? r * g_offset_local.x + u * g_offset_local.y + d * g_offset_local.z
-                              : view.position - g_centre;
-  if (Length(offset) < 1e-3f) offset = d * -1.0f;
-  offset = Normalized(offset);
+  const Vec offset = OffsetDirection(view);
+  // PINNED ROOMS (kPinnedReach): the designers' "never moves" volume keeps
+  // the camera near its spot; the rest of the room comes from a wider view.
+  float zoom_min = 0.0f, zoom_max = 0.0f;
+  const bool pinned = REXCVAR_GET(coop_camera_pinned_rooms) && VolumeZoomRange(zoom_min, zoom_max) &&
+                      zoom_max - zoom_min < 0.01f;
+  if (pinned) max_d = std::max(game_zoom, std::min(max_d, zoom_max * kPinnedReach));
+  // WALLS: never past the scenery behind the camera (g_wall, from the ray).
+  if (g_wall < max_d) max_d = std::max(game_zoom, g_wall);
+  const float dist = FitDistanceUncapped(game_zoom, max_d, view, d, r, u, offset);
+  if (pinned && !AllFit(max_d, 1.0f, view, d, r, u, offset)) {
+    // Not everyone fits at the pinned distance: the smallest field-of-view
+    // scale (up to kMaxFovScale) that shows them all.
+    if (!AllFit(max_d, kMaxFovScale, view, d, r, u, offset)) {
+      g_fov_want = kMaxFovScale;
+    } else {
+      float lo = 1.0f, hi = kMaxFovScale;
+      for (int i = 0; i < 14; ++i) {
+        const float mid = 0.5f * (lo + hi);
+        (AllFit(max_d, mid, view, d, r, u, offset) ? hi : lo) = mid;
+      }
+      g_fov_want = hi;
+    }
+  }
+  return std::min(dist, max_d);
+}
+
+// Every player in game inside the picture with the camera `dist` from the
+// centre and the field of view widened by fov_scale (on the tangent)?
+bool AllFit(float dist, float fov_scale, const View& view, Vec d, Vec r, Vec u, Vec offset) {
   // ROOM: besides feet and head, points `room` units to the player's left /
   // right (screen right, kept level) and beyond them (the camera's forward,
   // kept level) must be on screen too, so a player at the edge still sees the
@@ -507,33 +647,37 @@ float FitDistance(float game_zoom) {
   const float room = std::max(0.0f, float(REXCVAR_GET(coop_camera_room)));
   const Vec side = Normalized(Vec{r.x, 0, r.z}) * room;
   const Vec ahead = Normalized(Vec{d.x, 0, d.z}) * room;
-  auto fits = [&](float dist) {
-    const Vec cam = g_centre + offset * dist;
-    auto inside = [&](Vec point) {
-      const Vec v = point - cam;
-      const float depth = Dot(v, d);
-      if (depth <= 0.5f) return false;
-      const float sx = Dot(v, r) / (depth * view.tan_x);
-      const float sy = Dot(v, u) / (depth * view.tan_y);
-      return std::fabs(sx) <= kMarginX && sy <= kMarginTop && sy >= -kMarginBottom;
-    };
-    for (const Player& pl : g_players) {
-      if (!pl.in_game) continue;
-      const float height = pl.titan ? kTitanHeight : kCrashHeight;
-      const Vec head = pl.last + Vec{0, height, 0};
-      if (!inside(pl.last) || !inside(head)) return false;
-      if (room > 0.0f && (!inside(pl.last + side) || !inside(pl.last - side) || !inside(pl.last + ahead))) {
-        return false;
-      }
-    }
-    return true;
+  const Vec cam = g_centre + offset * dist;
+  const float tan_x = view.tan_x * fov_scale, tan_y = view.tan_y * fov_scale;
+  auto inside = [&](Vec point) {
+    const Vec v = point - cam;
+    const float depth = Dot(v, d);
+    if (depth <= 0.5f) return false;
+    const float sx = Dot(v, r) / (depth * tan_x);
+    const float sy = Dot(v, u) / (depth * tan_y);
+    return std::fabs(sx) <= kMarginX && sy <= kMarginTop && sy >= -kMarginBottom;
   };
-  if (fits(game_zoom)) return game_zoom;
-  if (!fits(max_d)) return max_d;
+  for (const Player& pl : g_players) {
+    if (!pl.in_game) continue;
+    const float height = pl.titan ? kTitanHeight : kCrashHeight;
+    const Vec head = pl.last + Vec{0, height, 0};
+    if (!inside(pl.last) || !inside(head)) return false;
+    if (room > 0.0f && (!inside(pl.last + side) || !inside(pl.last - side) || !inside(pl.last + ahead))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// The fit itself: the smallest distance between the game's and max_d at
+// which everyone is in the picture (max_d when nobody-fits-even-there).
+float FitDistanceUncapped(float game_zoom, float max_d, const View& view, Vec d, Vec r, Vec u, Vec offset) {
+  if (AllFit(game_zoom, 1.0f, view, d, r, u, offset)) return game_zoom;
+  if (!AllFit(max_d, 1.0f, view, d, r, u, offset)) return max_d;
   float lo = game_zoom, hi = max_d;
   for (int i = 0; i < 18; ++i) {
     const float mid = 0.5f * (lo + hi);
-    (fits(mid) ? hi : lo) = mid;
+    (AllFit(mid, 1.0f, view, d, r, u, offset) ? hi : lo) = mid;
   }
   return hi;
 }
@@ -541,10 +685,13 @@ float FitDistance(float game_zoom) {
 void Trace(uint32_t camera) {
   if (++g_trace_count % std::max(1, REXCVAR_GET(debug_coop_camera_trace_every))) return;
   std::string s = fmt::format("Co-op camera: {} cam ({:.1f} {:.1f} {:.1f}) dir ({:.2f} {:.2f} {:.2f}) centre "
-                              "({:.1f} {:.1f} {:.1f}) urgency {:.2f} zoom game {:.1f} ours {:.1f}",
+                              "({:.1f} {:.1f} {:.1f}) urgency {:.2f} zoom game {:.1f} ours {:.1f}{}{}{}",
                               g_active ? "ON " : "off", ReadFloat(camera + 216), ReadFloat(camera + 220),
                               ReadFloat(camera + 224), ReadFloat(camera + 228), ReadFloat(camera + 232),
-                              ReadFloat(camera + 236), g_centre.x, g_centre.y, g_centre.z, g_urgency, g_game_zoom, g_our_zoom);
+                              ReadFloat(camera + 236), g_centre.x, g_centre.y, g_centre.z, g_urgency, g_game_zoom, g_our_zoom,
+                              g_wall < 1e29f ? fmt::format(" wall {:.1f}", g_wall) : std::string(),
+                              g_hold_for_still ? " (holding: level change)" : "",
+                              g_fov_scale > 1.0005f ? fmt::format(" fov x{:.2f}", g_fov_scale) : std::string());
   for (int p = 0; p < kMaxPlayers; ++p) {
     const Player& pl = g_players[p];
     if (pl.weight == 0.0f && !pl.in_game) continue;
@@ -574,6 +721,21 @@ void OnGameCameraRebuilt(uint32_t camera) {
     g_view.tan_x = std::tan(0.5f * fov_x);
     g_view.tan_y = g_view.tan_x / aspect;
   }
+  // PINNED ROOMS: our wider view goes in before the rebuild (the game sets
+  // +16 again every frame, so it never piles up). Eased; off at once when
+  // ours isn't in charge (a cutscene's own view is never touched).
+  if (g_volume_ran && g_active && Finite(g_view.position)) {
+    const float rate = g_fov_want > g_fov_scale ? kFovOut : kFovIn;
+    g_fov_scale += (g_fov_want - g_fov_scale) * std::min(1.0f, g_frame_dt * rate);
+    if (std::fabs(g_fov_scale - g_fov_want) < 0.002f) g_fov_scale = g_fov_want;
+  } else {
+    g_fov_scale = 1.0f;
+    g_fov_want = 1.0f;
+  }
+  if (g_fov_scale > 1.0005f && fov_x > 0.1f && fov_x < 3.0f) {
+    WriteFloat(camera + kCamFovX, 2.0f * std::atan(std::tan(0.5f * fov_x) * g_fov_scale));
+  }
+  g_view.fov_scale = g_fov_scale;
   // A view only counts when the volume camera built it (see g_volume_ran).
   const bool volume_view = g_volume_ran;
   g_volume_ran = false;
@@ -628,10 +790,53 @@ extern "C" REX_FUNC(sub_82105538) {
 
 // The camera volume's zoom (r3 = CCameraVolumeBehaviour): remember the object
 // for the debug trace.
+// Before it, the WALL test for this frame (see kWallRayLift): the game's
+// scenery ray sub_8224C7F8 (r3 the world = *(uber + 48), r4 start, r5 end, r6
+// a query: +0x1C flags 0x80 = scenery only, the rest unused for that; r7 the
+// result: +0 the hit's distance from the start, +12 nonzero = hit; read from
+// its decompile and sub_8224C6C0, the screen-spot ray around it).
 extern "C" REX_FUNC(__imp__sub_821076B0);
+extern "C" REX_FUNC(__imp__sub_8224C7F8);
 extern "C" REX_FUNC(sub_821076B0) {
-  coop_camera::g_volume = ctx.r3.u32;
-  coop_camera::g_volume_ran = true;
+  using namespace coop_camera;
+  g_volume = ctx.r3.u32;
+  g_volume_ran = true;
+  g_wall = 1e30f;
+  // Only while ours is on and has backed off (or wants to): the game's own
+  // distance is designed for the room.
+  if (g_active && !g_hold_for_still && g_view.valid && REXCVAR_GET(coop_camera_walls) &&
+      (g_fit > g_game_zoom + 0.05f || g_urgency > 0.0f)) {
+    static uint32_t room = 0;  // start, end, query, result (guest memory, made once)
+    constexpr uint32_t kStart = 0, kEnd = 16, kQuery = 32, kResult = 32 + 0x24;
+    if (!room) room = rex::system::kernel_memory()->SystemHeapAlloc(kResult + 0x20);
+    const uint32_t uber = Read32(0x8259B190);
+    const uint32_t world = uber ? Read32(uber + 48) : 0;
+    if (room && world) {
+      const float reach = std::max(g_game_zoom, float(REXCVAR_GET(coop_camera_max_distance))) + kWallMargin;
+      // From the game's OWN camera spot (its distance: inside the room by
+      // design) outward. (A first try started at the players: the table
+      // between them and the camera in Crash's house stopped every back-off.)
+      const Vec dir = OffsetDirection(g_view);
+      const Vec start = g_centre + Vec{0, kWallRayLift, 0} + dir * g_game_zoom;
+      const Vec end = g_centre + Vec{0, kWallRayLift, 0} + dir * reach;
+      std::memset(Guest(room), 0, kResult + 0x20);
+      for (int i = 0; i < 3; ++i) {
+        WriteFloat(room + kStart + 4 * i, (&start.x)[i]);
+        WriteFloat(room + kEnd + 4 * i, (&end.x)[i]);
+      }
+      *Guest(room + kQuery + 0x1C) = 0x80;  // scenery only
+      const PPCContext saved = ctx;
+      ctx.r3.u64 = world;
+      ctx.r4.u64 = room + kStart;
+      ctx.r5.u64 = room + kEnd;
+      ctx.r6.u64 = room + kQuery;
+      ctx.r7.u64 = room + kResult;
+      __imp__sub_8224C7F8(ctx, base);
+      ctx = saved;
+      const float hit = std::fabs(ReadFloat(room + kResult));
+      if (Read32(room + kResult + 12) && std::isfinite(hit)) g_wall = g_game_zoom + std::max(0.0f, hit - kWallMargin);
+    }
+  }
   __imp__sub_821076B0(ctx, base);
 }
 
@@ -648,6 +853,18 @@ void CoopCameraDistance(PPCRegister& f1, PPCRegister& r31) {
   g_game_zoom = float(f1.f64);
   g_our_zoom = g_game_zoom;
   if (!g_active || !std::isfinite(g_game_zoom) || g_game_zoom <= 0.0f) return;
+  // Just after a level change / teleport: the game's own distance until its
+  // camera has glided in (kJumpUnits).
+  if (g_hold_for_still) return;
+  const uint32_t current = r31.u32 + kVolumeDistance;
+  // WALLS: a wall closer than the current distance pulls the camera in at once
+  // (easing in would leave it outside the room for a second).
+  const float wall_cap = std::max(g_game_zoom, g_wall);
+  if (g_wall < 1e29f) {
+    const float now = ReadFloat(current);
+    if (std::isfinite(now) && now > wall_cap) WriteFloat(current, wall_cap);
+    if (g_fit > wall_cap) g_fit = wall_cap;
+  }
   // Out at once (when more room is needed), back in only once the fit is
   // clearly closer, then easing (STEADY in the header).
   const float fit = FitDistance(g_game_zoom);
@@ -670,7 +887,6 @@ void CoopCameraDistance(PPCRegister& f1, PPCRegister& r31) {
   }
   g_our_zoom = std::max(g_game_zoom, g_fit);
   f1.f64 = g_our_zoom;
-  const uint32_t current = r31.u32 + kVolumeDistance;
   const float now = ReadFloat(current);
   // Not in the first quarter second after taking over (back from a
   // cutscene: the first fit reads the game's own view, built around one

@@ -144,6 +144,16 @@ going back; Escape goes back.
   view (setting: *Room around players*). After a cutscene with the other
   players far away, it goes straight to everyone instead of zooming out
   to the maximum and slowly back in.
+- **Moving between levels** (e.g. out of Crash's house) no longer zooms the
+  camera far out for a few seconds: it starts on the players right away.
+- **Rooms stay rooms**: where the original camera never moves (Crash's
+  house), the co-op camera keeps the original's spot and widens the view
+  instead of backing out through the wall and showing the outside of the
+  level. Elsewhere it still backs off as before, and never through a wall
+  behind it.
+- With 3 or 4 players, the game's way back for a lost player (off screen,
+  press B = become a mask on a partner) now works whichever players are in
+  the game. Before, it needed players 1 and 2 both in the game.
 - The purple walls that close a fight now light up when players 3 or 4
   come near them, not only players 1 and 2.
 - Players 3 and 4 now appear in the short victory scenes after a titan

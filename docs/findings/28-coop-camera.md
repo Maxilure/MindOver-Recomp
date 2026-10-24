@@ -25,8 +25,11 @@ Code: `src/players/coop_camera.*`, one mid-function hook in the manifest
 `--coop_camera_max_distance` (default 45) caps how far it backs off;
 `--coop_camera_group_focus` (default 2, 0 = everyone counts the same) sets
 how much a group of players outweighs a player on their own;
-`--debug_coop_camera_trace` logs the camera, the players and the volume's
-numbers every 10th frame.
+`--coop_camera_pinned_rooms` (on) keeps the camera at the original's spot
+in rooms where the original never moves it and widens the view instead
+(section 10); `--coop_camera_walls` (on) stops a back-off at the scenery
+behind the camera; `--debug_coop_camera_trace` logs the camera, the players
+and the volume's numbers every 10th frame.
 
 ## 1. How the game's camera works
 
@@ -199,11 +202,18 @@ On screen, B is the ordinary "turn into a mask", which instead requires the
 partner to be ON screen (`sub_82235CB8`). So the same button either hops
 on a nearby partner or pulls a far-away player back.
 
-`sub_82235978` only answers "off screen" while players 1 AND 2 are both in
-game (states 2 or 3, read from `0x8259B11C`): with player 1 and players 3-4
-but no player 2, nobody counts as off screen and the catch-up never fires.
-The camera's fit (section 2) keeps everyone in view up to the maximum
-distance, so the catch-up only matters past it.
+`sub_82235978` only answered "off screen" while players 1 AND 2 were both
+in game (states 2 or 3, read from `0x8259B11C`): with player 1 and players
+3-4 but no player 2, nobody counted as off screen and the catch-up never
+fired. Both of its checks meet at `0x82235A20` with the answer in r11; a
+mid-function hook there (`MorePlayersOffScreenGate`) now asks for any two
+players in game. Tested with players 1 and 3 only (fake controller, maximum
+distance 14, `--coop_mask_from_anywhere=false` so the ordinary B can't do
+it): player 3 ran about 35 units away, the ordinary "turn into a mask" was
+refused (off screen), and B then took the catch-up: player 3 became a mask
+on player 1. The camera's fit (section 2) keeps everyone in view up to the
+maximum distance, so the catch-up only matters past it (and in pinned rooms,
+section 10).
 
 
 ## 5. Second round: cutscenes, shimmer, room around players
@@ -372,3 +382,74 @@ A join still glides as before.
 
 In the 250 ms captures the picture shows the final framing about 0.5 s
 after the fade; the last couple of units are the normal gentle zoom out.
+
+
+## 9. Moving between levels
+
+**The symptom.** Two players walk out of Crash's house onto Wumpa Island,
+standing together at the door: the camera starts far out (35 units, the
+game's own distance is 12) and comes back in over about 4 seconds.
+
+**Why.** The level's own loading screen keeps the co-op camera on (the
+players are in game the whole time), and its smoothed centre was still in
+the house, 360 units from where the players now stand. At the first frames
+of the new level the centre glided across the map; seen from that moving
+view the players were at the edge of the picture (urgency 1), so the fit
+pushed the distance to 35 at once, and the game's smoother took seconds to
+come back.
+
+**The change.** The players' middle moving more than 20 units in one camera
+frame (a level change, a teleport) is a cut: the centre jumps to the
+players, and the distance stays the game's own while the game's camera
+glides into the new level. When its view is near the players, in a known
+volume and has stopped turning for 3 frames, the fit snaps in on that view
+(the 1 s snap of section 8). Under the loading screen the game's camera
+stands still back in the old level; a first try took that for "arrived"
+and fitted 45 units.
+
+| Out of Crash's house (trace every 3 frames) | camera distance |
+|---|---|
+| before | 15 → 24 → 36 at the door, then down to 12 over ~4 s |
+| after | 14 → 13.2 → 12.8 (the game's own) → 12.0, steady |
+
+## 10. Rooms: where the original camera never moves
+
+![Two players at opposite walls of Crash's house. Left: the camera backed off out of the house, the floor's edge and the sky beside it. Right: the camera stays at the game's own spot and the view widens](../images/coop-camera-pinned-room.jpg)
+
+**The symptom.** With two players at opposite walls of Crash's house, the
+camera backs off until it is outside the house; the floor's edge and the
+sky around the house show (from about 8 units, the game's own being 6).
+
+**How the original handles it.** Each camera volume has a designed zoom
+range (section 1). The house has a single volume with **min = max = 6**: the
+original never moves the camera there at all. Wumpa Island's 161 volumes are
+mostly 14-20 (90) or 12-20 (43); twelve are pinned too (12/12, 14/14,
+20/20).
+
+**Walls don't help here.** A first attempt cast the game's scenery ray
+(`sub_8224C7F8`, the one behind the Wii cursor's mojo collector,
+[findings/47](47-mouse-reticle-and-wii-cursor.md): r3 `*(uber + 48)`, r4 start,
+r5 end, r6 a query with flag `0x80` = scenery only at +0x1C, r7 the result:
++0 the hit's distance from the start, +12 nonzero = hit) along the camera's
+line. From the players it hit the house's table, which stopped every
+back-off. From the game's own camera spot outward it hit nothing: the house
+is built like a stage set, with no wall on the camera's side. The ray stays
+(`--coop_camera_walls`, on): from the game's camera spot outward, a hit
+stops the back-off 0.6 units before it, and pulls the camera in at once
+when it is already past it. Outdoors on Wumpa Island it never hit.
+
+**The change.** In a pinned volume (min = max) the camera stays at the
+game's distance, and when that doesn't show everyone the **field of view**
+widens instead (the VectorCamera's +16, which the game sets again every
+frame; written right before the rebuild), up to 1.4x on the tangent (64 to
+about 82 degrees at 16:9), eased in (4/s) and out (1.5/s), never during
+cutscenes. A first version also let the camera back off 15% (6.9 units):
+the sky still showed in one corner. `--coop_camera_pinned_rooms=false`
+gives the old behaviour. Past 1.4x a player at the far wall can still be at
+the edge or just outside the picture; the catch-up of section 4 brings
+them back.
+
+Tested in Crash's house with a fake second player in five poses (both
+players at opposite walls, corners): no outside visible in any. On Wumpa
+Island, two players running apart: unchanged (back-off to 45, no wall hit,
+no field-of-view change).
