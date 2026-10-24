@@ -45,6 +45,7 @@
 #include "../gameplay/game_mods.h"
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
+#include "../players/outfit_picker.h"
 #include "../players/outfits.h"
 #include "quick_load.h"
 #include "rename_screen.h"
@@ -1777,6 +1778,8 @@ extern "C" REX_FUNC(sub_824742F0) {
     std::memset(GuestPtr(base, state + 4), 0, 12);
   }
   if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  // The co-op outfit picker reads every controller itself (players/outfit_picker.h).
+  if (state) outfit_picker::FilterPad(user, GuestPtr(base, state + 4));
   // The title screen starts on any button (input/title_any_button.h).
   uint16_t our_buttons = 0;  // what that filter added (not a controller: prompt pictures below)
   if (state && ctx.r3.u32 == 0) our_buttons = title_any_button::FilterPad(user, GuestPtr(base, state + 4), base);

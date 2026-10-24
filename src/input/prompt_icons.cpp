@@ -2097,6 +2097,8 @@ char16_t KeyGlyph(Input key, SlotSize size) {
   return LendSlot("K " + std::to_string(key), size);
 }
 
+std::u16string TextForPlayer(std::u16string text, int p) { return ForPlayer(std::move(text), p); }
+
 char16_t ButtonGlyph(std::string_view pad, SlotSize size) {
   if (!g_menu_glyphs.load()) return 0;
   // The 360 control names of input/bindings.h (ActionInfo::pad).

@@ -75,6 +75,11 @@ void Install();
 // How many local players levels make room for (--local_players, 2-4).
 int LocalPlayerCount();
 
+// Counts the times a level made its players (spawn events for players 1-2
+// created, sub_82283670): a level start, a reload, or the players' respawn
+// after a Crash <-> Coco outfit pick. (outfits.cpp waits on it.)
+uint32_t PlayerSetsMade();
+
 // THE FOUR-PLAYER HUD LAYOUT (combo meters, the counter prompt's "Y"): the
 // positions chosen for players 3-4 apply while player 3 or 4 is in the game
 // (joined: mask or on foot), and for 10 s after the last of them left; with
@@ -121,6 +126,10 @@ bool PlayerPlays(int p);
 // screen? Any thread (reads the front end's flags). The keyboard's keys
 // follow it (input/bindings.h "PLAY AND MENUS").
 bool MenuOnScreen();
+// Did player p (0-3) press B at an object (a totem, the chest...) in the last
+// 1.5 seconds? That B's RELEASE isn't "turn into a mask" (more_players.cpp's
+// mask checks ask; game main thread).
+bool InteractedRecently(int p);
 }  // namespace menu_input
 
 namespace more_players_frontend {

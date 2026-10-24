@@ -1692,6 +1692,18 @@ registers = ["f1", "r31"]
 address = 0x822F003C
 name = "CoopCameraZoneActive"
 registers = ["r11", "r31"]
+# OFF-SCREEN CATCH-UP FOR 3-4 PLAYERS (src/players/more_players.cpp, MorePlayersOffScreenGate;
+# findings/28 s.4). sub_82235978 ("is this Crash off screen?", the test behind the game's catch-up:
+# off screen + B released = become a mask on a partner) only answers while players 1 AND 2 are both
+# in game: state (0x8259B11C) of player 1 in 2/3 (0x822359CC-0x822359EC), then player 2's (+4,
+# 0x82235A00-0x82235A18). Both paths meet at 0x82235A20 (clrlwi r11,r11,24) with the answer in r11
+# (li r11,0 at 0x82235A1C falls through, b 0x82235a20 at 0x82235A18); the hook makes it "any two
+# players in game" (players 1 + 3 alone never counted as off screen). Verified with xexdis
+# 0x82235978-0x82235A40 (2026-10-23).
+[[entrypoint.midasm_hook]]
+address = 0x82235A20
+name = "MorePlayersOffScreenGate"
+registers = ["r11"]
 # COMBAT BARRIERS (src/players/more_players.cpp, MorePlayersBarrierNearest; findings/26 s.36). The
 # purple arena walls (CWorldCombatBarrierBehaviour, per-barrier update sub_82230D18) glow by each
 # vertex's ground distance to the nearer of TWO positions (players 1-2, gathered at 0x82230D40,

@@ -75,6 +75,8 @@ set(CRASHMOM_SOURCES
     src/players/coop_camera.cpp  # the co-op camera: frames every player (camera rework)
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/players/outfits.cpp     # every player picks an outfit at the chest (findings/46)
+    src/players/outfit_picker.cpp  # the co-op outfit picker: everyone at once, a panel each
+    src/players/outfit_previews.cpp  # the chest: one animated 3D model per player
     src/players/spin_colours.cpp  # coloured Crashes spin in their colour (findings/46 s.4)
     src/players/victory_scenes.cpp  # players 3-4 in the victory scenes, all in view (findings/26 s.39)
     src/players/who_plays.cpp    # no profiles: who plays = which controllers play (the game's sign-in, PC version)

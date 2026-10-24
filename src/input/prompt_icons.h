@@ -172,6 +172,14 @@ char16_t ButtonGlyph(std::string_view pad, SlotSize size = SlotSize::kText);
 // (input/name_typing.h). Any thread.
 bool KeysShown();
 
+// A text the port writes for ONE player (0-3): its prompt characters (± ²...
+// and the menu glyphs) drawn as that player's own device's pictures (player
+// slots, as the co-op corners get them); player 1, or a player whose look is
+// player 1's, keeps the game's own characters. Call it every frame the text
+// is shown: a slot not asked for is lent to another picture. Game main thread.
+// (The co-op outfit picker's cards, players/outfit_picker.cpp.)
+std::u16string TextForPlayer(std::u16string text, int p);
+
 // The name ("Titans_Large", "Titans_Small") of the game's font object at
 // `font` (a pure3d::TextureFont the loader built), "" if it isn't one of
 // them. For measuring texts (input/mouse_menus.h). Any thread.

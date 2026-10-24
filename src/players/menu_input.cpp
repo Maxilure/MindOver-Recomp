@@ -215,6 +215,10 @@ int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
   return MenuOwner(ctx, base, fe, &why);
 }
 bool PlayerPlays(int p) { return Plays(p); }
+bool InteractedRecently(int p) {
+  return p >= 0 && p == g_last_interactor.load() &&
+         std::chrono::steady_clock::now() - g_interacted_at < std::chrono::milliseconds(1500);
+}
 bool MenuOnScreen() {
   if (!more_players::InPlay()) {
     // The front end: menus, except the boot's cards and movies (states 3

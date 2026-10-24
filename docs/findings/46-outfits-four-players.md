@@ -53,9 +53,8 @@ An outfit is a **skin number**, and each one is its own character template
 
 - **Four outfits.** The get / set functions are overridden: players 1-2 keep
   the game's table (saves are written as before), players 3-4 get the port's.
-  An outfit picked at the chest is kept per player in `user/settings.toml`
-  (`outfit_player1`-`4`, -1 = as the game decides), so it doesn't depend on
-  which save is loaded. It only counts while the loaded save has that outfit
+  An outfit picked at the chest is kept per player and per save (section 3d;
+  it was a global setting at first, `outfit_player1`-`4`, now retired). It only counts while the loaded save has that outfit
   UNLOCKED (the game's unlock list 0x825A72A8, 11 skin numbers ending at -1,
   filled from the save; its own test is `sub_8229F858`; Crash's model is
   always unlocked). Otherwise the player wears what the save says, and the
@@ -269,13 +268,117 @@ player, -1 = no pick). The size word at the start still says 0x4EED (it counts
 the game's part), the PC save drive hides the trailer from the game and
 writes it after every save it writes, so the game's bytes stay exactly as the
 game made them and a file without the trailer is a normal save. Load = the
-trailer becomes the current picks (a save without one takes the old global
-settings once); New Game = no picks; a pick at the chest is kept in memory and
+trailer becomes the current picks (a save without one has no picks: the
+game decides); New Game = no picks; a pick at the chest is kept in memory and
 reaches the file with the next save, like the rest of the progress; backups,
 deleted saves and copies carry it along because it is the file. Code:
 outfits.cpp (`OnSaveLoaded`, `OnNewGame`, `CurrentPickBytes`),
 save_files.cpp (`ReadOutfitTrailer`, `MakeTrailer`), pc_save_drive.cpp
 (Open splits the trailer off, Flush appends it).
+
+## 3e. The front end's outfit packages, and the last of the global picks
+
+**A crash at Quit Game -> Load Game.** Every outfit's model lives in its own
+package (Crash's, Coco's, ...), counted by the inventory: a package is
+unloaded when its last reference goes. The front end holds one reference per
+player, for what that player wears: taken once at boot (`sub_8225FED8`, step 3
+part 0, asks the getter `sub_8229F8B8` for players 1-2), then moved by the
+store `sub_822665B0(front end, player, skin)`, which asks the getter for the
+OLD outfit, sets the new one (`sub_8229F8A0`), asks again for the NEW one,
+takes the new package and gives back the old (`sub_822E44B8` /
+`sub_822E4650`). In the game the getter's answer only changes through the
+setter, so asking again always named the package held. The port's getter
+also answers a player's pick, which changes when a save is loaded (the picks
+and the unlock list arrive before the loader's stores, `sub_8229F9A8`). A
+trace of every store showed it: at boot the front end took Crash for player
+1; loading a save whose pick is Coco, the store gave back Coco (the getter
+already said Coco) and took Coco; the reset before the next Load Game
+(`sub_8229F960`, skin 0 for both players) gave Coco back again = one release
+too many. Coco's package was unloaded while player 1 still wore it, and the
+next "take Coco" read the half-freed section's dependency list (a read of
+address 4 in `sub_822E28E0`).
+
+**The change** (`outfits.cpp`, section 6). The port remembers, per player,
+which outfit's package the front end holds (recorded after the boot step and
+after every store) and the store, rewritten with the game's steps, gives
+back exactly that one; players 3-4 start holding nothing. Tested: three Quit
+Game -> Load Game cycles in one run between two saves with a Coco pick, no
+crash, 0 errors, every give-back the package held.
+
+**Picks no longer leak into the game's table.** The store also wrote every
+chest pick into the game's own two-entry table (0x8259B1C0), which is saved
+in the game's part of the file. A player 1 pick of Coco (something the game
+can't do: player 1 is always a Crash, 0-8; player 2 Carbon 0 or Coco 9 / 10)
+ended up in every save made after it, so an older save without picks still
+showed player 1 as Coco. Now a pick the original couldn't make stays in the
+picks only, and a table value the original can't have (player 1 = 9 or 10)
+reads as the game's default (0). The files keep their bytes.
+
+**The global settings are retired.** `outfit_player1`-`4` are no longer read
+(a save without picks of its own = the game decides; before any save is
+loaded nobody has a pick). They stay defined so settings files that hold them
+load without a warning; `--list_settings` (the launcher's Settings tab) leaves
+them out.
+
+## 3f. A Coco pick with the chest screen still open
+
+**The crash.** With the outfit picker, every Crash <-> Coco pick crashed a
+second or more later, in the chest screen's per-frame code: the preview's
+animation (`sub_82350F88` / `sub_8237AB58` from `0x820E1E40`) read addresses
+0, 0x20 or 0x24. Crash models were fine.
+
+**Why.** A Crash <-> Coco pick respawns the players (`sub_8227C5A0`:
+`sub_8229CB78` + game +0xA8 bit 0x80), a small level reload that lets go of
+every actor in the zones. The chest's 3D preview is such an actor: its build
+(`sub_820E0A30`) puts it in the zone manager's own zone (`sub_822E6B60`). In
+the game that never mattered, because Wear Skin is the screen's exit (front-end
+exit 850 in the same frame as the respawn): the screen and its preview were
+gone. The outfit picker keeps the screen open while the others choose, so the
+screen went on animating a preview the respawn had freed, and crashed when its
+next idle animation started. Found from the crash reports' stacks, a trace of
+the preview's builds and animation changes, and a log of the same pick before
+the picker existed (exit 850 right at the pick).
+
+**The change** (`outfits.cpp` section 5b, `outfit_previews.cpp`). Right before
+the respawn the preview is destroyed the screen's own way (`sub_820E1180`, the
+step the picker already uses to change the shown outfit), and so are the
+picker's per-player previews. No preview is built again (`sub_820E0A30`
+skipped; the screen asks again every frame) until the level has made its
+players again (spawn events for players 1-2, `sub_82283670`) and the player's
+new character exists; then the screen builds a fresh one.
+
+When that pick is the last one (everyone ready), the picker now closes the
+screen at once, as Wear Skin does in the game, instead of first sliding its
+panels out: the slide ran through the reload's loading screen and left the
+empty chest frame showing for a moment before the game came back.
+
+## 3g. The chest's music, and where a respawn puts the players
+
+**The menu music stayed on.** The chest screen's Enter (`sub_820E0188`,
+`0x820E07B8`) puts the music manager (`*(0x8259B240)`) in mode 3, the
+menu's music; both of the screen's own ways out set mode 1 again, the level's
+music: B (`sub_820E15F8`, `0x820E1700`) and Wear's "done" (`sub_820E0858`,
+`0x820E0924`), through `sub_822D9998(manager, mode)`. The outfit picker takes
+the input itself and closes the screen through its own decision, so neither
+ran: the menu music played on in the level until a level change, a respawn or
+the next menu. The picker's close now sets mode 1 the same way. (Found from
+the logs: the level's music was loaded again only after a respawn pick or
+another object's screen.)
+
+**Respawned at another object.** After using the save tiki, the TV or the
+books in Crash's house, a Crash <-> Coco pick at the chest put the players back
+at that object. The respawn makes the players' spawn events again
+(`sub_8229C550`), and each event's position comes from, in order: a fixed
+position in the global options block `0x825A7374` (`sub_822C8358()`; +0xC4
+byte = on, +0xC8..+0xD0 = x, y, z; the zone manager's start `sub_822E69E0`
+reads it too), a named spawn point (+0xD4), else the level's current spawn
+point (`sub_8227BC40`), one spot per player (`sub_82279260`). Those objects
+make themselves the current spawn point; the chest doesn't, since in the game a
+pick never reloaded for player 1. Now the respawn of a chest pick sets the
+fixed position to where the picking player stands, and puts the block back
+once the level has made its players again and a second has passed. Checked
+with the console: the fixed position set by hand, the game's respawn (`cheat
+respawn`) put player 1 exactly there.
 
 ## 4. Not done yet
 

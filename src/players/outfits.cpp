@@ -10,8 +10,8 @@
 //    save loader sub_8229F9A8 sets players 1-2 from the save, the skin
 //    screen asks for the current one). Overridden here for 4 players:
 //    players 1-2 keep the game's table (so saves stay as they were),
-//    players 3-4 get ours; an outfit picked at the chest (flag
-//    outfit_player<N> >= 0) wins over both. Players 3-4's spawn events are
+//    players 3-4 get ours; an outfit picked at the chest (kept per save,
+//    see Picked) wins over both. Players 3-4's spawn events are
 //    built AS player 2 (more_players.cpp): BuildingSpawnFor() says for whom.
 //
 // 2. CARBON = number 11 (kCarbon). Toward the game it is skin 0 (Crash's
@@ -82,22 +82,30 @@
 #include "../native/recorder.h"
 #include "../ui/scrooby.h"
 #include "more_players.h"
+#include "outfit_picker.h"
+#include "outfit_previews.h"
 
 REXCVAR_DEFINE_BOOL(carbon_colours, true, "CrashMoM",
                     "Crash in colours at the chest (red, yellow, green, blue, purple, pink: players 3-4 start "
                     "green and purple; player 2 stays the original white Carbon Crash); false = only the "
                     "white Carbon Crash");
+REXCVAR_DEFINE_BOOL(outfit_store_fix, true, "CrashMoM",
+                    "The outfit store gives back the package it holds and keeps picks out of the game's "
+                    "own table (2026-10-24); false = the earlier behaviour (for comparing)");
+// RETIRED (2026-10-24): the picks were global settings until they moved into
+// each save file (2026-10-22, see "THE PICKS ARE PER SAVE" below). For a while
+// older saves still started from these; now nothing reads them: a save
+// without picks of its own wears what the game decides. They stay defined
+// only so settings files that still hold them load without a warning; the
+// launcher's Settings tab leaves them out (settings_list.cpp).
 REXCVAR_DEFINE_INT32(outfit_player1, -1, "CrashMoM",
-                     "Player 1's outfit (picked at the chest in Crash's house): -1 as the game decides, "
-                     "0 Crash, 1 Greeny, 2 Bluey, 3 Reddy, 4 Snipe, 5 Ratcicle, 6 Magmadon, 7 Skeleton, "
-                     "8 Spike, 9 Coco, 10 Old School, 11 Carbon Crash, 12-17 Crash in red / blue / green / "
-                     "purple / yellow / pink")
+                     "No longer used (outfits are kept per save since 2026-10-22)")
     .range(-1, 17);
-REXCVAR_DEFINE_INT32(outfit_player2, -1, "CrashMoM", "Player 2's outfit (see outfit_player1)")
+REXCVAR_DEFINE_INT32(outfit_player2, -1, "CrashMoM", "No longer used (see outfit_player1)")
     .range(-1, 17);
-REXCVAR_DEFINE_INT32(outfit_player3, -1, "CrashMoM", "Player 3's outfit (see outfit_player1)")
+REXCVAR_DEFINE_INT32(outfit_player3, -1, "CrashMoM", "No longer used (see outfit_player1)")
     .range(-1, 17);
-REXCVAR_DEFINE_INT32(outfit_player4, -1, "CrashMoM", "Player 4's outfit (see outfit_player1)")
+REXCVAR_DEFINE_INT32(outfit_player4, -1, "CrashMoM", "No longer used (see outfit_player1)")
     .range(-1, 17);
 
 extern "C" REX_FUNC(__imp__sub_8229F8B8);  // player r3's skin
@@ -121,6 +129,7 @@ extern "C" REX_FUNC(__imp__sub_822E4680);
 extern "C" REX_FUNC(__imp__sub_820B09C8);
 extern "C" REX_FUNC(__imp__sub_820B0DF8);
 extern "C" REX_FUNC(__imp__sub_822665B0);  // front end: player r4 wears r5 (+ packages)
+extern "C" REX_FUNC(sub_822665B0);  // ours: section 6 (gives back what it holds)
 extern "C" REX_FUNC(__imp__sub_822E7880);  // the inventory's per-change update
 extern "C" REX_FUNC(__imp__sub_8236ACB8);
 extern "C" REX_FUNC(__imp__sub_820D8908);  // a section's texture by name key (r3 section, r4 64-bit key)
@@ -251,6 +260,13 @@ int g_wearing_player = -1, g_wearing_outfit = 0;
 // When the skin screen last ran its Update (steady clock, ms): while recent,
 // a Crash that isn't a player's is the screen's preview.
 std::atomic<int64_t> g_screen_ms{-100000};
+// (Section 5b: the chest's previews across a respawn.)
+uint32_t g_skin_screen = 0;           // the skin screen seen in its last Update
+bool g_preview_held = false;          // a respawn is under way: no preview build
+uint32_t g_held_sets = 0;             // PlayerSetsMade() when it began
+uint32_t g_held_old_character = 0;    // the respawning player's character then
+int g_held_player = -1;
+int64_t g_held_since = 0;
 int64_t NowMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::steady_clock::now().time_since_epoch())
@@ -281,6 +297,14 @@ uint32_t CallGame(GuestFunction f, PPCContext& ctx, uint8_t* base, uint32_t r3, 
 // The game's number for an outfit (Carbon = Crash's model).
 uint32_t GameSkin(int outfit) { return IsCarbon(outfit) ? 0u : uint32_t(outfit); }
 bool IsCoco(uint32_t skin) { return skin == 9 || skin == 10; }
+// What the ORIGINAL can put in its table (0x8259B1C0) for players 1-2: player
+// 1 is always a Crash (0 orange .. 8), player 2 the Carbon Crash (0) or the
+// story's Coco (9, 10 Old School). (2026-10-24) Until today a pick at the
+// chest also went into that table, so a player 1 Coco pick ended up in the
+// game's own part of every save made after it (saves seen with player 1 = 9).
+// Picks live only in each save's trailer now; a table value the original
+// can't have counts as the game's default (0). The save files keep their bytes.
+bool OriginalSkinFor(int p, uint32_t skin) { return p == 0 ? skin <= 8 : (skin == 0 || IsCoco(skin)); }
 // Is a game skin unlocked in the loaded save? The game's own test
 // (sub_8229F858, read here without a call): the unlock list 0x825A72A8, 11
 // skin numbers ending at -1, filled from the save when it loads (save offset
@@ -303,26 +327,20 @@ bool SkinUnlocked(uint32_t skin) {
 // the PC save drive keeps it apart and writes it back after the game's bytes
 // (saves/pc_save_drive.cpp calls SaveTrailer when a file is written).
 //   * a save is LOADED  -> its trailer becomes the current picks. A save
-//     without one (every save from before this existed) takes the picks the
-//     old global settings hold (outfit_player1..4, no longer written), so
-//     nothing changes for it; its next save gets the trailer;
+//     without one (every save from before this existed) has no picks: the
+//     game decides (until 2026-10-24 it took the old global settings
+//     outfit_player1..4, which made one old pick follow every older save);
 //   * New Game          -> no picks (the story's own outfits);
 //   * a pick at the chest -> the current picks; they reach the file with the
 //     next save, like the rest of the progress;
 //   * a save is WRITTEN (Create New Save, overwrite) -> the trailer holds the
 //     current picks.
 // Backups, deleted saves and copies of a save carry it along (it's the file).
-std::array<int, kMaxPlayers> g_picks = {-2, -2, -2, -2};  // -2 = not read from the settings yet
+// (Before any save is loaded -- title, menus, a New Game -- nobody has a pick.)
+std::array<int, kMaxPlayers> g_picks = {-1, -1, -1, -1};
 std::mutex g_picks_mutex;
 
-std::array<int, kMaxPlayers> LegacyPicks() {
-  return {REXCVAR_GET(outfit_player1), REXCVAR_GET(outfit_player2), REXCVAR_GET(outfit_player3),
-          REXCVAR_GET(outfit_player4)};
-}
-std::array<int, kMaxPlayers>& CurrentPicks() {
-  if (g_picks[0] == -2) g_picks = LegacyPicks();
-  return g_picks;
-}
+std::array<int, kMaxPlayers>& CurrentPicks() { return g_picks; }
 
 // The outfit a player wears by choice, -1 = none. It only counts while the
 // loaded save has it unlocked: a pick of Coco made in a late save, then a
@@ -618,6 +636,21 @@ int ColourIndex(int outfit) {
 int ColourCount() { return kColourCount; }
 float ColourHue(int index) { return index >= 0 && index < kColourCount ? kColours[index].body.h : 0.0f; }
 
+int ListIndexOf(int outfit) {
+  BuildList();
+  for (uint32_t i = 0; i < g_list_count; ++i) {
+    if (int(Read32(g_list + i * kEntryBytes)) == outfit) return int(i);
+  }
+  return -1;
+}
+bool OutfitAvailable(int outfit) {
+  if (outfit < 0 || outfit > kLastOutfit || ListIndexOf(outfit) < 0) return false;
+  if (outfit >= kFirstColour && !g_colours_added) return false;
+  return SkinUnlocked(GameSkin(outfit));
+}
+int ShownOutfit() { return int(Read32(kSelection)); }
+uint32_t ShownTemplateKey() { return kSelection + 12; }
+
 int OutfitOf(int p) {
   if (p < 0 || p >= kMaxPlayers) return 0;
   if (p == g_wearing_player) return g_wearing_outfit;
@@ -627,6 +660,7 @@ int OutfitOf(int p) {
   // Carbon (player 2 the original white); 3-4, the port's, a coloured Crash
   // in their marker's colour (green, purple).
   uint32_t skin = p >= 2 ? g_game_skins[p - 2] : Read32(0x8259B1C0 + 4 * p);
+  if (p < 2 && !OriginalSkinFor(p, skin)) skin = 0;  // (a pick that leaked into the table)
   if (skin > 10) skin = 0;
   if (p == 0 || skin != 0) return int(skin);
   if (p >= 2 && REXCVAR_GET(carbon_colours) && g_colours_added) return p == 2 ? kCrashGreen : kCrashPurple;
@@ -646,10 +680,9 @@ void OnSaveLoaded(int number) {
     REXLOG_INFO("Outfits: save {} has its own picks ({} {} {} {})", number, g_picks[0], g_picks[1],
                 g_picks[2], g_picks[3]);
   } else {
-    // A save from before the picks were per save: it keeps what was global.
-    g_picks = LegacyPicks();
-    REXLOG_INFO("Outfits: save {} has no picks of its own yet: the old global ones ({} {} {} {})",
-                number, g_picks[0], g_picks[1], g_picks[2], g_picks[3]);
+    // A save from before the picks were per save: the game decides.
+    g_picks = {-1, -1, -1, -1};
+    REXLOG_INFO("Outfits: save {} has no picks of its own: the game decides", number);
   }
 }
 void OnNewGame() {
@@ -740,13 +773,14 @@ extern "C" REX_FUNC(sub_8229F8B8) {
   } else {
     ctx.r3.u64 = uint32_t(p);
     __imp__sub_8229F8B8(ctx, base);
+    if (!OriginalSkinFor(p, ctx.r3.u32)) ctx.r3.u64 = 0;  // (a pick that leaked into the table)
   }
 }
 
 extern "C" REX_FUNC(sub_8229F8A0) {
   const int p = int(ctx.r3.u32);
   if (p == g_applying) {
-    // A pick at the chest: kept as the player's outfit (settings.toml).
+    // A pick at the chest: kept as the player's outfit (this save's picks).
     {
       std::lock_guard guard(g_picks_mutex);
       CurrentPicks()[p] = g_applying_outfit;  // reaches the file with the next save
@@ -757,6 +791,9 @@ extern "C" REX_FUNC(sub_8229F8A0) {
     g_game_skins[p - 2] = ctx.r4.u32;
     return;
   }
+  // A pick the original couldn't make for this player stays in the picks
+  // only: the game's table (and so the save's own bytes) keeps its value.
+  if (REXCVAR_GET(outfit_store_fix) && p == g_applying && !OriginalSkinFor(p, ctx.r4.u32)) return;
   __imp__sub_8229F8A0(ctx, base);
 }
 
@@ -790,6 +827,8 @@ void ChooseSkinSet(uint32_t render, uint32_t actor) {
   int outfit = -1;
   if (p >= 0) {
     outfit = OutfitOf(p);
+  } else if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) {
+    outfit = o;  // PER-PLAYER PREVIEWS (outfit_previews.h): that preview's outfit
   } else if (NowMs() - g_screen_ms.load() < 250 && Read32(kSelection) <= uint32_t(kLastOutfit)) {
     // Not a player, while the skin screen is up: its preview, wearing the
     // shown entry (-1 = a locked one: left alone).
@@ -827,6 +866,8 @@ uint32_t CarbonKey(PPCContext& ctx, uint8_t* base, int outfit) {
 int OutfitForActor(uint32_t actor) {
   const int p = PlayerOfActor(actor);
   if (p >= 0) return OutfitOf(p);
+  // PER-PLAYER PREVIEWS (outfit_previews.h): each preview wears its own outfit.
+  if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) return o;
   if (NowMs() - g_screen_ms.load() < 250 && Read32(kSelection) <= uint32_t(kLastOutfit)) {
     return int(Read32(kSelection));
   }
@@ -985,7 +1026,11 @@ void NameNextPage(PPCContext& ctx, uint8_t* base, uint32_t screen) {
 extern "C" REX_FUNC(sub_820E0858) {
   g_screen_ms = NowMs();
   const uint32_t screen = ctx.r3.u32;
+  g_skin_screen = screen;  // (section 5b: the preview across a respawn)
+  const double dt = ctx.f1.f64;  // (the Update's frame time)
   __imp__sub_820E0858(ctx, base);
+  outfit_picker::AfterUpdate(ctx, base, screen);  // the co-op picker (outfit_picker.h)
+  outfit_previews::Tick(ctx, base, screen, dt);   // one model per player (outfit_previews.h)
   NameNextPage(ctx, base, screen);
 }
 
@@ -1017,7 +1062,9 @@ extern "C" REX_FUNC(sub_82263630) {
 // At the controller's creation (bl sub_8211AA50): r5 = the animation set,
 // r6 = the preview's "player" (its texture set: we pick that per frame).
 void OutfitsPreviewCharacter(PPCRegister& r5, PPCRegister& r6) {
-  const uint32_t shown = Read32(kSelection);
+  // (PER-PLAYER PREVIEWS: one of ours being built = its own outfit.)
+  const int building = outfit_previews::BuildingOutfit();
+  const uint32_t shown = building >= 0 ? uint32_t(building) : Read32(kSelection);
   r5.u64 = IsCoco(GameSkin(int(std::min<uint32_t>(shown, uint32_t(kLastOutfit))))) ? kPreviewCocoMoves
                                                                                : kPreviewCrashMoves;
   r6.u64 = IsCarbon(int(shown)) ? 1u : 0u;
@@ -1025,12 +1072,15 @@ void OutfitsPreviewCharacter(PPCRegister& r5, PPCRegister& r6) {
 extern "C" REX_FUNC(sub_820E0C98) {
   const uint32_t screen = ctx.r3.u32;
   const uint32_t page = Read32(screen + kScreenPage);
-  const uint32_t shown = Read32(kSelection);
+  // (PER-PLAYER PREVIEWS: one of our shadow screens = its own outfit.)
+  const int own = outfit_previews::OutfitOfScreen(screen);
+  const uint32_t shown = own >= 0 ? uint32_t(own) : Read32(kSelection);
   Write32(screen + kScreenPage,
           IsCoco(GameSkin(int(std::min<uint32_t>(shown, uint32_t(kLastOutfit))))) ? 1u : 0u);
   __imp__sub_820E0C98(ctx, base);
   Write32(screen + kScreenPage, page);
 }
+
 
 // The coloured Crashes share Carbon Crash's name and text in the game's
 // bank: after the screen shows one, its own. (Title = this +0x24; the
@@ -1077,6 +1127,155 @@ extern "C" REX_FUNC(sub_820E14B8) {
   if (g_list_count) Write32(screen + kScreenCount, g_list_count);
 }
 
+// --- 5b. The chest's preview across a respawn -----------------------------------
+//
+// THE COCO PICK CRASH (2026-10-24). A Crash <-> Coco pick respawns the players
+// (sub_8227C5A0: sub_8229CB78 + game +0xA8 bit 0x80 = the players' section is
+// made again, like a small level reload: every actor in the zones is let go,
+// sub_822EFEA0 -> sub_820B0C58 + Release). The chest's 3D preview is such an
+// actor: its build (sub_820E0A30) puts it in the zone manager's own zone
+// (sub_822E6B60, r3 = game +100). In the game that never mattered: Wear Skin
+// is the screen's exit (front end exit 850 in the same frame as the respawn),
+// so the screen and its preview were gone. The outfit picker keeps the
+// screen open while others choose, so the screen's per-frame code
+// (sub_820E1C70) went on animating a preview the respawn had freed: reads of
+// 0, 0x20, 0x24 in sub_82350F88 / sub_8237AB58 from 0x820E1E40, 1.5-10 s after
+// the pick (whenever the next idle animation started). Crash models were fine
+// (no respawn: their swap happens on the spot). Found from the crash reports'
+// stacks, a trace of the preview's builds and animation changes, and the
+// 2026-10-21 log of the same pick before the picker (exit 850 = screen gone).
+//
+// The fix: right before the respawn the preview is destroyed the screen's own
+// way (sub_820E1180: actor +92, controller +96 let go, +92 = 0; the outfit
+// picker does the same to change the shown outfit), and the screen may not
+// build a new one (sub_820E0A30 skipped; its per-frame code just asks again
+// next frame) until the level has made its players again
+// (more_players::PlayerSetsMade() moved on) and the player's new character
+// exists. Then the screen builds a fresh preview of the shown outfit.
+extern "C" REX_FUNC(__imp__sub_820E1180);  // skin screen: destroy its preview character
+extern "C" REX_FUNC(__imp__sub_820E0A30);  // skin screen: build its preview (r4 = the section)
+
+namespace outfits {
+void PreviewAwayForRespawn(PPCContext& ctx, uint8_t* base, int p) {
+  const uint32_t screen = g_skin_screen;
+  if (!screen || NowMs() - g_screen_ms.load() > 250) return;  // (no screen up)
+  if (Read32(screen + 0x5C)) CallGame(__imp__sub_820E1180, ctx, base, screen);
+  g_preview_held = true;
+  g_held_sets = more_players::PlayerSetsMade();
+  g_held_old_character = more_players::CharacterOfPlayer(p);
+  g_held_player = p;
+  g_held_since = NowMs();
+  outfit_previews::LetGoForRespawn(ctx, base);  // (the picker's per-player previews too)
+  REXLOG_INFO("Outfits: the chest's preview is let go for the respawn (screen {:08X})", screen);
+}
+bool PreviewHeld() {
+  if (!g_preview_held) return false;
+  const uint32_t now_character = more_players::CharacterOfPlayer(g_held_player);
+  const bool remade = more_players::PlayerSetsMade() != g_held_sets && now_character &&
+                      now_character != g_held_old_character;
+  if (!remade && NowMs() - g_held_since < 10000) return true;
+  g_preview_held = false;
+  REXLOG_INFO("Outfits: the players are back{}: the chest's preview may be built again",
+              remade ? "" : " (gave up waiting after 10 s)");
+  return false;
+}
+}  // namespace outfits
+
+extern "C" REX_FUNC(sub_820E0A30) {
+  if (PreviewHeld()) return;  // (the screen asks again next frame)
+  __imp__sub_820E0A30(ctx, base);
+}
+
+// --- 5c. The respawn happens where the players are -----------------------------
+//
+// TELEPORTED TO THE TIKI / TV / BOOKS (2026-10-24). After using the save tiki,
+// the TV or the books in Crash's house, a Crash <-> Coco pick at the chest
+// put the players back at that object, not at the chest. The respawn makes the
+// players' spawn events again (sub_8229C550), and each event's position comes
+// from, in order: a fixed position in the global options block
+// 0x825A7374 (sub_822C8358(); +0xC4 byte = on, +0xC8/+0xCC/+0xD0 = x, y, z;
+// the zone manager's start, sub_822E69E0, reads the same), a named spawn point
+// (+0xD4), else the level's CURRENT spawn point (sub_8227BC40) per player
+// (sub_82279260). Those objects make themselves the current spawn point (their
+// screens come back through a reload); the chest doesn't, since in the game a
+// pick at the chest never reloaded for player 1. Found by reading
+// sub_8229C550 after the reports.
+//
+// The fix: for the respawn of a chest pick, the fixed position is set to where
+// the picking player stands (their character's world matrix), and switched off
+// again (the byte and the old position put back) once the level has made its
+// players again (more_players::PlayerSetsMade() moved on) and one more second
+// has passed (the zone manager's start reads it too). Nothing else in the game
+// sets that block in play, so other respawns (deaths, level changes) keep the
+// spawn points.
+namespace outfits {
+namespace {
+constexpr uint32_t kStartOptions = 0x825A7374;  // sub_822C8358()
+constexpr uint32_t kFixedOn = kStartOptions + 0xC4, kFixedPosition = kStartOptions + 0xC8;
+struct FixedSpawn {
+  std::atomic<bool> active{false};
+  uint8_t old_on = 0;
+  uint32_t old_position[3] = {};
+  uint32_t sets = 0;              // PlayerSetsMade() at the respawn
+  int64_t since = 0;              // when it was set
+  int64_t made_at = 0;            // when the players were made again (0 = not yet)
+} g_fixed;
+
+// A character's position: Crash +44 -> its world matrix, translation at +48
+// (findings/26 s.12).
+bool PositionOfCharacter(uint32_t character, float out[3]) {
+  if (character < 0x40000000) return false;
+  const uint32_t matrix = Read32(character + 44);
+  if (matrix < 0x40000000) return false;
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t bits = Read32(matrix + 48 + 4 * i);
+    std::memcpy(&out[i], &bits, 4);
+    if (!std::isfinite(out[i])) return false;
+  }
+  return true;
+}
+
+// (Frame-end listener, the game's main thread.) Off again once it was used.
+void FixedSpawnFrameEnd(void*) {
+  if (!g_fixed.active.load()) return;
+  const int64_t now = NowMs();
+  if (!g_fixed.made_at && more_players::PlayerSetsMade() != g_fixed.sets) g_fixed.made_at = now;
+  const bool used = g_fixed.made_at && now - g_fixed.made_at > 1000;
+  if (!used && now - g_fixed.since < 20000) return;
+  *Guest(kFixedOn) = g_fixed.old_on;
+  for (int i = 0; i < 3; ++i) Write32(kFixedPosition + 4 * i, g_fixed.old_position[i]);
+  g_fixed.active = false;
+  REXLOG_INFO("Outfits: the respawn's spawn spot is back to the level's{}", used ? "" : " (gave up after 20 s)");
+}
+}  // namespace
+
+void RespawnWhereTheyStand(int p) {
+  static bool listening = false;
+  if (!listening) {
+    pddi::AddFrameEndListener(&FixedSpawnFrameEnd, nullptr);
+    listening = true;
+  }
+  float at[3];
+  if (!PositionOfCharacter(more_players::CharacterOfPlayer(p), at)) return;
+  if (!g_fixed.active.load()) {  // (the level's own values, kept once)
+    g_fixed.old_on = *Guest(kFixedOn);
+    for (int i = 0; i < 3; ++i) g_fixed.old_position[i] = Read32(kFixedPosition + 4 * i);
+  }
+  *Guest(kFixedOn) = 1;
+  for (int i = 0; i < 3; ++i) {
+    uint32_t bits;
+    std::memcpy(&bits, &at[i], 4);
+    Write32(kFixedPosition + 4 * i, bits);
+  }
+  g_fixed.sets = more_players::PlayerSetsMade();
+  g_fixed.since = NowMs();
+  g_fixed.made_at = 0;
+  g_fixed.active = true;
+  REXLOG_INFO("Outfits: the respawn puts the players where player {} stands ({:.1f} {:.1f} {:.1f})", p + 1, at[0],
+              at[1], at[2]);
+}
+}  // namespace outfits
+
 // --- 5. Wear Skin ---------------------------------------------------------------
 
 extern "C" REX_FUNC(sub_82123880) {
@@ -1103,6 +1302,8 @@ extern "C" REX_FUNC(sub_82123880) {
     if (IsCoco(old_skin) != IsCoco(new_skin)) {
       // Crash <-> Coco: a different character; the game respawns the players,
       // each from their outfit (as it does for player 2).
+      PreviewAwayForRespawn(ctx, base, p);  // (section 5b)
+      RespawnWhereTheyStand(p);              // (section 5c)
       CallGame(__imp__sub_8227C5A0, ctx, base, game, uint32_t(p));
     } else if (old_skin != new_skin || rebind) {
       // Another model of the same character: SelectSkin's own swap on the actor.
@@ -1123,11 +1324,101 @@ extern "C" REX_FUNC(sub_82123880) {
     // (Carbon <-> orange Crash: same model, the draw picks the texture set.)
     g_applying = p;
     g_applying_outfit = outfit;
-    CallGame(__imp__sub_822665B0, ctx, base, front_end, uint32_t(p), new_skin);
+    CallGame(sub_822665B0, ctx, base, front_end, uint32_t(p), new_skin);  // ours (section 6)
     g_applying = -1;
     g_wearing_player = -1;
     REXLOG_INFO("Outfits: player {} picked outfit {} (game skin {} -> {})", p + 1, outfit, old_skin,
                 new_skin);
   }
   CallGame(__imp__sub_822E7880, ctx, base, Read32(game + kInventoryOf));
+}
+
+// --- 6. The front end's outfit packages: give back what was taken --------------
+//
+// THE QUIT -> LOAD GAME CRASH (2026-10-24). Every outfit's model lives in its
+// own package (Crash's, Coco's, ...), counted by the inventory: a package is
+// unloaded when its last reference goes. The front end holds one reference
+// per player, for what that player wears:
+//   * taken once at boot: sub_8225FED8 (front-end package step 3, part 0)
+//     asks sub_8229F8B8(p) for players 1-2 and takes each package;
+//   * moved by the store sub_822665B0(front end, p, skin): it asks
+//     sub_8229F8B8(p) for the OLD outfit, sets the new one (sub_8229F8A0),
+//     asks again for the NEW one, takes the new package and gives back the
+//     OLD one (sub_822E44B8 / sub_822E4650 by name handle).
+// In the game the getter's answer only changes through the setter, so "ask
+// again for the old one" always named the package held. Ours also answers a
+// player's PICK (per save, and only while the save has that outfit
+// unlocked), which changes when a save is loaded: the picks and the unlock
+// list arrive before the loader's stores (sub_8229F9A8). Traced: at boot the
+// front end took Crash for player 1; loading a save whose pick is Coco, the
+// store gave back COCO (the getter already said Coco) and took Coco; a Quit
+// Game + Load Game reset (stores of skin 0 from sub_8229F960) gave Coco back
+// AGAIN = one release too many: Coco's package was unloaded while player 1
+// still wore it, and the next "take Coco" read the half-freed section's
+// dependency list (null + 4 in sub_822E28E0, crash-2026-10-23_225531.txt).
+// Found with the crash report's game stack + a trace of every store (player,
+// skin, the getter's answer before / after, the game's table).
+//
+// The fix: we remember, per player, which outfit's package the front end
+// HOLDS (g_front_end_holds, by the getter's answer when it was taken), and
+// the store gives back exactly that one. Players 3-4 (the port's; the store
+// is called for them by our chest code) start holding nothing: the first
+// store only takes. The store's steps are otherwise the game's.
+extern "C" REX_FUNC(__imp__sub_822E44B8);  // inventory: take a reference (r3 inventory, r4 name handle)
+extern "C" REX_FUNC(__imp__sub_822E4650);  // inventory: give one back (same)
+extern "C" REX_FUNC(__imp__sub_8225FED8);  // front-end packages: step r4, part r5
+
+namespace outfits {
+namespace {
+constexpr uint32_t kNone = 0xFFFFFFFFu;
+uint32_t g_front_end_holds[kMaxPlayers] = {kNone, kNone, kNone, kNone};  // skin numbers
+
+// Takes (take = true) or gives back a reference on skin's package.
+void SkinPackageReference(PPCContext& ctx, uint8_t* base, uint32_t skin, bool take) {
+  static uint32_t handle = 0;  // guest room for the 4-byte name handle
+  if (!handle) handle = rex::system::kernel_memory()->SystemHeapAlloc(16);
+  if (!handle) return;
+  const uint32_t name = CallGame(__imp__sub_8229F810, ctx, base, skin);
+  CallGame(__imp__sub_8236AC90, ctx, base, handle, name);
+  const uint32_t inventory = CallGame(__imp__sub_822E3FA8, ctx, base, 0, handle);
+  CallGame(take ? __imp__sub_822E44B8 : __imp__sub_822E4650, ctx, base, inventory, handle);
+  CallGame(__imp__sub_823C9A70, ctx, base, handle);
+}
+}  // namespace
+}  // namespace outfits
+
+// Boot: the front end's first references (players 1-2). Recorded right after,
+// with the same answer the original just used.
+extern "C" REX_FUNC(sub_8225FED8) {
+  const PPCContext call = ctx;
+  __imp__sub_8225FED8(ctx, base);
+  if (call.r4.u32 != 3 || call.r5.u32 != 0) return;
+  const PPCContext after = ctx;
+  for (int p = 0; p < 2; ++p) g_front_end_holds[p] = CallGame(sub_8229F8B8, ctx, base, uint32_t(p));
+  ctx = after;
+  REXLOG_INFO("Outfits: the front end holds the packages of skins {} and {} (players 1-2)", g_front_end_holds[0],
+              g_front_end_holds[1]);
+}
+
+// The store, rewritten (same steps; gives back what it holds).
+extern "C" REX_FUNC(sub_822665B0) {
+  const PPCContext call = ctx;
+  const uint32_t p = call.r4.u32, skin = call.r5.u32;
+  if (p >= uint32_t(kMaxPlayers) || !REXCVAR_GET(outfit_store_fix)) {
+    __imp__sub_822665B0(ctx, base);
+    return;
+  }
+  // (A player 1-2 store before the boot step was seen: the game's own rule.)
+  uint32_t held = g_front_end_holds[p];
+  if (held == kNone && p < 2) held = CallGame(sub_8229F8B8, ctx, base, p);
+  CallGame(sub_8229F8A0, ctx, base, p, skin);  // ours: picks + players 3-4
+  const uint32_t now = CallGame(sub_8229F8B8, ctx, base, p);
+  SkinPackageReference(ctx, base, now, true);  // new first: a same-package store never drops to 0
+  if (held != kNone) SkinPackageReference(ctx, base, held, false);
+  g_front_end_holds[p] = now;
+  if (held != now) {
+    REXLOG_INFO("Outfits: player {} stored skin {}: the front end now holds skin {}'s package (gave back {})", p + 1,
+                skin, now, held == kNone ? std::string("nothing") : std::to_string(held));
+  }
+  ctx = call;
 }

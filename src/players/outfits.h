@@ -30,9 +30,9 @@
 //     shared by every Crash) follows the outfit too;
 //   * Back pages through every player on foot (1 -> 2 -> 3 -> 4 -> 1);
 //   * a picked outfit is kept per player AND PER SAVE
-//     (in the save file's trailer; outfit_player1..4 in settings.toml are
-//     only what older saves start from; -1 = as the game decides: player 1 orange Crash,
-//     players 2-4 Carbon Crash or the story's Coco). Saves keep the game's
+//     (in the save file's trailer; a save without picks wears what the game
+//     decides: player 1 orange Crash, players 2-4 Carbon Crash or the
+//     story's Coco; outfit_player1..4 in settings.toml are retired). Saves keep the game's
 //     own two numbers unchanged.
 // =============================================================================
 #pragma once
@@ -75,6 +75,17 @@ float ColourHue(int index);
 // Player p's outfit as the port sees it (0-10 the game's skins, 11 Carbon, 12-17 colours).
 int OutfitOf(int p);
 
+// FOR THE CO-OP PICKER (players/outfit_picker.h), which drives the chest's
+// screen: where an outfit is in the screen's list (-1 = not there: colours
+// off), whether the loaded save has it, the outfit the screen shows now (its
+// preview) and the address of that entry's template name key (8 bytes: the
+// inventory section to wait for), and Wear = the screen's "Wear Skin" for
+// player p with the shown outfit (ours, see outfits.cpp section 5).
+int ListIndexOf(int outfit);
+bool OutfitAvailable(int outfit);
+int ShownOutfit();
+uint32_t ShownTemplateKey();
+
 // PICKS PER SAVE (2026-10-22), kept in the save file itself (a trailer after
 // the game's bytes, see outfits.cpp and saves/save_files.h). Called by the
 // save list: a save was loaded / a New Game starts. CurrentPickBytes = what
@@ -83,5 +94,10 @@ int OutfitOf(int p);
 void OnSaveLoaded(int number);
 void OnNewGame();
 std::array<int8_t, 4> CurrentPickBytes();
+
+// A Crash <-> Coco pick is respawning the players: the chest's previews
+// (the screen's own and outfit_previews') may not be built yet (section 5b of
+// outfits.cpp). Turns false once the players are made again.
+bool PreviewHeld();
 
 }  // namespace outfits

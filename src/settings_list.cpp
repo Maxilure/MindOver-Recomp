@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <string_view>
 #include <vector>
 
 #include <rex/cvar.h>
@@ -35,6 +36,15 @@ const char* TypeName(rex::cvar::FlagType type) {
   return "?";
 }
 
+// Settings that still exist only so old settings files load quietly; nothing
+// reads them any more, so the launcher shouldn't offer them.
+//   outfit_player1..4: retired 2026-10-24 (outfits are kept per save,
+//   players/outfits.cpp).
+bool Retired(std::string_view name) {
+  return name == "outfit_player1" || name == "outfit_player2" || name == "outfit_player3" ||
+         name == "outfit_player4";
+}
+
 }  // namespace
 
 void WriteAndQuitIfAsked() {
@@ -45,7 +55,7 @@ void WriteAndQuitIfAsked() {
   // A copy, sorted by name (the registry is in registration order).
   std::vector<const rex::cvar::FlagEntry*> entries;
   for (const auto& entry : rex::cvar::GetRegistry()) {
-    if (entry.type != rex::cvar::FlagType::Command && entry.name != "list_settings") {
+    if (entry.type != rex::cvar::FlagType::Command && entry.name != "list_settings" && !Retired(entry.name)) {
       entries.push_back(&entry);
     }
   }

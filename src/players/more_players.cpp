@@ -2,8 +2,10 @@
 // players/more_players.cpp -- see more_players.h (and findings/26)
 // =============================================================================
 #include "more_players.h"
+#include "outfit_picker.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -690,6 +692,13 @@ extern "C" REX_FUNC(sub_822705D0) {
 // sub_8229F8B8 / sub_8229F8A0 and asks BuildingSpawnFor() below (players
 // 3-4's spawn events are built AS player 2 and ask for player 2's character).
 
+namespace more_players {
+namespace {
+std::atomic<uint32_t> g_player_sets_made{0};
+}  // namespace
+uint32_t PlayerSetsMade() { return g_player_sets_made.load(); }
+}  // namespace more_players
+
 // A level creates its players' spawn events (r3 = level, r4 = player, r5, r6 =
 // name). After player 2's: players 3..N, built as player 2 and renumbered.
 extern "C" REX_FUNC(sub_82283670) {
@@ -712,6 +721,7 @@ extern "C" REX_FUNC(sub_82283670) {
     }
   }
   __imp__sub_82283670(ctx, base);
+  if (call.r4.u32 == 1) ++g_player_sets_made;  // (PlayerSetsMade: a level made its players)
   if (call.r4.u32 != 1 || LocalPlayers() <= 2 || !g_block) return;
   const PPCContext after = ctx;
   for (int p = 2; p < LocalPlayers(); ++p) {
@@ -1034,6 +1044,75 @@ extern "C" REX_FUNC(sub_82239418) {
   }
 }
 
+// EXTRA RIDERS STAY IN THEIR HOST'S ZONE (2026-10-23, GitHub issue #2: "player
+// 3/4 appearing after a desert cutscene above player 1").
+//
+// The level is cut into ZONES; a zone runs (its actors update) only while the
+// camera / focus player is in it (sub_822EFFD8; the co-op camera adds every
+// player in game, coop_camera.cpp). Each actor's zone is at actor +40. An actor
+// changes zone only when its OWN movement code reports a move: physics "set
+// position" sub_8217F528 / position step sub_8217E850 -> sub_822E6C90 (r3 = the
+// zone manager *(0x8259B190)+100, r4 = the actor), which looks the zone up by
+// the world-matrix position (+44 -> +48) and moves the actor there (at once,
+// or queued while the manager walks its zones). A zone that stops running
+// sends its actors message 30 kind 3 (sub_822F02E0 from 0x822F00E8); Crash's
+// handler then runs the co-op CATCH-UP sub_82234E60 (Crash +0x40 +321 bit
+// 0x20): teleport to the focus player, "co-op state 1" message, sub-state 5.
+//
+// A mask's Crash moves through its mask behaviour's update, which runs in the
+// RIDER's zone. When a cutscene teleports player 1 (DO_TeleportPlayer,
+// victory_scenes.cpp), player 1 and the main rider (player 2) are re-zoned and
+// the old zone stops in the same frame, before the extra riders (players 3-4)
+// were moved: they stay in the sleeping zone, their mask update never runs
+// again, and they hang where player 1's shoulders were (seen: (-343, 75.6,
+// -101) after player 1 went to (18, 32, 136)). The sleeping zone's message 30
+// kind 3 then starts the catch-up on them; for a player who hasn't joined it
+// leaves the hidden Crash VISIBLE, standing on player 1's shoulders, until the
+// next level section (unless a level script hides them again: in one traced
+// run it did, 50 ms later). Found with a temporary trace of every message the
+// players' Crashes received (sub_820B0B70 wrapper) + the debug console
+// (positions, zone pointers before / after a teleport).
+//
+// The fix: every frame, after the host's holder sent its riders their spot
+// (sub_82238F18 below), an extra rider whose zone isn't its host's is put at
+// the host's position (world matrix + physics, like the console's goto) and
+// handed to the game's own "actor moved" sub_822E6C90, which re-zones it the
+// normal way; its mask update then runs again and puts it on the shoulder.
+// The original's main rider (player 2) is left to the original.
+extern "C" REX_FUNC(__imp__sub_822E6C90);  // zone manager: an actor moved (r3 manager, r4 actor)
+constexpr uint32_t kActorZone = 40;            // actor: its zone
+constexpr uint32_t kActorPhysics = 308;        // actor: its CPhysicsBehaviour (findings/22)
+constexpr uint32_t kPhysicsVtable = 0x82032FC4, kPhysicsActor = 88, kPhysicsVelocity = 104,
+                   kPhysicsPosition = 140;
+constexpr uint32_t kZoneManager = 100;         // game object +100: the zone manager
+
+static void KeepRiderInHostZone(PPCContext& ctx, uint8_t* base, uint32_t host, uint32_t rider) {
+  if (!host || !rider) return;
+  const uint32_t zone = Read32(host + kActorZone), rider_zone = Read32(rider + kActorZone);
+  if (!zone || zone == rider_zone) return;
+  const uint32_t manager = Read32(Read32(kGameGlobal) + kZoneManager);
+  const uint32_t host_matrix = Read32(host + kCharacterWorldMatrix);
+  const uint32_t rider_matrix = Read32(rider + kCharacterWorldMatrix);
+  if (!manager || host_matrix < 0x40000000 || rider_matrix < 0x40000000) return;
+  uint32_t physics = Read32(rider + kActorPhysics);
+  if (physics < 0x40000000 || Read32(physics) != kPhysicsVtable || Read32(physics + kPhysicsActor) != rider) {
+    physics = 0;
+  }
+  for (uint32_t i = 0; i < 3; ++i) {
+    const uint32_t bits = Read32(host_matrix + 48 + 4 * i);
+    Write32(rider_matrix + 48 + 4 * i, bits);
+    if (physics) {
+      Write32(physics + kPhysicsPosition + 4 * i, bits);
+      Write32(physics + kPhysicsVelocity + 4 * i, 0);
+    }
+  }
+  const PPCContext saved = ctx;
+  CallGame(__imp__sub_822E6C90, ctx, base, manager, rider);
+  ctx = saved;
+  REXLOG_INFO("Co-op: player {}'s Crash rides in another zone ({:08X}, host's {:08X}): put back on its host "
+              "(now zone {:08X})", PlayerOf(rider) + 1, rider_zone, zone, Read32(rider + kActorZone));
+}
+
 // The holder's slot 16 (sub_82239250 = "let go", r4 = 1), called when the
 // behaviour is disabled (sub_82102F28), e.g. when its Crash leaves the level:
 // every rider leaves.
@@ -1062,6 +1141,7 @@ extern "C" REX_FUNC(sub_82238F18) {
     __imp__sub_82238F18(ctx, base);
   }
   Write32(holder + kHolderRider, main_rider);
+  for (uint32_t rider : *extras) KeepRiderInHostZone(ctx, base, Read32(holder + kHolderOwner), rider);
   ctx = after;
 }
 
@@ -1106,9 +1186,40 @@ extern "C" REX_FUNC(sub_82237960) {
 // =============================================================================
 extern "C" REX_FUNC(__imp__sub_82235CB8);
 extern "C" REX_FUNC(__imp__sub_82235978);  // false = the other player may be the host (on screen)
+
+// THE B THAT OPENS A MENU ISN'T A MASK REQUEST (2026-10-23). B at an object
+// (the chest, a totem) interacts on its PRESS (menu_input.cpp,
+// sub_8214A9A8); its RELEASE, a few frames later and before the menu is up,
+// was then heard as "turn into a mask" (released B with a partner around):
+// player 1 opened the chest in a 4-player game and came back a mask (log:
+// "interacted" 34 ms before "may player 1 turn into a mask? yes", the screen
+// 0.47 s after). The game's own 2-player chest did it too. Two ways in:
+//   * the ordinary "turn into a mask" below (sub_82235CB8);
+//   * "is this Crash off screen?" (sub_82235978, r3 = a co-op behaviour, r4
+//     = the actor), which also drives the game's CATCH-UP (findings/28 s.4):
+//     off screen + B released = sub-state 5, "forced into a mask", decided in
+//     the co-op update sub_82234FB0 WITHOUT asking sub_82235CB8; and while the
+//     chest's screen is up the camera is the MENU's: everyone is off screen.
+// Both answer "no" / "on screen" for a player who interacted in the last 1.5 s
+// and while the outfit picker is up or just closed (outfit_picker.h).
+bool BelongsToAMenu(int player) {
+  return outfit_picker::JustClosed() || menu_input::InteractedRecently(player);
+}
+extern "C" REX_FUNC(sub_82235978) {
+  if (BelongsToAMenu(PlayerOf(ctx.r4.u32))) {
+    ctx.r3.u64 = 0;
+    return;
+  }
+  __imp__sub_82235978(ctx, base);
+}
 extern "C" REX_FUNC(sub_82235CB8) {
   const int n = LocalPlayers();
   const bool anywhere = REXCVAR_GET(coop_mask_from_anywhere);
+  // The B that opened a menu / the outfit picker: no (see BelongsToAMenu).
+  if (BelongsToAMenu(PlayerOf(Read32(ctx.r3.u32 + 32)))) {
+    ctx.r3.u64 = 0;
+    return;
+  }
   if (n <= 2 && !anywhere) {
     __imp__sub_82235CB8(ctx, base);
     return;
@@ -1619,6 +1730,81 @@ void MorePlayersTriggerFocus(PPCRegister& r31, PPCRegister& r26) {
 // just before) -> every local player. Players 0 / 1 / focus overwrite it.
 void MorePlayersInteractionLast(PPCRegister& r29) { r29.u64 = uint32_t(LocalPlayers() - 1); }
 
+// =============================================================================
+// PER-PLAYER INTERACTIONS FOR PLAYERS 3-4 (2026-10-23): the chest in Crash's
+// house (and any object scripted the same way) has one CRequirementInteraction
+// PER PLAYER: "player 1 interacted" (who = +16 >> 28 = 0) and "player 2
+// interacted" (who = 1), each followed by the action that opens the menu for
+// ITS player (sub_82295E20: front end +0x222C = the screen, +0x2230 = the
+// player kept at the action's +12, via sub_82263620). There is none for
+// players 3-4, so their B did nothing at the chest (traced: the interaction
+// reached the object, "Menu input: player 3 interacted", but requirements 4
+// (who 0) and 5 (who 1) both answered no; player 2's B: requirement 5 yes,
+// exit 496 to the skin screen).
+// How a requirement reads it: the interactable (sub_8214A080 = look up the
+// object's CInteractableBehaviour by its name handle at requirement +8)
+// keeps "who interacted" at +8 until every requirement watching it (slot
+// bytes +12..+15, sub_82149580 adds the requirement's byte +20,
+// sub_821495E0 takes it off and clears +8 with the last one) has looked once;
+// then the player's body is compared (the 4-player reads are opened above).
+// THE FIX: a requirement for player 1 also takes player 3, one for player 2
+// also player 4 (the same pairing as the chest page's layout, player & 1):
+// while it answers, its "who" is set to -1 (the loop over every player) when
+// the interactor IS that player 3 / 4; and the menu the next action opens is
+// given to the real player (sub_82263620 below).
+// =============================================================================
+extern "C" REX_FUNC(__imp__sub_822A2460);
+extern "C" REX_FUNC(__imp__sub_8214A080);  // the interactable named by *r3 (a name handle), 0 if none
+extern "C" REX_FUNC(__imp__sub_8226FCD8);  // player number of an actor (r3 = game object, r4 = actor)
+namespace {
+int g_interaction_player = -1;  // a player 3-4 a requirement just accepted for player 1-2
+std::chrono::steady_clock::time_point g_interaction_at;
+}  // namespace
+extern "C" REX_FUNC(sub_822A2460) {
+  const uint32_t req = ctx.r3.u32;
+  const uint32_t word = Read32(req + 16);
+  const int32_t who = int32_t(word) >> 28;
+  int borrowed = -1;
+  if ((who == 0 || who == 1) && LocalPlayers() > 2) {
+    const uint32_t interactable = CallGame(__imp__sub_8214A080, ctx, base, req + 8);
+    const uint32_t interactor = interactable ? Read32(interactable + 8) : 0;
+    const int p = interactor ? int(int32_t(CallGame(__imp__sub_8226FCD8, ctx, base, kGameObject, interactor))) : -1;
+    if (p >= 2 && p < LocalPlayers() && (p & 1) == who) {
+      Write32(req + 16, word | 0xF0000000u);  // who = -1: every player
+      borrowed = p;
+    }
+  }
+  __imp__sub_822A2460(ctx, base);
+  if (borrowed < 0) return;
+  Write32(req + 16, word);  // its own "who" back
+  if (ctx.r3.u32 & 0xFF) {
+    g_interaction_player = borrowed;
+    g_interaction_at = std::chrono::steady_clock::now();
+    if (REXCVAR_GET(debug_coop_trace)) {
+      REXLOG_INFO("Co-op: player {} counts for player {}'s interaction (requirement {:08X})", borrowed + 1,
+                  who + 1, req);
+    }
+  }
+}
+// The front end's "open this screen for this player" (sub_82263620: r3 = the
+// front end, r4 = the screen -> +0x222C, r5 = the player -> +0x2230; its
+// callers: the open-menu action sub_82295E20 and a reset, sub_82262170).
+// Right after a player 3-4 was accepted (same frame chain; 1 s at most), the
+// screen is theirs: the menu owner rules (menu_input.cpp) and the chest's own
+// page then see the right player.
+extern "C" REX_FUNC(__imp__sub_82263620);
+extern "C" REX_FUNC(sub_82263620) {
+  if (g_interaction_player >= 0) {
+    const int p = g_interaction_player;
+    g_interaction_player = -1;
+    if (int32_t(ctx.r5.u32) == (p & 1) &&
+        std::chrono::steady_clock::now() - g_interaction_at < std::chrono::seconds(1)) {
+      ctx.r5.u64 = uint32_t(p);
+    }
+  }
+  __imp__sub_82263620(ctx, base);
+}
+
 // The partner check: for EVERY other player (joined), the original's test
 // (their Crash's zone +40 in state 4 = being unloaded -> sub_82234E60 pulls
 // them to the focus player as a mask).
@@ -1637,4 +1823,39 @@ extern "C" REX_FUNC(sub_82234F40) {
     const uint32_t zone = Read32(crash + 40);
     if (zone && Read32(zone + 596) == 4) CallGame(__imp__sub_82234E60, ctx, base, crash);
   }
+}
+
+// The catch-up itself (sub_82234E60, r3 = the Crash), reached from the zone
+// message above (Crash's handler, 0x821AE16C) as well as from sub_82234F40.
+// SAFETY NET for the desert riders bug (see KeepRiderInHostZone): a player 3-4
+// who hasn't joined (state 0) is only ever a hidden rider on a host; the
+// catch-up would make that hidden Crash a visible stranger on the focus
+// player's shoulders. They're put back on their host instead.
+extern "C" REX_FUNC(sub_82234E60) {
+  const uint32_t crash = ctx.r3.u32;
+  const int p = PlayerOf(crash);
+  if (p >= 2 && Read32(kState + 4 * p) == 0) {
+    const auto it = g_host_of.find(crash);
+    const uint32_t host = it == g_host_of.end() ? 0 : Read32(it->second + kHolderOwner);
+    REXLOG_INFO("Co-op: catch-up for player {} (not joined) skipped: kept on its host {:08X}", p + 1, host);
+    KeepRiderInHostZone(ctx, base, host, crash);
+    return;
+  }
+  __imp__sub_82234E60(ctx, base);
+}
+
+// OFF-SCREEN CATCH-UP for 3-4 players (manifest: MorePlayersOffScreenGate;
+// findings/28 s.4). sub_82235978 answers "this Crash is off screen" (the camera's
+// visibility test) only while players 1 AND 2 are both in game (state 2 or 3);
+// at 0x82235A20 r11 holds that check. With player 1 + player 3 (no player 2)
+// nobody ever counted as off screen, so the game's catch-up (off screen + B
+// released = become a mask on a partner, the nearest Crash on foot) never
+// fired for them. Now: any two local players in game.
+void MorePlayersOffScreenGate(PPCRegister& r11) {
+  int in_game = 0;
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    const uint32_t state = Read32(kState + 4 * p);
+    in_game += state == 2 || state == 3;
+  }
+  r11.u64 = in_game >= 2 ? 1 : 0;
 }

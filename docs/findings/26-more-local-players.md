@@ -1580,3 +1580,92 @@ point for player 1 (362.4, 8.9, -265.8); player 3 the same spot 2 units
 lower (362.4, 7.0, -265.8): bottom left; player 4 on player 2's side and
 low (358.9, 6.9, -268.4): bottom right. A slowed-down photo series shows
 player 4's mojo dropping toward the bottom-right portrait.
+
+## 41. Players 3-4 at objects scripted per player (the outfit chest)
+
+**The bug.** Players 3-4 could not open the chest in Crash's house: their B
+reached the chest (the interaction is sent and logged), but no screen opened.
+
+**Why.** The chest's level script has one `CRequirementInteraction`
+(`sub_822A2460`) per player: "player 1 interacted" (its *who*, the top four
+bits of +16, = 0) and "player 2 interacted" (who = 1), each followed by an
+action that opens the skin screen for its own player (`sub_82295E20` ->
+`sub_82263620`: front end +0x222C = the screen, +0x2230 = the player kept at
+the action's +12). Nothing exists for players 3-4. A requirement finds its
+object's `CInteractableBehaviour` by name (`sub_8214A080`), which keeps the
+last interactor at +8 until every requirement watching it has looked once
+(slot bytes +12..+15: `sub_82149580` adds one, `sub_821495E0` removes it and
+clears +8 with the last), then compares that actor with its player's body.
+A trace of the answers: player 2's B made requirement "who 1" answer yes and
+the front end took exit 496 to the skin screen; player 3's B got "no" from
+both.
+
+**The change** (`more_players.cpp`). A requirement for player 1 also accepts
+player 3, one for player 2 also player 4 (the chest page's own pairing,
+player & 1): while it answers, its who is set to -1 (the loop over every
+player, opened to four players in section 38) when the interactor is that
+player 3 / 4, and put back right after. The screen the following action opens
+is then given to the real player (a wrapper of `sub_82263620` swaps the
+player 1 / 2 number for the 3 / 4 that was accepted in the same moment).
+
+**Tested** with fake controllers, four players in Crash's house: player 3 and
+player 4 each open the chest (front end player 2 / 3), the outfit picker opens
+for all four and closes cleanly, nobody ends up a mask; players 1 and 2 open it
+as before (front end player 0 / 1, no borrowed interaction).
+
+## 42. Players 3-4 left behind in a sleeping zone (GitHub issue #2)
+
+**The report.** After a cutscene in the desert, two Crashes (players 3 and
+4, in their green and purple outfits) stood on player 1's shoulders, with
+one or two players in game: players 3-4 had never joined. They went away at
+the next section of the level.
+
+**Zones.** The level is cut into zones; a zone runs (its actors update) only
+while the camera's player is in it (`sub_822EFFD8`; the co-op camera adds
+every player in game, findings/28 s.6). Each actor's zone is at actor +40.
+An actor changes zone only when its own movement code reports a move: the
+physics "set position" `sub_8217F528` and position step `sub_8217E850` call
+`sub_822E6C90` (r3 = the zone manager `*(0x8259B190)+100`, r4 = the actor),
+which finds the zone under the actor's world-matrix position and moves the
+actor there (at once, or queued while the manager walks its zones). A zone
+that stops running sends its actors message 30 kind 3 (`sub_822F02E0`,
+from `0x822F00E8`); Crash's message handler then runs the co-op CATCH-UP
+`sub_82234E60`: teleport to the focus player, a co-op state message, sub-state
+5.
+
+**What went wrong.** A mask's Crash is moved by its mask behaviour's update,
+which runs in the RIDER's zone. When a cutscene teleports player 1
+(`DO_TeleportPlayer`, section 39), player 1 and the main rider (player 2,
+the original's one mask slot) are re-zoned and the old zone stops in the same
+frame, before the extra riders (players 3-4, section 12) are moved. They stay
+in a zone that no longer runs, so their mask update never runs again: the
+debug console showed them hanging where player 1's shoulders had been, at
+the old spot, while player 1 stood far away. The sleeping zone's message 30
+kind 3 then starts the catch-up on them, and for a player who hasn't joined
+that leaves the hidden Crash VISIBLE on the focus player's shoulders (in one
+traced run a level script hid them again 50 ms later; in the reported runs
+nothing did). A log of a normal walk showed the same lag at EVERY zone border
+player 1 crossed: the extra riders were one step behind each time.
+
+**How it was found.** A temporary wrapper on the game's message send
+(`sub_820B0B70`) logged every message the players' Crashes received with its
+guest call stack: players 3-4 got message 30 kind 3 from the old zone where
+player 2 got kind 2 from the new one, followed by the catch-up's state
+message. Then the console (`players`, `read p3+40 u32`, `goto`) showed the
+zone pointers before and after a teleport, and Ghidra the zone manager
+(`sub_822E6EC0`, `sub_820B1B30` = set zone).
+
+**The change** (`more_players.cpp`, `KeepRiderInHostZone`). Every frame, after
+the host's mask holder sends its riders their spot (`sub_82238F18`), an extra
+rider whose zone isn't its host's is put at the host's position (world matrix
+and physics, like the console's `goto`) and handed to the game's own
+`sub_822E6C90`, which re-zones it the normal way; its mask update then runs
+again and puts it on the shoulder. As a safety net the catch-up
+`sub_82234E60` is skipped for players 3-4 who haven't joined (they are only
+ever hidden riders): they are put back on their host instead. The original's
+main rider (player 2) is left to the original.
+
+**Tested.** Four local players, nobody joined but player 1: walking across
+zone borders logs the re-zoning once per border and nothing else; console
+teleports and a titan jack don't trigger it; 0 errors. At the reported desert
+cutscene players 3-4 now stay hidden on player 1's shoulders.
