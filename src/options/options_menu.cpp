@@ -375,6 +375,15 @@ bool Selectable(int i) {
   return i >= 0 && i < int(rows.size()) && rows[size_t(i)].kind != Kind::kHeader;
 }
 int VisibleCount() { return std::min(kRows, int(Rows().size()) - First()); }
+// The first screen row the cursor may stand on (a tab can START with a
+// heading since the 2026-10-24 sort: Gameplay's "Co-op"). Used wherever the
+// menu puts the cursor at the top: opening the screen, changing tab.
+int FirstSelectableOnScreen() {
+  for (int r = 0; r < VisibleCount(); ++r) {
+    if (Selectable(First() + r)) return r;
+  }
+  return 0;
+}
 // The tab's row under the cursor (screen row `sel`), or null.
 const Row* RowOnScreen(int sel) {
   const auto& rows = Rows();
@@ -616,8 +625,8 @@ void Refresh(Env& env) {
   const int visible = VisibleCount();
   int sel = scrooby::Selection(base, g.menu);
   if (sel < 0 || sel >= visible) {
-    sel = 0;
-    scrooby::Select(ctx, base, g.menu, 0);
+    sel = FirstSelectableOnScreen();
+    scrooby::Select(ctx, base, g.menu, sel);
   }
   const uint32_t lit = Read32(base, kStarLitColour);
   for (int r = 0; r < kRows; ++r) {
@@ -744,7 +753,7 @@ void SwitchTab(Env& env, int delta) {
   g.tab = (g.tab + delta + count) % count;
   g.key_message_row = -1;
   g.top = 0;
-  scrooby::Select(env.ctx, env.base, g.menu, 0);
+  scrooby::Select(env.ctx, env.base, g.menu, FirstSelectableOnScreen());
   scrooby::PlaySound(env.ctx, env.base,
                      delta < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
   Refresh(env);
@@ -1002,8 +1011,10 @@ int TurnPage(uint32_t menu, int direction, uint8_t* base) {
   while (next >= 0 && next < count && !Selectable(next)) next += direction;
   if (next < 0 || next >= count) {
     // Past an end: around to the other end, as the game's menus wrap.
+    // (Searching on in the SAME direction: a tab can start with a heading,
+    // and searching back from row 0 found nothing = no slide, heading hidden.)
     next = direction > 0 ? 0 : count - 1;
-    while (next >= 0 && next < count && !Selectable(next)) next -= direction;
+    while (next >= 0 && next < count && !Selectable(next)) next += direction;
     if (next < 0 || next >= count) return 0;
     g.top = direction > 0 ? 0 : LastTop();
   } else if (next >= First() && next < First() + kRows) {
@@ -1014,6 +1025,9 @@ int TurnPage(uint32_t menu, int direction, uint8_t* base) {
     g.top = next;  // slides up: the row comes in at the top...
     // ...with a heading just above it shown too.
     while (g.top > 0 && !Selectable(g.top - 1)) --g.top;
+    // ...but not the blank spacer before that heading (options_settings
+    // Build): the window wouldn't start with an empty line.
+    if (Rows()[size_t(g.top)].label.empty() && g.top < next) ++g.top;
   }
   g.pending_select = next - g.top;
   return 1;
@@ -1182,7 +1196,7 @@ extern "C" REX_FUNC(sub_820D2828) {
     scrooby::SetScale(ctx, base, e, kPageScale);
   }
   SetUpFixedTexts(ctx, base);
-  scrooby::Select(ctx, base, g.menu, 0);
+  scrooby::Select(ctx, base, g.menu, FirstSelectableOnScreen());
   Env env{ctx, base, owner};
   Refresh(env);
   g_open = true;

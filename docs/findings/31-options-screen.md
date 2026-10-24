@@ -2,7 +2,7 @@
 
 Status: built (first version). Pause -> Options opens the port's Options
 screen: the game's glass panel and menu look, with tabs (Display, Graphics,
-Audio, Controls, Camera), and every change takes effect at once. Code:
+Audio, Controls, Gameplay, Language since the sort of section 10), and every change takes effect at once. Code:
 `src/options/` (page, settings, screen) and `src/ui/scrooby.*` (helpers for
 the game's menu library). Builds on the menu research of findings/30.
 
@@ -476,3 +476,42 @@ keys now), in game and in the main menu: a key set and taken from another
 move, a second key, Backspace removing both, Esc and a controller's B
 cancelling (the screen stays), the Up arrow refused, Default Keys answered
 Yes by a mouse click (the file back to the defaults) and No; 0 errors.
+
+## 10. The tabs sorted (2026-10-24)
+
+Seven tabs had grown one row at a time and stopped saying where a setting
+lives: Display mixed the window, the frame rate, Brightness and the
+Renderer (whose choice greys out rows on the Graphics tab), and Camera held
+only two rows. Now six tabs, with headings (the Controls tab's cyan rows
+that can't be selected) inside the long ones:
+
+| Tab | Rows |
+|---|---|
+| Display (the screen and the window) | Window Mode, Monitor, V-Sync, Frame-rate Cap, Brightness; *Frame Counter*: FPS Counter, FPS Position |
+| Graphics (how the picture is drawn) | Renderer; *Quality*: Resolution, Anti-aliasing, Smooth Leaves, Texture Sharpness, Sharpening; *Effects*: Shadow Softness, Motion Blur, Depth of Field |
+| Audio | Music, Dialogue, SFX |
+| Controls | Invert Axis, Mouse Aiming; *Button Pictures*: Keyboard Icons, Controller Icons; *Keyboard and Mouse Keys*: the keys, Default Keys |
+| Gameplay | *Co-op*: Friendly Fire, Partner Hits, Co-op Camera, Camera Follows; *Spinning*: Simple Spinning, Keep Spinning |
+| Language | Text, Voices |
+
+A blank row (an empty heading) stands before every heading that doesn't
+open its tab: the cyan alone still read as one crowded list. When the list
+slides up it brings a heading along with the row under it, but not that
+blank row (the window never starts with an empty line).
+
+Renderer opens Graphics because it decides which rows under it are greyed
+(their reason now says "on the Graphics tab"). The Camera rows only matter
+with partners, so they joined Gameplay's Co-op heading.
+
+A tab may now START with a heading (Gameplay). Two code paths assumed row 0
+can be selected: the cursor went to row 0 on opening the screen and on a
+tab change (now `FirstSelectableOnScreen()` in `options_menu.cpp`), and the
+list's wrap from the last row to the top searched for a selectable row
+BACKWARDS from row 0, found none and left the list where it was (the menu's
+own wrap then picked the first row on screen, the "Co-op" heading scrolled
+out of view). It now searches forward.
+
+Tested with the debug console, in game and in the main menu: every tab, the
+cursor on Friendly Fire when Gameplay opens, up from it = Keep Spinning,
+down from there = back to the top with "Co-op" shown, "Spinning" stepped
+over; 0 errors.

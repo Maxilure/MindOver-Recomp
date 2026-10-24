@@ -91,6 +91,16 @@ void SetFlag(const char* name, const std::string& value) {
 
 // A row for an on / off port flag: values[0] = on, unless `off_first`
 // (plain Off / On rows read better that way round).
+// A HEADING inside a tab (2026-10-24, the Options sort): a row that can't be
+// selected, drawn in the titles' cyan by options_menu.cpp. It groups the rows
+// under it ("Quality", "Effects", "Co-op"...).
+Row Heading(std::u16string label) {
+  Row heading;
+  heading.label = std::move(label);
+  heading.kind = Kind::kHeader;
+  return heading;
+}
+
 Row OnOffRow(std::u16string label, const char* flag, std::u16string on, std::u16string off,
              std::u16string on_text, std::u16string off_text, bool off_first = false) {
   Row r;
@@ -439,7 +449,7 @@ void NeedsNative(Row& r) {
   r.unavailable = [](Env&) {
     const bool native = g_hooks.native_shown && g_hooks.native_shown();
     return native ? std::u16string()
-                  : std::u16string(u"Needs the port's renderer: set Renderer to Native on the Display tab.");
+                  : std::u16string(u"Needs the port's renderer: set Renderer to Native on the Graphics tab.");
   };
 }
 
@@ -756,13 +766,10 @@ Row MouseAimingRow() {
 }
 
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), KeyboardIconsRow(), ControllerIconsRow(), MouseAimingRow()};
-  // The keys start under a heading of their own (a row that can't be
-  // selected: options_menu.cpp draws it in the titles' cyan).
-  Row heading;
-  heading.label = u"Keyboard and Mouse Keys";
-  heading.kind = Kind::kHeader;
-  rows.push_back(std::move(heading));
+  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), Heading(u"Button Pictures"), KeyboardIconsRow(),
+                        ControllerIconsRow()};
+  // The keys start under a heading of their own.
+  rows.push_back(Heading(u"Keyboard and Mouse Keys"));
   for (const KeyRowInfo& k : kKeyRows) {
     Row r;
     r.label = ActionName(k.action);
@@ -853,7 +860,20 @@ std::vector<Row> GameplayRows() {
     return rex::cvar::Query<bool>("simple_spinning") ? std::u16string()
                                                      : std::u16string(u"Turn on Simple Spinning first.");
   };
-  return {friendly_fire, partner_hits, simple_spinning, keep_spinning};
+  // Co-op first (the camera rows were a tab of their own until 2026-10-24:
+  // both only matter with partners), then spinning.
+  return {Heading(u"Co-op"),
+          friendly_fire,
+          partner_hits,
+          OnOffRow(u"Co-op Camera", "coop_camera", u"Frame Everyone", u"Original",
+                   u"The camera pulls back to keep every player on screen.",
+                   u"The camera of the original game."),
+          OnOffRow(u"Camera Follows", "coop_camera_near_focus", u"Nearest Player", u"Middle",
+                   u"Front to back, the camera stays with the player nearest to it.",
+                   u"The camera aims at the middle of the group."),
+          Heading(u"Spinning"),
+          simple_spinning,
+          keep_spinning};
 }
 
 // ---------------------------------------------------------------------------
@@ -949,34 +969,42 @@ Row VoiceLanguageRow() {
 }
 
 std::vector<Tab> Build() {
+  // THE LAYOUT (sorted 2026-10-24: Display = the screen and the window,
+  // Graphics = how the picture is drawn; Camera folded into Gameplay's Co-op
+  // heading). Headings are rows that can't be selected.
   std::vector<Tab> tabs;
   Row renderer = RendererRow();
   AddDualMode(renderer);
-  tabs.push_back(
-      {u"Display",
-       {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), WindowModeRow(), MonitorRow(), FpsCounterRow(),
-        FpsPositionRow()}});
-  tabs.push_back({u"Graphics", {RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(), TextureSharpnessRow(), SharpeningRow(),
-                                 ShadowSoftnessRow(), MotionBlurRow(), DepthOfFieldRow()}});
+  tabs.push_back({u"Display",
+                  {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
+                   Heading(u"Frame Counter"), FpsCounterRow(), FpsPositionRow()}});
+  // Renderer first: it decides which rows under it are greyed out.
+  tabs.push_back({u"Graphics",
+                  {renderer, Heading(u"Quality"), RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(),
+                   TextureSharpnessRow(), SharpeningRow(), Heading(u"Effects"), ShadowSoftnessRow(),
+                   MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
       {u"Audio",
-       {VolumeRow(u"Dialogue", {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
-                  u"How loud the characters talk.", false),
-        VolumeRow(u"Music", {global_options::Volume::kMusic, 0, 0},
+       {VolumeRow(u"Music", {global_options::Volume::kMusic, 0, 0},
                   u"How loud the music plays.", true),
+        VolumeRow(u"Dialogue", {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
+                  u"How loud the characters talk.", false),
         VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   u"How loud hits, crates, footsteps and the rest are.", false)}});
-  tabs.push_back({u"Language", {TextLanguageRow(), VoiceLanguageRow()}});
   tabs.push_back({u"Controls", ControlsRows()});
   tabs.push_back({u"Gameplay", GameplayRows()});
-  tabs.push_back(
-      {u"Camera",
-       {OnOffRow(u"Co-op Camera", "coop_camera", u"Frame Everyone", u"Original",
-                 u"The camera pulls back to keep every player on screen.",
-                 u"The camera of the original game."),
-        OnOffRow(u"Camera Follows", "coop_camera_near_focus", u"Nearest Player", u"Middle",
-                 u"Front to back, the camera stays with the player nearest to it.",
-                 u"The camera aims at the middle of the group.")}});
+  tabs.push_back({u"Language", {TextLanguageRow(), VoiceLanguageRow()}});
+  // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
+  // as one crowded list): an EMPTY heading row (blank, never selected) before
+  // every heading that doesn't open its tab.
+  for (Tab& tab : tabs) {
+    std::vector<Row> spaced;
+    for (Row& row : tab.rows) {
+      if (row.kind == Kind::kHeader && !row.label.empty() && !spaced.empty()) spaced.push_back(Heading(u""));
+      spaced.push_back(std::move(row));
+    }
+    tab.rows = std::move(spaced);
+  }
   return tabs;
 }
 
