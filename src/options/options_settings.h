@@ -87,6 +87,9 @@ struct Row {
   std::u16string x_label;
   std::function<bool(Env&, int)> x_shown;
   std::function<void(Env&)> x_action;
+  // A question asked first in the game's Yes / No box ("Restart now?"):
+  // x_action runs only on Yes. Empty text = none (x_action at once).
+  std::function<std::u16string(Env&)> x_confirm;
 };
 
 struct Tab {

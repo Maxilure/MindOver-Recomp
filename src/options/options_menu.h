@@ -50,6 +50,10 @@ void SeePad(uint32_t user, const uint8_t* gamepad);
 
 // The Options screen is up (for other code that wants to stay out of its way).
 bool Open();
+
+// The screen open is the MAIN MENU's (no game in progress), not the pause
+// menu's. False while closed.
+bool InMainMenu();
 // Does a mouse wheel notch scroll the screen's list (the open tab is longer
 // than the screen) rather than step the selection? Read by the keyboard
 // driver (input/keyboard_mouse.cpp, any thread).

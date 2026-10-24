@@ -21,6 +21,7 @@
 #include <rex/logging.h>
 #include <rex/ppc/func.h>
 
+#include "../app_restart.h"
 #include "../frame_rate.h"
 #include "../game_folder.h"
 #include "../guest_memory.h"
@@ -28,7 +29,9 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
+#include "../language/language.h"
 #include "global_options.h"
+#include "options_menu.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);
 REXCVAR_DECLARE(bool, native_only);
@@ -793,6 +796,98 @@ std::vector<Row> GameplayRows() {
   return {friendly_fire, partner_hits, simple_spinning, keep_spinning};
 }
 
+// ---------------------------------------------------------------------------
+// LANGUAGE (findings/49): the game's text and its voices, chosen apart. The
+// game loads only the chosen language's strings and voices at start-up, so a
+// change shows at the next start: the rows say so, and X = "Restart Now"
+// (in game after a question: progress since the last save would be lost).
+// ---------------------------------------------------------------------------
+
+// The voices offered: only those whose archive is in the game folder.
+std::vector<int> VoicesOnDisc() {
+  std::vector<int> out;
+  const auto& voices = language::VoiceLanguages();
+  for (size_t i = 0; i < voices.size(); ++i) {
+    if (language::Available(voices[i])) out.push_back(int(i));
+  }
+  return out;
+}
+
+void AddRestart(Row& r) {
+  r.warn = [](Env&, int) {
+    return language::RestartNeeded()
+               ? std::u16string(u"Takes effect when the game starts again: Restart Now, or next time you play.")
+               : std::u16string();
+  };
+  r.x_label = u"Restart Now";
+  r.x_shown = [](Env&, int) { return language::RestartNeeded(); };
+  r.x_confirm = [](Env&) {
+    return options_menu::InMainMenu() ? std::u16string()
+                                      : std::u16string(u"Restart now? Anything since your last save will be lost.");
+  };
+  r.x_action = [](Env&) {
+    SaveChanged();  // the new choice must be in settings.toml for the next start
+    app_restart::RestartNow();
+  };
+}
+
+// The labels are short ("Text", "Voices": the tab says Language) and the
+// values just the names: longer ones ran into the labels (playtest photo,
+// 2026-10-24).
+Row TextLanguageRow() {
+  Row r;
+  r.label = u"Text";
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (const auto& t : language::TextLanguages()) v.push_back(t.name);
+    return v;
+  };
+  r.get = [](Env&) { return language::ChosenText(); };
+  r.set = [](Env&, int i) { SetFlag("text_language", language::TextLanguages()[size_t(i)].key); };
+  r.describe = [](Env&, int) {
+    return std::u16string(u"Menus, tutorials and messages in this language. The voices are chosen below.");
+  };
+  AddRestart(r);
+  return r;
+}
+
+Row VoiceLanguageRow() {
+  Row r;
+  r.label = u"Voices";
+  r.values = [](Env&) {
+    const auto& voices = language::VoiceLanguages();
+    std::vector<std::u16string> v{u"Same as Text"};
+    for (int i : VoicesOnDisc()) v.push_back(voices[size_t(i)].name);
+    return v;
+  };
+  r.get = [](Env&) {
+    const std::vector<int> on_disc = VoicesOnDisc();
+    const auto it = std::find(on_disc.begin(), on_disc.end(), language::ChosenVoice());
+    return it == on_disc.end() ? 0 : int(it - on_disc.begin()) + 1;
+  };
+  r.set = [](Env&, int i) {
+    const std::vector<int> on_disc = VoicesOnDisc();
+    SetFlag("voice_language", i == 0 || i > int(on_disc.size())
+                                  ? std::string("auto")
+                                  : std::string(language::VoiceLanguages()[size_t(on_disc[size_t(i - 1)])].key));
+  };
+  r.describe = [](Env&, int i) {
+    if (i == 0) {
+      // The text's own voices, or English when the disc has none (Russian).
+      const auto& voices = language::VoiceLanguages();
+      const auto& text = language::TextLanguages()[size_t(language::ChosenText())];
+      const auto& voice = voices[size_t(language::AutomaticVoice(language::ChosenText()))];
+      if (std::string(voice.key) != text.voice) {
+        return std::u16string(u"The disc has no voices in the text's language: the characters speak English.");
+      }
+      return u"The characters speak the text's language: " + std::u16string(voice.name) + u".";
+    }
+    return std::u16string(u"The characters speak this language, whatever the text is.");
+  };
+  AddRestart(r);
+  return r;
+}
+
 std::vector<Tab> Build() {
   std::vector<Tab> tabs;
   Row renderer = RendererRow();
@@ -811,6 +906,7 @@ std::vector<Tab> Build() {
                   u"How loud the music plays.", true),
         VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   u"How loud hits, crates, footsteps and the rest are.", false)}});
+  tabs.push_back({u"Language", {TextLanguageRow(), VoiceLanguageRow()}});
   tabs.push_back({u"Controls", ControlsRows()});
   tabs.push_back({u"Gameplay", GameplayRows()});
   tabs.push_back(

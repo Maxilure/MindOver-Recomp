@@ -67,6 +67,7 @@
 #include "ui/wii_cursor.h"
 #include "input/prompt_icons.h"
 #include "effects/post_effects.h"
+#include "language/language.h"
 #include "data/data_patcher.h"
 #include "options/options_menu.h"
 #include "options/options_settings.h"
@@ -275,6 +276,7 @@ class CrashMomApp : public rex::ReXApp {
     prompt_icons::Install();
     // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).
     post_effects::Install();
+    language::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).

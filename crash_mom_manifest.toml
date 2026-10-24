@@ -1826,3 +1826,22 @@ registers = ["r4", "r31"]
 address = 0x820E0AA8
 name = "OutfitsPreviewCharacter"
 registers = ["r5", "r6"]
+# LANGUAGES (findings/49, src/language/language.cpp): sub_82262AD8 (front end: apply the language
+# letter) picks the sound system's voice folder name by a switch on the letter; every case ends at
+# 0x82262C04 (li r5,1) with r4 = the name string ("english" 0x8203A1D8, "french" ..., default English),
+# then calls sub_8232AB98 with it. The hook sets r4 to the voice_language setting's folder, so text and
+# voices can differ. Verified with xexdis 0x82262AD8-0x82262C38 (the 11 branches all `addi r4` then
+# `b 0x82262c04`; the default case falls through to it).
+[[entrypoint.midasm_hook]]
+address = 0x82262C04
+name = "LanguageVoiceFolder"
+registers = ["r4"]
+# MOVIE DIALOGUE (findings/49): the movie start sub_822C42A0 chooses the Bink dialogue track by a switch on
+# the front end's language letter, loaded at 0x822C4338 (lwz r7,60(r8); r8 = front end) and used from r7
+# by both switches (5.1 list from 0x822C435C, stereo list after 0x822C4434; the bl 0x82248ea8 in between is
+# a leaf that leaves r7 alone). The hook sets r7 to the voice_language's letter so movies speak the voice
+# language. Verified with xexdis 0x822C42F0-0x822C4380.
+[[entrypoint.midasm_hook]]
+address = 0x822C433C
+name = "MovieDialogueLanguage"
+registers = ["r7"]

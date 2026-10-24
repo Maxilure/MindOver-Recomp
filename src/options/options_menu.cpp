@@ -168,6 +168,8 @@ struct Screen {
   // A row's question (Row::confirm) in the game's Yes / No box: the row
   // (index into the tab's rows) and the selection to keep meanwhile.
   int asking_row = -1, asking_selection = 0;
+  // The question is a row's X action's (Row::x_confirm), not its A action's.
+  bool asking_x = false;
   // A row's name colour as the data has it (unselected green), found at
   // Enter: a slot that showed a heading gets it back (below).
   uint32_t row_colour = 0;
@@ -1059,6 +1061,7 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
 }
 
 bool Open() { return g_open.load(std::memory_order_relaxed); }
+bool InMainMenu() { return Open() && g.main_menu; }
 bool WheelScrollsList() { return Open() && g_wheel_list.load(std::memory_order_relaxed); }
 
 // ---------------------------------------------------------------------------
@@ -1320,7 +1323,11 @@ extern "C" REX_FUNC(sub_820D2A00) {
       const int row_index = g.asking_row;
       g.asking_row = -1;
       const auto& rows = Rows();
-      if (answer == 1 && row_index < int(rows.size()) && rows[size_t(row_index)].activate) {
+      const bool x = g.asking_x;
+      g.asking_x = false;
+      if (answer == 1 && x && row_index < int(rows.size()) && rows[size_t(row_index)].x_action) {
+        rows[size_t(row_index)].x_action(env);
+      } else if (answer == 1 && !x && row_index < int(rows.size()) && rows[size_t(row_index)].activate) {
         rows[size_t(row_index)].activate(env);
         g.key_message_row = -1;
     g.asking_row = -1;
@@ -1378,8 +1385,15 @@ extern "C" REX_FUNC(sub_820D2A00) {
   if (pressed & kPadX) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
     if (row && row->x_action && row->x_shown && row->x_shown(env, row->get ? row->get(env) : 0)) {
-      row->x_action(env);
+      const std::u16string question = row->x_confirm ? row->x_confirm(env) : std::u16string();
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      if (!question.empty()) {
+        Ask(env, First() + scrooby::Selection(base, g.menu), question);
+        g.asking_x = true;
+        ctx = saved;
+        return;
+      }
+      row->x_action(env);
     }
   }
   // A: an action row (Rebind Keys) does its thing; any other row takes its

@@ -53,8 +53,9 @@
 //          the directory's offsets pairs them up. Checked on default.rcf:
 //          all 1,162 .rsd names land on "RSD6" data, 1,102 .p3d names on
 //          P3D models, 239 .lua/.blua names on Lua bytecode.
-//   Only default.rcf and english.rcf are indexed (the game opens
-//   english.rcf at boot; other languages repeat the same IDs).
+//   Only default.rcf and the session's voice archive are indexed (the game
+//   opens one voice archive at boot, english.rcf unless voice_language says
+//   otherwise; other languages repeat the same IDs).
 //
 // OUTPUT, one line per request:
 //   Audio: <kind> <designer's file name> (<ID>) [dump <seconds>]
@@ -79,6 +80,7 @@
 
 #include "audio_trace.h"
 #include "guest_memory.h"
+#include "language/language.h"
 
 #include <algorithm>
 #include <atomic>
@@ -206,7 +208,7 @@ std::string NameOf(uint64_t id) {
   std::lock_guard<std::mutex> lock(g_index.mutex);
   auto it = g_index.files.find(id);
   if (it == g_index.files.end()) {
-    return "(not in default.rcf / english.rcf)";
+    return "(not in default.rcf / the voice archive)";
   }
   RsdFile& file = it->second;
   if (file.name.empty()) {
@@ -294,7 +296,10 @@ void Start(const std::filesystem::path& game_data_root) {
   if (!REXCVAR_GET(debug_audio_trace)) {
     return;
   }
-  for (const char* archive : {"default.rcf", "english.rcf"}) {
+  // The voices: the archive this session mounts (language.h: voice_language,
+  // English by default), so the names say which language's clip it is.
+  const char* voices = language::VoiceLanguages()[size_t(language::RunningVoice())].archive;
+  for (const char* archive : {"default.rcf", voices}) {
     if (!IndexArchive(game_data_root / archive)) {
       REXLOG_WARN("Audio trace: can't read the file list of {}", archive);
     }

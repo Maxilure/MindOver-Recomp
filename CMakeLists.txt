@@ -33,6 +33,8 @@ set(CRASHMOM_SOURCES
     src/debug_console.cpp        # --debug_console: a socket that answers questions about the running game
     src/game_folder.cpp          # saves / settings / controls inside the game folder (user/)
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
+    src/app_restart.cpp          # Options -> "Restart Now": the game closes and starts again
+    src/language/language.cpp    # text and voice language from the settings (findings/49)
     src/crash_report.cpp         # a crash writes its named call stack into the log + crash-*.txt
     src/debug/host_symbols.cpp   # host code address -> function name / original PowerPC instruction
     src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
