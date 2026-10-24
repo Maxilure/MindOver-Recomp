@@ -482,11 +482,66 @@ constexpr uint32_t kQueryEnd = 0x10, kQueryMask = 0x14, kQueryFlags = 0x1C;
 constexpr uint8_t kScenery = 0x80, kTargets = 0x20;
 constexpr uint32_t kResultTarget = 0x1C;
 
+// THE "ALL MOJO AT ONCE" BUG (playtest, 2026-10-24): now and then, leaving
+// Crash's house, the keyboard player picked up EVERY mojo in the level the
+// moment it loaded. Cause: the ray's hit spot (result +16/+20/+24) came back
+// NaN. The ray (sub_8224C6C0) unprojects the screen spot with the camera
+// (sub_82265C80) into a near and a far point and normalises far - near
+// (sub_82424880); while the level loads the camera isn't set up yet (or the
+// spot lands on a degenerate one), far - near = 0, and 0 / 0 = NaN. The
+// cursor's Update then puts its MOJO_VAC collector there (sub_822515D8: a
+// sphere, centre +0x3C, radius +0x48, box +4..+0x18 = centre -/+ radius).
+// With a NaN centre the box is NaN, and every "is this mojo outside the
+// box?" comparison is false (NaN compares false with everything): each mojo
+// in the level counts as inside the vacuum. On the Wii the cursor only ran
+// once the scripts switched it on in play; we switch it on as soon as the
+// player is on foot, which can be under the loading screen.
+// FIX: a hit spot that isn't a finite, sane number is replaced by one far
+// below the world (kParked), where the vacuum touches nothing; the next good
+// frame puts it back on the pointer.
+constexpr uint32_t kResultSpot = 0x10;
+constexpr float kSaneRange = 1.0e6f;  // world units; levels are a few thousand across
+constexpr float kParked[3] = {0.0f, -1.0e5f, 0.0f};
+
+float ReadFloat(uint8_t* base, uint32_t a) {
+  const uint8_t* p = GuestPtr(base, a);
+  const uint32_t v = uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
+  float f;
+  std::memcpy(&f, &v, 4);
+  return f;
+}
+void WriteFloat(uint8_t* base, uint32_t a, float f) {
+  uint32_t v;
+  std::memcpy(&v, &f, 4);
+  uint8_t* p = GuestPtr(base, a);
+  p[0] = uint8_t(v >> 24); p[1] = uint8_t(v >> 16); p[2] = uint8_t(v >> 8); p[3] = uint8_t(v);
+}
+
+// The cursor ray's hit spot is usable (finite and inside kSaneRange); if
+// not, it is parked (above) and the event logged (first one, then every
+// 300th: a loading screen can produce one per frame).
+void KeepSpotSane(uint8_t* base, uint32_t result) {
+  bool sane = true;
+  for (int i = 0; i < 3; ++i) {
+    const float v = ReadFloat(base, result + kResultSpot + 4 * i);
+    if (!std::isfinite(v) || std::fabs(v) > kSaneRange) sane = false;
+  }
+  if (sane) return;
+  static uint32_t count = 0;
+  if (count++ % 300 == 0) {
+    REXLOG_WARN("Wii cursor: aim ray gave a bad spot ({}, {}, {}); mojo vacuum parked (x{})",
+                ReadFloat(base, result + kResultSpot), ReadFloat(base, result + kResultSpot + 4),
+                ReadFloat(base, result + kResultSpot + 8), count);
+  }
+  for (int i = 0; i < 3; ++i) WriteFloat(base, result + kResultSpot + 4 * i, kParked[i]);
+}
+
 extern "C" REX_FUNC(sub_8224C6C0) {
   const bool cursor = uint32_t(ctx.lr) == 0x82140124;
-  const uint32_t world = ctx.r3.u32, spot = ctx.r4.u32, query = ctx.r5.u32;
+  const uint32_t world = ctx.r3.u32, spot = ctx.r4.u32, query = ctx.r5.u32, cursor_result = ctx.r6.u32;
   __imp__sub_8224C6C0(ctx, base);
   if (!cursor) return;
+  KeepSpotSane(base, cursor_result);  // before the Update places its vacuum there
   static uint32_t room = 0;  // our query + result, guest memory, made once
   if (!room) room = rex::system::kernel_memory()->SystemHeapAlloc(kQueryBytes + kResultBytes);
   if (!room) return;

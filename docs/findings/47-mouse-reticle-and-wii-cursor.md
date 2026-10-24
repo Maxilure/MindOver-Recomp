@@ -163,3 +163,27 @@ flags `| 0xA0`, mask all, the keyboard player's own Crash ignored. A target in
 its result = the bubble grows to 1.5x (eased over ~0.06 s, back the same).
 Checked with a Roller titan spawned in view (F5 cheats): the pointer over it
 reports it, anywhere else (Crash included) nothing.
+
+## 6. Every mojo in the level collected at once (fixed)
+
+Seen in crosshair mode, rarely, on leaving Crash's house: the keyboard player
+collected EVERY mojo in the new level the moment it loaded.
+
+The cursor's ray (`sub_8224C6C0`) unprojects the screen spot with the camera
+(`sub_82265C80`) into a near and a far point, normalises far - near
+(`sub_82424880`) and writes the hit spot to result `+0x10..+0x18` (on a miss:
+start + direction x reach, reach 60). While a level loads the camera is not
+set up yet (or the spot lands on a degenerate one): far - near = 0, and the
+normalise gives NaN. The cursor's Update then places its `MOJO_VAC`
+collector there (`sub_822515D8`: a sphere, centre `+0x3C`, radius `+0x48`,
+box `+4..+0x18` = centre -/+ radius). A NaN centre makes a NaN box, and every
+"outside the box?" comparison is false (NaN compares false with everything),
+so each mojo counts as inside the vacuum. On the Wii the scripts switched the
+cursor on only in play; the port switches it on as soon as the player is on
+foot, which can be under the loading screen.
+
+Fix (`ui/wii_cursor.cpp` `KeepSpotSane`): right after the cursor's ray, a hit
+spot that isn't finite or lies beyond 1e6 units is replaced by a point far
+below the world (0, -100000, 0), where the vacuum touches nothing; the next
+good frame puts it back on the pointer. Logged as `Wii cursor: aim ray gave a
+bad spot ...`.
