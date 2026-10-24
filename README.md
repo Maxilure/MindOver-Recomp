@@ -76,7 +76,7 @@ Every key rebindable (**F6**), menus with keys of their own, any controller SDL 
 <td valign="top">
 
 ### ⚙️ Options in the game's own look
-Pause → **Options**: frame rate, renderer, brightness, V-sync, resolution (up to 4K), anti-aliasing, texture sharpness, sharpening, shadow softness, motion blur and depth of field, audio, controls, camera and gameplay (friendly fire, combos, one-button and hold-to-keep spinning), all live, built from the game's own menu pieces. **Language**: the disc's 13 text languages and 10 voice languages, mixed freely (say, English voices with German text), with a Restart Now button.
+Pause → **Options**: frame rate, renderer, brightness, V-sync, windowed or fullscreen on the monitor of your choice, resolution (up to 4K), anti-aliasing, texture sharpness, sharpening, shadow softness, motion blur and depth of field, audio, controls, camera and gameplay (friendly fire, combos, one-button and hold-to-keep spinning), all live, built from the game's own menu pieces. **Language**: the disc's 13 text languages and 10 voice languages, mixed freely (say, English voices with German text), with a Restart Now button.
 
 </td>
 </tr>

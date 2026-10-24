@@ -289,7 +289,7 @@ game right away (a desktop shortcut); `--screenshot=<file.png>
 
 The **Settings** tab edits `user/settings.toml` (the same file the game's F4
 menu writes; saved at once, applied at the next start): the main settings
-with plain names (frame rate cap, renderer, fullscreen, players, co-op
+with plain names (frame rate cap, renderer, window mode, monitor, players, co-op
 camera, keyboard and mouse, sound, log extras; the save list has no
 switch there: it stays on), and under "All
 settings" every one of the game's ~200 flags, searchable. A yellow

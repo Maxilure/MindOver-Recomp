@@ -29,6 +29,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
+#include "../ui/window_mode.h"
 #include "../language/language.h"
 #include "global_options.h"
 #include "options_menu.h"
@@ -348,10 +349,69 @@ Row FpsPositionRow() {
   return r;
 }
 
-Row FullscreenRow() {
-  // The SDK's own flag: its change callback resizes the window right away.
-  return OnOffRow(u"Fullscreen", "fullscreen", u"On", u"Off", u"Fills the whole screen.",
-                  u"Plays in a window you can move and resize.", /*off_first=*/true);
+// WINDOW MODE (ui/window_mode.h, findings/50): Windowed or Fullscreen; the
+// fullscreen is always the borderless kind (a window covering the monitor at
+// its own mode: quick to switch away, behaves the same on every system).
+Row WindowModeRow() {
+  Row r;
+  r.label = u"Window Mode";
+  r.values = [](Env&) { return std::vector<std::u16string>{u"Windowed", u"Fullscreen"}; };
+  r.get = [](Env&) { return window_mode::Current() == window_mode::Mode::kWindowed ? 0 : 1; };
+  r.set = [](Env&, int i) {
+    window_mode::Set(i == 0 ? window_mode::Mode::kWindowed : window_mode::Mode::kFullscreen,
+                     [](const char* name, const std::string& value) { SetFlag(name, value); });
+  };
+  r.describe = [](Env&, int i) -> std::u16string {
+    return i == 0 ? u"Plays in a window you can move and resize."
+                  : u"Fills the whole monitor (the one picked under Monitor).";
+  };
+  return r;
+}
+
+// A monitor's name as the game font can write it: plain letters only, short
+// enough for the value box.
+std::u16string MonitorName(const std::string& name) {
+  std::u16string out;
+  for (const char c : name) {
+    if (c >= 0x20 && c < 0x7F) out += char16_t(c);
+  }
+  while (!out.empty() && out.back() == u' ') out.pop_back();
+  if (out.size() > 16) out = out.substr(0, 15) + u".";
+  return out.empty() ? std::u16string(u"Monitor") : out;
+}
+
+// MONITOR (ui/window_mode.h): the SDK's monitor flag, 0 = Automatic, 1..N =
+// the connected monitors (SDL's order), read again each time it's shown.
+Row MonitorRow() {
+  Row r;
+  r.label = u"Monitor";
+  r.values = [](Env&) {
+    window_mode::RefreshDisplays();  // monitors plugged in since: next time
+    const auto displays = window_mode::Displays();
+    std::vector<std::u16string> values{u"Automatic"};
+    for (size_t i = 0; i < displays.size(); ++i) {
+      values.push_back(Utf16(std::to_string(i + 1)) + u": " + MonitorName(displays[i].short_name));
+    }
+    // A monitor picked earlier that isn't connected now keeps its place.
+    const int now = int(rex::cvar::Query<int32_t>("monitor"));
+    while (now >= int(values.size())) {
+      values.push_back(Utf16(std::to_string(values.size())) + u": Not Connected");
+    }
+    return values;
+  };
+  r.get = [](Env&) { return std::max(0, int(rex::cvar::Query<int32_t>("monitor"))); };
+  r.set = [](Env&, int i) {
+    SetFlag("monitor", std::to_string(std::max(0, i)));
+    window_mode::AfterChange();
+  };
+  r.describe = [](Env&, int i) -> std::u16string {
+    if (i == 0) return u"Fullscreen fills the monitor the game is on.";
+    if (i > int(window_mode::Displays().size())) {
+      return u"This monitor isn't connected: fullscreen fills the one the game is on.";
+    }
+    return u"Fullscreen fills this monitor.";
+  };
+  return r;
 }
 
 // ---------------------------------------------------------------------------
@@ -894,7 +954,7 @@ std::vector<Tab> Build() {
   AddDualMode(renderer);
   tabs.push_back(
       {u"Display",
-       {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), FullscreenRow(), FpsCounterRow(),
+       {FrameRateRow(), renderer, BrightnessRow(), VsyncRow(), WindowModeRow(), MonitorRow(), FpsCounterRow(),
         FpsPositionRow()}});
   tabs.push_back({u"Graphics", {RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(), TextureSharpnessRow(), SharpeningRow(),
                                  ShadowSoftnessRow(), MotionBlurRow(), DepthOfFieldRow()}});

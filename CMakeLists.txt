@@ -47,6 +47,7 @@ set(CRASHMOM_SOURCES
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
+    src/ui/window_mode.cpp       # Window Mode (windowed / borderless / fullscreen) + Monitor rows (Options -> Display)
     src/fps_overlay.cpp          # our own frame-rate counter over the picture, game font (Options -> Display)
     src/input/bindings.cpp       # keyboard + mouse: the actions, their keys, controls.toml
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)

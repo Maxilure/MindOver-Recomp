@@ -51,6 +51,7 @@
 #include "debug_console.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "ui/window_mode.h"
 #include "game_folder.h"
 #include "saves/save_files.h"
 #include "settings_list.h"
@@ -279,6 +280,10 @@ class CrashMomApp : public rex::ReXApp {
     language::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
+    // Window Mode + Monitor rows (ui/window_mode.h): the monitor list, read on
+    // the UI thread; after a change the refresh rate is read again.
+    window_mode::Install([this](std::function<void()> job) { app_context().CallInUIThread(std::move(job)); },
+                         [] { frame_rate::UpdateDisplayRefresh(); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).

@@ -7,6 +7,10 @@
 #include <cmath>
 #include <cstdio>
 #include <map>
+#include <string>
+#include <vector>
+
+#include <SDL3/SDL.h>
 
 namespace fs = std::filesystem;
 
@@ -436,7 +440,53 @@ void Page::DrawMain() {
   // --- Window -----------------------------------------------------------------
   if (section("Window")) {
     columns();
-    check("Fullscreen", "fullscreen", "Start in fullscreen (borderless, at the desktop's mode).");
+    // Window mode = the game's fullscreen flag: Windowed or Fullscreen (the
+    // borderless kind: fullscreen_exclusive set back to false), as in the
+    // game's Options -> Display (src/ui/window_mode.h).
+    Row("Window mode", "Windowed: a window you can move and resize. Fullscreen: fills the whole "
+                       "monitor (the one picked under Monitor).");
+    {
+      const int mode = settings::AsBool(Value("fullscreen")) ? 1 : 0;
+      const char* modes[] = {"Windowed", "Fullscreen"};
+      if (ImGui::BeginCombo("##window_mode", modes[mode])) {
+        for (int i = 0; i < 2; ++i) {
+          if (ImGui::Selectable(modes[i], i == mode)) {
+            SetValue("fullscreen", i == 0 ? "false" : "true");
+            if (settings::AsBool(Value("fullscreen_exclusive"))) {
+              SetValue("fullscreen_exclusive", "false");
+            }
+          }
+        }
+        ImGui::EndCombo();
+      }
+      Status("fullscreen");
+    }
+    // Monitor = the game's monitor flag: 0 = wherever the desktop puts it,
+    // 1..N = SDL_GetDisplays() order (the game numbers them the same way).
+    Row("Monitor", "Which monitor Fullscreen fills. Automatic = the one the game is on.");
+    {
+      std::vector<std::string> names{"Automatic"};
+      int count = 0;
+      SDL_DisplayID* ids = SDL_GetDisplays(&count);
+      for (int i = 0; ids && i < count; ++i) {
+        const char* name = SDL_GetDisplayName(ids[i]);
+        names.push_back(std::to_string(i + 1) + ": " + (name && *name ? name : "Monitor"));
+      }
+      SDL_free(ids);
+      const int monitor = std::max(0, int(settings::AsNumber(Value("monitor"))));
+      while (monitor >= int(names.size())) {
+        names.push_back(std::to_string(names.size()) + ": not connected");
+      }
+      if (ImGui::BeginCombo("##monitor", names[size_t(monitor)].c_str())) {
+        for (int i = 0; i < int(names.size()); ++i) {
+          if (ImGui::Selectable(names[size_t(i)].c_str(), i == monitor)) {
+            SetValue("monitor", std::to_string(i));
+          }
+        }
+        ImGui::EndCombo();
+      }
+      Status("monitor");
+    }
     ImGui::EndTable();
   }
 
