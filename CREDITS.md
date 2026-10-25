@@ -23,6 +23,9 @@ engineering, testing, bug reports, corrections, art. See
 - Wrote most of the code and the documentation (via Claude Code). This
   includes the recompilation fixes, SDK patches, native renderer, input,
   co-op, save system, launcher and debugging tools.
+- Made the jack symbol over stunned titans (`assets/icons/jack.png`): a white
+  silhouette of Aku Aku's mask with its eye sockets and eyes, traced from a
+  *Crash of the Titans* render (see References); Maxilure picked this version.
 - Did the reverse engineering written up in [docs/findings](docs/findings/).
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
@@ -82,4 +85,6 @@ computer from their own disc. See the [Disclaimer](README.md#disclaimer).
 - The **Crash Bandicoot fan wiki**: names of places, enemies and titans used
   in the documentation.
 - ***Crash of the Titans*** (Radical Entertainment, 2007): its save-slot
-  numbers were the model for the player 3 and 4 markers.
+  numbers were the model for the player 3 and 4 markers, and a render of its
+  Aku Aku mask model ([The Spriters Resource](https://models.spriters-resource.com/xbox_360/crashofthetitans/asset/305580/))
+  was traced for the outline of the jack symbol.

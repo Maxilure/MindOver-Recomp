@@ -16,6 +16,7 @@
 #include <map>
 #include <optional>
 #include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -388,6 +389,10 @@ std::vector<DiscFont> ReadDiscFonts() {
 // "see-through" black inside the window). So the game's B looks exactly as
 // before, and a key is a whole square key.
 constexpr float kCoinWindow = 0.454f;  // the 12-sided window's corner radius, fraction of the picture
+// The world B's copies (PatchWorldButton): 0-3 = players 1-4's, 4 = the jack
+// symbol's (a stunned titan out of everyone's reach: WHO CAN JACK IT).
+constexpr int kJackSymbol = 4;
+constexpr float kJackSymbolScale = 1.7f;  // the jack symbol's coin, drawn this much bigger (CoinGroup::scale)
 
 // Bakes the window into the game's B: `indices` w x h (either row order: the
 // window is symmetric), `palette` BGRA x `colours`. The see-through colour =
@@ -1078,6 +1083,14 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, Box 
     const Box face{margin, margin, int(width) - 2 * margin, int(height) - 2 * margin};
     return Draw(described.substr(2), width, height, face);
   }
+  if (described[0] == 'J') {
+    // THE JACK SYMBOL (a stunned titan nobody is close enough to jack yet):
+    // our own picture over the coin's square face, like a key ('C').
+    const int margin = int(std::lround((0.5f - kCoinWindow) * float(width)));
+    const Box face{margin, margin, int(width) - 2 * margin, int(height) - 2 * margin};
+    Fit(page, Trim(Asset("../icons", "jack.png"), kTrimAll), face);
+    return page;
+  }
   if (described[0] == 'O') {
     // A controller button as the game draws it (its 360 picture from the
     // disc's font, the page of that button's glyph), fitted to the page with
@@ -1187,7 +1200,7 @@ struct GuestPage {
   std::vector<uint8_t> original_palette;  // the guest's 1 KB palette
   std::string shown;                      // Describe() of what's in memory ("" = original)
   std::string name;                       // "Titans_Small A" (log)
-  int world_player = -1;                  // a copy of the world's B: whose (0-3); -1 = the game's own
+  int world_player = -1;                  // a copy of the world's B: whose (0-3), 4 = the jack symbol; -1 = the game's own
 };
 
 struct State {
@@ -1519,11 +1532,14 @@ void CheckWorldTexture(uint8_t* base, uint32_t texture) {
   // out as "∀" (playtest photo). So the pictures go in the other way up.
   gp.flipped = !gp.flipped;
   g.world_vtable = Load32(base, texture);
-  gp.world_player = world_found - 1;  // the original, then players 1-4's copies (PatchWorldButton)
-  if (gp.world_player > 3) return;
-  if (gp.world_player >= 0) gp.name = "world B player " + std::to_string(gp.world_player + 1);
+  gp.world_player = world_found - 1;  // the original, players 1-4's copies, the jack symbol (PatchWorldButton)
+  if (gp.world_player > kJackSymbol) return;
+  if (gp.world_player == kJackSymbol) gp.name = "world jack symbol";
+  else if (gp.world_player >= 0) gp.name = "world B player " + std::to_string(gp.world_player + 1);
   REXLOG_INFO("Prompt pictures: the world's B button found (texture {:08X}){}", texture,
-              gp.world_player >= 0 ? " = player " + std::to_string(gp.world_player + 1) + "'s copy" : "");
+              gp.world_player == kJackSymbol ? " = the jack symbol's copy"
+              : gp.world_player >= 0         ? " = player " + std::to_string(gp.world_player + 1) + "'s copy"
+                                             : "");
   g.pages.push_back(std::move(gp));
   g.revision = UINT32_MAX;  // drawn at once
 }
@@ -1698,9 +1714,12 @@ void OnFrameEnd(void*) {
       continue;
     }
     // The floating B: its owner's look (THE FLOATING B'S OWNER above).
-    const Look own = gp.world_player >= 0 ? LookOf(uint32_t(gp.world_player)) : Look{};
+    const Look own = gp.world_player >= 0 && gp.world_player < kJackSymbol ? LookOf(uint32_t(gp.world_player)) : Look{};
     const Look& use = gp.prompt != &kWorldB ? l : gp.world_player >= 0 ? own : world;
-    const std::string want = Describe(*gp.prompt, bindings, use.keys, use.dark, use.pad_style);
+    // The jack symbol's copy: the same picture whatever anyone plays with.
+    const std::string want = gp.prompt == &kWorldB && gp.world_player == kJackSymbol
+                                 ? std::string("J jack")
+                                 : Describe(*gp.prompt, bindings, use.keys, use.dark, use.pad_style);
     if (want != gp.shown) Show(base, gp, want);
     if (gp.font && gp.prompt->kind == Kind::kSpin) NarrowRotate(base, gp.font, gp.prompt->character, l.keys);
     ++i;
@@ -1925,8 +1944,11 @@ bool PatchWorldButton(const pure3d::Bytes& original, pure3d::Bytes* patched) {
       // coin to be drawn with its owner's copy (WorldButtonSwap, through the
       // outfits' per-object texture swap), but that swap never sees the coin
       // yet (OnFrameEnd: drawn by Pure3D's render loop): not visible so far.
+      // THE JACK SYMBOL (2026-10-24): a fifth copy, "_p5", painted with our
+      // own picture (assets/icons/jack.png): what a stunned titan shows while
+      // no player is close enough to jack it (WHO CAN JACK IT, below).
       const std::string base_name(name);
-      for (int p = 1; p <= 4; ++p) {
+      for (int p = 1; p <= 5; ++p) {
         pure3d::Node copy = texture;
         const std::string dot = base_name.substr(base_name.rfind('.'));
         RenamePage(copy, base_name, base_name.substr(0, base_name.rfind('.')) + "_p" + std::to_string(p) + dot);
@@ -2416,6 +2438,102 @@ bool InInteractableList(uint8_t* base, uint32_t it, int p) {
   return false;
 }
 
+// WHO CAN JACK IT (2026-10-24). A stunned titan has no interactable list:
+// its floating B means "this titan can be jacked" and shows from any
+// distance (it went up 72.8 units from the nearest player in a playtest;
+// the old guess, "within the owner's distance at the time + 15%", then gave
+// the whole area a coin). The game's own rule, found with the debug console
+// (findings/37 s.7):
+//   * a stunned titan OPENS AN OPPORTUNITY (COpportunityBehaviour, vtable
+//     0x8202F904; message 24, subtype 0 = open sub_82156128, 1 = close,
+//     2 = check sub_82157058) named after its fight tree: StrongJackable,
+//     BearJackable, ...;
+//   * the open opportunities live in one table at 0x825A5418: a binary tree
+//     (root = the word at the table, sentinel = table + 4; node +0 left, +4
+//     right, +0x10 the name's hash (h * 31 + c), +0x14 a list: entry +0 next,
+//     +8 the COpportunity: +0xC the actor offering it, +0x10 the one actor it
+//     is for, 0 = anyone);
+//   * on the Jack button, Crash's fight tree (Crashlua.blua, the function at
+//     line 7306) checks each name with its own range; the check (sub_82157058)
+//     takes an offer whose actor is within that range across the ground
+//     (x, z) AND up or down (|y|), from Crash to the offering actor.
+// So player p can jack titan T right now = T offers one of these names and
+// p's Crash, on foot, is within its range. Measured before the script was
+// read: a Ratcicle (Strong) jacks at 6.0, not at 6.5; Scorporilla at 8.
+constexpr uint32_t kOpportunityTable = 0x825A5418;
+constexpr uint32_t kCoOpState = 0x8259B11C;  // u32 per player: 2 = in the game (more_players.h)
+
+constexpr uint32_t NameHash(std::string_view name) {
+  uint32_t h = 0;
+  for (const char c : name) h = h * 31 + uint8_t(c);
+  return h;
+}
+struct JackCheck {
+  uint32_t key;
+  float range;
+};
+// In the script's order, with its ranges.
+constexpr JackCheck kJackChecks[] = {
+    {NameHash("BossJackable"), 8.5f},       {NameHash("CaptainJackable"), 8.5f},
+    {NameHash("BearJackable"), 6.5f},       {NameHash("StrongJackable"), 6.0f},
+    {NameHash("ProjectileJackable"), 6.0f}, {NameHash("JackableTurretJackableByCrash"), 8.0f},
+};
+
+// The list of the opportunities open under `key` (0 = none): a walk down the
+// tree like the game's lookup (keys compared as unsigned numbers).
+uint32_t OpportunityList(uint8_t* base, uint32_t key) {
+  const uint32_t sentinel = kOpportunityTable + 4;
+  uint32_t node = Load32(base, kOpportunityTable);
+  for (int depth = 0; depth < 64 && node != sentinel && node >= 0x40000000u; ++depth) {
+    const uint32_t at = Load32(base, node + 0x10);
+    if (key == at) return Load32(base, node + 0x14);
+    node = Load32(base, node + (key < at ? 0 : 4));
+  }
+  return 0;
+}
+
+// Body position (an actor's world matrix: +44, translation at +48).
+bool ActorAt(uint8_t* base, uint32_t actor, float out[3]) {
+  const uint32_t matrix = actor ? Load32(base, actor + 44) : 0;
+  if (matrix < 0x40000000u) return false;
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = Load32(base, matrix + 48 + 4 * i);
+    std::memcpy(&out[i], &w, 4);
+  }
+  return std::isfinite(out[0]) && std::isfinite(out[1]) && std::isfinite(out[2]);
+}
+
+// Bit p set = player p could jack `titan` now. *jackable = the titan offers a
+// jack at all (it is down, waiting for a rider).
+uint32_t JackReach(uint8_t* base, uint32_t titan, bool* jackable) {
+  *jackable = false;
+  float at[3];
+  if (!ActorAt(base, titan, at)) return 0;
+  uint32_t reach = 0;
+  for (const JackCheck& check : kJackChecks) {
+    uint32_t entry = OpportunityList(base, check.key);
+    for (int n = 0; n < 64 && entry >= 0x40000000u; ++n, entry = Load32(base, entry)) {
+      const uint32_t offer = Load32(base, entry + 8);
+      if (offer < 0x40000000u || Load32(base, offer + 0xC) != titan) continue;
+      *jackable = true;
+      const uint32_t only_for = Load32(base, offer + 0x10);
+      for (int p = 0; p < 4; ++p) {
+        // On foot: in the game (not a mask, not joining) and riding no titan.
+        if (!menu_input::PlayerPlays(p) || Load32(base, kCoOpState + 4 * uint32_t(p)) != 2 ||
+            more_players::TitanOfPlayer(p)) {
+          continue;
+        }
+        const uint32_t crash = more_players::CharacterOfPlayer(p);
+        float body[3];
+        if (!crash || (only_for && only_for != crash) || !ActorAt(base, crash, body)) continue;
+        const float dx = at[0] - body[0], dy = at[1] - body[1], dz = at[2] - body[2];
+        if (std::fabs(dy) <= check.range && dx * dx + dz * dz <= check.range * check.range) reach |= 1u << p;
+      }
+    }
+  }
+  return reach;
+}
+
 const CoinGroup& CurrentCoinGroup() { return g_coins; }
 
 // FORGET THE LAST MATERIAL (2026-10-23). Two floating buttons up at once
@@ -2433,15 +2551,16 @@ const CoinGroup& CurrentCoinGroup() { return g_coins; }
 // coin gets its own set-up (and its owner's picture) in BOTH renderers.
 constexpr uint32_t kLastMaterialKey = 0x824EE830;
 namespace {
-std::array<std::atomic<uint32_t>, 5> g_world_xn{};  // the game's B + players 1-4's copies (0 = none)
+// The game's B + players 1-4's copies + the jack symbol's (0 = none).
+std::array<std::atomic<uint32_t>, kJackSymbol + 2> g_world_xn{};
 
 void RefreshWorldXn() {  // with g.mutex held
-  uint32_t xn[5] = {};
+  uint32_t xn[kJackSymbol + 2] = {};
   for (const GuestPage& gp : g.pages) {
-    if (gp.font || gp.prompt != &kWorldB || gp.world_player > 3) continue;
+    if (gp.font || gp.prompt != &kWorldB || gp.world_player > kJackSymbol) continue;
     xn[gp.world_player + 1] = gp.xn;
   }
-  for (int i = 0; i < 5; ++i) g_world_xn[i].store(xn[i], std::memory_order_relaxed);
+  for (int i = 0; i < kJackSymbol + 2; ++i) g_world_xn[i].store(xn[i], std::memory_order_relaxed);
 }
 }  // namespace
 
@@ -2520,13 +2639,18 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
   }
   const uint32_t interactable = icon_object ? InteractableOf(base, icon_object) : 0;
   if (!interactable) {
-    static uint32_t logged = 0;
-    if (logged != icon_object) {
-      logged = icon_object;
+    // Once per object (two such buttons up at once alternated one "last
+    // logged" value = this line every frame: 2026-10-24 log).
+    static std::set<uint32_t> logged;
+    if (logged.size() > 256) logged.clear();
+    if (logged.insert(icon_object).second) {
       REXLOG_INFO("Prompt pictures: a floating button ({:08X}) without an interactable: coins within {:.2f}",
                   icon_object, icon_range);
     }
   }
+  // A stunned titan: the game's own jack rule (WHO CAN JACK IT).
+  bool jackable = false;
+  const uint32_t jack_reach = !interactable && icon_object ? JackReach(base, icon_object, &jackable) : 0;
   std::string seen[4];
   int count = 0;
   uint32_t players_near = 0;  // bit p: player p may use it (for the log)
@@ -2536,6 +2660,8 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
     if (!menu_input::PlayerPlays(p)) {
     } else if (interactable) {
       near = InInteractableList(base, interactable, p);
+    } else if (jackable) {
+      near = (jack_reach >> p) & 1;
     } else {
       // No list: within the range the game showed it at (its owner's
       // distance then, 15% to spare for steps and turns).
@@ -2554,7 +2680,17 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
     seen[count] = look;
     g_coins.xn[count++] = copy[p];
   }
-  if (count == 0 && copy[owner]) g_coins.xn[count++] = copy[owner];  // nobody counted: the owner's, as before
+  if (count == 0) {
+    // Nobody close enough to jack a stunned titan: the jack symbol ("this
+    // one can be jacked", from anywhere, as the original's B meant). Else
+    // (nobody in an interactable's list for a frame): the owner's, as before.
+    const uint32_t jack = g_world_xn[kJackSymbol + 1].load(std::memory_order_relaxed);
+    if (jackable && jack) {
+      g_coins.xn[count++] = jack;
+      g_coins.scale = kJackSymbolScale;
+    }
+    else if (copy[owner]) g_coins.xn[count++] = copy[owner];
+  }
   g_coins.count = count;
   if (count > 0) to_xn = g_coins.xn[0];
   {  // who may use it: logged when that changes
@@ -2567,8 +2703,8 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
       for (int p = 0; p < 4; ++p) {
         if (players_near & (1u << p)) who += fmt::format("{}{}", who.empty() ? "" : " ", p + 1);
       }
-      REXLOG_INFO("Prompt pictures: floating button {:08X}: players near [{}], {} coin(s)", icon_object, who,
-                  count);
+      REXLOG_INFO("Prompt pictures: floating button {:08X}: players near [{}], {} coin(s){}", icon_object, who,
+                  count, jackable ? (players_near ? " (titan: in jacking reach)" : " (titan: jack symbol)") : "");
     }
   }
   return true;

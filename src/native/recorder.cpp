@@ -1320,8 +1320,14 @@ void OnDrawPrimBuffer(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
 // keep their spacing as the camera moves in and out (3-4 coins: an arc). `d` itself becomes the group's first coin.
 void CommitCoins(const uint8_t* base, DrawCommand& d) {
   const prompt_icons::CoinGroup& group = prompt_icons::CurrentCoinGroup();
-  if (group.count < 2 || !d.textured) return;
+  if (group.count < 1 || !d.textured) return;
   if (Load32(base, g.mesh_material + shader::kSimpleTexture) != group.xn[0]) return;
+  // A bigger coin (the jack symbol): the coin's own x, y, z axes scaled (the
+  // MVP's first three columns, column-major), so it grows around its centre.
+  if (group.scale != 1.0f) {
+    for (int k = 0; k < 12; ++k) d.mvp[k] *= group.scale;
+  }
+  if (group.count < 2) return;
   // The centre of the coin in clip space has w = mvp[15] (16.5 over a totem);
   // a coin is about 0.09 of the screen's half width across there.
   constexpr float kCoinNdcAtUnitW = 0.09f * 16.5f;

@@ -452,7 +452,64 @@ own copy is pointed back to 0 (the copy freed, findings/30 s.9), the corner
 decides as the original does, and the player texts then convert what it
 chose (a number has no prompt characters and is left alone).
 
-## 7. Tests
+## 7. A titan's jack symbol, and who can jack it (2026-10-24)
+
+![A stunned titan out of reach shows the jack symbol; in reach, each player's own button](../images/jack-symbol-and-reach.jpg)
+
+A stunned titan's floating B means "this titan can be jacked": it appears
+the moment the titan goes down, wherever the players are (once 72.8 units
+from the nearest one). Section 6 gave every nearby player a coin, but a
+titan keeps no interactable list, so "nearby" was a guess: within the
+owner's distance when the B appeared, plus 15%. That covered a whole area,
+and a player far away saw their button over a titan they could not jack.
+
+**The game's own rule.** Found with the debug console (`who`, Ghidra, and
+Crash's fight-tree script):
+
+* A stunned titan **opens an opportunity** (`COpportunityBehaviour`, vtable
+  `0x8202F904`; message 24: subtype 0 open `sub_82156128`, 1 close
+  `sub_82156260`, 2 check `sub_82157058`) named after its fight tree:
+  `StrongJackable`, `BearJackable`, `CaptainJackable`, `ProjectileJackable`,
+  `BossJackable`, `JackableTurretJackableByCrash`.
+* The open ones live in one table at `0x825A5418`: a binary tree (root = the
+  word at the table, sentinel = table + 4; node +0 left, +4 right, +0x10 the
+  name's hash `h * 31 + c`, +0x14 a list: entry +0 next, +8 the opportunity:
+  +0xC the actor offering it, +0x10 the only actor it is for, 0 = anyone).
+* On the Jack button, Crash's script (`fighttrees/Crashlua.blua`, the
+  function at line 7306) checks each name with its own range: Boss 8.5,
+  Captain 8.5, Bear 6.5, Strong 6.0, Projectile 6.0, turret 8.0. The check
+  accepts an offer within that range across the ground (x, z) and up or
+  down (|y|).
+
+Measured before the script was read (one B press per fresh titan): a
+Ratcicle jacks at 6.0, not at 6.5; Scorporilla still at 8. Three other
+leads were dead ends: a reference count on Crash that happened to change
+near 6 units, the counter-move opportunities (`CounterThroughLegs` is
+checked at 6.25 every frame), and the trigger-volume messages.
+
+**What the port shows.** For a floating B with no interactable list, the
+coins now follow that rule (`JackReach` in `prompt_icons.cpp`): player p
+gets their button while their Crash is on foot (co-op state 2, no titan)
+and within range of an opportunity the titan offers. Nobody in reach = the
+**jack symbol**, a fifth copy of the B texture (`_p5` in the package patch)
+painted with `assets/icons/jack.png`: a white silhouette of Aku Aku's mask
+(the outline traced from a render of *Crash of the Titans*' mask model, its
+eye sockets and eyes kept so it reads as a mask at button size). It is drawn
+1.7 times the size of a button (`kJackSymbolScale` -> `CoinGroup::scale`:
+the native renderer scales the coin's own axes, recorder.cpp `CommitCoins`),
+since the tall mask fills less of the coin's square face. So
+from afar every player sees the same "can be jacked" symbol, and up close
+the symbol turns into the buttons of the players who can jack it, side by
+side as in section 6.
+
+Tested with the debug console on Wumpa Island, a knocked-out Ratcicle from
+the F5 spawn cheat: one player at 12 and 7 units = the symbol, at 5 = their
+button; two players (keyboard + a fake PlayStation 5 controller) = only the
+player in reach, both side by side, then only player 2. The log line
+"floating button ...: players near [...]" says "(titan: jack symbol)" or
+"(titan: in jacking reach)".
+
+## 8. Tests
 
 On a copy of the saves, with the debug console: both fonts found and checked
 (15 pictures each, menu glyphs included); a fake controller's Start switched

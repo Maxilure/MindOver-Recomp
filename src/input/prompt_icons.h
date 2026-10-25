@@ -128,6 +128,10 @@ void HudFrame(PPCContext& ctx, uint8_t* base);
 struct CoinGroup {
   int count = 0;       // coins to draw side by side (0 = just the game's one)
   uint32_t xn[4] = {};  // each one's texture (an xnTexture: the player's copy of the B)
+  // Drawn this much bigger, around the coin's centre (1 = the game's size).
+  // The jack symbol only: a tall shape in the coin's square face read too
+  // small next to the buttons (playtest, 2026-10-24). Native renderer only.
+  float scale = 1.0f;
 };
 // What WorldButtonSwap decided for the coin being set up now, until the
 // frame ends (the native renderer reads it at the draw: recorder.cpp).

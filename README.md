@@ -222,7 +222,7 @@ src/                       the port's own native code
   data/                    changed copies of game data, built at run time from your files
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
 launcher/                  the launcher: setup, play, settings, log, updates (no game code)
-assets/                    pictures the port draws: players 3-4's markers, keyboard and mouse prompts
+assets/                    pictures the port draws: players 3-4's markers, keyboard and mouse prompts, the jack symbol
 tools/                     disc extraction, disassembler, play/debug and release scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
 docs/                      guides, and findings about the game's internals
@@ -271,6 +271,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 - The patches in `patches/rexglue-sdk/` modify ReXGlue's source and stay under ReXGlue's **BSD 3-Clause** license, like the SDK itself (which also builds on [Xenia](https://github.com/xenia-project/xenia)'s code).
 - The screenshots in `docs/images/` show the game's own imagery and are not covered by these licenses.
 - The marker pictures in `assets/markers/` were drawn for this port, after the save-slot numbers of *Crash of the Titans* (Radical Entertainment, 2007), to match the game's own markers.
+- The jack symbol in `assets/icons/` is a silhouette of Aku Aku's mask made for this port, traced from a render of *Crash of the Titans*' mask model.
 - The keyboard, mouse and controller pictures in `assets/prompts/` are from [Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/) by Nicolae "Xelu" Berbece, released into the public domain (**CC0**).
 
 <sub>This is an unofficial fan project for game preservation. It is not affiliated with, endorsed by, or sponsored by Activision, Sierra Entertainment, Radical Entertainment, or Microsoft. *Crash Bandicoot* and *Crash: Mind over Mutant* are trademarks of their respective owners. This repository contains no game code, assets or data: you need your own legally obtained copy of the game.</sub>
