@@ -1731,6 +1731,79 @@ void MorePlayersTriggerFocus(PPCRegister& r31, PPCRegister& r26) {
 void MorePlayersInteractionLast(PPCRegister& r29) { r29.u64 = uint32_t(LocalPlayers() - 1); }
 
 // =============================================================================
+// THE CAMERA'S FOCUS LIST HAS ROOM FOR TWO (findings/26 s.43, 2026-10-25).
+// The volume camera (CCameraVolumeBehaviour) keeps the actors it may focus on
+// in a FIXED 2-entry list: +492 / +496 entries, +500 = end pointer (set up in
+// its constructor at 0x82106954, nothing else allocates it). The focus player
+// (game object +40) is the owner of the list's FIRST entry (sub_821099C0).
+//   * add    sub_82109940 (r3 camera, r4 actor): "count < 2" else DROPPED;
+//            called by sub_82109850 when a group-0 (primary) interest, i.e. a
+//            player's Crash or titan, registers with the camera;
+//   * remove sub_82109AC8 (r3 camera, r4 actor): takes it out, the focus
+//            becomes the new first entry, or "nobody" (-1) when it's empty;
+//   * replace sub_82109BB0 (old -> new actor, a titan jack).
+// THE BUG: at a level start EVERY Crash registers (players 1-4; the ones not
+// playing as hidden masks). Players 1 and 2 fill both slots, player 3's and
+// 4's adds are dropped. Then the hidden players 1-2 turn into masks and leave
+// the list: it's EMPTY, focus = -1. With only player 3 / 4 in game the camera
+// stood still, the game's screen-edge rule held them in place, and story
+// triggers for "the camera's player" (-4: level exits, area doors) answered
+// nobody: stuck. Found 2026-10-25: a save, player 3 joins, player 1 drops out
+// (focus 2, fine), player 3 walks into the next level -> console "read
+// game+40 s32" = -1 after the load, camera still, player 3 pinned at the edge.
+// THE FIX: after a removal leaves room, the list is refilled from the camera's
+// own group-0 interest records (+196 begin / +200 end, 36 bytes each, +0 the
+// actor), skipping the actor being removed (its record goes right after),
+// through the game's own add. Players 1-2 first (record order). With two local
+// players the list never overflows: untouched.
+// =============================================================================
+extern "C" REX_FUNC(__imp__sub_82109940);
+extern "C" REX_FUNC(__imp__sub_82109AC8);
+namespace {
+constexpr uint32_t kFocusList = 492, kFocusListEnd = 500;          // camera: 2 entries + end pointer
+constexpr uint32_t kPrimaryRecords = 196, kPrimaryRecordsEnd = 200;  // camera: group 0 interest records
+constexpr uint32_t kInterestRecordSize = 36;
+uint32_t FocusCount(uint32_t camera) { return (Read32(camera + kFocusListEnd) - (camera + kFocusList)) / 4; }
+bool InFocusList(uint32_t camera, uint32_t actor) {
+  for (uint32_t i = 0, n = FocusCount(camera); i < n && i < 2; ++i) {
+    if (Read32(camera + kFocusList + 4 * i) == actor) return true;
+  }
+  return false;
+}
+}  // namespace
+extern "C" REX_FUNC(sub_82109940) {
+  if (LocalPlayers() > 2 && REXCVAR_GET(debug_coop_trace) && FocusCount(ctx.r3.u32) >= 2) {
+    REXLOG_INFO("Co-op: camera focus list full: actor {:08X} (player {}) waits for room", ctx.r4.u32,
+                PlayerOf(ctx.r4.u32) + 1);
+  }
+  __imp__sub_82109940(ctx, base);
+}
+extern "C" REX_FUNC(sub_82109AC8) {
+  const uint32_t camera = ctx.r3.u32, leaving = ctx.r4.u32;
+  __imp__sub_82109AC8(ctx, base);
+  if (LocalPlayers() <= 2) return;
+  const uint32_t begin = Read32(camera + kPrimaryRecords), end = Read32(camera + kPrimaryRecordsEnd);
+  if (end < begin || (end - begin) / kInterestRecordSize > 64) return;  // not a sane list
+  for (uint32_t rec = begin; rec < end && FocusCount(camera) < 2; rec += kInterestRecordSize) {
+    const uint32_t actor = Read32(rec);
+    if (!actor || actor == leaving || InFocusList(camera, actor)) continue;
+    CallGame(__imp__sub_82109940, ctx, base, camera, actor);
+    if (REXCVAR_GET(debug_coop_trace)) {
+      REXLOG_INFO("Co-op: camera focus: {:08X} (player {}) left, {:08X} (player {}) takes its place; focus player {}",
+                  leaving, PlayerOf(leaving) + 1, actor, PlayerOf(actor) + 1,
+                  int32_t(Read32(0x825B0008 + 40)) + 1);
+    }
+  }
+  if (REXCVAR_GET(debug_coop_trace)) {
+    const uint32_t n = std::min<uint32_t>(FocusCount(camera), 2);
+    REXLOG_INFO("Co-op: camera focus list after {:08X} (player {}) left: {} entr{} [{:08X} {:08X}] = players {} {}",
+                leaving, PlayerOf(leaving) + 1, n, n == 1 ? "y" : "ies", n > 0 ? Read32(camera + kFocusList) : 0,
+                n > 1 ? Read32(camera + kFocusList + 4) : 0, n > 0 ? PlayerOf(Read32(camera + kFocusList)) + 1 : 0,
+                n > 1 ? PlayerOf(Read32(camera + kFocusList + 4)) + 1 : 0);
+  }
+}
+
+// =============================================================================
 // PER-PLAYER INTERACTIONS FOR PLAYERS 3-4 (2026-10-23): the chest in Crash's
 // house (and any object scripted the same way) has one CRequirementInteraction
 // PER PLAYER: "player 1 interacted" (who = +16 >> 28 = 0) and "player 2

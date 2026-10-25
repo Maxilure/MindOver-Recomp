@@ -19,7 +19,8 @@
 // So the camera stays glued to one player and only backs off from 12 to 20
 // units: the other player walks off screen (measured: 57 units apart, player 2
 // far outside the picture). The +492 "players" list has room for 2, so players
-// 3-4 never count at all.
+// 3-4 never counted at all (more_players.cpp now refills it when a player
+// leaves it: findings/26 s.43).
 //
 // OUR CAMERA (the camera rework, step 1: two players; players 3-4 count too).
 // Everything still happens INSIDE the game's camera, so each area keeps its

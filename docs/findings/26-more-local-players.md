@@ -1669,3 +1669,57 @@ main rider (player 2) is left to the original.
 zone borders logs the re-zoning once per border and nothing else; console
 teleports and a titan jack don't trigger it; 0 errors. At the reported desert
 cutscene players 3-4 now stay hidden on player 1's shoulders.
+
+## 43. Players 3-4 alone after a level change: the camera's 2-entry focus list
+
+**The symptom.** With only player 3 or 4 in game (player 1 dropped out),
+walking into the next level worked once, but after the load the camera
+stood still, the player was held at the edge of the picture, and level exits
+and area doors no longer reacted: stuck.
+
+**Why.** The console showed the camera's player (game object `+40`) as -1
+(nobody) right after the load; before the load it was 2 (player 3, section
+38). The volume camera (`CCameraVolumeBehaviour`) keeps the actors it may
+focus on in a **fixed list of two**: `+492` / `+496`, end pointer at `+500`
+(set up by its constructor at `0x82106954`; nothing else allocates it). The
+focus player is the owner of the list's first entry (`sub_821099C0`).
+
+| function | what it does |
+|---|---|
+| `sub_82109940` | add (camera, actor): only while the list holds fewer than 2, else the actor is dropped |
+| `sub_82109AC8` | remove: the next entry becomes the focus, or nobody (-1) when the list is empty |
+| `sub_82109BB0` | replace one actor by another |
+| `sub_82109850` | a primary (group 0) interest registers with the camera: its record (`+196` list, 36 bytes, `+0` the actor) + add |
+
+At a level start every Crash registers, also the ones whose players aren't
+playing (they become hidden masks). Players 1 and 2 fill both slots, players
+3 and 4 are dropped; then the hidden players 1-2 turn into masks and leave
+the list. It ends up empty:
+
+```
+camera focus list full: actor F9F8C2A0 (player 3) waits for room
+camera focus list full: actor F9FA3CB0 (player 4) waits for room
+(player 1 and player 2 leave)  ->  focus -1
+```
+
+With focus -1 the camera has no target, and story triggers for "the
+camera's player" (-4) answer nobody. In a running level the bug didn't show:
+player 3 joins later, when the list has room.
+
+**The change** (`more_players.cpp`). After a removal leaves room, the list
+is refilled from the camera's own primary interest records (skipping the
+actor that is leaving: its record goes right after), through the game's own
+add, in record order (players 1-2 first). With two local players the list
+never overflows and nothing changes.
+
+```
+camera focus list after F9D7A410 (player 1) left: 2 entries [F9D71E30 F9F8C2A0] = players 2 3
+camera focus list after F9D71E30 (player 2) left: 2 entries [F9F8C2A0 F9FA3CB0] = players 3 4
+```
+
+**Tested** with fake controllers on a save that starts next to a level exit:
+player 3 alone, player 4 alone, players 3 and 4 together (three level changes
+back and forth), players 1 and 3 (list [1, 3], focus player 1), and two
+players with `--local_players=2`. After every load the camera follows the
+player, they walk on and through the next exit; hidden players always leave
+the list; 0 errors.
