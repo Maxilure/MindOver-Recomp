@@ -13,7 +13,9 @@
 //    (old & 0xEF), sends it (sub_820B0B70(body, msg)) and frees it
 //    (sub_820B7F50). Bodies: sub_8226FC88(game, player) (4 players since
 //    more_players.cpp). We run the same steps for players 3-4 after the
-//    original, with the position moved along the line through the two spots.
+//    original, with the position BETWEEN the two spots (player 2's own spot
+//    when player 2 isn't playing): the same action moves players at area
+//    doors, where a spot beyond them can be over a drop (findings/26 s.48).
 //
 // 2. THE "HOLD STILL" LOOP. The action's update (sub_8229DE30), on its first
 //    call when its flag +0x18 bit 0x40 is set (the variant that waits for a
@@ -81,9 +83,6 @@ constexpr uint32_t kCamFovX = 16, kCamAspect = 28;
 // half-height from the centre), and the heights checked above the feet.
 constexpr float kMarginX = 0.85f, kMarginTop = 0.80f, kMarginBottom = 0.88f;
 constexpr float kCrashHeight = 2.0f, kTitanHeight = 4.5f;
-// Players 3-4 stand this far beyond the spots (the spots' own spacing,
-// within these bounds).
-constexpr float kMinSpacing = 2.5f, kMaxSpacing = 5.0f;
 constexpr int64_t kArmedMs = 15000;  // a shot must start this soon after the teleport
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
@@ -224,13 +223,17 @@ extern "C" REX_FUNC(sub_8229E3C8) {
   REXLOG_INFO("Victory scenes: the players are moved to two spots ({:08X}, {:08X}); {} local players", first,
               second, more_players::LocalPlayerCount());
   if (!first || !second || more_players::LocalPlayerCount() <= 2 || !Scratch()) return;
-  // Players 3-4 on the line through the two spots: 3 beyond the first, 4
-  // beyond the second (the first spot is the focus player's).
+  // Players 3-4 BETWEEN the two spots (2026-10-25, findings/26 s.48). The
+  // first version put them 2.5-5 units BEYOND the spots along the line through
+  // them; this same action moves the players at area doors / exits too, and
+  // there the spots sit on a path or a ledge: player 4 was placed over a drop
+  // ((-363.7, 17.0, -244.9), dead 33 units lower a second later). The spots
+  // themselves are designer-placed on solid ground, so the stretch between
+  // them is the safe place: player 3 at a third, player 4 at two thirds; when
+  // player 2 isn't playing, their spot is free and player 4 takes it. Heights
+  // follow the spots, 0.25 higher (they drop onto the ground).
   const Vec a = ReadVec(first + kSpotPosition), b = ReadVec(second + kSpotPosition);
-  Vec line = a - b;
-  line.y = 0;
-  const float spacing = std::clamp(Length(line), kMinSpacing, kMaxSpacing);
-  line = Normalized(line);
+  const bool second_free = !InGame(1);
   int moved = 0;
   for (int p = 2; p < kMaxPlayers; ++p) {
     if (!InGame(p)) continue;
@@ -240,7 +243,8 @@ extern "C" REX_FUNC(sub_8229E3C8) {
       continue;
     }
     const bool beside_first = p == 2;
-    const Vec at = beside_first ? a + line * spacing : b - line * spacing;
+    const float along = p == 3 && second_free ? 1.0f : (p == 2 ? 1.0f / 3.0f : 2.0f / 3.0f);
+    const Vec at = a + (b - a) * along + Vec{0, 0.25f, 0};
     Teleport(ctx, base, action, beside_first ? first : second, body, at);
     ++moved;
     REXLOG_INFO("Victory scenes: player {} placed at ({:.1f} {:.1f} {:.1f})", p + 1, at.x, at.y, at.z);

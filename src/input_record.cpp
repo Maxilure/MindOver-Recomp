@@ -364,7 +364,25 @@ void BeforeFilters(uint32_t player, uint8_t* gamepad, uint32_t& result, uint8_t*
   }
 }
 
+// The last state the game read per player (for LastRead: a dummy player that
+// copies someone, players/dummy_players.h). Kept even with recording off.
+std::mutex g_last_mutex;
+std::array<uint8_t, 12> g_last_read[kPlayers] = {};
+bool g_last_connected[kPlayers] = {};
+
+bool LastRead(uint32_t player, uint8_t gamepad[12]) {
+  if (player >= kPlayers) return false;
+  std::lock_guard<std::mutex> lock(g_last_mutex);
+  std::memcpy(gamepad, g_last_read[player].data(), 12);
+  return g_last_connected[player];
+}
+
 void AfterFilters(uint32_t player, const uint8_t* gamepad, uint32_t result) {
+  if (player < kPlayers) {
+    std::lock_guard<std::mutex> lock(g_last_mutex);
+    g_last_connected[player] = result == 0;
+    if (result == 0) std::memcpy(g_last_read[player].data(), gamepad, 12);
+  }
   if (player >= kPlayers || !REXCVAR_GET(debug_input_record)) return;
   Pad pad;
   pad.connected = result == 0;

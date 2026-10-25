@@ -66,6 +66,7 @@
 #include "overlay_banner.h"
 #include "fps_overlay.h"
 #include "ui/wii_cursor.h"
+#include "players/dummy_players.h"
 #include "input/prompt_icons.h"
 #include "effects/post_effects.h"
 #include "language/language.h"
@@ -273,6 +274,8 @@ class CrashMomApp : public rex::ReXApp {
     fps_overlay::Install();
     // The Wii-style gameplay cursor for the mouse (ui/wii_cursor.h): when to show it.
     wii_cursor::Install();
+    // Dummy controllers steered from F5 (follow / copy a player): players/dummy_players.h.
+    dummy_players::Install();
     // Keyboard / mouse pictures in the game's button prompts (input/prompt_icons.h).
     prompt_icons::Install();
     // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).

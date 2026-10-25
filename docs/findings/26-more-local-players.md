@@ -1723,3 +1723,229 @@ back and forth), players 1 and 3 (list [1, 3], focus player 1), and two
 players with `--local_players=2`. After every load the camera follows the
 player, they walk on and through the next exit; hidden players always leave
 the list; 0 errors.
+
+## 44. Two masks at once: a mask on a player who isn't playing
+
+**The symptom.** Two players (players 1 and 4, `--local_players=4`) turn
+into masks and back over and over. Suddenly the camera stops following
+anyone and stays at one spot high up; joining or respawning players are
+teleported there; both reticles freeze; level exits stop working. The
+mask / unmask trick itself is the original game's behaviour (used in
+speedruns) and stays as it is.
+
+**What the log showed.** The camera's focus list held player 2's Crash, but
+player 2 had never joined: the game builds a hidden player-2 Crash at every
+level start and parks it as a mask (its position was constant, up top).
+
+```
+states 2 0 0 3                    (player 4 starts turning into a mask)
+other player of <P1> (asked from 82235198): <P2 hidden> (original rule)
+holder (owner <P2 hidden>) attach <P1> as main       (player 1's mask rides it)
+camera focus list after <P4> left: 1 entry [<P2 hidden>] = players 2 0
+```
+
+**Why.** The game has two ways into a mask. The ordinary B asks
+"may I turn into a mask?" (section 35), which says no while another player
+is turning into one. The off-screen CATCH-UP (findings/28 s.4) does not:
+the co-op update `sub_82234FB0` calls "is my Crash off screen?"
+(`sub_82235978`, call at `0x82234FF0`, r4 = my Crash) and, off screen with
+B released, forces the mask at once. Player 1 (off screen) released B
+0.45 s after player 4 had started its own mask; the partner lookup
+(`sub_82235B10`) found nobody on foot and fell back to the original
+two-player rule, "player 1's partner is player 2". With both real players
+masks, the only Crash on foot left for the camera was the hidden one.
+
+**The change** (`more_players.cpp`). At that one call (return address
+`0x82234FF4`), a joined player is "on screen" while no partner could carry
+the mask (no other player on foot with room on their holder): no catch-up
+with nobody to catch up to, the same answer the ordinary B gives. The
+original's handling of the hidden player-2 Crash (not joined) is untouched.
+If the partner lookup ever answers a not-joined player again with three or
+four local players, it logs a warning ("who isn't playing").
+
+## 45. Rejoining into the water: hidden Crashes left where a player died
+
+**The symptom.** Players 1 and 4 playing; player 1 falls into deadly water.
+After the countdown, player 1 rejoins next to player 4 and, a moment later,
+flies about 30 units in an arc back into that water and dies again, every
+time. When the spot happened to be on dry land, player 1 survived there.
+
+**How it was found** (debug console on the running game):
+
+| Step | Result |
+|---|---|
+| per-frame watch of player 1 from death to rejoin | rejoin on foot next to player 4, then an arc (height 20.2 → 21.4 → water) at ~48 units/s; death 1.1 s later |
+| write watch on player 1's velocity | zero the whole flight: an animated move, not physics |
+| scan of 4 MB of game heap for the death spot | one copy: player 1's camera interest (+32), a camera height hold; overwriting it changed nothing |
+| the flight's end vs the other Crashes | it ends above the hidden player-2 Crash, which sat in the water |
+| `goto` the hidden player-2 Crash next to player 4, rejoin again | player 1 lands beside it, on dry land |
+
+**Why.** At every level start the game parks each not-joined player's Crash
+as a hidden mask on a player in game (section 15). When that player dies,
+their holder lets go of every mask (`sub_82239250`), and the hidden Crashes
+stay where the player died; nothing parks them again. The original never
+needs to: with two players, player 1 dying alone ends at a checkpoint. On
+rejoin, the jump uses the original pairing "player 1's partner is player 2"
+and aims at player 2's Crash, here a hidden one in the water.
+
+**The change** (`more_players.cpp`, `ReparkHiddenCrashes`, called every frame
+from the HUD update). With three or four local players, a Crash of a player
+not in game (co-op state 0) that has ridden nobody for 1 s is attached to
+the nearest player on foot whose holder has room, through the same attach
+the "riders follow their host" step uses. Log: "Crash (not in game) rode
+nobody at (...): parked on player N again".
+
+## 46. Mask spam leftovers: a hidden player in the camera's focus, a reticle on foot
+
+**The symptom.** Players 1 and 4; after many mask / unmask turns, with
+player 1 out of the game (dead), the camera framed player 4 badly and
+wobbled, and a purple reticle (player 4's) stayed in mid-screen while player
+4 walked on foot. Player 1 rejoining fixed the camera.
+
+**The camera.** The console showed the game's focus player = 2 (game +40 = 1)
+and the focus list (section 43) = players 2 and 4. Player 2 isn't playing:
+it was the hidden player-2 Crash, riding player 4 as a mask. Section 43's
+refill takes actors from the camera's player interest RECORDS, and a Crash
+keeps its record after the game takes it out of the focus list as it turns
+into a mask. When player 1 left, the refill put the hidden mask back in.
+Now the refill only takes the body (titan, else Crash) of a player ON FOOT
+(co-op state 2), like the game's own list.
+
+**The reticle.** The Crash fight tree turns a player's reticle on
+(`sub_8213FF18`, +48 bit `0x80`) when they become a mask and off
+(`sub_8213FFA8`) when they leave it; the two have no direct callers (script
+methods). Some way out of the mask during the spam skips the "off" call. Now,
+in the reticles' per-frame update (`sub_82265248`), the reticle of a player
+who is neither a mask (state 1) nor turning into one (3) is switched off
+(log: "reticle was still on while not a mask"). Three or four local players
+only. Exception: a player whose own game cursor is active (crosshair mode on
+keyboard and mouse, findings/47 s.5): its activation turns the reticle on and
+keeps it on; the first version switched player 1's off every frame (23,046
+times in three minutes of play), fighting the crosshair.
+
+## 47. Players 3-4 falling through the floor at a level start
+
+**The symptom.** Players 3-4 (player 4 alone too) dropped through the
+ground right after entering a new level: in some areas every time, in
+others never.
+
+**Why.** Their spawn events (section 9) are copies of player 2's, moved
+1.5 units (player 3) or 3 units (player 4) along x at the SAME height. A
+spawn point sits just above the ground at its own spot; where the ground
+beside it rises (a slope, a step, a rock), the moved spot was inside the
+floor. Seen in the logs: player 4 started at height 17.9 where player 1
+stood at 19.4 on the same patch of ground.
+
+**The change.** Players 3-4 start on player 2's own spot, player 4 0.3
+units to the side so the two don't start inside each other, both 0.25 units
+higher (they drop onto the ground).
+
+## 48. Players 3-4 falling at area doors: placed beyond the teleport spots
+
+**The symptom (continued).** With section 47 built, player 4 still fell
+through the ground right after passing an area door. The log showed no new
+spawn points there: the door ran DO_TeleportPlayer (section 39), the action
+that moves the players to two designer-placed spots. Our part put player 4 at
+(-363.7, 17.0, -244.9); one second later player 4 was dead at height -16.2,
+next to player 1's new spot.
+
+**Why.** Section 39 placed players 3-4 2.5-5 units BEYOND the two spots,
+along the line through them, at the spots' height. Victory scenes have room
+there; area doors often put the spots on a path or a ledge, and beyond them
+is a drop.
+
+**The change** (`victory_scenes.cpp`). Players 3-4 go BETWEEN the two
+spots, which are both on solid ground: player 3 at a third, player 4 at two
+thirds of the way; when player 2 isn't playing, player 4 takes player 2's
+own spot. Heights follow the spots, 0.25 units higher.
+
+## 49. Dummy players: fake controllers to steer from the F5 menu
+
+Testing three or four players needs three or four controllers. The fake
+controllers (`debug_fake_pads = 1-3`, players 2-4 by default, movable in F6)
+can now be driven from the F5 Cheats menu's "Dummy players" section
+(`src/players/dummy_players.*`), each in one of three modes:
+
+| Mode | What the dummy does |
+|---|---|
+| Idle | only what is clicked: START / A / B / X / Y / LB / RB / LT / RT / BACK buttons and a hold-to-walk stick pad (3 x 3) |
+| Follow player N | left stick toward that player, relative to the camera; stops ~3 units away, jumps when stuck below them |
+| Copy player N | that player's controller as the game read it (`input_record::LastRead`), minus START and BACK |
+
+The fake controller driver got a per-pad held state with analog sticks and
+triggers (`ScriptedInputDriver::SetLiveState`), set once per game frame;
+console / FIFO `dummy <2-4> follow|copy <1-4>` / `dummy <2-4> idle`.
+
+Tested on Wumpa Island (players 3-4 as dummies, player 1 by console): follow
+trailed two runs and stopped 3 units away; copy matched player 1's run (14.4
+vs 14.6 units) and jump.
+
+## 50. Loading paws: colours by who actually plays
+
+**The symptom.** With only player 4 in the game, the loading screen's paw
+prints showed player 1's orange colour (and player 4's purple trail), where
+a single player gets white paws in the original.
+
+**Why.** Section 28 coloured the real loading screen's trails by players 1-2
+only: with player 3 or 4 present it gave trail 0 player 1's two-player
+colour. With players 1-2 out (no controller), the game draws trail 0 anyway:
+the "nobody" trail that wanders by itself.
+
+**The change** (`more_players_loading.cpp`). Every player 1-4 with a
+controller counts: exactly one = white paws, whoever it is; two or more =
+each player's own colour (1 orange, 2 blue, 3 green, 4 purple). The game's
+wandering "nobody" trail isn't drawn while players 3-4 have trails of their
+own.
+
+The dummy players (section 49) can also pretend to be a controller model
+(Xbox 360, Xbox Series, DualShock 4, DualSense, Switch Pro, another maker):
+the Automatic button pictures then detect them from a real-looking GUID of
+that model (`dummy_players::DetectorKey`, `prompt_icons.cpp StyleOfPad`).
+
+## 51. A hidden player 3 back on a shoulder (main rider left behind)
+
+**The symptom.** Player 3 (not playing) suddenly stood visible on player
+4's shoulder, near a level exit: the GitHub issue #2 look, by another way.
+
+**What the log showed.**
+
+| Step | Event |
+|---|---|
+| 1 | dummy player 3 turns into a mask on player 1 (MAIN rider; players 2 and 4 hidden as extras), then drops out |
+| 2 (18 s later) | a teleport (DO_TeleportPlayer) moves player 1; player 3's hidden Crash stays at (-342.9, 75.6, -101.2), the issue #2 spot |
+| 3 (3 min later) | player 1 drops out: their holder lets go of every rider |
+| 4 (1 s later) | section 45's re-park attaches player 3's Crash to player 4: seen on player 4's shoulder |
+
+**Why.** Two gaps. (1) Section 42 keeps EXTRA riders in their host's zone;
+the original moves the main rider with player 1 at a teleport only when it is
+player 2, so a player 3 as the main rider stayed in the old zone. (2) Section
+45's re-park called the holder's attach directly; the game's own route
+(`sub_82235160`) first sends the Crash a HIDE message (`sub_820B4450` kind 0;
+kind 3 shows it again when leaving a mask), so a Crash that had been shown
+stayed visible.
+
+**The change** (`more_players.cpp`). The holder's per-frame handler keeps a
+main rider other than player 2 in its host's zone too. The re-park sends the
+game's messages: hide (kind 0) to the Crash, then the mask attach (kind 4,
+host + rider) to the Crash and to the host.
+
+## 52. Player 4's paws missing unless player 2 plays (a clobbered register)
+
+**The symptom.** With players 3 and 4 (or 1, 3 and 4), player 4's loading
+paws never appeared; with player 2 in the game they did.
+
+**Found with a temporary trace** of the shadow loading screen (section 28):
+player 3's trail started at (524, 480) and laid prints; player 4's stayed at
+(-1, -1), the reset's "not placed", with 0 prints.
+
+**Why.** The paw update fills its per-trail controller list in a loop
+(0x8226B354..78) that keeps its counter in r4 across the call to "controller
+of player r4" (`sub_82266130`); the original leaves r4 alone. Our 4-player
+version wrote the SHIFTED player back into r4: in the players 3-4 pass (shift
+2) the counter jumped to 2 after trail 0 and the loop ended. Trail 1's slot
+kept what the game's own pass had just written at the same stack spot:
+player 2's controller, so player 4's trail ran only while player 2 played.
+
+**The change** (`more_players.cpp`). The wrapper restores r4 to the value it
+was called with. Retested (players 3 and 4 only, through a level exit):
+both trails start and lay prints step for step.

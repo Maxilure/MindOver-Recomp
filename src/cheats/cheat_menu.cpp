@@ -15,6 +15,7 @@
 #include <rex/ui/virtual_key.h>
 
 #include "../input/keyboard_mouse.h"
+#include "../players/dummy_players.h"
 #include "cheats.h"
 #include "free_camera.h"
 #include "spawn.h"
@@ -61,7 +62,11 @@ class CheatDialog : public rex::ui::ImGuiDialog {
  protected:
   void OnDraw(ImGuiIO& io) override {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (!open_) return;
+    if (!open_) {
+      // (a dummy's held stick pad direction must not outlive the window)
+      for (int d = 0; d < dummy_players::kMaxDummies; ++d) dummy_players::SetHeldStick(d, 0.0f, 0.0f);
+      return;
+    }
     // Top right, out of Crash's way (the game's camera keeps him centred).
     const ImVec2 size(std::min(430.0f, io.DisplaySize.x - 20.0f),
                       std::min(700.0f, io.DisplaySize.y - 20.0f));
@@ -92,6 +97,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
 
     DrawCharacter(snap);
     DrawSpawn(snap);
+    DrawDummies();
 
     Section("Everyone");
     bool god = cheats::GodMode();
@@ -317,6 +323,95 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::BeginDisabled(!frozen);
     if (ImGui::Button("Step one frame")) cheats::RequestStepFrame();
     ImGui::EndDisabled();
+  }
+
+  // DUMMY PLAYERS (players/dummy_players.h): the fake controllers, half-steered.
+  // mutex_ held.
+  void DrawDummies() {
+    Section("Dummy players");
+    const int count = dummy_players::Count();
+    if (count <= 0) {
+      ImGui::TextDisabled("No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml");
+      ImGui::TextDisabled("(1-3 dummies) and restart the game.");
+      return;
+    }
+    ImGui::TextDisabled("START joins, B leaves a mask. Hold a direction on the pad to walk.");
+    static const char* kModes[] = {"Idle (buttons only)", "Follow player 1", "Follow player 2", "Follow player 3",
+                                   "Follow player 4",     "Copy player 1",   "Copy player 2",   "Copy player 3",
+                                   "Copy player 4"};
+    for (int d = 0; d < count; ++d) {
+      ImGui::PushID(d);
+      const int player = dummy_players::PlayerOf(d);
+      if (player >= 0) {
+        ImGui::Text("Dummy controller %d: player %d", d + 2, player + 1);
+      } else {
+        ImGui::Text("Dummy controller %d: plays as nobody (F6 Players)", d + 2);
+      }
+      // Mode: 0 idle, 1-4 follow player 1-4, 5-8 copy player 1-4.
+      const dummy_players::Mode mode = dummy_players::GetMode(d);
+      int item = mode == dummy_players::Mode::kIdle ? 0
+                 : mode == dummy_players::Mode::kFollow ? 1 + dummy_players::GetTarget(d)
+                                                        : 5 + dummy_players::GetTarget(d);
+      ImGui::SetNextItemWidth(170.0f);
+      if (ImGui::Combo("##mode", &item, kModes, IM_ARRAYSIZE(kModes))) {
+        if (item == 0) dummy_players::SetMode(d, dummy_players::Mode::kIdle, 0);
+        else if (item <= 4) dummy_players::SetMode(d, dummy_players::Mode::kFollow, item - 1);
+        else dummy_players::SetMode(d, dummy_players::Mode::kCopy, item - 5);
+      }
+      ImGui::SetItemTooltip(
+          "Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
+          "below them. Copy: repeats that player's controller (not START / BACK).\n"
+          "The buttons and the stick pad work in every mode.");
+      // Which controller it pretends to be (the Automatic button pictures).
+      ImGui::SameLine();
+      int model = dummy_players::GetModel(d);
+      ImGui::SetNextItemWidth(190.0f);
+      if (ImGui::BeginCombo("##model", dummy_players::ModelName(model))) {
+        for (int m = 0; m < dummy_players::ModelCount(); ++m) {
+          if (ImGui::Selectable(dummy_players::ModelName(m), m == model)) dummy_players::SetModel(d, m);
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::SetItemTooltip(
+          "Which controller this dummy pretends to be. With Controller Icons on\n"
+          "Automatic, the game detects it from its maker and model like a real pad\n"
+          "and shows that player's prompts in its button pictures.");
+      // Buttons: a tap each (150 ms; START a little longer).
+      static const char* kButtons[][2] = {{"START", "start"}, {"A", "a"}, {"B", "b"}, {"X", "x"},
+                                          {"Y", "y"},         {"LB", "lb"}, {"RB", "rb"}, {"LT", "lt"},
+                                          {"RT", "rt"},       {"BACK", "back"}};
+      for (size_t i = 0; i < IM_ARRAYSIZE(kButtons); ++i) {
+        if (i) ImGui::SameLine();
+        if (ImGui::SmallButton(kButtons[i][0])) {
+          dummy_players::Tap(d, kButtons[i][1], i == 0 ? 300 : 150);
+        }
+      }
+      // The stick pad: 3 x 3, held = walk that way (up = away from the camera).
+      float hx = 0.0f, hy = 0.0f;
+      for (int row = 0; row < 3; ++row) {
+        for (int col = 0; col < 3; ++col) {
+          if (col) ImGui::SameLine();
+          ImGui::PushID(row * 3 + col);
+          const bool centre = row == 1 && col == 1;
+          static const char* kArrows[3][3] = {{"\\", "^", "/"}, {"<", " ", ">"}, {"/", "v", "\\"}};
+          ImGui::BeginDisabled(centre);
+          ImGui::Button(kArrows[row][col], ImVec2(26.0f, 22.0f));
+          ImGui::EndDisabled();
+          if (!centre && ImGui::IsItemActive()) {
+            hx = float(col - 1);
+            hy = float(1 - row);
+          }
+          ImGui::PopID();
+        }
+      }
+      if (hx != 0.0f && hy != 0.0f) {  // diagonals: full tilt, not more
+        hx *= 0.7071f;
+        hy *= 0.7071f;
+      }
+      dummy_players::SetHeldStick(d, hx, hy);
+      ImGui::PopID();
+      ImGui::Spacing();
+    }
   }
 
   // mutex_ held.

@@ -54,6 +54,12 @@ void BeforeFilters(uint32_t player, uint8_t* gamepad, uint32_t& result, uint8_t*
 // Game thread, at the wrapper's end: records what the game gets.
 void AfterFilters(uint32_t player, const uint8_t* gamepad, uint32_t result);
 
+// The last controller state the game read for `player` (0-3): the 12-byte
+// big-endian XINPUT_GAMEPAD (u16 buttons, u8 LT, u8 RT, s16 LX LY RX RY).
+// False if that player had no controller then. Kept with recording off too
+// (a dummy player copying someone: players/dummy_players.h). Any thread.
+bool LastRead(uint32_t player, uint8_t gamepad[12]);
+
 // The debug console's `replay` (any thread). Returns the reply text; throws
 // std::runtime_error on a bad file / range.
 // raw: in a game-frame replay above 30 fps, hand changes over at once

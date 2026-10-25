@@ -10,6 +10,10 @@
 //   SPAWN: titans (knocked out = one hit from down, then jack; or ready to
 //     fight), enemies (untested), or any template by name (experimental), beyond
 //     that player as the camera sees it (spawn.h).
+//   DUMMY PLAYERS: the dummy controllers (debug_fake_pads = 1-3): per dummy a
+//     mode (idle / follow player N / copy player N), buttons (START, A, B, X,
+//     Y, LB, RB, LT, RT, BACK) and a hold-to-walk stick pad
+//     (players/dummy_players.h).
 //   EVERYONE: God mode.
 //   TIME: game speed (0.1x - 4x), Freeze, Step one frame.
 //   CAMERA: Free camera (fly with W A S D, E / Q, right mouse button = look).

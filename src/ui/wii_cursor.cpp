@@ -442,6 +442,12 @@ void SwitchGameCursors(PPCContext& ctx, uint8_t* base) {
   }
 }
 
+bool GameCursorActive(uint32_t crash) {
+  const auto it = g_cursor_of.find(crash);
+  return it != g_cursor_of.end() &&
+         (*rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(it->second + kFlagsByte) & kActive);
+}
+
 void Create(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate) {
   if (drawer && !g_dialog) g_dialog = new CursorDialog(drawer, immediate);
 }

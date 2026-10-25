@@ -82,6 +82,7 @@ set(CRASHMOM_SOURCES
     src/players/outfit_previews.cpp  # the chest: one animated 3D model per player
     src/players/spin_colours.cpp  # coloured Crashes spin in their colour (findings/46 s.4)
     src/players/victory_scenes.cpp  # players 3-4 in the victory scenes, all in view (findings/26 s.39)
+    src/players/dummy_players.cpp  # dummy controllers for co-op tests: follow / copy a player, F5 buttons
     src/players/who_plays.cpp    # no profiles: who plays = which controllers play (the game's sign-in, PC version)
     src/players/lost_controller.cpp  # a player's controller is gone: pause + message anyone answers (findings/26)
     src/data/data_patcher.cpp    # changed copies of game data files, built from the player's disc at run time

@@ -54,6 +54,11 @@ void Install();
 // Needs a game context: called once per frame from the reticle's Update
 // wrapper (input/mouse_reticle.cpp, player 1's reticle). Game thread.
 void SwitchGameCursors(PPCContext& ctx, uint8_t* base);
+
+// Is this Crash's own cursor behaviour (CGameplayCursorBehaviour) active? Its
+// activation turns the player's reticle ON and keeps it on: in crosshair mode
+// the keyboard player's reticle is on while they walk (game thread).
+bool GameCursorActive(uint32_t crash);
 // Makes the overlay (CrashMomApp::OnCreateDialogs).
 void Create(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate);
 

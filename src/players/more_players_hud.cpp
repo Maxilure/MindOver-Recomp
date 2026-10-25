@@ -464,6 +464,8 @@ uint32_t ObjectOf(int kind, uint32_t front_end, int player);  // more_players_fr
 }
 void UpdateCounterLayout(PPCContext& ctx, uint8_t* base);  // below (counter prompts)
 extern "C" REX_FUNC(sub_8226A998) {
+  // (every frame in play, HUD hidden or not: not a HUD job, just a per-frame spot)
+  more_players::ReparkHiddenCrashes(ctx, base);
   if (cheats::HudHidden()) return;
   const uint32_t controller = ctx.r3.u32;
   __imp__sub_8226A998(ctx, base);

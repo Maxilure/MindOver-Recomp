@@ -34,6 +34,7 @@
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 #include "../input/title_any_button.h"
+#include "../ui/wii_cursor.h"
 
 #include <cstring>
 
@@ -257,6 +258,31 @@ extern "C" REX_FUNC(__imp__sub_82265248);
 extern "C" REX_FUNC(sub_82265248) {
   const uint32_t fe = ctx.r3.u32;
   const double dt = ctx.f1.f64;
+  // A RETICLE BELONGS TO A MASK (2026-10-25, findings/26 s.46). The Crash fight
+  // tree turns a player's reticle on (+48 bit 0x80, sub_8213FF18) when they
+  // become a mask and off (sub_8213FFA8) when they leave it; turning into a
+  // mask and out again over and over (players 1 and 4) left player 4's reticle
+  // ON while they walked on foot: a purple reticle in mid-screen for good. Some
+  // way out of the mask skips the "off" call. Here, every frame: the reticle of
+  // a player who isn't a mask (co-op state 1) or turning into one (3) is off.
+  // Except a player whose own game cursor is active (crosshair mode on keyboard
+  // and mouse, wii_cursor.h): that cursor keeps their reticle on by design; the
+  // first version switched it off every frame (23,000 times in three minutes).
+  // With 3-4 local players only (two-player games stay the original's).
+  if (more_players::LocalPlayerCount() > 2 && fe == g_front_end) {
+    for (int p = 0; p < more_players::LocalPlayerCount(); ++p) {
+      const uint32_t state = Read32(0x8259B11C + 4 * uint32_t(p));
+      if (state == 1 || state == 3) continue;
+      if (wii_cursor::GameCursorActive(more_players::CharacterOfPlayer(p))) continue;
+      const uint32_t reticle = p < 2 ? fe + 8420 + 52 * uint32_t(p) : ObjectOf(kReticle, fe, p);
+      if (!reticle) continue;
+      uint8_t* flags = Guest(reticle + 48);
+      if (*flags & 0x80) {
+        *flags &= 0x7F;
+        REXLOG_INFO("Co-op: player {}'s reticle was still on while not a mask (state {}): off", p + 1, state);
+      }
+    }
+  }
   __imp__sub_82265248(ctx, base);
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) CallVirtual(ctx, base, g_objects[kReticle][i], 0, 0, dt);

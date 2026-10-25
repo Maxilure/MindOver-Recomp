@@ -86,6 +86,19 @@ class ScriptedInputDriver final : public rex::input::InputDriver {
   // god on", "p2.start"...). False (logged) when it isn't understood.
   bool HandleLine(const std::string& line);
 
+  // 5) DUMMY PLAYERS (players/dummy_players.h, the F5 menu): a held state per
+  // fake controller, set every frame by the dummy logic (follow / copy / the
+  // menu's stick), with ANALOG sticks and triggers. It adds to the taps:
+  // buttons are OR'ed, a tap's full-tilt stick direction wins over it.
+  struct LiveState {
+    uint16_t buttons = 0;                       // X_INPUT_GAMEPAD_* bits
+    int16_t lx = 0, ly = 0, rx = 0, ry = 0;     // XInput sticks (+y up, +x right)
+    uint8_t lt = 0, rt = 0;                     // triggers 0-255
+  };
+  void SetLiveState(int pad, const LiveState& state);
+  // How many fake controllers there are (1 + --debug_fake_pads).
+  int PadCount() const { return pads_; }
+
   rex::X_STATUS Setup() override;
   void EnumerateDevices(std::vector<rex::input::DeviceInfo>& out) override;
   rex::X_RESULT GetDeviceState(rex::input::DeviceId id,
@@ -122,6 +135,8 @@ class ScriptedInputDriver final : public rex::input::InputDriver {
   const int pads_;          // how many fake controllers (1 + --debug_fake_pads)
   std::vector<Tap> taps_;  // timeline taps + live taps (appended by the FIFO)
   Inputs last_inputs_[kMaxPads] = {};
+  LiveState live_[kMaxPads] = {};                    // SetLiveState
+  rex::input::X_INPUT_GAMEPAD last_state_[kMaxPads] = {};  // what was last handed out
   uint32_t packet_number_[kMaxPads] = {1, 1, 1, 1};  // must change whenever the state changes
   // "p<N>.unplug" / "p<N>.plug": a fake controller that is unplugged
   // isn't listed any more (the SDK re-lists devices at every poll), exactly

@@ -39,6 +39,7 @@
 #include "bindings.h"
 #include "keyboard_mouse.h"
 #include "players.h"
+#include "../players/dummy_players.h"
 
 // stb_image (from the SDK's source tree), private to this file.
 #define STB_IMAGE_STATIC
@@ -778,6 +779,11 @@ int StyleOfPad(const std::string& key) {
   // A debug fake controller ("debug-pad-2".."4"): the style --debug_fake_pad_styles
   // gives it (tests of per-player pictures with every player in another look).
   if (key.rfind("debug-pad-", 0) == 0 && key.size() == 11) {
+    // A dummy that pretends to be a real model (F5 Dummy players): detect from
+    // that model's GUID, exactly as for a plugged-in pad.
+    if (const std::string pretend = dummy_players::DetectorKey(key.back() - '2'); !pretend.empty()) {
+      return StyleOfPad(pretend);
+    }
     std::string_view list = REXCVAR_GET(debug_fake_pad_styles);
     for (int n = key.back() - '2'; n > 0 && !list.empty(); --n) {
       const size_t comma = list.find(',');

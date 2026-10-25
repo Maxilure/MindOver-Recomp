@@ -42,13 +42,17 @@
 //     picture and foot UVs, in the players' MARKER colours (the colour of
 //     the banner over their heads: --marker_colour_player3 green,
 //     --marker_colour_player4 purple, more_players_frontend.cpp).
-//   * Player 1's trail takes its two-player colour (orange) as soon as
-//     anyone else plays, not only player 2: the real draw counts players
-//     1-2 only, and alone it's white.
+//   * COLOURS COUNT EVERY PLAYER 1-4 (2026-10-25, findings/26 s.50): exactly
+//     one player with a controller = white, whoever it is (was: player 4
+//     alone got purple paws plus the game's own trail in player 1's
+//     orange); two or more = each player's colour. The game's "nobody"
+//     trail (trail 0 wandering when players 1-2 have no controller) isn't
+//     drawn while players 3-4 have trails of their own.
 //   * The shadow is reset with the real one.
 // =============================================================================
 #include "more_players.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -130,6 +134,13 @@ bool ExtraPlayersPresent(PPCContext& ctx, uint8_t* base) {
   if (more_players::LocalPlayerCount() <= 2) return false;
   return HasController(ctx, base, 2) || HasController(ctx, base, 3);
 }
+// How many players (1-4) have a controller = a trail of their own.
+int PlayersWithTrails(PPCContext& ctx, uint8_t* base) {
+  int n = 0;
+  for (int p = 0; p < std::min(4, more_players::LocalPlayerCount()); ++p) n += HasController(ctx, base, p);
+  return n;
+}
+constexpr uint32_t kWhite = 0x00FFFFFF;  // the original's "alone" colour (RGB)
 
 // The marker colour (0xAARRGGBB) of player 3 / 4 (p = 2, 3).
 uint32_t MarkerColour(int p) {
@@ -202,6 +213,7 @@ extern "C" REX_FUNC(sub_8226BDA0) {
   __imp__sub_8226BDA0(ctx, base);
   if (!g_shadow || !ExtraPlayersPresent(ctx, base)) return;
   const float alpha_scale = ReadFloat(0x8201F94C);  // 255 (the draw's f30)
+  const bool alone = PlayersWithTrails(ctx, base) == 1;  // the only one: white, like the original alone
   for (int t = 0; t < 2; ++t) {
     const int p = 2 + t;
     if (!HasController(ctx, base, p)) continue;
@@ -215,7 +227,7 @@ extern "C" REX_FUNC(sub_8226BDA0) {
       if (!(alpha > 0.0f)) continue;
       // As the original: alpha byte = (int)(alpha x 255), feet alternate UV sets.
       const uint32_t a = uint32_t(int32_t(alpha * alpha_scale)) & 0xFF;
-      const uint32_t colour = a << 24 | (MarkerColour(p) & 0x00FFFFFF);
+      const uint32_t colour = a << 24 | (alone ? kWhite : (MarkerColour(p) & 0x00FFFFFF));
       CallGame(__imp__sub_8225F108, ctx, base, screen, print, g_uvs + 32 * ((j + 1) % 2),
                colour, Read32(screen + kPicture));
     }
@@ -232,16 +244,23 @@ extern "C" REX_FUNC(sub_8226BF90) {
   }
 }
 
-// A paw drawn by the REAL loading screen: alone, the original draws player
-// 1's trail white, and it counts players 1-2 only. With player 3 or 4 in,
-// player 1 isn't alone: take the two-player colour of the trail's player.
+// A paw drawn by the REAL loading screen (players 1-2's trails). The original
+// counts players 1-2 only: alone = white, two = their colours; with nobody
+// it draws trail 0 as a white trail that WANDERS by itself. With player 3 or
+// 4 in (2026-10-25, findings/26 s.50: "only player 4 = player 1's orange
+// paws"), every player 1-4 counts:
+//   * a trail whose player has no controller (the wanderer) isn't drawn:
+//     players 3-4 have their own trails;
+//   * exactly one player with a trail: white (theirs, whoever it is);
+//   * two or more: the trail's player's colour (player 1 orange, 2 blue).
 extern "C" REX_FUNC(sub_8225F108) {
   const uint32_t element = ctx.r3.u32, print = ctx.r4.u32;
-  if (Read32(element) == kLoadingScreenVtable && (ctx.r6.u32 & 0x00FFFFFF) == 0x00FFFFFF &&
-      print >= element + kTrails && print < element + kTrails + 2 * kTrailSize &&
-      ExtraPlayersPresent(ctx, base)) {
-    const uint32_t t = (print - element - kTrails) / kTrailSize;
-    ctx.r6.u64 = (ctx.r6.u32 & 0xFF000000) | (Read32(kTwoPlayerColours + 4 * t) & 0x00FFFFFF);
+  if (Read32(element) == kLoadingScreenVtable && print >= element + kTrails &&
+      print < element + kTrails + 2 * kTrailSize && ExtraPlayersPresent(ctx, base)) {
+    const int t = int((print - element - kTrails) / kTrailSize);
+    if (!HasController(ctx, base, t)) return;  // nobody's wandering trail
+    const uint32_t rgb = PlayersWithTrails(ctx, base) == 1 ? kWhite : Read32(kTwoPlayerColours + 4 * t) & 0x00FFFFFF;
+    ctx.r6.u64 = (ctx.r6.u32 & 0xFF000000) | rgb;
   }
   __imp__sub_8225F108(ctx, base);
 }

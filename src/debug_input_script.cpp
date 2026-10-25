@@ -23,6 +23,7 @@
 #include "cheats/cheats.h"
 #include "debug_console.h"
 #include "input/keyboard_mouse.h"
+#include "players/dummy_players.h"
 
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
                       "Debug: timed input taps, e.g. \"8000:start,30000:lsright:2000\" "
@@ -31,8 +32,9 @@ REXCVAR_DEFINE_STRING(debug_input_fifo, "", "CrashMoM",
                       "Debug: named pipe to read live input commands from, one per "
                       "line: \"<inputs> [hold ms]\" (Linux; empty = off)");
 REXCVAR_DEFINE_INT32(debug_fake_pads, 0, "CrashMoM",
-                     "Debug: 1-3 more fake controllers (players 2-4 by default), driven by "
-                     "\"p<N>.\" commands in --debug_input_script / --debug_input_fifo (0 = off)");
+                     "Dummy controllers for testing co-op: 1-3 fake controllers (players 2-4 by default), "
+                     "driven from the F5 menu's Dummy players section (follow / copy a player, buttons) "
+                     "or by \"p<N>.\" commands in --debug_input_script / --debug_input_fifo (0 = off)");
 
 // Xbox types (X_RESULT, X_ERROR_*, X_INPUT_STATE...) live in these.
 using namespace rex;
@@ -240,6 +242,30 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
     REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (mouse <x 0-1> <y 0-1>)", line);
     return false;
   }
+  // "dummy <N> follow <P>" / "dummy <N> copy <P>" / "dummy <N> idle": dummy
+  // controller N (2-4) follows / copies player P (1-4) (players/dummy_players.h).
+  if (view.substr(0, 6) == "dummy ") {
+    int n = 0, p = 1;
+    char what[16] = {};
+    const int got = std::sscanf(line.c_str() + 6, "%d %15s %d", &n, what, &p);
+    const std::string mode = what;
+    // "dummy <N> model <M>": which controller it pretends to be (0 = none).
+    if (got == 3 && n >= 2 && n <= 4 && mode == "model" && p >= 0 && p < dummy_players::ModelCount()) {
+      dummy_players::SetModel(n - 2, p);
+      return true;
+    }
+    if (got >= 2 && n >= 2 && n <= 4 && (mode == "idle" || ((mode == "follow" || mode == "copy") && got == 3 &&
+                                                             p >= 1 && p <= 4))) {
+      dummy_players::SetMode(n - 2,
+                             mode == "idle"     ? dummy_players::Mode::kIdle
+                             : mode == "follow" ? dummy_players::Mode::kFollow
+                                                : dummy_players::Mode::kCopy,
+                             p - 1);
+      return true;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (dummy <2-4> follow|copy <1-4> / dummy <2-4> idle)", line);
+    return false;
+  }
   // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
   if (view.substr(0, 6) == "cheat ") {
     // "cheat menu" opens / closes the F5 window (draws it: a crash check).
@@ -360,26 +386,42 @@ X_RESULT ScriptedInputDriver::GetDeviceState(DeviceId id, X_INPUT_STATE* out_sta
     }
   }
   if (inputs != last_inputs_[pad]) {
-    // XInput games compare packet_number to spot a new state.
-    ++packet_number_[pad];
     if (inputs) {
       REXLOG_INFO("debug_input_script: t={} ms pad {} inputs={:06X}", now_ms, pad + 1, inputs);
     }
     last_inputs_[pad] = inputs;
   }
+  // The taps (full tilt), with the held live state (dummy players) under them:
+  // buttons OR'ed, a tap's stick / trigger wins where it says something.
+  const LiveState& live = live_[pad];
+  auto axis = [&](uint32_t negative, uint32_t positive, int16_t held) {
+    return (inputs & (negative | positive)) ? Axis(inputs, negative, positive) : held;
+  };
+  X_INPUT_GAMEPAD state{};
+  state.buttons = uint16_t((inputs & 0xFFFF) | live.buttons);
+  // XInput sticks: +y is up, +x is right.
+  state.thumb_lx = axis(kStickLLeft, kStickLRight, live.lx);
+  state.thumb_ly = axis(kStickLDown, kStickLUp, live.ly);
+  state.thumb_rx = axis(kStickRLeft, kStickRRight, live.rx);
+  state.thumb_ry = axis(kStickRDown, kStickRUp, live.ry);
+  state.left_trigger = (inputs & kTriggerL) ? 0xFF : live.lt;
+  state.right_trigger = (inputs & kTriggerR) ? 0xFF : live.rt;
+  if (std::memcmp(&state, &last_state_[pad], sizeof(state)) != 0) {
+    // XInput games compare packet_number to spot a new state.
+    ++packet_number_[pad];
+    last_state_[pad] = state;
+  }
   if (out_state) {
-    std::memset(out_state, 0, sizeof(*out_state));
     out_state->packet_number = packet_number_[pad];
-    out_state->gamepad.buttons = uint16_t(inputs & 0xFFFF);
-    // XInput sticks: +y is up, +x is right.
-    out_state->gamepad.thumb_lx = Axis(inputs, kStickLLeft, kStickLRight);
-    out_state->gamepad.thumb_ly = Axis(inputs, kStickLDown, kStickLUp);
-    out_state->gamepad.thumb_rx = Axis(inputs, kStickRLeft, kStickRRight);
-    out_state->gamepad.thumb_ry = Axis(inputs, kStickRDown, kStickRUp);
-    out_state->gamepad.left_trigger = (inputs & kTriggerL) ? 0xFF : 0;
-    out_state->gamepad.right_trigger = (inputs & kTriggerR) ? 0xFF : 0;
+    out_state->gamepad = state;
   }
   return X_ERROR_SUCCESS;
+}
+
+void ScriptedInputDriver::SetLiveState(int pad, const LiveState& state) {
+  if (pad < 0 || pad >= pads_) return;
+  std::lock_guard<std::mutex> lock(mutex_);
+  live_[pad] = state;
 }
 
 X_RESULT ScriptedInputDriver::GetDeviceCapabilities(DeviceId id, uint32_t flags,

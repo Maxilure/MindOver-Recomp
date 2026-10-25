@@ -501,14 +501,23 @@ namespace more_players {
 thread_local int g_lookup_shift = 0;
 void ShiftControllerLookup(int shift) { g_lookup_shift = shift; }
 }  // namespace more_players
+// r4 GOES BACK AS IT CAME (2026-10-25, findings/26 s.52): the original leaves
+// r4 untouched, and the loading screen's update (0x8226B354..78) uses r4 as its
+// loop counter across this call ("controller of trail r4" for r4 = 0, 1). The
+// first version left the SHIFTED number in r4: in the players 3-4 pass (shift
+// 2) the loop ended after trail 0, and trail 1's controller slot kept what the
+// game's own pass had left there = player 2's controller. Player 4's paws
+// appeared only while player 2 played.
 extern "C" REX_FUNC(sub_82266130) {
+  const uint64_t asked = ctx.r4.u64;
   const int32_t player = int32_t(ctx.r4.u32) + more_players::g_lookup_shift;
-  ctx.r4.u64 = uint32_t(player);
   if (player >= 2 && player < kMaxPlayers) {
     ctx.r3.u64 = uint32_t(g_controllers[player - 2]);
     return;
   }
+  ctx.r4.u64 = uint32_t(player);
   __imp__sub_82266130(ctx, base);
+  ctx.r4.u64 = asked;
 }
 extern "C" REX_FUNC(sub_82266150) {
   const int32_t player = int32_t(ctx.r4.u32);
@@ -738,12 +747,23 @@ extern "C" REX_FUNC(sub_82283670) {
     g_building_spawn_for = -1;
     Write32(event + kEventPlayer, uint32_t(p));
     Write32(event + kEventNameHashLow, Read32(event + kEventNameHashLow) ^ uint32_t(p));
-    float x;
-    uint32_t bits = Read32(event + kEventX);
-    std::memcpy(&x, &bits, 4);
-    x += 1.5f * float(p - 1);  // a little to the side of player 2's spot
-    std::memcpy(&bits, &x, 4);
-    Write32(event + kEventX, bits);
+    // WHERE: player 2's own spot (2026-10-25, findings/26 s.47). The first
+    // version moved players 3-4 1.5 / 3 units along x at the SAME height: a
+    // spawn point is placed just above the ground at that exact spot, and where
+    // the ground beside it rises (a slope, a step), player 4 started inside the
+    // floor and fell through the level, every time in some areas. Now: player
+    // 2's spot, player 4 a hand's width (0.3) to the side so the two don't start
+    // inside each other, both 0.25 higher (they drop onto the ground).
+    auto shift = [&](uint32_t field, float by) {
+      float v;
+      uint32_t bits = Read32(event + field);
+      std::memcpy(&v, &bits, 4);
+      v += by;
+      std::memcpy(&bits, &v, 4);
+      Write32(event + field, bits);
+    };
+    shift(kEventX, 0.3f * float(p - 2));
+    shift(kEventX + 4, 0.25f);  // y
     ctx = call;
     ctx.r4.u64 = event;
     __imp__sub_82287860(ctx, base);
@@ -870,6 +890,15 @@ extern "C" REX_FUNC(sub_82235B10) {
   const uint32_t lr = uint32_t(ctx.lr);
   if (!best) {
     __imp__sub_82235B10(ctx, base);
+    // Nobody on foot: the original's answer can be the hidden Crash of a player
+    // who isn't playing (findings/26 s.44; the catch-up no longer gets here).
+    // No better answer exists (everyone else is a mask or turning into one),
+    // so it stays, but loud: a mask on that Crash takes over the camera.
+    const int answer_player = PlayerOf(ctx.r3.u32);
+    if (LocalPlayers() > 2 && answer_player >= 0 && Read32(kState + 4 * answer_player) == 0) {
+      REXLOG_WARN("Co-op: other player of {:08X} (asked from {:08X}) = player {}, who isn't playing "
+                  "(nobody on foot)", mine, lr, answer_player + 1);
+    }
   } else {
     ctx.r3.u64 = best;
   }
@@ -1044,6 +1073,92 @@ extern "C" REX_FUNC(sub_82239418) {
   }
 }
 
+// HIDDEN CRASHES LEFT BEHIND (2026-10-25, findings/26 s.45). Every level start
+// parks the Crash of each player who isn't playing as a hidden MASK on a
+// player in game (the "mask ... of actor ...: player 2 state 0" lines): it
+// travels with them and is never seen. When that player DIES, their holder lets
+// go of every mask (sub_82239250 above) and the hidden ones stay where the
+// player died; nothing parks them again. The original never needs to: with two
+// players, player 1 dying alone ends the game at a checkpoint. With 3-4 local
+// players (players 1 and 4 playing), player 1 died in the water, the hidden
+// player 2 Crash stayed in that water, and every time player 1 rejoined the
+// game threw them at "player 2's Crash" (the original pairing: player 1's
+// partner = player 2; an animated jump, velocity 0, found with the console:
+// with the hidden Crash moved to dry land by `goto`, player 1 landed beside it)
+// = back into the water, dead again, over and over.
+// The fix: a not-in-game player's Crash that has ridden nobody for kStraySeconds
+// is attached to the nearest player on foot with room, through the same attach
+// the riders-follow-their-host step above uses. Called every frame from the
+// HUD update (more_players_hud.cpp); 3-4 local players only.
+extern "C" REX_FUNC(__imp__sub_820B4450);  // message: show / hide (r3 msg, r4 kind: 0 hide, 3 show)
+extern "C" REX_FUNC(__imp__sub_820B44D0);  // message: mask (r3 msg, r4 kind 4 attach / 5 detach, r5 host, r6 rider)
+extern "C" REX_FUNC(__imp__sub_820B0B70);  // send a message to an actor (r3 actor, r4 msg)
+extern "C" REX_FUNC(__imp__sub_820B45C8);  // message: free
+void more_players::ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base) {
+  using StrayClock = std::chrono::steady_clock;
+  constexpr float kStraySeconds = 1.0f;
+  static StrayClock::time_point stray_since[kMaxPlayers];
+  const StrayClock::time_point now = StrayClock::now();
+  const bool active = LocalPlayers() > 2 && InPlay() && !Loading();
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    const uint32_t crash = p < LocalPlayers() ? CharacterOf(p) : 0;
+    // Only Crashes nobody plays (state 0: not joined, dropped out, dead) that ride nobody.
+    if (!active || !crash || Read32(kState + 4 * p) != 0 || g_host_of.count(crash)) {
+      stray_since[p] = {};
+      continue;
+    }
+    if (stray_since[p] == StrayClock::time_point{}) stray_since[p] = now;
+    if (std::chrono::duration<float>(now - stray_since[p]).count() < kStraySeconds) continue;
+    // The nearest player on foot whose holder has room.
+    float me[3];
+    if (!PositionOf(crash, me)) continue;
+    uint32_t best_holder = 0;
+    int best_player = -1;
+    float best_distance = 0.0f;
+    for (int q = 0; q < LocalPlayers(); ++q) {
+      if (q == p || Read32(kState + 4 * q) != 2) continue;
+      const uint32_t host = CharacterOf(q), holder = HolderOf(host);
+      float at[3];
+      if (!holder || !PositionOf(host, at)) continue;
+      const std::vector<uint32_t>* extras = ExtrasOf(holder);
+      const int riders = (Read32(holder + kHolderRider) != 0) + (extras ? int(extras->size()) : 0);
+      if (riders >= 1 + kMaxExtraRiders) continue;
+      const float d = (at[0] - me[0]) * (at[0] - me[0]) + (at[1] - me[1]) * (at[1] - me[1]) +
+                      (at[2] - me[2]) * (at[2] - me[2]);
+      if (best_player < 0 || d < best_distance) {
+        best_holder = holder;
+        best_player = q;
+        best_distance = d;
+      }
+    }
+    if (best_player < 0) continue;  // nobody on foot (or no room): try again next frame
+    REXLOG_INFO("Co-op: player {}'s Crash (not in game) rode nobody at ({:.1f}, {:.1f}, {:.1f}): parked on "
+                "player {} again",
+                p + 1, me[0], me[1], me[2], best_player + 1);
+    // As the game's own "hide and attach to the other player" (sub_82235160):
+    // a HIDE message (kind 0, sub_820B4450) to the Crash, then the mask
+    // ATTACH message (kind 4 with host + rider, sub_820B44D0) to the Crash and
+    // to its host, each freed after (sub_820B45C8). A first version called the
+    // holder's attach directly: a Crash the game had shown stayed VISIBLE on
+    // the host's shoulder (player 3 after a teleport left it in a far zone).
+    static uint32_t scratch = 0;  // two messages (80 B each), guest memory
+    if (!scratch) scratch = rex::system::kernel_memory()->SystemHeapAlloc(256);
+    if (!scratch) continue;
+    const uint32_t host = CharacterOf(best_player), hide = scratch, attach = scratch + 128;
+    std::memset(Guest(scratch), 0, 256);
+    CallGame(__imp__sub_820B4450, ctx, base, hide, 0);
+    CallGame(__imp__sub_820B0B70, ctx, base, crash, hide);
+    CallGame(__imp__sub_820B44D0, ctx, base, attach, 4, host, crash);
+    CallGame(__imp__sub_820B0B70, ctx, base, crash, attach);
+    CallGame(__imp__sub_820B0B70, ctx, base, host, attach);
+    CallGame(__imp__sub_820B45C8, ctx, base, attach);
+    CallGame(__imp__sub_820B45C8, ctx, base, hide);
+    // (the attach message reaches the host's holder: sub_822392A0 above)
+    if (!g_host_of.count(crash)) CallGame(sub_822392A0, ctx, base, best_holder, crash);  // safety
+    stray_since[p] = {};
+  }
+}
+
 // EXTRA RIDERS STAY IN THEIR HOST'S ZONE (2026-10-23, GitHub issue #2: "player
 // 3/4 appearing after a desert cutscene above player 1").
 //
@@ -1130,10 +1245,21 @@ extern "C" REX_FUNC(sub_82238F18) {
   __imp__sub_82238F18(ctx, base);
   const uint32_t holder = call.r3.u32, type = Read32(call.r5.u32 + 4);
   if (type != 39 && type != 25) return;
+  const uint32_t main_rider = Read32(holder + kHolderRider);
+  // The MAIN rider stays in its host's zone too, unless it is player 2's Crash
+  // (the original moves that one with player 1 at a teleport). Found
+  // 2026-10-25 (findings/26 s.51): a dummy player 3 dropped out while riding
+  // player 1 as the main rider; a teleport moved player 1 and left player 3's
+  // hidden Crash behind in a far zone ((-342.9, 75.6, -101.2), the desert
+  // spot of GitHub issue #2).
+  if (main_rider && LocalPlayers() > 2 && PlayerOf(main_rider) != 1) {
+    const PPCContext keep = ctx;
+    KeepRiderInHostZone(ctx, base, Read32(holder + kHolderOwner), main_rider);
+    ctx = keep;
+  }
   std::vector<uint32_t>* extras = ExtrasOf(holder);
   if (!extras || extras->empty()) return;
   const PPCContext after = ctx;
-  const uint32_t main_rider = Read32(holder + kHolderRider);
   if (!main_rider) return;  // (the handler only sends while it has a rider)
   for (uint32_t rider : *extras) {
     Write32(holder + kHolderRider, rider);
@@ -1205,8 +1331,43 @@ extern "C" REX_FUNC(__imp__sub_82235978);  // false = the other player may be th
 bool BelongsToAMenu(int player) {
   return outfit_picker::JustClosed() || menu_input::InteractedRecently(player);
 }
+// Could someone carry player `me`'s mask right now? Another player ON FOOT
+// (state 2) whose holder has room. Players mid-transformation (state 3) and
+// not joined (0) don't count.
+bool HasMaskHost(int me) {
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    if (p == me || Read32(kState + 4 * p) != 2) continue;
+    const uint32_t holder = HolderOf(CharacterOf(p));
+    if (!holder) continue;
+    const std::vector<uint32_t>* extras = ExtrasOf(holder);
+    const int riders = (Read32(holder + kHolderRider) != 0) + (extras ? int(extras->size()) : 0);
+    if (riders < 1 + kMaxExtraRiders) return true;
+  }
+  return false;
+}
+// THE CATCH-UP WITH NOBODY TO CATCH UP TO (2026-10-25, findings/26 s.44). The
+// co-op update's own call (0x82234FF0, r4 = my Crash) decides the catch-up:
+// off screen + B released = forced into a mask, WITHOUT the "may I turn into a
+// mask" gate below. Found in a 2-player game (players 1 and 4, mask / unmask
+// over and over): player 4 started turning into a mask, player 1 (off screen)
+// let go of B 0.45 s later, the catch-up asked for a partner, nobody else was
+// on foot, and the partner lookup fell back to the ORIGINAL rule: player 2,
+// who wasn't playing. Player 1's mask rode player 2's hidden Crash (parked at
+// the level start), player 4's followed, and that hidden Crash became the
+// camera's focus: camera stuck up there, respawns teleported there, reticles
+// frozen, level exits closed (they wait for the focus player). The ordinary
+// B already refuses in that moment (nobody may enter a mask while another
+// does); now the catch-up does too: no possible host = "on screen".
+// Only joined players (not joined = the original's own handling of the hidden
+// player-2 Crash at a level start).
 extern "C" REX_FUNC(sub_82235978) {
-  if (BelongsToAMenu(PlayerOf(ctx.r4.u32))) {
+  const int player = PlayerOf(ctx.r4.u32);
+  if (BelongsToAMenu(player)) {
+    ctx.r3.u64 = 0;
+    return;
+  }
+  if (uint32_t(ctx.lr) == 0x82234FF4 && player >= 0 && Read32(kState + 4 * player) != 0 &&
+      !HasMaskHost(player)) {
     ctx.r3.u64 = 0;
     return;
   }
@@ -1770,6 +1931,21 @@ bool InFocusList(uint32_t camera, uint32_t actor) {
   }
   return false;
 }
+// May this actor go back into the focus list? Only the body of a player ON FOOT
+// (co-op state 2): their titan if they ride one, else their Crash. The game
+// takes a Crash out of the list when it turns into a mask, but its interest
+// RECORD stays: a first refill took any record and put the hidden player-2
+// Crash (not in game, riding player 4 as a mask) back in: the camera's focus
+// became player 2, a mask bobbing on player 4's shoulder = a janky camera,
+// until player 1 rejoined and took the slot (findings/26 s.46, 2026-10-25).
+bool MayFocus(uint32_t actor) {
+  for (int p = 0; p < LocalPlayers(); ++p) {
+    if (Read32(kState + 4 * p) != 2) continue;
+    const uint32_t titan = TitanOfPlayer(p);
+    if (actor == (titan ? titan : CharacterOf(p))) return true;
+  }
+  return false;
+}
 }  // namespace
 extern "C" REX_FUNC(sub_82109940) {
   if (LocalPlayers() > 2 && REXCVAR_GET(debug_coop_trace) && FocusCount(ctx.r3.u32) >= 2) {
@@ -1786,7 +1962,7 @@ extern "C" REX_FUNC(sub_82109AC8) {
   if (end < begin || (end - begin) / kInterestRecordSize > 64) return;  // not a sane list
   for (uint32_t rec = begin; rec < end && FocusCount(camera) < 2; rec += kInterestRecordSize) {
     const uint32_t actor = Read32(rec);
-    if (!actor || actor == leaving || InFocusList(camera, actor)) continue;
+    if (!actor || actor == leaving || InFocusList(camera, actor) || !MayFocus(actor)) continue;
     CallGame(__imp__sub_82109940, ctx, base, camera, actor);
     if (REXCVAR_GET(debug_coop_trace)) {
       REXLOG_INFO("Co-op: camera focus: {:08X} (player {}) left, {:08X} (player {}) takes its place; focus player {}",

@@ -65,6 +65,8 @@
 
 REXCVAR_DECLARE(int32_t, local_players);
 
+struct PPCContext;
+
 namespace more_players {
 
 // Moves the tables (copies their current values to the new places and
@@ -86,6 +88,11 @@ uint32_t PlayerSetsMade();
 // only players 1-2 for that long the game's own places come back. Call it
 // every frame (the HUD update does); other callers just read it.
 bool FourPlayerLayout();
+
+// Every frame (the HUD update): a hidden Crash of a player not in the game
+// that rides nobody (dropped where its host died) is parked as a mask on the
+// nearest player on foot again (findings/26 s.45). 3-4 local players only.
+void ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base);
 
 // Is a level being played (game state 5, its pause and menus included)?
 // Safe from any thread.
