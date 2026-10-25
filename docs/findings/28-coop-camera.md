@@ -22,7 +22,9 @@ fit.*
 
 Code: `src/players/coop_camera.*`, one mid-function hook in the manifest
 (`CoopCameraDistance`). `--coop_camera=false` gives back the original camera;
-`--coop_camera_max_distance` (default 45) caps how far it backs off;
+`--coop_camera_reach` (default 1.3) caps how far it backs off relative to
+the area's own farthest camera distance, and `--coop_camera_max_distance`
+(default 30, was 45) is the absolute cap (section 11);
 `--coop_camera_group_focus` (default 2, 0 = everyone counts the same) sets
 how much a group of players outweighs a player on their own;
 `--coop_camera_pinned_rooms` (on) keeps the camera at the original's spot
@@ -453,3 +455,26 @@ Tested in Crash's house with a fake second player in five poses (both
 players at opposite walls, corners): no outside visible in any. On Wumpa
 Island, two players running apart: unchanged (back-off to 45, no wall hit,
 no field-of-view change).
+
+## 11. Reach and bump jitter (round 4)
+
+**Too far.** Backing off to 45 units made the players specks; the original
+never goes past its volume's designed farthest distance (20 on most of Wumpa
+Island). The farthest is now **the current volume's designed maximum x
+`--coop_camera_reach`** (1.3: Wumpa Island 20 → 26), never past
+`--coop_camera_max_distance` (now 30). The room each player needs around
+them (`--coop_camera_room`) went from 4 to 2 units. A player beyond that
+reach leaves the screen, where the game's own catch-up (section 4) applies.
+The wall ray only looks as far as that reach too.
+
+**Jitter when bumping into things.** A bump pushes a player's position back
+and forth for a few frames, and three parts reacted at once:
+
+| Part | Before | Now |
+|---|---|---|
+| player points the fit / urgency measure | raw position | eased over 0.08 s |
+| urgency (spring 0.22 → 0.06 s, back-off 1.5 → 10/s) | rose at once | rises over 0.12 s; at most 0.25 while nobody-fits-even-at-the-farthest |
+| wall test | pulled in at once, let out at once; ray stopped once the wall had pulled the camera in, so it went out and in again | closer wall at once, release 3 units/s; ray keeps running while a wall is held |
+
+The debug trace prints the wall's held and raw values and "(at the
+farthest)" when the reach cap is what stops the back-off.
