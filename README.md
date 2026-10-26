@@ -175,7 +175,7 @@ Not counted: 89 kernel basics (threads, locks, memory, files), already thin tran
 
 ## 🛠️ Building from source
 
-For developers: players don't need this, the launcher does it all. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`; the full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
+For developers: players don't need this, the launcher does it all. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`; the full walkthrough, Windows included, is in **[Building](docs/01-building.md)**. On Windows, `tools/setup_windows.ps1` installs the missing tools with `winget`.
 
 <details>
 <summary><b>Build commands</b></summary>
