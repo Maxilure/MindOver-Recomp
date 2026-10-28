@@ -34,6 +34,9 @@
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 #include "../input/title_any_button.h"
+#include "../ui/quit_game.h"
+#include "../achievements/achievements.h"
+#include "../achievements/achievements_screen.h"
 #include "../ui/wii_cursor.h"
 
 #include <cstring>
@@ -194,6 +197,12 @@ extern "C" REX_FUNC(sub_82261C40) {
   mouse_menus::FrontEndFrame(ctx, base);
   // The title's "Press Any Button" (input/title_any_button.h).
   title_any_button::FrontEndFrame(ctx, base);
+  // The main menu's "Quit Game" words (ui/quit_game.h).
+  quit_game::FrontEndFrame(ctx, base);
+  // A waiting achievement notification starts (achievements/achievements.h).
+  achievements::FrontEndFrame(ctx, base);
+  // The "Achievements" items' words (achievements/achievements_screen.h).
+  achievements_screen::FrontEndFrame(ctx, base);
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) {
     for (int k : {kCombo, kLockOn, kCounter}) CallVirtual(ctx, base, g_objects[k][i], 3, 0, dt);

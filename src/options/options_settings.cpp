@@ -968,6 +968,23 @@ Row VoiceLanguageRow() {
   return r;
 }
 
+// ACHIEVEMENTS (achievements/achievements.h): the notification (through the
+// game's message bar), and its jingle (the game's own stinger_reward).
+Row AchievementPopupsRow() {
+  return OnOffRow(u"Notifications", "achievement_popups", u"On", u"Off",
+                  u"A card slides up at the bottom of the screen when you earn an achievement.",
+                  u"No card: achievements are still earned and kept.");
+}
+Row AchievementJingleRow() {
+  Row r = OnOffRow(u"Jingle", "achievement_sound", u"On", u"Off",
+                   u"One of the game's own jingles plays with the card.", u"The card shows without a sound.");
+  r.unavailable = [](Env&) {
+    return rex::cvar::Query<bool>("achievement_popups") ? std::u16string()
+                                                        : std::u16string(u"Notifications are off.");
+  };
+  return r;
+}
+
 std::vector<Tab> Build() {
   // THE LAYOUT (sorted 2026-10-24: Display = the screen and the window,
   // Graphics = how the picture is drawn; Camera folded into Gameplay's Co-op
@@ -977,7 +994,9 @@ std::vector<Tab> Build() {
   AddDualMode(renderer);
   tabs.push_back({u"Display",
                   {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
-                   Heading(u"Frame Counter"), FpsCounterRow(), FpsPositionRow()}});
+                   Heading(u"Frame Counter"), FpsCounterRow(), FpsPositionRow(),
+                   // achievements/achievements.h: the card at the bottom centre.
+                   Heading(u"Achievements"), AchievementPopupsRow(), AchievementJingleRow()}});
   // Renderer first: it decides which rows under it are greyed out.
   tabs.push_back({u"Graphics",
                   {renderer, Heading(u"Quality"), RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(),

@@ -152,7 +152,7 @@ bool HudHidden();
 
 // True once a cheat that changes progress (level up, max level, mojo, refill,
 // god mode) was used: from then on until the game restarts, achievements the
-// game unlocks aren't written (sub_82292938 hook). Freeze, speed, the camera
+// game unlocks aren't earned (achievements/achievements.cpp, sub_82292938). Freeze, speed, the camera
 // and the HUD don't count.
 bool AchievementsBlocked();
 // Turns achievements off like the progress cheats above (spawn.h uses it).

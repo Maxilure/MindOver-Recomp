@@ -11,6 +11,7 @@
 #include <array>
 #include <atomic>
 #include <cstring>
+#include <ctime>
 #include <string>
 
 #include <fmt/format.h>
@@ -21,6 +22,9 @@
 #include "../data/fight_tree.h"
 #include "../guest_memory.h"
 #include "../ui/game_font.h"
+#include "../achievements/achievements.h"
+#include "../achievements/achievements_screen.h"
+#include "../ui/quit_game.h"
 #include "../ui/scrooby.h"
 #include "options_page.h"
 #include "options_settings.h"
@@ -116,6 +120,11 @@ constexpr float kSelectedTab = 0.97f;
 // scale the page and glass LAYERS around the screen's centre after every
 // step of their slides (each step resets them); the prompts follow.
 constexpr float kPageScale = 0.85f;
+// ...except the ACHIEVEMENTS LIST (achievements_screen.h): it is drawn at
+// the game's own size, the full glass panel of the pause menu (the
+// request may still be pending when the in-game screen's Enter scales).
+bool ListMode();
+float DrawScale() { return ListMode() ? 1.0f : kPageScale; }
 constexpr float kPageArrowScale = 0.6f;          // the page markers' arrows
 // A greyed-out row's name and value (Row::unavailable): see-through like
 // the tab names beside the current one (options_page.cpp kFadedGreen).
@@ -177,8 +186,26 @@ struct Screen {
   // is up (their x positions as found, put back at Exit).
   std::array<uint32_t, 8> prompts{};
   std::array<uint32_t, 8> prompts_x{}, prompts_y{};  // the +92 / +96 words as found
+  // THE ACHIEVEMENTS SCREEN (achievements/achievements_screen.h): this
+  // screen in its second mode. The selected grid cell (kept between visits),
+  // the pointer's move count last seen, the main menu page's title.
+  bool achievements = false;
+  int cell = 0;
+  uint32_t pointer_moves = 0;
+  uint32_t title = 0;          // the main menu page's "Options" title (OptTitle)
+  uint32_t paused_title = 0;   // the in-game page's "P1 Paused" (the game's own text)
+  // Its elements (options_page.cpp THE ACHIEVEMENTS LIST): the heading and
+  // the cards; none when the pictures couldn't be made. ach_top = the
+  // achievement on the first card (the list scrolls one card at a time).
+  struct AchCard {
+    uint32_t glass = 0, ring = 0, icon = 0, name = 0, state = 0, desc = 0;
+  };
+  std::vector<AchCard> ach_cards;
+  uint32_t ach_heading = 0, ach_up = 0, ach_down = 0;
+  int ach_top = 0;
 };
 Screen g;
+bool ListMode() { return g.achievements || achievements_screen::OpenNextPending(); }
 std::atomic<bool> g_open{false};
 std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
 // The in-game screen's CInGameOptionsScreenAction while it's up (its +20
@@ -368,7 +395,7 @@ const std::vector<Row>& Rows() { return options_settings::Tabs()[size_t(g.tab)].
 // First() + r. Stepping past the window's edge slides it by ONE row (like the
 // save list), so the mouse wheel goes through the rows one by one.
 int First() { return g.top; }
-bool Slides() { return int(Rows().size()) > kRows; }
+bool Slides() { return !g.achievements && int(Rows().size()) > kRows; }
 int LastTop() { return std::max(0, int(Rows().size()) - kRows); }
 bool Selectable(int i) {
   const auto& rows = Rows();
@@ -429,6 +456,22 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
   g.page_up = FindPicture(ctx, base, g.page, "OptPageUp");
   g.page_down = FindPicture(ctx, base, g.page, "OptPageDown");
   g.page_text = FindText(ctx, base, g.page, "OptPage");
+  // The Achievements list's cards (as many as the page has).
+  g.ach_cards.clear();
+  for (int k = 0;; ++k) {
+    Screen::AchCard c;
+    c.glass = FindPicture(ctx, base, g.page, fmt::format("AchCard{}", k));
+    if (!c.glass) break;
+    c.ring = FindPicture(ctx, base, g.page, fmt::format("AchCardRing{}", k));
+    c.icon = FindPicture(ctx, base, g.page, fmt::format("AchCardIcon{}", k));
+    c.name = FindText(ctx, base, g.page, fmt::format("AchCardName{}", k));
+    c.state = FindText(ctx, base, g.page, fmt::format("AchCardState{}", k));
+    c.desc = FindText(ctx, base, g.page, fmt::format("AchCardDesc{}", k));
+    g.ach_cards.push_back(c);
+  }
+  g.ach_heading = FindText(ctx, base, g.page, "AchHeading");
+  g.ach_up = FindPicture(ctx, base, g.page, "AchUp");
+  g.ach_down = FindPicture(ctx, base, g.page, "AchDown");
   // FE_Buttons, found as the game's GetMenuIndex does (layer 4, then 0).
   uint32_t buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 4, scrooby::GuestAscii("FE_Buttons"));
   if (!buttons) buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 0, scrooby::GuestAscii("FE_Buttons"));
@@ -613,8 +656,14 @@ void ApplyGreying(Env& env) {
   }
 }
 
+void RefreshAchievements(Env& env);  // the Achievements screen's (below)
+
 // Everything that depends on the tab, the values and the selection.
 void Refresh(Env& env) {
+  if (g.achievements) {
+    RefreshAchievements(env);
+    return;
+  }
   PPCContext& ctx = env.ctx;
   uint8_t* base = env.base;
   const auto& tabs = options_settings::Tabs();
@@ -744,6 +793,280 @@ void Refresh(Env& env) {
     g.focused = focus;
   }
   g.selection = sel;
+}
+
+// ---------------------------------------------------------------------------
+// THE ACHIEVEMENTS SCREEN (achievements/achievements_screen.h)
+// ---------------------------------------------------------------------------
+// THE LIST (options_page.cpp THE ACHIEVEMENTS LIST): cards of 540 x 78
+// page units from x 50; texts at line 1 (name left, state right) and line 2
+// (the description, small print). Their boxes in the data are full size;
+// the small ones are scaled around their box's centre, so their boxes are
+// moved to keep the edge they're read from (left / right) in place.
+constexpr float kAchTextLeft = options_page::kAchTextLeft, kAchTextRight = options_page::kAchTextRight;
+constexpr float kAchStateScale = 0.8f, kAchDescScale = 0.72f, kAchDescMinScale = 0.55f;
+// Colours (0xAARRGGBB): the menus' own (options_page.cpp kGreen / kYellow /
+// kCyan); the selected card's glass solid, the others see-through like the
+// save list's (#dc alpha) and a little more; locked: picture and texts
+// darkened.
+constexpr uint32_t kAchGreen = 0xFF00FF00, kAchYellow = 0xFFFFF110, kAchCyan = 0xFF00FFF7;
+constexpr uint32_t kAchGlassSelected = 0xFFFFFFFF, kAchGlass = 0xA0FFFFFF;
+constexpr uint32_t kEarnedTint = 0xFFFFFFFF, kLockedTint = 0xFF4C4C4C;
+constexpr uint32_t kLockedName = 0xFF5FA05F, kLockedState = 0xFFB0B0B0;
+
+void ShowAchievementElements(uint8_t* base, bool shown) {
+  for (const Screen::AchCard& c : g.ach_cards) {
+    for (const uint32_t e : {c.glass, c.ring, c.icon, c.name, c.state, c.desc}) scrooby::SetVisible(base, e, shown);
+  }
+  scrooby::SetVisible(base, g.ach_heading, shown);
+  scrooby::SetVisible(base, g.ach_up, shown);
+  scrooby::SetVisible(base, g.ach_down, shown);
+}
+
+// The Options screen's SIDE CARD, hidden while the list is up and back
+// after (LayOutCard picks which of its glass shapes shows). The glass
+// panel, cogs, hinge and title stay: the list sits in the game's own panel.
+void ShowOptionsFurniture(PPCContext& ctx, uint8_t* base, bool shown) {
+  (void)ctx;
+  for (const uint32_t e : g.card_glass) {
+    if (!shown) scrooby::SetVisible(base, e, false);
+  }
+  for (const uint32_t e : {g.card_value, g.desc, g.warn, g.guide}) {
+    if (e) scrooby::SetVisible(base, e, shown);
+  }
+}
+
+// THE PANEL CENTRED FOR THE LIST: the Options screen's pieces sit moved left
+// by kGlassShift (room for its side card): for the list they go back to
+// the middle (+110), the list's arrows beside the cards on the right. In
+// game the shared glass page isn't moved at all (MoveGlassForCard skips it);
+// here: the in-game title ("P1 Paused"), and in the main menu the page's own
+// panel, cogs, hinge and title. Every element's place as found is kept and
+// put back at Exit.
+struct Moved {
+  uint32_t element, x, y;  // the +92 / +96 words as found
+};
+std::vector<Moved> g_moved;
+void Remember(const uint8_t* base, uint32_t e) {
+  if (e) g_moved.push_back({e, Read32(base, e + kElementX), Read32(base, e + kElementY)});
+}
+void CentreForList(PPCContext& ctx, uint8_t* base) {
+  g_moved.clear();
+  std::vector<uint32_t> shifted = {g.paused_title, g.title};
+  if (g.main_menu) {
+    for (const char* name : {"OptionsMenu_Panel", "cog1", "OptCog2", "OptionsMenu_PanelHinge"}) {
+      shifted.push_back(scrooby::FindPicture(ctx, base, g.page, name));
+    }
+  }
+  for (const uint32_t e : shifted) {
+    if (!e) continue;
+    Remember(base, e);
+    MoveX(base, e, -options_page::kGlassShift);
+  }
+  // The list's own arrows (AchUp / AchDown), sized and turned like the
+  // Options list's markers.
+  scrooby::SetScale(ctx, base, g.ach_up, kPageArrowScale);
+  scrooby::Rotate(ctx, base, g.ach_up, 180.0f);
+  scrooby::SetScale(ctx, base, g.ach_down, kPageArrowScale);
+}
+void PutBackAfterList(uint8_t* base) {
+  for (const Moved& m : g_moved) {
+    for (const auto& [field, word] : {std::pair{kElementX, m.x}, std::pair{kElementY, m.y}}) {
+      uint8_t* p = GuestPtr(base, m.element + field);
+      for (int b = 0; b < 4; ++b) p[b] = uint8_t(word >> (24 - 8 * b));
+    }
+  }
+  g_moved.clear();
+}
+
+std::u16string Utf16(std::string_view s) {
+  std::u16string out;
+  for (size_t i = 0; i < s.size();) {
+    const uint8_t c = uint8_t(s[i]);
+    uint32_t cp = c;
+    int extra = c >= 0xF0 ? 3 : c >= 0xE0 ? 2 : c >= 0xC0 ? 1 : 0;
+    if (extra) cp = c & (0x3F >> extra);
+    ++i;
+    for (int k = 0; k < extra && i < s.size(); ++k, ++i) cp = (cp << 6) | (uint8_t(s[i]) & 0x3F);
+    if (cp < 0x10000) out.push_back(char16_t(cp));
+  }
+  return out;
+}
+
+// "12 Oct 2026" (the player's own time zone).
+std::u16string DateText(int64_t unix_seconds) {
+  const std::time_t t = std::time_t(unix_seconds);
+  std::tm tm{};
+#if defined(_WIN32)
+  localtime_s(&tm, &t);
+#else
+  localtime_r(&t, &tm);
+#endif
+  char text[32];
+  std::strftime(text, sizeof(text), "%d %b %Y", &tm);
+  std::string s = text;
+  if (s.size() > 1 && s[0] == '0') s.erase(0, 1);
+  return std::u16string(s.begin(), s.end());
+}
+
+// A text's box placed so that, drawn at `scale` around the box's centre,
+// its LEFT (right_edge false) or RIGHT edge lands at x; `y` = the box's
+// bottom as in the data.
+void PlaceScaled(PPCContext& ctx, uint8_t* base, uint32_t text, float x, float y, float w, float scale,
+                 bool right_edge) {
+  if (!text) return;
+  const float box_x = right_edge ? x - w + (1 - scale) * w / 2 : x - (1 - scale) * w / 2;
+  SetBox(base, text, box_x, y, w, 36.0f);
+  scrooby::SetScale(ctx, base, text, scale);
+}
+
+void RefreshAchievements(Env& env) {
+  PPCContext& ctx = env.ctx;
+  uint8_t* base = env.base;
+  // No rows, no tabs, no page text: the cards are the screen.
+  for (int r = 0; r < kRows; ++r) {
+    scrooby::SetSelectable(base, scrooby::Item(base, g.menu, r), false);
+    scrooby::SetVisible(base, g.label[r], false);
+    scrooby::SetVisible(base, g.value[r], false);
+    for (int k = 0; k < kStars; ++k) scrooby::SetVisible(base, g.star[r][k], false);
+  }
+  for (const uint32_t e : {g.tab_prev, g.tab_text, g.tab_next, g.lb, g.rb, g.page_text}) {
+    scrooby::SetVisible(base, e, false);
+  }
+  g_wheel_list = true;  // the wheel scrolls the cards (UpdateAchievements)
+  ShowOptionsFurniture(ctx, base, false);
+  // The heading in the tabs' line, under the game's "P1 Paused" (in the main
+  // menu the panel's own title says "Achievements": Enter).
+  scrooby::SetText(ctx, base, g.ach_heading, u"Achievements");
+  scrooby::SetVisible(base, g.ach_heading, g.title == 0);
+  const std::vector<achievements::Info> list = achievements::List();
+  const int cards = int(g.ach_cards.size());
+  const int count = int(list.size());
+  if (!count || !cards) return;
+  g.cell = std::clamp(g.cell, 0, count - 1);
+  // The window follows the selection.
+  if (g.cell < g.ach_top) g.ach_top = g.cell;
+  if (g.cell >= g.ach_top + cards) g.ach_top = g.cell - cards + 1;
+  g.ach_top = std::clamp(g.ach_top, 0, std::max(0, count - cards));
+  for (int k = 0; k < cards; ++k) {
+    const Screen::AchCard& c = g.ach_cards[size_t(k)];
+    const int i = g.ach_top + k;
+    const bool used = i < count;
+    for (const uint32_t e : {c.glass, c.ring, c.icon, c.name, c.state, c.desc}) scrooby::SetVisible(base, e, used);
+    if (!used) continue;
+    const achievements::Info& a = list[size_t(i)];
+    const bool selected = i == g.cell;
+    scrooby::SetColour(ctx, base, c.glass, selected ? kAchGlassSelected : kAchGlass);
+    const int frame = achievements::SpriteFrame(a.id);
+    scrooby::SetVisible(base, c.icon, frame >= 0);
+    if (frame >= 0) scrooby::SetFrame(ctx, base, c.icon, uint32_t(frame));
+    scrooby::SetColour(ctx, base, c.icon, a.unlocked ? kEarnedTint : kLockedTint);
+    // Texts: line 1 = name + state, line 2 = the description (the game's
+    // "how to earn it" text while locked), shrunk if it's too long.
+    const float card_top = float(options_page::kAchCardsTop - options_page::kAchCardStep * k);
+    const std::u16string name = Utf16(a.name);
+    scrooby::SetText(ctx, base, c.name, name);
+    scrooby::SetColour(ctx, base, c.name, selected ? kAchYellow : a.unlocked ? kAchGreen : kLockedName);
+    const std::u16string state = a.unlocked ? u"Earned " + DateText(a.unlocked_at) : std::u16string(u"Locked");
+    // The name gets the line up to the state (a gap of 16): smaller when it
+    // doesn't fit ("Would You Like Fries With That?" ran into the date).
+    {
+      const float room = kAchTextRight - TextWidth(state, kAchStateScale) - 16 - kAchTextLeft;
+      const float w = TextWidth(name, 1.0f);
+      const float scale = w > room && w > 0 ? std::max(0.6f, room / w) : 1.0f;
+      PlaceScaled(ctx, base, c.name, kAchTextLeft, card_top - 38, kAchTextRight - kAchTextLeft, scale, false);
+    }
+    scrooby::SetText(ctx, base, c.state, state);
+    scrooby::SetColour(ctx, base, c.state, a.unlocked ? kAchYellow : kLockedState);
+    PlaceScaled(ctx, base, c.state, kAchTextRight, card_top - 38, 260, kAchStateScale, true);
+    const std::u16string desc = Utf16(a.unlocked ? a.description : a.locked_description);
+    const float room = kAchTextRight - kAchTextLeft;
+    float scale = kAchDescScale;
+    const float w = TextWidth(desc, 1.0f);
+    if (w * scale > room) scale = std::max(kAchDescMinScale, room / w);
+    scrooby::SetText(ctx, base, c.desc, desc);
+    scrooby::SetColour(ctx, base, c.desc, kAchCyan);
+    PlaceScaled(ctx, base, c.desc, kAchTextLeft, card_top - 66, room, scale, false);
+  }
+  // The list's arrows beside the cards: more above / below.
+  const bool more = count > cards;
+  scrooby::SetVisible(base, g.page_up, false);
+  scrooby::SetVisible(base, g.page_down, false);
+  scrooby::SetVisible(base, g.ach_up, more);
+  scrooby::SetVisible(base, g.ach_down, more);
+  if (more) {
+    scrooby::SetColour(ctx, base, g.ach_up, g.ach_top > 0 ? kArrowOn : kArrowFaded);
+    scrooby::SetColour(ctx, base, g.ach_down, g.ach_top + cards < count ? kArrowOn : kArrowFaded);
+  }
+  // No X / Y actions here.
+  if (g.x_showing) {
+    scrooby::SetText(ctx, base, g.x_button, u"");
+    scrooby::SetText(ctx, base, g.x_text, u"");
+    g.x_showing = false;
+  }
+  if (g.y_showing) {
+    scrooby::SetText(ctx, base, g.y_button, u"");
+    scrooby::SetText(ctx, base, g.y_text, u"");
+    g.y_showing = false;
+  }
+}
+
+// Every Update while the Achievements screen is up: the selection (up /
+// down one card, left / right four, through the game's own menu buttons;
+// the mouse by hovering a card, its wheel scrolls; the list's arrows
+// clicked). One sound per move, the game's menu sounds: up "up_right",
+// down "down_left" (the menu's own up / down, which would sound too, is
+// told "no move": TurnPage).
+void UpdateAchievements(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
+  // No "Select A" (A does nothing here); the screen's own tracks may write
+  // the prompt bar again, so every frame. The glass layer too (in game the
+  // screen action finds it after our Enter).
+  scrooby::SetText(ctx, base, g.select_button, u"");
+  scrooby::SetText(ctx, base, g.select_text, u"");
+  ShowOptionsFurniture(ctx, base, false);
+  if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) return;  // sliding
+  const int count = int(achievements::List().size());
+  const int cards = int(g.ach_cards.size());
+  if (!count || !cards) return;
+  int cell = g.cell, top = g.ach_top;
+  if (Pressed(ctx, base, 45)) cell = std::max(0, cell - 1);
+  if (Pressed(ctx, base, 16)) cell = std::min(count - 1, cell + 1);
+  if (Pressed(ctx, base, kButtonLeft)) cell = std::max(0, cell - cards);
+  if (Pressed(ctx, base, kButtonRight)) cell = std::min(count - 1, cell + cards);
+  // The mouse: the card under the pointer, once it moves; the wheel and
+  // the arrows scroll (the selection stays on a card on screen).
+  const uint32_t layer = MainMenuLayer(base);
+  const uint32_t moves = mouse_menus::PointerMoves();
+  if (moves != g.pointer_moves) {
+    g.pointer_moves = moves;
+    for (int k = 0; k < cards && top + k < count; ++k) {
+      if (mouse_menus::PointerOver(base, g.ach_cards[size_t(k)].glass, g.page, layer)) cell = top + k;
+    }
+  }
+  int scroll = 0;
+  if (auto* driver = kbm::KeyboardMouseDriver::Get()) scroll = driver->TakeListWheel();
+  if (mouse_menus::TakeClickOver(base, g.ach_up, g.page, layer)) scroll = -1;
+  if (mouse_menus::TakeClickOver(base, g.ach_down, g.page, layer)) scroll = +1;
+  if (scroll) {
+    top = std::clamp(top + scroll, 0, std::max(0, count - cards));
+    cell = std::clamp(cell, top, top + cards - 1);
+  }
+  // The main menu's copy: B = back (as the Options rows' code does).
+  const uint16_t pad = g_pad[size_t(owner)].load(std::memory_order_relaxed);
+  const uint16_t pressed = pad & ~g.seen;
+  g.seen = pad;
+  if (g.main_menu && (pressed & kPadB) && !CloseMainMenuOptions(ctx, base)) {
+    *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
+  }
+  if (cell != g.cell || top != g.ach_top) {
+    if (cell != g.cell) {
+      scrooby::PlaySound(ctx, base, cell < g.cell ? scrooby::Sound::kChange : scrooby::Sound::kMove);
+    }
+    g.cell = cell;
+    g.ach_top = top;
+    Env env{ctx, base, owner};
+    RefreshAchievements(env);
+  }
 }
 
 void SwitchTab(Env& env, int delta) {
@@ -1003,6 +1326,9 @@ void FilterPad(uint32_t user, uint8_t* gamepad) {
 }
 
 int TurnPage(uint32_t menu, int direction, uint8_t* base) {
+  // The Achievements screen: the menu's own up / down neither moves nor
+  // sounds (UpdateAchievements moves the grid and plays one sound).
+  if (g.action && menu == g.menu && g.achievements) return -1;
   if (!g.action || menu != g.menu || !Slides()) return 0;  // short lists: the menu's own move
   const int count = int(Rows().size());
   const int current = First() + scrooby::Selection(base, g.menu);
@@ -1105,7 +1431,7 @@ void ShrinkInGame(PPCContext& ctx, uint8_t* base, uint32_t action) {
   if (!options_page::Available()) return;
   for (const uint32_t field : {kScreenGlassLayer, kScreenPage}) {
     if (const uint32_t e = Read32(base, action + field)) {
-      scrooby::CallF(__imp__sub_82371198, ctx, base, e, kPageScale);
+      scrooby::CallF(__imp__sub_82371198, ctx, base, e, DrawScale());
     }
   }
 }
@@ -1113,6 +1439,12 @@ void ShrinkInGame(PPCContext& ctx, uint8_t* base, uint32_t action) {
 
 void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action) {
   g_screen_action = action;
+  // The Achievements list keeps the panel centred (its Enter may run before
+  // or after the menu's: the request is still pending, or already taken).
+  if (g.achievements || achievements_screen::OpenNextPending()) {
+    ShrinkInGame(ctx, base, action);
+    return;
+  }
   if (!options_page::Available() || g_moved_glass[0]) return;
   const uint32_t page = Read32(base, action + kScreenGlassPage);
   if (!page) return;
@@ -1156,6 +1488,9 @@ extern "C" REX_FUNC(sub_820D2828) {
   }
   g.page = Read32(base, action + kActionPage);
   g.menu = Read32(base, action + kActionMenu);
+  // THE ACHIEVEMENTS SCREEN (achievements_screen.h): this screen in its
+  // second mode when the main / pause menu asked for it.
+  g.achievements = achievements_screen::TakeOpenNext();
   g.selection = -1;
   g.focused = -1;
   g.top = 0;
@@ -1189,19 +1524,44 @@ extern "C" REX_FUNC(sub_820D2828) {
     const float unit = ReadF(base, kUnitToPosition);
     const uint8_t* size = GuestPtr(base, e + kElementSize);
     const float w = float(size[0] << 8 | size[1]), h = float(size[2] << 8 | size[3]);
-    const float cx = ReadF(base, e + kElementX) / unit + float(options_page::kGlassShift) + w / 2;
+    // (The Achievements list keeps the panel centred: no shift.)
+    const float shift = g.achievements ? 0.0f : float(options_page::kGlassShift);
+    const float cx = ReadF(base, e + kElementX) / unit + shift + w / 2;
     const float cy = ReadF(base, e + kElementY) / unit + h / 2;
-    WriteF(base, e + kElementX, (320.0f + kPageScale * (cx - 320.0f) - w / 2) * unit);
-    WriteF(base, e + kElementY, (240.0f + kPageScale * (cy - 240.0f) - h / 2) * unit);
-    scrooby::SetScale(ctx, base, e, kPageScale);
+    WriteF(base, e + kElementX, (320.0f + DrawScale() * (cx - 320.0f) - w / 2) * unit);
+    WriteF(base, e + kElementY, (240.0f + DrawScale() * (cy - 240.0f) - h / 2) * unit);
+    scrooby::SetScale(ctx, base, e, DrawScale());
   }
   SetUpFixedTexts(ctx, base);
+  // The elements the Achievements list hides come back for Options; the
+  // main menu page's title says which screen this is.
+  for (const uint32_t e : {g.tab_prev, g.tab_next, g.lb, g.rb}) scrooby::SetVisible(base, e, !g.achievements);
+  scrooby::SetVisible(base, g.tab_text, true);
+  if (!g.achievements) ShowAchievementElements(base, false);  // (shown by RefreshAchievements)
+  g.title = main_menu ? scrooby::FindText(ctx, base, g.page, "OptTitle") : 0;
+  g.paused_title = main_menu ? 0 : scrooby::FindText(ctx, base, g.page, "Paused");
+  if (g.title && g.achievements) {
+    scrooby::SetText(ctx, base, g.title, u"Achievements");
+  } else if (g.title) {  // the game's own translated "Options" (options_page.cpp: the PS2 item's string)
+    scrooby::Call(__imp__sub_82371CE0, ctx, base, g.title, scrooby::GuestAscii("GameStart_MainMenu_Options"));
+  }
+  if (g.achievements) CentreForList(ctx, base);
+  // The list hides the Options screen's own furniture: back for Options.
+  if (!g.achievements) ShowOptionsFurniture(ctx, base, true);
+  if (g.achievements) {  // A does nothing here: no "Select A"
+    scrooby::SetText(ctx, base, g.select_button, u"");
+    scrooby::SetText(ctx, base, g.select_text, u"");
+    if (const uint32_t fe = FrontEnd(base)) {
+      // (as from the main menu: a pick left over must not close it)
+      *GuestPtr(base, fe + kResultFlags) &= uint8_t(~(kFlagCancel | kFlagAccept));
+    }
+  }
   scrooby::Select(ctx, base, g.menu, FirstSelectableOnScreen());
   Env env{ctx, base, owner};
   Refresh(env);
   g_open = true;
-  REXLOG_INFO("Options: screen opened ({}) by player {} (tab {})", main_menu ? "main menu" : "in game",
-              owner + 1, g.tab);
+  REXLOG_INFO("{}: screen opened ({}) by player {} (tab {})", g.achievements ? "Achievements" : "Options",
+              main_menu ? "main menu" : "in game", owner + 1, g.tab);
 }
 
 // The main menu copy's "OptionsMenu" layer (drawn at kMainMenuScale), 0 in
@@ -1302,6 +1662,11 @@ extern "C" REX_FUNC(sub_820D2A00) {
   }
   RunWithoutSpecialCode(__imp__sub_820D2A00, ctx, base);
   const PPCContext saved = ctx;  // our calls below must not change what Update returned
+  if (g.achievements) {
+    UpdateAchievements(ctx, base, fe, owner);
+    ctx = saved;
+    return;
+  }
   // A question in the box: the rows under it don't move.
   if (g.asking_row >= 0 && scrooby::Selection(base, g.menu) != g.asking_selection) {
     scrooby::Select(ctx, base, g.menu, g.asking_selection);
@@ -1467,6 +1832,12 @@ extern "C" REX_FUNC(sub_820D2F08) {
       g_capture_result = kCaptureNone;
     }
     g.key_message_row = -1;
+    if (g.achievements) {
+      ShowAchievementElements(base, false);
+      ShowOptionsFurniture(ctx, base, true);
+      PutBackAfterList(base);
+      g.achievements = false;
+    }
     if (!g.main_menu) {  // in game the pause menu sets its own corners again
       scrooby::SetText(ctx, base, g.select_button, u"");
       scrooby::SetText(ctx, base, g.select_text, u"");
@@ -1494,6 +1865,11 @@ extern "C" REX_FUNC(sub_820D2F08) {
 // pause menu's own slide turns them again).
 extern "C" REX_FUNC(__imp__sub_820CDD60);  // CInGameOptionsScreenAction: Exit
 extern "C" REX_FUNC(sub_820CDD60) {
+  // The glass layer (panel, cogs, hinge) is the pause menu's too: whatever
+  // the Achievements list did with it, it's shown again.
+  if (g_screen_action) {
+    if (const uint32_t layer = Read32(base, g_screen_action + 32)) scrooby::SetVisible(base, layer, true);
+  }
   g_screen_action = 0;
   if (g_moved_glass[0]) {
     for (size_t i = 0; i < g_moved_glass.size(); ++i) {
@@ -1524,7 +1900,7 @@ extern "C" REX_FUNC(sub_820CE2C8) {
 // selected item into an exit when the accept flag is up: GetMenuIndex
 // (sub_821239C8, page GameStart_Start_Xenon, menu StartMenu) 0-3 -> 86 New
 // Game, 87 Load Game, 88 Credits, 89 Calibration. Ours: New Game, Load Game,
-// Options, Credits (Calibration gave its place); 2 = exit 77, the PS2 menu's ExitOptions -> the
+// Options, Credits, Quit Game (Calibration gave its place; Quit = ui/quit_game.h); 2 = exit 77, the PS2 menu's ExitOptions -> the
 // OptionsScreen state 96 (the engine follows any exit's target, not only a
 // child of the current state: saves/rename_screen.cpp).
 extern "C" REX_FUNC(__imp__sub_8211B6C8);  // MainMenuScreen's decision
@@ -1539,6 +1915,12 @@ constexpr int32_t kExitOptions = 77;  // the PS2 main menu's ExitOptions -> Opti
 }  // namespace
 
 extern "C" REX_FUNC(sub_8211B6C8) {
+  // "Quit Game"'s question up (or just answered No): stay, no pick counts
+  // (ui/quit_game.h).
+  if (quit_game::HoldDecision(ctx, base)) {
+    ctx.r3.s64 = -1;
+    return;
+  }
   const uint32_t fe = FrontEnd(base);
   if (!options_page::MainMenuAvailable() || !fe ||
       !(*GuestPtr(base, fe + kResultFlags) & kFlagAccept)) {
@@ -1554,6 +1936,13 @@ extern "C" REX_FUNC(sub_8211B6C8) {
   // (Calibration, 89, is no longer in the list: options_page.cpp.)
   constexpr int32_t kExits[] = {kExitNewGame, kExitLoadGame, kExitOptions, kExitCredits};
   static_assert(kExits[options_page::kMainMenuOptionsItem] == kExitOptions);
+  // The last item, "Quit Game", has no exit: its pick never closes the
+  // screen (ui/quit_game.cpp takes it back and asks); should one get here,
+  // stay.
+  if (index == options_page::kMainMenuQuitItem) {
+    ctx.r3.s64 = -1;
+    return;
+  }
   if (index < 0 || index >= int(std::size(kExits))) {
     __imp__sub_8211B6C8(ctx, base);  // as the game: the flags' other answers
     return;
@@ -1665,7 +2054,7 @@ namespace {
 // The page's smaller size, after a slide step (or once at Enter).
 void ShrinkMainMenuPage(PPCContext& ctx, uint8_t* base, uint32_t action) {
   if (const uint32_t layer = Read32(base, action + kOptLayer)) {
-    scrooby::CallF(__imp__sub_82371198, ctx, base, layer, kMainMenuScale);
+    scrooby::CallF(__imp__sub_82371198, ctx, base, layer, DrawScale());
   }
 }
 }  // namespace

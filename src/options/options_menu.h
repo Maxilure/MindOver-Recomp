@@ -72,7 +72,8 @@ void FilterPad(uint32_t user, uint8_t* gamepad);
 // saves/save_library.cpp) asks this first. Moving past the last / first row on
 // screen slides the tab's list by one row (headings skipped; past the list's
 // end: around to the other end). Returns 1 = moved (the menu plays its
-// sound), 0 = not ours / the menu's own move on screen. (The mouse wheel
+// sound), 0 = not ours / the menu's own move on screen, -1 = ours and
+// nothing moves, no sound (the Achievements screen moves its grid itself). (The mouse wheel
 // doesn't come this way: it scrolls the list itself, WheelScrollsList.)
 int TurnPage(uint32_t menu, int direction, uint8_t* base);
 

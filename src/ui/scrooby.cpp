@@ -3,6 +3,8 @@
 // =============================================================================
 #include "scrooby.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -13,6 +15,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../guest_memory.h"
+#include "game_font.h"
 
 extern "C" REX_FUNC(__imp__sub_821241E8);  // front end: find a loaded page (layer, name)
 extern "C" REX_FUNC(__imp__sub_8232B438);  // a name's hash (the page lookups' key)
@@ -152,6 +155,40 @@ void SetText(PPCContext& ctx, uint8_t* base, uint32_t text, std::u16string_view 
   Call(__imp__sub_823574E8, ctx, base, heap);
 }
 
+void SetBox(uint8_t* base, uint32_t element, float x, float y, float w, float h) {
+  if (!element) return;
+  float unit;
+  {
+    const uint32_t bits = Read32(base, 0x8204701C);
+    std::memcpy(&unit, &bits, 4);
+  }
+  auto write_f = [&](uint32_t a, float f) {
+    uint32_t bits;
+    std::memcpy(&bits, &f, 4);
+    uint8_t* p = GuestPtr(base, a);
+    for (int i = 0; i < 4; ++i) p[i] = uint8_t(bits >> (24 - 8 * i));
+  };
+  auto write_16 = [&](uint32_t a, float v) {
+    const uint16_t u = uint16_t(std::lround(std::max(1.0f, v)));
+    uint8_t* p = GuestPtr(base, a);
+    p[0] = uint8_t(u >> 8), p[1] = uint8_t(u);
+  };
+  write_f(element + 92, x * unit);
+  write_f(element + 96, y * unit);
+  write_16(element + 88, w);
+  write_16(element + 90, h);
+}
+
+float TextWidth(std::u16string_view text, float scale) {
+  static game_font::Font font;
+  static bool tried = false;
+  if (!tried) {
+    tried = true;
+    font.Load("Titans_Small");
+  }
+  return (font.loaded() ? font.Measure(text) * 0.5f : 12.0f * float(text.size())) * scale;
+}
+
 void SetVisible(uint8_t* base, uint32_t element, bool visible) {
   if (!element) return;
   uint8_t* flags = GuestPtr(base, element + 110);
@@ -220,6 +257,28 @@ void PlaySound(PPCContext& ctx, uint8_t* base, Sound sound) {
   ctx.r3.u64 = front_end;
   ctx.r4.u64 = kSoundBank;
   ctx.r5.u64 = sound == Sound::kMove ? kSoundDownLeft : kSoundUpRight;
+  ctx.f1.f64 = 1.0;
+  ctx.f2.f64 = 0.0;
+  ctx.f3.f64 = 1.0;
+  __imp__sub_82261800(ctx, base);
+  ctx = saved;
+}
+
+namespace {
+bool g_sounds_muted = false;  // game thread only
+}  // namespace
+void SetSoundsMuted(bool muted) { g_sounds_muted = muted; }
+bool SoundsMuted() { return g_sounds_muted; }
+
+void PlayCue(PPCContext& ctx, uint8_t* base, std::string_view cue) {
+  const uint32_t game = Read32(base, kGameGlobal);
+  const uint32_t front_end = game ? Read32(base, game + 52) : 0;
+  const uint32_t name = GuestAscii(cue);
+  if (!front_end || !name) return;
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = front_end;
+  ctx.r4.u64 = kSoundBank;
+  ctx.r5.u64 = name;
   ctx.f1.f64 = 1.0;
   ctx.f2.f64 = 0.0;
   ctx.f3.f64 = 1.0;

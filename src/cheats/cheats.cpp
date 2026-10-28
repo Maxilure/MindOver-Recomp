@@ -812,22 +812,7 @@ extern "C" REX_FUNC(sub_821349E0) {
   __imp__sub_821349E0(ctx, base);
 }
 
-// The achievement writer (r3 = the achievement manager): takes the next queued
-// unlock (28 bytes, a queue ending at +168), copies it to +180 and starts the
-// Xbox's XUserWriteAchievements with it (0x82300670; the manager polls the
-// write's overlapped at +136 before the next one: sub_82291BB8). After a
-// progress cheat we only take the unlock off the queue: nothing is written, so
-// the achievement isn't earned (the game's own pop-up still shows, from its
-// stats). How we found it: "Max level" on a titan unlocked "fully upgraded"
-// (2026-10-05 test run).
-extern "C" REX_FUNC(__imp__sub_82292938);
-extern "C" REX_FUNC(sub_82292938) {
-  using namespace cheats;
-  if (!g_cheated.load()) {
-    __imp__sub_82292938(ctx, base);
-    return;
-  }
-  const uint32_t manager = ctx.r3.u32;
-  Write32(manager + 168, Read32(manager + 168) - 28);
-  REXLOG_INFO("Cheats: an achievement unlock was not written (cheats were used this session)");
-}
+// The achievement writer (sub_82292938) lives in achievements/achievements.cpp
+// since 2026-10-25 (the port keeps achievements itself); it asks
+// AchievementsBlocked() and drops the unlock after a progress cheat. How the
+// rule was found: "Max level" on a titan unlocked "fully upgraded" (2026-10-05).

@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -487,11 +488,29 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
 // GetMenuIndex (r4 = page name, r5 = menu name -> r3 = the selected item):
 // the question a front-end decision asks when a screen's slide ends. For the
 // menu of a remembered click, the clicked item (see "AFTER A CLICK").
+namespace mouse_menus {
+std::atomic<MenuIndexFilter> g_index_filter{nullptr};
+void SetMenuIndexFilter(MenuIndexFilter filter) { g_index_filter = filter; }
+bool PointerOnCanvas(float* cx, float* cy, uint32_t* moves) { return PointerCanvas(cx, cy, moves); }
+}  // namespace mouse_menus
+
 extern "C" REX_FUNC(__imp__sub_821239C8);
 extern "C" REX_FUNC(sub_821239C8) {
   const uint32_t page_name = ctx.r4.u32, menu_name = ctx.r5.u32;
   __imp__sub_821239C8(ctx, base);
   using namespace mouse_menus;
+  // The port's own items in the game's menus (SetMenuIndexFilter), after
+  // the click memory below has had its say.
+  struct Filter {
+    PPCContext& ctx;
+    uint8_t* base;
+    uint32_t page_name;
+    ~Filter() {
+      if (MenuIndexFilter f = g_index_filter.load()) {
+        ctx.r3.u64 = uint64_t(int64_t(f(base, page_name, int32_t(ctx.r3.u32))));
+      }
+    }
+  } filter{ctx, base, page_name};
   if (!g_click.active || !page_name || !menu_name) return;
   const auto text = [&](uint32_t a) {
     std::string out;

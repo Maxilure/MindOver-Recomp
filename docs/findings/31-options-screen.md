@@ -515,3 +515,54 @@ Tested with the debug console, in game and in the main menu: every tab, the
 cursor on Friendly Fire when Gameplay opens, up from it = Keep Spinning,
 down from there = back to the top with "Co-op" shown, "Spinning" stepped
 over; 0 errors.
+
+## 11. Quit Game in the main menu (2026-10-25)
+
+![Quit Game and its question](../images/main-menu-quit-game.jpg)
+
+On the Xbox 360 a game never closes itself: the console's Guide button goes
+back to the dashboard. A PC game closes from its own main menu, so the main
+menu got a fifth item, "Quit Game" (`src/ui/quit_game.*`).
+
+* **The item.** The main menu package patch (s.4) appends a copy of the
+  Credits item, renamed `QuitItem` (siblings keep unique names). The menus'
+  text bank has no "Quit" string (the pause menu's "Quit Game" is in the
+  in-game bank, which isn't loaded there), so every front-end update writes
+  "Quit Game" into the item's Text (menu item +140) once per page load. Five
+  items 50 units apart would end close to the prompt bar: they are 45 apart
+  now, the first one where it was.
+* **The pick.** The main menu SCREEN's action (vtable `0x82023700`, Update
+  `sub_820CEB58`) has a state at +36: 2 opening, 3 open (`sub_820CEE40`: B ->
+  4, A -> 5; either one turns the menus' input bit off and plays its
+  sound), 4 / 5 closing (`sub_820CEF70`: the list fades out through +68,
+  then the result flag at front end +8593: 4 cancel, 5 accept). The main
+  menu's decision (`sub_8211B6C8`) only sees a pick once that fade is over.
+  The Update is wrapped: a 3 -> 5 step with Quit Game selected is taken back
+  (state 3 again, the list never fades) and the question asked. A mouse
+  click is a pulsed A, so it takes the same path.
+* **The question.** The game's own Yes / No box (front end +172,
+  ShowConfirmMessage `sub_8225F758`, as the pause menu's quit question and
+  Options' Default Keys use it), our words in its text element. The list is
+  hidden under it (the box is see-through) and its input is off (front end
+  +8592 bit 0x40). Like the pause menu's question, it answers A on Yes or
+  No (B does nothing there).
+* **Yes** flushes the log and ends the process the way closing the window
+  does (`std::_Exit(0)`, ReXApp::OnClosing): about half a second after the
+  press, most of it the box's own fade. Nothing is lost: the main menu has
+  no game in progress, and Options saves its settings when it closes.
+* **No** brings the list back with Quit Game still selected. Its input comes
+  back 0.3 s later: the press that answered is still the newest one, and the
+  list would take it too.
+
+How the first version went wrong: it answered the main menu's DECISION
+instead (an exit-less item). By then the screen had already faded its list
+out and stayed in state 5, which raises "accept" every frame: after No the
+question came back at once. The debug console's `who` on front end +8593
+named the writer (`sub_820CEF70+0x114`, `ori r8,r9,8`).
+
+The item and the question are English in every text language, as the
+port's Options screen is.
+
+Tested with the debug console on the test copy: the item reads "Quit Game"
+in the game's font, A asks, No keeps the menu (the cursor moves, Quit Game
+selected), asking again works, Yes ends the game; 0 errors.

@@ -19,6 +19,7 @@
 
 #include <rex/logging.h>
 
+#include "achievements/achievements.h"
 #include "cheats/cheat_menu.h"
 #include "cheats/cheats.h"
 #include "debug_console.h"
@@ -264,6 +265,15 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
       return true;
     }
     REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (dummy <2-4> follow|copy <1-4> / dummy <2-4> idle)", line);
+    return false;
+  }
+  // "achievement list|show <id>|unlock <id>" (achievements/achievements.h).
+  if (view.substr(0, 12) == "achievement ") {
+    if (achievements::DebugCommand(view.substr(12))) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+      return ok;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (achievement list|show <id>|unlock <id>)", line);
     return false;
   }
   // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).

@@ -16,6 +16,7 @@
 #include "../data/data_patcher.h"
 #include "../data/fight_tree.h"
 #include "../data/pure3d.h"
+#include "../achievements/achievements.h"
 
 namespace options_page {
 namespace {
@@ -158,6 +159,26 @@ bool SetPictureSprite(Node& picture, std::string_view sprite) {
   picture.data = std::move(data);
   return true;
 }
+// The same for a picture with several frames: `sprites` in order (frame 0
+// first; the page's code picks one with scrooby::SetFrame).
+bool SetPictureSprites(Node& picture, const std::vector<std::string>& sprites) {
+  const size_t count_at = pure3d::NameEnd(picture) + 41;
+  if (picture.data.size() < count_at + 5 || pure3d::NodeLe32(picture, count_at) != 1 || sprites.empty()) {
+    return false;
+  }
+  const size_t name_at = count_at + 4;
+  const size_t name_end = name_at + 1 + picture.data[name_at];
+  if (name_end > picture.data.size()) return false;
+  Bytes data(picture.data.begin(), picture.data.begin() + long(count_at));
+  pure3d::PutLe32(data, uint32_t(sprites.size()));
+  for (const std::string& s : sprites) {
+    const Bytes name = pure3d::PaddedString(s);
+    data.insert(data.end(), name.begin(), name.end());
+  }
+  data.insert(data.end(), picture.data.begin() + long(name_end), picture.data.end());
+  picture.data = std::move(data);
+  return true;
+}
 void SetTextColour(Node& text, uint32_t bgra_le) {
   // stored B G R A: as a little-endian u32 that's 0xAARRGGBB.
   pure3d::SetNodeLe32(text, pure3d::NameEnd(text) + 29, bgra_le);
@@ -196,7 +217,45 @@ struct Parts {
   Node star, arrow;   // pictures
   Node guide;         // the Brightness guide (the calibration screen's grey scale)
   std::vector<Node> backdrop;  // drawn first (the main menu's glass panel, cogs, hinge)
+  // The Achievements screen's sprites (achievements.h MenuSprites): one per
+  // achievement in list order, and the ring. Empty = no grid.
+  std::vector<std::string> ach_icons;
+  std::string ach_ring;
 };
+
+// THE ACHIEVEMENTS LIST (achievements_screen.h; the contract with
+// options_menu.cpp, which fills, tints and scrolls them): kAchCards glass
+// CARDS stacked down the page, like the save list's panels (FE_GameSlot:
+// FE_Common_GlassPanel_Rectangle_Small stretched to 388 x 111, a picture,
+// texts) but wider and lower, one achievement each (page units, y up):
+//   AchHeading       "Achievements", above the cards (the screen's title)
+//   AchUp / AchDown  the list's arrows, beside the first / last card
+//   AchCard<k>       the glass (kAchCardW x kAchCardH, from x kAchCardX)
+//   AchCardRing<k>   a dark frame round the picture
+//   AchCardIcon<k>   the picture, one FRAME per achievement (SetFrame)
+//   AchCardName<k>   its name (line 1, left)
+//   AchCardState<k>  "Earned 29 Sep 2026" / "Locked" (line 1, right)
+//   AchCardDesc<k>   its text (line 2, small print)
+// The texts' boxes here are where they sit at full size; options_menu.cpp
+// scales the small ones and moves them so they keep their left / right edge.
+// (Sizes and places: options_page.h THE ACHIEVEMENTS LIST.)
+constexpr int kAchRingSide = 66;
+constexpr int kAchTextX = kAchTextLeft;
+constexpr uint32_t kAchRingColour = 0xA0000000;   // the pictures' frames: black, ~63 %
+constexpr uint32_t kAchGlassColour = 0xDCFFFFFF;  // as the save list's panels (#ffffffdc)
+
+// The sprites themselves (top-level chunks for RebuildProject's `extra`),
+// and their names into `parts`.
+std::vector<Bytes> AchievementSprites(Parts* parts) {
+  std::vector<Bytes> chunks;
+  for (const achievements::MenuSprite& s : achievements::MenuSprites()) {
+    chunks.push_back(s.chunk);
+    if (s.id) parts->ach_icons.push_back(s.name);
+    else parts->ach_ring = s.name;
+  }
+  if (parts->ach_ring.empty()) parts->ach_icons.clear();
+  return chunks;
+}
 
 // The in-game Options page's parts (`page` = InGame_Options_XENON.pag,
 // `map` = InGame_Map.pag of the same project).
@@ -262,6 +321,48 @@ std::vector<Node> BuildElements(const Parts& p) {
       // 2026-10-11). tools/scrooby_dump.py calls it "frames".
       pure3d::SetNodeLe32(card, pure3d::NameEnd(card) + 20, kStretchToBox);
       elements.push_back(std::move(card));
+    }
+  }
+  // The Achievements list (hidden unless the screen is in that mode).
+  if (!p.ach_icons.empty()) {
+    auto picture = [&](std::string name, const std::vector<std::string>& sprites, int x, int y, int w, int h,
+                       uint32_t colour) {
+      Node n = p.arrow;
+      pure3d::SetNodeName(n, name);
+      if (!(sprites.size() == 1 ? SetPictureSprite(n, sprites[0]) : SetPictureSprites(n, sprites))) return;
+      SetBox(n, x, y, w, h);
+      pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 29, colour);
+      pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 20, kStretchToBox);
+      elements.push_back(std::move(n));
+    };
+    elements.push_back(MakeText(p.label, p.empty, "AchHeading", 320 - 150, kAchHeadingY, 300, kLineHeight, kCentre,
+                                kYellow));
+    // The list's own arrows (the map's arrow, as the Options list's markers),
+    // beside the first and last card: more above / below.
+    {
+      const int last_bottom = kAchCardsTop - kAchCardStep * (kAchCards - 1) - kAchCardH;
+      for (const auto& [name, y] : {std::pair{"AchUp", kAchCardsTop - kArrowSize}, std::pair{"AchDown", last_bottom}}) {
+        Node a = p.arrow;
+        pure3d::SetNodeName(a, name);
+        SetBox(a, kAchArrowX, y, kArrowSize, kArrowSize);
+        elements.push_back(std::move(a));
+      }
+    }
+    for (int k = 0; k < kAchCards; ++k) {
+      const int top = kAchCardsTop - kAchCardStep * k, bottom = top - kAchCardH;
+      picture(fmt::format("AchCard{}", k), {std::string(kCardSprites[0])}, kAchCardX, bottom, kAchCardW, kAchCardH,
+              kAchGlassColour);
+      const int icon_y = bottom + (kAchCardH - kAchIconSide) / 2;
+      const int ring_off = (kAchRingSide - kAchIconSide) / 2;
+      picture(fmt::format("AchCardIcon{}", k), p.ach_icons, kAchIconX, icon_y, kAchIconSide, kAchIconSide, 0xFFFFFFFF);
+      picture(fmt::format("AchCardRing{}", k), {p.ach_ring}, kAchIconX - ring_off, icon_y - ring_off, kAchRingSide,
+              kAchRingSide, kAchRingColour);
+      elements.push_back(MakeText(p.label, p.empty, fmt::format("AchCardName{}", k), kAchTextX, top - 38,
+                                  kAchTextRight - kAchTextX, kLineHeight, kLeft, kGreen));
+      elements.push_back(MakeText(p.label, p.empty, fmt::format("AchCardState{}", k), kAchTextRight - 260, top - 38,
+                                  260, kLineHeight, kRight, kYellow));
+      elements.push_back(MakeText(p.label, p.empty, fmt::format("AchCardDesc{}", k), kAchTextX, top - 66,
+                                  kAchTextRight - kAchTextX, kLineHeight, kLeft, kCyan));
     }
   }
   // The menu: kRows rows, each a copy of the Dialogue row.
@@ -427,6 +528,65 @@ bool CutGuide(const Bytes& menus, Node* picture, Bytes* sprite) {
 // In game: every in-game menus package (one per level group)
 // ---------------------------------------------------------------------------
 
+// THE PAUSE MENU'S "Achievements" (2026-10-25, achievements_screen.h): the
+// two pause pages the pause state shows (InGame_Pause, one player:
+// Resume, Missions, Tutorials, Options, Save, Quit; InGame_Pause2Player:
+// ... Drop Out before Options) get a copy of OptionsItem right after it,
+// renamed AchievementsItem (its words go in at run time: the in-game text
+// bank has none). The items are spread over the same span as before (the
+// first at y 280, the last at 70 at most): 35 apart (the game's) when they
+// fit, closer when not (two players: 8 items, 30 apart).
+constexpr std::string_view kPausePages[] = {"InGame_Pause.pag", "InGame_Pause2Player.pag"};
+// THE ACHIEVEMENT CARD, ON THE MESSAGE BAR'S PAGE (InGame_MessageBar.pag:
+// the game's pop-up at the bottom; achievements.cpp puts an earned
+// achievement in the bar's queue). The bar's own wide glass and texts are
+// hidden while one of ours is up and this card shows instead, so it is drawn
+// by the game and slides with the bar's page (canvas units, y up; at 720p
+// x = 160 + 1.5 u, y = 720 - 1.5 u: 520 x 100 pixels, 30 above the bottom):
+//   AchPopGlass  the save list's glass (FE_Common_GlassPanel_Rectangle_Small),
+//                white at 78 %, x 147-493, y 20-87
+//   AchBarIcon   the achievement's picture, one FRAME each (SetFrame), 45 x 45
+//   AchBarRing   its dark frame, 49 x 49
+//   AchPopTitle  "Achievement Unlocked" (cyan, small)
+//   AchPopName   its name (yellow)
+// The texts are placed and sized by achievements.cpp (it shrinks long names).
+// (The bar's own glass: 600 x 180 at (20, -45), its lower part under the
+// screen's edge; title at y 90, message at y 55.)
+constexpr std::string_view kMessageBarPage = "InGame_MessageBar.pag";
+constexpr int kPopX = 147, kPopY = 20, kPopW = 346, kPopH = 67;
+constexpr int kBarIconSide = 45, kBarRingSide = 49, kBarIconX = kPopX + 11, kBarIconY = kPopY + (kPopH - 45) / 2;
+constexpr uint32_t kPopGlassColour = 0xC8FFFFFF;  // white at 78 %, as the in-game glass panel
+constexpr int kPauseTopY = 280, kPauseLowestY = 70, kPauseStep = 35;
+std::atomic<bool> g_pause_patched{false};
+
+bool AddPauseAchievements(Node& page) {
+  Node* layer = Child(page, kChunkLayer);
+  Node* menu = layer ? Child(*layer, kChunkMenu, "PauseMenu") : nullptr;
+  if (!menu) return false;
+  auto& items = menu->children;
+  const auto options = std::find_if(items.begin(), items.end(), [](const Node& n) {
+    return n.id == kChunkItem && pure3d::NodeName(n) == "OptionsItem";
+  });
+  if (options == items.end() || options->children.empty() || options->children[0].children.empty()) return false;
+  Node copy = *options;
+  pure3d::SetNodeName(copy, "AchievementsItem");
+  pure3d::SetNodeName(copy.children[0].children[0], "AchievementsValue");
+  items.insert(options + 1, copy);
+  int count = 0;
+  for (const Node& n : items) count += n.id == kChunkItem;
+  const int step = count > 1 ? std::min(kPauseStep, (kPauseTopY - kPauseLowestY) / (count - 1)) : kPauseStep;
+  int i = 0;
+  for (Node& item : items) {
+    if (item.id != kChunkItem || item.children.empty() || item.children[0].children.empty()) continue;
+    Node& text = item.children[0].children[0];
+    const size_t e = pure3d::NameEnd(text);
+    SetBox(text, int(pure3d::NodeLe32(text, e + 4)), kPauseTopY - step * i,
+           int(pure3d::NodeLe32(text, e + 12)), int(pure3d::NodeLe32(text, e + 16)));
+    ++i;
+  }
+  return true;
+}
+
 bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
   Node options, map;
   if (!FindInGamePages(original, &options, &map)) return false;  // another package
@@ -453,9 +613,72 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
   parts.guide = guide;
   std::vector<Bytes> extra;
   if (!guide_sprite.empty()) extra.push_back(guide_sprite);
+  for (Bytes& b : AchievementSprites(&parts)) extra.push_back(std::move(b));
+  // The pause pages that this package has (RebuildProject wants every page
+  // it's given; a package without one keeps its pause menu as it was).
+  std::vector<std::string_view> pages{kPageName};
+  {
+    pure3d::Chunk root;
+    std::vector<pure3d::Chunk> top;
+    pure3d::Parse(original, &root, &top);
+    for (const pure3d::Chunk& c : top) {
+      if (c.id != pure3d::kChunkProject || pure3d::NameOf(original, c) != kHostProject) continue;
+      for (const pure3d::Chunk& k : pure3d::ChildrenOf(original, c)) {
+        for (std::string_view p : kPausePages) {
+          if (k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == p) pages.push_back(p);
+        }
+        if (!parts.ach_icons.empty() && k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == kMessageBarPage) {
+          pages.push_back(kMessageBarPage);
+        }
+      }
+    }
+  }
   const bool ok = RebuildProject(
-      original, kHostProject, {kPageName},
-      [&](std::string_view, Node& page) {
+      original, kHostProject, pages,
+      [&](std::string_view name, Node& page) {
+        if (name == kMessageBarPage) {
+          Node* layer = Child(page, kChunkLayer);
+          if (!layer) return true;
+          auto picture = [&](const char* element, const std::vector<std::string>& sprites, int x, int y, int side,
+                             uint32_t colour) {
+            Node n = parts.arrow;
+            pure3d::SetNodeName(n, element);
+            if (!(sprites.size() == 1 ? SetPictureSprite(n, sprites[0]) : SetPictureSprites(n, sprites))) return;
+            SetBox(n, x, y, side, side);
+            pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 29, colour);
+            pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 20, kStretchToBox);
+            layer->children.push_back(std::move(n));
+          };
+          // A picture element stretched to its box (the glass is 4:1, the box
+          // ~5:1: picture() takes a square side, so the glass is made here).
+          {
+            Node glass = parts.arrow;
+            pure3d::SetNodeName(glass, "AchPopGlass");
+            if (SetPictureSprite(glass, kCardSprites[0])) {
+              SetBox(glass, kPopX, kPopY, kPopW, kPopH);
+              pure3d::SetNodeLe32(glass, pure3d::NameEnd(glass) + 29, kPopGlassColour);
+              pure3d::SetNodeLe32(glass, pure3d::NameEnd(glass) + 20, kStretchToBox);
+              layer->children.push_back(std::move(glass));
+            }
+          }
+          const int off = (kBarRingSide - kBarIconSide) / 2;
+          picture("AchBarIcon", parts.ach_icons, kBarIconX, kBarIconY, kBarIconSide, 0xFFFFFFFF);
+          picture("AchBarRing", {parts.ach_ring}, kBarIconX - off, kBarIconY - off, kBarRingSide, kAchRingColour);
+          const int text_x = kBarIconX + kBarIconSide + 11, text_w = kPopX + kPopW - 11 - text_x;
+          layer->children.push_back(
+              MakeText(parts.label, parts.empty, "AchPopTitle", text_x, kPopY + 36, text_w, kLineHeight, kLeft, kCyan));
+          layer->children.push_back(
+              MakeText(parts.label, parts.empty, "AchPopName", text_x, kPopY + 8, text_w, kLineHeight, kLeft, kYellow));
+          return true;
+        }
+        if (name == kPausePages[0] || name == kPausePages[1]) {
+          if (!AddPauseAchievements(page)) {
+            REXLOG_WARN("Achievements: {} isn't as expected: no Achievements item there", name);
+            return true;  // the page as it was: the rest of the patch still counts
+          }
+          g_pause_patched = true;
+          return true;
+        }
         Node* layer = Child(page, kChunkLayer);
         if (!layer) return false;
         layer->children = BuildElements(parts);
@@ -490,10 +713,15 @@ constexpr std::string_view kMainOptionsPage = "GameStart_OptionsPS2.pag";
 constexpr std::string_view kMainOptionsMenu = "OptionsMenu";
 constexpr std::string_view kInGamePackage = "package\\7a8185b0.p3d";  // any in-game menus package
 // The main menu's items, as the game lays out its four: 50 units apart from
-// y 295. Still four: Calibration (the original's TV brightness test screen)
-// gives its place to Options, its grey scale becomes the Brightness row's
-// guide (2026-10-10).
-constexpr int kMainItemTopY = 295, kMainItemStep = 50;
+// y 295. Calibration (the original's TV brightness test screen) gives its
+// place to Options, its grey scale becomes the Brightness row's guide
+// (2026-10-10). "Quit Game" last (2026-10-25, ui/quit_game.h: a PC game
+// closes from its own menu; the Xbox had the console's Guide button). Five
+// items at the original's 50 units would end at y 95, close to the prompt
+// bar: 45 apart keeps the list's top where it was. (An "Achievements" item
+// was here for a few days; it lives in the pause menu only now: the
+// achievements are earned in play.)
+constexpr int kMainItemTopY = 295, kMainItemStep = 45;
 constexpr std::string_view kCalibrationItem = "CalibrationItem";
 
 std::atomic<bool> g_main_menu_patched{false};
@@ -562,6 +790,8 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
   Node main_guide;
   Bytes unused_sprite;  // already in this package
   CutGuide(original, &main_guide, &unused_sprite);
+  // The Achievements screen's pictures (achievements.h MenuSprites).
+  for (Bytes& b : AchievementSprites(&parts)) stars.push_back(std::move(b));
 
   const bool ok = RebuildProject(
       original, kMainMenuProject, {kMainMenuPage, kMainOptionsPage},
@@ -570,7 +800,7 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
         if (!layer) return false;
         if (name == kMainMenuPage) {
           Node* menu = Child(*layer, kChunkMenu);
-          if (!menu || menu->children.size() != 4) return false;
+          if (!menu || menu->children.size() != 4) return false;  // the original's four
           auto& items = menu->children;
           const auto calibration = std::find_if(items.begin(), items.end(), [](const Node& n) {
             return pure3d::NodeName(n) == kCalibrationItem;
@@ -578,6 +808,17 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
           if (calibration == items.end()) return false;
           items.erase(calibration);
           items.insert(items.begin() + kMainMenuOptionsItem, ps2_item);
+          // "Quit Game": a copy of the last item (Credits: same font, colour,
+          // look), renamed (siblings keep unique names). Its text still names
+          // Credits' string in the bank; the words go in at run time
+          // (ui/quit_game.cpp: the menus' text bank has no such string).
+          {
+            Node quit = items.back();
+            pure3d::SetNodeName(quit, "QuitItem");
+            if (quit.children.empty() || quit.children[0].children.empty()) return false;
+            pure3d::SetNodeName(quit.children[0].children[0], "QuitItemText");
+            items.push_back(quit);
+          }
           // Evenly apart (each item's text: look -> text).
           for (size_t i = 0; i < menu->children.size(); ++i) {
             Node& item = menu->children[i];
@@ -712,5 +953,6 @@ void Register() {
 
 bool Available() { return g_patched.load(); }
 bool MainMenuAvailable() { return g_main_menu_patched.load(); }
+bool PauseAchievementsAvailable() { return g_pause_patched.load(); }
 
 }  // namespace options_page

@@ -87,7 +87,26 @@ bool Available();
 // Whether the main menu got its "Options" item and our page (as its third
 // item, the page in place of the unused PS2 Options page: options_page.cpp).
 bool MainMenuAvailable();
-// The main menu's items with it: New Game, Load Game, OPTIONS, Credits.
+// The main menu's items with it: New Game, Load Game, OPTIONS, Credits,
+// QUIT GAME (ui/quit_game.h). (Achievements: the pause menu only.)
 constexpr int kMainMenuOptionsItem = 2;
+constexpr int kMainMenuQuitItem = 4;
+// Whether the pause pages got their "Achievements" item (right after
+// Options; options_page.cpp AddPauseAchievements).
+bool PauseAchievementsAvailable();
+// THE ACHIEVEMENTS LIST (options_page.cpp; options_menu.cpp fills it), in
+// page units, y up: kAchCards glass cards INSIDE the game's glass panel,
+// which stays centred for the list (x 70-570, y 34-388: the Options screen
+// moves it left for its side card, the list doesn't), under the heading
+// (the tabs' line, y 312), the list's arrows beside them on the right.
+constexpr int kAchCards = 3;
+// (Full size since 2026-10-29, like the pause menu: 70 tall, 78 apart from
+// y 304, so the last card ends at y 78, above the prompts' line, y 42-69.)
+constexpr int kAchCardX = 85, kAchCardW = 438, kAchCardH = 70, kAchCardStep = 78, kAchCardsTop = 304;
+constexpr int kAchIconSide = 60, kAchIconX = kAchCardX + 12;
+constexpr int kAchTextLeft = kAchIconX + kAchIconSide + 14;    // 171
+constexpr int kAchTextRight = kAchCardX + kAchCardW - 16;     // 507
+constexpr int kAchHeadingY = 312;
+constexpr int kAchArrowX = 530;  // the arrows' box left (32 wide), beside the cards (glass edge 570)
 
 }  // namespace options_page

@@ -76,6 +76,14 @@ uint32_t FindPolygon(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_
 void SetText(PPCContext& ctx, uint8_t* base, uint32_t text, std::u16string_view value);
 
 void SetVisible(uint8_t* base, uint32_t element, bool visible);
+// An element's box (canvas units, y up: x / y of its bottom-left, w / h):
+// +92 / +96 position (units x the constant at 0x8204701C), +88 / +90 size.
+// (A PICTURE is drawn at the size its data has: only its place moves.)
+void SetBox(uint8_t* base, uint32_t element, float x, float y, float w, float h);
+// Width in canvas units of a line in the game's font (Titans_Small, every
+// menu text) at `scale` (0.5 unit per font pixel at size 1: calibrated on a
+// photo, options/options_menu.cpp).
+float TextWidth(std::u16string_view text, float scale);
 bool Visible(uint8_t* base, uint32_t element);
 // Scales an element around its centre (1 = its own size); resets any other
 // transform it had.
@@ -100,5 +108,15 @@ void SetSelectable(uint8_t* base, uint32_t item, bool selectable);
 // The front end's menu sounds (the "FE_SFX" bank).
 enum class Sound { kMove, kChange };
 void PlaySound(PPCContext& ctx, uint8_t* base, Sound sound);
+// Any cue of the menus' sound bank FE_SFX by name ("objective5" = the
+// "unlocked" jingle, stinger_unlock: achievements/achievements.cpp). The
+// bank's cues are listed in default.rcf (findings/51).
+void PlayCue(PPCContext& ctx, uint8_t* base, std::string_view cue);
+// While set, the front end's sound player (sub_82261800, wrapped in
+// saves/save_library.cpp) plays nothing (game thread): around a game call
+// whose own sound isn't wanted (the message bar's "back" for an
+// achievement: achievements.cpp).
+void SetSoundsMuted(bool muted);
+bool SoundsMuted();
 
 }  // namespace scrooby

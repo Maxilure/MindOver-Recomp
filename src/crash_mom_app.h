@@ -64,6 +64,8 @@
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
+#include "achievements/achievements.h"
+#include "achievements/achievements_screen.h"
 #include "fps_overlay.h"
 #include "ui/wii_cursor.h"
 #include "players/dummy_players.h"
@@ -232,6 +234,8 @@ class CrashMomApp : public rex::ReXApp {
     // Pause -> Options: the port's Options screen with tabs (options/options_menu.h):
     // its page replaces the game's in the in-game menus package.
     options_menu::Register();
+    // The pause menu's "Achievements" item (achievements/achievements_screen.h).
+    achievements_screen::Register();
     {
       options_settings::Hooks hooks;
       if (native_renderer_) {
