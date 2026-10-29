@@ -4,6 +4,7 @@
 // Each override below says what the ORIGINAL method did (findings/32) and how
 // ours does the same with a plain file. Argument registers are the original's.
 #include "pc_save_drive.h"
+#include "../cheats/cheats.h"
 #include "../players/outfits.h"
 
 #include <algorithm>
@@ -125,19 +126,26 @@ bool SafeName(const std::string& name) {
 bool Flush(OpenFile& f) {
   if (!f.dirty) return true;
   std::string error;
-  // The game's bytes, then the port's trailer: the current outfit picks for
-  // a file the game wrote (a save), the file's own for any other write.
+  // The game's bytes, then the port's trailer: the current outfit picks (and
+  // the "made with cheats" mark while cheats are on, cheats.h) for a file
+  // the game wrote (a save), the file's own for any other write.
   std::vector<uint8_t> out = f.data;
+  const bool game_save = f.writable && f.data.size() == save_files::kGameFileSize;
+  const bool cheated = game_save && cheats::AchievementsBlocked();
   const std::vector<uint8_t> trailer =
-      f.writable && f.data.size() == save_files::kGameFileSize
-          ? save_files::MakeTrailer(outfits::CurrentPickBytes())
-          : f.trailer;
+      game_save ? save_files::MakeTrailer(outfits::CurrentPickBytes(),
+                                          cheated ? save_files::kTrailerMadeWithCheats : 0)
+                : f.trailer;
   out.insert(out.end(), trailer.begin(), trailer.end());
   if (!save_files::ReplaceFile(f.path, out, &error)) {
     REXLOG_ERROR("PC save drive: COULD NOT WRITE {}: {}", f.path.string(), error);
     return false;
   }
   f.dirty = false;
+  if (game_save) {
+    cheats::OnSaveWritten(cheated);
+    if (cheated) REXLOG_INFO("PC save drive: {} marked as made with cheats", f.path.filename().string());
+  }
   REXLOG_INFO("PC save drive: wrote {} ({} bytes)", f.path.filename().string(), f.data.size());
   return true;
 }

@@ -89,6 +89,7 @@ A few minutes per configuration.
   | `0014-quiet-empty-texture-slots` | "Texture fetch constant ... has "invalid" type!" was logged for every draw with an EMPTY texture slot (type "invalid", no address: what unbinding a texture leaves), thousands of lines per level load. Nothing is bound for such a slot either way, so it's now skipped quietly; an invalid slot that points at memory is still warned about, once per distinct constant |
   | `0015-gamma-ramp-power` | Brightness (the Options screen's Display tab): GPU flag `gamma_ramp_power`, a power on each channel of the game's display gamma ramp, applied when the swap uploads the ramp (re-uploaded when the flag changes); the native renderer applies the same curve (`CommandProcessor::GammaRampEntryWithPower`) |
   | `0016-renderdoc-only-when-attached` | RenderDoc is used only when it is already in the process (the game started from RenderDoc): the SDK loaded `librenderdoc.so` whenever RenderDoc was installed, which hid Vulkan's Wayland surface, so on a Wayland desktop the game window never appeared |
+  | `0017-tools-menu-binds` | `InvokeBind(name)` runs a key bind by name (the port's Tools menu, F1, runs the SDK's own overlays through it), and the SDK's F3 / F4 / F7 / backtick binds start with no key: one stray function key press no longer opens a window mid-game |
 
   `patches/rexglue-sdk/debug/` holds **optional debugging patches** that
   the `*.patch` glob above deliberately skips. Apply one by hand when
@@ -187,10 +188,14 @@ is rejected. Useful extras:
   goes to `<log name>-inputs.txt` next to the session log, for replaying a
   session's presses through the debug console.
 
-In-game overlays: **F3** stats, **`** log console, **F4** settings. The
-port's own keys: **F8** second window (native picture), **F9** switch the
-picture, **F10** photo of the same frame from both renderers, **F11** /
-**F12** renderer debugging (findings/20).
+Keys: **F1** opens the Tools menu, **F2** hides / shows the HUD, **F11** switches fullscreen; nothing else
+sits on a function key (findings/52). The Tools menu has the SDK's overlays
+(stats, log console, all settings, its achievements list) and the port's
+tools: Cheats, Controls, second window (native picture), switch the
+picture, photo of the same frame from both renderers, and the renderer
+debugging cycles (findings/20). Each is still a key bind setting with no
+key (`bind_photo`, `bind_renderer`, `bind_settings`...): give one a key in
+`user/settings.toml` (e.g. `bind_photo = "F10"`) to have it back on a key.
 
 For the current state, see the Status table in the [README](../README.md).
 

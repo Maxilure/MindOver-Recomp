@@ -1,5 +1,5 @@
 // =============================================================================
-// cheats/cheat_menu.h -- the Cheats menu (F5): testing cheats over the game
+// cheats/cheat_menu.h -- the Cheats menu (Tools menu, F1): testing cheats over the game
 // =============================================================================
 //
 // WHAT: a window over the game (main window) with the cheats of cheats.h and
@@ -39,7 +39,11 @@ namespace cheat_menu {
 // Creates the dialog, closed (CrashMomApp::OnCreateDialogs).
 void Create(rex::ui::ImGuiDrawer* drawer);
 
-// F5 (UI thread): opens it if closed, closes it if open.
+// The Tools menu's "Cheats..." (UI thread): opens it if closed, closes it if
+// open. OPENING it enables cheats (cheats.h NoteCheatsUsed: achievements
+// off until a save is loaded, the game's bar says so).
 void Toggle();
+// Whether the window is open now (any thread).
+bool IsOpen();
 
 }  // namespace cheat_menu

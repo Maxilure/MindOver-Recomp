@@ -15,6 +15,7 @@
 #include "recorder.h"
 #include "../input/prompt_icons.h"
 #include "../guest_memory.h"
+#include "../ui/marquee.h"
 #include "spotter.h"
 
 #include <algorithm>
@@ -1172,6 +1173,8 @@ void BeginImmediate(PPCContext& ctx, uint8_t* base, PPCFunc* original, bool inde
   const uint32_t prim_type = ctx.r5.u32;
   const uint32_t index_count = indexed ? ctx.r8.u32 : 0;
   original(ctx, base);
+  // Scrolling menu texts (ui/marquee.h): whatever renderer shows the picture.
+  if (!indexed) marquee::OnBeginPrims(base, xn_context, prim_type);
   if (!g.recording) {
     return;
   }
@@ -1233,6 +1236,9 @@ void OnBeginIndexedPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
 // the GPU is done, but we copy first anyway). Each 32-bit word is
 // byte-swapped, which turns every component into host order (frame.h).
 void OnEndPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
+  // Scrolling menu texts (ui/marquee.h): their glyphs moved / cut / faded in
+  // the game's own data first, so both pictures (and the copy below) get it.
+  marquee::OnEndPrims(base);
   if (g.recording && g.pending) {
     DrawCommand& d = g.pending_draw;
     // F12's "erase" experiments (spotter.h): zero this particle draw's vertex

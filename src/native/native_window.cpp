@@ -13,7 +13,7 @@
 
 REXCVAR_DEFINE_BOOL(native_window, false, "CrashMoM",
                     "Dual mode at start: a second window shows the native renderer's picture "
-                    "live while the main window shows the emulated one. F8 opens/closes it");
+                    "live while the main window shows the emulated one. Tools menu (F1) opens/closes it");
 
 std::unique_ptr<NativeWindow> NativeWindow::Create(rex::ui::WindowedAppContext& app_context,
                                                    rex::ui::GraphicsProvider& provider,

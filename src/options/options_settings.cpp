@@ -229,20 +229,21 @@ Row RendererRow() {
     if (g_hooks.emulated_drawing) g_hooks.emulated_drawing();
   };
   r.describe = [none](Env&, int i) -> std::u16string {
-    // F9 switches the picture between the two renderers (not with Emulated
-    // Only: the port's renderer is off then).
-    const std::u16string f9 = KeyOf(kbm::ParseInput("F9"));
+    // The Tools menu (F1 -> Switch renderer) switches the picture between the
+    // two renderers (not with Emulated Only: the port's renderer is off then).
+    // Was F9 until 2026-10-29 (ui/tools_menu.h).
+    const std::u16string tools = KeyOf(kbm::ParseInput("F1"));
     if (none()) return u"The Xbox 360's graphics chip, imitated step by step: looks like the original.";
     switch (i) {
       case kEmulatedOnly:
-        return u"Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and " + f9 +
-               u" doesn't switch.";
+        return u"Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the " + tools +
+               u" Tools menu doesn't switch.";
       case kEmulated:
-        return u"The Xbox 360's graphics chip, imitated step by step: looks like the original. " + f9 +
-               u" switches to the port's renderer.";
+        return u"The Xbox 360's graphics chip, imitated step by step: looks like the original. The " + tools +
+               u" Tools menu switches to the port's renderer.";
       case kNative:
-        return u"The port's own renderer, made for PC. The imitation keeps drawing behind it: " + f9 +
-               u" switches back at once.";
+        return u"The port's own renderer, made for PC. The imitation keeps drawing behind it: the " + tools +
+               u" Tools menu switches back at once.";
       default: return u"The port's own renderer alone: the lightest on your PC.";
     }
   };

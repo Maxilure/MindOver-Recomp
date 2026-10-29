@@ -74,7 +74,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     ImGui::SetNextWindowSize(size, ImGuiCond_Appearing);
     ImGui::SetNextWindowBgAlpha(0.94f);
     bool still_open = true;
-    if (ImGui::Begin("Controls (F6)###crashmom_controls", &still_open,
+    if (ImGui::Begin("Controls###crashmom_controls", &still_open,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings)) {
       DrawContents(driver);
     }
@@ -125,7 +125,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     }
     ImGui::EndChild();
 
-    if (ImGui::Button("Close (F6)")) {
+    if (ImGui::Button("Close")) {
       SetOpen(driver, false);
       return;
     }

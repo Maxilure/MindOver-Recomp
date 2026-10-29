@@ -28,7 +28,7 @@
 
 REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
                       "Picture shown at start: 'emulated' (ReXGlue's GPU emulation) or "
-                      "'native' (our Vulkan renderer, in development). F9 switches");
+                      "'native' (our Vulkan renderer, in development). Tools menu (F1) switches");
 // NATIVE ONLY (2026-09-30, experimental): a preview of
 // the finish line, where our renderer replaces the emulated GPU. The emulated
 // GPU normally keeps drawing every frame even while nobody sees its picture,
@@ -44,7 +44,7 @@ REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
 // known) would go stale.
 REXCVAR_DEFINE_BOOL(native_only, true, "CrashMoM",
                     "Start on the native picture and stop the emulated GPU's drawing while "
-                    "the native picture is in the main window (F9 back turns it on again)");
+                    "the native picture is in the main window (switching back turns it on again)");
 // EMULATED ONLY (2026-09-30, the mirror image of --native_only): the plain
 // emulated game as a clean baseline to compare
 // with. Starts on the emulated picture and locks it there: F9 and F8 (dual
@@ -53,7 +53,7 @@ REXCVAR_DEFINE_BOOL(native_only, true, "CrashMoM",
 // game's renderer calls (a few function calls per draw, nothing drawn) and
 // F10 photos of the screen.
 REXCVAR_DEFINE_BOOL(emulated_only, false, "CrashMoM",
-                    "Only the emulated GPU's picture: F9 / F8 locked, the native renderer never "
+                    "Only the emulated GPU's picture: renderer switch and second window locked, the native renderer never "
                     "draws. The baseline to compare --native_only with");
 // EMULATED EVERY NTH FRAME (2026-10-03): with both renderers drawing (dual
 // mode, or our picture in the main window without --native_only), the host
@@ -709,23 +709,23 @@ bool NativeRenderer::Initialize() {
   }
 
   // --- Hook up: F9, the start setting, the game's calls, its frame end ---
-  rex::ui::RegisterBind("bind_renderer", "F9",
+  rex::ui::RegisterBind("bind_renderer", "" /* Tools menu (was F9) */,
                         "Switch the picture between the emulated GPU and the native renderer",
                         [this] {
                           if (emulated_only()) {
                             overlay_banner::Show("EMULATED ONLY",
-                                                 "F9 is off (--emulated_only)");
+                                                 "No switching with --emulated_only");
                             return;
                           }
                           // Dual mode: each window already shows one picture.
                           if (window_presenter_.load(std::memory_order_relaxed)) {
                             overlay_banner::Show("DUAL MODE",
-                                                 "F9 does nothing while the native window is open "
-                                                 "(F8 closes it)");
+                                                 "No switching while the second window is open "
+                                                 "(Tools closes it)");
                             REXLOG_INFO(
-                                "NativeRenderer: F9 does nothing while the native window is open "
+                                "NativeRenderer: no renderer switch while the native window is open "
                                 "(the main window shows the emulated picture, the native window "
-                                "ours; F8 closes it)");
+                                "ours; Tools closes it)");
                             return;
                           }
                           SetShowNative(!show_native());
@@ -734,7 +734,7 @@ bool NativeRenderer::Initialize() {
   // (main window on native, or the native window open; ab_capture.h: PNGs
   // into --photo_dir). With --debug_pddi_trace_dir (tools/play.sh --trace)
   // it also records every renderer call of that frame (pddi/trace.cpp).
-  rex::ui::RegisterBind("bind_photo", "F10",
+  rex::ui::RegisterBind("bind_photo", "" /* Tools menu (was F10) */,
                         "Save a photo of the game (both renderers' pictures of one frame "
                         "while the native one is shown) into --photo_dir",
                         [this] {
@@ -757,7 +757,7 @@ bool NativeRenderer::Initialize() {
   // The debug console's `photo` = F10 (ab_capture::RequestPhotoLikeF10).
   native::ab_capture::SetNativeShownCheck(
       [](void* self) { return static_cast<NativeRenderer*>(self)->native_drawn(); }, this);
-  REXLOG_INFO("NativeRenderer: ready ({}x{}), F9 switches emulated/native, F10 takes a photo",
+  REXLOG_INFO("NativeRenderer: ready ({}x{}), Tools menu (F1) switches emulated/native and takes photos",
               kWidth, kHeight);
   return true;
 }
@@ -1426,7 +1426,7 @@ void NativeRenderer::SetShowNative(bool show) {
   // (SDK patch 0004). When switching back it simply takes over at its next
   // swap. In dual mode the main window stays emulated whatever F9 says.
   presenter_->SetGuestOutputExternal(show && !window_presenter_.load(std::memory_order_relaxed));
-  REXLOG_INFO("NativeRenderer: showing the {} picture (F9 switches)",
+  REXLOG_INFO("NativeRenderer: showing the {} picture (Tools menu switches)",
               show ? "native" : "emulated");
   UpdateEmulatedDrawing();
   AnnouncePicture();
@@ -1439,16 +1439,16 @@ void NativeRenderer::AnnouncePicture() {
   // shows now, and what the other renderer is doing meanwhile.
   if (window_presenter_.load(std::memory_order_relaxed)) {
     overlay_banner::Show("DUAL MODE", "this window: emulated (Xbox 360 GPU)   second window: "
-                                      "native (Vulkan)   F8 closes it");
+                                      "native (Vulkan)   F1 Tools closes it");
   } else if (emulated_only()) {
     overlay_banner::Show("EMULATED ONLY", "Xbox 360 GPU emulation; native renderer off");
   } else if (show_native()) {
     overlay_banner::Show("NATIVE (Vulkan)",
                          REXCVAR_GET(native_only)
-                             ? "native only: the emulated GPU is off   F9 switches"
-                             : "the emulated GPU still draws in the background   F9 switches");
+                             ? "native only: the emulated GPU is off   F1 Tools switches"
+                             : "the emulated GPU still draws in the background   F1 Tools switches");
   } else {
-    overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle   F9 switches");
+    overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle   F1 Tools switches");
   }
 }
 

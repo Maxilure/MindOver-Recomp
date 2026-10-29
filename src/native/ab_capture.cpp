@@ -36,7 +36,7 @@ REXCVAR_DEFINE_STRING(debug_native_ab_trigger, "", "CrashMoM",
                       "Debug: like --debug_native_ab_ms, whenever this file appears (`touch` it; "
                       "it is deleted once the frame is saved)");
 REXCVAR_DEFINE_STRING(photo_dir, "", "CrashMoM",
-                      "Where F10 saves photos (PNG): the same frame from both renderers while "
+                      "Where photos (Tools -> Take a photo) go (PNG): the same frame from both renderers while "
                       "the native picture is shown, else the screen. Empty = user/photos in "
                       "the game folder; a relative path starts at the folder the game was "
                       "started from");

@@ -22,7 +22,7 @@
 #include <rex/ui/windowed_app_context.h>
 
 REXCVAR_DEFINE_BOOL(keyboard_mouse, true, "CrashMoM",
-                    "Play with keyboard and mouse (keys in user/controls.toml in the game folder, F6 = "
+                    "Play with keyboard and mouse (keys in user/controls.toml in the game folder, F1 Tools -> Controls = "
                     "Controls menu); a controller keeps working too");
 REXCVAR_DEFINE_BOOL(debug_kbm_trace, false, "CrashMoM",
                     "Debug: log every change of the controller state the keyboard / mouse "

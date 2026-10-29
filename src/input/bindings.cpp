@@ -20,7 +20,7 @@
 
 REXCVAR_DEFINE_STRING(controls_file, "", "CrashMoM",
                       "Keyboard + mouse controls file (empty = user/controls.toml in the game folder; "
-                      "written by the Controls menu, F6)");
+                      "written by the Controls menu, F1 Tools)");
 
 namespace kbm {
 namespace {
@@ -343,17 +343,23 @@ bool IsMouseInput(Input input) {
 
 bool IsReservedInput(Input input) {
   switch (input) {
-    case V(VK::kF3):    // SDK: debug overlay
-    case V(VK::kF4):    // SDK: settings
-    case V(VK::kF5):    // ours: the Cheats menu
-    case V(VK::kF6):    // ours: the Controls menu
-    case V(VK::kF7):    // SDK: achievements
-    case V(VK::kF8):    // ours: native window (dual mode)
-    case V(VK::kF9):    // ours: emulated <-> native picture
-    case V(VK::kF10):   // ours: photo
-    case V(VK::kF11):   // ours: highlight
-    case V(VK::kF12):   // ours: particle experiments
-    case V(VK::kOem3):  // SDK: log console (backtick)
+    // Since 2026-10-29 the tools are buttons in ONE menu (ui/tools_menu.h);
+    // only its key, the HUD switch and fullscreen keep a function key. The others (F2-F10,
+    // F12, backtick) stay out of the game's keys too: a player may give a
+    // tool its old key back in settings.toml (bind_photo = "F10"...).
+    case V(VK::kF1):    // ours: the Tools menu
+    case V(VK::kF2):    // ours: hide / show the HUD (was: save rename)
+    case V(VK::kF3):    // (was SDK: debug overlay)
+    case V(VK::kF4):    // (was SDK: settings)
+    case V(VK::kF5):    // (was: the Cheats menu)
+    case V(VK::kF6):    // (was: the Controls menu)
+    case V(VK::kF7):    // (was SDK: achievements)
+    case V(VK::kF8):    // (was: native window, dual mode)
+    case V(VK::kF9):    // (was: emulated <-> native picture)
+    case V(VK::kF10):   // (was: photo)
+    case V(VK::kF11):   // ours: fullscreen
+    case V(VK::kF12):   // (was: particle experiments)
+    case V(VK::kOem3):  // (was SDK: log console, backtick)
       return true;
     default:
       return false;
@@ -647,11 +653,11 @@ Bindings LoadBindings(const std::filesystem::path& path) {
 bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
   std::ostringstream out;
   out << "# Crash: Mind over Mutant (Mind over Recomp): keyboard and mouse controls.\n"
-         "# Written by the Controls menu (F6) on every change. Hand edits work too, with\n"
+         "# Written by the Controls menu (F1 Tools) on every change. Hand edits work too, with\n"
          "# the game closed: up to " << kSlots << " keys per action, separated by commas.\n"
          "# Key names: A-Z, 0-9, F1-F24, Space, Return, Escape, Tab, Backspace, Shift,\n"
          "# Control, Alt, Up/Down/Left/Right, Numpad0-9, LMB, RMB, MMB, Mouse4, Mouse5,\n"
-         "# WheelUp, WheelDown (more: src/input/bindings.cpp). F3-F12 and the\n"
+         "# WheelUp, WheelDown (more: src/input/bindings.cpp). F1-F12 and the\n"
          "# backtick key belong to the tools and can't be bound.\n"
          "# The comment after each line is the Xbox 360 control the game sees.\n"
          "# Actions marked [menus] work while a menu is on screen, [play] in play; a key\n"
@@ -685,7 +691,7 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
   }
 
   // Players (players.h): only the devices given a player by hand.
-  out << "\n# Players: which device plays as which player (Players tab of F6).\n"
+  out << "\n# Players: which device plays as which player (Players tab of the Controls menu).\n"
          "# player.<device> = 1-4 or off; a device not listed is automatic (the keyboard\n"
          "# and the first controller = player 1, the second controller = player 2...).\n";
   for (const auto& [key, choice] : b.players) {

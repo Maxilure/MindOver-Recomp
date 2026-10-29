@@ -39,8 +39,8 @@
 //   motion factor: the frame function multiplies its step by it, and five
 //   other places read it. We multiply what it returns.
 //   ACHIEVEMENTS. "Max level" on a titan made the game unlock its "fully
-//   upgraded" achievement. After any progress cheat the achievement writer
-//   (sub_82292938) only drops its queue entry, until the game restarts.
+//   upgraded" achievement. With cheats enabled the achievement writer
+//   (sub_82292938) only drops its queue entry (rules at AchievementsBlocked).
 //   FREEZE / STEP. Leftovers of the developers' "PauseGameForScreenshots" and
 //   "SingleStepFrame" script commands: bits 0x04 / 0x02 of the game manager's
 //   byte +168. With 0x04 the frame function steps 1e-7 s per frame (the
@@ -68,9 +68,10 @@
 //   picked at the chest) but sets the same "Coco unlocked" byte 0x825AB1C8
 //   (only saved / loaded, nothing else reads it). Progress cheat: kept by the
 //   next save, achievements off.
-//   HIDE HUD. The HUD controller's draw (sub_8226A998: every player's
-//   portrait, health and special bars, mojo icon; players/more_players_hud.cpp
-//   wraps it) is skipped. Texts on the HUD's menu page (the mojo count) stay.
+//   HIDE HUD. Everything of the HUD is skipped at its draw (ui/hud_hide.h:
+//   since 2026-10-29 also the mojo count and multiplier, combo meters,
+//   counter prompts, markers, the HUD pages' texts); the same switch as F2
+//   (which is not a cheat; this switch doesn't keep cheats on across a load).
 //   (The developers' own "HideHud" script command, sub_8227D4B0, flips two
 //   bytes nothing in the release build reads: tried, no effect.)
 //
@@ -150,13 +151,37 @@ bool Frozen();
 void SetHudHidden(bool hidden);
 bool HudHidden();
 
-// True once a cheat that changes progress (level up, max level, mojo, refill,
-// god mode) was used: from then on until the game restarts, achievements the
-// game unlocks aren't earned (achievements/achievements.cpp, sub_82292938). Freeze, speed, the camera
-// and the HUD don't count.
+// CHEATS AND ACHIEVEMENTS (2026-10-29). Before, only "progress" cheats (level
+// ups, mojo, god mode...) turned achievements off, and only until the game
+// restarted; some cheats slipped through. Now the rule is simple and the
+// player is told:
+//   * OPENING THE CHEATS MENU (or any console / FIFO cheat, a spawn) = cheats
+//     ENABLED: a notification on the game's own message bar ("Cheats
+//     Enabled", achievements.h ShowNotice) and no achievement is earned...
+//   * ...until a save is LOADED (or New Game starts) with no cheat switch
+//     left on (god mode, no AI, speed, freeze, hidden HUD, free camera) and
+//     the menu closed: then they count again;
+//   * a SAVE WRITTEN while cheats are on is MARKED "made with cheats" (a flag
+//     in the save file's trailer, saves/save_files.h): loading it later keeps
+//     achievements off for as long as that game is played, and every save of
+//     it carries the mark on. A notification says so when it loads.
+// Besides fairness, the mark helps bug reports: a strange state in a save
+// may come from a mix of cheats (the log says so at every load).
+// True while achievements aren't earned (sub_82292938 asks;
+// achievements/achievements.cpp).
 bool AchievementsBlocked();
-// Turns achievements off like the progress cheats above (spawn.h uses it).
-void NoteProgressCheat();
+// Why, for the menus ("" when not blocked).
+const char* BlockReason();
+// The game in progress carries the "made with cheats" mark.
+bool SaveMarked();
+// Cheats enabled (the Cheats menu opened, a spawn, a console cheat).
+void NoteCheatsUsed();
+void NoteProgressCheat();  // (the same; kept for spawn.cpp)
+// The save library (saves/save_library.cpp): a save was loaded (number,
+// whether its file carries the mark) or New Game began (0, false).
+void OnGameStarted(bool from_marked_save, int save_number);
+// The PC save drive wrote the game's save with the mark (or not).
+void OnSaveWritten(bool marked);
 
 // Debug FIFO (debug_input_script.h): "cheat <command>" for test runs without
 // clicking the menu. Commands: god on|off, freeze on|off, step, speed <x>,

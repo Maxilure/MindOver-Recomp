@@ -252,6 +252,15 @@ in-game pop-up still shows (it comes from its stats). Freeze, speed, the
 camera and the HUD don't count as progress cheats. The menu says when
 achievements are off.
 
+**Since 2026-10-29 the rule is stricter and simpler (findings/52 s.2):** opening
+the Cheats menu at all (or any console cheat, or a spawn) enables cheats: the
+game's message bar says "Cheats Enabled", no achievement is earned until a
+save is loaded (with no cheat switch left on), and a save written meanwhile is
+MARKED as made with cheats (a flag in the save file's trailer), which keeps
+achievements off whenever it is played. The menu itself is on the Tools menu
+(F1) now, not on F5. "Hide the HUD" hides ALL of it now and is also on F2
+without any cheat (findings/52 s.5).
+
 ## 8. Players and masks
 
 Each player's co-op state (`0x8259B11C`, four entries since findings/26): 0 =

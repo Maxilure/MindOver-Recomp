@@ -35,7 +35,7 @@ REXCVAR_DEFINE_STRING(debug_input_fifo, "", "CrashMoM",
                       "line: \"<inputs> [hold ms]\" (Linux; empty = off)");
 REXCVAR_DEFINE_INT32(debug_fake_pads, 0, "CrashMoM",
                      "Dummy controllers for testing co-op: 1-3 fake controllers (players 2-4 by default), "
-                     "driven from the F5 menu's Dummy players section (follow / copy a player, buttons) "
+                     "driven from the Cheats menu's Dummy players section (follow / copy a player, buttons) "
                      "or by \"p<N>.\" commands in --debug_input_script / --debug_input_fifo (0 = off)");
 REXCVAR_DEFINE_STRING(debug_fake_pad_names, "", "CrashMoM",
                       "Debug: the names --debug_fake_pads' controllers 2, 3, 4 show (Players screen, "

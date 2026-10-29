@@ -84,6 +84,25 @@ void Count(int* earned, int* total, int* score, int* max_score);
 // notification and saved; already earned = nothing. False for an id the
 // title data doesn't know.
 bool Unlock(uint32_t id, const char* why);
+// A message of the port's on the same card (2026-10-29): a heading and one
+// line, no picture ("Cheats Enabled" / "No achievements until a save is
+// loaded", cheats.h). Any thread; queued like an achievement and shown once
+// a level is played (the bar only works there), even with
+// achievement_popups off.
+void ShowNotice(std::u16string heading, std::u16string line);
+// Notices not shown yet are dropped (cheats.h: a load cleared the cheats,
+// so "Cheats Enabled" would come too late to be true).
+void DropWaitingNotices();
+// Only the waiting notices with this heading (ui/hud_hide.h: "HUD Hidden"
+// still waiting behind another message when the HUD is shown again).
+void DropWaitingNotice(std::u16string_view heading);
+// TEST cards (Tools menu, Developer): nothing is earned or recorded.
+//   ShowTestCard: the achievement card with a real picture and a made-up
+//     name ("Fake Achievement"; long_name = one that has to scroll).
+//   ShowTestGameMessage: a message in the message bar's OWN wide look (glass,
+//     title, message, counter "2/5"), as the game shows a voodoo doll.
+void ShowTestCard(bool long_name);
+void ShowTestGameMessage();
 
 // Every front-end update (players/more_players_frontend.cpp, sub_82261C40):
 // the next waiting notification starts here (and its jingle, which needs the

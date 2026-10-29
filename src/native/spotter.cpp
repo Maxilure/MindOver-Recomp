@@ -148,8 +148,8 @@ void OnFrameEnd(void*) {
         // playtest: the banner with no TK block in view, one nearby. F11
         // shows where it really is.
         REXLOG_WARN("*** SPOTTED: {} ({}) is being drawn nearby: {} setup(s) this frame (it "
-                    "may be hidden behind something; F11 paints it magenta). Compare both "
-                    "pictures (tools/play.sh --dual) and press F10 if they differ ***",
+                    "may be hidden behind something; Tools -> Highlight paints it magenta). Compare both "
+                    "pictures (tools/play.sh --dual) and take a photo (Tools) if they differ ***",
                     h.description, h.name, setups);
         if (!s.seen_this_session) {
           // First time this session: take a photo (a pair of
@@ -186,7 +186,7 @@ void Install(bool (*native_drawn)(void* user), void* user) {
   }
   pddi::AddFrameEndListener(&OnFrameEnd, nullptr);
   rex::ui::RegisterBind(
-      "bind_highlight", "F11",
+      "bind_highlight", "" /* Tools menu (was F11) */,
       "Paint one material magenta in the native picture (cycles: bump, particles, motion trails, "
       "off)",
       [] {
@@ -206,7 +206,7 @@ void Install(bool (*native_drawn)(void* user), void* user) {
         REXLOG_WARN("Spotter: highlight (F11): {} in the native picture", kWhat[int(next)]);
       });
   rex::ui::RegisterBind(
-      "bind_particle_experiment", "F12",
+      "bind_particle_experiment", "" /* Tools menu (was F12) */,
       "Particle experiments in the native picture (cycles: no soft edge, no fog, no texture, "
       "no vertex colour, base mip only, smallest mip only, then erasing groups of particles in "
       "both pictures, normal)",

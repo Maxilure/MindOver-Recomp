@@ -31,7 +31,7 @@ Difficulty legend: 🟢 days · 🟡 weeks · 🔴 a big project · 🔬 researc
 Play the whole game and fix what breaks. Nothing else matters if the game
 crashes in chapter 3.
 
-* **Playtest** with `tools/play.sh` (one log per session, F10 for photos)
+* **Playtest** with `tools/play.sh` (one log per session, F1 → Take a photo)
   and note what breaks, with the session name and roughly when.
 * Fix bugs as they come (same method as findings/04–06).
 * Report our SDK fixes upstream (XMA, fibers, empty resolves, FBO black
@@ -74,7 +74,7 @@ driver replaces the SDK's generic one.
    by default; **Spin** on a key (the game's spin is "rotate the left
    stick", so the key draws circles with the virtual stick); any key
    combination (block while moving), mouse buttons, side buttons and the
-   wheel as keys; a controller at the same time. **F6** opens the Controls
+   wheel as keys; a controller at the same time. **F1** → Controls opens the Controls
    menu (ImGui): every action by section with the 360 button it presses,
    "click, then press the new key", spin speed and walk sliders, saved at
    once to `controls.toml` next to the exe. Its Players tab picks which

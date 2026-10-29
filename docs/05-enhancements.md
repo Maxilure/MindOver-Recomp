@@ -43,7 +43,7 @@ Game. In the port:
   game keeps that screen only in its menus and in Crash's house; the port
   adds a rename screen of its own to the game's menu logic and the keyboard
   to the in-game menus, built from your own game files at startup). On the
-  name screen, **X** erases a letter. On a keyboard, **F2** opens a quick
+  name screen, **X** erases a letter. From the Tools menu (**F1**), a quick
   box to type a name instead.
 * **Delete**: press **Y** (or the Delete key) and answer the game's own
   question ("Are you sure you wish to delete this save file?"). The save isn't
@@ -78,7 +78,7 @@ The original has drop-in co-op for two: a second player presses START to
 join, as the mask floating next to Crash, and leaves again from their pause
 menu (Drop Out). The goal is four players together on one PC.
 
-What's already in place: the Controls menu (**F6**, Players tab) decides
+What's already in place: the Controls menu (**F1** → Controls, Players tab) decides
 which device plays as which player, and players 2-4 share player 1's
 profile ([findings/23](findings/23-keyboard-and-mouse.md) section 5).
 
@@ -114,7 +114,7 @@ of following one player; with three or four players it leans toward the
 biggest group while still keeping the others in view (experimental, needs
 extensive testing: [findings/28](findings/28-coop-camera.md)). Any player can drop out and join again, player 1 included,
 as long as someone else stays in game (sections 30-31). A player whose
-controller disconnects (or is moved to another player in F6) no longer
+controller disconnects (or is moved to another player in the Controls menu) no longer
 leaves a pause menu only that controller could close: the game pauses and
 its own question box says so; any player can drop that player out, and once
 the controller is back that player presses a button to resume (section 33). Next: more camera testing (fights, titans, bosses, tight

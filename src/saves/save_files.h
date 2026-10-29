@@ -32,7 +32,10 @@
 //   +20205  OUR TRAILER (since 2026-10-22, optional, 10 bytes): the port's
 //           own per-save data that the game has no room for: "MORE", u8
 //           version 1, u8 count 4, then the four players' outfit picks (signed
-//           bytes, -1 = none; players/outfits.h). The size word at +0 still
+//           bytes, -1 = none; players/outfits.h); since 2026-10-29 an 11th
+//           byte of FLAGS may follow: bit 0 = MADE WITH CHEATS (cheats.h;
+//           absent = 0: older files, and older builds of the port read the
+//           first 10 bytes as before). The size word at +0 still
 //           says 0x4EED: it counts the game's part only. The PC save drive
 //           hides the trailer from the game and writes it after every save;
 //           a file without it is a normal save.
@@ -100,8 +103,11 @@ int HighestNumber();
 // the save has none.
 inline constexpr size_t kGameFileSize = 0x4EED;  // the game's part of a save file
 bool ReadOutfitTrailer(int number, std::array<int8_t, 4>* picks);
-// The bytes of a trailer holding `picks` (written after the game's bytes).
-std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks);
+// The trailer's flags byte (see the layout above; 0 when the file has none).
+inline constexpr uint8_t kTrailerMadeWithCheats = 0x01;
+uint8_t ReadTrailerFlags(int number);
+// The bytes of a trailer holding `picks` and `flags` (written after the game's bytes).
+std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks, uint8_t flags = 0);
 
 // Every save ("CrashMOM GameSlot N.sav", N >= 1), most recently played first.
 struct SaveInfo {

@@ -19,13 +19,14 @@
 //   OnPreLaunchModule   last chance to patch before the game's main thread runs
 //   OnShutdown          cleanup
 //
-// Built-in debug overlays: F3 = perf/threads, ` (backtick) = log console,
-// F4 = settings (CVars). Ours: F2 / Delete = rename / delete a save on the Load /
-// Save Game screen (saves/save_library.h), F5 = Cheats menu for testing
-// (cheats/cheat_menu.h), F6 = Controls menu (keyboard + mouse keys,
-// input/controls_menu.h), F8 = the native renderer's picture in a second
-// window (native/native_window.h), F9 = emulated <-> native picture,
-// F10 = photo (native/ab_capture.h).
+// KEYS (2026-10-29): F1 = the Tools menu (ui/tools_menu.h), F2 = hide / show
+// the HUD (ui/hud_hide.h), F11 = fullscreen,
+// Delete = delete a save on the Load / Save Game screen. Every other tool
+// (the SDK's debug overlay, log console, settings, achievements list; ours:
+// save rename, Cheats, Controls, second window, renderer switch, photo,
+// highlight, particle experiments) is a button in the Tools menu: its key
+// bind is registered with NO key (a key can be given back in settings.toml,
+// e.g. bind_photo = "F10"; SDK patch 0017 unbinds the SDK's own).
 // =============================================================================
 
 #pragma once
@@ -51,6 +52,8 @@
 #include "debug_console.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "ui/hud_hide.h"
+#include "ui/tools_menu.h"
 #include "ui/window_mode.h"
 #include "game_folder.h"
 #include "saves/save_files.h"
@@ -178,7 +181,7 @@ class CrashMomApp : public rex::ReXApp {
     if (auto* gfx = runtime() ? runtime()->graphics_system() : nullptr) {
       frame_capture_.Start(gfx->presenter());
       // Our own Vulkan renderer (roadmap phase 4, native/native_renderer.h).
-      // Draws next to the emulated GPU; F9 switches which picture is shown.
+      // Draws next to the emulated GPU; Tools -> Switch renderer picks which picture is shown.
       // Null if the presenter isn't Vulkan: then the game just stays on the
       // emulated picture.
       // The emulated GPU is also asked for the game's display gamma ramp.
@@ -193,7 +196,7 @@ class CrashMomApp : public rex::ReXApp {
       // with our picture, the main one keeps the emulated picture.
       // --native_window opens it right away.
       if (native_renderer_) {
-        rex::ui::RegisterBind("bind_native_window", "F8",
+        rex::ui::RegisterBind("bind_native_window", "" /* Tools menu (was F8) */,
                               "Open / close a second window with the native renderer's picture "
                               "(the main window then shows the emulated one)",
                               [this] { ToggleNativeWindow(); });
@@ -202,18 +205,38 @@ class CrashMomApp : public rex::ReXApp {
         }
       }
     }
-    // F5: the Cheats menu (cheats/cheat_menu.h), for testing.
-    rex::ui::RegisterBind("bind_cheat_menu", "F5",
+    // F1: the Tools menu (ui/tools_menu.h): every tool below, as buttons.
+    rex::ui::RegisterBind("bind_tools_menu", "F1",
+                          "Open / close the Tools menu (cheats, controls, renderer, photo, "
+                          "debug windows)",
+                          [] { tools_menu::Toggle(); });
+    // F2: hide / show the whole HUD, with a card on the message bar; NOT a
+    // cheat (ui/hud_hide.h).
+    rex::ui::RegisterBind("bind_hide_hud", "F2", "Hide / show the HUD (not a cheat)",
+                          [] { hud_hide::Toggle(); });
+    // F11: fullscreen on / off (borderless, ui/window_mode.h), remembered in
+    // settings.toml like the Options row.
+    rex::ui::RegisterBind("bind_fullscreen", "F11", "Fullscreen on / off", [] {
+      const bool to_full = window_mode::Current() == window_mode::Mode::kWindowed;
+      window_mode::Set(to_full ? window_mode::Mode::kFullscreen : window_mode::Mode::kWindowed,
+                       [](const char* name, const std::string& value) {
+                         options_settings::SetFlagToSave(name, value);
+                       });
+      options_settings::SaveChanged();
+      REXLOG_INFO("Fullscreen (F11): {}", to_full ? "on" : "off");
+    });
+    // The Cheats menu (cheats/cheat_menu.h), for testing: Tools menu.
+    rex::ui::RegisterBind("bind_cheat_menu", "" /* Tools menu (was F5) */,
                           "Open / close the Cheats menu (level ups, mojo, god mode, game speed, "
                           "free camera; for testing)",
                           [] { cheat_menu::Toggle(); });
-    // F6: the Controls menu (input/controls_menu.h), keyboard + mouse keys.
-    rex::ui::RegisterBind("bind_controls_menu", "F6",
+    // The Controls menu (input/controls_menu.h), keyboard + mouse keys: Tools menu.
+    rex::ui::RegisterBind("bind_controls_menu", "" /* Tools menu (was F6) */,
                           "Open / close the Controls menu (keyboard and mouse keys)",
                           [] { controls_menu::Toggle(); });
-    // F2 / Delete on the Load / Save Game screen: rename / delete the save
-    // under the cursor (saves/save_library.h; X / Y do the same).
-    rex::ui::RegisterBind("bind_save_rename", "F2",
+    // Tools menu (was F2) / Delete on the Load / Save Game screen: rename /
+    // delete the save under the cursor (saves/save_library.h; X / Y do the same).
+    rex::ui::RegisterBind("bind_save_rename", "" /* Tools menu (was F2) */,
                           "On the Load / Save Game screen: rename the save under the cursor",
                           [] { save_library::RequestDialog(false); });
     rex::ui::RegisterBind("bind_save_delete", "Delete",
@@ -356,7 +379,7 @@ class CrashMomApp : public rex::ReXApp {
 
   // Our ImGui overlay windows, drawn over the main window's picture.
   void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override {
-    // The short message shown when F9 / F8 switch pictures (overlay_banner.h).
+    // The short message shown when the renderer / second window switch (overlay_banner.h).
     overlay_banner::Create(drawer);
     // The frame-rate counter over the picture, in the game's font (fps_overlay.h).
     fps_overlay::Create(drawer, immediate_drawer());
@@ -366,6 +389,8 @@ class CrashMomApp : public rex::ReXApp {
     controls_menu::Create(drawer);
     // F5: the Cheats menu (cheats/cheat_menu.h), closed at first.
     cheat_menu::Create(drawer);
+    // F1: the Tools menu (ui/tools_menu.h), closed at first.
+    tools_menu::Create(drawer);
     // The save library's rename / delete box (saves/save_library.h).
     save_library::Create(drawer);
   }
@@ -400,12 +425,12 @@ class CrashMomApp : public rex::ReXApp {
   // void OnPostLoadXexImage() override {}
 
  private:
-  // F8 / --native_window (UI thread): the second window is made the first
+  // Tools -> Second window / --native_window (UI thread): the second window is made the first
   // time, then only opened and closed (native/native_window.h).
   void ToggleNativeWindow() {
     // --emulated_only: our renderer never draws, so no window for it.
     if (native_renderer_->emulated_only()) {
-      overlay_banner::Show("EMULATED ONLY", "F8 is off (--emulated_only)");
+      overlay_banner::Show("EMULATED ONLY", "No second window with --emulated_only");
       return;
     }
     if (!native_window_) {

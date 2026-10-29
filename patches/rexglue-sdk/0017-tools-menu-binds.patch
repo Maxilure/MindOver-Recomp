@@ -1,0 +1,109 @@
+Change: run a key bind by name, and the SDK's own F3 / F4 / F7 / backtick binds start unbound
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0017-tools-menu-binds.patch
+Status:     port-specific (a small API addition could go upstream)
+
+WHAT
+  The port gathers every tool that used to sit on a function key (the SDK's
+  debug overlay F3, settings F4, achievements F7, log console `, and the
+  port's own F2-F12) into ONE Tools menu on F1, so a stray press of an F key
+  no longer opens or switches something mid-game. F11 = fullscreen.
+
+WHY A PATCH
+  The menu has to run the SDK's own binds, whose callbacks touch ReXApp's
+  private overlay members: only the bind registry can reach them.
+
+CHANGE
+  * keybinds.h / .cpp: InvokeBind(name) runs a registered bind's callback as
+    if its key had been pressed (callback copied out under the lock first:
+    a callback may register binds itself).
+  * rex_app.cpp: bind_debug_overlay / bind_console / bind_settings /
+    bind_achievements are registered with NO default key. They stay ordinary
+    "Keybinds" settings: a key can still be given to any of them by hand
+    (settings.toml, e.g. bind_settings = "F4").
+
+diff --git a/include/rex/ui/keybinds.h b/include/rex/ui/keybinds.h
+index 3120f16..64cc770 100644
+--- a/include/rex/ui/keybinds.h
++++ b/include/rex/ui/keybinds.h
+@@ -82,4 +82,13 @@ void UnregisterBind(std::string_view name);
+  */
+ bool ProcessKeyEvent(KeyEvent& e);
+ 
++/**
++ * Run a registered bind's callback by name, as if its key was pressed
++ * (for menus that list the binds, e.g. a game's tools menu). Call it on the
++ * thread key events arrive on (the UI thread).
++ * @param name  The CVAR name used when registering the bind.
++ * @return      True if the bind exists and has a callback.
++ */
++bool InvokeBind(std::string_view name);
++
+ }  // namespace rex::ui
+diff --git a/src/ui/keybinds.cpp b/src/ui/keybinds.cpp
+index 9822f3b..b0be86a 100644
+--- a/src/ui/keybinds.cpp
++++ b/src/ui/keybinds.cpp
+@@ -223,4 +223,23 @@ bool ProcessKeyEvent(KeyEvent& e) {
+   return false;
+ }
+ 
++bool InvokeBind(std::string_view name) {
++  /* Copy the callback out first: it may register or unregister binds itself
++     (the lock isn't recursive). */
++  std::function<void()> callback;
++  {
++    std::lock_guard lock(g_binds_mutex);
++    for (auto& entry : g_binds) {
++      if (entry.name == name && entry.callback) {
++        callback = entry.callback;
++        break;
++      }
++    }
++  }
++  if (!callback)
++    return false;
++  callback();
++  return true;
++}
++
+ }  // namespace rex::ui
+diff --git a/src/ui/rex_app.cpp b/src/ui/rex_app.cpp
+index 9ff54e8..5c2c4f2 100644
+--- a/src/ui/rex_app.cpp
++++ b/src/ui/rex_app.cpp
+@@ -421,7 +421,7 @@ void ReXApp::SetupOverlays(rex::ui::Presenter* presenter, rex::ui::ImmediateDraw
+   // gated eager font upload in SetImmediateDrawer is skipped (font uploads
+   // lazily on the first Draw instead).
+   imgui_drawer_->SetPresenterAndImmediateDrawer(presenter, drawer);
+-  rex::ui::RegisterBind("bind_debug_overlay", "F3", "Toggle debug overlay", [this] {
++  rex::ui::RegisterBind("bind_debug_overlay", "" /* was F3: unbound, see patch 0017 */, "Toggle debug overlay", [this] {
+     if (debug_overlay_) {
+       debug_overlay_.reset();
+     } else {
+@@ -429,21 +429,21 @@ void ReXApp::SetupOverlays(rex::ui::Presenter* presenter, rex::ui::ImmediateDraw
+           std::make_unique<ui::DebugOverlayDialog>(imgui_drawer_.get(), frame_stats_provider_);
+     }
+   });
+-  rex::ui::RegisterBind("bind_console", "Backtick", "Toggle console overlay", [this] {
++  rex::ui::RegisterBind("bind_console", "" /* was Backtick: unbound, see patch 0017 */, "Toggle console overlay", [this] {
+     if (console_overlay_) {
+       console_overlay_.reset();
+     } else {
+       console_overlay_ = std::make_unique<ui::ConsoleDialog>(imgui_drawer_.get(), log_sink_);
+     }
+   });
+-  rex::ui::RegisterBind("bind_settings", "F4", "Toggle settings overlay", [this] {
++  rex::ui::RegisterBind("bind_settings", "" /* was F4: unbound, see patch 0017 */, "Toggle settings overlay", [this] {
+     if (settings_overlay_) {
+       settings_overlay_.reset();
+     } else {
+       settings_overlay_ = std::make_unique<ui::SettingsDialog>(imgui_drawer_.get(), config_path_);
+     }
+   });
+-  rex::ui::RegisterBind("bind_achievements", "F7", "Toggle achievements overlay", [this] {
++  rex::ui::RegisterBind("bind_achievements", "" /* was F7: unbound, see patch 0017 */, "Toggle achievements overlay", [this] {
+     if (achievements_overlay_) {
+       achievements_overlay_.reset();
+     } else {

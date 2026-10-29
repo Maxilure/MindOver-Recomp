@@ -4,6 +4,7 @@
 #include "cheat_menu.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdio>
 #include <mutex>
 #include <string>
@@ -49,9 +50,17 @@ class CheatDialog : public rex::ui::ImGuiDialog {
         driver && driver->InputHeld(static_cast<kbm::Input>(rex::ui::VirtualKey::kRShift))) {
       return;
     }
-    std::lock_guard<std::mutex> lock(mutex_);
-    open_ = !open_;
+    bool opened;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      open_ = !open_;
+      opened = open_;
+      is_open_ = open_;
+    }
+    // Opening = cheats enabled (cheats.h): achievements off, the bar says so.
+    if (opened) cheats::NoteCheatsUsed();
   }
+  bool IsOpen() const { return is_open_.load(); }
 
   // No continuous repaint, even while open: the window is meant to stay up
   // while playing, and asking for it repainted ~1,200 times a second (measured
@@ -75,12 +84,13 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::SetNextWindowSize(size, ImGuiCond_Appearing);
     ImGui::SetNextWindowBgAlpha(0.90f);
     bool still_open = true;
-    if (ImGui::Begin("Cheats (F5)###crashmom_cheats", &still_open,
+    if (ImGui::Begin("Cheats###crashmom_cheats", &still_open,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings)) {
       DrawContents();
     }
     ImGui::End();
     if (!still_open) open_ = false;
+    is_open_ = open_;
   }
 
  private:
@@ -120,13 +130,11 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     ImGui::SetItemTooltip("Portraits, health and special bars. The mojo count text stays.");
     ImGui::Spacing();
     ImGui::TextDisabled("All mojo collected: %s", Thousands(snap.total_mojo).c_str());
-    if (cheats::AchievementsBlocked()) {
-      ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.35f, 1.0f),
-                         "Achievements are off until the game restarts (cheats used).");
-    } else {
-      ImGui::TextDisabled("Level ups, mojo, health, unlocks and god mode turn achievements off");
-      ImGui::TextDisabled("until the game restarts.");
-    }
+    // (Opening this window enabled cheats: cheats.h AchievementsBlocked.)
+    ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.35f, 1.0f), "Achievements are off: %s.",
+                       cheats::BlockReason());
+    ImGui::TextDisabled("Loading a save turns them back on (with this window closed and the");
+    ImGui::TextDisabled("switches off). A save made now is marked as made with cheats.");
   }
 
   // mutex_ held.
@@ -345,7 +353,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
       if (player >= 0) {
         ImGui::Text("Dummy controller %d: player %d", d + 2, player + 1);
       } else {
-        ImGui::Text("Dummy controller %d: plays as nobody (F6 Players)", d + 2);
+        ImGui::Text("Dummy controller %d: plays as nobody (Controls -> Players)", d + 2);
       }
       // Mode: 0 idle, 1-4 follow player 1-4, 5-8 copy player 1-4.
       const dummy_players::Mode mode = dummy_players::GetMode(d);
@@ -451,6 +459,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
 
   mutable std::mutex mutex_;  // UI thread (Toggle comes from the key handler)
   bool open_ = false;
+  std::atomic<bool> is_open_{false};  // open_ for other threads
   int player_ = 0;  // whose character the Character section acts on (and spawns go to)
   int category_ = 0, entry_ = 0, spawn_count_ = 1;
   bool knocked_out_ = true;
@@ -471,5 +480,7 @@ void Create(rex::ui::ImGuiDrawer* drawer) {
 void Toggle() {
   if (g_dialog) g_dialog->Toggle();
 }
+
+bool IsOpen() { return g_dialog && g_dialog->IsOpen(); }
 
 }  // namespace cheat_menu

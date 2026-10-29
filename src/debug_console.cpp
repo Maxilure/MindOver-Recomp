@@ -940,7 +940,7 @@ std::string Photo() {
 // fkey <Key>: the app's shortcut on that key (rex::ui::RegisterBind), run
 // on the UI thread like a real press; replies once it has run.
 std::string FKey(const std::vector<std::string_view>& w) {
-  if (w.size() != 2) throw Error{"fkey <Key> (F1-F12, Backtick, Delete...)"};
+  if (w.size() != 2) throw Error{"fkey <Key> (F1 Tools, F11 fullscreen, Delete...)"};
   const rex::ui::VirtualKey key = rex::ui::ParseVirtualKey(w[1]);
   if (key == rex::ui::VirtualKey::kNone) throw Error{fmt::format("unknown key \"{}\"", w[1])};
   if (!g_post || !g_window) throw Error{"no window"};
@@ -949,10 +949,28 @@ std::string FKey(const std::vector<std::string_view>& w) {
     rex::ui::KeyEvent event(g_window, key, 0, false, false, false, false, false);
     *handled = rex::ui::ProcessKeyEvent(event) ? 1 : 2;
   });
-  WaitFor(3000, [&]() -> std::optional<std::string> {
+  WaitFor(15000, [&]() -> std::optional<std::string> {
     return handled->load() ? std::optional<std::string>("") : std::nullopt;
   });
   if (handled->load() == 2) throw Error{fmt::format("no shortcut on {}", w[1])};
+  return "";
+}
+
+// tool <bind>: a Tools menu button (ui/tools_menu.h) by its bind name
+// (bind_cheat_menu, bind_photo, bind_renderer...), on the UI thread like a
+// click. Since 2026-10-29 most tools have no key, so `fkey` only reaches
+// F1 (the menu) and F11 (fullscreen).
+std::string ToolCommand(const std::vector<std::string_view>& w) {
+  if (w.size() != 2) throw Error{"tool <bind name> (bind_cheat_menu, bind_photo, bind_renderer...)"};
+  if (!g_post) throw Error{"no window"};
+  auto handled = std::make_shared<std::atomic<int>>(0);  // 0 pending, 1 ran, 2 no such bind
+  const std::string name(w[1]);
+  g_post([name, handled] { *handled = rex::ui::InvokeBind(name) ? 1 : 2; });
+  // (The UI thread of a test window on a hidden workspace answers slowly.)
+  WaitFor(15000, [&]() -> std::optional<std::string> {
+    return handled->load() ? std::optional<std::string>("") : std::nullopt;
+  });
+  if (handled->load() == 2) throw Error{fmt::format("no tool \"{}\"", name)};
   return "";
 }
 
@@ -971,7 +989,7 @@ std::string FlagCommand(const std::vector<std::string_view>& w) {
 const char kHelp[] =
     "state | players | frontend | eval <expr> | read <expr> [type] [count] |\n"
     "write <expr> <type> <value> | wait ms <N> | wait state <N> [ms] | wait exit [ms] |\n"
-    "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> |\n"
+    "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> | tool <bind> |\n"
     "snap <name> <expr> <bytes> | diff <name> [update] [> file] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
@@ -1004,6 +1022,7 @@ std::string Run(std::string_view line) {
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);
   if (verb == "fkey") return FKey(w);
+  if (verb == "tool") return ToolCommand(w);
   if (verb == "flag") return FlagCommand(w);
   if (verb == "clock") return ClockCommand(w);
   if (verb == "track") return TrackCommand(w);

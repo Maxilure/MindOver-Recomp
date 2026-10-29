@@ -70,7 +70,7 @@ One scrolling list in the game's own save screen: as many saves as you like, ren
 <td valign="top">
 
 ### ⌨️ Keyboard, mouse and any controller
-Every key rebindable (**F6**), menus with keys of their own, any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
+Every key rebindable (Tools menu, **F1**, or Options → Controls), menus with keys of their own, any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
 
 </td>
 <td valign="top">
@@ -134,15 +134,16 @@ The launcher also lists your saves, edits settings, shows a live game log and ke
 Menus have keys of their own, so <kbd>Esc</kbd> pauses in play and goes back in menus. The game's button prompts show your keys while you play on the keyboard.
 
 <details>
-<summary><b>Port keys</b> (F5 to F10)</summary>
+<summary><b>Port keys</b> (F1, F2 and F11)</summary>
 <br>
 
 | Key | What it does |
 |---|---|
-| <kbd>F5</kbd> | Cheats menu, for testing: level ups, god mode, free camera, spawning, unlock everything |
-| <kbd>F6</kbd> | Controls: change keys, pick which device plays as which player |
-| <kbd>F9</kbd> | Switch between the emulated picture and the port's renderer |
-| <kbd>F10</kbd> | Save a photo of the game into `user/photos/` |
+| <kbd>F1</kbd> | The Tools menu: Cheats (level ups, god mode, free camera, spawning, unlock everything), Controls (change keys, pick which device plays as which player), switch between the emulated picture and the port's renderer, save a photo into `user/photos/`, and the developer windows |
+| <kbd>F2</kbd> | Hide / show the whole HUD (not a cheat) |
+| <kbd>F11</kbd> | Fullscreen on / off |
+
+The other function keys do nothing, so a stray press can't open a window mid-game. Opening the Cheats menu turns achievements off until a save is loaded, and a save made meanwhile is marked as made with cheats.
 
 </details>
 
@@ -213,12 +214,12 @@ tools/play.sh                               # one log per session in logs/
 crash_mom_manifest.toml    recompiler config: every analysis fix and hook, commented
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       the port's own native code
-  input/                   keyboard + mouse, the Controls menu (F6)
+  input/                   keyboard + mouse, the Controls menu
   players/                 up to four players, the co-op camera, who plays
   saves/                   the PC save drive, the save list
   options/                 the Options screen
   language/                text and voice language (the disc's own languages)
-  cheats/                  the Cheats menu (F5)
+  cheats/                  the Cheats menu
   data/                    changed copies of game data, built at run time from your files
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
 launcher/                  the launcher: setup, play, settings, log, updates (no game code)

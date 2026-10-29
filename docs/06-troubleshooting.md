@@ -34,7 +34,7 @@ is welcome).
   [below](#starting-and-playing)).
 * **The port's own renderer ("native") may miss effects** in areas not
   checked yet. The emulated picture is the reference: if something looks
-  different, a report with a screenshot of both (**F9** switches) helps.
+  different, a report with a screenshot of both (**F1** → Switch renderer) helps.
 * **Windows is less tested than Linux** (see [Windows](#windows)).
 
 ---
@@ -77,7 +77,7 @@ from where it stopped.
 interlock*. Most NVIDIA cards have it. Some other cards (likely AMD's)
 don't, and then those screens stay black. The port has only been tested on
 NVIDIA so far. Try the port's own renderer: launcher → Settings →
-Picture → **Native renderer** (or press **F9** in the game). It is still in progress, so a few
+Picture → **Native renderer** (or **F1** → Switch renderer in the game). It is still in progress, so a few
 effects may be missing in later levels.
 
 **The game is slow or stutters**: the emulated picture is the heavy part.
@@ -94,7 +94,7 @@ the original) and the game behaves as on the Xbox 360.
 **My controller does nothing**:
 * Press a button while the game's window is **focused**. Input is ignored
   while you're in another window.
-* Open the Controls menu (**F6** → Players tab): every controller found is
+* Open the Controls menu (**F1** → Controls, Players tab): every controller found is
   listed there with the player it plays as. One set to "off" is ignored.
 * A second, third or fourth player joins from the pause menu (**Join
   Game**), like in the original's co-op.
@@ -106,13 +106,18 @@ player wants to drop out. Plug it back in and press a button to continue,
 or answer **Yes** to drop them out.
 
 **Keys don't do what I expect**: all keys are listed and can be changed
-in the Controls menu (**F6**). "Reset keys to defaults" there undoes your
+in the Controls menu (**F1** → Controls). "Reset keys to defaults" there undoes your
 changes. The file is `user/controls.toml`.
 
-**F-keys do nothing, or something else happens**: the port uses F2 (rename
-a save), F4 (all settings), F5 (cheats), F6 (controls), F8-F12 (renderer
-tools). If another program (an overlay such as MangoHud, Steam or a
-recording tool) uses the same keys, change that program's keys.
+**F-keys do nothing, or something else happens**: the port only uses **F1**
+(the Tools menu: cheats, controls, renderer, photos, developer windows),
+**F2** (hide / show the HUD) and **F11** (fullscreen). The other function
+keys do nothing on purpose. If another program (an overlay such as
+MangoHud, Steam or a recording tool) uses one of these keys, change that
+program's keys.
+
+**The HUD is gone**: F2 hides it (a card at the bottom says so); press F2
+again.
 
 **The game crashed**: the game closes and writes a crash report to
 `user/logs/crash-<date>_<time>.txt`, next to the session log. The launcher's
@@ -134,9 +139,14 @@ DualSense has a small reset button in a hole on the back: press it for
 about 5 seconds), then use another cable or USB port, not a hub, or connect
 it over Bluetooth.
 
-**Achievements stopped showing**: after a cheat that changes progress (F5),
-achievements are switched off until you restart the game. This is on
-purpose.
+**Achievements stopped showing**: opening the Cheats menu (F1 → Cheats)
+switches achievements off, and the game says so ("Cheats Enabled"). Loading
+a save turns them back on, as long as no cheat is still switched on (god
+mode, no AI, game speed, freeze, hidden HUD, free camera) and the Cheats
+menu is closed. A game SAVED while cheats were on is marked as made with
+cheats: achievements stay off whenever that save is played ("Save Made With
+Cheats" when it loads), and every later save of it keeps the mark. This is
+on purpose.
 
 ### Saves
 

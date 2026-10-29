@@ -47,6 +47,7 @@
 #include "../players/lost_controller.h"
 #include "../players/more_players.h"
 #include "../players/outfit_picker.h"
+#include "../cheats/cheats.h"
 #include "../players/outfits.h"
 #include "quick_load.h"
 #include "rename_screen.h"
@@ -90,7 +91,7 @@ extern "C" REX_FUNC(__imp__sub_820D66E0);  // the keyboard's backspace (erase th
 REXCVAR_DEFINE_BOOL(save_library, true, "CrashMoM",
                     "The Load / Save Game screen as one scrolling list of any number of saves "
                     "(most recently played first, \"Create New Save\" when saving), New Game "
-                    "saves by itself, rename (X / F2) and delete (Y). "
+                    "saves by itself, rename (X) and delete (Y). "
                     "false = the game's own three slots");
 
 namespace save_library {
@@ -1374,6 +1375,10 @@ extern "C" REX_FUNC(sub_82259858) {
     g.picked = false;
     save_files::MarkPlayed(g.op_number);
     outfits::OnSaveLoaded(g.op_number);  // before the spawn asks who wears what
+    // Cheats: a load clears the session's cheats; a save made with cheats
+    // keeps achievements off (cheats.h).
+    cheats::OnGameStarted(save_files::ReadTrailerFlags(g.op_number) & save_files::kTrailerMadeWithCheats,
+                          g.op_number);
     REXLOG_INFO("Saves: loading save {}", g.op_number);
   }
   __imp__sub_82259858(ctx, base);
@@ -1714,6 +1719,7 @@ extern "C" REX_FUNC(sub_8211B8E8) {
   if (exit >= kDifficultyFirst && exit <= kDifficultyLast) {
     g.new_game = true;
     outfits::OnNewGame();  // a story from the start: nobody has picked anything
+    cheats::OnGameStarted(false, 0);  // a clean start: no cheats carried in
   } else if (exit == kDifficultyBack) {
     g.new_game = false;
   }

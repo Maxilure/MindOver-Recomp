@@ -29,6 +29,7 @@
 #include "../players/more_players.h"
 #include "../players/players_setup.h"
 #include "../ui/quit_game.h"
+#include "../ui/marquee.h"
 #include "../ui/scrooby.h"
 #include "options_page.h"
 #include "options_settings.h"
@@ -1054,6 +1055,8 @@ void RefreshAchievements(Env& env) {
       const float w = TextWidth(name, 1.0f);
       const float scale = w > room && w > 0 ? std::max(0.6f, room / w) : 1.0f;
       PlaceScaled(ctx, base, c.name, kAchTextLeft, card_top - 38, kAchTextRight - kAchTextLeft, scale, false);
+      // Longer than the room even at 0.6: it scrolls in its room (ui/marquee.h).
+      marquee::Fit(c.name, w * scale, room);
     }
     scrooby::SetText(ctx, base, c.state, state);
     scrooby::SetColour(ctx, base, c.state, a.unlocked ? kAchYellow : kLockedState);
@@ -1066,6 +1069,7 @@ void RefreshAchievements(Env& env) {
     scrooby::SetText(ctx, base, c.desc, desc);
     scrooby::SetColour(ctx, base, c.desc, kAchCyan);
     PlaceScaled(ctx, base, c.desc, kAchTextLeft, card_top - 66, room, scale, false);
+    marquee::Fit(c.desc, w * scale, room);  // (as the name)
   }
   // The list's arrows beside the cards: more above / below.
   const bool more = count > cards;
@@ -1391,7 +1395,13 @@ void RefreshPlayers(Env& env) {
     const float x = float(options_page::kPlyCardX[k % 2]), top = float(options_page::kPlyCardTop[k / 2]);
     const float room = float(options_page::kPlyCardW - 16);
     SetBox(base, c.info, x, top - options_page::kPlyInfoTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
-    scrooby::SetScale(ctx, base, c.info, FitScale(info, room, kPlyInfoScale));
+    {
+      const float scale = FitScale(info, room, kPlyInfoScale);
+      scrooby::SetScale(ctx, base, c.info, scale);
+      // Still too long at the smallest size (a long controller name): it
+      // scrolls inside the card (ui/marquee.h).
+      marquee::Fit(c.info, TextWidth(info, 1.0f) / kPageScale * scale, room);
+    }
     // The button pictures line (players_setup.h PadIcons), with a controller
     // only (LB / RB change it; the chooser shows the controller on offer),
     // and not while the card shows player 1's keyboard (its keys have no

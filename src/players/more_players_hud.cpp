@@ -42,6 +42,7 @@
 //      (section "Layout"), not hand-tuned offsets.
 // =============================================================================
 #include "more_players_hud.h"
+#include "../ui/hud_hide.h"
 #include "more_players.h"
 #include "players_setup.h"
 #include "../input/prompt_icons.h"
@@ -468,6 +469,7 @@ extern "C" REX_FUNC(sub_8226A998) {
   // (every frame in play, HUD hidden or not: not a HUD job, just a per-frame spot)
   more_players::ReparkHiddenCrashes(ctx, base);
   players_setup::PollJoinsInPlay(ctx, base);  // any button on a free controller = a player (players_setup.h)
+  hud_hide::Frame(ctx, base);  // the HUD pages hidden with it (ui/hud_hide.h)
   if (cheats::HudHidden()) return;
   const uint32_t controller = ctx.r3.u32;
   __imp__sub_8226A998(ctx, base);

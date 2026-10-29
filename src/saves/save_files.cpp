@@ -300,10 +300,22 @@ bool ReplaceFile(const fs::path& path, const std::vector<uint8_t>& data, std::st
   return true;
 }
 
-std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks) {
+std::vector<uint8_t> MakeTrailer(const std::array<int8_t, 4>& picks, uint8_t flags) {
   std::vector<uint8_t> t = {'M', 'O', 'R', 'E', 1, 4};
   for (int8_t p : picks) t.push_back(uint8_t(p));
+  // The flags byte only when something is set: a plain save stays the
+  // 10-byte trailer every build of the port knows.
+  if (flags) t.push_back(flags);
   return t;
+}
+
+uint8_t ReadTrailerFlags(int number) {
+  std::lock_guard guard(Lock());
+  std::vector<uint8_t> data;
+  if (number < 1 || !ReadAll(FileOf(number), data) || data.size() < kFileSize + 11) return 0;
+  const uint8_t* t = data.data() + kFileSize;
+  if (t[0] != 'M' || t[1] != 'O' || t[2] != 'R' || t[3] != 'E' || t[4] != 1 || t[5] != 4) return 0;
+  return t[10];
 }
 
 bool ReadOutfitTrailer(int number, std::array<int8_t, 4>* picks) {

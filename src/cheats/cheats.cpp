@@ -21,7 +21,9 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include "../achievements/achievements.h"
 #include "../players/more_players.h"
+#include "cheat_menu.h"
 #include "free_camera.h"
 #include "spawn.h"
 
@@ -196,12 +198,20 @@ std::atomic<bool> g_no_ai{false};
 std::atomic<bool> g_frozen{false};
 std::atomic<float> g_speed{1.0f};
 std::atomic<bool> g_hud_hidden{false};
-// A cheat that changes progress was used this session: achievements stay
-// locked from then on (see the achievement hook at the end).
+// CHEATS AND ACHIEVEMENTS (2026-10-29; see AchievementsBlocked in cheats.h).
+// g_cheated: the Cheats menu was opened (or a cheat used: console / FIFO,
+// a spawn) since the last save was loaded or New Game began. g_save_marked:
+// the game in progress carries the "made with cheats" mark (the save it was
+// loaded from had it, or it was saved while cheats were on).
 std::atomic<bool> g_cheated{false};
+std::atomic<bool> g_save_marked{false};
 void MarkCheated() {
   if (!g_cheated.exchange(true)) {
-    REXLOG_INFO("Cheats: progress cheat used: achievements are off until the game restarts");
+    REXLOG_INFO("Cheats: ENABLED: achievements are off until a save is loaded; a save made now "
+                "is marked as made with cheats");
+    // The message on the game's own bar (achievements.h ShowNotice): shown
+    // once a level is played (the bar only exists there).
+    achievements::ShowNotice(u"Cheats Enabled", u"No achievements until a save is loaded");
   }
 }
 
@@ -634,8 +644,47 @@ void SetHudHidden(bool hidden) {
   REXLOG_INFO("Cheats: HUD {}", hidden ? "hidden" : "shown");
 }
 bool HudHidden() { return g_hud_hidden.load(); }
-bool AchievementsBlocked() { return g_cheated.load(); }
+bool AchievementsBlocked() { return g_cheated.load() || g_save_marked.load(); }
+const char* BlockReason() {
+  if (g_save_marked.load()) return "this game was saved with cheats on";
+  if (g_cheated.load()) return "cheats were used (until a save is loaded)";
+  return "";
+}
+bool SaveMarked() { return g_save_marked.load(); }
 void NoteProgressCheat() { MarkCheated(); }
+void NoteCheatsUsed() { MarkCheated(); }
+
+// A switch that's still on keeps cheating after a load (god mode carried
+// into the loaded game...): then the load doesn't clear the session.
+bool AnySwitchOn() {
+  // (A hidden HUD isn't one: it changes nothing in the game, and F2 hides it
+  // without any cheat, ui/hud_hide.h.)
+  return g_god.load() || g_no_ai.load() || g_frozen.load() ||
+         std::fabs(g_speed.load() - 1.0f) > 1e-4f || free_camera::Enabled() || cheat_menu::IsOpen();
+}
+void OnGameStarted(bool from_marked_save, int save_number) {
+  g_save_marked = from_marked_save;
+  const bool keep = g_cheated.load() && AnySwitchOn();
+  if (g_cheated.load() && !keep) {
+    g_cheated = false;
+    achievements::DropWaitingNotices();  // a "Cheats Enabled" not shown yet is no longer true
+    REXLOG_INFO("Cheats: session cleared by {}: achievements count again{}",
+                save_number > 0 ? fmt::format("loading save {}", save_number) : std::string("New Game"),
+                from_marked_save ? " (BUT this save was made with cheats)" : "");
+  } else if (keep) {
+    REXLOG_INFO("Cheats: still ENABLED after {}: a cheat switch is on or the Cheats menu is open",
+                save_number > 0 ? fmt::format("loading save {}", save_number) : std::string("New Game"));
+  }
+  if (from_marked_save) {
+    REXLOG_INFO("Cheats: save {} was MADE WITH CHEATS: no achievements while playing it", save_number);
+    achievements::ShowNotice(u"Save Made With Cheats", u"No achievements while playing this save");
+  }
+}
+void OnSaveWritten(bool marked) {
+  if (marked && !g_save_marked.exchange(true)) {
+    REXLOG_INFO("Cheats: this save is marked as made with cheats");
+  }
+}
 void RequestFreeJack(int player) {
   MarkCheated();
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -688,6 +737,9 @@ bool DebugCommand(std::string_view command) {
   }
   if (!count) return false;
   const std::string_view verb = words[0];
+  // A cheat from the console / FIFO is a cheat like the menu's (a test of a
+  // look-only switch included): achievements off, the next save marked.
+  if (verb != "info") MarkCheated();
   const bool on = words[1] == "on";
   const int player = count > 1 ? std::atoi(std::string(words[1]).c_str()) - 1 : 0;
   const bool player_ok = player >= 0 && player < kPlayers;
