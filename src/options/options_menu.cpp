@@ -1624,34 +1624,35 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   // and select it), on the chooser's arrows = step, on a prompt = do it.
   const uint32_t layer = MainMenuLayer(base);
   const uint32_t moves = mouse_menus::PointerMoves();
-  // HOVER PICKS THE ROW (2026-10-29): over a card's Buttons line = that card
-  // selected on its Buttons row (nothing changes until a click / A / left /
-  // right); over the selected card's controller (picture or name) = back to
-  // its controller row; over another card while none is selected = that
-  // card. Only when the pointer moved.
+  // HOVER (2026-10-29): over a card = that card highlighted (a CLICK selects
+  // it); inside the SELECTED card the pointer picks its row: over its
+  // Buttons line = the Buttons row, over its controller PICTURE = the
+  // controller row. (A first version also selected cards and rows by hover
+  // alone, and took the name line too: between the name and the Buttons
+  // line the two areas fought, flipping rows.) Only when the pointer moved.
   if (moves != g.pointer_moves) {
     g.pointer_moves = moves;
-    const auto boxes = players_setup::Boxes();
-    for (int k = 0; k < 4; ++k) {
+    if (g.ply_choosing != kPlyNone) {
+      const int k = g.ply_choosing;
       const Screen::PlyCard& c = g.ply_cards[size_t(k)];
-      if (boxes[size_t(k)].has_pad && scrooby::Visible(base, c.style) &&
-          mouse_menus::PointerOver(base, c.style, g.page, layer)) {
-        sel = k;
+      // On players 3-4's cards (drawn upside down) the Buttons line sits right
+      // above the picture and the two areas OVERLAP: there the row flipped
+      // back and forth. A spot over both changes nothing.
+      const bool over_style = scrooby::Visible(base, c.style) && mouse_menus::PointerOver(base, c.style, g.page, layer);
+      const bool over_pic = mouse_menus::PointerOver(base, c.pic, g.page, layer);
+      if (!on_style && players_setup::Boxes()[size_t(k)].has_pad && over_style && !over_pic) {
         on_style = true;
-        g.ply_choosing = k;
-        break;
-      }
-      if (g.ply_choosing == k && on_style &&
-          (mouse_menus::PointerOver(base, c.pic, g.page, layer) ||
-           mouse_menus::PointerOver(base, c.info, g.page, layer))) {
+      } else if (on_style && over_pic && !over_style) {
         on_style = false;  // the controller row, offering its own controller again
         const auto controllers = players_setup::Controllers();
         for (int i = 0; i < int(controllers.size()); ++i) {
           if (controllers[size_t(i)].player == k) g.ply_choice = i;
         }
-        break;
       }
-      if (g.ply_choosing == kPlyNone && mouse_menus::PointerOver(base, c.glass, g.page, layer)) sel = k;
+    } else {
+      for (int k = 0; k < 4; ++k) {
+        if (mouse_menus::PointerOver(base, g.ply_cards[size_t(k)].glass, g.page, layer)) sel = k;
+      }
     }
   }
   int clicked = -1;
@@ -1677,10 +1678,10 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   }
   for (int k = 0; k < 4; ++k) {
     const Screen::PlyCard& c = g.ply_cards[size_t(k)];
-    // A click on a card's Buttons line: that card selected, its Buttons row,
-    // the next style.
-    if (scrooby::Visible(base, c.style) && mouse_menus::TakeClickOver(base, c.style, g.page, layer) &&
-        players_setup::Boxes()[size_t(k)].has_pad) {
+    // A click on the SELECTED card's Buttons line: its Buttons row, the next
+    // style. (Another card's line: a click on that card, below.)
+    if (k == g.ply_choosing && scrooby::Visible(base, c.style) &&
+        mouse_menus::TakeClickOver(base, c.style, g.page, layer) && players_setup::Boxes()[size_t(k)].has_pad) {
       sel = k;
       on_style = true;
       g.ply_sel = k;

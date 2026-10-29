@@ -2068,9 +2068,14 @@ widest name ("PlayStation 5"): at first they hugged each name, so a short
 one ("Switch") pulled them in. Turned and scaled, the two arrows don't
 shrink round their centres, so each is nudged back (measured on photos) to
 sit level. A click on or just beside either arrow steps the style; a click
-on the card's empty space keeps the line selected. The pointer picks rows
-by itself: over a card's Buttons line = that card on its Buttons row, over
-the selected card's picture or name = back to its controller row.
+on the card's empty space keeps the line selected. The pointer only
+highlights cards; a click selects one. Inside the selected card it picks
+the row: over the Buttons line = the Buttons row, over the controller
+picture = the controller row. (A first version also selected cards and rows
+by hovering alone and counted the name line as the controller row: between
+the name and the Buttons line the two areas fought and the row flipped. On
+players 3-4's upside-down cards the Buttons line and the picture overlap:
+a spot over both changes nothing.)
 
 The debug tools' own input ("Debug input script", the device behind the
 console, `--debug_input_script` and `--debug_input_fifo`) isn't listed: it
