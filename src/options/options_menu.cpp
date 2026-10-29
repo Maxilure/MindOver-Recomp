@@ -1284,6 +1284,30 @@ std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& b
   return out;
 }
 
+// The selected card's arrows (the map's arrow, turned): `inset` units in
+// from the card's sides, centred `centre` units below its top, at `scale`
+// of their size. Turned again round the new place each time (the turn is a
+// transform built round the box: a moved box alone left the arrows where
+// the old turn put them).
+constexpr float kPlyLineArrowScale = 0.75f;  // beside the Buttons line
+void PlaceArrows(PPCContext& ctx, uint8_t* base, const Screen::PlyCard& c, int k, float inset, float centre,
+                 float scale) {
+  const float cx = float(options_page::kPlyCardX[k % 2]), ctop = float(options_page::kPlyCardTop[k / 2]);
+  const float side = float(options_page::kPlyArrowSide) * scale, y = ctop - centre - side / 2;
+  // Smaller, the turned arrows don't shrink round their centres: the left
+  // one (+90) sat (1 - scale) x its full size lower and ~0.4 of that further
+  // out, the right one (-90) ~0.6 of it further out (measured on photos at
+  // 0.75: 7 units down; gaps to the text 17 vs 30 px after the first fix).
+  // Moved back so both sit level, the same distance from the text.
+  const float shift = float(options_page::kPlyArrowSide) * (1.0f - scale);
+  SetBox(base, c.left, cx + inset + 0.4f * shift, y + shift, side, side);
+  SetBox(base, c.right, cx + float(options_page::kPlyCardW) - inset - side - 0.6f * shift, y, side, side);
+  scrooby::SetScale(ctx, base, c.left, scale);
+  scrooby::Rotate(ctx, base, c.left, 90.0f);
+  scrooby::SetScale(ctx, base, c.right, scale);
+  scrooby::Rotate(ctx, base, c.right, -90.0f);
+}
+
 void RefreshPlayers(Env& env) {
   PPCContext& ctx = env.ctx;
   uint8_t* base = env.base;
@@ -1336,21 +1360,9 @@ void RefreshPlayers(Env& env) {
     // Buttons line while it has the focus (same arrows, moved).
     scrooby::SetVisible(base, c.left, offering || style_focus);
     scrooby::SetVisible(base, c.right, offering || style_focus);
-    if (offering || style_focus) {
-      const float cx = float(options_page::kPlyCardX[k % 2]), ctop = float(options_page::kPlyCardTop[k / 2]);
-      const float centre = style_focus ? float(options_page::kPlyStyleTop[k / 2]) + 18.0f
-                                       : float(options_page::kPlyPicCentre[k / 2]);
-      const float side = float(options_page::kPlyArrowSide), y = ctop - centre - side / 2;
-      SetBox(base, c.left, cx + options_page::kPlyArrowInset, y, side, side);
-      SetBox(base, c.right, cx + options_page::kPlyCardW - options_page::kPlyArrowInset - side, y, side, side);
-      // Turned again round the new place (the turn is a transform built
-      // round the box: a moved box alone left the arrows where the old turn
-      // put them).
-      scrooby::SetScale(ctx, base, c.left, 1.0f);
-      scrooby::Rotate(ctx, base, c.left, 90.0f);
-      scrooby::SetScale(ctx, base, c.right, 1.0f);
-      scrooby::Rotate(ctx, base, c.right, -90.0f);
-    }
+    // (Beside the picture: placed here; beside the Buttons line: below, once
+    // the line's width is known.)
+    if (offering) PlaceArrows(ctx, base, c, k, options_page::kPlyArrowInset, float(options_page::kPlyPicCentre[k / 2]), 1.0f);
     // The player's NUMBER, big, in their colour (the selected card is told by
     // its ring and the number's pulse).
     scrooby::SetText(ctx, base, c.title, Utf16(fmt::format("{}", k + 1)));
@@ -1394,7 +1406,18 @@ void RefreshPlayers(Env& env) {
       scrooby::SetText(ctx, base, c.style, style);
       scrooby::SetColour(ctx, base, c.style, style_focus ? kPlyYellow : kPlyCyan);
       SetBox(base, c.style, x, top - options_page::kPlyStyleTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
-      scrooby::SetScale(ctx, base, c.style, FitScale(style, room, kPlyStyleScale));
+      // With the focus the arrows stand just outside the text (they sat at
+      // the card's edges and ran over long lines: "Buttons: PlayStation 5"):
+      // the text fits the room left between them, the arrows 0.75x.
+      const float arrows = style_focus ? 2.0f * (kPlyLineArrowScale * float(options_page::kPlyArrowSide) + 6.0f) : 0.0f;
+      const float scale = FitScale(style, room - arrows, kPlyStyleScale);
+      scrooby::SetScale(ctx, base, c.style, scale);
+      if (style_focus) {
+        const float half = TextWidth(style, 1.0f) / kPageScale * scale / 2.0f;
+        const float inset = float(options_page::kPlyCardW) / 2.0f - half - 6.0f -
+                            kPlyLineArrowScale * float(options_page::kPlyArrowSide);
+        PlaceArrows(ctx, base, c, k, inset, float(options_page::kPlyStyleTop[k / 2]) + 18.0f, kPlyLineArrowScale);
+      }
     }
   }
   // The prompt row, centred under the panel: "<glyph> <label>", 24 apart.
@@ -1573,12 +1596,15 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     // offer; DOWN = its Buttons row (with a controller).
     if (left) PlayersStep(ctx, base, -1);
     if (right) PlayersStep(ctx, base, +1);
-    if (down && players_setup::Boxes()[size_t(g.ply_choosing)].has_pad) on_style = true;
+    // (The bottom row is drawn upside down: its Buttons line sits ABOVE the
+    // picture, so there it's UP.)
+    const bool toward_line = g.ply_choosing < 2 ? down : up;
+    if (toward_line && players_setup::Boxes()[size_t(g.ply_choosing)].has_pad) on_style = true;
   } else if (g.ply_choosing != kPlyNone) {
     // Its Buttons row: left / right = the previous / next style; UP = back
     // to the controller row (offering its own controller again).
     if (left || right) PlayersAct(ctx, base, right ? kPlyActStyle : -kPlyActStyle);
-    if (up) {
+    if (g.ply_choosing < 2 ? up : down) {
       on_style = false;
       const auto controllers = players_setup::Controllers();
       for (int i = 0; i < int(controllers.size()); ++i) {

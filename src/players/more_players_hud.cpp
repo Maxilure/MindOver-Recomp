@@ -778,7 +778,16 @@ void MorePlayersCounterPosition(PPCRegister& prompt) {
 // Every frame (the HUD draw): when the layout flips, every prompt moves to
 // its other place and gets its text's other size (the set-up's own call,
 // sub_82371198 on the text at +16, scale 1.2 from 0x82020C28).
+// THE TEXT MOVES TOO (2026-10-29): the set-up places the Y text ONCE, at
+// (x + 50 x mirror, y + 50 + 5) with sub_82371058 (then sub_82370A58), and
+// the star is drawn from +24 / +28 every frame. So when players 3-4 joined
+// after the level began, players 1-2's stars moved beside their HUDs but
+// their Y stayed at the game's own place: on players 3-4's portraits.
+// Now the switch re-places the text as the set-up does, both ways (3-4
+// joining, and leaving again).
 extern "C" REX_FUNC(__imp__sub_82371198);
+extern "C" REX_FUNC(__imp__sub_82371058);  // element: place at (r4, r5) (ints)
+extern "C" REX_FUNC(__imp__sub_82370A58);  // element: its transform rebuilt
 void UpdateCounterLayout(PPCContext& ctx, uint8_t* base) {
   static int last = -1;
   const int now = more_players::FourPlayerLayout() ? 1 : 0;
@@ -794,6 +803,16 @@ void UpdateCounterLayout(PPCContext& ctx, uint8_t* base) {
     PlaceCounter(d, now == 1);
     if (const uint32_t text = Read32(d + 16)) {
       const PPCContext saved = ctx;
+      // Placed as the set-up does (see above).
+      const float x = ReadFloat(d + 24), y = ReadFloat(d + 28), mirror = ReadFloat(d + 32);
+      ctx.r3.u64 = text;
+      ctx.r4.u64 = uint64_t(int64_t(int32_t(mirror * 50.0f + x)));
+      ctx.r5.u64 = uint64_t(int64_t(int32_t(uint32_t(y + 50.0f)) + 5));
+      __imp__sub_82371058(ctx, base);
+      ctx = saved;
+      ctx.r3.u64 = text;
+      __imp__sub_82370A58(ctx, base);
+      ctx = saved;
       ctx.r3.u64 = text;
       ctx.f1.f64 = double(ReadFloat(0x82020C28)) * (now == 1 ? kCounterScale : 1.0f);
       __imp__sub_82371198(ctx, base);

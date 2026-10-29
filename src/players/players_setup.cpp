@@ -54,8 +54,14 @@ bool InGame(const uint8_t* base, int p) { return Read32(base, kCoOpState + 4 * u
 // The players a level makes room for (2-4).
 int Room() { return std::clamp(more_players::LocalPlayerCount(), 1, kPlayers); }
 
-// Is a controller ("pad:..." or a fake "debug-pad-N")?
+// Is a controller ("pad:..." or a fake "debug-pad-2".."4")? NOT the debug
+// tools' own input ("debug-pad-1", "Debug input script": the console /
+// --debug_input_script / --debug_input_fifo press buttons through it, and it
+// exists whenever one of those is on): it showed on player 1's card and in
+// the chooser as if it were a controller (2026-10-29). It still plays as
+// player 1; the screen just never lists it.
 bool IsPad(const PlayerAssignment::Device& d) {
+  if (d.key == "debug-pad-1") return false;
   return !d.keyboard && (d.key.rfind("pad:", 0) == 0 || d.key.rfind("debug-pad-", 0) == 0);
 }
 

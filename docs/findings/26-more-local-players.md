@@ -2010,6 +2010,17 @@ player 4; after resuming nobody was in the game until player 2 pressed START.
 * In the main menu the purple frame is drawn over the screen's bottom edge:
   the screen is drawn at 0.88x there so its prompt row stays visible.
 
+**Players 1-2's "counter" Y on players 3-4's portraits (fixed
+2026-10-29).** The counter prompt's set-up places its Y text ONCE (at
+x + 50 x mirror, y + 55, `sub_82371058` then `sub_82370A58`), while the red
+star is drawn from the prompt's +24 / +28 every frame. With players 3-4
+joining after the level began, the switch to the four-player layout moved
+players 1-2's stars beside their HUDs but left their Y at the game's own
+place, the bottom corners: on players 3-4's portraits. The switch now
+places the text as the set-up does, both ways. Checked: all four joined in
+a level, every Y inside its star beside its own HUD; players 3-4 dropped
+out, players 1-2's prompts back at the game's own place.
+
 **The look (second round).** Each card shows the player's number, big, in
 the card's outer corner of the screen (1 top left, 2 top right, 3 bottom
 left, 4 bottom right) over a soft glow of their colour (`aura_p<N>.png`,
@@ -2039,8 +2050,9 @@ ring flashes: a first version also popped the controller picture.
 **Each player's button pictures.** A card with a controller has a
 "Buttons: ..." line. A card is used in two rows: A selects it (its
 controller row: left / right offer each controller connected, A takes the
-one shown), Down moves to its Buttons line, and left / right or A there
-step that player's button pictures through Automatic (by the
+one shown), Down moves to its Buttons line (Up on the bottom row, which is
+drawn upside down: its line sits above the picture), and left / right or A
+there step that player's button pictures through Automatic (by the
 controller's maker), Xbox 360 (the game's own), Xbox Series, PlayStation 5,
 PlayStation 4 and Switch; the card says "Buttons: ..." under the device's
 name. Player 1's choice is the Options row Controller Icons (the flag
@@ -2049,6 +2061,15 @@ name. Player 1's choice is the Options row Controller Icons (the flag
 (`prompt_icons::PadIconsSetting`, used by `LookOf`). Checked: player 2 set
 to Xbox Series in the screen, back in play the "Join Game" corner of
 player 2 showed the Xbox Series B while players 3-4 kept the game's 360 B.
+
+The arrows beside a focused Buttons line stand just outside its text (at
+0.75 x their size; the text fits the room left between them). Turned and
+scaled, the two don't shrink round their centres, so each is nudged back
+(measured on photos) to sit level and equally far from the text.
+
+The debug tools' own input ("Debug input script", the device behind the
+console, `--debug_input_script` and `--debug_input_fifo`) isn't listed: it
+showed on player 1's card and in the chooser as if it were a controller.
 
 **"Join Game" only with a controller.** In a level the game's co-op corner
 offers "Join Game" to every player not in the game, so with players 3-4
