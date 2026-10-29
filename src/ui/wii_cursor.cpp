@@ -31,6 +31,7 @@
 #include "../guest_memory.h"
 #include "../data/pure3d.h"
 #include "../input/keyboard_mouse.h"
+#include "../input/mouse_menus.h"
 #include "../input/mouse_reticle.h"
 #include "../input/players.h"
 #include "../pddi/intercept.h"
@@ -154,7 +155,8 @@ int KeyboardPlayerOnFoot() {
 // windows (F6 Controls, F5 cheats) want the pointer.
 bool ShouldShow() {
   const bool menu = !more_players::InPlay() || menu_input::MenuOnScreen();
-  if ((!menu && mouse_reticle::Mode() != 2) || g_imgui_mouse.load() || g_imgui_window.load()) {
+  if ((!menu && mouse_reticle::Mode() != 2) || g_imgui_mouse.load() || g_imgui_window.load() ||
+      (menu && mouse_menus::MouseBlocked())) {  // another player's menu: the mouse does nothing there
     return false;
   }
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
@@ -387,8 +389,8 @@ class CursorDialog : public rex::ui::ImGuiDialog {
       std::vector<uint8_t> rgba;
       int w = 0, h = 0;
       if (!LoadTexture(name, &rgba, &w, &h)) return nullptr;
-      return immediate_->CreateTexture(uint32_t(w), uint32_t(h), rex::ui::ImmediateTextureFilter::kLinear, false,
-                                       rgba.data());
+      return immediate_->CreateTexture(uint32_t(w), uint32_t(h),
+                                       rex::ui::ImmediateTextureFilter::kLinear, false, rgba.data());
     };
     texture_ = make(kBubbleTexture);
     glow_ = make(kGlowTexture);

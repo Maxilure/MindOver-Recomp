@@ -191,6 +191,13 @@ struct Settings {
   // walk, 0.8 = about a third of a run): the old default 0.5 made Walk stop
   // Crash instead. Allowed: kWalkTiltMin..kWalkTiltMax.
   float walk_tilt = 0.75f;
+  // Players 2-4's BUTTON PICTURES (the Players screen, 2026-10-29; index =
+  // player 0-3, [0] unused: player 1's is the Options flag
+  // controller_icons), numbered like controller_icons: 0 Automatic (by the
+  // controller's maker), 1 the game's own Xbox 360, 2 Xbox Series, 3
+  // PlayStation 5, 4 PlayStation 4, 5 Switch. File lines icons.player2-4
+  // (written only when not Automatic).
+  std::array<int, 4> pad_icons{};
 };
 
 // A device's player choice (input/players.h), remembered with the name it

@@ -1949,3 +1949,151 @@ player 2's controller, so player 4's trail ran only while player 2 played.
 **The change** (`more_players.cpp`). The wrapper restores r4 to the value it
 was called with. Retested (players 3 and 4 only, through a level exit):
 both trails start and lay prints step for step.
+
+## 53. The Players screen: who plays with which device
+
+A screen in the game's own look to set up the four players without the F6
+tools window, reached from the main menu and the pause menu ("Players",
+right after Options). Code: `src/players/players_setup.*` (the rules),
+`src/options/options_menu.cpp` (the screen: the Options screen's third mode,
+like the Achievements list) and `src/options/options_page.cpp` (its page
+elements). Four cards, two by two, inside the game's glass panel: "Player N"
+in that player's colour (red, blue, green, purple), the device picture, the
+device's own name; an empty card shows a faint controller and "Press any
+button to join".
+
+![Players screen in the pause menu: four players with four kinds of device, and player 2's card selected on its Buttons line](../images/players-screen.jpg)
+
+**The rules.**
+
+| What | How |
+|---|---|
+| Player 1 | always has the keyboard and mouse, and may also have a controller (both work at once); the card shows the device used last. A controller moved onto player 1 never pushes the keyboard away (`PlayerAssignment::SetChoice` no longer displaces the keyboard). |
+| Press any button to join | a controller that plays as nobody presses any button or trigger: it takes the first of players 2-4 without a device. |
+| Choose (A on a card) | the card becomes a chooser: left / right step through every controller connected (its picture in that player's colour, its name, whose it is now), A gives the one shown to that player, B cancels. Taken from another player = the two swap; one that played as nobody replaces the player's own. |
+| Remove (X / Backspace) | the player's controllers are set to nobody (they can press to join again). In a level the player drops out at once (the pause menu's Drop Out, `lost_controller::DropOut`); the last player in the game keeps theirs. |
+| B / Esc | cancels a choice, else leaves the screen. |
+| Joining the game | not done by the screen: a player with a controller still joins the game's own way (START / B in play). |
+| Down in a selected card | its Buttons line: the player's button pictures (below): left / right / A change it, Up back to the controller, B leaves the card. |
+| Saved | globally, in `controls.toml` (`player.<device>` and `icons.player<N>` lines), not per save. |
+
+**Reading a controller nobody plays.** A controller set to nobody answers on
+no socket, so the game never polls it. The input system merges the devices
+the assignment lists for a socket; asking for socket 4 (past the guest's
+four, so the SDK's "used last" bookkeeping ignores it) with a one-shot list
+of just that device reads its own state (`PlayerAssignment::ProbeState`).
+
+**Joining stays the players' own.** A first version made a player who got a
+controller here join by itself as soon as play resumed (it answered the
+front end's "START pressed?" question `sub_82272338(controller, 1, 36, 0)` at
+`0x82264FF4` for that socket). Removed: having a controller and being in the
+game are separate, as in the original; the player joins with the game's own
+button. A first "pick up and drop" Move was replaced by the chooser the same
+day. Tested: two fake controllers joined their cards, a third was chosen for
+player 4; after resuming nobody was in the game until player 2 pressed START.
+
+**Pitfalls found while testing.**
+
+* The B that cancels a choice must not reach the game: the Options state's
+  screen action closes on B by itself, and holding back only its decision
+  left the front end in state 956 with nothing on screen. While the chooser
+  is open (and until that B is let go) B is filtered out of every pad
+  the game reads (`options_menu::FilterPad`); the screen reads before the
+  filter.
+* A controller joining in the main menu lands on socket 1 (outside play every
+  device answers as player 1) one poll after the press, so its held button
+  reached the screen as a fresh B and closed it. Its buttons stay hidden for
+  300 ms and then until let go.
+* The text measure (`TextWidth`) is calibrated for the Options screen drawn
+  at 0.85x; this screen is drawn at full size, so names are fitted with that
+  factor.
+* In the main menu the purple frame is drawn over the screen's bottom edge:
+  the screen is drawn at 0.88x there so its prompt row stays visible.
+
+**The look (second round).** Each card shows the player's number, big, in
+the card's outer corner of the screen (1 top left, 2 top right, 3 bottom
+left, 4 bottom right) over a soft glow of their colour (`aura_p<N>.png`,
+drawn by `tools/make_player_pictures.py`, over the card's glass). The glow
+shows for every player with a device (player 1's keyboard always; a
+controller pressed to join or chosen) and fades in or out over half a
+second when that changes; opening the screen shows it at once. (A first
+version lit only players already playing in the level: in the pause menu
+most cards stayed bare.) With the "Player N" title gone, the
+bottom row is the top row upside down (name and button lines first, the
+picture below, the number in the bottom corner), so a number never meets
+the text. The Switch picture is the pack's Joy-Cons drawn apart, its inner
+lines in a light shade of the player's colour.
+
+**Which controller is which.** Several controllers can share a name
+("Xbox Controller"), so a card answers when its own device presses
+anything: its picture pops to 1.15x and settles back over 0.4 s, and its
+ring flashes in the player's colour (the selected card's yellow ring turns
+that colour meanwhile). Every controller is read each update
+(`PlayerAssignment::ProbeState`, as for joining; a trigger counts past 64),
+player 1's keys by the keyboard driver's `last_key_down`, and in the
+chooser the controller on offer flashes the choosing card: step through
+two "Xbox Controller"s, press a button on the one in hand, and the card
+answers when it is the one shown (`players_setup::PollPresses`). Only the
+ring flashes: a first version also popped the controller picture.
+
+**Each player's button pictures.** A card with a controller has a
+"Buttons: ..." line. A card is used in two rows: A selects it (its
+controller row: left / right offer each controller connected, A takes the
+one shown), Down moves to its Buttons line, and left / right or A there
+step that player's button pictures through Automatic (by the
+controller's maker), Xbox 360 (the game's own), Xbox Series, PlayStation 5,
+PlayStation 4 and Switch; the card says "Buttons: ..." under the device's
+name. Player 1's choice is the Options row Controller Icons (the flag
+`controller_icons`); players 2-4's are `icons.player2`-`4` lines in
+`controls.toml`, which the prompt pictures read per player
+(`prompt_icons::PadIconsSetting`, used by `LookOf`). Checked: player 2 set
+to Xbox Series in the screen, back in play the "Join Game" corner of
+player 2 showed the Xbox Series B while players 3-4 kept the game's 360 B.
+
+**"Join Game" only with a controller.** In a level the game's co-op corner
+offers "Join Game" to every player not in the game, so with players 3-4
+it showed for them too, controllers or not. Now players 2-4 without a
+controller get no corner: the corner update (`sub_82269480`, display +0x90
+= its player) sets its Message (+16) and Button (+20) texts' shown bit
+every frame, and they're hidden again right after it. A free controller
+pressing any button in a level takes the first player without one, as on
+the Players screen (`players_setup::PollJoinsInPlay`, from the HUD's
+per-frame update): that player's corner appears, in their own button. The
+press is hidden from the game until let go, so it doesn't also join them.
+Checked: players 3-4 without controllers = only player 2's corner; A on a
+free controller made it player 3, and player 3's corner showed with its
+Switch button.
+
+**The mouse in another player's menu.** In a level a menu belongs to a
+player (who paused, who used the totem: `menu_input`'s owner rules), and
+the keyboard only answers for its own player, so player 2's pause menu took
+no keys, but the mouse still hovered and clicked in it. Now the mouse
+follows the keyboard: while the menu's owner is a player the keyboard
+doesn't play for, the pointer neither hovers nor clicks (a click made
+meanwhile is dropped) and the Wii-style pointer hides
+(`mouse_menus::MouseBlocked`, checked every front-end frame). Checked:
+player 2 paused, the pointer over "Players" and a click left the selection
+on Resume Game.
+
+**The hinge.** The glass panel's hinge (top left) lives on the glass page,
+drawn before the screen's own page, so player 1's card covered most of it.
+A copy (`PlyHinge`) now stands on the screen's page after the cards (shown
+at every redraw: the Options screen hides it when it opens first), and
+the original is hidden while the screen is up (put back at Exit): in game
+it comes from `InGame_NV_GlassPanel.pag` (its second layer,
+`GlassPanelLayer`), in the main menu from the page's own
+`OptionsMenu_PanelHinge`.
+
+**Pictures.** Xelu's controller outlines (CC0, `assets/prompts/controllers/`)
+filled in each player's colour with a navy edge by
+`tools/make_player_pictures.py` into `assets/prompts/controllers/players/`:
+at 4x size, the outside flood-filled from the edges, the rest is the body,
+lines thickened a touch and kept soft, then averaged down (filling the
+128-pixel outlines directly gave hard, uneven edges). The Switch's right
+Joy-Con is drawn as a solid shape in the pack: solid parts are found by
+erosion and filled too. The selection rings and the card backing are simple
+rounded rectangles drawn by the script. Each in-game and main menus package
+gets the 24 sprites (~540 KB).
+
+**Four players by default.** `--local_players` now defaults to 4 (was 2), so
+all four cards always take a player.

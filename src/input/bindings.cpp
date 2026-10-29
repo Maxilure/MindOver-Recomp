@@ -495,6 +495,17 @@ Bindings LoadBindings(const std::filesystem::path& path) {
       b.players[std::string(key.substr(7))] = std::move(choice);
       continue;
     }
+    if (key.size() == 13 && key.substr(0, 12) == "icons.player" && key[12] >= '2' && key[12] <= '4') {
+      // icons.player2-4 = 0-5 (Settings::pad_icons).
+      int style = 0;
+      if (std::from_chars(value.data(), value.data() + value.size(), style).ec != std::errc() || style < 0 ||
+          style > 5) {
+        REXLOG_WARN("Controls: {} = \"{}\": not 0-5 (skipped)", key, value);
+        continue;
+      }
+      b.settings.pad_icons[size_t(key[12] - '1')] = style;
+      continue;
+    }
     if (key == "controls_version") {
       std::from_chars(value.data(), value.data() + value.size(), version);
       continue;
@@ -684,6 +695,24 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
     std::string entry = "player." + key + " = " +
                         (choice.player < 0 ? std::string("off") : std::to_string(choice.player + 1));
     out << entry << "   # " << (choice.name.empty() ? std::string("?") : choice.name) << "\n";
+  }
+
+  // Players 2-4's button pictures (Settings::pad_icons): only the chosen ones.
+  {
+    static constexpr const char* kStyles[6] = {"Automatic", "Xbox 360", "Xbox Series", "PlayStation 5",
+                                               "PlayStation 4", "Switch"};
+    bool header = false;
+    for (int p = 1; p < 4; ++p) {
+      const int style = b.settings.pad_icons[size_t(p)];
+      if (style <= 0 || style > 5) continue;
+      if (!header) {
+        out << "\n# Players 2-4's button pictures (Players screen; player 1's = Options ->\n"
+               "# Controller Icons): 1 Xbox 360, 2 Xbox Series, 3 PlayStation 5, 4 PlayStation 4,\n"
+               "# 5 Switch; not listed = automatic (by the controller's maker).\n";
+        header = true;
+      }
+      out << "icons.player" << (p + 1) << " = " << style << "   # " << kStyles[style] << "\n";
+    }
   }
 
   // Write a temporary file, then rename it over the old one: a crash halfway

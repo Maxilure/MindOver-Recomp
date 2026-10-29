@@ -63,6 +63,7 @@
 #include <vector>
 
 #include <rex/input/device_assignment.h>
+#include <rex/input/input.h>
 
 namespace kbm {
 
@@ -101,7 +102,18 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
     std::string key, name;
     int choice;
   };
+  // (The keyboard is never moved by a swap: player 1 keeps the keyboard and
+  // mouse whoever moves onto player 1; only moving the keyboard itself moves
+  // it. The Players screen, players/players_setup.h, 2026-10-29.)
   std::vector<Change> SetChoice(const std::string& key, int choice);
+  // ONE DEVICE'S OWN STATE (the Players screen's "press anything to join":
+  // a controller that plays as nobody answers on no socket, so the game
+  // never sees it). Asks the input system for a socket only this call
+  // answers (kProbeUser, past the four: the SDK's "which pad was used last"
+  // bookkeeping ignores it), with this one device on it. False = not
+  // connected / not found. Game main thread (or any thread but the input
+  // system's own callers' lock: it takes no lock of ours while asking).
+  bool ProbeState(const std::string& key, rex::input::X_INPUT_STATE* out) const;
   // "Is a level being played?" (game thread safe). While it says no, every
   // device also plays as player 1 (see above). Unset = always in play.
   void SetInPlayCheck(std::function<bool()> in_play);

@@ -48,6 +48,8 @@
 
 #include <cstdint>
 
+struct PPCContext;
+
 namespace lost_controller {
 
 // Is the box ours right now? (Any thread.)
@@ -59,5 +61,12 @@ bool Active();
 // succeeded. While the box is ours it takes the presses (Y, any button) and leaves
 // the game an untouched pad.
 void FilterPad(int user, uint8_t* gamepad, bool connected);
+
+// The Players screen (players/players_setup.h) took player p's last
+// controller away in a level: p drops out at once, the pause menu's own Drop
+// Out (sub_82266040 with the menu owner set to p, as the Y here does), and
+// the "controller disconnected" box isn't asked for p meanwhile. False =
+// not dropped (p isn't in game, or nobody else is). Game main thread.
+bool DropOut(PPCContext& ctx, uint8_t* base, int p);
 
 }  // namespace lost_controller

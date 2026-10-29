@@ -320,6 +320,20 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
 
 bool Active() { return g_phase.load() != kNone; }
 
+bool DropOut(PPCContext& ctx, uint8_t* base, int p) {
+  if (p < 0 || p >= kMaxPlayers || !InGame(p) || g_dropping[p] || !SomeoneElse(p)) return false;
+  const uint32_t game = Read32(kGameGlobal);
+  const uint32_t fe = game ? Read32(game + 52) : 0;
+  if (!fe) return false;
+  const uint32_t owner = Read32(fe + kOwner);
+  Write32(fe + kOwner, uint32_t(p));
+  CallGame(__imp__sub_82266040, ctx, base, fe);
+  Write32(fe + kOwner, owner);
+  g_dropping[p] = true;
+  REXLOG_INFO("Lost controller: player {} dropped out (the Players screen took the controller)", p + 1);
+  return true;
+}
+
 void FilterPad(int user, uint8_t* gamepad, bool connected) {
   const int phase = g_phase.load();
   if (phase == kNone || user < 0 || user >= kMaxPlayers || !gamepad) return;

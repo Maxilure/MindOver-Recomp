@@ -87,13 +87,17 @@ bool Available();
 // Whether the main menu got its "Options" item and our page (as its third
 // item, the page in place of the unused PS2 Options page: options_page.cpp).
 bool MainMenuAvailable();
-// The main menu's items with it: New Game, Load Game, OPTIONS, Credits,
-// QUIT GAME (ui/quit_game.h). (Achievements: the pause menu only.)
+// The main menu's items with it: New Game, Load Game, OPTIONS, PLAYERS,
+// Credits, QUIT GAME (ui/quit_game.h). (Achievements: the pause menu only.)
 constexpr int kMainMenuOptionsItem = 2;
-constexpr int kMainMenuQuitItem = 4;
-// Whether the pause pages got their "Achievements" item (right after
-// Options; options_page.cpp AddPauseAchievements).
+constexpr int kMainMenuPlayersItem = 3;
+constexpr int kMainMenuQuitItem = 5;
+// Whether the pause pages got their "Players" and "Achievements" items
+// (right after Options, in that order; options_page.cpp AddPauseItems).
 bool PauseAchievementsAvailable();
+// Whether the pages have the Players screen's cards (the device pictures
+// were made: players/players_setup.h MenuSprites).
+bool PlayersCardsAvailable();
 // THE ACHIEVEMENTS LIST (options_page.cpp; options_menu.cpp fills it), in
 // page units, y up: kAchCards glass cards INSIDE the game's glass panel,
 // which stays centred for the list (x 70-570, y 34-388: the Options screen
@@ -108,5 +112,31 @@ constexpr int kAchTextLeft = kAchIconX + kAchIconSide + 14;    // 171
 constexpr int kAchTextRight = kAchCardX + kAchCardW - 16;     // 507
 constexpr int kAchHeadingY = 312;
 constexpr int kAchArrowX = 530;  // the arrows' box left (32 wide), beside the cards (glass edge 570)
+// THE PLAYERS SCREEN (players/players_setup.h; options_page.cpp builds,
+// options_menu.cpp fills; the design of 2026-10-29, its 1280 x 720 pixels
+// / 1.5 = units): four cards, two by two, filling the game's glass panel
+// (x 70-570, y 34-388: 17 inside it, 12 apart), each a centred column:
+// "Player N", the device picture, the device's name. Card k: column k % 2,
+// row k / 2. The prompts in a centred row under the panel.
+constexpr int kPlyCardW = 227, kPlyCardH = 154;
+constexpr int kPlyCardX[2] = {87, 326};
+constexpr int kPlyCardTop[2] = {371, 205};
+constexpr int kPlyRingMargin = 5;    // the selection ring round a card
+constexpr int kPlyPicSide = 84;      // the device picture's box (square; the picture is ~70 x 45 inside)
+// Each card's places, below the card's top, per ROW (2026-10-29, the
+// screen's design: the player's NUMBER in the card's outer corner of the
+// screen, over a glow of their colour, instead of a "Player N" title; the
+// bottom row is the top row upside down: lines first, picture below, the
+// number in the bottom corner, so the number never meets the lines).
+// [0] = top row (players 1-2), [1] = bottom row (players 3-4).
+constexpr int kPlyPicCentre[2] = {58, 94};  // the picture's centre
+constexpr int kPlyInfoTop[2] = {100, 6};    // the name line's box top
+constexpr int kPlyStyleTop[2] = {122, 28};  // the button pictures line (PlyStyle)
+constexpr int kPlyNumberCentreY[2] = {30, 124};  // the number's centre
+constexpr int kPlyNumberInset = 30;         // its centre, from the card's outer side
+constexpr int kPlyArrowSide = 28;    // the chooser's arrows, beside the picture
+constexpr int kPlyArrowInset = 26;   // from the card's left / right edge
+constexpr int kPlyPrompts = 4;       // the prompt row: up to four
+constexpr int kPlyPromptTop = 36;    // its boxes' top (the panel's bottom = 34)
 
 }  // namespace options_page

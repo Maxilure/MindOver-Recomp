@@ -52,12 +52,6 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "Two windows: the emulated picture and the native one, both drawn live. Meant for "
               "comparing the two; it needs a strong graphics card."};
     }
-  } else if (name == "local_players") {
-    if (AsNumber(value) > 2) {
-      return {"Experimental",
-              "Players 3 and 4 are this port's addition (the original has 2): their HUD, "
-              "markers, camera and menus are new and still being tested. Expect rough edges."};
-    }
   } else if (name == "coop_camera") {
     if (AsBool(value)) {
       return {"Experimental",
@@ -493,10 +487,10 @@ void Page::DrawMain() {
   // --- Co-op ------------------------------------------------------------------
   if (section("Co-op")) {
     columns();
-    Row("Players", "How many players can play at once. The original game has 2; players join "
-                   "from the pause menu (Join Game).");
+    Row("Players", "How many players can play at once (4 by default; the original game has 2). "
+                   "Players join from the Players screen (main menu or pause menu) or with START.");
     const int players = int(settings::AsNumber(Value("local_players")));
-    const char* labels[] = {"2 (the original)", "3", "4"};
+    const char* labels[] = {"2 (the original)", "3", "4 (default)"};
     const int index = std::clamp(players - 2, 0, 2);
     if (ImGui::BeginCombo("##players", labels[index])) {
       for (int i = 0; i < 3; ++i) {

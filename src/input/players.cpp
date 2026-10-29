@@ -5,7 +5,9 @@
 
 #include <atomic>
 
+#include <rex/input/input_system.h>
 #include <rex/logging.h>
+#include <rex/runtime.h>
 
 #include "../players/who_plays.h"
 
@@ -16,6 +18,12 @@ namespace kbm {
 namespace {
 
 std::atomic<PlayerAssignment*> g_assignment{nullptr};
+
+// ProbeState's socket: past the guest's four (the SDK only keeps "used last"
+// for sockets 0-3), answered with g_probe alone while a probe runs on this
+// thread.
+constexpr uint32_t kProbeUser = rex::input::kMaxGuestUsers;
+thread_local DeviceId g_probe = DeviceId::kInvalid;
 
 const char* PlayerText(int player) {
   static const char* kText[] = {"player 1", "player 2", "player 3", "player 4"};
@@ -154,6 +162,10 @@ void PlayerAssignment::SetInPlayCheck(std::function<bool()> in_play) {
 
 void PlayerAssignment::DevicesForUser(uint32_t user_index, std::vector<DeviceId>& out) const {
   out.clear();
+  if (user_index == kProbeUser) {  // ProbeState's socket: only the probed device
+    if (g_probe != DeviceId::kInvalid) out.push_back(g_probe);
+    return;
+  }
   std::lock_guard<std::mutex> lock(mutex_);
   // Outside play every real device also answers on player 1's socket: the
   // title takes START from any socket but makes that socket player 1, and the
@@ -207,7 +219,8 @@ std::vector<PlayerAssignment::Change> PlayerAssignment::SetChoice(const std::str
     std::vector<const Known*> displaced;
     if (choice >= 0 && old_player >= 0 && old_player != choice) {
       for (const Known& d : devices_) {
-        if (!d.key.empty() && d.key != key && PlayerOf(d) == choice) displaced.push_back(&d);
+        // (Never the keyboard: it stays player 1's, players.h SetChoice.)
+        if (!d.key.empty() && d.key != key && !d.keyboard && PlayerOf(d) == choice) displaced.push_back(&d);
       }
     }
     if (choice == kPlayerAuto) {
@@ -232,6 +245,24 @@ std::vector<PlayerAssignment::Change> PlayerAssignment::SetChoice(const std::str
   }
   AnnounceIfChanged();
   return changes;
+}
+
+bool PlayerAssignment::ProbeState(const std::string& key, rex::input::X_INPUT_STATE* out) const {
+  DeviceId id = DeviceId::kInvalid;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const Known& d : devices_) {
+      if (d.key == key) id = d.id;
+    }
+  }
+  auto* input = static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
+  if (id == DeviceId::kInvalid || !input) return false;
+  g_probe = id;
+  rex::input::X_INPUT_STATE state{};
+  const bool ok = input->GetState(kProbeUser, &state) == 0;  // X_ERROR_SUCCESS
+  g_probe = DeviceId::kInvalid;
+  if (ok && out) *out = state;
+  return ok;
 }
 
 }  // namespace kbm

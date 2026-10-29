@@ -17,6 +17,7 @@
 #include "../data/fight_tree.h"
 #include "../data/pure3d.h"
 #include "../achievements/achievements.h"
+#include "../players/players_setup.h"
 
 namespace options_page {
 namespace {
@@ -221,6 +222,15 @@ struct Parts {
   // achievement in list order, and the ring. Empty = no grid.
   std::vector<std::string> ach_icons;
   std::string ach_ring;
+  // The Players screen's device pictures (players_setup.h MenuSprites), in
+  // Picture order: one picture element shows any of them (SetFrame).
+  std::vector<std::string> ply_pics;
+  // The glass panel's hinge (teal bracket + wrench, top left), copied onto
+  // our page as PlyHinge AFTER the cards: the original sits on the glass
+  // page, drawn before ours, so player 1's card covered it. In game: the
+  // Hinge of InGame_NV_GlassPanel.pag; main menu: the PS2 Options page's
+  // OptionsMenu_PanelHinge. Empty = no copy.
+  Node ply_hinge;
 };
 
 // THE ACHIEVEMENTS LIST (achievements_screen.h; the contract with
@@ -255,6 +265,98 @@ std::vector<Bytes> AchievementSprites(Parts* parts) {
   }
   if (parts->ach_ring.empty()) parts->ach_icons.clear();
   return chunks;
+}
+
+// The Players screen's pictures (top-level chunks); `parts` notes that the
+// cards can be built.
+std::atomic<bool> g_players_cards{false};
+std::vector<Bytes> PlayersSprites(Parts* parts) {
+  std::vector<Bytes> chunks;
+  for (const players_setup::Sprite& s : players_setup::MenuSprites()) chunks.push_back(s.chunk);
+  parts->ply_pics.clear();
+  if (!chunks.empty()) {
+    parts->ply_pics.push_back(players_setup::CardBackName());
+    g_players_cards = true;
+  }
+  return chunks;
+}
+
+// THE PLAYERS SCREEN (players/players_setup.h; the contract with
+// options_menu.cpp, which fills and shows them; places options_page.h):
+//   PlyBack<k>      the card's opaque teal backing (players_setup.h)
+//   PlyCard<k>      the game's glass over it, at 60 % (the sheen)
+//   PlyRing<k>      the selection ring round it (frames: yellow = selected,
+//                   players 1-4's colours = the controller being moved)
+//   PlyPic<k>       the device picture (frames: players_setup.h Picture)
+//   PlyAura<k>      the glow of the player's colour from the card's outer
+//                   corner (over the glass; players_setup.h AuraName)
+//   PlyTitle<k>     the player's number, big, in that corner
+//   PlyInfo<k>      the device's name / "Press any button to join" /
+//                   whose a controller is while choosing (centred, small)
+//   PlyStyle<k>     its button pictures ("Buttons: PlayStation 5"; only with
+//                   a controller: LB / RB change them; centred, small)
+//   PlyLeft<k> / PlyRight<k>  the chooser's arrows beside the picture (the
+//                   map's arrow, turned by options_menu.cpp)
+//   PlyPrompt<i>    the prompt row under the panel ("<A> Move Controller")
+//   PlyHinge        the panel's hinge again, over the cards (Parts::ply_hinge;
+//                   at the hinge's own place: the Players screen keeps the
+//                   panel centred, so (57, 310) in both menus)
+constexpr uint32_t kPlyGlassColour = 0x99FFFFFF;  // the glass over the backing (60 %)
+void AddPlayersCards(const Parts& p, std::vector<Node>& elements) {
+  if (p.ply_pics.empty()) return;
+  auto picture = [&](std::string name, const std::vector<std::string>& sprites, int x, int y, int w, int h,
+                     uint32_t colour) {
+    Node n = p.arrow;
+    pure3d::SetNodeName(n, name);
+    if (!(sprites.size() == 1 ? SetPictureSprite(n, sprites[0]) : SetPictureSprites(n, sprites))) return false;
+    SetBox(n, x, y, w, h);
+    pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 29, colour);
+    pure3d::SetNodeLe32(n, pure3d::NameEnd(n) + 20, kStretchToBox);
+    elements.push_back(std::move(n));
+    return true;
+  };
+  for (int k = 0; k < 4; ++k) {
+    const int x = kPlyCardX[k % 2], top = kPlyCardTop[k / 2], bottom = top - kPlyCardH;
+    const int m = kPlyRingMargin;
+    if (!picture(fmt::format("PlyBack{}", k), {players_setup::CardBackName()}, x, bottom, kPlyCardW, kPlyCardH,
+                 0xFFFFFFFF) ||
+        !picture(fmt::format("PlyCard{}", k), {std::string(kCardSprites[0])}, x, bottom, kPlyCardW, kPlyCardH,
+                 kPlyGlassColour) ||
+        !picture(fmt::format("PlyAura{}", k), {players_setup::AuraName(k)}, x, bottom, kPlyCardW, kPlyCardH,
+                 0xFFFFFFFF) ||
+        !picture(fmt::format("PlyRing{}", k), players_setup::RingFrames(), x - m, bottom - m, kPlyCardW + 2 * m,
+                 kPlyCardH + 2 * m, 0xFFFFFFFF) ||
+        !picture(fmt::format("PlyPic{}", k), players_setup::PictureFrames(k), x + (kPlyCardW - kPlyPicSide) / 2,
+                 top - kPlyPicCentre[k / 2] - kPlyPicSide / 2, kPlyPicSide, kPlyPicSide, 0xFFFFFFFF)) {
+      return;
+    }
+    for (int side = 0; side < 2; ++side) {
+      Node a = p.arrow;
+      pure3d::SetNodeName(a, side == 0 ? fmt::format("PlyLeft{}", k) : fmt::format("PlyRight{}", k));
+      const int ax = side == 0 ? x + kPlyArrowInset : x + kPlyCardW - kPlyArrowInset - kPlyArrowSide;
+      SetBox(a, ax, top - kPlyPicCentre[k / 2] - kPlyArrowSide / 2, kPlyArrowSide, kPlyArrowSide);
+      elements.push_back(std::move(a));
+    }
+    {  // the number: in the outer corner (options_menu.cpp sizes it)
+      const int cx = k % 2 == 0 ? x + kPlyNumberInset : x + kPlyCardW - kPlyNumberInset;
+      elements.push_back(MakeText(p.label, p.empty, fmt::format("PlyTitle{}", k), cx - 30,
+                                  top - kPlyNumberCentreY[k / 2] - kLineHeight / 2, 60, kLineHeight, kCentre, kGreen));
+    }
+    elements.push_back(MakeText(p.label, p.empty, fmt::format("PlyInfo{}", k), x, top - kPlyInfoTop[k / 2] - kLineHeight,
+                                kPlyCardW, kLineHeight, kCentre, kGreen));
+    elements.push_back(MakeText(p.label, p.empty, fmt::format("PlyStyle{}", k), x, top - kPlyStyleTop[k / 2] - kLineHeight,
+                                kPlyCardW, kLineHeight, kCentre, kCyan));
+  }
+  for (int i = 0; i < kPlyPrompts; ++i) {
+    elements.push_back(MakeText(p.label, p.empty, fmt::format("PlyPrompt{}", i), 0, kPlyPromptTop - kLineHeight,
+                                200, kLineHeight, kCentre, kCyan));
+  }
+  if (p.ply_hinge.id == kChunkPicture) {
+    Node hinge = p.ply_hinge;
+    pure3d::SetNodeName(hinge, "PlyHinge");
+    SetBox(hinge, 57, 310, 100, 150);
+    elements.push_back(std::move(hinge));
+  }
 }
 
 // The in-game Options page's parts (`page` = InGame_Options_XENON.pag,
@@ -365,6 +467,8 @@ std::vector<Node> BuildElements(const Parts& p) {
                                   kAchTextRight - kAchTextX, kLineHeight, kLeft, kCyan));
     }
   }
+  // The Players screen's cards (hidden unless the screen is in that mode).
+  AddPlayersCards(p, elements);
   // The menu: kRows rows, each a copy of the Dialogue row.
   Node menu = p.menu;
   for (int r = 0; r < kRows; ++r) {
@@ -568,10 +672,15 @@ bool AddPauseAchievements(Node& page) {
     return n.id == kChunkItem && pure3d::NodeName(n) == "OptionsItem";
   });
   if (options == items.end() || options->children.empty() || options->children[0].children.empty()) return false;
+  // "Players" first, then "Achievements" (both after Options).
+  Node players = *options;
+  pure3d::SetNodeName(players, "PlayersItem");
+  pure3d::SetNodeName(players.children[0].children[0], "PlayersValue");
   Node copy = *options;
   pure3d::SetNodeName(copy, "AchievementsItem");
   pure3d::SetNodeName(copy.children[0].children[0], "AchievementsValue");
-  items.insert(options + 1, copy);
+  const auto at = items.insert(options + 1, players);
+  items.insert(at + 1, copy);
   int count = 0;
   for (const Node& n : items) count += n.id == kChunkItem;
   const int step = count > 1 ? std::min(kPauseStep, (kPauseTopY - kPauseLowestY) / (count - 1)) : kPauseStep;
@@ -614,6 +723,7 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
   std::vector<Bytes> extra;
   if (!guide_sprite.empty()) extra.push_back(guide_sprite);
   for (Bytes& b : AchievementSprites(&parts)) extra.push_back(std::move(b));
+  for (Bytes& b : PlayersSprites(&parts)) extra.push_back(std::move(b));
   // The pause pages that this package has (RebuildProject wants every page
   // it's given; a package without one keeps its pause menu as it was).
   std::vector<std::string_view> pages{kPageName};
@@ -624,6 +734,13 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
     for (const pure3d::Chunk& c : top) {
       if (c.id != pure3d::kChunkProject || pure3d::NameOf(original, c) != kHostProject) continue;
       for (const pure3d::Chunk& k : pure3d::ChildrenOf(original, c)) {
+        if (k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == "InGame_NV_GlassPanel.pag") {
+          Node glass_page = pure3d::ToNode(original, k);
+          for (Node& layer : glass_page.children) {  // (2nd layer: BackgroundLayer, GlassPanelLayer)
+            if (layer.id != kChunkLayer) continue;
+            if (Node* h = Child(layer, kChunkPicture, "Hinge")) parts.ply_hinge = *h;
+          }
+        }
         for (std::string_view p : kPausePages) {
           if (k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == p) pages.push_back(p);
         }
@@ -721,7 +838,8 @@ constexpr std::string_view kInGamePackage = "package\\7a8185b0.p3d";  // any in-
 // bar: 45 apart keeps the list's top where it was. (An "Achievements" item
 // was here for a few days; it lives in the pause menu only now: the
 // achievements are earned in play.)
-constexpr int kMainItemTopY = 295, kMainItemStep = 45;
+// Six items since "Players" (2026-10-29): 40 apart, the last at y 95.
+constexpr int kMainItemTopY = 295, kMainItemStep = 40;
 constexpr std::string_view kCalibrationItem = "CalibrationItem";
 
 std::atomic<bool> g_main_menu_patched{false};
@@ -792,6 +910,7 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
   CutGuide(original, &main_guide, &unused_sprite);
   // The Achievements screen's pictures (achievements.h MenuSprites).
   for (Bytes& b : AchievementSprites(&parts)) stars.push_back(std::move(b));
+  for (Bytes& b : PlayersSprites(&parts)) stars.push_back(std::move(b));
 
   const bool ok = RebuildProject(
       original, kMainMenuProject, {kMainMenuPage, kMainOptionsPage},
@@ -808,6 +927,16 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
           if (calibration == items.end()) return false;
           items.erase(calibration);
           items.insert(items.begin() + kMainMenuOptionsItem, ps2_item);
+          // "Players" right after it (players/players_setup.h): a copy of
+          // Options' item (same look), its words set at run time like Quit's
+          // (achievements/achievements_screen.cpp FrontEndFrame).
+          {
+            Node players = ps2_item;
+            pure3d::SetNodeName(players, "PlayersItem");
+            if (players.children.empty() || players.children[0].children.empty()) return false;
+            pure3d::SetNodeName(players.children[0].children[0], "PlayersItemText");
+            items.insert(items.begin() + kMainMenuPlayersItem, players);
+          }
           // "Quit Game": a copy of the last item (Credits: same font, colour,
           // look), renamed (siblings keep unique names). Its text still names
           // Credits' string in the bank; the words go in at run time
@@ -868,6 +997,7 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
         pure3d::SetNodeName(cog_b, "OptCog2");
         SetBox(cog_a, 98 + kShift, 448, 90, 90);
         SetBox(cog_b, 39 + kShift, 395, 90, 90);
+        p.ply_hinge = *hinge;
         Node hinge_copy = *hinge;
         SetBox(hinge_copy, 57 + kShift, 310, 100, 150);
         p.backdrop = {glass, cog_a, cog_b, hinge_copy};
@@ -954,5 +1084,6 @@ void Register() {
 bool Available() { return g_patched.load(); }
 bool MainMenuAvailable() { return g_main_menu_patched.load(); }
 bool PauseAchievementsAvailable() { return g_pause_patched.load(); }
+bool PlayersCardsAvailable() { return g_players_cards.load(); }
 
 }  // namespace options_page

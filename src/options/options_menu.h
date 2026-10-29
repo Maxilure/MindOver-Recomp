@@ -66,6 +66,11 @@ bool Capturing();
 // cancel): zeroes the pad while Capturing(), and afterwards hides the
 // buttons that were held then until they're let go. Game threads.
 void FilterPad(uint32_t user, uint8_t* gamepad);
+// A controller that just got a player (players/players_setup.h PollJoins in
+// a level): the buttons it holds are hidden from the game on socket `user`
+// until let go, so the press that gave it a player doesn't also count as the
+// game's join (START / B) or anything else. Game main thread.
+void HideHeldButtons(int user, uint16_t buttons);
 
 // THE SLIDING LIST (2026-10-15; was pages): the menu's own move (Scrooby
 // Menu::MoveNext sub_8237A668 / Previous sub_8237A550, hooked by

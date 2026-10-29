@@ -24,9 +24,11 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
-REXCVAR_DEFINE_INT32(local_players, 2, "CrashMoM",
-                     "How many local players a level makes room for: 2 (the original) to 4. "
-                     "Players 3-4 join like player 2 (pause menu Join Game; experimental)");
+// Default 4 since 2026-10-29 (the Players screen, players/players_setup.h:
+// four cards that always take a player; levels make room for all four).
+REXCVAR_DEFINE_INT32(local_players, 4, "CrashMoM",
+                     "How many local players a level makes room for: 2 (the original) to 4 (the default). "
+                     "Players 3-4 join like player 2 (the Players screen, or START)");
 
 // The originals of the functions rewritten or wrapped below.
 extern "C" REX_FUNC(__imp__sub_82266130);  // front end: controller of player r4

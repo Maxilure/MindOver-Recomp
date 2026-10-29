@@ -40,6 +40,7 @@
 #include "keyboard_mouse.h"
 #include "players.h"
 #include "../players/dummy_players.h"
+#include "../players/players_setup.h"
 
 // stb_image (from the SDK's source tree), private to this file.
 #define STB_IMAGE_STATIC
@@ -1251,6 +1252,25 @@ std::atomic<bool> g_player_slots{false};
 // keyboard's last key against p's last controller input). Player 1's look =
 // the game's own glyphs (shared texts: hints, tutorials, the message bar).
 // Outside play every device answers as player 1, so any device counts there.
+// Each player's Controller Icons setting (0 Automatic .. 5 Switch, as
+// --controller_icons): player 1's = that flag, players 2-4's = controls.toml's
+// icons.player2-4 (bindings.h Settings::pad_icons; the Players screen sets
+// them), copied out of the driver's bindings whenever those change (a copy
+// of all the bindings is too dear for every LookOf).
+std::array<std::atomic<int>, 4> g_pad_icons{};
+std::atomic<uint32_t> g_pad_icons_revision{UINT32_MAX};
+int PadIconsSettingOf(uint32_t p) {
+  if (p == 0 || p >= 4) return int(REXCVAR_GET(controller_icons));
+  if (const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
+    const uint32_t revision = driver->bindings_revision();
+    if (g_pad_icons_revision.exchange(revision) != revision) {
+      const kbm::Bindings b = driver->bindings();
+      for (size_t q = 1; q < 4; ++q) g_pad_icons[q] = b.settings.pad_icons[q];
+    }
+  }
+  return g_pad_icons[p].load();
+}
+
 Look LookOf(uint32_t p) {
   Look l;
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
@@ -1263,7 +1283,7 @@ Look LookOf(uint32_t p) {
   }
   // The controller's style: chosen, or (Automatic) the maker and model of p's
   // controller (PadKeyFor socket p).
-  const int32_t pad_setting = REXCVAR_GET(controller_icons);
+  const int32_t pad_setting = PadIconsSettingOf(p);
   if (pad_setting >= 2 && pad_setting < 2 + int(std::size(kPadSets))) {
     l.pad_style = pad_setting - 2;
   } else if (pad_setting == 0 && assignment) {
@@ -2726,6 +2746,14 @@ void WorldButtonRestore(uint8_t* base) {
   }
   g_coin_shader = 0;
 }
+bool KeysLookFor(int p) { return p >= 0 && p < 4 && LookOf(uint32_t(p)).keys; }
+int PadIconsSetting(int p) { return p >= 0 && p < 4 ? PadIconsSettingOf(uint32_t(p)) : 0; }
+
+int DetectedPadStyle(const std::string& key) {
+  const int style = StyleOfPad(key);
+  return style == kOriginalStyle ? 1 : style + 2;
+}
+
 }  // namespace prompt_icons
 
 // CInteractableBehaviour Update (vtable slot 4): remembered for WHO MAY USE IT.
@@ -2792,8 +2820,27 @@ extern "C" REX_FUNC(sub_823C5DA0) {
 // display; +20 its Button text): THE COUNTDOWN UNDER OUR PICTURE.
 extern "C" REX_FUNC(__imp__sub_82269480);
 extern "C" REX_FUNC(sub_82269480) {
-  if (prompt_icons::g_menu_glyphs.load(std::memory_order_relaxed) && ctx.r3.u32) {
-    prompt_icons::GiveBackToGame(ctx, base, prompt_icons::Load32(base, ctx.r3.u32 + 20));
+  const uint32_t display = ctx.r3.u32;
+  if (prompt_icons::g_menu_glyphs.load(std::memory_order_relaxed) && display) {
+    prompt_icons::GiveBackToGame(ctx, base, prompt_icons::Load32(base, display + 20));
   }
   __imp__sub_82269480(ctx, base);
+  // "JOIN GAME" ONLY FOR PLAYERS WITH A CONTROLLER (2026-10-29): the corner
+  // offered every player not in the game "Join Game", controller or not
+  // (with players 3-4 too). Players 2-4 without one (players_setup.h
+  // HasController) get no corner: its Message (+16) and Button (+20) texts
+  // hidden right after the game set them (it sets their shown bit, +110
+  // bit 0x80, every frame, so nothing needs putting back). A player in the
+  // game (co-op state != 0) keeps theirs (the countdown after a death...).
+  // Any button on a free controller gives it a player (PollJoinsInPlay):
+  // their corner appears, in their own button.
+  if (display) {
+    const int32_t p = int32_t(prompt_icons::Load32(base, display + 0x90));
+    if (p >= 1 && p < 4 && prompt_icons::Load32(base, 0x8259B11C + 4 * uint32_t(p)) == 0 &&
+        !players_setup::HasController(p)) {
+      for (const uint32_t field : {16u, 20u}) {
+        if (const uint32_t text = prompt_icons::Load32(base, display + field)) scrooby::SetVisible(base, text, false);
+      }
+    }
+  }
 }

@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
+#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <string>
@@ -24,6 +26,8 @@
 #include "../ui/game_font.h"
 #include "../achievements/achievements.h"
 #include "../achievements/achievements_screen.h"
+#include "../players/more_players.h"
+#include "../players/players_setup.h"
 #include "../ui/quit_game.h"
 #include "../ui/scrooby.h"
 #include "options_page.h"
@@ -203,9 +207,52 @@ struct Screen {
   std::vector<AchCard> ach_cards;
   uint32_t ach_heading = 0, ach_up = 0, ach_down = 0;
   int ach_top = 0;
+  // THE PLAYERS SCREEN (players/players_setup.h): this screen in its third
+  // mode. Its four cards (options_page.cpp AddPlayersCards; none when the
+  // device pictures couldn't be made), the selected card (kept between
+  // visits), and what the cards were last drawn for (redrawn on a change).
+  bool players = false;
+  struct PlyCard {
+    uint32_t back = 0, glass = 0, aura = 0, ring = 0, pic = 0, title = 0, info = 0, style = 0, left = 0, right = 0;
+  };
+  std::vector<PlyCard> ply_cards;
+  // Our copy of the panel's hinge, drawn over the cards (options_page.cpp
+  // PlyHinge), and whether the game's own one (under player 1's card) is
+  // hidden yet this visit (it goes on ply_hidden: back at Exit).
+  uint32_t ply_hinge = 0;
+  bool ply_hinge_swapped = false;
+  // THE PRESS INDICATOR (players_setup.h PollPresses): when each card's
+  // device last pressed something (steady-clock seconds; < 0 = not lately).
+  std::array<double, 4> ply_flash{-1, -1, -1, -1};
+  // THE CORNER GLOW only for a player who's IN (in a level: playing; in the
+  // main menu: has a device), fading in / out over kAuraFade when that
+  // changes: its alpha now (0-1), and when it was last stepped (< 0 = the
+  // screen just opened: no fade, straight to what it should be).
+  std::array<float, 4> ply_aura{};
+  double ply_aura_time = -1;
+  std::array<uint32_t, options_page::kPlyPrompts> ply_prompt{};
+  std::array<int, options_page::kPlyPrompts> ply_prompt_action{};  // what a click on each does
+  int ply_sel = 0;
+  int ply_choosing = -1;    // the card whose controller is being chosen (-1 none)
+  // A SELECTED CARD (A on it: ply_choosing) has two rows: its controller
+  // (left / right = the controllers connected, A = take the one shown) and,
+  // DOWN from there, its BUTTONS LINE (left / right / A = the player's button
+  // pictures; up = back to the controller). B leaves the card. (2026-10-29:
+  // first LB / RB on a card, then a Buttons stop in the cards' own up / down
+  // order: both replaced at the player's request.) True = the Buttons row.
+  bool ply_on_style = false;
+  int ply_choice = 0;       // the controller on offer (index into players_setup::Controllers())
+  bool ply_hold_b = false;  // the B that cancelled a choice: hidden from the game until let go
+  std::vector<uint32_t> ply_hidden;  // the game's prompts / title hidden while the screen is up
+  std::string ply_drawn;
 };
 Screen g;
-bool ListMode() { return g.achievements || achievements_screen::OpenNextPending(); }
+bool ListMode() {
+  return g.achievements || g.players || achievements_screen::OpenNextPending() || players_setup::OpenNextPending();
+}
+// The Options screen's other modes (Achievements, Players): no rows, tabs
+// or side card.
+bool OtherMode() { return g.achievements || g.players; }
 std::atomic<bool> g_open{false};
 std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
 // The in-game screen's CInGameOptionsScreenAction while it's up (its +20
@@ -219,6 +266,12 @@ constexpr uint32_t kElementColour = 80;  // an element's colour word (0xAARRGGBB
 constexpr int kCaptureNone = -3, kCaptureWaiting = -2, kCaptureCancelled = -1;
 std::atomic<int> g_capture_result{kCaptureNone};
 std::atomic<bool> g_capturing{false};  // read by the controller filter (Capturing())
+// The Players screen's chooser is open (or the B that cancelled it is still
+// held): the game doesn't see B (FilterPad), the screen does (its
+// own reading, SeePad, comes first). Holding back only the screen's decision
+// wasn't enough: the screen's own action heard that B and slid away, and the
+// front end stayed in the Options state with nothing on screen.
+std::atomic<bool> g_players_take_b{false};
 
 uint32_t Read32(const uint8_t* base, uint32_t a) {
   const uint8_t* p = GuestPtr(base, a);
@@ -395,7 +448,7 @@ const std::vector<Row>& Rows() { return options_settings::Tabs()[size_t(g.tab)].
 // First() + r. Stepping past the window's edge slides it by ONE row (like the
 // save list), so the mouse wheel goes through the rows one by one.
 int First() { return g.top; }
-bool Slides() { return !g.achievements && int(Rows().size()) > kRows; }
+bool Slides() { return !OtherMode() && int(Rows().size()) > kRows; }
 int LastTop() { return std::max(0, int(Rows().size()) - kRows); }
 bool Selectable(int i) {
   const auto& rows = Rows();
@@ -468,6 +521,27 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     c.state = FindText(ctx, base, g.page, fmt::format("AchCardState{}", k));
     c.desc = FindText(ctx, base, g.page, fmt::format("AchCardDesc{}", k));
     g.ach_cards.push_back(c);
+  }
+  // The Players screen's cards and prompt row.
+  g.ply_cards.clear();
+  for (int k = 0; k < 4; ++k) {
+    Screen::PlyCard c;
+    c.glass = FindPicture(ctx, base, g.page, fmt::format("PlyCard{}", k));
+    if (!c.glass) break;
+    c.back = FindPicture(ctx, base, g.page, fmt::format("PlyBack{}", k));
+    c.aura = FindPicture(ctx, base, g.page, fmt::format("PlyAura{}", k));
+    c.ring = FindPicture(ctx, base, g.page, fmt::format("PlyRing{}", k));
+    c.pic = FindPicture(ctx, base, g.page, fmt::format("PlyPic{}", k));
+    c.title = FindText(ctx, base, g.page, fmt::format("PlyTitle{}", k));
+    c.info = FindText(ctx, base, g.page, fmt::format("PlyInfo{}", k));
+    c.style = FindText(ctx, base, g.page, fmt::format("PlyStyle{}", k));
+    c.left = FindPicture(ctx, base, g.page, fmt::format("PlyLeft{}", k));
+    c.right = FindPicture(ctx, base, g.page, fmt::format("PlyRight{}", k));
+    g.ply_cards.push_back(c);
+  }
+  g.ply_hinge = FindPicture(ctx, base, g.page, "PlyHinge");
+  for (int i = 0; i < options_page::kPlyPrompts; ++i) {
+    g.ply_prompt[size_t(i)] = FindText(ctx, base, g.page, fmt::format("PlyPrompt{}", i));
   }
   g.ach_heading = FindText(ctx, base, g.page, "AchHeading");
   g.ach_up = FindPicture(ctx, base, g.page, "AchUp");
@@ -657,11 +731,16 @@ void ApplyGreying(Env& env) {
 }
 
 void RefreshAchievements(Env& env);  // the Achievements screen's (below)
+void RefreshPlayers(Env& env);       // the Players screen's (below)
 
 // Everything that depends on the tab, the values and the selection.
 void Refresh(Env& env) {
   if (g.achievements) {
     RefreshAchievements(env);
+    return;
+  }
+  if (g.players) {
+    RefreshPlayers(env);
     return;
   }
   PPCContext& ctx = env.ctx;
@@ -1069,6 +1148,528 @@ void UpdateAchievements(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) 
   }
 }
 
+// ---------------------------------------------------------------------------
+// THE PLAYERS SCREEN (players/players_setup.h)
+// ---------------------------------------------------------------------------
+// The design of 2026-10-29: four cards two by two in the game's glass
+// panel, each "Player N" (the player's colour; yellow and pulsing when
+// selected), the device picture, the device's name (or "Press any button to
+// join", blinking). Player 1's card shows the device player 1 used last.
+// A opens the CHOOSER on the selected card (left / right = every controller
+// connected, A gives it to that player, B cancels); X / Backspace removes
+// the player's controller; B / Esc goes back. The
+// prompt row under the panel shows only what can be done. Texts are
+// written only when they change (each change allocates on the menus' heap);
+// the pulse and blink are a scale / an alpha, every frame.
+constexpr uint32_t kPlyYellow = 0xFFFDED06, kPlyGreen = 0xFF00F800, kPlyCyan = 0xFF00F6EF;
+constexpr float kPlyInfoScale = 0.72f, kPlyPromptScale = 0.9f, kPlyMinScale = 0.42f;
+constexpr float kPlyStyleScale = 0.56f;  // the button pictures line: small print
+constexpr float kPlyNumberScale = 1.7f;  // the player's number in the card's corner
+constexpr char16_t kGlyphB = u'²';  // the font's B button picture
+constexpr int kPlyNone = -1;
+
+// The buttons a controller that just joined holds: hidden from the menus'
+// reading on sockets 1 and `user` until let go (defined with FilterPad).
+void HideHeld(int user, uint16_t buttons);
+uint16_t HiddenOn(int user);
+
+// A text that fits `room` units at most at `scale` (smaller, down to
+// kPlyMinScale, when it doesn't). (TextWidth's units are the Options
+// screen's, drawn at kPageScale; this screen is drawn at full size: names
+// measured that way ran ~15 % past the cards' edge.)
+float FitScale(std::u16string_view text, float room, float scale) {
+  const float w = TextWidth(text, 1.0f) / kPageScale;
+  return w * scale > room && w > 0 ? std::max(kPlyMinScale, room / w) : scale;
+}
+
+void ShowPlayersElements(uint8_t* base, bool shown) {
+  for (const Screen::PlyCard& c : g.ply_cards) {
+    for (const uint32_t e : {c.back, c.glass, c.aura, c.ring, c.pic, c.title, c.info, c.style, c.left, c.right}) {
+      scrooby::SetVisible(base, e, shown);
+    }
+  }
+  for (const uint32_t e : g.ply_prompt) scrooby::SetVisible(base, e, shown);
+  scrooby::SetVisible(base, g.ply_hinge, shown);
+}
+
+// While the screen is up the game's own prompts (FE_Buttons: Back...) and
+// the page title ("P1 Paused" / the main menu's "Options") give way to the
+// screen's prompt row; put back as they were at Exit.
+void HideGamePrompts(uint8_t* base, bool hide) {
+  std::vector<uint32_t> elements(g.prompts.begin(), g.prompts.end());
+  elements.push_back(g.paused_title);
+  elements.push_back(g.title);
+  if (hide) {
+    g.ply_hidden.clear();
+    g.ply_hinge_swapped = false;
+    for (const uint32_t e : elements) {
+      if (e && scrooby::Visible(base, e)) {
+        g.ply_hidden.push_back(e);
+        scrooby::SetVisible(base, e, false);
+      }
+    }
+  } else {
+    for (const uint32_t e : g.ply_hidden) scrooby::SetVisible(base, e, true);
+    g.ply_hidden.clear();
+    g.ply_hinge_swapped = false;
+  }
+}
+
+// The game's own hinge hidden while ours (over the cards) shows: both drawn
+// = its soft edges twice as dark. Main menu: on our page; in game: on the
+// shared glass page (the screen action's +28), known only once the in-game
+// screen's Enter ran (before or after ours), so asked at every refresh until
+// found. Put back with the prompts (ply_hidden).
+void SwapHinge(PPCContext& ctx, uint8_t* base) {
+  if (g.ply_hinge_swapped || !g.ply_hinge) return;
+  uint32_t original = 0;
+  if (g.main_menu) {
+    original = scrooby::FindPicture(ctx, base, g.page, "OptionsMenu_PanelHinge");
+  } else if (g_screen_action) {
+    if (const uint32_t page = Read32(base, g_screen_action + 28)) original = scrooby::FindPicture(ctx, base, page, "Hinge");
+  }
+  if (!original) return;
+  g.ply_hinge_swapped = true;
+  if (scrooby::Visible(base, original)) {
+    g.ply_hidden.push_back(original);
+    scrooby::SetVisible(base, original, false);
+  }
+}
+
+// The device a card shows: player 1's in use (keys or its controller), the
+// first controller of the others; null = none.
+const players_setup::ShownDevice* ShownDevice(const players_setup::Box& b, int p) {
+  if (b.devices.empty()) return nullptr;
+  if (p == 0 && b.has_pad && !prompt_icons::KeysLookFor(0)) {
+    for (const players_setup::ShownDevice& d : b.devices) {
+      if (!d.keyboard) return &d;
+    }
+  }
+  return &b.devices[0];
+}
+
+struct PlyPrompt {
+  char16_t glyph;
+  std::u16string label;
+  int action;  // what a click on it does (kPlyAct*)
+};
+enum { kPlyActChoose, kPlyActRemove, kPlyActStyle, kPlyActBack };
+
+// Does card k show its BUTTONS LINE (players_setup.h PadIcons)? With a
+// controller only, and not while it shows player 1's keyboard (keys have no
+// button pictures to choose).
+bool StyleLineShown(const players_setup::Box& b, int k) {
+  const players_setup::ShownDevice* d = ShownDevice(b, k);
+  return b.has_pad && !(d && d->keyboard);
+}
+
+// The prompts for the selection as it is.
+std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& boxes, size_t controllers) {
+  const char16_t remove = prompt_icons::KeysLookFor(0) ? kGlyphY : kGlyphX;  // Backspace on keys
+  std::vector<PlyPrompt> out;
+  const players_setup::Box& sel = boxes[size_t(g.ply_sel)];
+  if (g.ply_choosing != kPlyNone && g.ply_on_style) {
+    out.push_back({kGlyphA, u"Change Buttons", kPlyActStyle});
+    out.push_back({kGlyphB, u"Back", kPlyActBack});
+  } else if (g.ply_choosing != kPlyNone) {
+    out.push_back({kGlyphA, u"Select Controller", kPlyActChoose});
+    out.push_back({kGlyphB, u"Back", kPlyActBack});
+  } else {
+    if (controllers && sel.state != players_setup::State::kUnavailable) {
+      out.push_back({kGlyphA, u"Select", kPlyActChoose});
+    }
+    if (sel.has_pad) out.push_back({remove, u"Remove", kPlyActRemove});
+    out.push_back({kGlyphB, u"Back", kPlyActBack});
+  }
+  return out;
+}
+
+void RefreshPlayers(Env& env) {
+  PPCContext& ctx = env.ctx;
+  uint8_t* base = env.base;
+  SwapHinge(ctx, base);
+  const auto boxes = players_setup::Boxes();
+  const auto controllers = players_setup::Controllers();
+  if (g.ply_choosing != kPlyNone && controllers.empty()) g.ply_choosing = kPlyNone;  // all unplugged
+  if (!controllers.empty()) g.ply_choice = std::clamp(g.ply_choice, 0, int(controllers.size()) - 1);
+  const std::vector<PlyPrompt> prompts = PlayersPrompts(boxes, controllers.size());
+  // What the screen would say (a change = redraw).
+  if (g.ply_on_style && (g.ply_choosing == kPlyNone || !boxes[size_t(g.ply_choosing)].has_pad)) {
+    g.ply_on_style = false;  // no card selected / its controller gone: no Buttons row
+  }
+  std::string drawn = fmt::format("{}|{}|{}|{}|{}|", g.ply_sel, g.ply_choosing, g.ply_choice, prompt_icons::KeysLookFor(0),
+                                  g.ply_on_style);
+  for (int k = 0; k < 4; ++k) {
+    const players_setup::ShownDevice* d = ShownDevice(boxes[size_t(k)], k);
+    drawn += fmt::format("{}:{}:{}:{};", d ? d->key : "", d ? d->picture : -1, boxes[size_t(k)].has_pad,
+                         players_setup::PadIcons(k));
+  }
+  for (const players_setup::Controller& c : controllers) drawn += fmt::format("{}={},", c.key, c.player);
+  if (drawn == g.ply_drawn) return;
+  g.ply_drawn = drawn;
+  // No rows, tabs or page texts: the cards are the screen.
+  for (int r = 0; r < kRows; ++r) {
+    scrooby::SetSelectable(base, scrooby::Item(base, g.menu, r), false);
+    scrooby::SetVisible(base, g.label[r], false);
+    scrooby::SetVisible(base, g.value[r], false);
+    for (int k = 0; k < kStars; ++k) scrooby::SetVisible(base, g.star[r][k], false);
+  }
+  for (const uint32_t e : {g.tab_prev, g.tab_text, g.tab_next, g.lb, g.rb, g.page_text, g.page_up, g.page_down}) {
+    scrooby::SetVisible(base, e, false);
+  }
+  ShowAchievementElements(base, false);
+  ShowOptionsFurniture(ctx, base, false);
+  scrooby::SetVisible(base, g.ply_hinge, true);  // ours over the cards (SwapHinge hid the game's)
+  g_wheel_list = true;  // the wheel does nothing here (not the D-pad)
+  for (int k = 0; k < 4; ++k) {
+    const Screen::PlyCard& c = g.ply_cards[size_t(k)];
+    const players_setup::Box& b = boxes[size_t(k)];
+    const players_setup::ShownDevice* d = ShownDevice(b, k);
+    const bool selected = k == g.ply_sel, choosing = k == g.ply_choosing;
+    // The selected card's rows: offering = its controller row (the
+    // controller on offer shown), style_focus = its Buttons row.
+    const bool offering = choosing && !g.ply_on_style, style_focus = choosing && g.ply_on_style;
+    for (const uint32_t e : {c.back, c.glass, c.pic, c.title, c.info}) scrooby::SetVisible(base, e, true);
+    scrooby::SetVisible(base, c.ring, selected);
+    if (selected) scrooby::SetFrame(ctx, base, c.ring, choosing ? uint32_t(1 + k) : 0u);  // choosing: their colour
+    // The arrows: beside the picture while choosing a controller, beside the
+    // Buttons line while it has the focus (same arrows, moved).
+    scrooby::SetVisible(base, c.left, offering || style_focus);
+    scrooby::SetVisible(base, c.right, offering || style_focus);
+    if (offering || style_focus) {
+      const float cx = float(options_page::kPlyCardX[k % 2]), ctop = float(options_page::kPlyCardTop[k / 2]);
+      const float centre = style_focus ? float(options_page::kPlyStyleTop[k / 2]) + 18.0f
+                                       : float(options_page::kPlyPicCentre[k / 2]);
+      const float side = float(options_page::kPlyArrowSide), y = ctop - centre - side / 2;
+      SetBox(base, c.left, cx + options_page::kPlyArrowInset, y, side, side);
+      SetBox(base, c.right, cx + options_page::kPlyCardW - options_page::kPlyArrowInset - side, y, side, side);
+      // Turned again round the new place (the turn is a transform built
+      // round the box: a moved box alone left the arrows where the old turn
+      // put them).
+      scrooby::SetScale(ctx, base, c.left, 1.0f);
+      scrooby::Rotate(ctx, base, c.left, 90.0f);
+      scrooby::SetScale(ctx, base, c.right, 1.0f);
+      scrooby::Rotate(ctx, base, c.right, -90.0f);
+    }
+    // The player's NUMBER, big, in their colour (the selected card is told by
+    // its ring and the number's pulse).
+    scrooby::SetText(ctx, base, c.title, Utf16(fmt::format("{}", k + 1)));
+    scrooby::SetColour(ctx, base, c.title, players_setup::kPlayerColour[k]);
+    std::u16string info;
+    uint32_t colour = kPlyGreen;
+    int picture = d ? d->picture : players_setup::kPicEmpty;
+    if (offering) {
+      // The controller on offer: its picture (in this player's colour), its
+      // name, and whose it is now.
+      const players_setup::Controller& o = controllers[size_t(g.ply_choice)];
+      picture = o.picture;
+      info = Utf16(o.player == k   ? o.name + " (now)"
+                   : o.player >= 0 ? fmt::format("{} (Player {})", o.name, o.player + 1)
+                                   : o.name);
+      colour = kPlyYellow;
+    } else if (d) {
+      info = Utf16(d->name);
+    } else {
+      info = u"Press any button to join";
+      colour = kPlyCyan;
+    }
+    scrooby::SetFrame(ctx, base, c.pic, uint32_t(picture));
+    scrooby::SetText(ctx, base, c.info, info);
+    scrooby::SetColour(ctx, base, c.info, colour);
+    const float x = float(options_page::kPlyCardX[k % 2]), top = float(options_page::kPlyCardTop[k / 2]);
+    const float room = float(options_page::kPlyCardW - 16);
+    SetBox(base, c.info, x, top - options_page::kPlyInfoTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
+    scrooby::SetScale(ctx, base, c.info, FitScale(info, room, kPlyInfoScale));
+    // The button pictures line (players_setup.h PadIcons), with a controller
+    // only (LB / RB change it; the chooser shows the controller on offer),
+    // and not while the card shows player 1's keyboard (its keys have no
+    // button pictures to choose).
+    // (A selected card shows it whenever it has a controller: the row to go
+    // down to, even while it shows player 1's keyboard.)
+    const bool style_shown = choosing ? b.has_pad : StyleLineShown(b, k);
+    scrooby::SetVisible(base, c.style, style_shown);
+    if (style_shown) {
+      const std::u16string style =
+          Utf16(fmt::format("Buttons: {}", players_setup::StyleName(players_setup::PadIcons(k))));
+      scrooby::SetText(ctx, base, c.style, style);
+      scrooby::SetColour(ctx, base, c.style, style_focus ? kPlyYellow : kPlyCyan);
+      SetBox(base, c.style, x, top - options_page::kPlyStyleTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
+      scrooby::SetScale(ctx, base, c.style, FitScale(style, room, kPlyStyleScale));
+    }
+  }
+  // The prompt row, centred under the panel: "<glyph> <label>", 24 apart.
+  float widths[options_page::kPlyPrompts] = {};
+  float total = 0;
+  const int n = std::min(int(prompts.size()), options_page::kPlyPrompts);
+  std::array<std::u16string, options_page::kPlyPrompts> texts;
+  for (int i = 0; i < n; ++i) {
+    texts[size_t(i)] = std::u16string(1, prompt_icons::MenuGlyph(prompts[size_t(i)].glyph)) + u" " +
+                       prompts[size_t(i)].label;
+    widths[i] = TextWidth(texts[size_t(i)], 1.0f) / kPageScale * kPlyPromptScale;
+    total += widths[i] + (i ? 24.0f : 0.0f);
+  }
+  float left = 320.0f - total / 2;
+  for (int i = 0; i < options_page::kPlyPrompts; ++i) {
+    const uint32_t t = g.ply_prompt[size_t(i)];
+    scrooby::SetVisible(base, t, i < n);
+    g.ply_prompt_action[size_t(i)] = i < n ? prompts[size_t(i)].action : -1;
+    if (i >= n) continue;
+    scrooby::SetText(ctx, base, t, texts[size_t(i)]);
+    // A box as wide as the text (the mouse clicks it), drawn scaled round
+    // its centre: the box is the scaled width's / the scale.
+    const float w = widths[i] / kPlyPromptScale;
+    SetBox(base, t, left + widths[i] / 2 - w / 2, options_page::kPlyPromptTop - 36.0f, w, 36.0f);
+    scrooby::SetScale(ctx, base, t, kPlyPromptScale);
+    left += widths[i] + 24.0f;
+  }
+}
+
+// A: open the chooser on the selected card (on its own controller, else the
+// first one), or give the controller on offer to that player.
+void PlayersAct(PPCContext& ctx, uint8_t* base, int action) {
+  const auto boxes = players_setup::Boxes();
+  const auto controllers = players_setup::Controllers();
+  if (action == kPlyActChoose && g.ply_on_style && g.ply_choosing != kPlyNone) action = kPlyActStyle;
+  if (action == kPlyActChoose) {
+    if (g.ply_choosing == kPlyNone) {
+      if (controllers.empty() || boxes[size_t(g.ply_sel)].state == players_setup::State::kUnavailable) return;
+      g.ply_choosing = g.ply_sel;
+      g.ply_choice = 0;
+      for (int i = 0; i < int(controllers.size()); ++i) {
+        if (controllers[size_t(i)].player == g.ply_sel) {
+          g.ply_choice = i;
+          break;
+        }
+      }
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    } else {
+      const int p = g.ply_choosing;
+      g.ply_choosing = kPlyNone;
+      g.ply_on_style = false;
+      if (g.ply_choice < int(controllers.size()) &&
+          players_setup::AssignController(ctx, base, p, controllers[size_t(g.ply_choice)].key)) {
+        scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      } else {
+        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+      }
+    }
+  } else if (action == kPlyActStyle || action == -kPlyActStyle) {
+    // The selected player's button pictures, one style on (right / A / a
+    // click on the line) or back (left), wrapping: Automatic, Xbox 360 ..
+    // Switch.
+    if (!boxes[size_t(g.ply_sel)].has_pad) return;
+    const int step = action > 0 ? 1 : -1;
+    players_setup::SetPadIcons(g.ply_sel, (players_setup::PadIcons(g.ply_sel) + step + 6) % 6);
+    scrooby::PlaySound(ctx, base, step < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
+  } else if (action == kPlyActRemove && g.ply_choosing == kPlyNone) {
+    if (players_setup::RemoveControllers(ctx, base, g.ply_sel)) {
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    }
+  }
+}
+
+// The chooser: the next / previous controller (wrapping round).
+void PlayersStep(PPCContext& ctx, uint8_t* base, int direction) {
+  const int count = int(players_setup::Controllers().size());
+  if (g.ply_choosing == kPlyNone || count < 2) return;
+  g.ply_choice = ((g.ply_choice + direction) % count + count) % count;
+  scrooby::PlaySound(ctx, base, direction < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
+}
+
+void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
+  scrooby::SetText(ctx, base, g.select_button, u"");
+  scrooby::SetText(ctx, base, g.select_text, u"");
+  ShowOptionsFurniture(ctx, base, false);
+  Env env{ctx, base, owner};
+  if (g.ply_cards.size() < 4) return;
+  // Joins first: a controller playing as nobody that presses anything.
+  uint16_t joined_buttons = 0;
+  const int joined = players_setup::PollJoins(ctx, base, &joined_buttons);
+  if (joined >= 0) {
+    // Its press isn't also a menu press (outside play it answers on socket 1).
+    HideHeld(0, joined_buttons);
+    HideHeld(joined, joined_buttons);
+    g.seen |= joined_buttons;
+    if (g.ply_choosing == kPlyNone) g.ply_sel = joined;
+    scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+  }
+  // The pulse of the selected name (1.08 <-> 1.02 over 0.9 s) and the blink
+  // of the empty cards' line (1 <-> 0.35 over 1.2 s), every frame.
+  {
+    const double t = double(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::steady_clock::now().time_since_epoch())
+                                .count()) /
+                     1000.0;
+    const float pulse = 1.05f + 0.03f * float(std::cos(t * 2 * 3.14159265 / 0.9));
+    const float blink = 0.675f + 0.325f * float(std::cos(t * 2 * 3.14159265 / 1.2));
+    const auto boxes = players_setup::Boxes();
+    for (int k = 0; k < 4; ++k) {
+      const Screen::PlyCard& c = g.ply_cards[size_t(k)];
+      scrooby::SetScale(ctx, base, c.title, kPlyNumberScale * (k == g.ply_sel ? pulse : 1.0f));
+      const bool empty = boxes[size_t(k)].devices.empty() && k != g.ply_choosing;
+      scrooby::SetAlpha(ctx, base, c.info, empty ? uint8_t(255 * blink) : 0xFF);
+    }
+    // THE CORNER GLOW (see Screen::ply_aura): in = the player has a device
+    // (joined on this screen: a controller pressed to join, or chosen; player
+    // 1's keyboard always), whether or not they're in the level yet; fades
+    // over kAuraFade. (First tried: only players playing in the level, in
+    // menus those with a device: most cards stayed bare in the pause menu.)
+    {
+      constexpr double kAuraFade = 0.5;
+      const double dt = g.ply_aura_time < 0 ? 1e9 : std::max(0.0, t - g.ply_aura_time);
+      g.ply_aura_time = t;
+      for (int k = 0; k < 4; ++k) {
+        const bool in = !boxes[size_t(k)].devices.empty();
+        float& a = g.ply_aura[size_t(k)];
+        const float step = float(dt / kAuraFade);
+        a = in ? std::min(1.0f, a + step) : std::max(0.0f, a - step);
+        const uint32_t e = g.ply_cards[size_t(k)].aura;
+        scrooby::SetVisible(base, e, a > 0.0f);
+        if (a > 0.0f) scrooby::SetAlpha(ctx, base, e, uint8_t(255 * (a * a * (3 - 2 * a))));  // eased
+      }
+    }
+    // THE PRESS INDICATOR: a card whose device pressed something (its
+    // controller, player 1's keys, the chooser's offered controller): its
+    // ring flashes in the player's colour, fading out over kFlash (on the
+    // selected card the yellow ring turns their colour meanwhile). Only the
+    // card's ring: a first version also popped the controller picture (1.15x),
+    // not wanted. Drawn every frame over what
+    // RefreshPlayers set; when a flash ends that redraw is asked for again.
+    constexpr double kFlash = 0.4;
+    const auto controllers = players_setup::Controllers();
+    const bool offering =
+        g.ply_choosing != kPlyNone && !g.ply_on_style && g.ply_choice < int(controllers.size());
+    const uint32_t pressed =
+        players_setup::PollPresses(offering ? controllers[size_t(g.ply_choice)].key : std::string(),
+                                   offering ? g.ply_choosing : -1);
+    for (int k = 0; k < 4; ++k) {
+      double& since = g.ply_flash[size_t(k)];
+      if (pressed & (1u << k)) since = t;
+      if (since < 0) continue;
+      const Screen::PlyCard& c = g.ply_cards[size_t(k)];
+      const double age = t - since;
+      if (age >= kFlash) {  // over: back to the card as drawn
+        since = -1;
+        scrooby::SetAlpha(ctx, base, c.ring, 0xFF);
+        g.ply_drawn.clear();
+        continue;
+      }
+      const float left = float(1.0 - age / kFlash);  // 1 -> 0
+      scrooby::SetVisible(base, c.ring, true);
+      scrooby::SetFrame(ctx, base, c.ring, uint32_t(1 + k));
+      scrooby::SetAlpha(ctx, base, c.ring, k == g.ply_sel ? 0xFF : uint8_t(255 * left));
+    }
+  }
+  if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) {  // sliding
+    RefreshPlayers(env);
+    return;
+  }
+  int sel = g.ply_sel;
+  bool on_style = g.ply_on_style;
+  const bool left = Pressed(ctx, base, kButtonLeft), right = Pressed(ctx, base, kButtonRight);
+  const bool up = Pressed(ctx, base, 45), down = Pressed(ctx, base, 16);
+  if (g.ply_choosing != kPlyNone && !on_style) {
+    // The selected card's controller row: left / right = the controller on
+    // offer; DOWN = its Buttons row (with a controller).
+    if (left) PlayersStep(ctx, base, -1);
+    if (right) PlayersStep(ctx, base, +1);
+    if (down && players_setup::Boxes()[size_t(g.ply_choosing)].has_pad) on_style = true;
+  } else if (g.ply_choosing != kPlyNone) {
+    // Its Buttons row: left / right = the previous / next style; UP = back
+    // to the controller row (offering its own controller again).
+    if (left || right) PlayersAct(ctx, base, right ? kPlyActStyle : -kPlyActStyle);
+    if (up) {
+      on_style = false;
+      const auto controllers = players_setup::Controllers();
+      for (int i = 0; i < int(controllers.size()); ++i) {
+        if (controllers[size_t(i)].player == g.ply_choosing) g.ply_choice = i;
+      }
+    }
+  } else {
+    if (up || down) sel ^= 2;  // the other row
+    if (left || right) sel ^= 1;
+  }
+  // The mouse: the card under the pointer once it moves; a click on a card
+  // selects it (on the selected one = A; on another while choosing = cancel
+  // and select it), on the chooser's arrows = step, on a prompt = do it.
+  const uint32_t layer = MainMenuLayer(base);
+  const uint32_t moves = mouse_menus::PointerMoves();
+  if (moves != g.pointer_moves && g.ply_choosing == kPlyNone) {
+    g.pointer_moves = moves;
+    for (int k = 0; k < 4; ++k) {
+      if (mouse_menus::PointerOver(base, g.ply_cards[size_t(k)].glass, g.page, layer)) {
+        sel = k;
+      }
+    }
+  }
+  int clicked = -1;
+  if (g.ply_choosing != kPlyNone) {
+    const Screen::PlyCard& c = g.ply_cards[size_t(g.ply_choosing)];
+    if (mouse_menus::TakeClickOver(base, c.left, g.page, layer)) PlayersStep(ctx, base, -1);
+    if (mouse_menus::TakeClickOver(base, c.right, g.page, layer)) PlayersStep(ctx, base, +1);
+  }
+  for (int k = 0; k < 4; ++k) {
+    const Screen::PlyCard& c = g.ply_cards[size_t(k)];
+    // A click on a card's Buttons line: that card selected, its Buttons row,
+    // the next style.
+    if (scrooby::Visible(base, c.style) && mouse_menus::TakeClickOver(base, c.style, g.page, layer) &&
+        players_setup::Boxes()[size_t(k)].has_pad) {
+      sel = k;
+      on_style = true;
+      g.ply_sel = k;
+      g.ply_choosing = k;
+      g.ply_on_style = true;
+      clicked = kPlyActStyle;
+      continue;
+    }
+    if (!mouse_menus::TakeClickOver(base, c.glass, g.page, layer)) continue;
+    if (k == g.ply_sel && !on_style) {
+      clicked = kPlyActChoose;
+    } else {
+      g.ply_choosing = kPlyNone;
+      sel = k;
+      on_style = false;
+    }
+  }
+  for (int i = 0; i < options_page::kPlyPrompts; ++i) {
+    if (g.ply_prompt_action[size_t(i)] >= 0 &&
+        mouse_menus::TakeClickOver(base, g.ply_prompt[size_t(i)], g.page, layer)) {
+      clicked = g.ply_prompt_action[size_t(i)];
+    }
+  }
+  if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->TakeListWheel();  // (no use here)
+  if (sel != g.ply_sel || on_style != g.ply_on_style) {
+    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    g.ply_sel = sel;
+    g.ply_on_style = on_style;
+  }
+  // (Minus a joining controller's press, still hidden: HideHeld.)
+  const uint16_t pad = g_pad[size_t(owner)].load(std::memory_order_relaxed) & ~HiddenOn(owner);
+  const uint16_t pressed = pad & ~g.seen;
+  g.seen = pad;
+  if (!(pad & kPadB)) g.ply_hold_b = false;  // B let go: the game may hear B again
+  if ((pressed & kPadA) || clicked == kPlyActChoose) {
+    PlayersAct(ctx, base, kPlyActChoose);
+  } else if ((pressed & (kPadX | kPadY)) || clicked == kPlyActRemove) {
+    PlayersAct(ctx, base, kPlyActRemove);
+  } else if (clicked == kPlyActStyle) {
+    PlayersAct(ctx, base, kPlyActStyle);
+  } else if ((pressed & kPadB) || clicked == kPlyActBack) {
+    if (g.ply_choosing != kPlyNone) {
+      g.ply_choosing = kPlyNone;  // leave the card (a controller on offer not taken); the screen stays
+      g.ply_on_style = false;
+      g.ply_hold_b = (pad & kPadB) != 0;
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    } else if (g.main_menu && !CloseMainMenuOptions(ctx, base)) {
+      *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
+    } else if (!g.main_menu && clicked == kPlyActBack) {
+      if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->Pulse(kPadB);  // the game's own back
+    }
+  }
+  g_players_take_b = g.ply_choosing != kPlyNone || g.ply_hold_b;
+  RefreshPlayers(env);
+}
+
 void SwitchTab(Env& env, int delta) {
   // Leaving the tab: its focused row hears "off" first.
   Unfocus(env);
@@ -1308,8 +1909,33 @@ namespace {
 std::array<std::atomic<uint16_t>, 4> g_hidden{};
 }  // namespace
 
+namespace {
+// A controller that just joined in the Players screen moves to a socket only
+// at the next poll, so for a moment its held buttons aren't on the socket
+// yet: "let go" mustn't be decided then (the joining B came through a frame
+// later as Back and closed the screen). Not cleared before this time (ms).
+std::array<std::atomic<int64_t>, 4> g_hidden_until{};
+int64_t NowMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+}
+void HideHeld(int user, uint16_t buttons) {
+  if (user < 0 || user >= int(g_hidden.size()) || !buttons) return;
+  g_hidden[size_t(user)] |= buttons;
+  g_hidden_until[size_t(user)] = NowMs() + 300;
+}
+// The buttons hidden on socket `user` (the Players screen's own reading
+// skips them too: its reading comes before the filter).
+uint16_t HiddenOn(int user) {
+  return user >= 0 && user < int(g_hidden.size()) ? g_hidden[size_t(user)].load(std::memory_order_relaxed) : 0;
+}
+}  // namespace
+
+void HideHeldButtons(int user, uint16_t buttons) { HideHeld(user, buttons); }
+
 void FilterPad(uint32_t user, uint8_t* gamepad) {
   if (user >= g_hidden.size() || !gamepad) return;
+  if (g_players_take_b.load(std::memory_order_relaxed)) gamepad[0] &= uint8_t(~(kPadB >> 8));  // (Players screen)
   const uint16_t buttons = uint16_t(gamepad[0] << 8 | gamepad[1]);
   if (Capturing()) {
     g_hidden[user] = buttons;
@@ -1318,8 +1944,10 @@ void FilterPad(uint32_t user, uint8_t* gamepad) {
   }
   uint16_t hidden = g_hidden[user].load(std::memory_order_relaxed);
   if (!hidden) return;
-  hidden &= buttons;  // let go = seen again from the next press on
-  g_hidden[user] = hidden;
+  if (NowMs() >= g_hidden_until[user].load(std::memory_order_relaxed)) {
+    hidden &= buttons;  // let go = seen again from the next press on
+    g_hidden[user] = hidden;
+  }
   const uint16_t out = buttons & ~hidden;
   gamepad[0] = uint8_t(out >> 8);
   gamepad[1] = uint8_t(out);
@@ -1328,7 +1956,7 @@ void FilterPad(uint32_t user, uint8_t* gamepad) {
 int TurnPage(uint32_t menu, int direction, uint8_t* base) {
   // The Achievements screen: the menu's own up / down neither moves nor
   // sounds (UpdateAchievements moves the grid and plays one sound).
-  if (g.action && menu == g.menu && g.achievements) return -1;
+  if (g.action && menu == g.menu && OtherMode()) return -1;
   if (!g.action || menu != g.menu || !Slides()) return 0;  // short lists: the menu's own move
   const int count = int(Rows().size());
   const int current = First() + scrooby::Selection(base, g.menu);
@@ -1441,7 +2069,7 @@ void MoveGlassForCard(PPCContext& ctx, uint8_t* base, uint32_t action) {
   g_screen_action = action;
   // The Achievements list keeps the panel centred (its Enter may run before
   // or after the menu's: the request is still pending, or already taken).
-  if (g.achievements || achievements_screen::OpenNextPending()) {
+  if (ListMode()) {
     ShrinkInGame(ctx, base, action);
     return;
   }
@@ -1491,6 +2119,10 @@ extern "C" REX_FUNC(sub_820D2828) {
   // THE ACHIEVEMENTS SCREEN (achievements_screen.h): this screen in its
   // second mode when the main / pause menu asked for it.
   g.achievements = achievements_screen::TakeOpenNext();
+  // THE PLAYERS SCREEN (players/players_setup.h): the third mode, when the
+  // main / pause menu's "Players" asked (and the page has its cards).
+  g.players = players_setup::TakeOpenNext() && !g.achievements;
+  g.ply_drawn.clear();
   g.selection = -1;
   g.focused = -1;
   g.top = 0;
@@ -1500,6 +2132,10 @@ extern "C" REX_FUNC(sub_820D2828) {
   const int owner = Owner(base);
   g.seen = g_pad[size_t(owner)].load(std::memory_order_relaxed);
   FindElements(ctx, base);
+  if (g.players && g.ply_cards.size() < 4) {  // the page has no cards: Options instead
+    g.players = false;
+    REXLOG_WARN("Players: the page has no player cards: Options opens instead");
+  }
   // "Select A" in the lower right corner: the font's A picture and the
   // game's own text (by the key the main menus' prompts use, so it's in the
   // game's language; sub_82371CE0 = a text's string from the text list).
@@ -1525,7 +2161,7 @@ extern "C" REX_FUNC(sub_820D2828) {
     const uint8_t* size = GuestPtr(base, e + kElementSize);
     const float w = float(size[0] << 8 | size[1]), h = float(size[2] << 8 | size[3]);
     // (The Achievements list keeps the panel centred: no shift.)
-    const float shift = g.achievements ? 0.0f : float(options_page::kGlassShift);
+    const float shift = OtherMode() ? 0.0f : float(options_page::kGlassShift);
     const float cx = ReadF(base, e + kElementX) / unit + shift + w / 2;
     const float cy = ReadF(base, e + kElementY) / unit + h / 2;
     WriteF(base, e + kElementX, (320.0f + DrawScale() * (cx - 320.0f) - w / 2) * unit);
@@ -1535,9 +2171,10 @@ extern "C" REX_FUNC(sub_820D2828) {
   SetUpFixedTexts(ctx, base);
   // The elements the Achievements list hides come back for Options; the
   // main menu page's title says which screen this is.
-  for (const uint32_t e : {g.tab_prev, g.tab_next, g.lb, g.rb}) scrooby::SetVisible(base, e, !g.achievements);
+  for (const uint32_t e : {g.tab_prev, g.tab_next, g.lb, g.rb}) scrooby::SetVisible(base, e, !OtherMode());
   scrooby::SetVisible(base, g.tab_text, true);
   if (!g.achievements) ShowAchievementElements(base, false);  // (shown by RefreshAchievements)
+  if (!g.players) ShowPlayersElements(base, false);            // (shown by RefreshPlayers)
   g.title = main_menu ? scrooby::FindText(ctx, base, g.page, "OptTitle") : 0;
   g.paused_title = main_menu ? 0 : scrooby::FindText(ctx, base, g.page, "Paused");
   if (g.title && g.achievements) {
@@ -1545,10 +2182,27 @@ extern "C" REX_FUNC(sub_820D2828) {
   } else if (g.title) {  // the game's own translated "Options" (options_page.cpp: the PS2 item's string)
     scrooby::Call(__imp__sub_82371CE0, ctx, base, g.title, scrooby::GuestAscii("GameStart_MainMenu_Options"));
   }
-  if (g.achievements) CentreForList(ctx, base);
+  if (OtherMode()) CentreForList(ctx, base);
   // The list hides the Options screen's own furniture: back for Options.
-  if (!g.achievements) ShowOptionsFurniture(ctx, base, true);
-  if (g.achievements) {  // A does nothing here: no "Select A"
+  if (!OtherMode()) ShowOptionsFurniture(ctx, base, true);
+  if (g.players) {
+    players_setup::Opened();
+    g.ply_choosing = -1;
+    g.ply_flash = {-1, -1, -1, -1};
+    g.ply_on_style = false;
+    g.ply_aura_time = -1;
+    g.ply_hold_b = false;
+    HideGamePrompts(base, true);
+    // The chooser's arrows: the map's arrow (it points down as drawn: the
+    // Options list turns it 180 for "up") turned to point left / right.
+    for (const Screen::PlyCard& c : g.ply_cards) {
+      scrooby::SetScale(ctx, base, c.left, 1.0f);
+      scrooby::Rotate(ctx, base, c.left, 90.0f);
+      scrooby::SetScale(ctx, base, c.right, 1.0f);
+      scrooby::Rotate(ctx, base, c.right, -90.0f);
+    }
+  }
+  if (OtherMode()) {  // A does nothing here: no "Select A"
     scrooby::SetText(ctx, base, g.select_button, u"");
     scrooby::SetText(ctx, base, g.select_text, u"");
     if (const uint32_t fe = FrontEnd(base)) {
@@ -1560,7 +2214,8 @@ extern "C" REX_FUNC(sub_820D2828) {
   Env env{ctx, base, owner};
   Refresh(env);
   g_open = true;
-  REXLOG_INFO("{}: screen opened ({}) by player {} (tab {})", g.achievements ? "Achievements" : "Options",
+  REXLOG_INFO("{}: screen opened ({}) by player {} (tab {})",
+              g.players ? "Players" : g.achievements ? "Achievements" : "Options",
               main_menu ? "main menu" : "in game", owner + 1, g.tab);
 }
 
@@ -1664,6 +2319,11 @@ extern "C" REX_FUNC(sub_820D2A00) {
   const PPCContext saved = ctx;  // our calls below must not change what Update returned
   if (g.achievements) {
     UpdateAchievements(ctx, base, fe, owner);
+    ctx = saved;
+    return;
+  }
+  if (g.players) {
+    UpdatePlayers(ctx, base, fe, owner);
     ctx = saved;
     return;
   }
@@ -1838,6 +2498,17 @@ extern "C" REX_FUNC(sub_820D2F08) {
       PutBackAfterList(base);
       g.achievements = false;
     }
+    if (g.players) {
+      ShowPlayersElements(base, false);
+      HideGamePrompts(base, false);
+      g.ply_choosing = -1;
+      g.ply_hold_b = false;
+      g_players_take_b = false;
+      ShowOptionsFurniture(ctx, base, true);
+      PutBackAfterList(base);
+      g.players = false;
+      players_setup::Closed();
+    }
     if (!g.main_menu) {  // in game the pause menu sets its own corners again
       scrooby::SetText(ctx, base, g.select_button, u"");
       scrooby::SetText(ctx, base, g.select_text, u"");
@@ -1900,7 +2571,8 @@ extern "C" REX_FUNC(sub_820CE2C8) {
 // selected item into an exit when the accept flag is up: GetMenuIndex
 // (sub_821239C8, page GameStart_Start_Xenon, menu StartMenu) 0-3 -> 86 New
 // Game, 87 Load Game, 88 Credits, 89 Calibration. Ours: New Game, Load Game,
-// Options, Credits, Quit Game (Calibration gave its place; Quit = ui/quit_game.h); 2 = exit 77, the PS2 menu's ExitOptions -> the
+// Options, Players, Credits, Quit Game (Calibration gave its place; Players = the Options screen's
+// third mode, players/players_setup.h; Quit = ui/quit_game.h); 2 and 3 = exit 77, the PS2 menu's ExitOptions -> the
 // OptionsScreen state 96 (the engine follows any exit's target, not only a
 // child of the current state: saves/rename_screen.cpp).
 extern "C" REX_FUNC(__imp__sub_8211B6C8);  // MainMenuScreen's decision
@@ -1934,8 +2606,11 @@ extern "C" REX_FUNC(sub_8211B6C8) {
   const int index = int(ctx.r3.s32);
   ctx = saved;
   // (Calibration, 89, is no longer in the list: options_page.cpp.)
-  constexpr int32_t kExits[] = {kExitNewGame, kExitLoadGame, kExitOptions, kExitCredits};
+  // "Players" (players/players_setup.h) = the Options screen in its third
+  // mode: Options' exit, plus the request.
+  constexpr int32_t kExits[] = {kExitNewGame, kExitLoadGame, kExitOptions, kExitOptions, kExitCredits};
   static_assert(kExits[options_page::kMainMenuOptionsItem] == kExitOptions);
+  static_assert(kExits[options_page::kMainMenuPlayersItem] == kExitOptions);
   // The last item, "Quit Game", has no exit: its pick never closes the
   // screen (ui/quit_game.cpp takes it back and asks); should one get here,
   // stay.
@@ -1948,7 +2623,16 @@ extern "C" REX_FUNC(sub_8211B6C8) {
     return;
   }
   ctx.r3.s64 = kExits[index];
-  if (index == options_page::kMainMenuOptionsItem) REXLOG_INFO("Options: main menu -> Options");
+  if (index == options_page::kMainMenuPlayersItem) {
+    if (options_page::PlayersCardsAvailable()) {
+      players_setup::OpenNext();
+      REXLOG_INFO("Options: main menu -> Players");
+    } else {
+      ctx.r3.s64 = -1;  // no cards on the page: stay
+    }
+  } else if (index == options_page::kMainMenuOptionsItem) {
+    REXLOG_INFO("Options: main menu -> Options");
+  }
 }
 
 // The PS2 Options screen's own action (COptionsScreenAction, vtable
@@ -2051,10 +2735,15 @@ uint32_t MainMenuLayer(const uint8_t* base) {
 }
 
 namespace {
-// The page's smaller size, after a slide step (or once at Enter).
+// The page's smaller size, after a slide step (or once at Enter). The
+// Players screen in the main menu: 0.88 x, so its prompt row (under the
+// glass panel) clears the main menu's purple frame, which is drawn over the
+// screen's bottom edge (at full size the row was hidden under it).
+constexpr float kPlayersMainMenuScale = 0.88f;
 void ShrinkMainMenuPage(PPCContext& ctx, uint8_t* base, uint32_t action) {
   if (const uint32_t layer = Read32(base, action + kOptLayer)) {
-    scrooby::CallF(__imp__sub_82371198, ctx, base, layer, DrawScale());
+    const bool players = g.players || players_setup::OpenNextPending();
+    scrooby::CallF(__imp__sub_82371198, ctx, base, layer, players ? kPlayersMainMenuScale : DrawScale());
   }
 }
 }  // namespace

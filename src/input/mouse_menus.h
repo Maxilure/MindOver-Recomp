@@ -66,6 +66,10 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // The pointer on the menus' 640 x 480 canvas (y up), and how many times it
 // has moved (a hover only counts after a move). False: no pointer.
 bool PointerOnCanvas(float* cx, float* cy, uint32_t* moves);
+// Is the menu on screen another player's (player 2-4 paused / at a totem, and
+// the keyboard doesn't play for them)? Then the mouse does nothing in it and
+// the Wii-style pointer hides (ui/wii_cursor.cpp). Any thread.
+bool MouseBlocked();
 
 // A filter on the game's GetMenuIndex answers (sub_821239C8, wrapped here):
 // (base, the page name's guest address, the menu's selected item) -> the

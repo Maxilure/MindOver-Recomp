@@ -11,15 +11,18 @@
 #include <memory>
 #include <string>
 
+#include <fmt/format.h>
 #include <rex/input/input.h>
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 
 #include "../guest_memory.h"
+#include "../players/more_players.h"
 #include "../ui/game_font.h"
 #include "../ui/scrooby.h"
 #include "prompt_icons.h"
 #include "keyboard_mouse.h"
+#include "players.h"
 
 namespace mouse_menus {
 namespace {
@@ -115,7 +118,15 @@ uint32_t g_seen_moves = 0;
 // The pointer in canvas units (640 x 480, y up; the canvas is drawn 4:3 in
 // the middle of the 16:9 picture: picture x = (160 + 1.5 x) / 1280,
 // y = (720 - 1.5 y) / 720). False without a pointer.
+// THE MOUSE BELONGS TO THE KEYBOARD'S PLAYER (2026-10-29): in a level, a menu
+// owned by a player the keyboard doesn't play for (player 2 paused, player 3
+// uses a totem: menu_input.cpp's owner rules) takes no keys, so it takes no
+// mouse either: no hover, no clicks (a click made meanwhile is dropped).
+// Set every front-end frame (FrontEndFrame).
+std::atomic<bool> g_mouse_blocked{false};
+
 bool PointerCanvas(float* cx, float* cy, uint32_t* moves) {
+  if (g_mouse_blocked.load(std::memory_order_relaxed)) return false;
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   float px = 0, py = 0;
   if (!driver || !driver->Pointer(&px, &py, moves)) return false;
@@ -300,6 +311,7 @@ bool PointerOver(uint8_t* base, uint32_t element, uint32_t page, uint32_t layer)
 }
 
 bool TakeClickOver(uint8_t* base, uint32_t element, uint32_t page, uint32_t layer) {
+  if (g_mouse_blocked.load(std::memory_order_relaxed)) return false;
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   float px = 0, py = 0;
   if (!driver || !driver->PeekMenuClick(&px, &py)) return false;
@@ -327,6 +339,7 @@ bool PointerNear(uint8_t* base, uint32_t element, float half_w, float half_h, ui
 }
 
 bool TakeClickNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page) {
+  if (g_mouse_blocked.load(std::memory_order_relaxed)) return false;
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   float px = 0, py = 0;
   if (!driver || !driver->PeekMenuClick(&px, &py)) return false;
@@ -455,6 +468,18 @@ void OnMenuUpdate(PPCContext& ctx, uint8_t* base, uint32_t action) {
 }
 
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
+  {  // the mouse in another player's menu (see g_mouse_blocked)
+    const int owner = menu_input::CurrentMenuOwner(ctx, base);
+    const kbm::PlayerAssignment* a = kbm::PlayerAssignment::Get();
+    const bool blocked = owner > 0 && a && !a->KeyboardAnswersFor(uint32_t(owner));
+    if (g_mouse_blocked.exchange(blocked) != blocked) {
+      REXLOG_INFO("Mouse in menus: {}", blocked ? fmt::format("off (player {}'s menu)", owner + 1) : "on");
+    }
+    if (blocked) {
+      if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) driver->TakeMenuClick();
+      return;
+    }
+  }
   AgeClick(base);
   // A question box: its Yes / No answer to the pointer (and nothing under it).
   if (const uint32_t menu = QuestionMenu(base)) {
@@ -492,6 +517,7 @@ namespace mouse_menus {
 std::atomic<MenuIndexFilter> g_index_filter{nullptr};
 void SetMenuIndexFilter(MenuIndexFilter filter) { g_index_filter = filter; }
 bool PointerOnCanvas(float* cx, float* cy, uint32_t* moves) { return PointerCanvas(cx, cy, moves); }
+bool MouseBlocked() { return g_mouse_blocked.load(std::memory_order_relaxed); }
 }  // namespace mouse_menus
 
 extern "C" REX_FUNC(__imp__sub_821239C8);

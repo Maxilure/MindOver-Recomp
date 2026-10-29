@@ -196,4 +196,23 @@ std::string FontNameAt(uint32_t font);
 // controller either. Game threads.
 void SeePad(uint32_t user, const uint8_t* gamepad, uint16_t ours = 0);
 
+// The button picture style a controller's maker and model call for
+// (Automatic's detection, from its device key "pad:<guid>[:n]" or a fake
+// pad's "debug-pad-N"), numbered like --controller_icons: 1 = the game's own
+// Xbox 360 pictures (a 360 pad, or any maker we don't know), 2 Xbox Series,
+// 3 PlayStation 5, 4 PlayStation 4, 5 Switch. For the Players screen's
+// controller pictures (players/players_setup.h).
+int DetectedPadStyle(const std::string& key);
+
+// Does player p (0-3) see keys right now (the keyboard used last of p's
+// devices, or --button_prompts says keys)? The Players screen shows player
+// 1's device in use by it.
+bool KeysLookFor(int p);
+
+// Player p's (0-3) Controller Icons setting, numbered like --controller_icons
+// (0 Automatic, 1 Xbox 360 .. 5 Switch): player 1's is that flag, players
+// 2-4's controls.toml's icons.player2-4 (input/bindings.h; set on the
+// Players screen, players/players_setup.h SetPadIcons). Any thread.
+int PadIconsSetting(int p);
+
 }  // namespace prompt_icons

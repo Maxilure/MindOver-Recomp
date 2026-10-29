@@ -25,6 +25,7 @@
 #include "debug_console.h"
 #include "input/keyboard_mouse.h"
 #include "players/dummy_players.h"
+#include "players/players_setup.h"
 
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
                       "Debug: timed input taps, e.g. \"8000:start,30000:lsright:2000\" "
@@ -36,6 +37,10 @@ REXCVAR_DEFINE_INT32(debug_fake_pads, 0, "CrashMoM",
                      "Dummy controllers for testing co-op: 1-3 fake controllers (players 2-4 by default), "
                      "driven from the F5 menu's Dummy players section (follow / copy a player, buttons) "
                      "or by \"p<N>.\" commands in --debug_input_script / --debug_input_fifo (0 = off)");
+REXCVAR_DEFINE_STRING(debug_fake_pad_names, "", "CrashMoM",
+                      "Debug: the names --debug_fake_pads' controllers 2, 3, 4 show (Players screen, "
+                      "logs), comma-separated, e.g. \"DualSense Wireless Controller,Nintendo Switch Pro "
+                      "Controller\" (screenshots); empty = \"Debug fake controller N\"");
 
 // Xbox types (X_RESULT, X_ERROR_*, X_INPUT_STATE...) live in these.
 using namespace rex;
@@ -276,6 +281,15 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
     REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (achievement list|show <id>|unlock <id>)", line);
     return false;
   }
+  // "players [list]": the Players screen's cards into the log (players/players_setup.h).
+  if (view == "players" || view.substr(0, 8) == "players ") {
+    if (players_setup::DebugCommand(view.size() > 8 ? view.substr(8) : std::string_view{})) {
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+      return ok;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (players [list])", line);
+    return false;
+  }
   // "cheat <command>": a cheat menu switch / action (cheats/cheats.h).
   if (view.substr(0, 6) == "cheat ") {
     // "cheat menu" opens / closes the F5 window (draws it: a crash check).
@@ -376,6 +390,15 @@ void ScriptedInputDriver::EnumerateDevices(std::vector<DeviceInfo>& out) {
     DeviceInfo extra;
     extra.id = PadDevice(pad);
     extra.name = "Debug fake controller " + std::to_string(pad + 1);
+    {  // --debug_fake_pad_names: the pad-th name of the list, if given
+      std::string_view list = REXCVAR_GET(debug_fake_pad_names);
+      for (int n = pad - 1; n > 0 && !list.empty(); --n) {
+        const size_t comma = list.find(',');
+        list = comma == std::string_view::npos ? std::string_view{} : list.substr(comma + 1);
+      }
+      const std::string_view name = list.substr(0, list.find(','));
+      if (!name.empty()) extra.name = std::string(name);
+    }
     extra.guid = "debug-pad-" + std::to_string(pad + 1);
     extra.synthetic = true;
     out.push_back(extra);
