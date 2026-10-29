@@ -114,7 +114,23 @@ the threshold it waits for to the global `0x8259B1CC` (the previous one to
 the script then runs the upgrade itself (screen and all), exactly as after a
 pickup. **Max level** keeps doing that every frame while new thresholds
 appear (the next one is posted once the player closed the last "Level Up!"
-screen) and stops 10 s after the last upgrade.
+screen) and stops 10 s of plain play (front end state 489) after the last
+upgrade: a "Level Up!" screen (state 839) or the pause menu holds the count.
+The first version counted 600 game frames, only 3.3 s at 180 fps, so a
+screen left open a few seconds ended the chain early; the next threshold
+could then be 100,000 mojo away while the HUD's mojo counter stops at
+100,000, and further pickups looked as if they did nothing.
+
+**How many mojo can buy.** Crash's mojo upgrades are one objective,
+`CrashUpgrades` in `script/objectives/objectives.lua` (default.rcf): 18
+pairs of `WAIT_CrashMojoUpgradeValue N` + `DO_UnlockMove` (spin and
+strength moves), N = 1,000, 3,000, 5,500, 9,000, 12,500, 16,500, 20,500,
+26,000, 31,500, 37,500, 43,500, 49,000, 65,000, 75,000, 90,000, 105,000,
+120,000 and 220,000, then `Done`. The other upgrades of the "Upgrades: N/32"
+count are unlocked by the story (`DO_UnlockMove` in `levels/L*/objectives`).
+So Max level ends at 18 / 32 on an early save, as collecting mojo would: the
+cheat now says so ("every mojo upgrade bought; the rest come with the
+story"), and the menu greys its level buttons for Crash.
 
 Tested on a Wumpa Island save: level 11 -> 12 ("Spin Attack Upgrade,
 Upgrades: 12/32"), the next threshold moved 12,500 -> 16,500; Max level with B

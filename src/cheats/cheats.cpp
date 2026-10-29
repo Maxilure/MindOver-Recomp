@@ -5,6 +5,7 @@
 #include "cheats.h"
 
 #include <algorithm>
+#include <chrono>
 #include <atomic>
 #include <cmath>
 #include <cstdlib>
@@ -22,6 +23,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../achievements/achievements.h"
+#include "../data/fight_tree.h"
 #include "../players/more_players.h"
 #include "cheat_menu.h"
 #include "free_camera.h"
@@ -50,6 +52,17 @@ constexpr int kStatIntCount = 183;
 // "WAIT_CrashMojoUpgradeValue" requirement (sub_822A1458 stores it here; the
 // previous one at +4). Stat 4 >= this = the script's next upgrade happens.
 constexpr uint32_t kCrashNextPrice = 0x8259B1CC;
+// The LAST of those thresholds. Crash's mojo upgrades are ONE objective,
+// "CrashUpgrades" in script/objectives/objectives.lua (default.rcf; read
+// 2026-10-30 with notes/scratch-tools/dis50.py): 18 x (WAIT_CrashMojoUpgrade-
+// Value N, DO_UnlockMove), N = 1,000 3,000 5,500 9,000 12,500 16,500 20,500
+// 26,000 31,500 37,500 43,500 49,000 65,000 75,000 90,000 105,000 120,000
+// 220,000, then Done. The rest of the "Upgrades: N/32" come from the story
+// (levels/L*/objectives DO_UnlockMove): mojo can't buy them. Once stat 4 has
+// met this one, his mojo upgrades are all bought.
+constexpr int kCrashLastPrice = 220000;
+// Front end state "a level is being played, no screen over it" (GameRunning).
+constexpr int32_t kFrontEndPlaying = 489;
 
 // Each player's co-op state (ECoOpPlayerState; more_players grew the table
 // to 4 in place): 0 not joined, 1 mask, 2 in the game on foot / in a titan,
@@ -313,6 +326,7 @@ PlayerInfo Describe(uint32_t stats, int p) {
     info.level = ReadStat(stats, kStatCrashLevel);
     info.mojo = ReadStat(stats, kStatCrashMojo);
     info.next_price = int32_t(Read32(kCrashNextPrice));
+    info.mojo_upgrades_done = info.next_price >= kCrashLastPrice && info.mojo >= info.next_price;
     return info;
   }
   uint32_t titan = 0;
@@ -335,6 +349,7 @@ PlayerInfo Describe(uint32_t stats, int p) {
     info.level = ReadStat(stats, kStatCrashLevel);
     info.mojo = ReadStat(stats, kStatCrashMojo);
     info.next_price = int32_t(Read32(kCrashNextPrice));
+    info.mojo_upgrades_done = info.next_price >= kCrashLastPrice && info.mojo >= info.next_price;
   }
   if (const uint32_t dmg = DamageableOf(body)) {
     const uint32_t hp = Read32(dmg + kDmgHitpoints), max = Read32(dmg + kDmgMaxHitpoints);
@@ -446,7 +461,17 @@ void GiveFreeJack(PPCContext& ctx, uint8_t* base, int p, uint32_t titan) {
 
 // Crash's "max level": one level up per frame until his script stops asking
 // for more (its next requirement appears a frame or more after the last).
-int g_crash_max_frames[kPlayers] = {};
+// The chain gives up after kCrashMaxPatience seconds without an upgrade,
+// counted in REAL time and only while the level is plainly played (front end
+// 489): a "Level Up!" screen (state 839) or the pause menu holds the count.
+// WHY (2026-10-30 playtest, "max level softlocks"): it counted 600 GAME
+// FRAMES = 10 s at 60 fps but 3.3 s at 180, so a Level Up screen left open
+// a few seconds ended the chain early. The next threshold could then be far
+// away (120,000 -> 220,000), and the HUD's mojo counter stops at 100,000:
+// mojo seemed not to count any more, with "Upgrades: 18/32" on screen.
+constexpr double kCrashMaxPatience = 10.0;
+double g_crash_max_left[kPlayers] = {};  // seconds; 0 = no chain running
+std::chrono::steady_clock::time_point g_last_tick;
 
 // Is id in the list (the game's own tests, e.g. sub_8229F858)?
 bool InUnlockList(const UnlockList& list, int id) {
@@ -505,13 +530,21 @@ void Tick(PPCContext& ctx, uint8_t* base) {
   }
   const bool in_level = more_players::InPlay();
   const uint32_t stats = StatsManager();
+  // Real time since the last tick (the max level chain's patience).
+  const auto now = std::chrono::steady_clock::now();
+  const double tick_seconds =
+      g_last_tick.time_since_epoch().count() == 0
+          ? 0.0
+          : std::min(0.25, std::chrono::duration<double>(now - g_last_tick).count());
+  g_last_tick = now;
+  const bool plain_play = fight_tree::CurrentFrontEnd().state == kFrontEndPlaying;
 
   if (requests.step && frozen) flags |= kFlagStep;
 
   if (in_level && stats) {
     for (int p = 0; p < kPlayers; ++p) {
       if (CoOpState(p) == kStateNotJoined) {
-        g_crash_max_frames[p] = 0;
+        g_crash_max_left[p] = 0;
         continue;
       }
       // A mask has no body: its level cheats go to Crash's (shared) upgrades.
@@ -534,20 +567,32 @@ void Tick(PPCContext& ctx, uint8_t* base) {
           while (bought < kUpgStepCount && LevelUpTitan(ctx, base, stats, titan, false)) ++bought;
           REXLOG_INFO("Cheats: player {} titan max level: {} steps bought", p + 1, bought);
         } else {
-          g_crash_max_frames[p] = 600;  // ~10 s of frames, renewed by each upgrade
+          g_crash_max_left[p] = kCrashMaxPatience;  // renewed by each upgrade
           REXLOG_INFO("Cheats: player {} Crash max level: started", p + 1);
         }
       }
       // Crash's chain: top up each new threshold as his script posts it (the
       // next one comes once the player closed the last "Level Up!" screen).
-      // Ends ~10 s after the last upgrade, or when he jacks a titan.
-      if (g_crash_max_frames[p] > 0) {
-        --g_crash_max_frames[p];
+      // Ends when his mojo upgrades are all bought, kCrashMaxPatience seconds
+      // of play after the last upgrade, or when he jacks a titan.
+      if (g_crash_max_left[p] > 0) {
+        if (plain_play) g_crash_max_left[p] -= tick_seconds;
         if (titan) {
-          g_crash_max_frames[p] = 0;
+          g_crash_max_left[p] = 0;
         } else if (LevelUpCrash(stats)) {
-          g_crash_max_frames[p] = 600;
-          REXLOG_INFO("Cheats: player {} Crash max level: one more upgrade", p + 1);
+          g_crash_max_left[p] = kCrashMaxPatience;
+          REXLOG_INFO("Cheats: player {} Crash max level: one more upgrade (next at {})", p + 1,
+                      int32_t(Read32(kCrashNextPrice)));
+        } else if (int32_t(Read32(kCrashNextPrice)) >= kCrashLastPrice &&
+                   ReadStat(stats, kStatCrashMojo) >= kCrashLastPrice) {
+          g_crash_max_left[p] = 0;
+          REXLOG_INFO("Cheats: player {} Crash max level: every mojo upgrade bought; "
+                      "the rest come with the story", p + 1);
+        } else if (g_crash_max_left[p] <= 0) {
+          g_crash_max_left[p] = 0;
+          REXLOG_INFO("Cheats: player {} Crash max level: stopped ({:.0f} s of play without a new "
+                      "upgrade; next at {}, mojo {})", p + 1, kCrashMaxPatience,
+                      int32_t(Read32(kCrashNextPrice)), ReadStat(stats, kStatCrashMojo));
         }
       }
       if (requests.refill[p] && body) Refill(ctx, base, body);

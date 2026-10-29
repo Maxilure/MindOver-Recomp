@@ -101,6 +101,9 @@ struct PlayerInfo {
   int mojo = 0;             // mojo collected toward this character's upgrades
   int next_price = 0;       // mojo the next upgrade needs (0 = none known)
   bool fully_upgraded = false;
+  // Crash (on foot / mask): every MOJO upgrade bought (his script's last
+  // threshold met, cheats.cpp kCrashLastPrice); the rest come with the story.
+  bool mojo_upgrades_done = false;
   float hitpoints = 0.0f, max_hitpoints = 0.0f;
 };
 

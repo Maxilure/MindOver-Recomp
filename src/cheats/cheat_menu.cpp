@@ -168,7 +168,9 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     } else {
       ImGui::Text("Level: %d", info.level);
     }
-    if (info.next_price > 0) {
+    if (info.mojo_upgrades_done) {
+      ImGui::Text("Every mojo upgrade bought: the rest come with the story");
+    } else if (info.next_price > 0) {
       ImGui::Text("Mojo toward the next upgrade: %s / %s", Thousands(info.mojo).c_str(),
                   Thousands(info.next_price).c_str());
     } else {
@@ -181,7 +183,7 @@ class CheatDialog : public rex::ui::ImGuiDialog {
                          ImVec2(-1.0f, 0.0f), text);
     }
 
-    ImGui::BeginDisabled(!snap.in_level || info.fully_upgraded);
+    ImGui::BeginDisabled(!snap.in_level || info.fully_upgraded || info.mojo_upgrades_done);
     if (ImGui::Button("Level up")) cheats::RequestLevelUp(player_);
     ImGui::SetItemTooltip(
         info.titan ? "Buys this titan's next upgrade (with the game's upgrade screen)."
@@ -192,7 +194,9 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     if (ImGui::Button("Max level")) cheats::RequestMaxLevel(player_);
     ImGui::SetItemTooltip(info.titan ? "Buys every upgrade left at once (no screens)."
                                      : "Feeds Crash every upgrade his scripts ask for, one at a time:\n"
-                                       "close each \"Level Up!\" screen (B) for the next one.");
+                                       "close each \"Level Up!\" screen (B) for the next one.\n"
+                                       "Mojo buys 18 of them (the last at 220,000); the others\n"
+                                       "of the 32 are unlocked by the story.");
     ImGui::EndDisabled();
     ImGui::BeginDisabled(!snap.in_level);
     for (int amount : {100, 1000, 10000}) {
