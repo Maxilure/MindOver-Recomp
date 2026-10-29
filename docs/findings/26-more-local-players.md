@@ -2062,12 +2062,15 @@ name. Player 1's choice is the Options row Controller Icons (the flag
 to Xbox Series in the screen, back in play the "Join Game" corner of
 player 2 showed the Xbox Series B while players 3-4 kept the game's 360 B.
 
-The arrows beside a focused Buttons line stand just outside its text (at
-0.75 x their size; the text fits the room left between them). Turned and
-scaled, the two don't shrink round their centres, so each is nudged back
-(measured on photos) to sit level and equally far from the text. A click
-on either arrow steps the style too (at first only the keys and a click on
-the line itself did).
+A focused Buttons line shows the style's name alone ("Buttons:" dropped)
+between two arrows (0.75 x their size) at fixed places, just outside the
+widest name ("PlayStation 5"): at first they hugged each name, so a short
+one ("Switch") pulled them in. Turned and scaled, the two arrows don't
+shrink round their centres, so each is nudged back (measured on photos) to
+sit level. A click on or just beside either arrow steps the style; a click
+on the card's empty space keeps the line selected. The pointer picks rows
+by itself: over a card's Buttons line = that card on its Buttons row, over
+the selected card's picture or name = back to its controller row.
 
 The debug tools' own input ("Debug input script", the device behind the
 console, `--debug_input_script` and `--debug_input_fifo`) isn't listed: it

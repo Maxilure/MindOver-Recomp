@@ -1401,22 +1401,26 @@ void RefreshPlayers(Env& env) {
     const bool style_shown = choosing ? b.has_pad : StyleLineShown(b, k);
     scrooby::SetVisible(base, c.style, style_shown);
     if (style_shown) {
-      const std::u16string style =
-          Utf16(fmt::format("Buttons: {}", players_setup::StyleName(players_setup::PadIcons(k))));
+      // With the focus: the style's NAME only, between the arrows ("Buttons:"
+      // dropped), and the arrows at FIXED places: just outside the widest
+      // name ("PlayStation 5"), so they stay put while the names change (at
+      // first they hugged each name: "Switch" pulled them in, 2026-10-29).
+      // The arrows 0.75x.
+      const char* name = players_setup::StyleName(players_setup::PadIcons(k));
+      const std::u16string style = style_focus ? Utf16(name) : Utf16(fmt::format("Buttons: {}", name));
       scrooby::SetText(ctx, base, c.style, style);
       scrooby::SetColour(ctx, base, c.style, style_focus ? kPlyYellow : kPlyCyan);
       SetBox(base, c.style, x, top - options_page::kPlyStyleTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
-      // With the focus the arrows stand just outside the text (they sat at
-      // the card's edges and ran over long lines: "Buttons: PlayStation 5"):
-      // the text fits the room left between them, the arrows 0.75x.
-      const float arrows = style_focus ? 2.0f * (kPlyLineArrowScale * float(options_page::kPlyArrowSide) + 6.0f) : 0.0f;
-      const float scale = FitScale(style, room - arrows, kPlyStyleScale);
-      scrooby::SetScale(ctx, base, c.style, scale);
+      const float arrow = kPlyLineArrowScale * float(options_page::kPlyArrowSide);
       if (style_focus) {
-        const float half = TextWidth(style, 1.0f) / kPageScale * scale / 2.0f;
-        const float inset = float(options_page::kPlyCardW) / 2.0f - half - 6.0f -
-                            kPlyLineArrowScale * float(options_page::kPlyArrowSide);
+        static const std::u16string kWidest = u"PlayStation 5";
+        const float scale = FitScale(kWidest, room - 2.0f * (arrow + 6.0f), kPlyStyleScale);
+        scrooby::SetScale(ctx, base, c.style, scale);
+        const float half = TextWidth(kWidest, 1.0f) / kPageScale * scale / 2.0f;
+        const float inset = float(options_page::kPlyCardW) / 2.0f - half - 6.0f - arrow;
         PlaceArrows(ctx, base, c, k, inset, float(options_page::kPlyStyleTop[k / 2]) + 18.0f, kPlyLineArrowScale);
+      } else {
+        scrooby::SetScale(ctx, base, c.style, FitScale(style, room, kPlyStyleScale));
       }
     }
   }
@@ -1620,12 +1624,34 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   // and select it), on the chooser's arrows = step, on a prompt = do it.
   const uint32_t layer = MainMenuLayer(base);
   const uint32_t moves = mouse_menus::PointerMoves();
-  if (moves != g.pointer_moves && g.ply_choosing == kPlyNone) {
+  // HOVER PICKS THE ROW (2026-10-29): over a card's Buttons line = that card
+  // selected on its Buttons row (nothing changes until a click / A / left /
+  // right); over the selected card's controller (picture or name) = back to
+  // its controller row; over another card while none is selected = that
+  // card. Only when the pointer moved.
+  if (moves != g.pointer_moves) {
     g.pointer_moves = moves;
+    const auto boxes = players_setup::Boxes();
     for (int k = 0; k < 4; ++k) {
-      if (mouse_menus::PointerOver(base, g.ply_cards[size_t(k)].glass, g.page, layer)) {
+      const Screen::PlyCard& c = g.ply_cards[size_t(k)];
+      if (boxes[size_t(k)].has_pad && scrooby::Visible(base, c.style) &&
+          mouse_menus::PointerOver(base, c.style, g.page, layer)) {
         sel = k;
+        on_style = true;
+        g.ply_choosing = k;
+        break;
       }
+      if (g.ply_choosing == k && on_style &&
+          (mouse_menus::PointerOver(base, c.pic, g.page, layer) ||
+           mouse_menus::PointerOver(base, c.info, g.page, layer))) {
+        on_style = false;  // the controller row, offering its own controller again
+        const auto controllers = players_setup::Controllers();
+        for (int i = 0; i < int(controllers.size()); ++i) {
+          if (controllers[size_t(i)].player == k) g.ply_choice = i;
+        }
+        break;
+      }
+      if (g.ply_choosing == kPlyNone && mouse_menus::PointerOver(base, c.glass, g.page, layer)) sel = k;
     }
   }
   int clicked = -1;
@@ -1635,7 +1661,13 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     // previous / next style (the arrows stood there but only the keys and
     // a click on the line itself worked; 2026-10-29).
     for (const int dir : {-1, +1}) {
-      if (!mouse_menus::TakeClickOver(base, dir < 0 ? c.left : c.right, g.page, layer)) continue;
+      // (A little room round the small arrows: a click just beside one
+      // counts; only on the selected card, where nothing else is there.)
+      const uint32_t arrow = dir < 0 ? c.left : c.right;
+      if (!mouse_menus::TakeClickOver(base, arrow, g.page, layer) &&
+          !(layer == 0 && mouse_menus::TakeClickNear(base, arrow, 22.0f, 22.0f, g.page))) {
+        continue;
+      }
       if (on_style) {
         PlayersAct(ctx, base, dir > 0 ? kPlyActStyle : -kPlyActStyle);
       } else {
@@ -1658,6 +1690,7 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
       continue;
     }
     if (!mouse_menus::TakeClickOver(base, c.glass, g.page, layer)) continue;
+    if (k == g.ply_choosing && on_style) continue;  // its Buttons row: a click beside the arrows does nothing
     if (k == g.ply_sel && !on_style) {
       clicked = kPlyActChoose;
     } else {
