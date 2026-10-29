@@ -320,12 +320,20 @@ face (3.33, 0, 1.8), chest (7.36, 0, 2.01), TV (10.87, 0, -3.87), and one at
 
 ### 5.3 The credits
 
-`ui/credits_scroll.*`. The wheel scrolls them both ways (3 lines a notch),
-the text moving the way the wheel turns (a notch down = the names go down =
-back, like dragging a page);
-Up / Down set the speed as on the Xbox (0.1 steps, 0 = stopped), but Down
-goes on past stopped into rolling backwards (to -1), which stops by itself at
-the start.
+`ui/credits_scroll.*`. The wheel scrolls them both ways like a list: a notch
+down = on toward the end (the names go up), up = back; one line a notch,
+glided over about 0.2 s (each frame moves 15 x frame time of what is left,
+at least 2 lines a second). The first version jumped 3 lines a notch the
+other way round (a notch down = names down, like dragging a page); in play
+that felt jerky, too big and inverted (changed 2026-10-30);
+Up / Down (D-pad, stick, arrow keys, W / S) set the speed in 0.1 steps, the
+way one moves through a list: Down rolls the names on toward the end
+(faster), Up slows them, stops (0) and goes on into rolling backwards (to
+-1), which stops by itself at the start. The Xbox had it the other way
+round (Up = faster, Down = slower, never backwards); the first version kept
+the Xbox's direction, which made Up head toward the end and Down back, the
+reverse of the wheel's list feel (fixed 2026-10-30; measured with key taps:
+W 0.2 -> 0.1 -> 0.0 -> -0.1, S back up to 0.2).
 
 How the game rolls them (CCreditScreenAction, vtable 0x8202248C, Update
 `sub_820C6330`): 30 text elements (this +84, 8 bytes each: element, line

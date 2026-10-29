@@ -30,8 +30,8 @@ extern "C" REX_FUNC(__imp__sub_820C71F0);  // the credits: are voice clips on? (
 extern "C" REX_FUNC(__imp__sub_82370FD0);  // element: scale by (f1, f2, f3) around its centre
 
 REXCVAR_DEFINE_BOOL(credits_scroll, true, "CrashMoM",
-                    "The credits scroll with the mouse wheel, and Down slows them past a stop into "
-                    "rolling backwards. false = the original (forward only, Up / Down = speed 0..1)");
+                    "The credits scroll with the mouse wheel; Up slows them past a stop into rolling "
+                    "backwards, Down rolls them on. false = the original (forward only, Up / Down = speed 0..1)");
 
 namespace credits_scroll {
 namespace {
@@ -69,8 +69,15 @@ constexpr float kLineSpacing = 30.0f;     // the phase's spacing (x 1 / +332), 0
 // How far a notch goes, how often we keep a checkpoint, and the biggest
 // single step we hand the game's phase function while replaying (one third
 // of a line: an element is recycled once per call at most).
-constexpr float kNotchLines = 3.0f, kCheckpointLines = 2.0f, kChunkLines = 1.0f / 3.0f;
+constexpr float kNotchLines = 1.0f, kCheckpointLines = 2.0f, kChunkLines = 1.0f / 3.0f;
 constexpr float kSpeedStep = 0.1f;  // the game's Up / Down step
+// SMOOTH WHEEL (2026-10-30 playtest: a notch JUMPED 3 lines at once, "not
+// smooth, too big"): a notch adds one line to the distance still to glide,
+// and each frame moves this fraction-per-second of what is left (an ease
+// out: ~95% of a notch in 0.2 s), plus a small floor so it doesn't crawl
+// at the very end.
+constexpr float kWheelGlidePerSecond = 15.0f;
+constexpr float kWheelMinLinesPerSecond = 2.0f;
 // THE END: phase 2 brings the last card ("Thanks For Playing!") up, phase 3
 // holds it in the middle; the step keeps coming (the game rolls on, showing
 // nothing new). We stop counting this far into phase 3 (lines), or one
@@ -117,6 +124,7 @@ struct State {
   uint32_t action = 0;      // the credits screen we follow (0 = none yet)
   float speed = 0;          // ours, -1..1 (the game's is 0..1)
   float distance = 0;       // rolled so far (in the game's units: x 1 / +332 done)
+  float wheel_left = 0;     // wheel distance still to glide (game units, + = on)
   float end = -1;           // the distance where it stops (phase 3 + kEndLines; -1 = not reached yet)
   std::vector<Checkpoint> checkpoints;
 } g;
@@ -300,8 +308,14 @@ extern "C" REX_FUNC(sub_820C6330) {
   __imp__sub_820C6330(ctx, base);
   const uint64_t result = ctx.r3.u64;
   const float heard = RF(base, a + kSpeed);
-  if (heard > 0.55f) g.speed = std::min(1.0f, g.speed + kSpeedStep);
-  if (heard < 0.45f) g.speed = std::max(-1.0f, g.speed - kSpeedStep);
+  // DIRECTION (2026-10-30 playtest): the game reads Up as 0.6 (+0.1) and
+  // Down as 0.4; on the Xbox Up = faster. Here the credits read like a list
+  // you move through, as on PC: UP (W / arrow up / D-pad up) heads back
+  // toward the start (rolling forward: slows, stops, then rolls back = the
+  // names move down), DOWN heads on toward the end (names move up). Until
+  // then Up sped the roll on and Down sent it back: the wrong way round.
+  if (heard > 0.55f) g.speed = std::max(-1.0f, g.speed - kSpeedStep);
+  if (heard < 0.45f) g.speed = std::min(1.0f, g.speed + kSpeedStep);
   if (heard > 0.55f || heard < 0.45f) {
     g.speed = std::round(g.speed * 10.0f) / 10.0f;  // no 0.30000001 drift
     REXLOG_INFO("Credits: speed {:.1f}{}", g.speed, g.speed < 0 ? " (backwards)" : "");
@@ -316,15 +330,28 @@ extern "C" REX_FUNC(sub_820C6330) {
       REXLOG_DEBUG("Credits: back at the start, stopped");
     }
   }
-  // The wheel: ours while the credits roll (input/mouse_menus.h). It moves
-  // the TEXT the way the wheel turns (2026-10-29 playtest): a notch down =
-  // the names go down (back), up = they go up (on), like dragging a page.
+  // The wheel: ours while the credits roll (input/mouse_menus.h). Like a
+  // list (2026-10-30 playtest, the 10-29 direction felt inverted): a notch
+  // DOWN = on toward the end (the names go up), UP = back. One line a notch,
+  // glided over a few frames (SMOOTH WHEEL above), not jumped.
   if (running) {
     mouse_menus::ClaimWheel(mouse_menus::Wheel::kList);
+    const float scale = RF(base, a + kScale);
     if (auto* driver = kbm::KeyboardMouseDriver::Get()) {
       if (const int notches = driver->TakeListWheel()) {
-        Move(ctx, base, a, -notches * kNotchLines * kLineSpacing / RF(base, a + kScale));
+        g.wheel_left += notches * kNotchLines * kLineSpacing / scale;
       }
+    }
+    if (g.wheel_left != 0.0f) {
+      const float left = std::abs(g.wheel_left);
+      const float floor = float(kWheelMinLinesPerSecond * kLineSpacing / scale * dt);
+      const float step = std::min(left, std::max(left * std::min(1.0f, float(kWheelGlidePerSecond * dt)), floor));
+      const float signed_step = std::copysign(step, g.wheel_left);
+      g.wheel_left -= signed_step;
+      if (std::abs(g.wheel_left) < 1e-4f) g.wheel_left = 0;
+      Move(ctx, base, a, signed_step);
+      // At the start (nothing before it) there is nowhere left to glide.
+      if (g.wheel_left < 0 && g.distance <= 0) g.wheel_left = 0;
     }
   }
   if (running && !waiting) PointAtVoiceLine(ctx, base, a);

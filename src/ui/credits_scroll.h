@@ -4,16 +4,18 @@
 //
 // WHAT THE PLAYER GETS (2026-10-29): the credits (main menu -> Credits, and
 // after the last boss) roll by themselves as before, and now:
-//   * the mouse WHEEL scrolls them, both ways (3 lines a notch), the text
-//     going the way the wheel turns (down = the names go down = back);
+//   * the mouse WHEEL scrolls them, both ways, like a list: a notch down =
+//     on toward the end (the names go up), up = back; one line a notch,
+//     glided smoothly over ~0.2 s;
 //   * the VOICE LINES (people with a voice clip: the game grows the one in
 //     the middle and A plays it) answer to the mouse anywhere on screen:
 //     under the pointer one grows, a left click (or A / Space) plays it;
-//   * Up / Down (D-pad, stick, arrow keys) set the speed, as on the Xbox
-//     (Up faster, Down slower, 10 steps), but Down goes on past "stopped"
-//     into rolling BACKWARDS (up to the same speed): a controller can read
-//     back too; that stops by itself at the start (the credits begin on an
-//     empty screen, as on the Xbox). Back (B / Esc / right click) leaves,
+//   * Up / Down (D-pad, stick, arrow keys, W / S) set the speed in 10 steps
+//     each way, like moving through a list (2026-10-30 playtest; the Xbox
+//     had Up = faster): Down rolls them on toward the end, Up slows them,
+//     stops, then rolls them BACKWARDS (up to the same speed): a controller
+//     can read back too; that stops by itself at the start (the credits
+//     begin on an empty screen, as on the Xbox). Back (B / Esc / right click) leaves,
 //     as before.
 //
 // HOW THE GAME ROLLS THEM (CCreditScreenAction, vtable 0x8202248C; Update
