@@ -133,6 +133,14 @@ struct CoinGroup {
   // The jack symbol only: a tall shape in the coin's square face read too
   // small next to the buttons (playtest, 2026-10-24). Native renderer only.
   float scale = 1.0f;
+  // Drawn FLAT: the coin's thickness squashed to nothing, so its two faces
+  // lie in one plane (the jack symbol only). The coin has a front and a back
+  // face with the same picture; the B is opaque, so the back never shows,
+  // but the jack symbol is see-through around the mask and the back face's
+  // copy showed through it, offset (2026-10-30 playtest). Flat, the back
+  // face draws the very same pixels at the same depth: one symbol. The
+  // game's own coin is untouched (native renderer only, like `scale`).
+  bool flat = false;
 };
 // What WorldButtonSwap decided for the coin being set up now, until the
 // frame ends (the native renderer reads it at the draw: recorder.cpp).

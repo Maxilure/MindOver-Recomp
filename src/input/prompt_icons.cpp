@@ -394,7 +394,11 @@ constexpr float kCoinWindow = 0.454f;  // the 12-sided window's corner radius, f
 // The world B's copies (PatchWorldButton): 0-3 = players 1-4's, 4 = the jack
 // symbol's (a stunned titan out of everyone's reach: WHO CAN JACK IT).
 constexpr int kJackSymbol = 4;
-constexpr float kJackSymbolScale = 1.7f;  // the jack symbol's coin, drawn this much bigger (CoinGroup::scale)
+constexpr float kJackSymbolScale = 1.7f;
+// The jack symbol's page is the B's 64 x 64 picture ENLARGED this many times
+// (256 x 256, PatchWorldButton): drawn 1.7x a button, the mask's detail
+// needs more than 64 pixels (2026-10-30, higher-quality mask).
+constexpr uint32_t kJackPageScale = 4;  // the jack symbol's coin, drawn this much bigger (CoinGroup::scale)
 
 // Bakes the window into the game's B: `indices` w x h (either row order: the
 // window is symmetric), `palette` BGRA x `colours`. The see-through colour =
@@ -1095,7 +1099,11 @@ Picture Draw(const std::string& described, uint32_t width, uint32_t height, Box 
     // our own picture over the coin's square face, like a key ('C').
     const int margin = int(std::lround((0.5f - kCoinWindow) * float(width)));
     const Box face{margin, margin, int(width) - 2 * margin, int(height) - 2 * margin};
-    Fit(page, Trim(Asset("../icons", "jack.png"), kTrimAll), face);
+    // The picture (2026-10-30): a solid YELLOW mask (the community's
+    // pick) at 321 x 495, traced from a render of Crash of the Titans' mask
+    // model; it goes onto the jack symbol's 256 x 256 page (kJackPageScale).
+    const Picture jack = Trim(Asset("../icons", "jack.png"), kTrimAll);
+    Fit(page, jack, face);
     return page;
   }
   if (described[0] == 'O') {
@@ -1331,8 +1339,11 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
   gp.width = (f[2] & 0x1FFF) + 1;
   gp.height = ((f[2] >> 13) & 0x1FFF) + 1;
   const bool tiled = (f[0] >> 31) != 0, palette_tiled = (pf[0] >> 31) != 0;
+  // An ENLARGED copy (the jack symbol's page, kJackPageScale): every pixel
+  // of the disc's picture repeated k x k times. k = 1 for everything else.
+  const uint32_t k = dp.width && gp.width % dp.width == 0 ? gp.width / dp.width : 0;
   if ((f[1] & 0x3F) != kFormat8 || tiled || !palette || (pf[1] & 0x3F) != kFormat8888 ||
-      palette_tiled || gp.width != dp.width || gp.height != dp.height) {
+      palette_tiled || k == 0 || gp.height != dp.height * k || (k != 1 && k != kJackPageScale)) {
     if (!quiet) REXLOG_WARN("Prompt pictures: {} isn't laid out as expected (fetch {:08X} {:08X} {:08X}, "
                 "palette {:08X} {:08X}): left alone",
                 gp.name, f[0], f[1], f[2], pf[0], pf[1]);
@@ -1351,7 +1362,7 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
   bool match[2] = {true, true};
   for (uint32_t y = 0; y < gp.height; ++y) {
     for (uint32_t x = 0; x < gp.width; ++x) {
-      const uint8_t want = dp.indices[size_t(y) * gp.width + x];
+      const uint8_t want = dp.indices[size_t(y / k) * dp.width + x / k];
       match[0] = match[0] && texel(x, y) == want;
       match[1] = match[1] && texel(x, gp.height - 1 - y) == want;
     }
@@ -1389,8 +1400,8 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
   // page's opaque part, inside the rows the glyph shows.
   {
     int x0 = int(gp.width), y0 = int(gp.used_height), x1 = -1, y1 = -1;
-    for (uint32_t y = 0; y < gp.used_height && y < dp.height; ++y) {
-      for (uint32_t x = 0; x < gp.width && x < dp.width; ++x) {
+    for (uint32_t y = 0; y < gp.used_height / k && y < dp.height; ++y) {
+      for (uint32_t x = 0; x < gp.width / k && x < dp.width; ++x) {
         const uint8_t index = dp.indices[size_t(y) * dp.width + x];
         if (index >= dp.colours || dp.palette[4 * size_t(index) + 3] <= 16) continue;
         x0 = std::min(x0, int(x));
@@ -1399,7 +1410,8 @@ bool MakePage(uint8_t* base, uint32_t font, uint32_t texture, const Prompt* prom
         y1 = std::max(y1, int(y));
       }
     }
-    gp.ink = x1 < 0 ? Box{0, 0, int(gp.width), int(gp.used_height)} : Box{x0, y0, x1 - x0 + 1, y1 - y0 + 1};
+    gp.ink = x1 < 0 ? Box{0, 0, int(gp.width), int(gp.used_height)}
+                    : Box{x0 * int(k), y0 * int(k), (x1 - x0 + 1) * int(k), (y1 - y0 + 1) * int(k)};
     // A BIG key slot (a copy of the stick's page): a key at the full stick
     // size was too big (playtest), an A-sized one too small: kBigSlotScale
     // of the stick's height, centred on it (the stick sits on the line the
@@ -1535,7 +1547,10 @@ void CheckWorldTexture(uint8_t* base, uint32_t texture) {
   const uint32_t d3d = xn ? Load32(base, xn + kXnD3DTexture) : 0;
   if (!d3d || Load32(base, xn + kXnPaletteMode) != 1) return;
   const uint32_t size = Load32(base, d3d + kD3DFetch + 8);
-  if ((size & 0x1FFF) + 1 != g.world_disc->width || ((size >> 13) & 0x1FFF) + 1 != g.world_disc->height) return;
+  const uint32_t w = (size & 0x1FFF) + 1, h = ((size >> 13) & 0x1FFF) + 1;
+  const bool plain = w == g.world_disc->width && h == g.world_disc->height;
+  const bool enlarged = w == g.world_disc->width * kJackPageScale && h == g.world_disc->height * kJackPageScale;
+  if (!plain && !enlarged) return;
   int world_found = 0;  // world B textures already known (the original first, then the copies)
   for (const GuestPage& gp : g.pages) {
     if (gp.texture == texture) return;  // known already
@@ -1929,6 +1944,48 @@ bool SquareCoin(pure3d::Node& group) {
 
 // WORLD B: THE BUTTON'S MATERIAL (above): the material's alpha test on;
 // THE BUTTON'S SHAPE: the B baked, the coin square. Package bca1bc0b.
+// THE JACK SYMBOL'S BIGGER PAGE: a texture chunk (one palettized 8-bit
+// image, as the B's) made `k` times as wide and tall, each pixel repeated
+// k x k times. Sizes live in three places: the texture (0x19000) and the
+// image (0x19001) each have width, height right after the name's version
+// word; the image data (0x19002) = u32 size + the TGA (its header's width /
+// height at 12 / 14, the indices after the palette). The game loads it as
+// any texture; MakePage still recognises the B in it (each k x k block = the
+// disc's pixel), and the jack symbol is painted at the full size.
+bool EnlargePage(pure3d::Node& texture, uint32_t k) {
+  auto set_size = [k](pure3d::Node& n) {
+    const size_t at = pure3d::NameEnd(n) + 4;  // after the name and the version
+    if (n.data.size() < at + 8) return false;
+    pure3d::SetNodeLe32(n, at, pure3d::NodeLe32(n, at) * k);
+    pure3d::SetNodeLe32(n, at + 4, pure3d::NodeLe32(n, at + 4) * k);
+    return true;
+  };
+  if (!set_size(texture)) return false;
+  bool enlarged = false;
+  for (pure3d::Node& image : texture.children) {
+    if (image.id != kChunkImage || !set_size(image)) continue;
+    for (pure3d::Node& pixels : image.children) {
+      if (pixels.id != kChunkImageData || pixels.data.size() < 4 + 18) continue;
+      const uint8_t* tga = pixels.data.data() + 4;
+      const size_t colours = size_t(tga[5] | tga[6] << 8), at = 18 + tga[0] + 4 * colours;
+      const uint32_t w = tga[12] | tga[13] << 8, h = tga[14] | tga[15] << 8;
+      if (tga[1] != 1 || tga[16] != 8 || at + size_t(w) * h > pixels.data.size() - 4) continue;
+      std::vector<uint8_t> out(tga, tga + at);  // header (+ id) + palette
+      const uint32_t W = w * k, H = h * k;
+      out[12] = uint8_t(W), out[13] = uint8_t(W >> 8), out[14] = uint8_t(H), out[15] = uint8_t(H >> 8);
+      out.resize(at + size_t(W) * H);
+      for (uint32_t y = 0; y < H; ++y) {
+        for (uint32_t x = 0; x < W; ++x) out[at + size_t(y) * W + x] = tga[at + size_t(y / k) * w + x / k];
+      }
+      pixels.data.resize(4);
+      pure3d::SetNodeLe32(pixels, 0, uint32_t(out.size()));
+      pixels.data.insert(pixels.data.end(), out.begin(), out.end());
+      enlarged = true;
+    }
+  }
+  return enlarged;
+}
+
 bool PatchWorldButton(const pure3d::Bytes& original, pure3d::Bytes* patched) {
   pure3d::Chunk root;
   std::vector<pure3d::Chunk> top;
@@ -1978,6 +2035,7 @@ bool PatchWorldButton(const pure3d::Bytes& original, pure3d::Bytes* patched) {
         pure3d::Node copy = texture;
         const std::string dot = base_name.substr(base_name.rfind('.'));
         RenamePage(copy, base_name, base_name.substr(0, base_name.rfind('.')) + "_p" + std::to_string(p) + dot);
+        if (p == 5 && EnlargePage(copy, kJackPageScale)) ++done;
         const pure3d::Bytes copy_bytes = pure3d::ToBytes(copy);
         children.insert(children.end(), copy_bytes.begin(), copy_bytes.end());
       }
@@ -2719,6 +2777,7 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
     if (jackable && jack) {
       g_coins.xn[count++] = jack;
       g_coins.scale = kJackSymbolScale;
+      g_coins.flat = true;
     }
     else if (copy[owner]) g_coins.xn[count++] = copy[owner];
   }

@@ -1333,6 +1333,12 @@ void CommitCoins(const uint8_t* base, DrawCommand& d) {
   if (group.scale != 1.0f) {
     for (int k = 0; k < 12; ++k) d.mvp[k] *= group.scale;
   }
+  // Flat (the jack symbol, CoinGroup::flat): the coin's z axis = the MVP's
+  // third column (column-major) set to zero, so both faces land on the
+  // coin's centre plane and the back can't show through the front's holes.
+  if (group.flat) {
+    for (int k = 8; k < 12; ++k) d.mvp[k] = 0.0f;
+  }
   if (group.count < 2) return;
   // The centre of the coin in clip space has w = mvp[15] (16.5 over a totem);
   // a coin is about 0.09 of the screen's half width across there.

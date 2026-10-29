@@ -23,9 +23,11 @@ engineering, testing, bug reports, corrections, art. See
 - Wrote most of the code and the documentation (via Claude Code). This
   includes the recompilation fixes, SDK patches, native renderer, input,
   co-op, save system, launcher and debugging tools.
-- Made the jack symbol over stunned titans (`assets/icons/jack.png`): a white
+- Made the jack symbol over stunned titans (`assets/icons/jack.png`): a
   silhouette of Aku Aku's mask with its eye sockets and eyes, traced from a
   *Crash of the Titans* render (see References); Maxilure picked this version.
+  Redrawn 2026-10-30 at a higher resolution, solid yellow (the community's
+  pick), from a render of the same model.
 - Did the reverse engineering written up in [docs/findings](docs/findings/).
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.

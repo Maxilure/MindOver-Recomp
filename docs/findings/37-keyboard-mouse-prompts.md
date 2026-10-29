@@ -492,12 +492,30 @@ coins now follow that rule (`JackReach` in `prompt_icons.cpp`): player p
 gets their button while their Crash is on foot (co-op state 2, no titan)
 and within range of an opportunity the titan offers. Nobody in reach = the
 **jack symbol**, a fifth copy of the B texture (`_p5` in the package patch)
-painted with `assets/icons/jack.png`: a white silhouette of Aku Aku's mask
+painted with `assets/icons/jack.png`: a silhouette of Aku Aku's mask
 (the outline traced from a render of *Crash of the Titans*' mask model, its
-eye sockets and eyes kept so it reads as a mask at button size). It is drawn
+eye sockets and eyes kept so it reads as a mask at button size), solid
+YELLOW (255, 204, 24; the community's pick over the first white version)
+with a dark outline and dark eye sockets and face marks. The file is 322 x
+492 and the jack symbol's copy of the texture is 256 x 256 (`EnlargePage`:
+the B's 64 x 64 picture enlarged 4 times, each pixel repeated 4 x 4, so
+MakePage still recognises it as the disc's B; `kJackPageScale`): at 64 x 64
+the mask's face lost its detail at the 1.7x size. It is drawn
 1.7 times the size of a button (`kJackSymbolScale` -> `CoinGroup::scale`:
 the native renderer scales the coin's own axes, recorder.cpp `CommitCoins`),
-since the tall mask fills less of the coin's square face. So
+since the tall mask fills less of the coin's square face.
+
+**One symbol, not two.** The coin is a thin 3D disc with a front and a back
+face carrying the same picture. The game's B is opaque edge to edge, so its
+back face is always hidden; the jack symbol is see-through around the mask,
+and the back face's copy showed through it, a little offset (the disc's
+thickness, seen at an angle). The native renderer now draws the jack
+symbol's coin FLAT (`CoinGroup::flat`: the MVP's third column, the coin's
+thickness axis, set to zero), so both faces land on the coin's centre plane:
+the back face draws the very same pixels at the same depth and disappears
+under the front. The game's coin data and the B itself are untouched; the
+emulated picture keeps the plain coin (like the 1.7x size, this is native
+only). So
 from afar every player sees the same "can be jacked" symbol, and up close
 the symbol turns into the buttons of the players who can jack it, side by
 side as in section 6.
