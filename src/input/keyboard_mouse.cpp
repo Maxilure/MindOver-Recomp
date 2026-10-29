@@ -4,6 +4,7 @@
 #include "keyboard_mouse.h"
 
 #include "../options/options_menu.h"
+#include "mouse_menus.h"
 
 #include "players.h"
 #include "../players/more_players.h"
@@ -681,24 +682,25 @@ void KeyboardMouseDriver::MenuMouseDown(Input input, Clock::time_point now) {
     case Input(rex::ui::VirtualKey::kRButton):
       if (pulses_.size() < 4) pulses_.push_back(X_INPUT_GAMEPAD_B);
       break;
-    // A list that scrolls by itself (the Options screen's long tabs) takes
-    // the notch: the list moves, the selection doesn't (playtest, 2026-10-15:
-    // a notch as a D-pad press moved the cursor first). Any other menu: a
-    // step up / down.
+    // The wheel does what the screen on show claimed (mouse_menus.h, WHAT
+    // THE WHEEL DOES): a list that scrolls by itself (Options, the save list,
+    // the credits) takes the notch, the list moves and the selection doesn't
+    // (playtest, 2026-10-15: a notch as a D-pad press moved the cursor first);
+    // a row of pictures (Crash's house) steps left / right; any other menu:
+    // nothing (2026-10-29: a short menu has nothing to scroll; the notch as a
+    // D-pad step only moved the cursor by surprise).
     case kWheelUp:
-      if (options_menu::WheelScrollsList()) {
-        list_wheel_ = std::max(-8, list_wheel_ - 1);
-      } else if (pulses_.size() < 4) {
-        pulses_.push_back(X_INPUT_GAMEPAD_DPAD_UP);
+    case kWheelDown: {
+      const bool up = input == kWheelUp;
+      const mouse_menus::Wheel use = options_menu::WheelScrollsList() ? mouse_menus::Wheel::kList
+                                                                      : mouse_menus::WheelUse();
+      if (use == mouse_menus::Wheel::kList) {
+        list_wheel_ = std::clamp(list_wheel_ + (up ? -1 : 1), -8, 8);
+      } else if (use == mouse_menus::Wheel::kLeftRight && pulses_.size() < 4) {
+        pulses_.push_back(up ? X_INPUT_GAMEPAD_DPAD_LEFT : X_INPUT_GAMEPAD_DPAD_RIGHT);
       }
       break;
-    case kWheelDown:
-      if (options_menu::WheelScrollsList()) {
-        list_wheel_ = std::min(8, list_wheel_ + 1);
-      } else if (pulses_.size() < 4) {
-        pulses_.push_back(X_INPUT_GAMEPAD_DPAD_DOWN);
-      }
-      break;
+    }
     default:
       break;
   }

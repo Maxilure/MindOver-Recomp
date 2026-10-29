@@ -22,6 +22,7 @@
 #include "../ui/scrooby.h"
 #include "prompt_icons.h"
 #include "keyboard_mouse.h"
+#include "mouse_screens.h"
 #include "players.h"
 
 namespace mouse_menus {
@@ -486,6 +487,9 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     HoverAndClick(ctx, base, menu, nullptr);
     return;
   }
+  // Crash's house's picture screens and the credits: their arrows, pictures
+  // and the wheel (input/mouse_screens.h).
+  mouse_screens::FrontEndFrame(ctx, base);
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   if (!driver || !driver->PeekMenuClick()) return;
   const uint32_t page = scrooby::FindPage(ctx, base, "FE_Buttons");
@@ -506,6 +510,29 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
       return;
     }
   }
+}
+
+bool MenusTakeInput(uint8_t* base) { return MenusTakeInput(static_cast<const uint8_t*>(base)); }
+
+// WHAT THE WHEEL DOES (mouse_menus.h): the last claim and when it runs out.
+namespace {
+std::atomic<int> g_wheel_use{int(Wheel::kNothing)};
+std::atomic<int64_t> g_wheel_until{0};  // steady_clock ticks
+constexpr auto kWheelClaimLife = std::chrono::milliseconds(300);
+}  // namespace
+
+void ClaimWheel(Wheel use) {
+  g_wheel_use.store(int(use), std::memory_order_relaxed);
+  g_wheel_until.store((std::chrono::steady_clock::now() + kWheelClaimLife).time_since_epoch().count(),
+                      std::memory_order_relaxed);
+}
+
+Wheel WheelUse() {
+  if (std::chrono::steady_clock::now().time_since_epoch().count() >
+      g_wheel_until.load(std::memory_order_relaxed)) {
+    return Wheel::kNothing;
+  }
+  return Wheel(g_wheel_use.load(std::memory_order_relaxed));
 }
 
 }  // namespace mouse_menus

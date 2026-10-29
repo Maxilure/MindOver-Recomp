@@ -56,6 +56,7 @@
 #include "pddi/intercept.h"
 #include "debug_input_script.h"
 #include "input_record.h"
+#include "input/prompt_icons.h"
 #include "native/ab_capture.h"
 #include "players/more_players.h"
 
@@ -746,6 +747,22 @@ std::string PosCommand(const std::vector<std::string_view>& w) {
   return Format("vec3", m + 48) + "\n";
 }
 
+// `interactables`: every thing a player can use that we've seen (a totem,
+// the TV...), with its object's position (object +44 = its world matrix,
+// position at +48), nearest to player 1 first: where to `goto` to use it.
+std::string InteractablesCommand() {
+  constexpr uint32_t kVtable = 0x8202EA6C;  // CInteractableBehaviour
+  std::string out;
+  for (const uint32_t it : prompt_icons::KnownInteractables()) {
+    if (!Readable(it, 32) || ReadBE(it, 4) != kVtable) continue;
+    const uint32_t object = ReadBE(it + 28, 4);
+    const uint32_t m = object && Readable(object + 44, 4) ? ReadBE(object + 44, 4) : 0;
+    if (!m || !Readable(m + 48, 12)) continue;
+    out += fmt::format("{:08X} object {:08X} at {}\n", it, object, Format("vec3", m + 48));
+  }
+  return out.empty() ? "none seen yet\n" : out;
+}
+
 std::string GotoCommand(const std::vector<std::string_view>& w) {
   if (w.size() != 5) throw Error{"goto <player> <x> <y> <z> (~ = keep, ~5 = +5)"};
   const uint32_t body = Body(w[1]);
@@ -991,7 +1008,7 @@ const char kHelp[] =
     "write <expr> <type> <value> | wait ms <N> | wait state <N> [ms] | wait exit [ms] |\n"
     "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> | tool <bind> |\n"
     "snap <name> <expr> <bytes> | diff <name> [update] [> file] | replay <file> [from] [to] | replay stop |\n"
-    "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> |\n"
+    "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | interactables |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
     "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"
     "<any FIFO input line>\n"
@@ -1019,6 +1036,7 @@ std::string Run(std::string_view line) {
   if (verb == "pos") return PosCommand(w);
   if (verb == "who") return WhoCommand(w);
   if (verb == "goto") return GotoCommand(w);
+  if (verb == "interactables") return InteractablesCommand();
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);
   if (verb == "fkey") return FKey(w);

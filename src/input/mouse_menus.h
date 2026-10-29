@@ -7,7 +7,13 @@
 //   * the pointer over an item SELECTS it (with the game's move sound);
 //   * a left click on an item CHOOSES it (the menu gets an A press);
 //   * a right click goes BACK (B), anywhere;
-//   * a wheel notch is one step up / down (the D-pad);
+//   * the wheel works only where there is something to scroll (2026-10-29,
+//     see WHAT THE WHEEL DOES): a long list slides (Options, the save list,
+//     the achievements), the credits scroll, a row of pictures (Crash's
+//     house: the TV's movies, the comic's art, the tiki face's enemies, the
+//     chest's outfits) steps left / right; in every other menu it does
+//     nothing (it used to be a D-pad press: in a five-item menu that only
+//     moved the cursor by surprise);
 //   * a left click on a prompt of the menus' prompt bar presses its button
 //     ("Back", "Rename", "Delete"...); the Options screen's tabs and the
 //     save list's panels are clickable too.
@@ -91,5 +97,25 @@ bool TakeClickOver(uint8_t* base, uint32_t element, uint32_t page = 0, uint32_t 
 // a key's letter is thin, its cell isn't). Hidden elements never match.
 bool PointerNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page = 0);
 bool TakeClickNear(uint8_t* base, uint32_t element, float half_w, float half_h, uint32_t page = 0);
+
+// Does the front end take menu input right now (no screen sliding in or
+// out: front end +8592 bit 0x40)? Main thread.
+bool MenusTakeInput(uint8_t* base);
+
+// -----------------------------------------------------------------------------
+// WHAT THE WHEEL DOES (2026-10-29)
+// -----------------------------------------------------------------------------
+// A wheel notch in a menu goes to whoever CLAIMED the wheel this frame:
+//   kList      the screen slides its own list (Options, save list, credits:
+//              they collect the notches with KeyboardMouseDriver::
+//              TakeListWheel; the selection itself doesn't jump);
+//   kLeftRight a row of pictures: notch up = D-pad left, down = right;
+//   kNothing   (no claim) the notch is dropped.
+// A claim lasts 300 ms: screens claim it every update while they're up, so
+// it ends by itself when they close. The Options screen claims through its
+// own WheelScrollsList (options_menu.h).
+enum class Wheel { kNothing, kList, kLeftRight };
+void ClaimWheel(Wheel use);  // main thread
+Wheel WheelUse();            // any thread (keyboard_mouse.cpp asks per notch)
 
 }  // namespace mouse_menus

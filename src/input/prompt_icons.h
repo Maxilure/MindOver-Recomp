@@ -90,6 +90,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 #include <string>
 #include <string_view>
 
@@ -214,5 +215,10 @@ bool KeysLookFor(int p);
 // 2-4's controls.toml's icons.player2-4 (input/bindings.h; set on the
 // Players screen, players/players_setup.h SetPadIcons). Any thread.
 int PadIconsSetting(int p);
+
+// The interactables seen so far (CInteractableBehaviour objects whose
+// Update ran; some may have gone away: check before reading). For the debug
+// console's `interactables` (where are the things a player can use?).
+std::vector<uint32_t> KnownInteractables();
 
 }  // namespace prompt_icons

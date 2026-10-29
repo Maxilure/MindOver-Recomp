@@ -360,6 +360,7 @@ struct GameState {
   int last_index = -1;         // the menu cursor at the last update (-1 = not known)
   bool refilling = false;      // inside our own call of the screen's Enter
   bool scroll_pending = false; // the window moved: fill the panels at the next update
+  int wheel_select = -1;       // ...and the panel the cursor goes to then (the wheel; -1 = it stays)
   bool refresh_pending = false;  // the list changed (a delete): rebuild, fill
   bool cursor_pending = false;   // a new visit (the scan ran): put the cursor in place
   bool preview_shown = false;    // "Create New Save" shows the game in progress (FillPreview)
@@ -1523,6 +1524,29 @@ extern "C" REX_FUNC(sub_820CCA38) {
       g.scroll_pending = false;
       FillTable(base, manager);
       Refill(ctx, base, screen);
+      if (g.wheel_select >= 0 && g.slot_menu) {
+        CallGame(__imp__sub_8237A4C0, ctx, base, g.slot_menu, uint32_t(g.wheel_select));
+      }
+      g.wheel_select = -1;
+    }
+    // THE MOUSE WHEEL (2026-10-29, as the Options screen's long tabs): a
+    // notch slides the window one save, the selection doesn't jump: the
+    // cursor stays on ITS save while that's still in one of the 3 panels,
+    // else on the nearest panel. Nothing at the list's ends. The wheel is
+    // ours while the list is up (input/mouse_menus.h WHAT THE WHEEL DOES).
+    if (idle && list_active && g.slot_menu && !DialogBusy() && !g.scroll_pending &&
+        !g.refresh_pending) {
+      mouse_menus::ClaimWheel(mouse_menus::Wheel::kList);
+      const int notches = kbm::KeyboardMouseDriver::Get() ? kbm::KeyboardMouseDriver::Get()->TakeListWheel() : 0;
+      const int top = std::clamp(g.top + notches, 0, std::max(ItemCount() - kPanels, 0));
+      if (notches && top != g.top) {
+        const int item = g.top + ReadS8(base, g.slot_menu + kMenuIndex);  // the selected save's place
+        g.top = top;
+        g.wheel_select = std::clamp(item - g.top, 0, VisiblePanels() - 1);
+        g.scroll_pending = true;
+        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+        REXLOG_INFO("Saves: the wheel slid the list to save {} of {}", g.top + 1, ItemCount());
+      }
     }
     const int index = int(int32_t(CallGame(__imp__sub_821239C8, ctx, base, screen,
                                            kSlotPageName, kSlotMenuName)));
@@ -1583,6 +1607,7 @@ extern "C" REX_FUNC(sub_820CCB08) {
     g.screen = 0;
     g.slot_menu = 0;
     g_screen_showing = false;
+    g.wheel_select = -1;
     g.prompts_pending = false;
     SetPrompts(ctx, base, false);
     RestorePanels(ctx, base);

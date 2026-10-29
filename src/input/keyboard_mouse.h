@@ -161,8 +161,9 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // to say what it hit (dropped after 0.2 s). Taking it consumes it.
   bool TakeMenuClick();
   // Wheel notches meant for a LIST that scrolls by itself (the Options
-  // screen's long tabs: options_menu::WheelScrollsList), not turned into
-  // D-pad presses: + = down. Taken (zeroed) by the reader. Game thread.
+  // screen's long tabs, the save list, the credits: whoever claimed the
+  // wheel, mouse_menus.h WHAT THE WHEEL DOES), not turned into D-pad
+  // presses: + = down. Taken (zeroed) by the reader. Game thread.
   int TakeListWheel();
   // The same without taking it: is a fresh one waiting? `x` / `y` (if given)
   // = where the pointer was when the button went down (0..1 over the
@@ -170,7 +171,7 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // pointer went in the frame or two before a menu looks at it.
   bool PeekMenuClick(float* x = nullptr, float* y = nullptr) const;
   // Presses `buttons` (X_INPUT_GAMEPAD_*) for a moment (~80 ms), queued after
-  // any earlier ones: a click's A, a right click's B, a wheel notch's D-pad.
+  // any earlier ones: a click's A, a right click's B, a wheel notch's left / right.
   void Pulse(uint16_t buttons);
   // Is a pulse being pressed or waiting? (The click lock in mouse_menus ends
   // once the click's press has reached the game.)

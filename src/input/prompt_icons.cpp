@@ -2452,6 +2452,11 @@ uint32_t InteractableOf(uint8_t* base, uint32_t object) {
   return 0;
 }
 
+std::vector<uint32_t> KnownInteractables() {
+  std::lock_guard<std::mutex> lock(g_interactables_mutex);
+  return g_interactables;
+}
+
 // Is player p's body (their Crash, or the titan they ride) in the list?
 bool InInteractableList(uint8_t* base, uint32_t it, int p) {
   const uint32_t crash = more_players::CharacterOfPlayer(p), titan = more_players::TitanOfPlayer(p);

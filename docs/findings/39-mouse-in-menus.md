@@ -7,9 +7,11 @@ Short version: the game's menus are Scrooby menus whose items each have a
 ([findings/30](30-menus-and-hud.md)). The port maps the mouse pointer from
 the window into that canvas and tests it against the boxes: the item under a
 moving pointer is selected (with the game's move sound), a left click on it
-chooses it (an A press), a right click goes back (B) and a wheel notch is a
-step up or down (the D-pad). The prompt bar, the Options tabs, the save list
-and the game's question boxes answer to the mouse too. The presses go into
+chooses it (an A press), a right click goes back (B) and the wheel scrolls
+where there is something to scroll (section 5; it used to be a D-pad step in
+every menu). The prompt bar, the Options tabs, the save list, the game's
+question boxes, Crash's house's picture screens and the credits answer to the
+mouse too. The presses go into
 the game the same way the keyboard's do ([findings/38](38-keyboard-mouse-real-keybinds.md)),
 so the game's own menu code does the rest.
 
@@ -251,3 +253,135 @@ No; save list hover + the Back word.
 
 The name screen's on-screen keyboard (its cursor is the screen's own, not a
 Scrooby menu selection) and typing a name on the keyboard: findings/38 s.5.
+
+## 5. Crash's house's picture screens, the wheel, the credits
+
+2026-10-29. Three gaps: the screens Crash's house opens took no mouse at
+all, the wheel stepped through every menu (in a five-item menu it only moved
+the cursor by surprise), and the credits could not be scrolled.
+
+### 5.1 What the wheel does
+
+`input/mouse_menus.h` (WHAT THE WHEEL DOES). A screen CLAIMS the wheel
+every update while it is up (`ClaimWheel`, a claim lasts 300 ms, so it ends
+by itself when the screen closes), and the keyboard driver sends each notch
+where the claim says:
+
+| claim | screens | a notch |
+|---|---|---|
+| list | Options (its own `WheelScrollsList`), the save list, the credits | the screen slides its list; the selection stays |
+| left / right | the TV, the comic, the tiki face, the chest | D-pad left (up) / right (down) |
+| none | every other menu (main menu, pause menu, difficulty, question boxes...) | nothing |
+
+The save list now slides like the Options screen's long tabs: one save a
+notch, the cursor kept on its save while that save is still in one of the
+three panels, else on the nearest panel; nothing at the ends.
+
+### 5.2 Crash's house's screens
+
+`input/mouse_screens.*`. They are front-end states with a page each in
+GameStart.prj, not Scrooby menus: one picture between a left and a right
+arrow (`LeftArrow` / `RightArrow` elements):
+
+| object in the house | front-end state | page | picture |
+|---|---|---|---|
+| TV | 988 MovieSelectionScreen | GameStart_MovieSelection | MovieImageSprite (17 movies) |
+| comic (front table) | 865 ConceptArtScreen | GameStart_ConceptArt | MenuSprite (12 art packs) |
+| tiki face | 860 EnemyInfoScreen | GameStart_EnemyInfo | portraits in the top row |
+| chest | 847 SkinSelectionScreen | (the port's outfit picker) | (its own mouse) |
+
+Their input states read IsButtonPressed (`sub_822652B0`) buttons 27 / 40
+(left / right), 1 (A) and 12 (B) every frame (CMovieScreenAction: state
++76 == 3, `sub_820D4CC0`; CEnemyInfoScreenAction: +152 == 3,
+`sub_820C91F8`, selected enemy at +156). So the mouse goes in as presses:
+a click on an arrow = D-pad left / right, a click on the TV's or the comic's
+picture = A (the TV plays that movie, the comic shows the art full screen).
+The arrows the game hides at the ends never match.
+
+The tiki face's portraits: its 20-entry table at 0x8259FCA8 (84 bytes per
+enemy, the portrait picture at +76) puts the ones from s - 1 to s + 2 in the
+top row (`sub_820C9440`), the selected one at alpha 255 (the top byte of
+element +80), the others at 128. A click on a portrait steps toward it ONE
+press at a time: after each step the screen loads that enemy and drops
+presses meanwhile (two presses at once moved one place).
+
+The tiki face's other A: each enemy has a sound (its battle cry), played by
+A on this screen (`0x820C92D4`). The enemy itself is a 3D model, not a page
+element, so a click inside a fixed canvas box right of the description panel
+(x 345-575, y 40-295, below the portrait row) is that A. Tested: a click on
+the Ratnician = `battlecry_labrat1_01.wav` in the audio trace.
+
+Debug console: `interactables` lists every usable thing seen so far with its
+position (CInteractableBehaviour, object +44 = world matrix). In a new game
+in the house: front door (11.52, 0, -0.21), comic table (3.75, 0, -6.0), tiki
+face (3.33, 0, 1.8), chest (7.36, 0, 2.01), TV (10.87, 0, -3.87), and one at
+(9, 5.5, -1) (name TBD). The comic opens when Crash walks up to its table
+(a teleport onto the spot didn't).
+
+### 5.3 The credits
+
+`ui/credits_scroll.*`. The wheel scrolls them both ways (3 lines a notch),
+the text moving the way the wheel turns (a notch down = the names go down =
+back, like dragging a page);
+Up / Down set the speed as on the Xbox (0.1 steps, 0 = stopped), but Down
+goes on past stopped into rolling backwards (to -1), which stops by itself at
+the start.
+
+How the game rolls them (CCreditScreenAction, vtable 0x8202248C, Update
+`sub_820C6330`): 30 text elements (this +84, 8 bytes each: element, line
+index) roll up by step = speed (+324) x dt x 500 / +332 per frame through the
+phase function (+344: 1 `sub_820C6EB8` rolling, 2 `sub_820C7260` the end
+elements come up, 3 `sub_820C7340` the last card, "Thanks For Playing!",
+held in the middle). An element past the top is RECYCLED at the bottom with
+the next line (+336 the last line handed out, +328 where the next goes; +328
+moves with the text). The lines (from +28 to +32, 272 bytes each): +0 a
+text-bank key, +4 the text, +260 heading, +261 big heading, +262 a line with
+a voice clip (A plays it; +348 bit 0x80 while it plays, the roll waits),
++268 text by key. Button 45 (up) and 16 (down) change the speed.
+
+A recycled line is gone, so going back works by CHECKPOINTS: every 2 line
+spacings of distance the port keeps the rolling state (the 30 elements'
+places, lines and visibility; +328 to +348; the end elements +44..+72), and
+back by d = restore the last checkpoint before the target, put each
+element's text back by the game's own rule (0x820C6F8C: the text at +4, or
+by key for headings / +268), then roll forward to the target with the
+game's own phase functions in steps of a third of a line. The game's Update
+runs with dt = 0 (its own step 0; f2 + 30 dt keeps its clock +124 the same)
+and the speed set to 0.5, so its Up / Down show as 0.6 / 0.4 afterwards; the
+port then moves the text by its own signed speed. The roll stops counting 20
+spacings into phase 3 (it goes on stepping while showing nothing new, and a
+notch back would still be the same card).
+
+VOICE LINES BY MOUSE. Some people's lines carry a voice clip (+262): the
+game grows the one passing the middle of the screen (1.9x, a window in the
+phase function at `0x820C712C`), shows a "Play Sound" prompt, and A plays it
+(+340 = that line; `sub_820C71F0` = are clips on, by language). The port lets
+the pointer pick ANY voice line on screen: after the frame's phase calls
+(which reset every element's scale, `0x82370A58`) the voice line under the
+pointer is grown the same way (`sub_82370FD0`, 1.9) and written to +340, and a
+left click on it is an A. Tested: pointer parked at 78% height, the names
+under it grow while the middle one grows too; clicks played
+`tschultz_ngin.wav` and `bchurchill_crunch_tiny.wav` (audio trace). A click
+while a clip plays is ignored by the game (+348), as its A is.
+
+Tests (debug console, main menu -> Credits, 623 lines, speed 0.2 at the
+start): stopped, 4 notches forward and 4 back = the same frame (mean
+difference 4.5 / 255: only the Back prompt's picture changed, pad -> key);
+-0.2 rolls back (earlier names come down); 30 notches up = the empty start;
+400 notches down = the end card, then 40 up = back through phase 2 to 1
+and forward again to phase 2 / 3 at the same distance (837 / 879 spacings,
+first pass 837 / 880). Before the end elements were in the checkpoints, the
+second pass jumped to phase 3 at once.
+
+### 5.4 Tests
+
+Debug console on a copy of the saves, New Game into Crash's house (keyboard
+on player 1): TV: right arrow 1 -> 2, wheel down -> 3, two notches up -> 1,
+a click on the picture plays the movie (its skip prompt answers); comic:
+right arrow 1 -> 2, wheel -> 3, a click on the picture = the art full
+screen; tiki face: the third portrait clicked = two steps (Ratnician ->
+Ratcicle); chest: the wheel steps the colour. Pause menu: two notches move
+nothing. Load Game list (55 saves): the cursor on save 2, one notch = window
+at save 2 with the cursor still on it, two more = it scrolled away and the
+cursor is on the nearest panel, one back = cursor on the same save one panel
+down. 0 errors in the logs.
