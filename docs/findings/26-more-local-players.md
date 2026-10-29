@@ -2065,7 +2065,9 @@ player 2 showed the Xbox Series B while players 3-4 kept the game's 360 B.
 The arrows beside a focused Buttons line stand just outside its text (at
 0.75 x their size; the text fits the room left between them). Turned and
 scaled, the two don't shrink round their centres, so each is nudged back
-(measured on photos) to sit level and equally far from the text.
+(measured on photos) to sit level and equally far from the text. A click
+on either arrow steps the style too (at first only the keys and a click on
+the line itself did).
 
 The debug tools' own input ("Debug input script", the device behind the
 console, `--debug_input_script` and `--debug_input_fifo`) isn't listed: it

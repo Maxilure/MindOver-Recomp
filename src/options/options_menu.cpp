@@ -1631,8 +1631,17 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   int clicked = -1;
   if (g.ply_choosing != kPlyNone) {
     const Screen::PlyCard& c = g.ply_cards[size_t(g.ply_choosing)];
-    if (mouse_menus::TakeClickOver(base, c.left, g.page, layer)) PlayersStep(ctx, base, -1);
-    if (mouse_menus::TakeClickOver(base, c.right, g.page, layer)) PlayersStep(ctx, base, +1);
+    // The arrows: the controller on offer, or (on the Buttons row) the
+    // previous / next style (the arrows stood there but only the keys and
+    // a click on the line itself worked; 2026-10-29).
+    for (const int dir : {-1, +1}) {
+      if (!mouse_menus::TakeClickOver(base, dir < 0 ? c.left : c.right, g.page, layer)) continue;
+      if (on_style) {
+        PlayersAct(ctx, base, dir > 0 ? kPlyActStyle : -kPlyActStyle);
+      } else {
+        PlayersStep(ctx, base, dir);
+      }
+    }
   }
   for (int k = 0; k < 4; ++k) {
     const Screen::PlyCard& c = g.ply_cards[size_t(k)];
