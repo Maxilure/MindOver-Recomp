@@ -864,6 +864,15 @@ bool OutfitAvailable(int outfit) {
   if ((outfit >= kFirstColour || IsTinted(outfit)) && !g_colours_added) return false;
   return SkinUnlocked(GameSkin(outfit));
 }
+uint32_t ListEntryOf(int outfit) {
+  const int i = ListIndexOf(outfit);
+  return i < 0 ? 0 : g_list + uint32_t(i) * kEntryBytes;
+}
+const char16_t* ColourDescription(int outfit) {
+  if (outfit == kCarbon || !IsCarbon(outfit)) return u"";  // (Carbon: the game's own text)
+  const CrashColour* c = ColourOf(outfit);
+  return c ? c->text : u"";
+}
 int ShownOutfit() { return int(Read32(kSelection)); }
 uint32_t ShownTemplateKey() { return kSelection + 12; }
 

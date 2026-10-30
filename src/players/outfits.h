@@ -132,6 +132,13 @@ int ListIndexOf(int outfit);
 bool OutfitAvailable(int outfit);
 int ShownOutfit();
 uint32_t ShownTemplateKey();
+// THE DESCRIPTION of an outfit for the picker's pages (2026-10-30): the
+// screen's list entry (20 bytes: skin, name text key +4, description text
+// key +8; 0 = not listed), and a coloured Crash's own description ("Exactly
+// the same in every way but red"; empty for other outfits: their entry's
+// key has the game's own text).
+uint32_t ListEntryOf(int outfit);
+const char16_t* ColourDescription(int outfit);
 
 // PICKS PER SAVE (2026-10-22), kept in the save file itself (a trailer after
 // the game's bytes, see outfits.cpp and saves/save_files.h). Called by the

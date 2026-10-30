@@ -9,11 +9,12 @@
 // and goes round again. One way only (no back-and-forth). Letters are cut
 // cleanly at the box's two edges. A text that fits is never touched.
 //
-// WHERE: only texts the port asks for (Fit below), and only once the usual
+// WHERE: only texts the port asks for (Fit / FitLines below), and only once the usual
 // shrinking (each screen's own "smaller, down to N") isn't enough:
 //   * the achievement / notice card on the game's message bar (its name line)
 //   * the Achievements screen's cards (names and descriptions)
 //   * the Players screen's device names
+//   * (FitLines, up and down) the outfit chest's descriptions
 // Every other text of the game draws exactly as before.
 //
 // HOW (native: the game draws it, both renderers show it, no ImGui):
@@ -54,6 +55,18 @@ namespace marquee {
 // draws as the game draws it. Call it whenever the text or its scale is set
 // (every frame is fine: the scroll only restarts when the numbers change).
 void Fit(uint32_t text, float width, float room);
+
+// UP AND DOWN (2026-10-30): a text of several lines (a wrapped description)
+// that has more than `max_lines` lines shows its first `max_lines`, waits,
+// scrolls UP a line at a time's pace until its last line is in view, waits,
+// fades out and comes back at the start fading in (the same round as the
+// sideways one). The lines are measured from the glyphs the game draws (no
+// font sizes, wrapping or page scale needed: only the order of the lines
+// and their spacing), so the first frame of a new text draws as the game
+// draws it. `content` = anything that changes with the words (a hash): a
+// new value starts the round again. Glyphs are cut at the window's top and
+// bottom edges like the sideways ones at the sides.
+void FitLines(uint32_t text, int max_lines, uint64_t content);
 
 // The text draws normally again (its screen is leaving / it's reused).
 void Stop(uint32_t text);

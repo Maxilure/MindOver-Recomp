@@ -12,32 +12,42 @@
 // characters: the game draws no world under this screen at all, the picture
 // behind was black; the preview is drawn by the menu itself.) So:
 //
-//   * THE LOOK (the chosen design: 1920 x 1080 mockups, one per player count):
-//       1 player   = the game's own page re-arranged: a glass panel on the
-//                    left (Crash / Coco faces, the outfit's name, the eight
-//                    colour circles in two rows of four), the 3D model on the
-//                    right on an orange pad, the prompt bar's "B Back" /
-//                    "Wear A";
-//       2-4 players = a CARD per player in a row, centred: "P1" in the
+//   * THE LOOK (2026-10-30: pages for 1-2 players, cards for 3-4):
+//       1 player   = THE GAME'S OWN PAGE (title glass with the outfit's
+//                    name, square panel, 3D model on the right, hinges and
+//                    gears where the original has them), the panel holding
+//                    three rows of NAMES ("Crash" / "Coco", the look, the fur
+//                    colour; selected = yellow, bigger, pulsing, between the
+//                    page's own green arrows) above the game's DESCRIPTION
+//                    of the outfit (its text bank key, as the screen sets
+//                    it); the prompt bar's "B Back" / "Wear A";
+//       2 players  = TWO such pages at once, 0.8 of the size: player 1's on
+//                    the left, player 2's MIRRORED on the right (model inside,
+//                    panel outside, as the original's player-2 page), each
+//                    with "P1" / "P2" on its title and its own "A Wear";
+//       3-4 players = a CARD per player in a row, centred: "P1" in the
 //                    player's colour at the top left, the model standing on
 //                    an oval PAD in the player's colour above the card's
-//                    rows: the faces (the other character greyed), the
-//                    outfit's name (selected = yellow, bigger, pulsing, a red
-//                    arrow at each side), the colour circles (Crash's Normal
-//                    look only; the picked one bigger in a white ring, yellow
-//                    while that row is selected), "A Wear" under them;
-//                    states READY ("Ready!", "B Change"), LOADING ("Loading"
-//                    pulsing where Wear was), LOCKED (the game's lock icon,
-//                    no Wear).
+//                    rows: three NAMES, one per choice: the character
+//                    ("Crash" / "Coco"), the look ("Normal", "Snipe"), the
+//                    fur colour ("Orange", "Carbon", "Ruby": looks that show
+//                    his fur only); the selected row = yellow, bigger,
+//                    pulsing, a red arrow at each side; "A Wear" under them.
+//                    (Until 2026-10-30 the character was two face pictures
+//                    and the colour eight circles: replaced by names; the
+//                    3D model shows the look.)
+//       Every layout: states READY ("Ready!", "B Change"), LOADING
+//       ("Loading" pulsing), LOCKED (the game's lock icon, no Wear; pages:
+//       the game's "Locked" as the description).
 //   * THE ELEMENTS: a data patch adds one layer to the screen's page
 //     (GameStart_SkinSelection.pag in the menus package cdd70a8c, which the
 //     game loads in Crash's house): FOUR cards' worth of elements, copies of
 //     the page's own (its square glass, its texts, its lock icon, its hinge),
-//     plus pictures the page didn't have: the faces (the HUD's MugshotCrash /
-//     MugshotCoco, textures of the in-game menus' package 7a8185b0, wrapped
-//     as menu sprites) and a CIRCLE (the game has no round picture: drawn by
-//     this file, a white disc and a disc with a dark rim, tinted per element
-//     for the pads, the colour circles and the ring). The red arrows and the
+//     plus TWO pages' worth (title glass, title, description, green arrows,
+//     hinges, gears: the original page's own pieces copied per side),
+//     plus one picture the page didn't have: a CIRCLE (the game has no round
+//     picture: a white disc drawn by this file, tinted per element) for the
+//     pads under the models. The red arrows and the
 //     A / B are the game font's own button characters.
 //     Nothing is laid out for a player count in the data: every frame each
 //     element is MOVED (its box, +92 / +96) and STRETCHED (its transform)
@@ -95,6 +105,7 @@
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
 #include "../ui/game_font.h"
+#include "../ui/marquee.h"
 #include "../ui/scrooby.h"
 #include "more_players.h"
 #include "outfit_previews.h"
@@ -104,6 +115,9 @@ REXCVAR_DEFINE_BOOL(outfit_picker, true, "CrashMoM",
                     "The chest in Crash's house: every player picks their outfit at the same time on a card "
                     "of their own (false = the game's own one-player-at-a-time screen)");
 
+REXCVAR_DEFINE_STRING(debug_outfit_description, "", "CrashMoM",
+                      "Dev: every outfit's description on the chest's pages becomes this text (tests the "
+                      "up-and-down scroll of long descriptions; \"\" = the game's own)");
 REXCVAR_DEFINE_STRING(outfit_picker_tune, "", "CrashMoM",
                       "(Developer) the outfit picker's model placement: 'px_per_x,px_per_y,feet_y0,size' "
                       "overrides the measured numbers (tuning only)");
@@ -139,6 +153,8 @@ constexpr uint32_t kInventoryManager = 0x8259B264;
 // for player 2's mirrored one; read in sub_820E0A30 at 0x820E0B54-0x820E0B68).
 // Ours is written every frame: above the card of whoever moved last.
 constexpr uint32_t kScreenPreview = 92;
+constexpr uint32_t kScreenScrooby = 16;     // CSkinScreenAction: its Scrooby screen (held)
+constexpr uint32_t kFrontEndScreen = 24;    // front end: the shown Scrooby screen (sub_82262730)
 constexpr uint32_t kMusicManager = 0x8259B240;  // the music manager (sub_822D9998's r3)
 // THE OPENING'S SLIDE (read 2026-10-23 with a per-frame log of the screen's
 // fields): CSkinScreenAction +24 = its title panel's LAYER (MenuLayer), +32 =
@@ -156,29 +172,31 @@ constexpr float kLayerWidthPx = 1440.0f;
 constexpr std::string_view kProject = "GameStart.prj";
 constexpr std::string_view kPageFile = "GameStart_SkinSelection.pag";
 constexpr std::string_view kPage = "GameStart_SkinSelection";
-constexpr std::string_view kInGamePackage = "package\\7a8185b0.p3d";  // the HUD's faces live there
 constexpr uint32_t kChunkLayer = 0x18020, kChunkPicture = 0x18022, kChunkText = 0x18023;
 constexpr uint32_t kChunkTexture = 0x19000, kChunkSprite = 0x19005, kChunkImage = 0x19001,
                    kChunkImageData = 0x19002;
 // Colours as the data stores them (B G R A bytes = 0xAARRGGBB little-endian),
 // also what scrooby::SetColour takes. The menus' own: item green, selected
-// yellow, title cyan; the players' marker colours; the colour circles'.
+// yellow, title cyan; the players' marker colours.
 constexpr uint32_t kGreen = 0xFF00FF00, kYellow = 0xFFFFF110, kCyan = 0xFF00FFF7, kWhite = 0xFFFFFFFF;
 constexpr uint32_t kGlass = 0xDBFFFFFF;    // the cards' glass: white, 86 % opaque (the page's own is 78 %)
-constexpr uint32_t kFaceDim = 0x8C9A9A9A;  // the character not picked: grey, see-through
 constexpr uint32_t kPlayerColour[kMaxPlayers] = {0xFFFF8C1A, 0xFF2F8CFF, 0xFF3CD23C, 0xFFB45AF0};
 constexpr uint8_t kPadAlpha = 0x8C;        // the pads: 55 % opaque
 constexpr uint32_t kLeft = 0, kCentre = 4;  // a text's horizontal justify
 
 // --- Element names (one set of four cards: "OP0Glass".."OP3Lock") -------------
-constexpr int kSwatches = 8;
+constexpr int kColourChoices = 8;
 std::string Name(int card, std::string_view part) { return fmt::format("OP{}{}", card, part); }
+// The page layouts' own elements ("OPS0Title".."OPS1ArrowR"): one set per side
+// (1 player = side 0; 2 players = player 1's page left, player 2's right).
+constexpr int kSides = 2;
+std::string SideName(int side, std::string_view part) { return fmt::format("OPS{}{}", side, part); }
 
 // The data boxes (Scrooby units) every element is laid out with; the code
 // stretches them from there (a picture is drawn at its DATA size, a size
 // written at run time isn't drawn: findings/31 s.7 -> the transform).
 constexpr float kGlassW = 256, kGlassH = 230;   // the page's own square glass (copied as it is)
-constexpr float kDisc = 32;                     // circles and faces: 32 x 32
+constexpr float kDisc = 32;                     // the circle picture (the pads): 32 x 32
 constexpr float kLockW = 50, kLockH = 79;       // the page's lock icon (copied as it is)
 // The lock picture's own shape: its sprite (LockedIcon.tga, 64 x 128 pixels)
 // draws a 63 x 100 part (the sprite's crop fields), so it's drawn 0.63 wide
@@ -189,6 +207,10 @@ constexpr float kHingeW = 80, kHingeH = 120;    // the page's hinge (copied as i
 constexpr float kCogSize = 90;                  // the page's gear ("cog", copied as it is)
 constexpr float kTextW = 300, kTextH = 36;      // centred texts (a line of the game's rows)
 constexpr float kTagW = 60;                     // "P1": left-aligned
+constexpr float kTitleW = 370, kTitleH = 74;    // the page's title glass (MenuPanel)
+constexpr float kDescW = 200, kDescH = 150;     // the description's box (CrashDescription: 200 x 200; ours is
+                                                // shorter, under the three choices)
+constexpr float kArrowSize = 32;                // the page's green arrows (LeftArrow / RightArrow)
 
 // --- Generated pictures (own art: a circle, drawn here) ------------------------
 // A sprite is chunk 0x19005 (name, u32 640, u32 480 = the screen it was made
@@ -274,9 +296,6 @@ Node CircleSprite(const Node& model, std::string_view name, bool rim) {
   return SpriteOf(model, name, std::move(image));
 }
 constexpr std::string_view kCircleSprite = "OP_Circle.tga";
-constexpr std::string_view kRimSprite = "OP_CircleRim.tga";
-constexpr std::string_view kFaceSprite[2] = {"OP_MugshotCrash.tga", "OP_MugshotCoco.tga"};
-constexpr std::string_view kFaceTexture[2] = {"MugshotCrash.tga", "MugshotCoco.tga"};
 
 // --- Building the layer -------------------------------------------------------
 // Element fields after the name (findings/30, tools/scrooby_dump.py): u32
@@ -316,19 +335,27 @@ Node* Find(Node& page, uint32_t id, std::string_view name) {
 std::atomic<bool> g_page_patched{false}, g_tree_patched{false};
 
 // The page with our layer added (on top: appended last). Element order =
-// drawing order: glass, pad, faces, circles (the ring under the picked one),
-// texts, arrows, lock.
+// drawing order: glass, pad, texts (the three choices by NAME), arrows, lock.
 bool PatchPage(Node& page) {
   Node* glass = Find(page, kChunkPicture, "CrashPanel");
   Node* text = Find(page, kChunkText, "Player1");
   Node* lock = Find(page, kChunkPicture, "CrashLockedIcon");
   Node* hinge = Find(page, kChunkPicture, "MenuHinge");
   Node* cog = Find(page, kChunkPicture, "cog");
+  // (the original page's pieces, copied for the PAGE layouts: 1-2 players)
+  Node* title_glass = Find(page, kChunkPicture, "MenuPanel");
+  Node* title_text = Find(page, kChunkText, "CrashMenuText");
+  Node* arrow_l = Find(page, kChunkPicture, "LeftArrow");
+  Node* arrow_r = Find(page, kChunkPicture, "RightArrow");
+  Node* panel_hinge = Find(page, kChunkPicture, "CrashHinge");
+  Node* panel_cog = Find(page, kChunkPicture, "cog2");
+  Node* description = Find(page, kChunkText, "CrashDescription");
   Node* menu_layer = nullptr;
   for (Node& l : page.children) {
     if (l.id == kChunkLayer && pure3d::NodeName(l) == "MenuLayer") menu_layer = &l;
   }
   if (!glass || !text || !lock || !hinge || !cog || !menu_layer || text->children.size() != 1) return false;
+  if (!title_glass || !title_text || !arrow_l || !arrow_r || !panel_hinge || !panel_cog || !description) return false;
   const Node empty = text->children[0];  // the menus' bank "_Empty": our code writes the strings
   Node layer = *menu_layer;
   pure3d::SetNodeName(layer, "OutfitPickerLayer");
@@ -351,55 +378,49 @@ bool PatchPage(Node& page) {
     t.children = {empty};
     layer.children.push_back(std::move(t));
   };
+  // (the pages' title gears and glasses FIRST: under the cards' texts, so
+  // the page's "P1", a card text, shows on its title glass)
+  for (int side = 0; side < kSides; ++side) {
+    add_picture(*cog, SideName(side, "Cog1"), "", kCogSize, kCogSize);
+    add_picture(*title_glass, SideName(side, "TitleGlass"), "", kTitleW, kTitleH);
+  }
   for (int k = 0; k < kMaxPlayers; ++k) {
     add_picture(*glass, Name(k, "Glass"), "", kGlassW, kGlassH);
     add_picture(*lock, Name(k, "Pad"), kCircleSprite, kDisc, kDisc);
-    add_picture(*lock, Name(k, "Face0"), kFaceSprite[0], kDisc, kDisc);
-    add_picture(*lock, Name(k, "Face1"), kFaceSprite[1], kDisc, kDisc);
-    add_picture(*lock, Name(k, "Ring"), kCircleSprite, kDisc, kDisc);
-    add_picture(*lock, Name(k, "Hover"), kCircleSprite, kDisc, kDisc);  // (the mouse's circle)
-    for (int s = 0; s < kSwatches; ++s) add_picture(*lock, Name(k, fmt::format("Swatch{}", s)), kRimSprite, kDisc, kDisc);
     add_text(Name(k, "Tag"), kTagW, kLeft);
+    add_text(Name(k, "Character"), kTextW, kCentre);
     add_text(Name(k, "Outfit"), kTextW, kCentre);
+    add_text(Name(k, "Colour"), kTextW, kCentre);
     add_text(Name(k, "Ready"), kTextW, kCentre);
     add_text(Name(k, "Prompt"), kTextW, kCentre);
     add_text(Name(k, "ArrowL"), kTagW, kCentre);
     add_text(Name(k, "ArrowR"), kTagW, kCentre);
     add_picture(*lock, Name(k, "Lock"), "", kLockW, kLockH);
   }
-  // (1 player) the gear and the hinge of the game's title panel, over the
-  // glass as in the original (its MenuLayer draws cog, panel, hinge).
-  add_picture(*cog, "OPCog2", "", kCogSize, kCogSize);  // (the second gear, under the first)
-  add_picture(*cog, "OPCog", "", kCogSize, kCogSize);
-  add_picture(*hinge, "OPHinge", "", kHingeW, kHingeH);
+  // THE PAGES (1-2 players): per side the original page's own pieces, at
+  // their own data sizes, in the original's drawing order (MenuLayer: gear,
+  // title glass (both added first, above), title, hinge, arrows; CrashLayer:
+  // panel (= the card's glass, drawn earlier), its gear, description, hinge).
+  auto add_text_from = [&](const Node& from, const std::string& name, float w, float h) {
+    Node t = from;
+    pure3d::SetNodeName(t, name);
+    SetBox(t, 0, 0, w, h);
+    t.children = {empty};
+    layer.children.push_back(std::move(t));
+  };
+  for (int side = 0; side < kSides; ++side) {
+    add_text_from(*title_text, SideName(side, "Title"), kTextW, kTextH);
+    SetJustify(layer.children.back(), kCentre);
+    add_picture(*hinge, SideName(side, "Hinge1"), "", kHingeW, kHingeH);
+    add_picture(*panel_cog, SideName(side, "Cog2"), "", kCogSize, kCogSize);
+    add_text_from(*description, SideName(side, "Desc"), kDescW, kDescH);
+    add_picture(*panel_hinge, SideName(side, "Hinge2"), "", kHingeW, kHingeH);
+    add_picture(*arrow_l, SideName(side, "ArrowL"), "", kArrowSize, kArrowSize);
+    add_picture(*arrow_r, SideName(side, "ArrowR"), "", kArrowSize, kArrowSize);
+  }
   if (!ok) return false;
   page.children.push_back(std::move(layer));
   return true;
-}
-
-// The faces: the in-game package's textures, their image wrapped as sprites.
-bool CutFaces(const Node& model, std::vector<Bytes>* sprites) {
-  Bytes ingame;
-  std::string error;
-  if (!data_patcher::ReadArchiveFile(kInGamePackage, &ingame, &error)) return false;
-  pure3d::Chunk root;
-  std::vector<pure3d::Chunk> top;
-  if (!pure3d::Parse(ingame, &root, &top)) return false;
-  int found = 0;
-  for (int f = 0; f < 2; ++f) {
-    for (const pure3d::Chunk& c : top) {
-      if (c.id != kChunkTexture || pure3d::NameOf(ingame, c) != kFaceTexture[f]) continue;
-      Node texture = pure3d::ToNode(ingame, c);
-      for (Node& image : texture.children) {
-        if (image.id != kChunkImage) continue;
-        sprites->push_back(pure3d::ToBytes(SpriteOf(model, kFaceSprite[f], image)));
-        ++found;
-        break;
-      }
-      break;
-    }
-  }
-  return found == 2;
 }
 
 // The same steps as options_page.cpp's RebuildProject, for one page; our
@@ -415,12 +436,7 @@ bool PatchPackage(const Bytes& original, Bytes* patched) {
     if (c.id == kChunkSprite && pure3d::NameOf(original, c) == "cog.tga") model = pure3d::ToNode(original, c);
   }
   if (model.id != kChunkSprite || model.children.empty() || model.children[0].id != kChunkImage) return false;
-  std::vector<Bytes> sprites = {pure3d::ToBytes(CircleSprite(model, kCircleSprite, false)),
-                                pure3d::ToBytes(CircleSprite(model, kRimSprite, true))};
-  if (!CutFaces(model, &sprites)) {
-    REXLOG_WARN("Outfit picker: the faces aren't in {}: the chest keeps the game's screen", kInGamePackage);
-    return false;
-  }
+  std::vector<Bytes> sprites = {pure3d::ToBytes(CircleSprite(model, kCircleSprite, false))};
   Bytes body;
   bool edited = false;
   for (const Chunk& c : top) {
@@ -486,14 +502,18 @@ constexpr Look kCrashLooks[] = {{0, u"Normal"},     {1, u"Greeny"},    {2, u"Blu
                                 {6, u"Magmadon"},   {7, u"Skeleton"},  {8, u"Spike"}};
 constexpr Look kCocoLooks[] = {{9, u"Coco"}, {10, u"Old School"}};
 struct Colour {
-  int outfit;
-  uint32_t tint;  // the circle's colour (the mockup's swatches)
+  int outfit;  // the fur colour (0 = the look's own: orange)
 };
-// The mockup's order: orange, white, red, yellow, green, blue, purple, pink.
-constexpr Colour kColours[kSwatches] = {
-    {0, 0xFFF08A24},                     {outfits::kCarbon, 0xFFF2F2EE},     {outfits::kCrashRed, 0xFFD8312A},
-    {outfits::kCrashYellow, 0xFFF2D230}, {outfits::kCrashGreen, 0xFF5BC236}, {outfits::kCrashBlue, 0xFF4A7BE0},
-    {outfits::kCrashPurple, 0xFF9A5AD8}, {outfits::kCrashPink, 0xFFF28CC0}};
+// The fur colours in the chest's order: the look's own orange, the white
+// Carbon, then the six gems (Ruby, Topaz, Jade, Sapphire, Amethyst, Rose
+// Quartz). Shown by NAME (ColourName), not as circles (2026-10-30).
+constexpr Colour kColours[kColourChoices] = {
+    {0},                     {outfits::kCarbon},     {outfits::kCrashRed},    {outfits::kCrashYellow},
+    {outfits::kCrashGreen}, {outfits::kCrashBlue}, {outfits::kCrashPurple}, {outfits::kCrashPink}};
+const char16_t* ColourName(int colour) {
+  return kColours[colour].outfit == 0 ? u"Orange" : outfits::FurWord(kColours[colour].outfit);
+}
+const char16_t* CharacterName(int character) { return character == 1 ? u"Coco" : u"Crash"; }
 constexpr int kCrashLookCount = int(std::size(kCrashLooks)), kCocoLookCount = int(std::size(kCocoLooks));
 
 struct Pick {
@@ -509,14 +529,19 @@ int OutfitOfPick(const Pick& k) {
 }
 // The name on the card: the look's, or with its fur colour ("Ruby Crash",
 // "Carbon Crash", "Topaz Ratcicle"; outfits::OutfitName).
-std::u16string PickName(const Pick& k) { return outfits::OutfitName(OutfitOfPick(k), LookOf(k).name); }
+// Plain orange Crash = "Crash", as the original's title (his look's own
+// name "Normal" is the look row's word).
+std::u16string PickName(const Pick& k) {
+  const int outfit = OutfitOfPick(k);
+  return outfit == 0 ? std::u16string(u"Crash") : outfits::OutfitName(outfit, LookOf(k).name);
+}
 Pick PickOfOutfit(int outfit) {
   Pick k;
-  if (outfits::IsTinted(outfit)) {  // a coloured look: its look + its fur's circle
+  if (outfits::IsTinted(outfit)) {  // a coloured look: its look + its fur colour
     const int look = outfits::LookOfOutfit(outfit), fur = outfits::FurColourOf(outfit);
     for (int i = 0; i < kCrashLookCount; ++i) {
       if (kCrashLooks[i].outfit != look) continue;
-      for (int c = 0; c < kSwatches; ++c) {
+      for (int c = 0; c < kColourChoices; ++c) {
         if (kColours[c].outfit == fur) return {kCrash, i, c};
       }
       return {kCrash, i, 0};
@@ -525,7 +550,7 @@ Pick PickOfOutfit(int outfit) {
   for (int i = 0; i < kCocoLookCount; ++i) {
     if (kCocoLooks[i].outfit == outfit) return {kCoco, i, 0};
   }
-  for (int i = 0; i < kSwatches; ++i) {
+  for (int i = 0; i < kColourChoices; ++i) {
     if (kColours[i].outfit == outfit) return {kCrash, 0, i};
   }
   for (int i = 0; i < kCrashLookCount; ++i) {
@@ -549,7 +574,7 @@ void Step(Pick& k, int row, int d) {
     if (!Available(k)) k.look = 0;
     return;
   }
-  const int count = row == kRowOutfit ? LookCount(k.character) : kSwatches;
+  const int count = row == kRowOutfit ? LookCount(k.character) : kColourChoices;
   int& v = row == kRowOutfit ? k.look : k.colour;
   v = ((v + d) % count + count) % count;
 }
@@ -567,18 +592,18 @@ struct Player {
   Clock::time_point repeat_at{};
 };
 // What a click can hit (THE MOUSE, below). kRow = a whole row's band: not
-// clickable, it only says which row the pointer is on (the outfit row's
-// arrows show there).
-enum HitKind { kHitNone = 0, kHitFace, kHitSwatch, kHitArrowL, kHitArrowR, kHitWear, kHitChange, kHitBack, kHitRow };
+// clickable, it only says which row the pointer is on (that row's arrows
+// show there). kHitName = a row's name: a click selects that row.
+enum HitKind { kHitNone = 0, kHitName, kHitArrowL, kHitArrowR, kHitWear, kHitChange, kHitBack, kHitRow };
 struct HitBox {
-  int kind, index;   // index: the face / circle number, the arrows' row, the row
+  int kind, index;   // index: the name's row, the arrows' row, the row
   float x0, y0, x1, y1;
 };
 
 // The elements of one card (and the page's), found once per page.
 struct Card {
-  uint32_t glass = 0, pad = 0, face[2] = {}, ring = 0, hover = 0, swatch[kSwatches] = {};
-  uint32_t tag = 0, outfit = 0, ready = 0, prompt = 0, arrow_l = 0, arrow_r = 0, lock = 0;
+  uint32_t glass = 0, pad = 0;
+  uint32_t tag = 0, character = 0, outfit = 0, colour = 0, ready = 0, prompt = 0, arrow_l = 0, arrow_r = 0, lock = 0;
 };
 struct State {
   bool open = false;
@@ -592,6 +617,7 @@ struct State {
   Clock::time_point opened_at{};
   bool close = false;        // the decision takes ExitBack at its next ask
   std::vector<std::pair<uint32_t, std::u16string>> shown;  // texts set (only changes are written)
+  std::map<uint32_t, std::u16string> desc_shown;             // descriptions set (by key or ours)
   // THE MOUSE (the keyboard's player only, on their own card): what can be
   // clicked, as last drawn (screen pixels at 1080p); what the pointer is over.
   int mouse_player = -1;     // -1 = the keyboard plays nobody here
@@ -607,7 +633,10 @@ struct State {
   int exit_step = -1;
   float slide = 0;           // this frame's offset of a LEFT-side panel, screen pixels
   uint32_t page = 0;         // the page the elements below belong to
-  uint32_t hinge = 0, cog = 0, cog2 = 0;
+  struct Side {  // a page's own elements (1-2 players)
+    uint32_t cog1 = 0, title_glass = 0, title = 0, hinge1 = 0, cog2 = 0, desc = 0, hinge2 = 0, arrow_l = 0,
+             arrow_r = 0;
+  } sides[2];
   Card cards[kMaxPlayers];
 } g;
 std::atomic<bool> g_mute{false};
@@ -788,16 +817,15 @@ float Units(float px) { return px / 2.25f; }
 
 // A row of cards (2-4 players), as the mockup's rowLayout(): card width,
 // the gap between cards, the model's size (1 = the 1-player page's), the
-// font size (CSS pixels of the mockup's font), the face size, the row
-// pitch, the circles' size and gap, the arrows' size and their gap to the
-// faces. Cards: top 470, bottom 968; the model's feet 150 below the top.
+// font size (CSS pixels of the mockup's font), the row pitch, the arrows'
+// size. Cards: top 470, bottom 968; the model's feet 150 below the top.
 struct RowLayout {
-  float w, gap, model, font, face, row, swatch, swatch_gap, arrow, arrow_gap;
+  float w, gap, model, font, row, arrow;
 };
 constexpr RowLayout kRowLayouts[3] = {
-    {600, 90, 1.25f, 62, 76, 84, 44, 14, 46, 18},  // 2 players
-    {470, 50, 1.05f, 58, 70, 80, 38, 11, 42, 14},  // 3
-    {375, 26, 0.90f, 50, 62, 74, 32, 8, 38, 10},   // 4
+    {600, 90, 1.25f, 62, 84, 46},  // 2 players
+    {470, 50, 1.05f, 58, 80, 42},  // 3
+    {375, 26, 0.90f, 50, 74, 38},  // 4
 };
 constexpr float kCardTop = 470, kCardBottom = 968, kFeetDrop = 150;
 constexpr float kOneModelSize = 1.6f;  // the mockup's 1-player model (its scale; the cards' are relative to it)
@@ -932,11 +960,10 @@ std::u16string ForPlayer(std::u16string text, int p) {
 }
 
 void HideCard(uint8_t* base, const Card& c) {
-  for (uint32_t e : {c.glass, c.pad, c.face[0], c.face[1], c.ring, c.hover, c.tag, c.outfit, c.ready, c.prompt, c.arrow_l,
-                     c.arrow_r, c.lock}) {
+  for (uint32_t e : {c.glass, c.pad, c.tag, c.character, c.outfit, c.colour, c.ready, c.prompt, c.arrow_l, c.arrow_r,
+                     c.lock}) {
     Hide(base, e);
   }
-  for (uint32_t e : c.swatch) Hide(base, e);
 }
 
 // --- The mouse's spots ---------------------------------------------------------------
@@ -955,17 +982,6 @@ bool Hovered(int p, int kind, int index = -1) {
 int ArrowRow(int p, const Player& pl) {
   return p == g.mouse_player && g.mouse_on && g.hover_row >= 0 ? g.hover_row : pl.row;
 }
-// The hover ring behind a circle, or hidden.
-void PlaceHoverRing(PPCContext& ctx, uint8_t* base, const Card& c, int p, float sx[kSwatches], float sy[kSwatches],
-                    float d) {
-  for (int s2 = 0; s2 < kSwatches; ++s2) {
-    if (Hovered(p, kHitSwatch, s2)) {
-      PlaceDisc(ctx, base, c.hover, sx[s2], sy[s2], d + 16, d + 16, 0xC8FFF110);  // see-through yellow
-      return;
-    }
-  }
-  Hide(base, c.hover);
-}
 // Hovered arrows grow (the one about to be clicked).
 float ArrowSize(int p, int row, bool left, float size) {
   return Hovered(p, left ? kHitArrowL : kHitArrowR, row) ? size * 1.3f : size;
@@ -977,6 +993,29 @@ void PlaceArrowsFor(PPCContext& ctx, uint8_t* base, const Card& c, int p, int ro
   PlaceText(ctx, base, c.arrow_r, u"\u00BB", cx + dx, cy - kLineMiddle * r, r, kWhite, false, kTagW);
   AddHit(p, kHitArrowL, row, cx - dx, cy, size * 1.4f, size * 1.4f);
   AddHit(p, kHitArrowR, row, cx + dx, cy, size * 1.4f, size * 1.4f);
+}
+
+// ONE CHOICE ROW (2026-10-30: everything picked BY NAME, no portraits or
+// colour circles): `row`'s name centred at cx, its line's top at `top`;
+// the selected row is yellow, 1.2x and pulsing, the others green; the red
+// arrows beside the row whose arrows show (the selected one, or the mouse
+// pointer's). `room` = the width the name may take (smaller font past it),
+// `arrow_dx` = the arrows' distance from cx.
+void PlaceChoice(PPCContext& ctx, uint8_t* base, const Card& c, int p, int row, uint32_t e, std::u16string_view name,
+                 float cx, float top, float font, float room, float width, float arrow_dx, float arrow) {
+  const Player& pl = g.players[p];
+  const bool browsing = !pl.ready && !pl.waiting;
+  const bool selected = browsing && pl.row == row;
+  const bool hover = Hovered(p, kHitName, row);
+  const float middle = top + font * kLineMiddle;
+  AddHit(p, kHitRow, row, cx, middle, width, font + 30);
+  if (browsing) AddHit(p, kHitName, row, cx, middle, room, font + 10);
+  if (selected) {
+    PlaceName(ctx, base, e, name, cx, top - font * 0.1f, font * 1.2f * Pulse(), kYellow, room);
+  } else {
+    PlaceName(ctx, base, e, name, cx, top, font, hover ? kYellow : kGreen, room);
+  }
+  if (browsing && ArrowRow(p, pl) == row) PlaceArrowsFor(ctx, base, c, p, row, cx, middle, arrow_dx, arrow);
 }
 
 // --- The game's own elements ------------------------------------------------------
@@ -991,30 +1030,38 @@ bool FindElements(PPCContext& ctx, uint8_t* base, uint32_t page) {
   if (g.page == page) return true;
   g.page = page;
   g.shown.clear();
+  g.desc_shown.clear();
   auto pic = [&](const std::string& n) { return scrooby::FindPicture(ctx, base, page, n); };
   auto txt = [&](const std::string& n) { return scrooby::FindText(ctx, base, page, n); };
-  g.hinge = pic("OPHinge");
-  g.cog = pic("OPCog");
-  g.cog2 = pic("OPCog2");
-  bool ok = g.hinge && g.cog && g.cog2;
+  bool ok = true;
+  for (int side = 0; side < kSides; ++side) {
+    State::Side& d = g.sides[side];
+    d.cog1 = pic(SideName(side, "Cog1"));
+    d.title_glass = pic(SideName(side, "TitleGlass"));
+    d.title = txt(SideName(side, "Title"));
+    d.hinge1 = pic(SideName(side, "Hinge1"));
+    d.cog2 = pic(SideName(side, "Cog2"));
+    d.desc = txt(SideName(side, "Desc"));
+    d.hinge2 = pic(SideName(side, "Hinge2"));
+    d.arrow_l = pic(SideName(side, "ArrowL"));
+    d.arrow_r = pic(SideName(side, "ArrowR"));
+    ok = ok && d.cog1 && d.title_glass && d.title && d.hinge1 && d.cog2 && d.desc && d.hinge2 && d.arrow_l &&
+         d.arrow_r;
+  }
   for (int k = 0; k < kMaxPlayers; ++k) {
     Card& c = g.cards[k];
     c.glass = pic(Name(k, "Glass"));
     c.pad = pic(Name(k, "Pad"));
-    c.face[0] = pic(Name(k, "Face0"));
-    c.face[1] = pic(Name(k, "Face1"));
-    c.ring = pic(Name(k, "Ring"));
-    c.hover = pic(Name(k, "Hover"));
-    for (int s = 0; s < kSwatches; ++s) c.swatch[s] = pic(Name(k, fmt::format("Swatch{}", s)));
     c.tag = txt(Name(k, "Tag"));
+    c.character = txt(Name(k, "Character"));
     c.outfit = txt(Name(k, "Outfit"));
+    c.colour = txt(Name(k, "Colour"));
     c.ready = txt(Name(k, "Ready"));
     c.prompt = txt(Name(k, "Prompt"));
     c.arrow_l = txt(Name(k, "ArrowL"));
     c.arrow_r = txt(Name(k, "ArrowR"));
     c.lock = pic(Name(k, "Lock"));
-    ok = ok && c.glass && c.pad && c.face[0] && c.face[1] && c.ring && c.hover && c.swatch[kSwatches - 1] && c.tag &&
-         c.outfit && c.ready && c.prompt && c.arrow_l && c.arrow_r && c.lock;
+    ok = ok && c.glass && c.pad && c.tag && c.character && c.outfit && c.colour && c.ready && c.prompt && c.arrow_l && c.arrow_r && c.lock;
   }
   if (!ok) REXLOG_WARN("Outfit picker: some of the cards' elements weren't found on the page");
   return ok;
@@ -1080,138 +1127,298 @@ void PlaceModel(float cx, float feet, float size, bool locked) {
   WriteF(matrix + 56, 0.0f);
 }
 
-// THE 1-PLAYER PAGE (the mockup's first screen): a 600 x 520 glass at
-// (420, 330) with the hinge at its top left; the faces, the name, the
-// circles in two rows of four; the model at x 1320 on its pad, feet at 860.
-void DrawOne(PPCContext& ctx, uint8_t* base, int p) {
+// --- THE PAGES (1-2 players, 2026-10-30) ------------------------------------------
+// The game's OWN page (its title glass with the outfit's name, its square
+// panel with the description, the 3D model beside it, its hinges and gears),
+// with the three choices as names in the panel's top: "Crash" / "Coco", the
+// look, the fur colour; the selected one yellow and pulsing between the
+// page's own green arrows; the game's description of the outfit under them.
+// 1 player = that page as the original lays it out. 2 players = TWO such
+// pages at once, player 1's on the left half, player 2's MIRRORED on the
+// right (the original's player-2 page: model inside, panel outside), each
+// 0.8 of the size. (3-4 players keep the cards.)
+//
+// Everything is laid out in the page's own units (640 x 480, y up; the
+// original's boxes, findings/30) and mapped to the screen through PageXf.
+// Two players: the pages are NARROWER (k across) but keep the original's
+// HEIGHTS (ky = 1: every element at its own height, the gears half behind
+// the frame at the top and bottom as the original's); texts, gears, hinges
+// and arrows are drawn k in both directions (no squashing), the glass
+// panels (they stretch) k wide and their own height.
+struct PageXf {
+  float k = 1, ky = 1, dx = 0, dy = 0;  // sizes, the heights' scale, then a shift (screen pixels at 1080p)
+  bool mirror = false;                  // flipped left-right (the player-2 page)
+  float X(float u) const {              // a point's screen x
+    const float m = mirror ? 640.0f - u : u;
+    return 960.0f + (240.0f + 2.25f * m - 960.0f) * k + dx;
+  }
+  float Y(float v) const { return 540.0f + (1080.0f - 2.25f * v - 540.0f) * ky + dy; }
+  float Px(float units) const { return units * 2.25f * k; }   // a size
+  float Py(float units) const { return units * 2.25f * ky; }  // a glass panel's height
+};
+// The original page's boxes (GameStart_SkinSelection.pag; bottom-left x, y,
+// width, height), the panel made taller (down to 70, was 93) for the three
+// choices above the description.
+struct PageBox {
+  float u, v, w, h;
+};
+constexpr PageBox kPgCog1 = {107, 412, kCogSize, kCogSize}, kPgTitle = {141, 330, kTitleW, kTitleH},
+                  kPgHinge1 = {131, 347, kHingeW, kHingeH}, kPgPanel = {79, 70, 256, 253},
+                  kPgCog2 = {276, -29, kCogSize, kCogSize}, kPgHinge2 = {264, 9, kHingeW, kHingeH},
+                  kPgDesc = {92, 60, kDescW, kDescH}, kPgLock = {404, 182, kLockW, kLockH};
+constexpr float kPgTitleMiddle = 326, kPgTitleLine = 345;  // the title's centre x, its line's bottom
+constexpr float kPgRowLine[3] = {288, 256, 224};           // the choices' line bottoms (36 tall)
+constexpr float kPgRowScale = 0.85f;
+constexpr float kPgArrowU[2] = {98, 316};                  // the arrows' centres x
+constexpr float kPgLoading[2] = {425, 219};                // "Loading" (the original's CrashLoading)
+constexpr float kPgPromptLine = 34;                        // 2 players: the page's own "A Wear" line
+constexpr float kTwoPageSize = 0.8f, kTwoPageShift = 385, kTwoPageDrop = 0;  // 2 players
+constexpr int kDescLines = 4;  // the description's lines the panel shows (more scroll up)
+constexpr float kPgModelX = 1242, kPgModelShoes = 848;     // the game's own model place (1080p, page 1)
+constexpr uint32_t kPageGlass = 0xC8FFFFFF;                // the page's glass: as the original (78 %)
+constexpr uint32_t kLockedTextKey = 0x825A58F0;            // the game's "Locked" text (its bank key)
+
+// A picture at a page box (its element's data box = own_w x own_h units,
+// default the box's own size: the panel's glass is the card's, 256 x 230).
+void PagePicture(PPCContext& ctx, uint8_t* base, uint32_t e, const PageXf& xf, const PageBox& b, uint32_t colour,
+                 float grow = 1.0f, float own_w = 0, float own_h = 0, bool glass = false) {
+  PlacePicture(ctx, base, e, xf.X(b.u + b.w / 2), xf.Y(b.v + b.h / 2), xf.Px(b.w) * grow,
+               (glass ? xf.Py(b.h) : xf.Px(b.h)) * grow, own_w > 0 ? own_w : b.w, own_h > 0 ? own_h : b.h, colour);
+}
+// A one-line text's top (screen) for a line whose 36-unit box sits at v.
+float PageLineTop(const PageXf& xf, float v, float scale) {
+  return xf.Y(v + kTextH / 2) - kLineMiddle * kFontAtScale1 * scale * xf.k;
+}
+// The description: the game's own text by its bank key (sub_82371C58, as the
+// screen does), or ours (a coloured Crash's); left-aligned, wrapped in its
+// box, scaled with the page.
+extern "C" REX_FUNC(__imp__sub_82371C58);
+extern "C" REX_FUNC(__imp__sub_82262730);  // front end: show a screen (r4)
+void PlaceDescription(PPCContext& ctx, uint8_t* base, uint32_t e, const PageXf& xf, uint32_t key,
+                      std::u16string_view own) {
+  if (!e) return;
+  const float unit = ReadF(kUnitToPosition);
+  const PageBox& b = kPgDesc;
+  // (mirrored: the box moves, the text stays left-aligned inside it)
+  // (its TOP stays where the page has it: scaled around its middle, a
+  // smaller box's first line would drop below the choices; MIRRORED page:
+  // the box keeps its place INSIDE the panel (13 units from the panel's
+  // left edge), not the mirror image of it: the text is left-aligned, a
+  // mirrored box put it 30 units further in than player 1's)
+  const float box_u = xf.mirror ? 2 * (kPgPanel.u + kPgPanel.w / 2) - (b.u + b.w / 2) : b.u + b.w / 2;
+  const float cx = xf.X(box_u), cy = xf.Y(b.v + b.h) + xf.Px(b.h) / 2;
+  WriteF(e + kElementX, (UnitX(cx) - b.w / 2) * unit);
+  WriteF(e + kElementY, (UnitY(cy) - b.h / 2) * unit);
+  scrooby::SetScale(ctx, base, e, xf.k);
+  // Written only when it changes (by key: the game's string; else ours).
+  std::u16string tag = key ? u"\x01" + U16(fmt::format("{:08X}", key)) : std::u16string(own);
+  auto& last = g.desc_shown[e];
+  if (last != tag) {
+    last = tag;
+    if (key) {
+      std::erase_if(g.shown, [&](const auto& t) { return t.first == e; });  // (Put's cache: not ours now)
+      scrooby::Call(__imp__sub_82371C58, ctx, base, e, key);
+    } else {
+      scrooby::SetText(ctx, base, e, own);
+    }
+  }
+  scrooby::SetColour(ctx, base, e, kCyan);
+  scrooby::SetVisible(base, e, true);
+  // A long description (more lines than the panel holds) scrolls up through
+  // it and starts again (ui/marquee.h FitLines).
+  marquee::FitLines(e, kDescLines, std::hash<std::u16string>{}(tag));
+}
+// The text and key of player p's description: locked = the game's "Locked";
+// a coloured Crash = ours; any other = its list entry's (a coloured look =
+// its look's).
+void DescriptionOf(const Pick& k, uint32_t* key, std::u16string* own) {
+  *key = 0;
+  own->clear();
+  if (const std::string test = REXCVAR_GET(debug_outfit_description); !test.empty()) {
+    *own = U16(test);
+    return;
+  }
+  const int outfit = OutfitOfPick(k);
+  if (!Available(k)) {
+    *key = Read32(kLockedTextKey);
+    return;
+  }
+  if (const char16_t* t = outfits::ColourDescription(outfit); t && *t) {
+    *own = t;
+    return;
+  }
+  if (const uint32_t entry = outfits::ListEntryOf(outfit)) *key = Read32(entry + 8);
+}
+// The game's own model (1 player): where the original stands it, or hidden.
+void PlaceGameModel(float x, float shoes, float size, bool hidden) {
+  const uint32_t preview = Read32(g.screen + kScreenPreview);
+  if (preview < 0x40000000) return;
+  const uint32_t matrix = Read32(preview + 44);
+  if (matrix < 0x40000000) return;
+  const ModelMap m = Map();
+  for (int r = 0; r < 3; ++r) {
+    for (int c = 0; c < 3; ++c) WriteF(matrix + 16 * r + 4 * c, r == c ? size : 0.0f);
+  }
+  WriteF(matrix + 48, hidden ? 1000.0f : (x - 960.0f) / m.px_per_x);
+  WriteF(matrix + 52, 0.1f + (kPgModelShoes - shoes) / m.px_per_y);
+  WriteF(matrix + 56, 0.0f);
+}
+void HideSide(uint8_t* base, const State::Side& d) {
+  for (uint32_t e : {d.cog1, d.title_glass, d.title, d.hinge1, d.cog2, d.desc, d.hinge2, d.arrow_l, d.arrow_r}) {
+    Hide(base, e);
+  }
+}
+
+// Page `side` for player p. Card `side`'s elements give the panel (its
+// glass), the choices' texts, "P1", Ready / Loading, the prompt and the lock.
+void DrawPage(PPCContext& ctx, uint8_t* base, int side, int p, const PageXf& xf, bool alone) {
   const Player& pl = g.players[p];
-  const Card& c = g.cards[0];
-  for (int k = 1; k < kMaxPlayers; ++k) HideCard(base, g.cards[k]);
-  // The panel comes in from the left with the title layer's slide, the model
-  // side (pad, lock) from the right (the description layer's, mirrored).
-  const float px = 420 + g.slide, py = 330, pw = 600, ph = 520, cx = px + pw / 2;
-  const float mx = 1320 - g.slide;
+  const Card& c = g.cards[side];
+  const State::Side& d = g.sides[side];
   const bool locked = !Available(pl.pick);
   const bool browsing = !pl.ready && !pl.waiting;
-  PlacePicture(ctx, base, c.glass, cx, py + ph / 2, pw, ph, kGlassW, kGlassH, kGlass);
-  // The hinge and the gear at the panel's top-left corner, at the game's own
-  // size and where the original page has them on its title panel
-  // (MenuPanel (141, 330) top 404: MenuHinge (131, 347) 80 x 120, cog (107,
-  // 412) 90 x 90 = hinge 10 units left of the panel and 57 below its top,
-  // cog 34 left, 8 above). The gear MOVES as the game moves its own (the
-  // hidden "cog": its transform copied every frame).
-  {
-    const float left = UnitX(px), top = UnitY(py);
-    auto sx = [](float u) { return 240.0f + 2.25f * u; };
-    auto sy = [](float u) { return 1080.0f - 2.25f * u; };
-    // The game's gear PULSES (read with the console: its transform's scale
-    // swings 1.11 <-> 1.20 about every 0.6 s, angle 0; the Options screen's
-    // turn during slides): its scale and angle are copied every frame.
-    float scale = 1.0f, angle = 0.0f;
-    if (const uint32_t game_cog = scrooby::FindPicture(ctx, base, g.page, "cog")) {
-      const float m00 = ReadF(game_cog + 16), m01 = ReadF(game_cog + 20);
-      const float k = std::hypot(m00, m01);
-      if (std::isfinite(k) && k > 0.2f && k < 5.0f) {
-        scale = k;
-        angle = std::atan2(m01, m00) * 57.2957795f;
-      }
+  const bool ready = pl.ready && !pl.waiting;
+  Hide(base, c.pad);
+  Hide(base, c.arrow_l);
+  Hide(base, c.arrow_r);
+  // The gears PULSE as the game's own (its hidden "cog": the transform's
+  // scale swings 1.11 <-> 1.20 about every 0.6 s; copied every frame); the
+  // panel's gear opposite (one grows while the other shrinks).
+  float scale = 1.0f, angle = 0.0f;
+  if (const uint32_t game_cog = scrooby::FindPicture(ctx, base, g.page, "cog")) {
+    const float m00 = ReadF(game_cog + 16), m01 = ReadF(game_cog + 20);
+    const float k = std::hypot(m00, m01);
+    if (std::isfinite(k) && k > 0.2f && k < 5.0f) {
+      scale = k;
+      angle = std::atan2(m01, m00) * 57.2957795f;
     }
-    PlacePicture(ctx, base, g.cog, sx(left - 34 + kCogSize / 2), sy(top + 8 + kCogSize / 2),
-                 kCogSize * 2.25f * scale, kCogSize * 2.25f * scale, kCogSize, kCogSize, kWhite);
-    if (angle != 0) scrooby::Rotate(ctx, base, g.cog, angle);
-    // A SECOND GEAR (2026-10-23), up and to the right of the
-    // first, its teeth meshing with it and its top running up behind the
-    // purple frame (the frame page is drawn over ours), as the menus' gears
-    // usually vanish behind the frame (the original title panel's own gear sits
-    // at y 412-502, past the frame's inner edge ~450). It pulses opposite to
-    // the first (one grows while the other shrinks: 1.11 + 1.20 - scale).
-    const float scale2 = std::clamp(2.31f - scale, 0.5f, 2.0f);
-    PlacePicture(ctx, base, g.cog2, sx(left - 34 + kCogSize / 2 + 40), sy(440), kCogSize * 2.25f * scale2,
-                 kCogSize * 2.25f * scale2, kCogSize, kCogSize, kWhite);
-    if (angle != 0) scrooby::Rotate(ctx, base, g.cog2, -angle);
-    PlacePicture(ctx, base, g.hinge, sx(left - 10 + kHingeW / 2), sy(top - 57 + kHingeH / 2), kHingeW * 2.25f,
-                 kHingeH * 2.25f, kHingeW, kHingeH, kWhite);
   }
-  Hide(base, c.tag);
-  Hide(base, c.ready);
-  const int arrow_row = ArrowRow(p, pl);
-  // Faces: 100 px, 60 px either side of the middle.
-  const float face = 100, face_y = py + 70 + face / 2;
-  AddHit(p, kHitRow, kRowCharacter, cx, face_y, pw, face + 30);
-  for (int f = 0; f < 2; ++f) {
-    const bool on = pl.pick.character == f;
-    const bool hover = Hovered(p, kHitFace, f);
-    const float grow = (on && browsing && pl.row == kRowCharacter ? 1.2f : 1.0f) * (hover ? 1.15f : 1.0f);
-    const float fx = cx + (f == 0 ? -110.0f : 110.0f);
-    PlaceDisc(ctx, base, c.face[f], fx, face_y, face * grow, face * grow, on || hover ? kWhite : kFaceDim);
-    if (browsing) AddHit(p, kHitFace, f, fx, face_y, face, face);
+  // (the mirrored page has no top gear or hinge: its corner is the frame's
+  // own emblem and gears; the original's single title had one, on the left)
+  if (!xf.mirror) {
+    PagePicture(ctx, base, d.cog1, xf, kPgCog1, kWhite, scale);
+    if (angle != 0) scrooby::Rotate(ctx, base, d.cog1, angle);
+  } else {
+    Hide(base, d.cog1);
   }
-  // The name.
-  const bool name_selected = browsing && pl.row == kRowOutfit;
-  const float font = 67;
-  AddHit(p, kHitRow, kRowOutfit, cx, py + 220 + font * 0.5f, pw, font + 30);
-  PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, py + 220 - (name_selected ? font * 0.1f : 0.0f),
-            font * (name_selected ? 1.2f * Pulse() : 1.0f), name_selected ? kYellow : kGreen, pw - 150);
-  // The circles: 54 px, 22 apart, 4 x 2.
-  const float d = 54, gap = 22, total = 4 * d + 3 * gap, top = py + 340;
-  if (HasColour(pl.pick)) {
-    AddHit(p, kHitRow, kRowColour, cx, top + d + gap / 2, pw, 2 * d + gap + 20);
-    float sxs[kSwatches], sys[kSwatches];
-    for (int s = 0; s < kSwatches; ++s) {
-      const int col = s % 4, row = s / 4;
-      const float sx = cx - total / 2 + col * (d + gap) + d / 2, sy = top + row * (d + gap) + d / 2;
-      sxs[s] = sx;
-      sys[s] = sy;
-      const bool on = s == pl.pick.colour;
-      PlaceDisc(ctx, base, c.swatch[s], sx, sy, on ? d + 10 : d, on ? d + 10 : d, kColours[s].tint);
-      if (on) {
-        const uint32_t ring = browsing && pl.row == kRowColour ? kYellow : kWhite;
-        PlaceDisc(ctx, base, c.ring, sx, sy, d + 22, d + 22, ring);
-      }
-      if (browsing) AddHit(p, kHitSwatch, s, sx, sy, d + gap, d + gap);
+  // The title: the whole name ("Ruby Snipe"), yellow as the original's.
+  PagePicture(ctx, base, d.title_glass, xf, kPgTitle, kPageGlass, 1.0f, 0, 0, true);
+  const float title_x = xf.X(kPgTitleMiddle);
+  PlaceName(ctx, base, d.title, PickName(pl.pick), title_x, PageLineTop(xf, kPgTitleLine, 1.0f), kFontAtScale1 * xf.k,
+            kYellow, xf.Px(kTitleW - 110));
+  if (!xf.mirror) {
+    PagePicture(ctx, base, d.hinge1, xf, kPgHinge1, kWhite);
+  } else {
+    Hide(base, d.hinge1);
+  }
+  // "P1" at the title glass's outer end (2 players only).
+  if (!alone) {
+    const float tag_u = xf.mirror ? kPgTitle.u + kPgTitle.w - 14 : kPgTitle.u + 46;
+    PlaceText(ctx, base, c.tag, U16(fmt::format("P{}", p + 1)), xf.X(tag_u), PageLineTop(xf, kPgTitleLine, 0.9f),
+              kFontAtScale1 * 0.9f * xf.k, kPlayerColour[p], true, kTagW);
+  } else {
+    Hide(base, c.tag);
+  }
+  // The panel, its gear and hinge.
+  PagePicture(ctx, base, c.glass, xf, kPgPanel, kPageGlass, 1.0f, kGlassW, kGlassH, true);
+  PagePicture(ctx, base, d.cog2, xf, kPgCog2, kWhite, std::clamp(2.31f - scale, 0.5f, 2.0f));
+  if (angle != 0) scrooby::Rotate(ctx, base, d.cog2, -angle);
+  // (the original's lower hinge is the same picture turned half a turn: the
+  // arm at the panel's corner, the wrench down to the gear)
+  // MIRRORED page: its mirror image (turned + mirrored left-right = flipped
+  // up-down: a negative height in the stretch).
+  if (xf.mirror) {
+    const PageBox& h = kPgHinge2;
+    PlacePicture(ctx, base, d.hinge2, xf.X(h.u + h.w / 2), xf.Y(h.v + h.h / 2), xf.Px(h.w), -xf.Px(h.h), h.w, h.h,
+                 kWhite);
+  } else {
+    PagePicture(ctx, base, d.hinge2, xf, kPgHinge2, kWhite);
+    scrooby::Rotate(ctx, base, d.hinge2, 180.0f);
+  }
+  const float mid_x = xf.X(kPgPanel.u + kPgPanel.w / 2);
+  const float font = kFontAtScale1 * kPgRowScale * xf.k;
+  const float room = xf.Px(kPgArrowU[1] - kPgArrowU[0] - 46), width = xf.Px(kPgPanel.w);
+  if (ready) {  // READY: "Ready!" in the panel, "B Change" (2 players; 1 player closes at once)
+    Hide(base, c.character);
+    Hide(base, c.outfit);
+    Hide(base, c.colour);
+    Hide(base, d.desc);
+    Hide(base, d.arrow_l);
+    Hide(base, d.arrow_r);
+    PlaceText(ctx, base, c.ready, u"Ready!", mid_x, PageLineTop(xf, 190, 1.45f), kFontAtScale1 * 1.45f * xf.k, kYellow);
+    PlaceText(ctx, base, c.prompt, ForPlayer(u"² Change", p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
+              kFontAtScale1 * 0.8f * xf.k, Hovered(p, kHitChange) ? kYellow : kCyan);
+    AddHit(p, kHitChange, -1, mid_x, xf.Y(kPgPromptLine + 18), width * 0.6f, font);
+  } else {
+    // The three choices by name (the arrows drawn below, the page's own).
+    PlaceChoice(ctx, base, c, p, kRowCharacter, c.character, CharacterName(pl.pick.character), mid_x,
+                PageLineTop(xf, kPgRowLine[0], kPgRowScale), font, room, width, 0, 0);
+    PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookOf(pl.pick).name, mid_x,
+                PageLineTop(xf, kPgRowLine[1], kPgRowScale), font, room, width, 0, 0);
+    if (HasColour(pl.pick)) {
+      PlaceChoice(ctx, base, c, p, kRowColour, c.colour, ColourName(pl.pick.colour), mid_x,
+                  PageLineTop(xf, kPgRowLine[2], kPgRowScale), font, room, width, 0, 0);
+    } else {
+      Hide(base, c.colour);
     }
-    PlaceHoverRing(ctx, base, c, p, sxs, sys, d);
-  } else {
-    for (uint32_t e : c.swatch) Hide(base, e);
-    Hide(base, c.ring);
-    Hide(base, c.hover);
+    // The green arrows beside the row whose arrows show (the original's own
+    // pictures; Menu_Down_Arrow turned to point left / right).
+    const int row = ArrowRow(p, pl);
+    if (browsing && (row != kRowColour || HasColour(pl.pick))) {
+      const float y = xf.Y(kPgRowLine[row] + kTextH / 2);
+      for (int a = 0; a < 2; ++a) {
+        const bool left = (a == 0) != xf.mirror;  // (mirrored: the left picture sits right)
+        const uint32_t e = a == 0 ? d.arrow_l : d.arrow_r;
+        const float x = xf.X(kPgArrowU[a]);
+        const float size = xf.Px(kArrowSize) * (Hovered(p, left ? kHitArrowL : kHitArrowR, row) ? 1.3f : 1.0f);
+        PlacePicture(ctx, base, e, x, y, size, size, kArrowSize, kArrowSize, kWhite);
+        scrooby::Rotate(ctx, base, e, left ? 90.0f : -90.0f);
+        AddHit(p, left ? kHitArrowL : kHitArrowR, row, x, y, size * 1.4f, size * 1.4f);
+      }
+    } else {
+      Hide(base, d.arrow_l);
+      Hide(base, d.arrow_r);
+    }
+    uint32_t key = 0;
+    std::u16string own;
+    DescriptionOf(pl.pick, &key, &own);
+    PlaceDescription(ctx, base, d.desc, xf, key, own);
+    // "Loading" where the model stands while the pick loads (the original's).
+    if (pl.waiting || (!alone && !locked && outfit_previews::Active() && outfit_previews::Loading(side))) {
+      PlaceText(ctx, base, c.ready, u"Loading", xf.X(kPgLoading[0]), PageLineTop(xf, kPgLoading[1] - 18, 1.0f),
+                kFontAtScale1 * xf.k * Pulse(), kCyan);
+    } else {
+      Hide(base, c.ready);
+    }
+    // 2 players: the page's own "A Wear" under the panel (1 player: the bar).
+    if (!alone && !locked) {
+      PlaceText(ctx, base, c.prompt, ForPlayer(u"± Wear", p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
+                kFontAtScale1 * 0.8f * xf.k, Hovered(p, kHitWear) ? kYellow : kCyan);
+      AddHit(p, kHitWear, -1, mid_x, xf.Y(kPgPromptLine + 18), width * 0.6f, font);
+    } else {
+      Hide(base, c.prompt);
+    }
   }
-  // The arrows beside the selected row (the mouse's row while it points).
-  if (!browsing) {
-    Hide(base, c.arrow_l);
-    Hide(base, c.arrow_r);
-  } else if (arrow_row == kRowCharacter) {
-    PlaceArrowsFor(ctx, base, c, p, kRowCharacter, cx, face_y, 110 + face / 2 + 50, 48);
-  } else if (arrow_row == kRowOutfit) {
-    PlaceArrowsFor(ctx, base, c, p, kRowOutfit, cx, py + 220 + font * 0.5f, pw / 2 - 24 - 14, 48);
-  } else if (p != g.mouse_player) {  // (keyboard + mouse: the circles are clicked, no arrows)
-    PlaceArrowsFor(ctx, base, c, p, kRowColour, cx, top + d + gap / 2, total / 2 + 48, 48);
-  } else {
-    Hide(base, c.arrow_l);
-    Hide(base, c.arrow_r);
-  }
-  // "Loading" under the circles while the pick loads.
-  if (pl.waiting) {
-    PlaceText(ctx, base, c.prompt, u"Loading", cx, py + ph - 70, 50 * Pulse(), kCyan);
-  } else {
-    Hide(base, c.prompt);
-  }
-  // The model on the right, on an orange pad; locked: the lock over it.
-  PlaceDisc(ctx, base, c.pad, mx, 860, 300, 52, (kPlayerColour[p] & 0x00FFFFFF) | uint32_t(kPadAlpha) << 24);
-  PlaceModel(1320, 860, 1.0f, locked || !g.settled || g.exit_step >= 0);  // (after the slide, gone at the close)
+  // The lock where the model would stand.
   if (locked) {
-    const float h = kLockTall * kOneModelSize;
-    PlacePicture(ctx, base, c.lock, mx, 860 - 380 * kOneModelSize * 0.62f + 72 * kOneModelSize,
-                 h * kLockAspect, h, kLockW, kLockH, kWhite);
+    PagePicture(ctx, base, c.lock, xf, kPgLock, kWhite);
   } else {
     Hide(base, c.lock);
   }
-  // The prompt bar: "B Back" bottom left, "Wear A" bottom right (the
-  // mockup's places); the mouse can click them too.
-  const bool wear = browsing && !locked;
-  PromptBar(ctx, base, g.exit_step < 0, wear, Hovered(p, kHitBack), wear && Hovered(p, kHitWear));
-  if (browsing) AddHit(p, kHitBack, -1, 482, 957, 180, 80);
-  if (wear) AddHit(p, kHitWear, -1, 1450, 957, 240, 80);
+  // The model: the game's own (1 player), or this page's (2 players).
+  const float model_x = xf.X(UnitX(kPgModelX)), shoes = xf.Y(UnitY(kPgModelShoes));
+  if (alone) {
+    PlaceGameModel(model_x, shoes, xf.k, locked || !g.settled || g.exit_step >= 0);
+    const bool wear = browsing && !locked;
+    PromptBar(ctx, base, g.exit_step < 0, wear, Hovered(p, kHitBack), wear && Hovered(p, kHitWear));
+    if (browsing) AddHit(p, kHitBack, -1, 482, 957, 180, 80);
+    if (wear) AddHit(p, kHitWear, -1, 1450, 957, 240, 80);
+  } else {
+    const ModelMap mm = Map();
+    if (Available(pl.pick)) outfit_previews::Show(side, OutfitOfPick(pl.pick));
+    outfit_previews::SetLocked(side, locked);
+    outfit_previews::Place(side, model_x / 1920.0f, xf.k, 0.1f + (kPgModelShoes - shoes) / mm.px_per_y);
+  }
 }
 
 // THE CARDS (2-4 players: the mockup's card()).
@@ -1237,12 +1444,9 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
   }
   float y = feet + 34;
   const float row = L.row;
-  if (pl.ready && !pl.waiting) {  // READY: the name, "Ready!", "B Change"
-    Hide(base, c.face[0]);
-    Hide(base, c.face[1]);
-    Hide(base, c.ring);
-    Hide(base, c.hover);
-    for (uint32_t e : c.swatch) Hide(base, e);
+  if (pl.ready && !pl.waiting) {  // READY: the whole name, "Ready!", "B Change"
+    Hide(base, c.character);
+    Hide(base, c.colour);
     Hide(base, c.arrow_l);
     Hide(base, c.arrow_r);
     PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y + 8, fs, kGreen, w - 40);
@@ -1253,65 +1457,21 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
     return;
   }
   Hide(base, c.ready);
-  // Row 1: the faces (the other character greyed; the picked one bigger
-  // while its row is selected).
-  const int arrow_row = ArrowRow(p, pl);
-  const float m = L.face, gap = m * 0.5f;
-  AddHit(p, kHitRow, kRowCharacter, cx, y + m / 2, w, row);
-  for (int f = 0; f < 2; ++f) {
-    const bool on = pl.pick.character == f;
-    const bool hover = Hovered(p, kHitFace, f);
-    const float grow = (on && browsing && pl.row == kRowCharacter ? 1.2f : 1.0f) * (hover ? 1.15f : 1.0f);
-    const float fx = f == 0 ? cx - gap / 2 - m / 2 : cx + gap / 2 + m / 2;
-    PlaceDisc(ctx, base, c.face[f], fx, y + m / 2, m * grow, m * grow, on || hover ? kWhite : kFaceDim);
-    if (browsing) AddHit(p, kHitFace, f, fx, y + m / 2, m, m);
-  }
-  if (browsing && arrow_row == kRowCharacter) {
-    PlaceArrowsFor(ctx, base, c, p, kRowCharacter, cx, y + m / 2, gap / 2 + m + L.arrow_gap, L.arrow);
-  }
+  // The three choices by name: "Crash" / "Coco", the look, the fur colour
+  // (looks that show his fur only).
+  Hide(base, c.arrow_l);
+  Hide(base, c.arrow_r);
+  const float room = w - 2 * L.arrow - 44, arrow_dx = w / 2 - L.arrow * 0.5f - 14;
+  PlaceChoice(ctx, base, c, p, kRowCharacter, c.character, CharacterName(pl.pick.character), cx, y, fs, room, w,
+              arrow_dx, L.arrow);
   y += row;
-  // Row 2: the outfit's name.
-  const bool name_selected = browsing && pl.row == kRowOutfit;
-  AddHit(p, kHitRow, kRowOutfit, cx, y + fs * 0.5f, w, row);
-  if (browsing && arrow_row == kRowOutfit) {
-    PlaceArrowsFor(ctx, base, c, p, kRowOutfit, cx, y + fs * 0.5f, w / 2 - L.arrow * 0.5f - 14, L.arrow);
-  }
-  if (name_selected) {
-    PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y - fs * 0.1f, fs * 1.2f * Pulse(), kYellow,
-              w - 2 * L.arrow - 44);
-  } else {
-    PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y, fs, kGreen, w - 2 * L.arrow - 44);
-  }
+  PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookOf(pl.pick).name, cx, y, fs, room, w, arrow_dx, L.arrow);
   y += row;
-  // Row 3: the colour circles (every look that shows his fur).
   if (HasColour(pl.pick)) {
-    const float d = L.swatch, g2 = L.swatch_gap, total = kSwatches * d + (kSwatches - 1) * g2;
-    AddHit(p, kHitRow, kRowColour, cx, y + d / 2, w, row);
-    float sxs[kSwatches], sys[kSwatches];
-    for (int sw = 0; sw < kSwatches; ++sw) {
-      const bool on = sw == pl.pick.colour;
-      const float sx = cx - total / 2 + sw * (d + g2) + d / 2, sy = y + d / 2;
-      sxs[sw] = sx;
-      sys[sw] = sy;
-      PlaceDisc(ctx, base, c.swatch[sw], sx, sy, on ? d + 8 : d, on ? d + 8 : d, kColours[sw].tint);
-      if (on) {
-        const uint32_t ring = browsing && pl.row == kRowColour ? kYellow : kWhite;
-        PlaceDisc(ctx, base, c.ring, sx, sy, d + 20, d + 20, ring);
-      }
-      if (browsing) AddHit(p, kHitSwatch, sw, sx, sy, d + g2, d + g2);
-    }
-    PlaceHoverRing(ctx, base, c, p, sxs, sys, d);
-    if (browsing && arrow_row == kRowColour && p != g.mouse_player) {  // (keyboard + mouse: no arrows)
-      PlaceArrowsFor(ctx, base, c, p, kRowColour, cx, y + d / 2, total / 2 + L.arrow * 0.5f + 8, L.arrow * 0.8f);
-    }
+    PlaceChoice(ctx, base, c, p, kRowColour, c.colour, ColourName(pl.pick.colour), cx, y, fs, room, w, arrow_dx,
+                L.arrow);
   } else {
-    for (uint32_t e : c.swatch) Hide(base, e);
-    Hide(base, c.ring);
-    Hide(base, c.hover);
-  }
-  if (!browsing || (arrow_row == kRowColour && p == g.mouse_player)) {  // (no arrows there)
-    Hide(base, c.arrow_l);
-    Hide(base, c.arrow_r);
+    Hide(base, c.colour);
   }
   y += row * 0.85f;
   // The prompt: "Loading" while the pick (or its model) loads, "A Wear" (not
@@ -1339,14 +1499,38 @@ void Draw(PPCContext& ctx, uint8_t* base) {
   for (int p = 0; p < kMaxPlayers; ++p) {
     if (g.players[p].joined) joined.push_back(p);
   }
-  if (joined.size() <= 1) {
-    outfit_previews::End();  // (1 player: the game's own model)
-    DrawOne(ctx, base, joined.empty() ? 0 : joined[0]);
+  if (joined.size() <= 2) {  // THE PAGES (1 player: the original's; 2: two at once)
+    for (int k = 2; k < kMaxPlayers; ++k) HideCard(base, g.cards[k]);
+    if (joined.size() <= 1) {
+      outfit_previews::End();  // (1 player: the game's own model)
+      HideCard(base, g.cards[1]);
+      HideSide(base, g.sides[1]);
+      PageXf xf;
+      xf.dx = g.slide;  // (the whole page comes in with the title layer's slide)
+      DrawPage(ctx, base, 0, joined.empty() ? 0 : joined[0], xf, true);
+      return;
+    }
+    if (g.settled && g.exit_step < 0) {
+      outfit_previews::Begin(2);
+    } else {
+      outfit_previews::End();
+      PlaceGameModel(0, 0, 1.0f, true);
+    }
+    PromptBar(ctx, base, false, false);
+    // Player 1's page left, player 2's mirrored on the right; each comes in
+    // from its own side (the overshoot kept small: the pages are close).
+    const float slide = std::min(g.slide, 20.0f);
+    for (int side = 0; side < 2; ++side) {
+      PageXf xf;
+      xf.k = kTwoPageSize;
+      xf.mirror = side == 1;
+      xf.dx = (side == 0 ? -kTwoPageShift : kTwoPageShift) + (side == 0 ? slide : -slide);
+      xf.dy = kTwoPageDrop;
+      DrawPage(ctx, base, side, joined[size_t(side)], xf, false);
+    }
     return;
   }
-  Hide(base, g.hinge);
-  Hide(base, g.cog);
-  Hide(base, g.cog2);
+  for (const State::Side& d : g.sides) HideSide(base, d);
   PromptBar(ctx, base, false, false);
   const int n = int(joined.size());
   const RowLayout& L = kRowLayouts[n - 2];
@@ -1427,10 +1611,10 @@ void Unready(PPCContext& ctx, uint8_t* base, int p) {
 
 // THE MOUSE (2026-10-23): it belongs to the player the
 // keyboard plays as, and only reaches THAT player's card, so it can't change
-// anyone else's pick. Pointing at a face, a colour circle, an arrow or the
-// Wear / Change (1 player: the bar's Back / Wear) only HIGHLIGHTS it (the
-// face grows, a yellow ring behind the circle, the arrow grows, the words
-// turn yellow); a LEFT CLICK on it does it. The right click is B and the
+// anyone else's pick. Pointing at a row's name, an arrow or the Wear /
+// Change (1 player: the bar's Back / Wear) only HIGHLIGHTS it (the name or
+// words turn yellow, the arrow grows); a LEFT CLICK on it does it (a name:
+// selects its row; an arrow: steps that row). The right click is B and the
 // wheel the D-pad already (the keyboard driver's pulses, in the keys' pad).
 // The spots are the ones the last frame drew (Draw -> AddHit); a click
 // counts where it was MADE (input/keyboard_mouse.h PeekMenuClick).
@@ -1484,16 +1668,11 @@ void Mouse(PPCContext& ctx, uint8_t* base) {
   Player& pl = g.players[p];
   if (pl.waiting || pl.stick_dir == 99) return;
   switch (h.kind) {
-    case kHitFace:
-      if (pl.pick.character != h.index) StepRow(ctx, base, p, kRowCharacter, 1);
-      pl.row = kRowCharacter;
-      break;
-    case kHitSwatch:
-      if (HasColour(pl.pick) && pl.pick.colour != h.index) {
-        pl.pick.colour = h.index;
-        StepRow(ctx, base, p, kRowColour, 0);
+    case kHitName:  // a row's name: that row is selected (its arrows change it)
+      if (pl.row != h.index) {
+        pl.row = h.index;
+        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
       }
-      pl.row = kRowColour;
       break;
     case kHitArrowL:
     case kHitArrowR:
@@ -1624,6 +1803,24 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   if (!REXCVAR_GET(outfit_picker) || !g_page_patched || !g_tree_patched) return;
   if (!g.open || g.screen != screen) Open(ctx, base, screen);
   ++g.frames;
+  // THE SCREEN BACK AFTER A RESPAWN (2026-10-30). A Crash <-> Coco pick
+  // respawns the players (outfits.cpp section 5b), and the respawn clears the
+  // front end's shown screen (front end +24, set by sub_82262730(front end,
+  // screen); sub_82260D68 sets it to none). In the original the pick closed
+  // the screen anyway; the picker keeps it open for the others, and the
+  // frame stayed up with nothing on it until everyone was ready (seen
+  // 2026-10-30). Ours (the skin screen's +16, as its Enter shows it) is put
+  // back whenever it isn't the shown one.
+  if (!g.close) {
+    const uint32_t game = Read32(kGameGlobal);
+    const uint32_t fe = game > 0x40000000 ? Read32(game + kFrontEndOf) : 0;
+    const uint32_t ours = Read32(screen + kScreenScrooby);
+    if (fe > 0x40000000 && ours > 0x40000000 && Read32(fe + kFrontEndScreen) != ours) {
+      scrooby::Call(__imp__sub_82262730, ctx, base, fe, ours);
+      REXLOG_INFO("Outfit picker: the chest's screen shown again (the front end had {:08X})",
+                  Read32(fe + kFrontEndScreen));
+    }
+  }
   if (g.close) {
     Draw(ctx, base);
     return;
@@ -1650,14 +1847,6 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
     int dx = 0, dy = 0;
     Directions(pl, pad, &dx, &dy);
     if ((dx || dy) && p == g.mouse_player) g.mouse_on = false;  // keys again: the arrows follow the selection
-    // 1 PLAYER: the circles are two rows of four: down from the top row =
-    // the circle under it, up from the bottom row = the one above.
-    if (dy && g.count == 1 && pl.row == kRowColour && HasColour(pl.pick) &&
-        ((dy > 0 && pl.pick.colour < 4) || (dy < 0 && pl.pick.colour >= 4))) {
-      pl.pick.colour += dy > 0 ? 4 : -4;
-      StepRow(ctx, base, p, kRowColour, 0);
-      dy = 0;
-    }
     if (dy) {  // up / down: the rows (no colour row on a look without colours; no wrap)
       const int last = HasColour(pl.pick) ? kRowColour : kRowOutfit;
       const int row = std::clamp(pl.row + dy, kRowCharacter, last);

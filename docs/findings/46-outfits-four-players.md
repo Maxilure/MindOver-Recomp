@@ -471,6 +471,72 @@ came back. The picker now parks it itself whenever the card models aren't up
 (the opening and closing slides). Checked with photos 50-80 ms apart through
 ten closes (colours, looks, Skeleton for both players, Coco).
 
+## 3i. The chest's layouts: the game's own page for 1-2 players, names instead of pictures
+
+The co-op picker (`players/outfit_picker.*`) now lays the chest out three ways:
+
+- **1 player: the game's own page.** The original's title glass with the
+  outfit's name, its square panel, the 3D model on the right, its hinges and
+  gears, at the original's places (the page's boxes, findings/30). The panel
+  holds the three choices as NAMES ("Crash" / "Coco", the look, the fur
+  colour), the selected one yellow and pulsing between the page's own green
+  arrows, and under them the game's DESCRIPTION of the outfit.
+- **2 players: two such pages at once**, 0.8 of the size: player 1's on the
+  left, player 2's mirrored on the right (model inside, panel outside, as the
+  original's player-2 page), each with its own model, "P1" / "P2" on its title
+  and its own "A Wear" / "Ready!".
+- **3-4 players: the cards**, with names where they had face pictures and
+  colour circles.
+
+![The chest for 1, 2 and 4 players](../images/outfit-chest-pages-and-cards.jpg)
+
+**The descriptions.** The game's screen shows one entry at a time
+(`sub_820E1228`), which also swaps outfit packages, so it can't serve two
+pages. Its text step is a single call: `sub_82371C58(text, key)` sets a menu
+text from the text bank, and each list entry (20 bytes) holds the name key at
++4 and the description key at +8. The pages call it on their own description
+texts with the shown pick's key; a locked pick gets the game's "Locked" (key
+in `0x825A58F0`, as the screen does); the coloured Crashes have their own
+lines ("Exactly the same in every way but red"), and a coloured look shows its
+look's text.
+
+**The pieces** are copies of the original page's own elements, one set per
+page side (data patch of `GameStart_SkinSelection.pag`): MenuPanel (title
+glass), CrashMenuText (title), CrashDescription (wrapped description box),
+LeftArrow / RightArrow (`Menu_Down_Arrow.tga`, turned a quarter turn each
+way), MenuHinge / CrashHinge and the two gears, pulsing as the game's own.
+Everything is laid out in the page's 640 x 480 units and mapped to the screen
+with a size + shift (+ a left-right flip for the second page). Two players'
+pages are narrower (0.8) but keep the original's heights, so the gears stay
+half behind the frame at the top and bottom; the glass panels stretch to it,
+everything else keeps its shape. The lower hinge is the same picture as the
+upper one turned half a turn (on the mirrored page: flipped up-down, a
+negative height in its stretch = its mirror image). The second page has no
+top gear or hinge (its corner is the frame's own emblem), and its
+description keeps the same place inside its panel as the first page's (the
+text is left-aligned: a mirrored box would sit 30 units further in).
+
+**Long descriptions scroll.** The panel shows four lines of description; a
+longer one scrolls up through them, holds at its end, fades out and starts
+again from the top (`ui/marquee.h` FitLines; dev flag
+`debug_outfit_description` = a test text for every outfit). A Scrooby text's
+glyphs come in the text's own units, each line at y 0..30, and each line
+(drawn in one batch per font page) gets its own MVP: one line lower = VS
+`c7.y` down by 30 units' worth (`c5.y` = the y scale). The marquee turns every
+glyph's y into one "text space" with those two, finds the lines there, moves
+the glyphs and cuts them at the window's top and bottom (their texture v
+moved alike), in the game's vertices before EndPrims, so both renderers show
+it. The title glasses come first in the
+layer, so the cards' "P1" text draws on them.
+
+**The screen after a Crash <-> Coco pick.** Such a pick respawns the players
+(section 3f), and the respawn clears the front end's shown screen (front end
++24, set by `sub_82262730(front end, screen)`; `sub_82260D68` sets none). The
+original closed the chest at that pick; the picker keeps it open for the
+others, and the frame stayed up with nothing on it until everyone was ready
+(cards and pages alike). The picker now shows the chest's screen again (the
+skin screen's +16, as its Enter shows it) whenever it isn't the shown one.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a
