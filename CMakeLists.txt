@@ -63,6 +63,7 @@ set(CRASHMOM_SOURCES
     src/input/movie_skip.cpp  # any button brings up a movie's "Skip" prompt in a level
     src/input/mouse_menus.cpp    # the mouse in the game's menus: hover selects, click chooses, right click = back
     src/input/mouse_screens.cpp  # the mouse on Crash's house's picture screens (TV, comic, tiki face, chest)
+    src/input/mouse_minigame.cpp  # the mouse on the minigame level picker (CMiniGameScreenAction)
     src/ui/credits_scroll.cpp    # the credits scroll back and forth (wheel, up / down)
     src/input/mouse_reticle.cpp  # a masked keyboard player aims the reticle with the mouse
     src/saves/pc_save_drive.cpp  # the saves as plain PC files: Radical's save drive, natively

@@ -393,3 +393,28 @@ nothing. Load Game list (55 saves): the cursor on save 2, one notch = window
 at save 2 with the cursor still on it, two more = it scrolled away and the
 cursor is on the nearest panel, one back = cursor on the same save one panel
 down. 0 errors in the logs.
+
+## 6. The minigame level picker
+
+A minigame spot in play opens a panel: the minigame's name and goal on the
+left, "Level 1" .. "Level 10" on the right (front-end state 970
+`MiniGameScreen`). The keys worked there from the start, the mouse didn't:
+the shared mouse code hooks `CMenuAction`, and this screen is its own class,
+`CMiniGameScreenAction` (vtable 0x82023CE4), which owns a Scrooby menu
+without being a `CMenuAction`.
+
+From its slots (xexdis):
+
+| Slot | Function | What it does |
+|---|---|---|
+| 4 Enter | sub_820D3660 | page found by name -> +20; the level menu found on it (sub_82371988) -> +24; each of the 10 items made selectable only up to the levels won (count from the save's stats) |
+| 5 Update | sub_820D3A98 | steps the screen by its state at +56 (2 opening, 3 open, 4/5 closing) |
+| 6 Exit | sub_820D3B38 | |
+
+`src/input/mouse_minigame.cpp` wraps Update and hands menu +24 and page +20
+to `mouse_menus::HoverAndClick` before the original runs: hover selects,
+a left click selects and presses A, locked levels (not selectable) are
+skipped. Right click and the prompt bar's Back / Select were already
+covered by the shared front-end code. The wheel does nothing here (ten
+levels fit, nothing scrolls). Log line once per visit: "Mouse in menus: the
+minigame level list".
