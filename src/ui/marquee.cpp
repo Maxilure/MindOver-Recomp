@@ -2,6 +2,7 @@
 // ui/marquee.cpp -- see marquee.h
 // =============================================================================
 #include "marquee.h"
+#include "hud_scale.h"
 
 #include <algorithm>
 #include <atomic>
@@ -243,6 +244,9 @@ extern "C" REX_FUNC(__imp__sub_82371D68);
 extern "C" REX_FUNC(sub_82371D68) {
   using namespace marquee;
   const uint32_t text = ctx.r3.u32;
+  // HUD size (ui/hud_scale.h): a player's text on the shared page InGame
+  // (mojo count, multiplier, counter Y) shrinks toward that player's corner.
+  hud_scale::Scope hud_size(ctx, base, hud_scale::WhereOfText(text));
   Text* t = nullptr;
   {
     std::lock_guard lock(g_mutex);

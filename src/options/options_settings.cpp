@@ -360,6 +360,44 @@ Row FpsPositionRow() {
   return r;
 }
 
+// HUD SIZE (ui/hud_scale.h, findings/53): 30-100 %, each HUD part shrinks
+// toward its own screen corner; and the extra shrink while players 3-4 play.
+constexpr int kHudSizes[] = {30, 40, 50, 60, 70, 80, 90, 100};
+
+Row HudSizeRow() {
+  Row r;
+  r.label = u"HUD Size";
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (int size : kHudSizes) {
+      const std::string text = std::to_string(size) + "%";
+      v.emplace_back(text.begin(), text.end());
+    }
+    return v;
+  };
+  r.get = [](Env&) {
+    const int now = rex::cvar::Query<int32_t>("hud_size");
+    int best = 0;  // the nearest offered size (a value set by hand in the file)
+    for (int i = 0; i < int(std::size(kHudSizes)); ++i) {
+      if (std::abs(kHudSizes[i] - now) < std::abs(kHudSizes[best] - now)) best = i;
+    }
+    return best;
+  };
+  r.set = [](Env&, int i) { SetFlag("hud_size", std::to_string(kHudSizes[i])); };
+  r.describe = [](Env&, int i) -> std::u16string {
+    return i == int(std::size(kHudSizes)) - 1
+               ? u"The original size."
+               : u"The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen.";
+  };
+  return r;
+}
+
+Row HudFourPlayersRow() {
+  return OnOffRow(u"Smaller for 3-4 Players", "hud_smaller_four_players", u"On", u"Off",
+                  u"With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is.",
+                  u"The HUD keeps the HUD Size above with any number of players.");
+}
+
 // WINDOW MODE (ui/window_mode.h, findings/50): Windowed or Fullscreen; the
 // fullscreen is always the borderless kind (a window covering the monitor at
 // its own mode: quick to switch away, behaves the same on every system).
@@ -995,6 +1033,7 @@ std::vector<Tab> Build() {
   AddDualMode(renderer);
   tabs.push_back({u"Display",
                   {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
+                   Heading(u"HUD"), HudSizeRow(), HudFourPlayersRow(),
                    Heading(u"Frame Counter"), FpsCounterRow(), FpsPositionRow(),
                    // achievements/achievements.h: the card at the bottom centre.
                    Heading(u"Achievements"), AchievementPopupsRow(), AchievementJingleRow()}});
