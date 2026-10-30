@@ -102,6 +102,11 @@ constexpr int kMainMenuItemCount = 7;   // + 5-6: the Extras set
 // Whether the pause pages got their "Players" and "Achievements" items
 // (right after Options, in that order; options_page.cpp AddPauseItems).
 bool PauseAchievementsAvailable();
+// Whether the two-player pause page (with Save) / the one without Save lost
+// their "Drop Out" item (players/pause_drop_out.h: Back drops a player out).
+// The shown items after it sit one place higher than the decision counts.
+bool PauseDropOutRemoved();
+bool PauseNoSaveDropOutRemoved();
 // Whether the pages have the Players screen's cards (the device pictures
 // were made: players/players_setup.h MenuSprites).
 bool PlayersCardsAvailable();

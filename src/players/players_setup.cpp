@@ -132,7 +132,7 @@ void Settle(PPCContext& ctx, uint8_t* base) {
         break;
       }
     }
-    lost_controller::DropOut(ctx, base, p);
+    lost_controller::DropOut(ctx, base, p, "the Players screen took the controller");
   }
 }
 

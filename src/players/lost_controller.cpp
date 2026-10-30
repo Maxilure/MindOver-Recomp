@@ -320,8 +320,10 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
 
 bool Active() { return g_phase.load() != kNone; }
 
-bool DropOut(PPCContext& ctx, uint8_t* base, int p) {
-  if (p < 0 || p >= kMaxPlayers || !InGame(p) || g_dropping[p] || !SomeoneElse(p)) return false;
+bool CanDropOut(int p) { return p >= 0 && p < kMaxPlayers && InGame(p) && !g_dropping[p] && SomeoneElse(p); }
+
+bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why) {
+  if (!CanDropOut(p)) return false;
   const uint32_t game = Read32(kGameGlobal);
   const uint32_t fe = game ? Read32(game + 52) : 0;
   if (!fe) return false;
@@ -330,7 +332,7 @@ bool DropOut(PPCContext& ctx, uint8_t* base, int p) {
   CallGame(__imp__sub_82266040, ctx, base, fe);
   Write32(fe + kOwner, owner);
   g_dropping[p] = true;
-  REXLOG_INFO("Lost controller: player {} dropped out (the Players screen took the controller)", p + 1);
+  REXLOG_INFO("Lost controller: player {} dropped out ({})", p + 1, why);
   return true;
 }
 

@@ -13,10 +13,12 @@
 #include "../guest_memory.h"
 #include "../input/mouse_menus.h"
 #include "../options/options_page.h"
+#include "../players/pause_drop_out.h"
 #include "../players/players_setup.h"
 #include "../ui/scrooby.h"
 
 extern "C" REX_FUNC(__imp__sub_82121B48);  // the pause menu's decision (node 868)
+extern "C" REX_FUNC(__imp__sub_82121EA8);  // the pause menu without Save's decision (node 901)
 
 namespace achievements_screen {
 namespace {
@@ -32,14 +34,27 @@ constexpr std::u16string_view kWords = u"Achievements";
 // The pause decision (sub_82121B48) knows the original items by index, so
 // while it runs the extras are counted out (ShiftPauseIndex) and a pick of
 // one is turned into Options' exit + "open as that screen".
+// The two-player pages also LOST "Drop Out" (4th item, index 3; Back drops a
+// player out now: players/pause_drop_out.h), so on them every shown item
+// from index 3 on is one place higher than the decision counts it.
 constexpr int kExtras = 2;  // Players, Achievements
 constexpr std::u16string_view kExtraWords[kExtras] = {u"Players", kWords};
+constexpr int kDropOutIndex = 3;  // Drop Out's place in the decisions' numbering
 struct PausePage {
   std::string_view name;
-  int options_item;      // Options' index (the extras follow it)
+  int options_item;      // Options' index in the decision's numbering (the extras follow it)
   int32_t options_exit;  // the decision's exit for Options (-> state 956)
+  bool two_players;      // had Drop Out (index 3)
 };
-constexpr PausePage kPausePages[] = {{"InGame_Pause", 3, 894}, {"InGame_Pause2Player", 4, 883}};
+constexpr PausePage kPausePages[] = {{"InGame_Pause", 3, 894, false}, {"InGame_Pause2Player", 4, 883, true}};
+// The pause screen without Save (decision sub_82121EA8): no extras, only
+// Drop Out taken out of its two-player page.
+constexpr std::string_view kNoSave2Player = "InGame_Pause2Player_NoSave";
+
+// Options' index as SHOWN on a page (one less once Drop Out is gone).
+int ShownOptionsItem(const PausePage& p) {
+  return p.options_item - (p.two_players && options_page::PauseDropOutRemoved() ? 1 : 0);
+}
 
 // While the pause decision runs: which extra was picked (-1 none).
 bool g_in_pause_decision = false;
@@ -82,19 +97,25 @@ void Word(PPCContext& ctx, uint8_t* base, std::string_view page_name, std::strin
   if (text && !Says(base, text, words)) scrooby::SetText(ctx, base, text, words);
 }
 
-// The GetMenuIndex filter (mouse_menus.h): only while the pause decision
-// runs, and only for the pause pages.
+// The GetMenuIndex filter (mouse_menus.h): only while a pause decision
+// runs, and only for the pause pages. Shown index -> the decision's index.
 int ShiftPauseIndex(uint8_t* base, uint32_t page_name, int index) {
   if (!g_in_pause_decision || !page_name || index < 0) return index;
   const std::string name = GuestString(base, page_name);
+  if (name == kNoSave2Player) {
+    return options_page::PauseNoSaveDropOutRemoved() && index >= kDropOutIndex ? index + 1 : index;
+  }
   for (const PausePage& p : kPausePages) {
     if (name != p.name) continue;
-    const int extra = index - p.options_item - 1;
+    const int options = ShownOptionsItem(p);
+    const int extra = index - options - 1;
     if (extra >= 0 && extra < kExtras) {
       g_picked = extra;
       return p.options_item;  // the decision takes the Options exit
     }
-    return index > p.options_item + kExtras ? index - kExtras : index;
+    if (index > options + kExtras) index -= kExtras;
+    if (p.two_players && options_page::PauseDropOutRemoved() && index >= kDropOutIndex) ++index;
+    return index;
   }
   return index;
 }
@@ -112,7 +133,7 @@ bool OpenNextPending() { return g_open_next.load(); }
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (options_page::PauseAchievementsAvailable()) {
     for (const PausePage& p : kPausePages) {
-      for (int e = 0; e < kExtras; ++e) Word(ctx, base, p.name, "PauseMenu", p.options_item + 1 + e, kExtraWords[e]);
+      for (int e = 0; e < kExtras; ++e) Word(ctx, base, p.name, "PauseMenu", ShownOptionsItem(p) + 1 + e, kExtraWords[e]);
     }
   }
   // The main menu's "Players" (options_page.cpp PatchMainMenu).
@@ -126,8 +147,9 @@ void Register() { mouse_menus::SetMenuIndexFilter(&ShiftPauseIndex); }
 }  // namespace achievements_screen
 
 // The pause menu's decision: its own index -> exit mapping, with the
-// Achievements item counted out (ShiftPauseIndex) and turned into the
-// Options exit + "open as the Achievements screen".
+// extras counted out (ShiftPauseIndex) and turned into the Options exit +
+// "open as that screen". Then Back = Drop Out (players/pause_drop_out.h:
+// may answer the decision's Drop Out exit, 882, for the menu's owner).
 extern "C" REX_FUNC(sub_82121B48) {
   using namespace achievements_screen;
   if (!options_page::PauseAchievementsAvailable()) {
@@ -138,7 +160,14 @@ extern "C" REX_FUNC(sub_82121B48) {
   g_picked = -1;
   __imp__sub_82121B48(ctx, base);
   g_in_pause_decision = false;
-  const int32_t exit = int32_t(ctx.r3.u32);
+  const int32_t game_exit = int32_t(ctx.r3.u32);
+  // Back = Drop Out first: once it picked, its exit replaces the item's
+  // (the Players / Achievements screens must not open then).
+  const int32_t exit = options_page::PauseDropOutRemoved()
+                           ? pause_drop_out::AfterPauseDecision(ctx, base, game_exit, pause_drop_out::kDropOutExit)
+                           : game_exit;
+  ctx.r3.u64 = uint32_t(exit);
+  if (exit != game_exit) g_picked = -1;
   if (g_picked >= 0 && (exit == kPausePages[0].options_exit || exit == kPausePages[1].options_exit)) {
     if (g_picked == 0) {
       players_setup::OpenNext();
@@ -147,4 +176,19 @@ extern "C" REX_FUNC(sub_82121B48) {
     }
   }
   g_picked = -1;
+}
+
+// The pause screen WITHOUT Save (NoSavePauseScreen 901): the same, but no
+// extras; its two-player page lost Drop Out too (exit 914 for it).
+extern "C" REX_FUNC(sub_82121EA8) {
+  using namespace achievements_screen;
+  if (!options_page::PauseNoSaveDropOutRemoved()) {
+    __imp__sub_82121EA8(ctx, base);
+    return;
+  }
+  g_in_pause_decision = true;
+  __imp__sub_82121EA8(ctx, base);
+  g_in_pause_decision = false;
+  const int32_t exit = int32_t(ctx.r3.u32);
+  ctx.r3.u64 = uint32_t(pause_drop_out::AfterPauseDecision(ctx, base, exit, pause_drop_out::kNoSaveDropOutExit));
 }

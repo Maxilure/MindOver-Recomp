@@ -179,8 +179,10 @@ constexpr ActionInfo kActions[kActionCount] = {
     {"pocket", "Pocket / unpocket", "Store the titan you control, and bring it back later.",
      "RB", Group::kTitans, Output::kButton, X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "R", kPlay},
 
-    {"map", "Map", "", "Back", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_BACK, 0, 0,
-     "Tab, M", kPlay},
+    // Map = Back: also in menus since 2026-10-30 (the pause menu's Back drops
+    // a player out: players/pause_drop_out.h).
+    {"map", "Map", "In the pause menu: drop out (another player stays in).", "Back", Group::kMenus,
+     Output::kButton, X_INPUT_GAMEPAD_BACK, 0, 0, "Tab, M", kBoth},
     {"pause", "Pause", "Opens the pause menu (in menus, Menu: back closes it).", "Start",
      Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_START, 0, 0, "Escape", kPlay},
     {"menu_confirm", "Menu: confirm", "Choose the selected item.", "A", Group::kMenus,

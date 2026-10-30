@@ -641,6 +641,15 @@ bool CutGuide(const Bytes& menus, Node* picture, Bytes* sprite) {
 // first at y 280, the last at 70 at most): 35 apart (the game's) when they
 // fit, closer when not (two players: 8 items, 30 apart).
 constexpr std::string_view kPausePages[] = {"InGame_Pause.pag", "InGame_Pause2Player.pag"};
+// DROP OUT LEAVES THE PAUSE MENU (2026-10-30, players/pause_drop_out.h): the
+// two-player pause pages lose their "Drop Out" item (DropOutMenuItem, 4th);
+// a player drops out with Back (Select) instead. The page without Save (the
+// game's other pause screen, InGame_Pause_NoSave.scr) only loses the item:
+// it gets no extras. The decisions still count Drop Out's place
+// (achievements_screen.cpp ShiftPauseIndex puts it back in their numbers).
+constexpr std::string_view kPauseNoSave2Player = "InGame_Pause2Player_NoSave.pag";
+constexpr std::string_view kDropOutItem = "DropOutMenuItem";
+std::atomic<bool> g_drop_out_removed{false}, g_drop_out_removed_no_save{false};
 // THE ACHIEVEMENT CARD, ON THE MESSAGE BAR'S PAGE (InGame_MessageBar.pag:
 // the game's pop-up at the bottom; achievements.cpp puts an earned
 // achievement in the bar's queue). The bar's own wide glass and texts are
@@ -663,6 +672,37 @@ constexpr uint32_t kPopGlassColour = 0xC8FFFFFF;  // white at 78 %, as the in-ga
 constexpr int kPauseTopY = 280, kPauseLowestY = 70, kPauseStep = 35;
 std::atomic<bool> g_pause_patched{false};
 
+// Spreads a pause menu's items from y `top` down (35 apart, the game's
+// step, or closer when they don't fit above y 70).
+void SpacePauseItems(std::vector<Node>& items, int top) {
+  int count = 0;
+  for (const Node& n : items) count += n.id == kChunkItem;
+  const int step = count > 1 ? std::min(kPauseStep, (top - kPauseLowestY) / (count - 1)) : kPauseStep;
+  int i = 0;
+  for (Node& item : items) {
+    if (item.id != kChunkItem || item.children.empty() || item.children[0].children.empty()) continue;
+    Node& text = item.children[0].children[0];
+    const size_t e = pure3d::NameEnd(text);
+    SetBox(text, int(pure3d::NodeLe32(text, e + 4)), top - step * i, int(pure3d::NodeLe32(text, e + 12)),
+           int(pure3d::NodeLe32(text, e + 16)));
+    ++i;
+  }
+}
+
+// Takes "Drop Out" out of a two-player pause page's menu (true = it was there).
+bool RemoveDropOut(Node& page) {
+  Node* layer = Child(page, kChunkLayer);
+  Node* menu = layer ? Child(*layer, kChunkMenu, "PauseMenu") : nullptr;
+  if (!menu) return false;
+  auto& items = menu->children;
+  const auto drop = std::find_if(items.begin(), items.end(), [](const Node& n) {
+    return n.id == kChunkItem && pure3d::NodeName(n) == kDropOutItem;
+  });
+  if (drop == items.end()) return false;
+  items.erase(drop);
+  return true;
+}
+
 bool AddPauseAchievements(Node& page) {
   Node* layer = Child(page, kChunkLayer);
   Node* menu = layer ? Child(*layer, kChunkMenu, "PauseMenu") : nullptr;
@@ -672,6 +712,8 @@ bool AddPauseAchievements(Node& page) {
     return n.id == kChunkItem && pure3d::NodeName(n) == "OptionsItem";
   });
   if (options == items.end() || options->children.empty() || options->children[0].children.empty()) return false;
+  // Drop Out goes (two players' page: pause_drop_out.h); Options moves up one.
+  const bool drop_out = RemoveDropOut(page);
   // "Players" first, then "Achievements" (both after Options).
   Node players = *options;
   pure3d::SetNodeName(players, "PlayersItem");
@@ -681,18 +723,8 @@ bool AddPauseAchievements(Node& page) {
   pure3d::SetNodeName(copy.children[0].children[0], "AchievementsValue");
   const auto at = items.insert(options + 1, players);
   items.insert(at + 1, copy);
-  int count = 0;
-  for (const Node& n : items) count += n.id == kChunkItem;
-  const int step = count > 1 ? std::min(kPauseStep, (kPauseTopY - kPauseLowestY) / (count - 1)) : kPauseStep;
-  int i = 0;
-  for (Node& item : items) {
-    if (item.id != kChunkItem || item.children.empty() || item.children[0].children.empty()) continue;
-    Node& text = item.children[0].children[0];
-    const size_t e = pure3d::NameEnd(text);
-    SetBox(text, int(pure3d::NodeLe32(text, e + 4)), kPauseTopY - step * i,
-           int(pure3d::NodeLe32(text, e + 12)), int(pure3d::NodeLe32(text, e + 16)));
-    ++i;
-  }
+  SpacePauseItems(items, kPauseTopY);
+  if (drop_out) g_drop_out_removed = true;
   return true;
 }
 
@@ -744,6 +776,9 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
         for (std::string_view p : kPausePages) {
           if (k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == p) pages.push_back(p);
         }
+        if (k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == kPauseNoSave2Player) {
+          pages.push_back(kPauseNoSave2Player);
+        }
         if (!parts.ach_icons.empty() && k.id == pure3d::kChunkPage && pure3d::NameOf(original, k) == kMessageBarPage) {
           pages.push_back(kMessageBarPage);
         }
@@ -786,6 +821,16 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
               MakeText(parts.label, parts.empty, "AchPopTitle", text_x, kPopY + 36, text_w, kLineHeight, kLeft, kCyan));
           layer->children.push_back(
               MakeText(parts.label, parts.empty, "AchPopName", text_x, kPopY + 8, text_w, kLineHeight, kLeft, kYellow));
+          return true;
+        }
+        if (name == kPauseNoSave2Player) {
+          // Only Drop Out goes; the rest keep the game's spacing from the top.
+          Node* layer = Child(page, kChunkLayer);
+          Node* menu = layer ? Child(*layer, kChunkMenu, "PauseMenu") : nullptr;
+          if (menu && RemoveDropOut(page)) {
+            SpacePauseItems(menu->children, 270);  // the page's first item (Resume) sits at y 270
+            g_drop_out_removed_no_save = true;
+          }
           return true;
         }
         if (name == kPausePages[0] || name == kPausePages[1]) {
@@ -1094,6 +1139,8 @@ void Register() {
 bool Available() { return g_patched.load(); }
 bool MainMenuAvailable() { return g_main_menu_patched.load(); }
 bool PauseAchievementsAvailable() { return g_pause_patched.load(); }
+bool PauseDropOutRemoved() { return g_drop_out_removed.load(); }
+bool PauseNoSaveDropOutRemoved() { return g_drop_out_removed_no_save.load(); }
 bool PlayersCardsAvailable() { return g_players_cards.load(); }
 
 }  // namespace options_page

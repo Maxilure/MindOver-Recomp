@@ -709,7 +709,7 @@ constexpr KeyRowInfo kKeyRows[] = {
     {kbm::kBlock, u"Hold to block attacks."},
     {kbm::kTitanSpecial, u"Your titan's special attack."},
     {kbm::kPocket, u"Store your titan, and bring it back later."},
-    {kbm::kMap, u"Open the map."},
+    {kbm::kMap, u"Open the map. In the pause menu: drop out (someone else stays in)."},
 };
 
 // "Light attack" -> "Light Attack", "Walk (hold)" -> "Walk (Hold)": the

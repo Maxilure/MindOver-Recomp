@@ -2225,3 +2225,57 @@ keyboard, even in player 3's menu on a controller. They now go through
 `prompt_icons::TextForPlayer(text, owner)` (the owner's own picture slots,
 asked every update so they stay lent).
 
+## 56. Drop Out moves to Back (Select)
+
+The pause menu grew with the port's own items (Options, Players,
+Achievements), and the two-player page held nine entries with Drop Out in
+the middle. The item is gone; in the pause menu, **Back / Select drops that
+player out**, for any player in the game:
+
+![The two-player pause menu without Drop Out: Back drops a player out](../images/pause-menu-back-drops-out.jpg)
+
+* **The data:** `options_page.cpp` RemoveDropOut takes `DropOutMenuItem` out
+  of `InGame_Pause2Player.pag` (with Save) and
+  `InGame_Pause2Player_NoSave.pag` (the pause screen without Save) in every
+  in-game menus package. Both two-player pages now list the same items as
+  the one-player page.
+* **The decisions** (`sub_82121B48` PauseScreen 868, `sub_82121EA8`
+  NoSavePauseScreen 901) still number the two-player items with Drop Out at
+  index 3 (exits 882 / 914). While they run, the GetMenuIndex filter
+  (`achievements_screen.cpp` ShiftPauseIndex) moves every shown index from 3
+  on up by one.
+* **Back** (`players/pause_drop_out.cpp`, called after each pause decision,
+  i.e. every frame the pause state is current): every player's controller as
+  the game last read it (`input_record::LastRead`), a new Back press counts.
+  * The menu's owner: picked like an item. A pick has two steps: the menu
+    screen action's "open" step (`sub_820D9E48`, state +0x30 = 3) hears A,
+    sets state 5, plays select / back / arm_wipe and turns the menus' input
+    off (front end +8592 bit 0x40); its closing step (`sub_820DA010`) fades
+    the page out and only then sets front end +8593 bit 0x08, which the
+    decision waits for before it reads the selected item. Back runs the same
+    open step for the owner (`sub_820D9E48` wrapped), and once bit 0x08 is
+    set the decision answers the Drop Out exit (882 / 914) instead of the
+    item under the cursor. Answering the exit at once (first version) closed
+    the menu with no fade.
+  * Another player: `lost_controller::DropOut` (the same game call,
+    `sub_82266040`, with the owner set to them); the menu stays up and the
+    player leaves once play goes on.
+  * The last player in the game can't drop out (`lost_controller::CanDropOut`).
+* **The prompt:** "Drop Out" with the Back picture in FE_Buttons' upper-left
+  corner while someone may drop out (the owner's look, like the other
+  prompts), cleared when the menu is left. The label says whether the corner
+  is ours; the button text is written only with it (or when emptied):
+  `prompt_icons` rewrites FE_Buttons' button texts into the owner's picture
+  every frame, and writing the plain Back character back every frame made
+  the two fight (the picture lent and taken back, shown blank at times).
+* **Keyboard:** Back is the Map key (Tab / M), now answered in menus too.
+
+Checked with fake controllers (3 players, Wumpa Island): player 3's Back =
+dropped out with player 1's menu up; Options and Save Game (below the old
+place) open their own screens; player 1's Back as the owner = the menu
+slides out, player 1 drops out, player 2 plays on; player 2 alone = no
+prompt, Back does nothing; player 1 on the keyboard (Tab): drop out, rejoin,
+pause again three times = the Tab picture every time; player 2 (controller)
+as the owner = same closing and drop out. 0 errors. Not reached: the pause
+screen without Save.
+

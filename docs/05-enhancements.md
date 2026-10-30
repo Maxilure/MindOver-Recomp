@@ -76,7 +76,8 @@ Off: `--save_library=false` (the game's own three slots).
 
 The original has drop-in co-op for two: a second player presses START to
 join, as the mask floating next to Crash, and leaves again from their pause
-menu (Drop Out). The goal is four players together on one PC.
+menu (Drop Out; in the port: Back / Select in the pause menu, for any
+player). The goal is four players together on one PC.
 
 What's already in place: the Controls menu (**F1** → Controls, Players tab) decides
 which device plays as which player, and players 2-4 share player 1's

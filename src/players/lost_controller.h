@@ -67,6 +67,12 @@ void FilterPad(int user, uint8_t* gamepad, bool connected);
 // Out (sub_82266040 with the menu owner set to p, as the Y here does), and
 // the "controller disconnected" box isn't asked for p meanwhile. False =
 // not dropped (p isn't in game, or nobody else is). Game main thread.
-bool DropOut(PPCContext& ctx, uint8_t* base, int p);
+// `why` goes in the log. Also the pause menu's Back (players/pause_drop_out.h)
+// for a player who isn't the menu's owner.
+bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why);
+
+// May player p drop out now? In game, not already dropping, and someone
+// else stays in game (the last player can't). Game main thread.
+bool CanDropOut(int p);
 
 }  // namespace lost_controller
