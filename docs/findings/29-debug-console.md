@@ -351,3 +351,39 @@ Two things to keep in mind:
   milliseconds and is on at every cap but 30: turn it off for exact runs.
 - Work on other threads (streaming, sound) doesn't follow the fixed step.
   The walk above didn't need any; a long run through a level may.
+
+## 7. The slow-load sampler, and the load that crawled (2026-10-30)
+
+After a long session (a level played, the outfit chest used a dozen times,
+Quit Game to the title), the title's own loading after the attract movie
+took 23 s instead of 3-6 s. The game wasn't stuck: the front end sat in its
+loading states (51 -> 52 -> 53) while the game's time per frame CLIMBED,
+13 -> 30 -> 48 -> 88 -> 153 ms, every frame costing more than the last. Tests
+didn't get anywhere near 23 s (3.3-6.9 s), so the log alone couldn't say why.
+
+**The sampler** (`src/debug/slow_load_sampler.*`, on by default,
+`--debug_slow_load_sampler`): while the front end is in one of those
+states and three frames in a row take the game over 60 ms, a timer thread
+signals the game's main thread every 2 ms for 4 s; the signal handler keeps
+the host call stack (`backtrace`), and the log gets three lists: the
+innermost game function of each sample (`sub_XXXXXXXX`), the innermost host
+function, and the innermost host function outside libc (who made the
+system call the thread was in). Once a minute at most; Linux only.
+
+Run once on purpose (threshold lowered for the test) during that load:
+
+| | |
+|---|---|
+| game functions | `sub_82300E98` 90% (the game's physical-memory allocation: MmAllocatePhysicalMemoryEx) |
+| host | a libc system call 73% |
+| outside libc | `std::basic_file::xsgetn` 67% (an `ifstream` read), `basic_file::open` 3%, `rex::memory::AllocFixed` 10% |
+
+**The cause** (SDK): `rex::memory::AllocFixed` commits a range that is
+already reserved with `mprotect`, but first made sure the range had no holes
+by opening, reading and parsing all of `/proc/self/maps`, on every commit.
+That file has a line per memory mapping; a long session (and the load itself)
+splits the guest's reservations into ever more of them, so each of the
+load's many commits read a longer file. `mprotect` already refuses (ENOMEM,
+changing nothing) a range with unmapped pages, so the check went: SDK patch
+`0018-commit-without-proc-maps`. The same load now takes 0.37 s.
+

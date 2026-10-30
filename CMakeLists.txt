@@ -38,6 +38,7 @@ set(CRASHMOM_SOURCES
     src/crash_report.cpp         # a crash writes its named call stack into the log + crash-*.txt
     src/debug/host_symbols.cpp   # host code address -> function name / original PowerPC instruction
     src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
+    src/debug/slow_load_sampler.cpp  # a crawling title load: sample the main thread, log where it is
     src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
     src/debug/xbox_calls.cpp     # the Xbox calls meter: which Xbox services the game calls (Linux)
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned

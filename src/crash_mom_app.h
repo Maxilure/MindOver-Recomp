@@ -60,6 +60,7 @@
 #include "settings_list.h"
 #include "session_log.h"
 #include "crash_report.h"
+#include "debug/slow_load_sampler.h"
 #include "debug/write_watchpoints.h"
 #include "input/name_typing.h"
 #include "input/controls_menu.h"
@@ -175,6 +176,8 @@ class CrashMomApp : public rex::ReXApp {
     // Debug console `who`: our write-watch fault handler, in front of the
     // SDK's (src/debug/write_watchpoints.h). Costs nothing until armed.
     write_watchpoints::Install();
+    // A crawling title load names itself in the log (src/debug/slow_load_sampler.h).
+    slow_load_sampler::Install();
     // Debug screenshots, only with --debug_capture_dir (see
     // debug_frame_capture.h). The presenter is the SDK object that holds
     // the final picture the emulated GPU sends to the "TV".

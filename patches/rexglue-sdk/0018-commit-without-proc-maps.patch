@@ -1,0 +1,100 @@
+Fix: commit on a reserved range without reading /proc/self/maps every time
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0018-commit-without-proc-maps.patch
+Status:     upstream performance bug (report to rexglue-sdk)
+
+WHAT BROKE
+  After a long session (a level played, the chest used many times, then
+  back to the title), the title's own loading after the attract movie took
+  23 s instead of 3-6 s. The game kept running but its time per frame CLIMBED
+  through the load (13 -> 30 -> 48 -> 88 -> 153 ms): every frame cost more
+  than the one before.
+
+WHY
+  rex::memory::AllocFixed (src/core/memory_posix.cpp) commits a range that is
+  already reserved (mmap MAP_FIXED_NOREPLACE fails with EEXIST) by mprotect,
+  but first checked that the whole range is mapped by opening, reading and
+  parsing ALL of /proc/self/maps (IsRangeFullyMapped). The game's loads commit
+  physical memory over and over (MmAllocatePhysicalMemoryEx from the game's
+  sub_82300E98). /proc/self/maps has one line per mapping, and a long session
+  (and the load itself) splits the guest's reservations into ever more
+  mappings, so each commit read a longer file.
+
+FIX
+  No pre-check: mprotect already fails with ENOMEM, changing nothing, when any
+  page of the range is unmapped, which is exactly the case the check guarded
+  against. IsRangeFullyMapped (now unused) is removed. (Protect and
+  QueryProtect still read /proc/self/maps when asked for the old access; not
+  seen in this game's hot paths.)
+
+HOW FOUND
+  The port's slow-load sampler (src/debug/slow_load_sampler.*: signals the
+  main thread every 2 ms during a slow front-end load, logs where it was):
+  90% of the samples under the game's sub_82300E98, 67% of them in
+  std::basic_file::xsgetn (an ifstream read) and 3% in basic_file::open,
+  called from rex::memory::AllocFixed; the reading loop is
+  IsRangeFullyMapped.
+
+--- a/src/core/memory_posix.cpp
++++ b/src/core/memory_posix.cpp
+@@ -189,38 +189,6 @@
+   return false;
+ }
+ 
+-// Check if [base, base+length) is fully covered by existing mappings (no gaps)
+-static bool IsRangeFullyMapped(void* base_address, size_t length) {
+-  if (!base_address || length == 0)
+-    return false;
+-
+-  const uintptr_t begin = reinterpret_cast<uintptr_t>(base_address);
+-  const uintptr_t end = begin + length;
+-  if (end < begin) {  // overflow check
+-    return false;
+-  }
+-
+-  std::ifstream maps("/proc/self/maps");
+-  if (!maps.is_open())
+-    return false;
+-
+-  uintptr_t cursor = begin;
+-  std::string line;
+-  while (std::getline(maps, line)) {
+-    LinuxMapEntry e;
+-    if (!ParseProcMapsLine(line, e))
+-      continue;
+-    if (e.end <= cursor)
+-      continue;
+-    if (e.start > cursor)
+-      return false;  // gap found
+-    cursor = e.end;
+-    if (cursor >= end)
+-      return true;
+-  }
+-  return cursor >= end;
+-}
+-
+ // Convert /proc/self/maps permission chars to PageAccess
+ static PageAccess PermsToPageAccess(const char perms[5]) {
+   const bool r = perms[0] == 'r';
+@@ -304,11 +272,15 @@
+   if (errno == EEXIST && base_address &&
+       (allocation_type == AllocationType::kCommit ||
+        allocation_type == AllocationType::kReserveCommit)) {
+-    // Verify the entire range is mapped before using mprotect
+-    if (IsRangeFullyMapped(base_address, length)) {
+-      if (mprotect(base_address, length, static_cast<int>(prot_requested)) == 0) {
+-        return base_address;
+-      }
++    // The range must be mapped all the way (a reservation) before mprotect
++    // changes it. mprotect itself checks that: it fails with ENOMEM when any
++    // page of the range isn't mapped, changing nothing. (It was checked first
++    // by reading and parsing all of /proc/self/maps, on every commit: that
++    // file grows with the process's mappings, so after a long session each
++    // commit took longer and a game's loading slowed to a crawl. Crash Mind
++    // over Mutant port, patch 0018.)
++    if (mprotect(base_address, length, static_cast<int>(prot_requested)) == 0) {
++      return base_address;
+     }
+   }
+ #endif
