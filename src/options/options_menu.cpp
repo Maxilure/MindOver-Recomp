@@ -4,6 +4,7 @@
 #include "options_menu.h"
 
 #include "../input/keyboard_mouse.h"
+#include "../input/players.h"
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 
@@ -234,16 +235,15 @@ struct Screen {
   std::array<uint32_t, options_page::kPlyPrompts> ply_prompt{};
   std::array<int, options_page::kPlyPrompts> ply_prompt_action{};  // what a click on each does
   int ply_sel = 0;
-  int ply_choosing = -1;    // the card whose controller is being chosen (-1 none)
-  // A SELECTED CARD (A on it: ply_choosing) has two rows: its controller
-  // (left / right = the controllers connected, A = take the one shown) and,
-  // DOWN from there, its BUTTONS LINE (left / right / A = the player's button
-  // pictures; up = back to the controller). B leaves the card. (2026-10-29:
-  // first LB / RB on a card, then a Buttons stop in the cards' own up / down
-  // order: both replaced at the player's request.) True = the Buttons row.
-  bool ply_on_style = false;
-  int ply_choice = 0;       // the controller on offer (index into players_setup::Controllers())
-  bool ply_hold_b = false;  // the B that cancelled a choice: hidden from the game until let go
+  // A card in BUTTONS mode (A on it, players_setup.h PadIcons): left / right
+  // preview the styles (ply_style = the one shown, its A B X Y on the card),
+  // A keeps it, B goes back to the old one. -1 = none.
+  int ply_styling = -1;
+  int ply_style = 0;
+  // MOVE (X on a card): the card whose controller is picked up (-1 none);
+  // the selection is where it would be dropped (A).
+  int ply_moving = -1;
+  bool ply_hold_b = false;  // the B that cancelled a mode: hidden from the game until let go
   std::vector<uint32_t> ply_hidden;  // the game's prompts / title hidden while the screen is up
   std::string ply_drawn;
 };
@@ -267,8 +267,8 @@ constexpr uint32_t kElementColour = 80;  // an element's colour word (0xAARRGGBB
 constexpr int kCaptureNone = -3, kCaptureWaiting = -2, kCaptureCancelled = -1;
 std::atomic<int> g_capture_result{kCaptureNone};
 std::atomic<bool> g_capturing{false};  // read by the controller filter (Capturing())
-// The Players screen's chooser is open (or the B that cancelled it is still
-// held): the game doesn't see B (FilterPad), the screen does (its
+// The Players screen has a card in Buttons or Move mode (or the B that
+// cancelled it is still held): the game doesn't see B (FilterPad), the screen does (its
 // own reading, SeePad, comes first). Holding back only the screen's decision
 // wasn't enough: the screen's own action heard that B and slid away, and the
 // front end stayed in the Options state with nothing on screen.
@@ -292,7 +292,18 @@ uint32_t FrontEnd(const uint8_t* base) {
 int Owner(const uint8_t* base) {
   const uint32_t fe = FrontEnd(base);
   const int owner = fe ? int(int32_t(Read32(base, fe + kOwner))) : -1;
-  return owner >= 0 && owner < 4 ? owner : 0;
+  if (owner < 0 || owner >= 4) return 0;
+  // The owner's controller went (unplugged, or moved on the Players screen)
+  // while this screen was up (2026-10-30): its buttons were the only ones
+  // read here, so nobody could leave it. The first player who still has a
+  // device works it instead (player 1: the keyboard is always theirs).
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  if (assignment && !assignment->HasDeviceFor(owner)) {
+    for (int p = 0; p < 4; ++p) {
+      if (assignment->HasDeviceFor(p)) return p;
+    }
+  }
+  return owner;
 }
 
 // Our page's menu: a track naming InGameOptionsMenu, with our page in the
@@ -1159,9 +1170,12 @@ void UpdateAchievements(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) 
 // panel, each "Player N" (the player's colour; yellow and pulsing when
 // selected), the device picture, the device's name (or "Press any button to
 // join", blinking). Player 1's card shows the device player 1 used last.
-// A opens the CHOOSER on the selected card (left / right = every controller
-// connected, A gives it to that player, B cancels); X / Backspace removes
-// the player's controller; B / Esc goes back. The
+// A = the card's BUTTON PICTURES (left / right preview each style's A B X Y,
+// A keeps, B goes back); X = MOVE its controller (point at another card, A
+// drops it there: an empty player takes it, a player with one swaps; B / X
+// cancels); Y / Backspace removes the player's controller; B / Esc goes
+// back. (2026-10-30: a controller CHOOSER on A came first: replaced, the
+// controllers take players first come, first served.) The
 // prompt row under the panel shows only what can be done. Texts are
 // written only when they change (each change allocates on the menus' heap);
 // the pulse and blink are a scale / an alpha, every frame.
@@ -1257,7 +1271,7 @@ struct PlyPrompt {
   std::u16string label;
   int action;  // what a click on it does (kPlyAct*)
 };
-enum { kPlyActChoose, kPlyActRemove, kPlyActStyle, kPlyActBack };
+enum { kPlyActButtons, kPlyActMove, kPlyActRemove, kPlyActStyle, kPlyActBack };
 
 // Does card k show its BUTTONS LINE (players_setup.h PadIcons)? With a
 // controller only, and not while it shows player 1's keyboard (keys have no
@@ -1267,22 +1281,46 @@ bool StyleLineShown(const players_setup::Box& b, int k) {
   return b.has_pad && !(d && d->keyboard);
 }
 
+// The style whose pictures a setting draws for card k: Automatic = the one
+// its controller's maker calls for (the 360's own when unknown).
+int DrawnStyle(const players_setup::Box& b, int setting) {
+  if (setting != 0) return setting;
+  return b.detected_style > 0 ? b.detected_style : 1;
+}
+
+// THE PREVIEW (2026-10-30): a style's four face buttons, A B X Y in the
+// 360's places (PlayStation: cross, circle, square, triangle; Switch: its
+// B A Y X), as pictures among the card's words. Empty if the font patch
+// isn't in.
+std::u16string FaceButtons(int style) {
+  std::u16string out;
+  for (const char16_t face : {u'A', u'B', u'X', u'Y'}) {
+    const char16_t glyph = prompt_icons::ButtonGlyphInStyle(face, style);
+    if (!glyph) return {};
+    if (!out.empty()) out += u"  ";
+    out += glyph;
+  }
+  return out;
+}
+
 // The prompts for the selection as it is.
-std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& boxes, size_t controllers) {
-  const char16_t remove = prompt_icons::KeysLookFor(0) ? kGlyphY : kGlyphX;  // Backspace on keys
+std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& boxes) {
   std::vector<PlyPrompt> out;
   const players_setup::Box& sel = boxes[size_t(g.ply_sel)];
-  if (g.ply_choosing != kPlyNone && g.ply_on_style) {
-    out.push_back({kGlyphA, u"Change Buttons", kPlyActStyle});
+  if (g.ply_styling != kPlyNone) {
+    out.push_back({kGlyphA, u"Confirm", kPlyActButtons});
     out.push_back({kGlyphB, u"Back", kPlyActBack});
-  } else if (g.ply_choosing != kPlyNone) {
-    out.push_back({kGlyphA, u"Select Controller", kPlyActChoose});
-    out.push_back({kGlyphB, u"Back", kPlyActBack});
-  } else {
-    if (controllers && sel.state != players_setup::State::kUnavailable) {
-      out.push_back({kGlyphA, u"Select", kPlyActChoose});
+  } else if (g.ply_moving != kPlyNone) {
+    if (g.ply_sel != g.ply_moving && players_setup::CanMoveTo(g.ply_sel)) {
+      out.push_back({kGlyphA, sel.has_pad ? u"Swap" : u"Move Here", kPlyActMove});
     }
-    if (sel.has_pad) out.push_back({remove, u"Remove", kPlyActRemove});
+    out.push_back({kGlyphB, u"Cancel", kPlyActBack});
+  } else {
+    if (sel.has_pad) {
+      out.push_back({kGlyphA, u"Buttons", kPlyActButtons});
+      out.push_back({kGlyphX, u"Move", kPlyActMove});
+      out.push_back({kGlyphY, u"Remove", kPlyActRemove});
+    }
     out.push_back({kGlyphB, u"Back", kPlyActBack});
   }
   return out;
@@ -1317,22 +1355,34 @@ void RefreshPlayers(Env& env) {
   uint8_t* base = env.base;
   SwapHinge(ctx, base);
   const auto boxes = players_setup::Boxes();
-  const auto controllers = players_setup::Controllers();
-  if (g.ply_choosing != kPlyNone && controllers.empty()) g.ply_choosing = kPlyNone;  // all unplugged
-  if (!controllers.empty()) g.ply_choice = std::clamp(g.ply_choice, 0, int(controllers.size()) - 1);
-  const std::vector<PlyPrompt> prompts = PlayersPrompts(boxes, controllers.size());
-  // What the screen would say (a change = redraw).
-  if (g.ply_on_style && (g.ply_choosing == kPlyNone || !boxes[size_t(g.ply_choosing)].has_pad)) {
-    g.ply_on_style = false;  // no card selected / its controller gone: no Buttons row
+  // A mode whose card lost its controller (unplugged, joined elsewhere) ends.
+  if (g.ply_styling != kPlyNone && !boxes[size_t(g.ply_styling)].has_pad) g.ply_styling = kPlyNone;
+  if (g.ply_moving != kPlyNone && !boxes[size_t(g.ply_moving)].has_pad) g.ply_moving = kPlyNone;
+  const std::vector<PlyPrompt> prompts = PlayersPrompts(boxes);
+  // The prompt row's texts, in the pictures of the screen's OWNER (who
+  // paused): player 3 on a controller sees its buttons, not player 1's keys
+  // (2026-10-30: the row always showed player 1's device). TextForPlayer
+  // lends the owner's picture slots: asked every frame (it's called every
+  // update), so they stay lent; player 1 keeps the game's own characters.
+  const int n = std::min(int(prompts.size()), options_page::kPlyPrompts);
+  std::array<std::u16string, options_page::kPlyPrompts> texts;
+  for (int i = 0; i < n; ++i) {
+    texts[size_t(i)] = prompt_icons::TextForPlayer(
+        std::u16string(1, prompt_icons::MenuGlyph(prompts[size_t(i)].glyph)) + u" " + prompts[size_t(i)].label,
+        env.player);
   }
-  std::string drawn = fmt::format("{}|{}|{}|{}|{}|", g.ply_sel, g.ply_choosing, g.ply_choice, prompt_icons::KeysLookFor(0),
-                                  g.ply_on_style);
+  // What the screen would say (a change = redraw).
+  std::string drawn = fmt::format("{}|{}|{}|{}|{}|", g.ply_sel, g.ply_styling, g.ply_style, g.ply_moving,
+                                  prompt_icons::KeysLookFor(0));
+  for (int i = 0; i < n; ++i) {
+    for (const char16_t c : texts[size_t(i)]) drawn += fmt::format("{:x}.", uint32_t(c));
+    drawn += '|';
+  }
   for (int k = 0; k < 4; ++k) {
     const players_setup::ShownDevice* d = ShownDevice(boxes[size_t(k)], k);
-    drawn += fmt::format("{}:{}:{}:{};", d ? d->key : "", d ? d->picture : -1, boxes[size_t(k)].has_pad,
-                         players_setup::PadIcons(k));
+    drawn += fmt::format("{}:{}:{}:{}:{};", d ? d->key : "", d ? d->picture : -1, boxes[size_t(k)].has_pad,
+                         players_setup::PadIcons(k), boxes[size_t(k)].detected_style);
   }
-  for (const players_setup::Controller& c : controllers) drawn += fmt::format("{}={},", c.key, c.player);
   if (drawn == g.ply_drawn) return;
   g.ply_drawn = drawn;
   // No rows, tabs or page texts: the cards are the screen.
@@ -1349,24 +1399,27 @@ void RefreshPlayers(Env& env) {
   ShowOptionsFurniture(ctx, base, false);
   scrooby::SetVisible(base, g.ply_hinge, true);  // ours over the cards (SwapHinge hid the game's)
   g_wheel_list = true;  // the wheel does nothing here (not the D-pad)
+  const int mover = g.ply_moving;
+  const bool dropping = mover != kPlyNone && g.ply_sel != mover;  // pointing at another card
   for (int k = 0; k < 4; ++k) {
     const Screen::PlyCard& c = g.ply_cards[size_t(k)];
     const players_setup::Box& b = boxes[size_t(k)];
     const players_setup::ShownDevice* d = ShownDevice(b, k);
-    const bool selected = k == g.ply_sel, choosing = k == g.ply_choosing;
-    // The selected card's rows: offering = its controller row (the
-    // controller on offer shown), style_focus = its Buttons row.
-    const bool offering = choosing && !g.ply_on_style, style_focus = choosing && g.ply_on_style;
+    const bool selected = k == g.ply_sel, styling = k == g.ply_styling;
     for (const uint32_t e : {c.back, c.glass, c.pic, c.title, c.info}) scrooby::SetVisible(base, e, true);
-    scrooby::SetVisible(base, c.ring, selected);
-    if (selected) scrooby::SetFrame(ctx, base, c.ring, choosing ? uint32_t(1 + k) : 0u);  // choosing: their colour
-    // The arrows: beside the picture while choosing a controller, beside the
-    // Buttons line while it has the focus (same arrows, moved).
-    scrooby::SetVisible(base, c.left, offering || style_focus);
-    scrooby::SetVisible(base, c.right, offering || style_focus);
-    // (Beside the picture: placed here; beside the Buttons line: below, once
-    // the line's width is known.)
-    if (offering) PlaceArrows(ctx, base, c, k, options_page::kPlyArrowInset, float(options_page::kPlyPicCentre[k / 2]), 1.0f);
+    // The ring: yellow = selected; in the player's colour while their card
+    // is in Buttons mode; MOVING = the moved controller's player's colour on
+    // its own card and on the card it would be dropped on.
+    const bool move_ring = mover != kPlyNone && (k == mover || selected);
+    scrooby::SetVisible(base, c.ring, selected || move_ring);
+    if (move_ring) {
+      scrooby::SetFrame(ctx, base, c.ring, uint32_t(1 + mover));
+    } else if (selected) {
+      scrooby::SetFrame(ctx, base, c.ring, styling ? uint32_t(1 + k) : 0u);
+    }
+    // The arrows: beside the Buttons line while it's being chosen.
+    scrooby::SetVisible(base, c.left, styling);
+    scrooby::SetVisible(base, c.right, styling);
     // The player's NUMBER, big, in their colour (the selected card is told by
     // its ring and the number's pulse).
     scrooby::SetText(ctx, base, c.title, Utf16(fmt::format("{}", k + 1)));
@@ -1374,14 +1427,30 @@ void RefreshPlayers(Env& env) {
     std::u16string info;
     uint32_t colour = kPlyGreen;
     int picture = d ? d->picture : players_setup::kPicEmpty;
-    if (offering) {
-      // The controller on offer: its picture (in this player's colour), its
-      // name, and whose it is now.
-      const players_setup::Controller& o = controllers[size_t(g.ply_choice)];
-      picture = o.picture;
-      info = Utf16(o.player == k   ? o.name + " (now)"
-                   : o.player >= 0 ? fmt::format("{} (Player {})", o.name, o.player + 1)
-                                   : o.name);
+    const std::u16string faces = styling ? FaceButtons(DrawnStyle(b, g.ply_style)) : std::u16string();
+    if (styling && !faces.empty()) {
+      // BUTTONS MODE: the style's A B X Y where the name was.
+      info = faces;
+      colour = 0xFFFFFFFF;
+    } else if (dropping && selected) {
+      // The card the controller would go to: that controller shown on it.
+      const players_setup::ShownDevice* moved = ShownDevice(boxes[size_t(mover)], -1);
+      for (const players_setup::ShownDevice& m : boxes[size_t(mover)].devices) {
+        if (!m.keyboard) {
+          moved = &m;
+          break;
+        }
+      }
+      if (!players_setup::CanMoveTo(k)) {
+        info = u"No room for this player";
+        colour = kPlyCyan;
+      } else if (moved) {
+        picture = moved->picture;
+        info = Utf16(moved->name);
+        colour = kPlyYellow;
+      }
+    } else if (k == mover) {
+      info = dropping ? Utf16(fmt::format("Moving to Player {}", g.ply_sel + 1)) : u"Pick a player";
       colour = kPlyYellow;
     } else if (d) {
       info = Utf16(d->name);
@@ -1403,26 +1472,22 @@ void RefreshPlayers(Env& env) {
       marquee::Fit(c.info, TextWidth(info, 1.0f) / kPageScale * scale, room);
     }
     // The button pictures line (players_setup.h PadIcons), with a controller
-    // only (LB / RB change it; the chooser shows the controller on offer),
-    // and not while the card shows player 1's keyboard (its keys have no
-    // button pictures to choose).
-    // (A selected card shows it whenever it has a controller: the row to go
-    // down to, even while it shows player 1's keyboard.)
-    const bool style_shown = choosing ? b.has_pad : StyleLineShown(b, k);
+    // only, and not while the card shows player 1's keyboard (its keys have
+    // no button pictures to choose; in Buttons mode it shows anyway).
+    const bool style_shown = styling ? b.has_pad : StyleLineShown(b, k);
     scrooby::SetVisible(base, c.style, style_shown);
     if (style_shown) {
-      // With the focus: the style's NAME only, between the arrows ("Buttons:"
-      // dropped), and the arrows at FIXED places: just outside the widest
-      // name ("PlayStation 5"), so they stay put while the names change (at
-      // first they hugged each name: "Switch" pulled them in, 2026-10-29).
-      // The arrows 0.75x.
-      const char* name = players_setup::StyleName(players_setup::PadIcons(k));
-      const std::u16string style = style_focus ? Utf16(name) : Utf16(fmt::format("Buttons: {}", name));
+      // Just the style's NAME ("PlayStation 5"; a "Buttons:" label came
+      // first), yellow between the arrows while it's being chosen, the
+      // arrows at FIXED places: just outside the widest name, so they stay
+      // put while the names change.
+      const std::u16string style =
+          Utf16(players_setup::StyleName(styling ? g.ply_style : players_setup::PadIcons(k)));
       scrooby::SetText(ctx, base, c.style, style);
-      scrooby::SetColour(ctx, base, c.style, style_focus ? kPlyYellow : kPlyCyan);
+      scrooby::SetColour(ctx, base, c.style, styling ? kPlyYellow : kPlyCyan);
       SetBox(base, c.style, x, top - options_page::kPlyStyleTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
       const float arrow = kPlyLineArrowScale * float(options_page::kPlyArrowSide);
-      if (style_focus) {
+      if (styling) {
         static const std::u16string kWidest = u"PlayStation 5";
         const float scale = FitScale(kWidest, room - 2.0f * (arrow + 6.0f), kPlyStyleScale);
         scrooby::SetScale(ctx, base, c.style, scale);
@@ -1437,11 +1502,7 @@ void RefreshPlayers(Env& env) {
   // The prompt row, centred under the panel: "<glyph> <label>", 24 apart.
   float widths[options_page::kPlyPrompts] = {};
   float total = 0;
-  const int n = std::min(int(prompts.size()), options_page::kPlyPrompts);
-  std::array<std::u16string, options_page::kPlyPrompts> texts;
   for (int i = 0; i < n; ++i) {
-    texts[size_t(i)] = std::u16string(1, prompt_icons::MenuGlyph(prompts[size_t(i)].glyph)) + u" " +
-                       prompts[size_t(i)].label;
     widths[i] = TextWidth(texts[size_t(i)], 1.0f) / kPageScale * kPlyPromptScale;
     total += widths[i] + (i ? 24.0f : 0.0f);
   }
@@ -1461,56 +1522,65 @@ void RefreshPlayers(Env& env) {
   }
 }
 
-// A: open the chooser on the selected card (on its own controller, else the
-// first one), or give the controller on offer to that player.
+// Leaves Buttons / Move mode without doing anything (Buttons: the old style
+// stays, nothing was saved while previewing).
+void PlayersCancel(PPCContext& ctx, uint8_t* base) {
+  g.ply_styling = kPlyNone;
+  g.ply_moving = kPlyNone;
+  scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+}
+
+// What a button / click does on the selected card.
+//   kPlyActButtons: Buttons mode on (the current style shown), or in it:
+//                   keep the style shown (saved);
+//   kPlyActStyle / -kPlyActStyle: in Buttons mode, the next / previous style
+//                   shown (wrapping: Automatic, Xbox 360 .. Switch);
+//   kPlyActMove:    Move mode on (the selected card's controller picked
+//                   up), or in it: dropped on the selected card;
+//   kPlyActRemove:  the selected player's controllers off.
 void PlayersAct(PPCContext& ctx, uint8_t* base, int action) {
   const auto boxes = players_setup::Boxes();
-  const auto controllers = players_setup::Controllers();
-  if (action == kPlyActChoose && g.ply_on_style && g.ply_choosing != kPlyNone) action = kPlyActStyle;
-  if (action == kPlyActChoose) {
-    if (g.ply_choosing == kPlyNone) {
-      if (controllers.empty() || boxes[size_t(g.ply_sel)].state == players_setup::State::kUnavailable) return;
-      g.ply_choosing = g.ply_sel;
-      g.ply_choice = 0;
-      for (int i = 0; i < int(controllers.size()); ++i) {
-        if (controllers[size_t(i)].player == g.ply_sel) {
-          g.ply_choice = i;
-          break;
-        }
-      }
+  const int k = g.ply_sel;
+  if (action == kPlyActButtons) {
+    if (g.ply_styling == kPlyNone) {
+      if (g.ply_moving != kPlyNone || !boxes[size_t(k)].has_pad) return;
+      g.ply_styling = k;
+      g.ply_style = players_setup::PadIcons(k);
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
     } else {
-      const int p = g.ply_choosing;
-      g.ply_choosing = kPlyNone;
-      g.ply_on_style = false;
-      if (g.ply_choice < int(controllers.size()) &&
-          players_setup::AssignController(ctx, base, p, controllers[size_t(g.ply_choice)].key)) {
+      const int p = g.ply_styling;
+      g.ply_styling = kPlyNone;
+      if (g.ply_style != players_setup::PadIcons(p)) players_setup::SetPadIcons(p, g.ply_style);
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    }
+  } else if (action == kPlyActStyle || action == -kPlyActStyle) {
+    if (g.ply_styling == kPlyNone) return;
+    const int step = action > 0 ? 1 : -1;
+    g.ply_style = (g.ply_style + step + 6) % 6;
+    scrooby::PlaySound(ctx, base, step < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
+  } else if (action == kPlyActMove) {
+    if (g.ply_styling != kPlyNone) return;
+    if (g.ply_moving == kPlyNone) {
+      if (!boxes[size_t(k)].has_pad) return;
+      g.ply_moving = k;
+      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    } else if (k == g.ply_moving) {
+      PlayersCancel(ctx, base);  // dropped where it was: nothing moves
+    } else {
+      const int from = g.ply_moving;
+      g.ply_moving = kPlyNone;
+      if (players_setup::MoveController(ctx, base, from, k)) {
         scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
       } else {
+        g.ply_moving = from;  // refused (no room / the last player in the game): still held
         scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
       }
     }
-  } else if (action == kPlyActStyle || action == -kPlyActStyle) {
-    // The selected player's button pictures, one style on (right / A / a
-    // click on the line) or back (left), wrapping: Automatic, Xbox 360 ..
-    // Switch.
-    if (!boxes[size_t(g.ply_sel)].has_pad) return;
-    const int step = action > 0 ? 1 : -1;
-    players_setup::SetPadIcons(g.ply_sel, (players_setup::PadIcons(g.ply_sel) + step + 6) % 6);
-    scrooby::PlaySound(ctx, base, step < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
-  } else if (action == kPlyActRemove && g.ply_choosing == kPlyNone) {
-    if (players_setup::RemoveControllers(ctx, base, g.ply_sel)) {
+  } else if (action == kPlyActRemove && g.ply_styling == kPlyNone && g.ply_moving == kPlyNone) {
+    if (players_setup::RemoveControllers(ctx, base, k)) {
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
     }
   }
-}
-
-// The chooser: the next / previous controller (wrapping round).
-void PlayersStep(PPCContext& ctx, uint8_t* base, int direction) {
-  const int count = int(players_setup::Controllers().size());
-  if (g.ply_choosing == kPlyNone || count < 2) return;
-  g.ply_choice = ((g.ply_choice + direction) % count + count) % count;
-  scrooby::PlaySound(ctx, base, direction < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
 }
 
 void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
@@ -1527,7 +1597,7 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     HideHeld(0, joined_buttons);
     HideHeld(joined, joined_buttons);
     g.seen |= joined_buttons;
-    if (g.ply_choosing == kPlyNone) g.ply_sel = joined;
+    if (g.ply_styling == kPlyNone && g.ply_moving == kPlyNone) g.ply_sel = joined;
     scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
   }
   // The pulse of the selected name (1.08 <-> 1.02 over 0.9 s) and the blink
@@ -1543,14 +1613,14 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     for (int k = 0; k < 4; ++k) {
       const Screen::PlyCard& c = g.ply_cards[size_t(k)];
       scrooby::SetScale(ctx, base, c.title, kPlyNumberScale * (k == g.ply_sel ? pulse : 1.0f));
-      const bool empty = boxes[size_t(k)].devices.empty() && k != g.ply_choosing;
+      const bool empty = boxes[size_t(k)].devices.empty() && !(g.ply_moving != kPlyNone && k == g.ply_sel);
       scrooby::SetAlpha(ctx, base, c.info, empty ? uint8_t(255 * blink) : 0xFF);
     }
     // THE CORNER GLOW (see Screen::ply_aura): in = the player has a device
-    // (joined on this screen: a controller pressed to join, or chosen; player
-    // 1's keyboard always), whether or not they're in the level yet; fades
-    // over kAuraFade. (First tried: only players playing in the level, in
-    // menus those with a device: most cards stayed bare in the pause menu.)
+    // (joined on this screen: a controller pressed to join, or moved there;
+    // player 1's keyboard always), whether or not they're in the level yet;
+    // fades over kAuraFade. (First tried: only players playing in the level,
+    // in menus those with a device: most cards stayed bare in the pause menu.)
     {
       constexpr double kAuraFade = 0.5;
       const double dt = g.ply_aura_time < 0 ? 1e9 : std::max(0.0, t - g.ply_aura_time);
@@ -1566,26 +1636,21 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
       }
     }
     // THE PRESS INDICATOR: a card whose device pressed something (its
-    // controller, player 1's keys, the chooser's offered controller): its
-    // ring flashes in the player's colour, fading out over kFlash (on the
-    // selected card the yellow ring turns their colour meanwhile). Only the
-    // card's ring: a first version also popped the controller picture (1.15x),
-    // not wanted. Drawn every frame over what
-    // RefreshPlayers set; when a flash ends that redraw is asked for again.
+    // controller, player 1's keys): its ring flashes in the player's colour,
+    // fading out over kFlash (on the selected card the yellow ring turns
+    // their colour meanwhile). Only the card's ring: a first version also
+    // popped the controller picture (1.15x), not wanted. Drawn every frame
+    // over what RefreshPlayers set; when a flash ends that redraw is asked
+    // for again. (Not while moving: the rings show the move then.)
     constexpr double kFlash = 0.4;
-    const auto controllers = players_setup::Controllers();
-    const bool offering =
-        g.ply_choosing != kPlyNone && !g.ply_on_style && g.ply_choice < int(controllers.size());
-    const uint32_t pressed =
-        players_setup::PollPresses(offering ? controllers[size_t(g.ply_choice)].key : std::string(),
-                                   offering ? g.ply_choosing : -1);
+    const uint32_t pressed = players_setup::PollPresses();
     for (int k = 0; k < 4; ++k) {
       double& since = g.ply_flash[size_t(k)];
-      if (pressed & (1u << k)) since = t;
+      if ((pressed & (1u << k)) && g.ply_moving == kPlyNone) since = t;
       if (since < 0) continue;
       const Screen::PlyCard& c = g.ply_cards[size_t(k)];
       const double age = t - since;
-      if (age >= kFlash) {  // over: back to the card as drawn
+      if (age >= kFlash || g.ply_moving != kPlyNone) {  // over: back to the card as drawn
         since = -1;
         scrooby::SetAlpha(ctx, base, c.ring, 0xFF);
         g.ply_drawn.clear();
@@ -1602,112 +1667,59 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     return;
   }
   int sel = g.ply_sel;
-  bool on_style = g.ply_on_style;
   const bool left = Pressed(ctx, base, kButtonLeft), right = Pressed(ctx, base, kButtonRight);
   const bool up = Pressed(ctx, base, 45), down = Pressed(ctx, base, 16);
-  if (g.ply_choosing != kPlyNone && !on_style) {
-    // The selected card's controller row: left / right = the controller on
-    // offer; DOWN = its Buttons row (with a controller).
-    if (left) PlayersStep(ctx, base, -1);
-    if (right) PlayersStep(ctx, base, +1);
-    // (The bottom row is drawn upside down: its Buttons line sits ABOVE the
-    // picture, so there it's UP.)
-    const bool toward_line = g.ply_choosing < 2 ? down : up;
-    if (toward_line && players_setup::Boxes()[size_t(g.ply_choosing)].has_pad) on_style = true;
-  } else if (g.ply_choosing != kPlyNone) {
-    // Its Buttons row: left / right = the previous / next style; UP = back
-    // to the controller row (offering its own controller again).
+  if (g.ply_styling != kPlyNone) {
+    // Buttons mode: left / right = the previous / next style shown.
     if (left || right) PlayersAct(ctx, base, right ? kPlyActStyle : -kPlyActStyle);
-    if (g.ply_choosing < 2 ? up : down) {
-      on_style = false;
-      const auto controllers = players_setup::Controllers();
-      for (int i = 0; i < int(controllers.size()); ++i) {
-        if (controllers[size_t(i)].player == g.ply_choosing) g.ply_choice = i;
-      }
-    }
   } else {
+    // The cards (also while moving: where the controller would go).
     if (up || down) sel ^= 2;  // the other row
     if (left || right) sel ^= 1;
   }
-  // The mouse: the card under the pointer once it moves; a click on a card
-  // selects it (on the selected one = A; on another while choosing = cancel
-  // and select it), on the chooser's arrows = step, on a prompt = do it.
+  // The mouse: the card under the pointer once it moves (not in Buttons
+  // mode: the arrows are what's there to click); a click on a card selects
+  // it (on the selected one = A: Buttons mode / drop the moved controller;
+  // on another while choosing buttons = the old style kept, that card
+  // selected), on the arrows = the next / previous style, on a prompt = do it.
   const uint32_t layer = MainMenuLayer(base);
   const uint32_t moves = mouse_menus::PointerMoves();
-  // HOVER (2026-10-29): over a card = that card highlighted (a CLICK selects
-  // it); inside the SELECTED card the pointer picks its row: over its
-  // Buttons line = the Buttons row, over its controller PICTURE = the
-  // controller row. (A first version also selected cards and rows by hover
-  // alone, and took the name line too: between the name and the Buttons
-  // line the two areas fought, flipping rows.) Only when the pointer moved.
   if (moves != g.pointer_moves) {
     g.pointer_moves = moves;
-    if (g.ply_choosing != kPlyNone) {
-      const int k = g.ply_choosing;
-      const Screen::PlyCard& c = g.ply_cards[size_t(k)];
-      // On players 3-4's cards (drawn upside down) the Buttons line sits right
-      // above the picture and the two areas OVERLAP: there the row flipped
-      // back and forth. A spot over both changes nothing.
-      const bool over_style = scrooby::Visible(base, c.style) && mouse_menus::PointerOver(base, c.style, g.page, layer);
-      const bool over_pic = mouse_menus::PointerOver(base, c.pic, g.page, layer);
-      if (!on_style && players_setup::Boxes()[size_t(k)].has_pad && over_style && !over_pic) {
-        on_style = true;
-      } else if (on_style && over_pic && !over_style) {
-        on_style = false;  // the controller row, offering its own controller again
-        const auto controllers = players_setup::Controllers();
-        for (int i = 0; i < int(controllers.size()); ++i) {
-          if (controllers[size_t(i)].player == k) g.ply_choice = i;
-        }
-      }
-    } else {
+    if (g.ply_styling == kPlyNone) {
       for (int k = 0; k < 4; ++k) {
         if (mouse_menus::PointerOver(base, g.ply_cards[size_t(k)].glass, g.page, layer)) sel = k;
       }
     }
   }
   int clicked = -1;
-  if (g.ply_choosing != kPlyNone) {
-    const Screen::PlyCard& c = g.ply_cards[size_t(g.ply_choosing)];
-    // The arrows: the controller on offer, or (on the Buttons row) the
-    // previous / next style (the arrows stood there but only the keys and
-    // a click on the line itself worked; 2026-10-29).
+  if (g.ply_styling != kPlyNone) {
+    const Screen::PlyCard& c = g.ply_cards[size_t(g.ply_styling)];
     for (const int dir : {-1, +1}) {
       // (A little room round the small arrows: a click just beside one
       // counts; only on the selected card, where nothing else is there.)
       const uint32_t arrow = dir < 0 ? c.left : c.right;
-      if (!mouse_menus::TakeClickOver(base, arrow, g.page, layer) &&
-          !(layer == 0 && mouse_menus::TakeClickNear(base, arrow, 22.0f, 22.0f, g.page))) {
-        continue;
-      }
-      if (on_style) {
+      if (mouse_menus::TakeClickOver(base, arrow, g.page, layer) ||
+          (layer == 0 && mouse_menus::TakeClickNear(base, arrow, 22.0f, 22.0f, g.page))) {
         PlayersAct(ctx, base, dir > 0 ? kPlyActStyle : -kPlyActStyle);
-      } else {
-        PlayersStep(ctx, base, dir);
       }
     }
   }
   for (int k = 0; k < 4; ++k) {
     const Screen::PlyCard& c = g.ply_cards[size_t(k)];
-    // A click on the SELECTED card's Buttons line: its Buttons row, the next
-    // style. (Another card's line: a click on that card, below.)
-    if (k == g.ply_choosing && scrooby::Visible(base, c.style) &&
-        mouse_menus::TakeClickOver(base, c.style, g.page, layer) && players_setup::Boxes()[size_t(k)].has_pad) {
-      sel = k;
-      on_style = true;
-      g.ply_sel = k;
-      g.ply_choosing = k;
-      g.ply_on_style = true;
-      clicked = kPlyActStyle;
-      continue;
-    }
     if (!mouse_menus::TakeClickOver(base, c.glass, g.page, layer)) continue;
-    if (k == g.ply_choosing && on_style) continue;  // its Buttons row: a click beside the arrows does nothing
-    if (k == g.ply_sel && !on_style) {
-      clicked = kPlyActChoose;
-    } else {
-      g.ply_choosing = kPlyNone;
+    if (g.ply_styling != kPlyNone) {
+      if (k == g.ply_styling) continue;  // its own card: the arrows / prompts do it
+      g.ply_styling = kPlyNone;          // another card: the old style stays, that card selected
       sel = k;
-      on_style = false;
+    } else if (g.ply_moving != kPlyNone) {
+      sel = k;
+      g.ply_sel = k;
+      clicked = kPlyActMove;  // dropped where clicked
+    } else if (k == g.ply_sel) {
+      clicked = kPlyActButtons;
+    } else {
+      sel = k;
     }
   }
   for (int i = 0; i < options_page::kPlyPrompts; ++i) {
@@ -1717,35 +1729,37 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     }
   }
   if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->TakeListWheel();  // (no use here)
-  if (sel != g.ply_sel || on_style != g.ply_on_style) {
+  if (sel != g.ply_sel) {
     scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
     g.ply_sel = sel;
-    g.ply_on_style = on_style;
   }
   // (Minus a joining controller's press, still hidden: HideHeld.)
   const uint16_t pad = g_pad[size_t(owner)].load(std::memory_order_relaxed) & ~HiddenOn(owner);
   const uint16_t pressed = pad & ~g.seen;
   g.seen = pad;
   if (!(pad & kPadB)) g.ply_hold_b = false;  // B let go: the game may hear B again
-  if ((pressed & kPadA) || clicked == kPlyActChoose) {
-    PlayersAct(ctx, base, kPlyActChoose);
-  } else if ((pressed & (kPadX | kPadY)) || clicked == kPlyActRemove) {
+  const bool in_mode = g.ply_styling != kPlyNone || g.ply_moving != kPlyNone;
+  if (pressed & kPadA) {
+    PlayersAct(ctx, base, g.ply_moving != kPlyNone ? kPlyActMove : kPlyActButtons);
+  } else if (clicked == kPlyActButtons || clicked == kPlyActMove || clicked == kPlyActRemove) {
+    PlayersAct(ctx, base, clicked);
+  } else if ((pressed & kPadX) && g.ply_moving != kPlyNone) {
+    PlayersCancel(ctx, base);  // X again: put back
+  } else if (pressed & kPadX) {
+    PlayersAct(ctx, base, kPlyActMove);
+  } else if (pressed & kPadY) {
     PlayersAct(ctx, base, kPlyActRemove);
-  } else if (clicked == kPlyActStyle) {
-    PlayersAct(ctx, base, kPlyActStyle);
   } else if ((pressed & kPadB) || clicked == kPlyActBack) {
-    if (g.ply_choosing != kPlyNone) {
-      g.ply_choosing = kPlyNone;  // leave the card (a controller on offer not taken); the screen stays
-      g.ply_on_style = false;
+    if (in_mode) {
+      PlayersCancel(ctx, base);  // the mode ends (a previewed style not kept); the screen stays
       g.ply_hold_b = (pad & kPadB) != 0;
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
     } else if (g.main_menu && !CloseMainMenuOptions(ctx, base)) {
       *GuestPtr(base, fe + kResultFlags) |= kFlagCancel;
     } else if (!g.main_menu && clicked == kPlyActBack) {
       if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->Pulse(kPadB);  // the game's own back
     }
   }
-  g_players_take_b = g.ply_choosing != kPlyNone || g.ply_hold_b;
+  g_players_take_b = g.ply_styling != kPlyNone || g.ply_moving != kPlyNone || g.ply_hold_b;
   RefreshPlayers(env);
 }
 
@@ -2266,9 +2280,9 @@ extern "C" REX_FUNC(sub_820D2828) {
   if (!OtherMode()) ShowOptionsFurniture(ctx, base, true);
   if (g.players) {
     players_setup::Opened();
-    g.ply_choosing = -1;
+    g.ply_styling = -1;
+    g.ply_moving = -1;
     g.ply_flash = {-1, -1, -1, -1};
-    g.ply_on_style = false;
     g.ply_aura_time = -1;
     g.ply_hold_b = false;
     HideGamePrompts(base, true);
@@ -2580,7 +2594,8 @@ extern "C" REX_FUNC(sub_820D2F08) {
     if (g.players) {
       ShowPlayersElements(base, false);
       HideGamePrompts(base, false);
-      g.ply_choosing = -1;
+      g.ply_styling = -1;
+      g.ply_moving = -1;
       g.ply_hold_b = false;
       g_players_take_b = false;
       ShowOptionsFurniture(ctx, base, true);

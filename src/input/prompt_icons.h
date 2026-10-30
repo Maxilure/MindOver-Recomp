@@ -179,6 +179,13 @@ char16_t KeyGlyph(uint16_t key, SlotSize size = SlotSize::kText);
 // picture when that's the style or nothing better is known). 0 = no slots
 // or an unknown name. Game main thread.
 char16_t ButtonGlyph(std::string_view pad, SlotSize size = SlotSize::kText);
+// One of the four FACE buttons ('A', 'B', 'X', 'Y': the 360's places) in a
+// CHOSEN style, whatever the Controller Icons setting says: `style` numbered
+// like --controller_icons (1 = the game's own 360 pictures, 2 Xbox Series,
+// 3 PlayStation 5, 4 PlayStation 4, 5 Switch). The Players screen's preview
+// while a player picks their button pictures (players/players_setup.h).
+// 0 = no slots or another letter. Game main thread.
+char16_t ButtonGlyphInStyle(char16_t face, int style, SlotSize size = SlotSize::kText);
 
 // Are the prompts showing keys right now (the keyboard / mouse was used last,
 // or --button_prompts says so)? For screens that pick their own prompts

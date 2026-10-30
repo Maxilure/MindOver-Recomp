@@ -1025,6 +1025,14 @@ std::string Describe(const Prompt& p, const kbm::Bindings& b, bool keyboard, boo
     const size_t slot = size_t(p.character - kFirstSlot);
     const std::string wide = slot >= kFirstBig && slot < kFirstCard ? "W " : "";
     if (what[0] == 'K') return wide + (dark ? "D " : "L ") + "key " + what.substr(2);
+    if (what[0] == 'S') {  // a button in a CHOSEN style (ButtonGlyphInStyle): "S <setting> <button>"
+      int setting = 0, button = 0;
+      std::sscanf(what.c_str() + 2, "%d %d", &setting, &button);
+      if (setting >= 2 && setting < 2 + int(std::size(kPadSets))) {
+        return wide + "P " + std::to_string(setting - 2) + " " + std::to_string(button);
+      }
+      return wide + "O " + std::to_string(button);  // 1 = the game's own 360 pictures
+    }
     // A controller button: the style's picture, or the game's own ("O").
     return wide + (pad_style == kOriginalStyle ? "O " + what.substr(2)
                                                : "P " + std::to_string(pad_style) + " " + what.substr(2));
@@ -2216,6 +2224,19 @@ char16_t ButtonGlyph(std::string_view pad, SlotSize size) {
   };
   const auto it = kNames.find(pad);
   return it == kNames.end() ? 0 : LendSlot("B " + std::to_string(it->second), size);
+}
+
+char16_t ButtonGlyphInStyle(char16_t face, int style, SlotSize size) {
+  if (!g_menu_glyphs.load()) return 0;
+  int button = -1;
+  switch (face) {
+    case u'A': button = kPadA; break;
+    case u'B': button = kPadB; break;
+    case u'X': button = kPadX; break;
+    case u'Y': button = kPadY; break;
+    default: return 0;
+  }
+  return LendSlot("S " + std::to_string(style) + " " + std::to_string(button), size);
 }
 
 char16_t MenuGlyph(char16_t c) {

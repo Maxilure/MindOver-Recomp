@@ -537,6 +537,22 @@ others, and the frame stayed up with nothing on it until everyone was ready
 (cards and pages alike). The picker now shows the chest's screen again (the
 skin screen's +16, as its Enter shows it) whenever it isn't the shown one.
 
+## 3j. A controller lost at the chest
+
+With 2-4 players at the chest, the screen closes once everyone is ready.
+A player whose controller disconnected (or was taken on the Players screen)
+could never get ready, and the "controller disconnected" box
+(findings/26 s.33) waits for the menus to close: nobody could leave. Now a
+joined player without a device is READY at once, keeping the outfit they
+wear (as B would; `outfit_picker.cpp`, every update, `HasDeviceFor`). The
+chest closes when the others are ready, and the box then asks about that
+player (reconnect, or Y to drop them out).
+
+Checked with a fake controller as player 2: chest open for 2, player 2
+unplugged = "player 2 has no controller: ready (keeps their outfit)";
+player 1's B = chest closed, the box came up for player 2; plugged back in,
+player 2's press resumed the game.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a

@@ -1970,7 +1970,7 @@ button to join".
 |---|---|
 | Player 1 | always has the keyboard and mouse, and may also have a controller (both work at once); the card shows the device used last. A controller moved onto player 1 never pushes the keyboard away (`PlayerAssignment::SetChoice` no longer displaces the keyboard). |
 | Press any button to join | a controller that plays as nobody presses any button or trigger: it takes the first of players 2-4 without a device. |
-| Choose (A on a card) | the card becomes a chooser: left / right step through every controller connected (its picture in that player's colour, its name, whose it is now), A gives the one shown to that player, B cancels. Taken from another player = the two swap; one that played as nobody replaces the player's own. |
+| Choose (A on a card; replaced by Move, section 54) | the card becomes a chooser: left / right step through every controller connected (its picture in that player's colour, its name, whose it is now), A gives the one shown to that player, B cancels. Taken from another player = the two swap; one that played as nobody replaces the player's own. |
 | Remove (X / Backspace) | the player's controllers are set to nobody (they can press to join again). In a level the player drops out at once (the pause menu's Drop Out, `lost_controller::DropOut`); the last player in the game keeps theirs. |
 | B / Esc | cancels a choice, else leaves the screen. |
 | Joining the game | not done by the screen: a player with a controller still joins the game's own way (START / B in play). |
@@ -2128,3 +2128,100 @@ gets the 24 sprites (~540 KB).
 
 **Four players by default.** `--local_players` now defaults to 4 (was 2), so
 all four cards always take a player.
+
+## 54. The Players screen, round 3: first come, Move, and a button preview
+
+The controller chooser of section 53 (A on a card: step through every
+controller connected, give one to that player) is gone. Controllers take
+players **first come, first served**: a controller that plays as nobody
+presses a button and becomes the first free player of 2-4 (as before), and
+nobody assigns devices to anyone else. What the cards offer now:
+
+| Button | On a card with a controller |
+|---|---|
+| A | **Buttons**: left / right step the player's button pictures (Automatic, Xbox 360, Xbox Series, PlayStation 5, PlayStation 4, Switch) while the card shows that style's four face buttons (A B X Y in the 360's places: cross, circle, square, triangle on PlayStation; B A Y X on Switch); A keeps the style shown, B goes back to the old one (nothing is saved while previewing). The card's line then names the style alone ("PlayStation 5", no "Buttons:"). |
+| X | **Move**: the controller is picked up (its ring in the player's colour), the D-pad / stick / pointer point at another card, which shows the controller and the prompt "Move Here" (empty player) or "Swap" (a player with a controller); A drops it. B, or X again, puts it back. The two players' button pictures swap with their controllers. Player 1's keyboard never moves. |
+| Y / Backspace | **Remove**: the player's controllers play as nobody; any controller's press then takes the free player. |
+| B / Esc | ends Buttons / Move, else leaves the screen. |
+
+![The Players screen's Buttons preview (left: PlayStation 5's four face buttons) and Move (right: player 2's controller about to become player 4's)](../images/players-screen-buttons-and-move.jpg)
+
+The rules of section 53 stay: in a level, a player left without a device by
+a Move or a Remove drops out at once (the pause menu's Drop Out), never the
+last player in the game (a Move that would do it is refused); getting a
+controller doesn't join the game (START / B in play does).
+
+**The four pictures.** A text slot of the prompt font patch (input/
+prompt_icons.h) is lent to `"S <style> <button>"` by
+`prompt_icons::ButtonGlyphInStyle`: drawn in that style whatever the
+Controller Icons setting says (style 1 = the game's own 360 picture), so the
+preview shows a style before it is chosen. Automatic previews the style the
+controller's maker calls for.
+
+**Code.** `players_setup::MoveController` (was `AssignController`) moves a
+player's first controller with `PlayerAssignment::SetChoice`, which swaps
+whatever the target player had; `CanMoveTo` = the levels have room for that
+player. The screen's state in `options_menu.cpp`: `ply_styling` + `ply_style`
+(Buttons), `ply_moving` (Move); the B filter (`g_players_take_b`) holds B
+back from the game in either mode.
+
+Checked by the debug console with a fake PlayStation controller as player 2
+(pause menu, in a level): A, right x3 = each style's four buttons, A kept
+PlayStation 5; X, down, A moved it to player 4 (player 2 dropped out, player
+4's line said PlayStation 5); Y removed it; a press on it joined it as
+player 2 again. 0 errors.
+
+## 55. A controller lost inside another player's menu
+
+What happens when player 2-4's controller disconnects (or the Players screen
+takes it) while a menu of theirs is up:
+
+* **The game's own menus** (pause, the totem's save flow, the level-up
+  screen): already answered by anyone once the owner has no device
+  (`menu_input.cpp`, IsButtonPressed `sub_822652B0`); the "controller
+  disconnected" box (section 33) waits until the menus close, then asks
+  about that player.
+* **The menus the port reads itself** (Options, Achievements, Players):
+  they read the owner's buttons (front end +8536), so nobody could leave
+  them. `options_menu::Owner` now falls back to the first player who still
+  has a device (player 1: the keyboard is always theirs).
+  `menu_input::CurrentMenuOwner` answers "anyone" (-1) for an owner without
+  a device: the save list's X / Y, the name screen and the mouse
+  (`mouse_menus`: player 1's pointer was off in another player's menu) work
+  for everyone then.
+* **The outfit chest** (findings/46): see section 3j there.
+
+**A crash: the menu's owner moved out of the game.** Player 3 paused, opened
+the Players screen and moved their own controller to an empty player 2:
+player 3 dropped out (no device) with their menu still up, and the game
+crashed at its next "button pressed?" (`sub_822652B0`, read of 0x14 at
+`0x8226537C`). The owner (front end +8536) is a player number that the game
+turns into a controller (`sub_82266130`: +8524 for players 1-2, the port's
+table for 3-4), -1 once that player is out; entry -1 of the controller list
+is no controller. In the original the pause menu's own Drop Out closes the
+menu first. Now:
+
+* **The pause goes with its controller.** A Move by the menu's owner onto a
+  player who is in the game (a swap: the same person still holds the menu)
+  makes that player the owner: "P2 Paused" when the pause menu shows again
+  (its Enter picks the title by the owner), the prompts in their pictures.
+* Onto a player NOT in the game the menu can't follow (they have no
+  controller in the game's eyes until they join with START / B): before the
+  drop out the menu goes to a player who stays in the game
+  (`players_setup.cpp` Settle).
+* Safety net for any route: `menu_input.cpp` KeepOwnerInGame, before each
+  "button pressed?", gives a menu whose owner has no controller entry to
+  the first player who has one.
+
+Checked: player 2 (fake controller) paused and moved itself to empty player
+4 = the menu went to player 1, no crash; player 3 paused and swapped with
+player 2 (both in the game) = the menu went with it, "P2 Paused" in its
+Switch buttons. 0 errors.
+
+**The prompt row follows the screen's owner.** The Players screen's prompts
+(Buttons / Move / Remove / Back) were drawn with the game's own prompt
+characters, which show player 1's device: keys while player 1 had used the
+keyboard, even in player 3's menu on a controller. They now go through
+`prompt_icons::TextForPlayer(text, owner)` (the owner's own picture slots,
+asked every update so they stay lent).
+

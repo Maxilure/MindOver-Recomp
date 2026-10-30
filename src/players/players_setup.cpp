@@ -112,8 +112,27 @@ bool SomeoneElseInGame(const uint8_t* base, int p) {
 void Settle(PPCContext& ctx, uint8_t* base) {
   const PlayerAssignment* a = PlayerAssignment::Get();
   if (!a || !more_players::InPlay()) return;
+  const uint32_t game = Read32(base, kGameGlobal);
+  const uint32_t fe = game ? Read32(base, game + 52) : 0;
   for (int p = 0; p < kPlayers; ++p) {
-    if (InGame(base, p) && !a->HasDeviceFor(p)) lost_controller::DropOut(ctx, base, p);
+    if (!InGame(base, p) || a->HasDeviceFor(p)) continue;
+    // The menu up (this screen, from the pause menu) may be THEIRS (front
+    // end +8536): it goes to a player who stays in the game first, one with
+    // a device (the one who took the controller, when they play). Left as
+    // theirs, the game's next "button pressed?" looked up the controller of
+    // a player no longer in the game and crashed (2026-10-30; the safety
+    // net: menu_input.cpp KeepOwnerInGame).
+    if (fe && int32_t(Read32(base, fe + 8536)) == p) {
+      for (int q = 0; q < kPlayers; ++q) {
+        if (q == p || !InGame(base, q) || !a->HasDeviceFor(q)) continue;
+        uint8_t* o = GuestPtr(base, fe + 8536);
+        o[0] = o[1] = o[2] = 0;
+        o[3] = uint8_t(q);
+        REXLOG_INFO("Players: player {}'s menu is player {}'s now (player {} drops out)", p + 1, q + 1, p + 1);
+        break;
+      }
+    }
+    lost_controller::DropOut(ctx, base, p);
   }
 }
 
@@ -252,7 +271,7 @@ std::map<std::string, bool> g_press_held;  // PollPresses: each controller held 
 int64_t g_press_key_down = -1;             // ... and the keyboard's last_key_down() then (-1 = first look)
 }  // namespace
 
-uint32_t PollPresses(const std::string& offered_key, int offered_card) {
+uint32_t PollPresses() {
   uint32_t cards = 0;
   if (const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
     const int64_t down = driver->last_key_down();
@@ -272,7 +291,6 @@ uint32_t PollPresses(const std::string& offered_key, int offered_card) {
     seen[d.key] = down;
     if (it == g_press_held.end() || it->second || !down) continue;  // first look / held / up
     if (!Unassigned(d) && d.player < kPlayers) cards |= 1u << d.player;
-    if (offered_card >= 0 && offered_card < kPlayers && d.key == offered_key) cards |= 1u << offered_card;
   }
   g_press_held = std::move(seen);  // (unplugged ones forgotten)
   return cards;
@@ -297,53 +315,68 @@ bool HasController(int p) {
   return !a || a->HasDeviceFor(p);  // (no assignment yet: as before, shown)
 }
 
-std::vector<Controller> Controllers() {
-  std::vector<Controller> out;
-  const PlayerAssignment* a = PlayerAssignment::Get();
-  if (!a) return out;
-  for (const PlayerAssignment::Device& d : a->Devices()) {
-    if (!IsPad(d)) continue;
-    const int detected = prompt_icons::DetectedPadStyle(d.key);
-    out.push_back({d.key, d.name, PictureOfStyle(detected), Unassigned(d) ? -1 : d.player});
-  }
-  return out;
-}
+bool CanMoveTo(int to) { return to >= 0 && to < Room(); }
 
-bool AssignController(PPCContext& ctx, uint8_t* base, int p, const std::string& key) {
+bool MoveController(PPCContext& ctx, uint8_t* base, int from, int to) {
   PlayerAssignment* a = PlayerAssignment::Get();
-  if (!a || p < 0 || p >= Room()) return false;
-  int from = -1;
-  std::string name = key;
-  std::vector<std::string> others;  // p's other controllers
+  if (!a || from < 0 || from >= kPlayers || !CanMoveTo(to) || from == to) return false;
+  // The controller that moves: `from`'s first one (the one its card shows);
+  // the keyboard never moves (player 1's, always).
+  std::string key, name;
+  int from_pads = 0, to_pads = 0;
+  bool from_keyboard = false;
   for (const PlayerAssignment::Device& d : a->Devices()) {
-    if (!IsPad(d)) continue;
-    if (d.key == key) {
-      from = Unassigned(d) ? -1 : d.player;
-      name = d.name;
-    } else if (d.player == p) {
-      others.push_back(d.key);
+    if (d.player == from && d.keyboard) from_keyboard = true;
+    if (!IsPad(d) || Unassigned(d)) continue;
+    if (d.player == from) {
+      if (key.empty()) {
+        key = d.key;
+        name = d.name;
+      }
+      ++from_pads;
+    } else if (d.player == to) {
+      ++to_pads;
     }
   }
-  if (from == p) return false;  // already theirs
-  // The last player in the game keeps a device: taking theirs (player 1
-  // always has the keyboard) would leave nobody.
-  if (more_players::InPlay() && from > 0 && InGame(base, from) && !SomeoneElseInGame(base, from) &&
-      others.empty()) {
+  if (key.empty()) return false;
+  // `from` left with no device drops out of the level (Settle): never the
+  // last player in it (like the pause menu's Drop Out). A swap leaves them
+  // the other player's controller(s), and a 2nd controller or the keyboard
+  // keeps them in too.
+  const bool from_keeps_one = from_keyboard || from_pads > 1 || to_pads > 0;
+  if (!from_keeps_one && more_players::InPlay() && InGame(base, from) && !SomeoneElseInGame(base, from)) {
+    REXLOG_INFO("Players: player {}'s controller can't move: they're the only player in the game", from + 1);
     return false;
   }
-  // SetChoice SWAPS: p's controllers go to the chosen one's old player.
-  // A controller that played as nobody: p's others are set to nobody, so p
-  // ends up with the chosen one alone.
-  std::vector<PlayerAssignment::Change> all = a->SetChoice(key, p);
-  if (from < 0) {
-    for (const std::string& k : others) {
-      for (const auto& c : a->SetChoice(k, kbm::kPlayerOff)) all.push_back(c);
+  // SetChoice SWAPS: `to`'s controllers (if any) take `from`'s place.
+  Save(a->SetChoice(key, to));
+  // THE PAUSE GOES WITH ITS CONTROLLER (2026-10-30): the menu up belongs to
+  // `from` (front end +8536, who paused) and the controller moves to a
+  // player who is IN the game: the same person holds the menu, now as `to`
+  // ("P2 Paused" once the pause menu shows again: its Enter picks the title
+  // by the owner). To a player not in the game it can't go (the game turns
+  // the owner into a controller; none for them: the 2026-10-30 crash):
+  // then Settle gives it to a player who stays.
+  if (more_players::InPlay() && InGame(base, to)) {
+    const uint32_t game = Read32(base, kGameGlobal);
+    const uint32_t fe = game ? Read32(base, game + 52) : 0;
+    if (fe && int32_t(Read32(base, fe + 8536)) == from) {
+      uint8_t* o = GuestPtr(base, fe + 8536);
+      o[0] = o[1] = o[2] = 0;
+      o[3] = uint8_t(to);
+      REXLOG_INFO("Players: the menu goes with the controller: player {}'s now", to + 1);
     }
   }
-  Save(all);
+  // The BUTTON PICTURES go with the controller (a PlayStation player moved
+  // to player 4 keeps seeing PlayStation buttons): the two players' styles
+  // swap too (they're per player: PadIcons).
+  if (const int moved = PadIcons(from), other = PadIcons(to); moved != other) {
+    SetPadIcons(to, moved);
+    SetPadIcons(from, other);
+  }
   Settle(ctx, base);
-  REXLOG_INFO("Players: {} chosen for player {}{}", name, p + 1,
-              from >= 0 ? fmt::format(" (was player {}'s)", from + 1) : std::string());
+  REXLOG_INFO("Players: {} moved from player {} to player {}{}", name, from + 1, to + 1,
+              to_pads ? fmt::format(" (player {}'s controller moved to player {})", to + 1, from + 1) : std::string());
   return true;
 }
 

@@ -23,21 +23,31 @@
 //     one person on a controller plays at once.) Such a controller answers
 //     on no socket, so the game never sees it: its state is asked for
 //     directly (players.h ProbeState).
-//   * A on a card = CHOOSE that player's controller: left / right step
-//     through every controller connected (the screen shows each one's
-//     picture and name, and whose it is now), A gives the one shown to that
-//     player. Taken from another player = the two swap; one that played as
-//     nobody replaces the player's own (theirs then plays as nobody). (A
-//     "pick up and drop" Move came first: replaced the same day.)
-//   * X / Backspace = REMOVE the player's controller(s) (nobody: "press any
-//     button" brings them back). In a level a player left without a device
-//     drops out at once (the pause menu's own Drop Out; lost_controller.h
-//     DropOut); the last player in the game keeps theirs (refused).
+//   * FIRST COME, FIRST SERVED (2026-10-30, replacing a chooser where A on a
+//     card picked that player's controller from a list): a controller takes
+//     a player only by pressing a button (above). Nobody picks devices for
+//     anyone; the cards just show who has what.
+//   * X = MOVE (the "pick up and drop" of the first version, back): the
+//     selected card's controller is picked up (its ring in the player's
+//     colour), the D-pad / stick / mouse point at another card, A drops it
+//     there. An empty card = the controller is that player now; a card with
+//     a controller = the two SWAP (their button pictures go with them). B
+//     (or X again) puts it back. Player 1's
+//     keyboard never moves (a controller moved onto player 1 joins it).
+//   * Y / Backspace = REMOVE the player's controller(s) (nobody: any
+//     controller pressing a button then takes the free player, the one
+//     removed included). In a level a player left without a device drops
+//     out at once (the pause menu's own Drop Out; lost_controller.h
+//     DropOut); the last player in the game keeps theirs (refused). A move
+//     follows the same rule.
 //   * Each card shows its controller as Xbox / PlayStation 5 / PlayStation 4
 //     / Switch by the maker and model (prompt_icons.h DetectedPadStyle), the
-//     same detection that picks each player's button pictures. LB / RB on a
-//     card with a controller chooses that player's button pictures
-//     (PadIcons below: Automatic = that detection).
+//     same detection that picks each player's button pictures. A on a card
+//     with a controller = its BUTTON PICTURES (PadIcons below): left / right
+//     step the styles while the card shows that style's A B X Y (the face
+//     buttons' pictures); A keeps the one shown, B goes back to the old
+//     one. The card then names it ("PlayStation 5"; "Automatic" = by the
+//     controller's maker).
 //   * JOINING THE GAME is the players' own: a controller given to player 3
 //     here doesn't put player 3 in the game; they join with the game's own
 //     button (START / B in play), as before. (A first version answered the
@@ -99,8 +109,8 @@ std::array<Box, kPlayers> Boxes();
 // (style numbers as --controller_icons; 0 = "Automatic").
 const char* StyleName(int style);
 
-// EACH PLAYER'S BUTTON PICTURES (2026-10-29, the screen's LB / RB on a
-// card): the Controller Icons style, numbered as StyleName (0 Automatic =
+// EACH PLAYER'S BUTTON PICTURES (2026-10-29; since 2026-10-30 A on a card,
+// with a preview): the Controller Icons style, numbered as StyleName (0 Automatic =
 // by the controller's maker). Player 1's IS the Options row Controller Icons
 // (flag controller_icons, saved to user/settings.toml); players 2-4's are
 // controls.toml's icons.player2-4 (input/bindings.h). Game main thread.
@@ -141,32 +151,25 @@ bool HasController(int p);
 // Every update while the screen is up: a bit per card (1 << player) whose
 // device went down since the last call: a controller of that player (any
 // button, or a trigger past 64), the keyboard and mouse for player 1 (any
-// key, mouse button or wheel notch: the driver's last_key_down), and the
-// controller on offer in the chooser (`offered_key`) for the card choosing
-// (`offered_card`; -1 none): left / right through two "Xbox Controller"s,
-// press a button on the one in your hand = its card answers. A device's
+// key, mouse button or wheel notch: the driver's last_key_down). A device's
 // first look counts as held (opening the screen with a button down is no
 // press).
-uint32_t PollPresses(const std::string& offered_key, int offered_card);
+uint32_t PollPresses();
 
-// Every controller connected (the chooser's list, in connection order):
-// its picture (Picture: by maker and model) and whose it is now (-1 nobody).
-struct Controller {
-  std::string key, name;
-  int picture = kPicXbox;
-  int player = -1;
-};
-std::vector<Controller> Controllers();
-// CHOOSE: controller `key` for player p (rules above). REMOVE: player p's
-// controllers off. False = nothing to do or refused (rules above).
-bool AssignController(PPCContext& ctx, uint8_t* base, int p, const std::string& key);
+// MOVE: player `from`'s controller (the one its card shows) to player `to`
+// (rules above: an empty player takes it, a player with a controller swaps).
+// CanMoveTo: may a controller go to player `to` at all (the levels have room
+// for them)? REMOVE: player p's controllers off. False = nothing to do or
+// refused (rules above).
+bool CanMoveTo(int to);
+bool MoveController(PPCContext& ctx, uint8_t* base, int from, int to);
 bool RemoveControllers(PPCContext& ctx, uint8_t* base, int p);
 
 // The screen's pictures as menu sprites (one 0x19005 chunk each) for the
 // pages' data patch (options_page.cpp). Empty if the pictures couldn't be
 // read. Names: card k's device pictures in Picture order (PictureFrames),
 // the selection rings (RingFrames: yellow = selected, then players 1-4's
-// colours = the controller being moved), the cards' backing (an opaque
+// colours = a press on that card, and the controller being moved), the cards' backing (an opaque
 // teal gradient under the game's glass, as the design asks).
 struct Sprite {
   std::string name;

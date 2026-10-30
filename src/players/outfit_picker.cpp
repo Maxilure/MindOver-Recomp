@@ -71,6 +71,11 @@
 //     own Wear Skin for that player (outfits.cpp section 5). The player is
 //     then READY. B = ready -> not ready; not ready -> leave as they are
 //     (ready, nothing changed). Locked looks can be looked at, not worn.
+//   * A player whose controller goes (unplugged, or taken on the Players
+//     screen) while choosing is READY at once with the outfit they wear
+//     (2026-10-30): the screen never waits for someone who can't answer;
+//     the game's "controller disconnected" box asks about them once the
+//     chest has closed (players/lost_controller.h).
 //   * Everyone joined is ready and nothing waits = the screen closes: our
 //     decision for state 847 takes its ExitBack (852 -> 486, the game).
 // =============================================================================
@@ -1604,6 +1609,11 @@ void Keep(PPCContext& ctx, uint8_t* base, int p) {
   pl.ready = true;
   scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
 }
+// Does player p have a device (a controller, or the keyboard) right now?
+bool HasController(int p) {
+  const kbm::PlayerAssignment* a = kbm::PlayerAssignment::Get();
+  return !a || a->HasDeviceFor(p);  // (no assignment yet: as before)
+}
 void Unready(PPCContext& ctx, uint8_t* base, int p) {
   g.players[p].ready = false;
   scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
@@ -1840,6 +1850,17 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
       continue;
     }
     if (pl.waiting) continue;
+    // NO CONTROLLER (2026-10-30): the player's controller was unplugged (or
+    // the Players screen took it) while the chest was open. Waiting for
+    // their "Ready" kept the screen up for good, and the "controller
+    // disconnected" box (lost_controller.h) waits for the menus to close: a
+    // dead end for everyone. So they're READY at once, keeping the outfit
+    // they wear (as B would); the box asks about them once the chest closes.
+    if (!pl.ready && !HasController(p)) {
+      Keep(ctx, base, p);
+      REXLOG_INFO("Outfit picker: player {} has no controller: ready (keeps their outfit)", p + 1);
+      continue;
+    }
     if (pl.ready) {
       if (pressed & kB) Unready(ctx, base, p);
       continue;

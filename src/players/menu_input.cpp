@@ -212,7 +212,16 @@ int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
   const uint32_t fe = Read32(game + 52);
   if (!fe) return -1;
   const char* why = "";
-  return MenuOwner(ctx, base, fe, &why);
+  const int owner = MenuOwner(ctx, base, fe, &why);
+  // An owner WITHOUT A DEVICE (their controller unplugged, or moved on the
+  // Players screen, while their menu was up; 2026-10-30): anyone. The
+  // callers read the save list's X / Y, the name screen and the mouse by
+  // this: with the owner's answer only, nobody could rename / delete and
+  // player 1's mouse stayed off in that menu (the game's own buttons
+  // already went to anyone: IsButtonPressed below).
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  if (owner >= 0 && assignment && !assignment->HasDeviceFor(owner)) return -1;
+  return owner;
 }
 bool PlayerPlays(int p) { return Plays(p); }
 bool InteractedRecently(int p) {
@@ -242,8 +251,34 @@ bool MenuOnScreen() {
 }  // namespace menu_input
 
 // IsButtonPressed: a question for "anyone" goes to the menu's owner.
+// THE MENU'S OWNER LEFT THE GAME (2026-10-30, a crash): the owner (+8536)
+// is a player number, and the original turns it into a controller through
+// the front end's per-player table (sub_82266130: +8524 for players 1-2,
+// ours for 3-4): -1
+// once that player dropped out. In the original the pause menu's own Drop
+// Out closes the menu first, so that never happens; the port can drop a
+// player out while their menu is up (the Players screen moving or removing
+// the controller of the player who paused): the original then read entry
+// -1 of the controller list and crashed (read of 0x14 at 0x8226537C).
+// Such a menu now belongs to a player still in the game (the first one with
+// a controller entry; player 1 normally). Players screen: players_setup.cpp
+// hands it over before the drop out; this is the safety net for any route.
+extern "C" REX_FUNC(sub_82266130);  // front end: controller of player r4 (-1 = not in game; four: more_players.cpp)
+void KeepOwnerInGame(PPCContext& ctx, uint8_t* base, uint32_t fe) {
+  const int32_t owner = int32_t(Read32(fe + kOwner));
+  auto controller = [&](uint32_t p) { return int32_t(CallGame(sub_82266130, ctx, base, fe, p)); };
+  if (owner < 0 || owner >= 4 || controller(uint32_t(owner)) >= 0) return;
+  for (uint32_t p = 0; p < 4; ++p) {
+    if (controller(p) < 0) continue;
+    Write32(fe + kOwner, p);
+    REXLOG_INFO("Menu input: the menu's owner (player {}) left the game: it's player {}'s now", owner + 1, p + 1);
+    return;
+  }
+}
+
 extern "C" REX_FUNC(sub_822652B0) {
   const uint32_t fe = ctx.r3.u32, button = ctx.r4.u32, lr = uint32_t(ctx.lr);
+  if (more_players::InPlay()) KeepOwnerInGame(ctx, base, fe);
   const int32_t asked = int32_t(ctx.r6.u32);
   const char* why = "";
   const int32_t who_before = int32_t(Read32(fe + kWhoPressedStart));
