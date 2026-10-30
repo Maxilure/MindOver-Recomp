@@ -488,7 +488,7 @@ near 6 units, the counter-move opportunities (`CounterThroughLegs` is
 checked at 6.25 every frame), and the trigger-volume messages.
 
 **What the port shows.** For a floating B with no interactable list, the
-coins now follow that rule (`JackReach` in `prompt_icons.cpp`): player p
+coins first followed that rule (`JackReach`, replaced by `JackTarget` below): player p
 gets their button while their Crash is on foot (co-op state 2, no titan)
 and within range of an opportunity the titan offers. Nobody in reach = the
 **jack symbol**, a fifth copy of the B texture (`_p5` in the package patch)
@@ -520,12 +520,72 @@ from afar every player sees the same "can be jacked" symbol, and up close
 the symbol turns into the buttons of the players who can jack it, side by
 side as in section 6.
 
+**Which titan B would jack (the rule redone).** "In range" was not enough:
+two stunned titans side by side both showed a player's button, while B
+jacks only one of them. The port now answers the question the Jack button
+itself answers (`JackTarget` in `prompt_icons.cpp`):
+
+* `CheckOpportunity` (`sub_82157058`) does not pick a titan. Every offer
+  within range goes to `sub_82156320` with the weight 1 / distance², which
+  keeps a list per name in Crash's own `COpportunityBehaviour` (+0x20: a
+  tree like the table's, node +0x10 name hash, +0x14 / +0x18 a vector of
+  12-byte entries: +0 opportunity, +4 weight, +8 hold count), SORTED by
+  weight, heaviest (nearest) first; an equal weight goes after the entries
+  already there.
+* `HoldOpportunity` (`sub_82156520`) and `GetOpportunityActor`
+  (`sub_82156ED0`) both take the FIRST entry of that list; the behaviour's
+  Update (slot 4, `sub_82156690`) drops every entry nobody holds, so the
+  ranking is rebuilt each time.
+* The script tries the names in a fixed order and stops at the first one
+  that finds anything: a Boss in range wins over a nearer Strong titan.
+
+So player p's target = the first name, in the script's order, with an
+offer in range, and among its offers the nearest. That titan shows p's
+button; every other stunned titan shows the jack symbol. The port only
+reads these lists: it never calls the check itself (that would add entries
+to Crash's list). A titan the player is already jacking (an entry they
+hold, or the titan they ride) keeps their button: before, the B flipped
+to the symbol for about a second at the start of every jack.
+
 Tested with the debug console on Wumpa Island, a knocked-out Ratcicle from
 the F5 spawn cheat: one player at 12 and 7 units = the symbol, at 5 = their
 button; two players (keyboard + a fake PlayStation 5 controller) = only the
 player in reach, both side by side, then only player 2. The log line
 "floating button ...: players near [...]" says "(titan: jack symbol)" or
-"(titan: in jacking reach)".
+"(titan: B jacks this one)". Retested with the new rule (one titan): 4 units
+= the button, 8 units away = the symbol, back = the button, B = jacked with
+no flip to the symbol in between.
+
+**Riding a titan.** From a titan, B jacks the next one straight away, but
+the port only gave a button to players on foot: riding, every other titan
+kept the symbol while B still hopped. Riding, B is answered by the ridden
+titan's own fight tree (the B-press function, e.g. `Stronglua.blua` line
+17959) through `CheckOpportunitySlave`: the same check, run on the RIDER's
+`COpportunityBehaviour`. A probe on `sub_82157058` showed it: measured from
+Crash, ranked in Crash's list, called through message 24. Same order as on
+foot, no turret, and each titan type has its own ranges:
+
+| Riding | Boss | Captain | Bear | Strong | Projectile |
+|---|---|---|---|---|---|
+| Strong, Projectile | 8.5 | 8.0 | 7.0 | 6.5 | 6.5 |
+| Bear | 8.5 | 8.0 | 7.5 | 7.0 | 7.0 |
+| Captain, bosses | 9.0 | 8.75 | 8.0 | 8.0 | 8.0 |
+
+The ridden titan's type is the name it offered while it was down (the
+port remembers it). Tested: three knocked-out Ratcicles; riding one, the
+button showed on the other titan in reach, B hopped to it, and the third
+(fallen down a slope, 11 units lower) kept the symbol.
+
+**Every coin shares one material.** The coins of all floating buttons are
+drawn with the same material, and the port swaps its texture for each coin
+in turn (the B is put back at the frame's end). The swap only took the B and
+players 1-4's copies as "ours", not the jack symbol's copy: after one titan's
+symbol, every later coin of that frame (the second titan, a save totem) was
+left alone and drew the symbol too, and no titan drawn after it could get a
+button. Now the symbol's copy counts as ours as well. Two knocked-out
+Ratcicles 4.6 units apart: Crash between them (3.7 and 4.8 units) = the
+button on the nearer one only, the other the symbol, the save totem its B;
+nearer the other = the button moves over; B jacked the titan that showed it.
 
 ## 8. Tests
 

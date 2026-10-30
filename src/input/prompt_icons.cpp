@@ -2527,29 +2527,48 @@ bool InInteractableList(uint8_t* base, uint32_t it, int p) {
   return false;
 }
 
-// WHO CAN JACK IT (2026-10-24). A stunned titan has no interactable list:
-// its floating B means "this titan can be jacked" and shows from any
-// distance (it went up 72.8 units from the nearest player in a playtest;
-// the old guess, "within the owner's distance at the time + 15%", then gave
-// the whole area a coin). The game's own rule, found with the debug console
-// (findings/37 s.7):
+// WHICH TITAN B WOULD JACK (2026-10-24, redone 2026-10-30). A stunned titan
+// has no interactable list: its floating B means "this titan can be jacked"
+// and shows from any distance (it went up 72.8 units from the nearest player
+// in a playtest). The first version gave a player their button over EVERY
+// stunned titan within jacking range, so two titans side by side both showed
+// it while B jacks only one of them. Now the port answers the question the
+// game itself answers on the Jack button: which titan would it take? Read
+// from the game (findings/37 s.7, Ghidra + Crash's fight-tree script):
 //   * a stunned titan OPENS AN OPPORTUNITY (COpportunityBehaviour, vtable
 //     0x8202F904; message 24, subtype 0 = open sub_82156128, 1 = close,
 //     2 = check sub_82157058) named after its fight tree: StrongJackable,
 //     BearJackable, ...;
 //   * the open opportunities live in one table at 0x825A5418: a binary tree
 //     (root = the word at the table, sentinel = table + 4; node +0 left, +4
-//     right, +0x10 the name's hash (h * 31 + c), +0x14 a list: entry +0 next,
-//     +8 the COpportunity: +0xC the actor offering it, +0x10 the one actor it
-//     is for, 0 = anyone);
+//     right, +8 parent, +0x10 the name's hash (h * 31 + c), +0x14 a list:
+//     entry +0 next, +8 the COpportunity: +0xC the actor offering it, +0x10
+//     the one actor it is for, 0 = anyone);
 //   * on the Jack button, Crash's fight tree (Crashlua.blua, the function at
-//     line 7306) checks each name with its own range; the check (sub_82157058)
-//     takes an offer whose actor is within that range across the ground
-//     (x, z) AND up or down (|y|), from Crash to the offering actor.
-// So player p can jack titan T right now = T offers one of these names and
-// p's Crash, on foot, is within its range. Measured before the script was
-// read: a Ratcicle (Strong) jacks at 6.0, not at 6.5; Scorporilla at 8.
+//     line 7306) calls CheckOpportunity(name, range) for Boss 8.5, Captain
+//     8.5, Bear 6.5, Strong 6.0, Projectile 6.0, turret 8.0, IN THAT ORDER,
+//     and jacks with the FIRST name that finds anything;
+//   * CheckOpportunity (sub_82157058) walks that name's list and hands every
+//     offer within range (across the ground (x, z) AND up or down (|y|),
+//     Crash to the offering actor) to sub_82156320 with the weight
+//     1 / distance^2; that keeps, in Crash's own COpportunityBehaviour (+0x20:
+//     a tree like the table's, node +0x10 name hash, +0x14 / +0x18 a vector
+//     of 12-byte entries: +0 COpportunity, +4 weight, +8 hold count), a list
+//     SORTED BY WEIGHT, heaviest (nearest) first; an equal weight goes after
+//     the ones already there;
+//   * HoldOpportunity (sub_82156520) and GetOpportunityActor (sub_82156ED0)
+//     both take that list's FIRST entry; the behaviour's Update (slot 4,
+//     sub_82156690) drops every entry nobody holds, so the ranking is made
+//     afresh each time.
+// So the titan B would jack for player p = the first name in the script's
+// order with an offer in range, and among that name's offers the nearest
+// (the first in the table's list on a tie). That is all read-only here: the
+// game's own check is never called (it would add entries to Crash's list).
+// A titan the player is jacking already (an entry they HOLD, or the titan
+// they ride) stays theirs too: the opportunity can stay open during the
+// jack, and the B flipped to the jack symbol for ~1 s there before.
 constexpr uint32_t kOpportunityTable = 0x825A5418;
+constexpr uint32_t kOpportunityBehaviourVtable = 0x8202F904;
 constexpr uint32_t kCoOpState = 0x8259B11C;  // u32 per player: 2 = in the game (more_players.h)
 
 constexpr uint32_t NameHash(std::string_view name) {
@@ -2561,12 +2580,56 @@ struct JackCheck {
   uint32_t key;
   float range;
 };
-// In the script's order, with its ranges.
+// ON FOOT: Crash's script (Crashlua.blua line 7306), in its order, with its
+// ranges.
 constexpr JackCheck kJackChecks[] = {
     {NameHash("BossJackable"), 8.5f},       {NameHash("CaptainJackable"), 8.5f},
     {NameHash("BearJackable"), 6.5f},       {NameHash("StrongJackable"), 6.0f},
     {NameHash("ProjectileJackable"), 6.0f}, {NameHash("JackableTurretJackableByCrash"), 8.0f},
 };
+// RIDING A TITAN (2026-10-30): B is answered by the RIDDEN titan's fight tree
+// (its B-press function, e.g. Stronglua.blua line 17959) through
+// CheckOpportunitySlave = the same check (sub_82157058, via message 24) on
+// the RIDER's own COpportunityBehaviour: measured from Crash, ranked in
+// Crash's list. Seen with a probe: a Ratcicle rider's B ran Boss 8.5,
+// Captain 8.0, Bear 7.0, Strong 6.5 on Crash's behaviour; Strong found one.
+// Same order as on foot, no turret, each titan type its own ranges. The
+// titan's type = the name it offered while it was down (g_offered).
+constexpr JackCheck kFromStrong[] = {  // Strong + Projectile trees
+    {NameHash("BossJackable"), 8.5f},   {NameHash("CaptainJackable"), 8.0f},    {NameHash("BearJackable"), 7.0f},
+    {NameHash("StrongJackable"), 6.5f}, {NameHash("ProjectileJackable"), 6.5f},
+};
+constexpr JackCheck kFromBear[] = {
+    {NameHash("BossJackable"), 8.5f},   {NameHash("CaptainJackable"), 8.0f},    {NameHash("BearJackable"), 7.5f},
+    {NameHash("StrongJackable"), 7.0f}, {NameHash("ProjectileJackable"), 7.0f},
+};
+constexpr JackCheck kFromBig[] = {  // Captain + the bosses (Cortex, Crunch)
+    {NameHash("BossJackable"), 9.0f},   {NameHash("CaptainJackable"), 8.75f},   {NameHash("BearJackable"), 8.0f},
+    {NameHash("StrongJackable"), 8.0f}, {NameHash("ProjectileJackable"), 8.0f},
+};
+struct JackChecks {
+  const JackCheck* checks;
+  size_t count;
+};
+template <size_t N>
+constexpr JackChecks ChecksOf(const JackCheck (&c)[N]) {
+  return {c, N};
+}
+
+// Titan -> the name it offered while down (= its fight tree's type).
+std::mutex g_offered_mutex;
+std::map<uint32_t, uint32_t> g_offered;
+
+JackChecks RiderChecks(uint32_t titan) {
+  uint32_t key = 0;
+  {
+    std::lock_guard<std::mutex> lock(g_offered_mutex);
+    if (const auto it = g_offered.find(titan); it != g_offered.end()) key = it->second;
+  }
+  if (key == NameHash("BearJackable")) return ChecksOf(kFromBear);
+  if (key == NameHash("CaptainJackable") || key == NameHash("BossJackable")) return ChecksOf(kFromBig);
+  return ChecksOf(kFromStrong);  // Strong, Projectile, or never seen down (the commonest set)
+}
 
 // The list of the opportunities open under `key` (0 = none): a walk down the
 // tree like the game's lookup (keys compared as unsigned numbers).
@@ -2592,35 +2655,125 @@ bool ActorAt(uint8_t* base, uint32_t actor, float out[3]) {
   return std::isfinite(out[0]) && std::isfinite(out[1]) && std::isfinite(out[2]);
 }
 
-// Bit p set = player p could jack `titan` now. *jackable = the titan offers a
-// jack at all (it is down, waiting for a rider).
-uint32_t JackReach(uint8_t* base, uint32_t titan, bool* jackable) {
-  *jackable = false;
-  float at[3];
-  if (!ActorAt(base, titan, at)) return 0;
-  uint32_t reach = 0;
+// Each Crash's COpportunityBehaviour (its actor = behaviour +0x1C), noted
+// from the behaviour's Update (the REX_FUNC at the end of this file): the
+// list it holds is how we tell "player p is jacking this titan".
+std::mutex g_opportunity_mutex;
+std::map<uint32_t, uint32_t> g_opportunity_behaviours;  // actor -> behaviour
+
+void NoteOpportunityBehaviour(uint8_t* base, uint32_t behaviour) {
+  const uint32_t actor = behaviour ? Load32(base, behaviour + 0x1C) : 0;
+  if (actor < 0x40000000u) return;
+  std::lock_guard<std::mutex> lock(g_opportunity_mutex);
+  if (g_opportunity_behaviours.size() > 256) g_opportunity_behaviours.clear();
+  g_opportunity_behaviours[actor] = behaviour;
+}
+
+uint32_t OpportunityBehaviourOf(uint8_t* base, uint32_t actor) {
+  std::lock_guard<std::mutex> lock(g_opportunity_mutex);
+  const auto it = g_opportunity_behaviours.find(actor);
+  if (it == g_opportunity_behaviours.end()) return 0;
+  // Still that actor's (a freed behaviour's memory is used again).
+  if (Load32(base, it->second) != kOpportunityBehaviourVtable || Load32(base, it->second + 0x1C) != actor) {
+    g_opportunity_behaviours.erase(it);
+    return 0;
+  }
+  return it->second;
+}
+
+// The actor of an opportunity `crash` HOLDS (hold count +8 > 0, like
+// GetHeldOpportunityActor sub_82156FB0), if it is `titan`.
+bool HoldsOpportunityOf(uint8_t* base, uint32_t crash, uint32_t titan) {
+  const uint32_t behaviour = OpportunityBehaviourOf(base, crash);
+  if (!behaviour) return false;
+  const uint32_t map = behaviour + 0x20, sentinel = map + 4;
+  // Every node of the tree (a small one: one node per name checked).
+  uint32_t stack[64];
+  int depth = 0, visited = 0;
+  if (const uint32_t root = Load32(base, map); root != sentinel && root >= 0x40000000u) stack[depth++] = root;
+  while (depth > 0 && visited++ < 64) {
+    const uint32_t node = stack[--depth];
+    const uint32_t begin = Load32(base, node + 0x14), end = Load32(base, node + 0x18);
+    if (begin >= 0x40000000u && end >= begin && end - begin <= 12 * 64) {
+      for (uint32_t e = begin; e < end; e += 12) {
+        const uint32_t opportunity = Load32(base, e);
+        if (int32_t(Load32(base, e + 8)) > 0 && opportunity >= 0x40000000u &&
+            Load32(base, opportunity + 0xC) == titan) {
+          return true;
+        }
+      }
+    }
+    for (const uint32_t side : {0u, 4u}) {
+      const uint32_t child = Load32(base, node + side);
+      if (child != sentinel && child >= 0x40000000u && depth < 64) stack[depth++] = child;
+    }
+  }
+  return false;
+}
+
+// Does `titan` offer a jack at all (it is down, waiting for a rider)? Also
+// remembers under which name (RiderChecks, once someone rides it).
+bool OffersJack(uint8_t* base, uint32_t titan) {
   for (const JackCheck& check : kJackChecks) {
     uint32_t entry = OpportunityList(base, check.key);
     for (int n = 0; n < 64 && entry >= 0x40000000u; ++n, entry = Load32(base, entry)) {
       const uint32_t offer = Load32(base, entry + 8);
-      if (offer < 0x40000000u || Load32(base, offer + 0xC) != titan) continue;
-      *jackable = true;
-      const uint32_t only_for = Load32(base, offer + 0x10);
-      for (int p = 0; p < 4; ++p) {
-        // On foot: in the game (not a mask, not joining) and riding no titan.
-        if (!menu_input::PlayerPlays(p) || Load32(base, kCoOpState + 4 * uint32_t(p)) != 2 ||
-            more_players::TitanOfPlayer(p)) {
-          continue;
-        }
-        const uint32_t crash = more_players::CharacterOfPlayer(p);
-        float body[3];
-        if (!crash || (only_for && only_for != crash) || !ActorAt(base, crash, body)) continue;
-        const float dx = at[0] - body[0], dy = at[1] - body[1], dz = at[2] - body[2];
-        if (std::fabs(dy) <= check.range && dx * dx + dz * dz <= check.range * check.range) reach |= 1u << p;
+      if (offer >= 0x40000000u && Load32(base, offer + 0xC) == titan) {
+        std::lock_guard<std::mutex> lock(g_offered_mutex);
+        if (g_offered.size() > 256) g_offered.clear();
+        g_offered[titan] = check.key;
+        return true;
       }
     }
   }
-  return reach;
+  return false;
+}
+
+// The titan player p's B would jack right now (0 = none): the B-press script
+// of whoever answers it (Crash's on foot, the ridden titan's while riding),
+// check by check, with the check's own ranking (nearest first).
+uint32_t JackTarget(uint8_t* base, int p) {
+  // In the game as a character (not a mask, not joining).
+  if (!menu_input::PlayerPlays(p) || Load32(base, kCoOpState + 4 * uint32_t(p)) != 2) return 0;
+  const uint32_t crash = more_players::CharacterOfPlayer(p), ridden = more_players::TitanOfPlayer(p);
+  float body[3];  // Crash's position even when riding: the check measures from its behaviour's actor
+  if (!crash || !ActorAt(base, crash, body)) return 0;
+  const JackChecks set = ridden ? RiderChecks(ridden) : ChecksOf(kJackChecks);
+  for (size_t c = 0; c < set.count; ++c) {
+    const JackCheck& check = set.checks[c];
+    uint32_t best = 0;
+    float best_d2 = 0;
+    uint32_t entry = OpportunityList(base, check.key);
+    for (int n = 0; n < 64 && entry >= 0x40000000u; ++n, entry = Load32(base, entry)) {
+      const uint32_t offer = Load32(base, entry + 8);
+      if (offer < 0x40000000u) continue;
+      const uint32_t actor = Load32(base, offer + 0xC), only_for = Load32(base, offer + 0x10);
+      float at[3];
+      if (actor == ridden || (only_for && only_for != crash) || !ActorAt(base, actor, at)) continue;
+      const float dx = at[0] - body[0], dy = at[1] - body[1], dz = at[2] - body[2];
+      const float d2 = dx * dx + dz * dz;
+      if (std::fabs(dy) > check.range || d2 > check.range * check.range) continue;
+      if (!best || d2 < best_d2) best = actor, best_d2 = d2;  // a tie keeps the first (sub_82156320)
+    }
+    if (best) return best;  // the first name with anything in range: the script stops there
+  }
+  return 0;
+}
+
+// Bit p set = player p's B would jack `titan` now, or p is jacking it.
+// *jackable = the titan offers a jack at all.
+uint32_t JackersOf(uint8_t* base, uint32_t titan, bool* jackable) {
+  *jackable = OffersJack(base, titan);
+  uint32_t who = 0;
+  for (int p = 0; p < 4; ++p) {
+    if (!menu_input::PlayerPlays(p)) continue;
+    const uint32_t crash = more_players::CharacterOfPlayer(p);
+    const bool mine = (*jackable && JackTarget(base, p) == titan) ||
+                      (more_players::TitanOfPlayer(p) == titan) ||
+                      (crash && HoldsOpportunityOf(base, crash, titan));
+    if (mine) who |= 1u << p;
+  }
+  return who;
 }
 
 const CoinGroup& CurrentCoinGroup() { return g_coins; }
@@ -2679,14 +2832,21 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
   }
   std::lock_guard<std::mutex> lock(g.mutex);
   const GuestPage* original = nullptr;
-  uint32_t copy[4] = {};
+  uint32_t copy[4] = {}, jack_copy = 0;
   for (const GuestPage& gp : g.pages) {
     if (gp.font || gp.prompt != &kWorldB) continue;
     if (gp.world_player < 0) original = &gp;
     else if (gp.world_player < 4) copy[gp.world_player] = gp.xn;
+    else if (gp.world_player == kJackSymbol) jack_copy = gp.xn;
   }
   if (!original) return false;
-  bool ours = original->xn == current;
+  // Every coin shares ONE material: the coin before this one left ITS
+  // picture in the material (put back only at the frame's end), so any of
+  // our copies counts as the B. The jack symbol's copy was missing here
+  // (2026-10-30): after one titan's symbol, every later coin of the frame
+  // (another titan, a save totem) was "not ours", left alone, and drew the
+  // symbol too.
+  bool ours = original->xn == current || (jack_copy && jack_copy == current);
   for (uint32_t c : copy) ours = ours || (c && c == current);
   if (!ours) return false;
   from_xn = current;
@@ -2737,9 +2897,9 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
                   icon_object, icon_range);
     }
   }
-  // A stunned titan: the game's own jack rule (WHO CAN JACK IT).
+  // A stunned titan: the game's own pick (WHICH TITAN B WOULD JACK).
   bool jackable = false;
-  const uint32_t jack_reach = !interactable && icon_object ? JackReach(base, icon_object, &jackable) : 0;
+  const uint32_t jackers = !interactable && icon_object ? JackersOf(base, icon_object, &jackable) : 0;
   std::string seen[4];
   int count = 0;
   uint32_t players_near = 0;  // bit p: player p may use it (for the log)
@@ -2749,8 +2909,8 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
     if (!menu_input::PlayerPlays(p)) {
     } else if (interactable) {
       near = InInteractableList(base, interactable, p);
-    } else if (jackable) {
-      near = (jack_reach >> p) & 1;
+    } else if (jackable || jackers) {
+      near = (jackers >> p) & 1;  // only where B would jack THIS titan
     } else {
       // No list: within the range the game showed it at (its owner's
       // distance then, 15% to spare for steps and turns).
@@ -2794,7 +2954,7 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
         if (players_near & (1u << p)) who += fmt::format("{}{}", who.empty() ? "" : " ", p + 1);
       }
       REXLOG_INFO("Prompt pictures: floating button {:08X}: players near [{}], {} coin(s){}", icon_object, who,
-                  count, jackable ? (players_near ? " (titan: in jacking reach)" : " (titan: jack symbol)") : "");
+                  count, jackable || jackers ? (players_near ? " (titan: B jacks this one)" : " (titan: jack symbol)") : "");
     }
   }
   return true;
@@ -2819,6 +2979,15 @@ int DetectedPadStyle(const std::string& key) {
 }
 
 }  // namespace prompt_icons
+
+// COpportunityBehaviour Update (vtable 0x8202F904 slot 4; a branch to
+// sub_82156690, which drops the entries nobody holds): each Crash's behaviour
+// noted for WHICH TITAN B WOULD JACK (a held entry = jacking that titan).
+extern "C" REX_FUNC(__imp__sub_82155F60);
+extern "C" REX_FUNC(sub_82155F60) {
+  prompt_icons::NoteOpportunityBehaviour(base, ctx.r3.u32);
+  __imp__sub_82155F60(ctx, base);
+}
 
 // CInteractableBehaviour Update (vtable slot 4): remembered for WHO MAY USE IT.
 extern "C" REX_FUNC(__imp__sub_82149808);
@@ -2908,3 +3077,4 @@ extern "C" REX_FUNC(sub_82269480) {
     }
   }
 }
+
