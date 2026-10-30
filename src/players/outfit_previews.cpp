@@ -249,7 +249,7 @@ uint32_t Inventory(PPCContext& ctx, uint8_t* base, uint32_t key_addr) {
 // skin's name (what sub_820E1228 makes at 0x820E12C0..0x820E1308). Carbon
 // and the colours = Crash's model (game skin 0).
 uint32_t TemplateKey(PPCContext& ctx, uint8_t* base, int outfit) {
-  const uint32_t skin = outfits::IsCarbon(outfit) ? 0u : uint32_t(outfit);
+  const uint32_t skin = uint32_t(outfits::LookOfOutfit(outfit));  // (coloured looks = their look)
   const uint32_t name = Call(__imp__sub_8229F7F8, ctx, base, {skin});
   if (!name || !g.scratch) return 0;
   std::string full = "Characters:";
@@ -345,7 +345,8 @@ void Build(PPCContext& ctx, uint8_t* base, Preview& pv, int index) {
     return;
   }
   // Page = which idle list / animation set (Crash's 0, Coco's 1).
-  const bool coco = !outfits::IsCarbon(pv.pending_outfit) && (pv.pending_outfit == 9 || pv.pending_outfit == 10);
+  const int look = outfits::LookOfOutfit(pv.pending_outfit);
+  const bool coco = look == 9 || look == 10;
   Write32(pv.shadow + kPage, coco ? 1u : 0u);
   g.building = pv.pending_outfit;
   Call(__imp__sub_820E0A30, ctx, base, {pv.shadow, section});
@@ -441,7 +442,7 @@ void Begin(int count) {
   g.active = g.count > 0;
 }
 void Show(int i, int outfit) {
-  if (i >= 0 && i < kMaxPreviews && outfit >= 0 && outfit <= outfits::kLastOutfit) g.p[i].want_outfit = outfit;
+  if (i >= 0 && i < kMaxPreviews && outfits::ValidOutfit(outfit)) g.p[i].want_outfit = outfit;
 }
 void Place(int i, float x, float scale, float world_y) {
   if (i >= 0 && i < kMaxPreviews) {

@@ -73,6 +73,8 @@
 #include <cmath>
 #include <cstring>
 #include <deque>
+#include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -92,6 +94,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
+#include "../ui/game_font.h"
 #include "../ui/scrooby.h"
 #include "more_players.h"
 #include "outfit_previews.h"
@@ -467,8 +470,11 @@ bool CheckTree(const Bytes& original, Bytes* patched) {
 }
 
 // --- What a player can pick ---------------------------------------------------
-// Character -> its looks (port outfit numbers, outfits.h) -> for Crash's own
-// look, a colour (the fur: orange is the original, white the original Carbon).
+// Character -> its looks (port outfit numbers, outfits.h) -> a fur colour
+// (orange = the look's own, white = the Carbon's, the six gems): on Crash's
+// own look and, since 2026-10-30, on every look that shows his fur (Greeny,
+// Bluey, Reddy, the four mutant suits; not the Skeleton: findings/46 s.3h).
+// A look keeps the colour picked: stepping on to another look wears it too.
 // Every look and colour can be LOOKED AT; only unlocked ones can be worn.
 enum Character { kCrash = 0, kCoco = 1 };
 struct Look {
@@ -495,10 +501,27 @@ struct Pick {
 };
 int LookCount(int character) { return character == kCoco ? kCocoLookCount : kCrashLookCount; }
 const Look& LookOf(const Pick& k) { return k.character == kCoco ? kCocoLooks[k.look] : kCrashLooks[k.look]; }
-bool HasColour(const Pick& k) { return k.character == kCrash && k.look == 0; }
-int OutfitOfPick(const Pick& k) { return HasColour(k) ? kColours[k.colour].outfit : LookOf(k).outfit; }
+bool HasColour(const Pick& k) {
+  return k.character == kCrash && (k.look == 0 || outfits::CanTint(LookOf(k).outfit));
+}
+int OutfitOfPick(const Pick& k) {
+  return HasColour(k) ? outfits::OutfitWithFur(LookOf(k).outfit, kColours[k.colour].outfit) : LookOf(k).outfit;
+}
+// The name on the card: the look's, or with its fur colour ("Ruby Crash",
+// "Carbon Crash", "Topaz Ratcicle"; outfits::OutfitName).
+std::u16string PickName(const Pick& k) { return outfits::OutfitName(OutfitOfPick(k), LookOf(k).name); }
 Pick PickOfOutfit(int outfit) {
   Pick k;
+  if (outfits::IsTinted(outfit)) {  // a coloured look: its look + its fur's circle
+    const int look = outfits::LookOfOutfit(outfit), fur = outfits::FurColourOf(outfit);
+    for (int i = 0; i < kCrashLookCount; ++i) {
+      if (kCrashLooks[i].outfit != look) continue;
+      for (int c = 0; c < kSwatches; ++c) {
+        if (kColours[c].outfit == fur) return {kCrash, i, c};
+      }
+      return {kCrash, i, 0};
+    }
+  }
   for (int i = 0; i < kCocoLookCount; ++i) {
     if (kCocoLooks[i].outfit == outfit) return {kCoco, i, 0};
   }
@@ -512,7 +535,7 @@ Pick PickOfOutfit(int outfit) {
 }
 bool Available(const Pick& k) { return outfits::OutfitAvailable(OutfitOfPick(k)); }
 
-// The rows: 0 character, 1 outfit, 2 colour (Crash's Normal look only).
+// The rows: 0 character, 1 outfit, 2 colour (looks with fur only).
 constexpr int kRows = 3;
 constexpr int kRowCharacter = 0, kRowOutfit = 1, kRowColour = 2;
 
@@ -866,6 +889,30 @@ void PlaceText(PPCContext& ctx, uint8_t* base, uint32_t e, std::u16string_view s
   scrooby::SetVisible(base, e, true);
 }
 
+// AN OUTFIT'S NAME FITS ITS ROW (2026-10-30): with the fur colours in the
+// names ("Rose Quartz Magmadon", "Carbon Ratcicle") a name ran past the
+// panel. Measured with the element's own font from the disc (ui/game_font,
+// as mouse_menus.cpp does: 0.475 canvas units per font pixel at scale 1, a
+// canvas unit = 2.25 of the mockup's pixels), the size shrinks until the
+// name fits `room` (mockup pixels), its middle staying where it was.
+void PlaceName(PPCContext& ctx, uint8_t* base, uint32_t e, std::u16string_view s, float cx, float top, float font,
+               uint32_t colour, float room) {
+  static std::map<std::string, std::unique_ptr<game_font::Font>> fonts;
+  float fitted = font;
+  if (e) {
+    auto& f = fonts[prompt_icons::FontNameAt(Read32(e + 144))];  // (text element +144: its font)
+    if (!f) {
+      f = std::make_unique<game_font::Font>();
+      f->Load(prompt_icons::FontNameAt(Read32(e + 144)));
+    }
+    if (f->loaded()) {
+      const float width = f->Measure(s) * 0.475f * 2.25f * (font / kFontAtScale1);
+      if (width > room && width > 0) fitted = font * room / width;
+    }
+  }
+  PlaceText(ctx, base, e, s, cx, top + (font - fitted) * kLineMiddle, fitted, colour);
+}
+
 // The red arrows (PlaceArrowsFor, below): the font's U+00BB is a filled red
 // arrow pointing RIGHT (U+00BA is an outlined one pointing left:
 // findings/31; photo 2026-10-23), so the left arrow is U+00BB turned half a
@@ -1103,8 +1150,8 @@ void DrawOne(PPCContext& ctx, uint8_t* base, int p) {
   const bool name_selected = browsing && pl.row == kRowOutfit;
   const float font = 67;
   AddHit(p, kHitRow, kRowOutfit, cx, py + 220 + font * 0.5f, pw, font + 30);
-  PlaceText(ctx, base, c.outfit, LookOf(pl.pick).name, cx, py + 220 - (name_selected ? font * 0.1f : 0.0f),
-            font * (name_selected ? 1.2f * Pulse() : 1.0f), name_selected ? kYellow : kGreen);
+  PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, py + 220 - (name_selected ? font * 0.1f : 0.0f),
+            font * (name_selected ? 1.2f * Pulse() : 1.0f), name_selected ? kYellow : kGreen, pw - 150);
   // The circles: 54 px, 22 apart, 4 x 2.
   const float d = 54, gap = 22, total = 4 * d + 3 * gap, top = py + 340;
   if (HasColour(pl.pick)) {
@@ -1198,7 +1245,7 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
     for (uint32_t e : c.swatch) Hide(base, e);
     Hide(base, c.arrow_l);
     Hide(base, c.arrow_r);
-    PlaceText(ctx, base, c.outfit, LookOf(pl.pick).name, cx, y + 8, fs, kGreen);
+    PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y + 8, fs, kGreen, w - 40);
     PlaceText(ctx, base, c.ready, u"Ready!", cx, y + row + 6, fs * 1.45f, kYellow);
     PlaceText(ctx, base, c.prompt, ForPlayer(u"² Change", p), cx, y + row * 2 + 30, fs * 0.8f,
               Hovered(p, kHitChange) ? kYellow : kCyan);
@@ -1230,12 +1277,13 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
     PlaceArrowsFor(ctx, base, c, p, kRowOutfit, cx, y + fs * 0.5f, w / 2 - L.arrow * 0.5f - 14, L.arrow);
   }
   if (name_selected) {
-    PlaceText(ctx, base, c.outfit, LookOf(pl.pick).name, cx, y - fs * 0.1f, fs * 1.2f * Pulse(), kYellow);
+    PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y - fs * 0.1f, fs * 1.2f * Pulse(), kYellow,
+              w - 2 * L.arrow - 44);
   } else {
-    PlaceText(ctx, base, c.outfit, LookOf(pl.pick).name, cx, y, fs, kGreen);
+    PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y, fs, kGreen, w - 2 * L.arrow - 44);
   }
   y += row;
-  // Row 3: the colour circles (Crash's Normal look only).
+  // Row 3: the colour circles (every look that shows his fur).
   if (HasColour(pl.pick)) {
     const float d = L.swatch, g2 = L.swatch_gap, total = kSwatches * d + (kSwatches - 1) * g2;
     AddHit(p, kHitRow, kRowColour, cx, y + d / 2, w, row);
@@ -1303,8 +1351,17 @@ void Draw(PPCContext& ctx, uint8_t* base) {
   const int n = int(joined.size());
   const RowLayout& L = kRowLayouts[n - 2];
   // The models: once the slide is over (as the game's own), gone at the close.
-  if (g.settled && g.exit_step < 0) outfit_previews::Begin(n);  // (the game's own single model goes out of sight)
-  else outfit_previews::End();
+  if (g.settled && g.exit_step < 0) {
+    outfit_previews::Begin(n);  // (the game's own single model goes out of sight)
+  } else {
+    outfit_previews::End();
+    // ...and the game's own model stays out of sight meanwhile: the per-card
+    // models only park it while they're up, and with them gone at the close
+    // the screen's own model (the focus player's look, where the one-player
+    // screen stands it) showed for the slide-out (2026-10-30: player 1's
+    // Crash popped in when the last player got ready).
+    PlaceModel(0, 0, 1.0f, true);
+  }
   const float total = n * L.w + (n - 1) * L.gap, x0 = std::round(960.0f - total / 2);
   for (int slot = 0; slot < kMaxPlayers; ++slot) {
     if (slot >= n) {
@@ -1646,4 +1703,8 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   Draw(ctx, base);
 }
 
+}  // namespace outfit_picker
+
+namespace outfit_picker {
+bool Enabled() { return REXCVAR_GET(outfit_picker); }
 }  // namespace outfit_picker

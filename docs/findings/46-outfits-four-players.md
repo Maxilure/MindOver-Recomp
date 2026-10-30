@@ -123,7 +123,8 @@ Crash has orange-rooted spikes on white fur.
 ### 3.2 The colours
 
 Six coloured Crashes, for anyone at the chest: **Red, Yellow, Green, Blue,
-Purple, Pink** (port numbers 12-17, in that order on the chest's pages from
+Purple, Pink** (named after gems beside the game's own Carbon Crash: Ruby,
+Topaz, Jade, Sapphire, Amethyst and Rose Quartz Crash; section 3h) (port numbers 12-17, in that order on the chest's pages from
 red: 12 red, 13 blue, 14 green, 15 purple, 16 yellow, 17 pink; the white
 Carbon Crash stays 11). They follow the many-coloured Crashes of the Crash
 of the Titans short "Have Another". By default player 2 is still the game's
@@ -379,6 +380,96 @@ fixed position to where the picking player stands, and puts the block back
 once the level has made its players again and a second has passed. Checked
 with the console: the fixed position set by hand, the game's respawn (`cheat
 respawn`) put player 1 exactly there.
+
+## 3h. Every look in a colour
+
+The fur colours (the white Carbon and the six gems) also go on Crash's other
+looks: the chest's colour row is there for every look that shows his fur,
+and a look keeps the picked colour while stepping through the looks. The
+names follow: "Ruby Crash", "Carbon Snipe", "Sapphire Greeny" (a long name is
+drawn smaller to fit its row, measured with the element's own font).
+
+**What each look's package holds** (read from the disc's packages, named by
+hash in `levels/GlobalPackages.p3d`):
+
+| Look | Package | Crash's fur | Hair |
+|---|---|---|---|
+| Greeny / Bluey / Reddy (`Crash_Var01`-`03`) | `55b4ea5b` / `5c` / `5d` | `Crash_Player1.bmp`, the whole Crash (512 x 512, 8-bit, shorts in the look's colour) | `crash_fur_blue/purple/green.tga` (tips in a colour) |
+| Snipe, Ratcicle, Magmadon, Spike (`Crash_Parafox`, `_Ratcicle`, `_Shurtle`, `_Spike`) | `7ed57722`, `2f22d61e`, `29ac4a2e`, `55915af9` | `Crash_Player1_face.bmp` (256 x 256, 8-bit), drawn by `..._crash_body_shader1` | none |
+| Skeleton (`Crash_Skeleton`) | `8ee6e47a` | none drawn: only `crash_skeleton.bmp` | none |
+
+In the four suit packages the SUIT is the package's `Crash_Player1.bmp`,
+with its own material (`<Suit>_Suit_shader`); Crash's own fur where the suit
+leaves it (face, arms, legs) is the separate face texture. So only that
+texture is recoloured, and every suit keeps its own colours (the Ratcicle
+suit stays icy blue; parts that belong to a suit, such as Magmadon's chest or
+Snipe's fox fur, stay as they are). The Skeleton shows no fur: no colour row.
+
+**The textures.** A data patch per look's package adds a copy of its fur
+texture (and hair) per colour, "<name>_<colour>" (`Crash_Player1_face_red.bmp`),
+through the same colour function as Crash's own (section 3.2), applied to the
+256-colour palette. The palettes hold one catch: every colour is in use, and
+the tattoos' dark colours are the same entries as the eyebrows' (16 of them in
+a 256 x 256 texture, 24 at 512), while a coloured Crash gives the two
+different shades (the Topaz Crash's tattoos are blue-violet). The closest
+pairs of palette entries (same alpha, 1-6 levels apart per channel) are
+merged until there is room, then each dark entry used inside the tattoo patch
+(pixels x 140-205, y 188-246 of the 256 layout, twice that at 512) gets a copy
+used only there.
+
+The white Carbon's fur for these looks was measured on the game's own Carbon
+texture where the orange one has each part (medians: fur h 45 s 0.36 v 0.91,
+chest h 60 s 0.13, eyebrows h 38 s 0.29 v 0.36, tattoos h 48 s 0.31 v 0.43).
+
+**The numbers.** A coloured look is one outfit number,
+`32 + 8 x look + (colour - 11)`, so it fits the save file's one byte per
+player like the others; Crash's own look in a colour stays 11-17. The game's
+lookups that take a skin number (name, base character, unlocked) answer it as
+its look.
+
+**The draw.** The look's fur material is shared by every character made from
+that package, so its texture is changed per character for the length of
+that character's draw, as for the hair (section 3.3), on two material
+set-ups: the character material's (`xnCharacterRimShader`, setup
+`0x8242CD10`) and the simple one's; +92 is the texture in both. Matching by
+the texture itself keeps the suit's material (which uses another texture of
+the same name) untouched. Two more things were needed:
+
+- **The game skips a material's set-up** when it is the material it applied
+  last (its key +12 against the global `0x824EE830`, in `0x8243C0D0` /
+  `0x8243C198`, used by mesh draws and the skinned draws `0x824372E0` alike).
+  Forgetting the last material (writing -1, the game's own reset) before and
+  after a recoloured character's draw makes its set-up run with the copy, and
+  the next character's with its own texture.
+- **Most pieces are drawn later.** Greeny's body and hair stayed orange: the
+  character's draw only queues them in a display list that draws them after
+  every model: `OpaqueTraversal` (vtable `0x8200D684`, groups draws by
+  material) or `TranslucentTraversal` (`0x8200D658`). Each list's add is its
+  slot 6 (`sub_823AE290` / `sub_823AD538`, r4 = the drawable, r5 = which of
+  its prim groups); the entry keeps the prim group's record
+  (`*(drawable +128) +80`, 20 bytes each), and the list's draw
+  (`sub_823ADC58`) hands that record to `sub_82391400`, where the set-up runs.
+  Found from the game's call stack at the set-up: `82391400 <- 823ADC58 <-
+  82378C40 <- ... <- the frame function`. Records queued during a recoloured
+  character's draw are remembered with its swap until the frame ends, and
+  drawn with it. (The suits' fur pieces were drawn inside the character's own
+  draw.)
+
+Checked at the chest and in the house: every look in Topaz and Carbon, two
+players in the same look in two colours at once (each their own), the four
+suits unchanged, Crash's own colours unchanged.
+
+![Greeny in two colours at once; four suits with coloured fur](../images/outfits-every-look-in-colour.jpg)
+
+**The old model at the close.** With 2-4 players each card has its own model
+(`players/outfit_previews.*`), and the screen's own single model is parked
+out of sight only while those are up. When the last player got ready they
+went at the start of the closing slide, and the screen's own model (the
+focus player's look, where the one-player screen stands it) appeared for the
+rest of the slide: player 1's Crash or Skeleton popped up before the game
+came back. The picker now parks it itself whenever the card models aren't up
+(the opening and closing slides). Checked with photos 50-80 ms apart through
+ten closes (colours, looks, Skeleton for both players, Coco).
 
 ## 4. Not done yet
 

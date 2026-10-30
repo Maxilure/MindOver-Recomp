@@ -207,30 +207,37 @@ struct Hsv {
 struct CrashColour {
   int outfit;
   const char* id;           // texture names
-  const char16_t* name;     // the chest's title
+  const char16_t* word;     // its name (2026-10-30: gems, beside the game's own "Carbon"):
+                            // "Ruby" -> "Ruby Crash" on the chest, "Ruby Ratcicle" for a look
   const char16_t* text;     // the chest's description
   Hsv body, chest, brow, tattoo, hair;
 };
 // In the chest's order. Tattoos: the yellow Crash's arm stripes are blue-violet
 // in the short; the others' are a deeper shade of their fur.
 constexpr CrashColour kColours[] = {
-    {kCrashRed, "red", u"Red Crash", u"Exactly the same in every way but red",
+    {kCrashRed, "red", u"Ruby", u"Exactly the same in every way but red",
      {9, .66f, .84f}, {12, .34f, 1.0f}, {5, .70f, .40f}, {352, .66f, .42f}, {7, .70f, .56f}},
-    {kCrashYellow, "yellow", u"Yellow Crash", u"Exactly the same in every way but yellow",
+    {kCrashYellow, "yellow", u"Topaz", u"Exactly the same in every way but yellow",
      {48, .56f, .90f}, {52, .28f, 1.0f}, {28, .66f, .40f}, {248, .42f, .66f}, {30, .62f, .54f}},
-    {kCrashGreen, "green", u"Green Crash", u"Exactly the same in every way but green",
+    {kCrashGreen, "green", u"Jade", u"Exactly the same in every way but green",
      {104, .45f, .76f}, {92, .24f, .94f}, {105, .55f, .34f}, {125, .60f, .33f}, {110, .58f, .50f}},
-    {kCrashBlue, "blue", u"Blue Crash", u"Exactly the same in every way but blue",
+    {kCrashBlue, "blue", u"Sapphire", u"Exactly the same in every way but blue",
      {228, .40f, .92f}, {224, .17f, 1.0f}, {225, .40f, .33f}, {236, .55f, .42f}, {224, .40f, .50f}},
-    {kCrashPurple, "purple", u"Purple Crash", u"Exactly the same in every way but purple",
+    {kCrashPurple, "purple", u"Amethyst", u"Exactly the same in every way but purple",
      {284, .40f, .80f}, {290, .18f, .98f}, {285, .45f, .33f}, {270, .55f, .36f}, {282, .45f, .50f}},
-    {kCrashPink, "pink", u"Pink Crash", u"Exactly the same in every way but pink",
+    {kCrashPink, "pink", u"Rose Quartz", u"Exactly the same in every way but pink",
      {350, .36f, 1.0f}, {350, .15f, 1.0f}, {350, .50f, .46f}, {335, .60f, .50f}, {352, .52f, .70f}},
 };
 constexpr int kColourCount = int(sizeof(kColours) / sizeof(kColours[0]));
-// The white Carbon's hair: roots in its fur's cream, spikes a dusty brown.
-constexpr CrashColour kCarbonHair = {kCarbon, "carbon", u"", u"",
-                                     {48, .36f, .91f}, {}, {}, {}, {36, .33f, .54f}};
+// The white Carbon: its hair (roots in its fur's cream, spikes a dusty
+// brown) on Crash's own look, where the game has the body texture; and, for
+// the coloured looks (s.3h), the whole fur, measured on the game's Carbon
+// texture (Crash_Player2.bmp) where the orange one has each part: fur h 45
+// s 0.36 v 0.91, chest h 60 s 0.13 v 1.0, eyebrows h 38 s 0.29 v 0.36,
+// tattoos h 48 s 0.31 v 0.43 (medians).
+constexpr CrashColour kCarbonHair = {kCarbon, "carbon", u"Carbon", u"",
+                                     {48, .36f, .91f}, {60, .13f, 1.0f}, {38, .29f, .36f}, {48, .31f, .43f},
+                                     {36, .33f, .54f}};
 const CrashColour* ColourOf(int outfit) {
   for (const CrashColour& c : kColours) {
     if (c.outfit == outfit) return &c;
@@ -295,7 +302,7 @@ uint32_t CallGame(GuestFunction f, PPCContext& ctx, uint8_t* base, uint32_t r3, 
 }
 
 // The game's number for an outfit (Carbon = Crash's model).
-uint32_t GameSkin(int outfit) { return IsCarbon(outfit) ? 0u : uint32_t(outfit); }
+uint32_t GameSkin(int outfit) { return uint32_t(LookOfOutfit(outfit)); }
 bool IsCoco(uint32_t skin) { return skin == 9 || skin == 10; }
 // What the ORIGINAL can put in its table (0x8259B1C0) for players 1-2: player
 // 1 is always a Crash (0 orange .. 8), player 2 the Carbon Crash (0) or the
@@ -350,7 +357,7 @@ int Picked(int p) {
   if (p < 0 || p >= kMaxPlayers) return -1;
   std::lock_guard guard(g_picks_mutex);
   const int picked = CurrentPicks()[p];
-  if (picked < 0 || picked > kLastOutfit) return -1;
+  if (!ValidOutfit(picked)) return -1;
   return SkinUnlocked(GameSkin(picked)) ? picked : -1;
 }
 
@@ -371,7 +378,8 @@ int PlayerOfActor(uint32_t actor) {
 // School (player 2's), copied from the game's lists (filled at boot).
 void BuildList(bool again = false) {
   if (g_list && !again) return;
-  if (!g_list) g_list = rex::system::kernel_memory()->SystemHeapAlloc(24 * kEntryBytes);
+  // (room: the game's 11 + Carbon + 6 colours + 7 looks x 7 fur colours)
+  if (!g_list) g_list = rex::system::kernel_memory()->SystemHeapAlloc(80 * kEntryBytes);
   if (!g_list) return;
   g_list_count = 0;
   auto copy = [](uint32_t from, uint32_t skin_override) {
@@ -388,6 +396,19 @@ void BuildList(bool again = false) {
   for (uint32_t i = 1; i < 9; ++i) copy(kPlayer1List + i * kEntryBytes, ~0u);
   copy(kPlayer2List + kEntryBytes, ~0u);     // Coco
   copy(kPlayer2List + 2 * kEntryBytes, ~0u); // Old School
+  // THE COLOURED LOOKS (s.3h), for the co-op picker only (its colour row
+  // picks them; the game's own one-at-a-time screen would list all 49): each
+  // a copy of its look's entry. The screen needs them in its list to build
+  // the preview and load the package (the template = the look's: our name
+  // lookup sub_8229F7F8 answers the look for them).
+  if (outfit_picker::Enabled() && REXCVAR_GET(carbon_colours) && g_colours_added) {
+    for (int look = 1; look <= 8; ++look) {
+      if (!CanTint(look)) continue;
+      for (int fur = kCarbon; fur <= kLastOutfit; ++fur) {
+        copy(kPlayer1List + uint32_t(look) * kEntryBytes, uint32_t(OutfitWithFur(look, fur)));
+      }
+    }
+  }
   static uint32_t logged = 0;
   if (logged != g_list_count) REXLOG_INFO("Outfits: {} outfits on every page of the chest", g_list_count);
   logged = g_list_count;
@@ -616,6 +637,184 @@ bool PatchCrashPackage(const data_patcher::Bytes& d, data_patcher::Bytes* out) {
   return true;
 }
 
+// --- THE COLOURED LOOKS (s.3h, 2026-10-30) ---
+// Each look has its own package (the path builder's category 10, named by
+// hash, from levels/GlobalPackages.p3d). Read from the disc's packages:
+//   * Greeny / Bluey / Reddy (Crash_Var01-03): the whole Crash in ONE texture,
+//     Crash_Player1.bmp (512 x 512, 8-bit with a 256-colour palette; the
+//     same layout as the suits' fur texture, shorts in the look's colour),
+//     and the hair, crash_fur_<blue|purple|green>.tga (the tips in a colour);
+//   * the mutant suits Snipe, Ratcicle, Magmadon, Spike: the SUIT is the
+//     package's Crash_Player1.bmp (its own shader, "<Suit>_Suit_shader"), and
+//     Crash's own fur where the suit leaves it (head, arms, legs) is
+//     Crash_Player1_face.bmp (256 x 256, 8-bit), drawn by the
+//     "..._crash_body_shader1" material; no hair material.
+//   * the Skeleton: only crash_skeleton.bmp is drawn: no fur.
+// So the recolour touches only Crash's fur texture of a look (and its hair):
+// the suits keep their own colours. Per look, the patch adds a copy per fur
+// colour (the white Carbon + the six), named "<texture>_<colour id>.<ext>"
+// ("Crash_Player1_face_red.bmp"); the draw puts it on that look's fur
+// material for a player who wears the colour (section 3b).
+struct LookTextures {
+  int look;             // the game's skin number
+  const char* package;  // its package (hash name)
+  const char* body;     // Crash's fur texture there
+  const char* hair;     // its hair texture (null: none)
+};
+constexpr LookTextures kLookTextures[] = {
+    {1, "55b4ea5b", "Crash_Player1.bmp", "crash_fur_blue.tga"},  // Greeny (Crash_Var01)
+    {2, "55b4ea5c", "Crash_Player1.bmp", "crash_fur_purple.tga"},  // Bluey (Crash_Var02)
+    {3, "55b4ea5d", "Crash_Player1.bmp", "crash_fur_green.tga"},  // Reddy (Crash_Var03)
+    {4, "7ed57722", "Crash_Player1_face.bmp", nullptr},  // Snipe (Crash_Parafox)
+    {5, "2f22d61e", "Crash_Player1_face.bmp", nullptr},  // Ratcicle (Crash_Ratcicle)
+    {6, "29ac4a2e", "Crash_Player1_face.bmp", nullptr},  // Magmadon (Crash_Shurtle)
+    {8, "55915af9", "Crash_Player1_face.bmp", nullptr},  // Spike (Crash_Spike)
+};
+const LookTextures* LookTexturesOf(int look) {
+  for (const LookTextures& t : kLookTextures) {
+    if (t.look == look) return &t;
+  }
+  return nullptr;
+}
+// "Crash_Player1_face.bmp" + "red" -> "Crash_Player1_face_red.bmp".
+std::string TintName(const std::string& texture, const char* id) {
+  const size_t dot = texture.rfind('.');
+  if (dot == std::string::npos) return texture + "_" + id;
+  return texture.substr(0, dot) + "_" + id + texture.substr(dot);
+}
+// All of a look's fur colours: the white Carbon, then the six.
+const CrashColour* FurColour(int fur) { return ColourOf(fur); }
+
+// A look's fur texture (8-bit TGA, 256 palette entries) recoloured: the
+// palette goes through Recolour. One catch: the TATTOOS (the swirl on his
+// back, the stripe beside it: pixels x 140-205, y 188-246 of the 256 x 256
+// layout, twice that at 512) take the tattoo shade, the eyebrows the brow
+// shade, but in these palettes the tattoos' dark colours are the same
+// entries as the eyebrows' (16 entries at 256, 24 at 512: every one shared),
+// and all 256 entries are in use. So first the closest pairs of entries
+// (same alpha; the closest are 1-6 levels apart per channel: invisible) are
+// merged until there is room, then each dark entry used inside the tattoo
+// patch gets a copy that only the patch's pixels use.
+bool DarkFur(const uint8_t* bgra) {
+  float rgb[3] = {bgra[2] / 255.0f, bgra[1] / 255.0f, bgra[0] / 255.0f};
+  const float mx = std::max({rgb[0], rgb[1], rgb[2]}), mn = std::min({rgb[0], rgb[1], rgb[2]});
+  if (mx <= mn || mx >= 0.62f) return false;
+  float h = 0.0f;
+  if (mx == rgb[0]) h = 60.0f * std::fmod((rgb[1] - rgb[2]) / (mx - mn) + 6.0f, 6.0f);
+  else if (mx == rgb[1]) h = 60.0f * ((rgb[2] - rgb[0]) / (mx - mn) + 2.0f);
+  else h = 60.0f * ((rgb[0] - rgb[1]) / (mx - mn) + 4.0f);
+  return h > 6.0f && h < 56.0f && (mx - mn) / mx > 0.15f;
+}
+bool RecolourLookTga(std::vector<uint8_t>& tga, const CrashColour& colour) {
+  if (tga.size() < 18 || tga[1] != 1 || tga[2] != 1 || tga[7] != 32 || tga[16] != 8) return false;
+  const size_t palette = 18 + tga[0];
+  const size_t entries = size_t(tga[5]) | size_t(tga[6]) << 8;
+  const int w = tga[12] | tga[13] << 8, h = tga[14] | tga[15] << 8;
+  const size_t pixels = palette + 4 * entries;
+  if (entries != 256 || w < 256 || pixels + size_t(w) * h > tga.size()) return false;
+  uint8_t* pal = &tga[palette];
+  uint8_t* px = &tga[pixels];
+  const bool top_down = (tga[17] & 0x20) != 0;
+  const int scale = w / 256;
+  auto in_patch = [&](int i) {
+    const int x = i % w, row = i / w, y = top_down ? row : h - 1 - row;
+    return x >= 140 * scale && x < 205 * scale && y >= 188 * scale && y < 246 * scale;
+  };
+  // Which entries the pixels use, and which dark ones the patch uses.
+  std::array<bool, 256> used{}, free_slot{};
+  auto tattoo_entries = [&]() {
+    std::vector<int> out;
+    std::array<bool, 256> seen{};
+    for (int i = 0; i < w * h; ++i) {
+      const int k = px[i];
+      if (!seen[k] && in_patch(i) && DarkFur(pal + 4 * k)) {
+        seen[k] = true;
+        out.push_back(k);
+      }
+    }
+    return out;
+  };
+  for (int i = 0; i < w * h; ++i) used[px[i]] = true;
+  int free_count = 0;
+  for (int k = 0; k < 256; ++k) free_count += free_slot[k] = !used[k];
+  std::vector<int> tattoo = tattoo_entries();
+  int merged = 0;
+  while (free_count < int(tattoo.size()) && merged < 64) {
+    // The closest pair still in use, same alpha: b's pixels become a's.
+    int best = 1 << 30, a = -1, b = -1;
+    for (int i = 0; i < 256; ++i) {
+      if (free_slot[i]) continue;
+      for (int j = i + 1; j < 256; ++j) {
+        if (free_slot[j] || pal[4 * i + 3] != pal[4 * j + 3]) continue;
+        int d = 0;
+        for (int c = 0; c < 3; ++c) d += (pal[4 * i + c] - pal[4 * j + c]) * (pal[4 * i + c] - pal[4 * j + c]);
+        if (d < best) best = d, a = i, b = j;
+      }
+    }
+    if (a < 0) break;
+    for (int i = 0; i < w * h; ++i) {
+      if (px[i] == b) px[i] = uint8_t(a);
+    }
+    free_slot[b] = true;
+    ++free_count;
+    ++merged;
+    tattoo = tattoo_entries();
+  }
+  // The patch's own copies of its dark entries (when there's room).
+  std::array<bool, 256> is_tattoo{};
+  if (free_count >= int(tattoo.size())) {
+    int next = 0;
+    for (int k : tattoo) {
+      while (!free_slot[next]) ++next;
+      std::memcpy(pal + 4 * next, pal + 4 * k, 4);
+      free_slot[next] = false;
+      is_tattoo[next] = true;
+      for (int i = 0; i < w * h; ++i) {
+        if (px[i] == k && in_patch(i)) px[i] = uint8_t(next);
+      }
+    }
+  }
+  for (int k = 0; k < 256; ++k) {
+    uint8_t* e = pal + 4 * k;
+    float rgb[3] = {e[2] / 255.0f, e[1] / 255.0f, e[0] / 255.0f};
+    Recolour(rgb, colour, is_tattoo[k] ? Part::kTattoo : Part::kBody);
+    for (int c = 0; c < 3; ++c) e[2 - c] = uint8_t(std::lround(rgb[c] * 255.0f));
+  }
+  return true;
+}
+
+// The patch of one look's package: per fur colour, a copy of its fur
+// texture (and hair), right after the original.
+bool PatchLookPackage(const LookTextures& look, const data_patcher::Bytes& d, data_patcher::Bytes* out) {
+  pure3d::Chunk root;
+  std::vector<pure3d::Chunk> top;
+  if (!pure3d::Parse(d, &root, &top)) return false;
+  pure3d::Node tree = pure3d::ToNode(d, root);
+  auto add = [&](const char* texture, bool hair) {
+    size_t at = 0;
+    pure3d::Node* list = ListWith(tree, texture, &at);
+    if (!list) return false;
+    const pure3d::Node source = list->children[at];
+    std::vector<pure3d::Node> copies;
+    for (int fur = kCarbon; fur <= kLastOutfit; ++fur) {
+      const CrashColour* c = FurColour(fur);
+      pure3d::Node copy;
+      auto change = [&](std::vector<uint8_t>& f) { return hair ? RecolourTga(f, *c) : RecolourLookTga(f, *c); };
+      if (!c || !TextureCopy(source, TintName(texture, c->id), change, &copy)) return false;
+      copies.push_back(std::move(copy));
+    }
+    list->children.insert(list->children.begin() + at + 1, copies.begin(), copies.end());
+    return true;
+  };
+  if (!add(look.body, false) || (look.hair && !add(look.hair, true))) {
+    REXLOG_WARN("Outfits: look {}'s package doesn't hold its textures as expected: no colours for it", look.look);
+    return false;
+  }
+  *out = pure3d::ToBytes(tree);
+  REXLOG_INFO("Outfits: look {}'s package got its fur in {} colours", look.look, kLastOutfit - kCarbon + 1);
+  return true;
+}
+
 }  // namespace
 
 // (section 3b, the hair)
@@ -624,14 +823,31 @@ void HairUpdate(uint32_t render, uint32_t actor);
 
 void Register() {
   data_patcher::Register("Crash in colours + every outfit's hair", 10, kCrashPackage, PatchCrashPackage);
+  for (const LookTextures& look : kLookTextures) {
+    data_patcher::Register("Crash's look " + std::to_string(look.look) + " in colours", 10, look.package,
+                           [&look](const data_patcher::Bytes& d, data_patcher::Bytes* out) {
+                             return PatchLookPackage(look, d, out);
+                           });
+  }
   RegisterHair();
 }
 
 int ColourIndex(int outfit) {
+  const int fur = FurColourOf(outfit);  // (a coloured look: its fur's colour)
   for (int i = 0; i < kColourCount; ++i) {
-    if (kColours[i].outfit == outfit) return i;
+    if (kColours[i].outfit == fur) return i;
   }
   return -1;
+}
+const char16_t* FurWord(int fur) {
+  const CrashColour* c = ColourOf(fur);
+  return c ? c->word : u"";
+}
+std::u16string OutfitName(int outfit, const char16_t* look_name) {
+  const int fur = FurColourOf(outfit);
+  if (!fur) return std::u16string(look_name);
+  // Crash's own look: "Ruby Crash", "Carbon Crash"; another look: "Ruby Ratcicle".
+  return std::u16string(FurWord(fur)) + u" " + (LookOfOutfit(outfit) == 0 ? u"Crash" : look_name);
 }
 int ColourCount() { return kColourCount; }
 float ColourHue(int index) { return index >= 0 && index < kColourCount ? kColours[index].body.h : 0.0f; }
@@ -644,8 +860,8 @@ int ListIndexOf(int outfit) {
   return -1;
 }
 bool OutfitAvailable(int outfit) {
-  if (outfit < 0 || outfit > kLastOutfit || ListIndexOf(outfit) < 0) return false;
-  if (outfit >= kFirstColour && !g_colours_added) return false;
+  if (!ValidOutfit(outfit) || ListIndexOf(outfit) < 0) return false;
+  if ((outfit >= kFirstColour || IsTinted(outfit)) && !g_colours_added) return false;
   return SkinUnlocked(GameSkin(outfit));
 }
 int ShownOutfit() { return int(Read32(kSelection)); }
@@ -693,7 +909,7 @@ std::array<int8_t, kMaxPlayers> CurrentPickBytes() {
   std::lock_guard guard(g_picks_mutex);
   std::array<int, kMaxPlayers>& now = CurrentPicks();
   std::array<int8_t, kMaxPlayers> out{};
-  for (int p = 0; p < kMaxPlayers; ++p) out[p] = int8_t(std::clamp(now[p], -1, kLastOutfit));
+  for (int p = 0; p < kMaxPlayers; ++p) out[p] = int8_t(ValidOutfit(now[p]) ? now[p] : -1);
   return out;
 }
 
@@ -804,10 +1020,12 @@ extern "C" REX_FUNC(sub_8229F7F8) {
     ctx.r3.u64 = kCrashName;
     return;
   }
+  if (IsTinted(int(ctx.r3.u32))) ctx.r3.u64 = uint32_t(LookOfOutfit(int(ctx.r3.u32)));  // (s.3h: its look's)
   __imp__sub_8229F7F8(ctx, base);
 }
 extern "C" REX_FUNC(sub_8229F8D0) {
   if (IsCarbon(int(ctx.r3.u32))) ctx.r3.u64 = 0;
+  if (IsTinted(int(ctx.r3.u32))) ctx.r3.u64 = uint32_t(LookOfOutfit(int(ctx.r3.u32)));
   __imp__sub_8229F8D0(ctx, base);
 }
 extern "C" REX_FUNC(sub_8229F858) {
@@ -815,6 +1033,7 @@ extern "C" REX_FUNC(sub_8229F858) {
     ctx.r3.u64 = 1;
     return;
   }
+  if (IsTinted(int(ctx.r3.u32))) ctx.r3.u64 = uint32_t(LookOfOutfit(int(ctx.r3.u32)));
   __imp__sub_8229F858(ctx, base);
 }
 
@@ -829,7 +1048,7 @@ void ChooseSkinSet(uint32_t render, uint32_t actor) {
     outfit = OutfitOf(p);
   } else if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) {
     outfit = o;  // PER-PLAYER PREVIEWS (outfit_previews.h): that preview's outfit
-  } else if (NowMs() - g_screen_ms.load() < 250 && Read32(kSelection) <= uint32_t(kLastOutfit)) {
+  } else if (NowMs() - g_screen_ms.load() < 250 && ValidOutfit(int(Read32(kSelection)))) {
     // Not a player, while the skin screen is up: its preview, wearing the
     // shown entry (-1 = a locked one: left alone).
     outfit = int(Read32(kSelection));
@@ -868,7 +1087,7 @@ int OutfitForActor(uint32_t actor) {
   if (p >= 0) return OutfitOf(p);
   // PER-PLAYER PREVIEWS (outfit_previews.h): each preview wears its own outfit.
   if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) return o;
-  if (NowMs() - g_screen_ms.load() < 250 && Read32(kSelection) <= uint32_t(kLastOutfit)) {
+  if (NowMs() - g_screen_ms.load() < 250 && ValidOutfit(int(Read32(kSelection)))) {
     return int(Read32(kSelection));
   }
   return -1;
@@ -915,6 +1134,27 @@ namespace {
 // During one Crash's Display: the hair material's texture `from` -> `to`
 // (pddiTextures, tTexture +0x18), and the material it was changed on.
 uint32_t g_hair_from = 0, g_hair_to = 0, g_hair_shader = 0;
+// THE COLOURED LOOKS' FUR (s.3h): the same, for the material that draws a
+// look's fur texture (the suits' "..._crash_body_shader1", Greeny's
+// "crash_body_V1_shader"). Its set-up is the character material's
+// (xnCharacterRimShader, setup 0x8242CD10: +92 = its diffuse texture, as the
+// simple material's +92); both set-ups are watched. Matched by the texture
+// itself, so the suit's own material (which uses ANOTHER texture of the
+// same name in the suits' packages) is never touched.
+uint32_t g_body_from = 0, g_body_to = 0, g_body_shader = 0;
+constexpr uint32_t kLastMaterialKey = 0x824EE830;  // the material last applied (its key)
+int g_hair_depth = 0;  // (the draws nest: slot 8 calls the model draw)
+// A draw set-up: the hair's / the fur's texture swapped for this Crash.
+void SwapForThisCrash(uint32_t shader) {
+  if (g_hair_to && Read32(shader + kSimpleTexture) == g_hair_from) {
+    Write32(shader + kSimpleTexture, g_hair_to);
+    g_hair_shader = shader;
+  }
+  if (g_body_to && Read32(shader + kSimpleTexture) == g_body_from) {
+    Write32(shader + kSimpleTexture, g_body_to);
+    g_body_shader = shader;
+  }
+}
 
 uint32_t FindTexture(PPCContext& ctx, uint8_t* base, uint32_t section, uint32_t key) {
   if (!section || !key) return 0;
@@ -929,11 +1169,7 @@ uint32_t FindTexture(PPCContext& ctx, uint8_t* base, uint32_t section, uint32_t 
 
 void HairSetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   const uint32_t shader = ctx.r3.u32;
-
-  if (g_hair_to && Read32(shader + kSimpleTexture) == g_hair_from) {
-    Write32(shader + kSimpleTexture, g_hair_to);
-    g_hair_shader = shader;
-  }
+  SwapForThisCrash(shader);
   // A floating button's coin: its owner's copy of the B, for this set-up only.
   uint32_t coin_from = 0, coin_to = 0;
   if (prompt_icons::WorldButtonSwap(base, shader, native::recorder::CurrentMeshContext(), coin_from,
@@ -952,11 +1188,27 @@ void outfits::HairUpdate(uint32_t render, uint32_t actor) {
   if (const uint32_t object = Read32(render + kRenderObject)) g_outfit_of[object] = OutfitForActor(actor);
 }
 
-void outfits::RegisterHair() { pddi::SetHandler(pddi::kFn_82441EA8, HairSetupDraw); }
+namespace {
+void CharacterSetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
+  SwapForThisCrash(ctx.r3.u32);
+  original(ctx, base);
+}
+}  // namespace
+
+void outfits::RegisterHair() {
+  pddi::SetHandler(pddi::kFn_82441EA8, HairSetupDraw);
+  pddi::SetHandler(pddi::kFn_8242CD10, CharacterSetupDraw);
+}
 
 namespace {
+// The materials' own textures back, nothing swapped.
+void RestoreSwaps() {
+  if (g_hair_shader) Write32(g_hair_shader + kSimpleTexture, g_hair_from);
+  if (g_body_shader) Write32(g_body_shader + kSimpleTexture, g_body_from);
+  g_hair_from = g_hair_to = g_hair_shader = 0;
+  g_body_from = g_body_to = g_body_shader = 0;
+}
 // One Crash drawn by `draw` (the original display) with its outfit's hair.
-int g_hair_depth = 0;  // (the draws nest: slot 8 calls the model draw)
 void DrawWithHair(PPCContext& ctx, uint8_t* base, void (*draw)(PPCContext&, uint8_t*)) {
   if (g_hair_depth > 0) {
     draw(ctx, base);
@@ -965,22 +1217,112 @@ void DrawWithHair(PPCContext& ctx, uint8_t* base, void (*draw)(PPCContext&, uint
   ++g_hair_depth;
   const uint32_t object = ctx.r3.u32;
   g_hair_from = g_hair_to = g_hair_shader = 0;
+  g_body_from = g_body_to = g_body_shader = 0;
   if (g_colours_added) {
     const auto outfit = g_outfit_of.find(object);
     const auto section = g_section_of.find(object);
-    const CrashColour* c = outfit != g_outfit_of.end() ? ColourOf(outfit->second) : nullptr;
+    const int worn = outfit != g_outfit_of.end() ? outfit->second : -1;
+    const CrashColour* c = ColourOf(FurColourOf(worn));
     if (c && section != g_section_of.end()) {
-      g_hair_from = FindTexture(ctx, base, section->second, NameKey(ctx, base, kFurTexture));
-      g_hair_to = FindTexture(ctx, base, section->second, NameKey(ctx, base, FurName(*c)));
-      if (!g_hair_from || !g_hair_to) g_hair_from = g_hair_to = 0;
+      const uint32_t in = section->second;
+      auto pair = [&](const std::string& from, const std::string& to, uint32_t& a, uint32_t& b) {
+        a = FindTexture(ctx, base, in, NameKey(ctx, base, from));
+        b = FindTexture(ctx, base, in, NameKey(ctx, base, to));
+        if (!a || !b) a = b = 0;
+      };
+      if (const LookTextures* look = LookTexturesOf(LookOfOutfit(worn))) {
+        // A coloured look: its fur texture (and hair) -> the colour's copy.
+        pair(look->body, TintName(look->body, c->id), g_body_from, g_body_to);
+        if (look->hair) pair(look->hair, TintName(look->hair, c->id), g_hair_from, g_hair_to);
+        static bool reported = false;
+        if (!g_body_to && !reported) {
+          reported = true;
+          REXLOG_WARN("Outfits: look {}'s package has no {} fur (its patch didn't run?): drawn in its own",
+                      LookOfOutfit(worn), c->id);
+        }
+      } else if (LookOfOutfit(worn) == 0) {
+        // Crash's own look in a colour / Carbon: the body comes from texture
+        // set 2 (section 3), the hair from here.
+        pair(kFurTexture, FurName(*c), g_hair_from, g_hair_to);
+      }
     }
   }
+  // FORGET THE LAST MATERIAL (as prompt_icons.cpp does for the floating
+  // buttons): the game skips a material's set-up when it was the last one
+  // applied (its key +12 vs global 0x824EE830), and the set-up is where the
+  // swap happens. Greeny's body was drawn back to back with the frame
+  // before's: no set-up, its own texture (found 2026-10-30: the textures were
+  // found, no set-up call was seen during the draw). Forgotten before the
+  // draw (our texture goes on) and after it (the next character's set-up
+  // puts its own texture back on the device).
+  const bool swapping = g_hair_to || g_body_to;
+  if (swapping) Write32(kLastMaterialKey, 0xFFFFFFFFu);
   draw(ctx, base);
-  if (g_hair_shader) Write32(g_hair_shader + kSimpleTexture, g_hair_from);
-  g_hair_from = g_hair_to = g_hair_shader = 0;
+  if (swapping) Write32(kLastMaterialKey, 0xFFFFFFFFu);
+  RestoreSwaps();
   --g_hair_depth;
 }
+
+// SOME PIECES ARE DRAWN LATER (2026-10-30). Greeny / Bluey / Reddy stayed
+// orange: the character's draw only QUEUES most of its pieces in a display
+// list, which draws them after every model: OpaqueTraversal (vtable
+// 0x8200D684; groups draws by material) and TranslucentTraversal (0x8200D658;
+// far ones first). Their "add" is slot 6 of each (sub_823AE290 /
+// sub_823AD538: r4 = the drawable, r5 = which of its prim groups), the
+// entry keeps the prim group's RECORD (*(drawable +128) +80, 20 bytes each:
+// opaque entry +8, see-through entry +0x30), and the list's draw
+// (sub_823ADC58 ...) hands that record to sub_82391400 (r3), where the
+// material's set-up runs: outside DrawWithHair, with nothing swapped. Found
+// from the game's call stack at the set-up (guest_stack::Callers):
+// 82391400 <- 823ADC58 (OpaqueTraversal slot 4) <- 82378C40 ... <- the frame
+// function. (The suits' fur pieces were drawn inside: they worked at once.)
+// So a prim group queued during a swapping Crash's draw is remembered with
+// that Crash's swap (until the frame ends) and drawn with it.
+struct Swap {
+  uint32_t hair_from, hair_to, body_from, body_to;
+};
+std::unordered_map<uint32_t, Swap> g_queued;  // prim group record -> its Crash's swap (this frame)
+bool g_queued_listening = false;
+void ForgetQueued(void*) { g_queued.clear(); }
+void RememberQueued(uint32_t drawable, uint32_t group) {
+  if (g_hair_depth == 0 || !(g_hair_to || g_body_to) || drawable < 0x40000000) return;
+  const uint32_t groups = Read32(drawable + 128);
+  if (groups < 0x40000000) return;
+  if (!g_queued_listening) {
+    pddi::AddFrameEndListener(&ForgetQueued, nullptr);
+    g_queued_listening = true;
+  }
+  g_queued[Read32(groups + 80) + 20 * group] = {g_hair_from, g_hair_to, g_body_from, g_body_to};
+}
 }  // namespace
+
+extern "C" REX_FUNC(__imp__sub_823AE290);  // OpaqueTraversal slot 6: queue (r4 drawable, r5 prim group)
+extern "C" REX_FUNC(__imp__sub_823AD538);  // TranslucentTraversal slot 6: the same
+extern "C" REX_FUNC(__imp__sub_82391400);  // draw a queued prim group (r3 = its record)
+extern "C" REX_FUNC(sub_823AE290) {
+  RememberQueued(ctx.r4.u32, ctx.r5.u32);
+  __imp__sub_823AE290(ctx, base);
+}
+extern "C" REX_FUNC(sub_823AD538) {
+  RememberQueued(ctx.r4.u32, ctx.r5.u32);
+  __imp__sub_823AD538(ctx, base);
+}
+extern "C" REX_FUNC(sub_82391400) {
+  const auto it = g_queued.empty() ? g_queued.end() : g_queued.find(ctx.r3.u32);
+  if (it == g_queued.end() || g_hair_depth > 0) {
+    __imp__sub_82391400(ctx, base);
+    return;
+  }
+  g_hair_from = it->second.hair_from;
+  g_hair_to = it->second.hair_to;
+  g_body_from = it->second.body_from;
+  g_body_to = it->second.body_to;
+  g_hair_shader = g_body_shader = 0;
+  Write32(kLastMaterialKey, 0xFFFFFFFFu);
+  __imp__sub_82391400(ctx, base);
+  Write32(kLastMaterialKey, 0xFFFFFFFFu);
+  RestoreSwaps();
+}
 // The two functions that draw a CCharacterObject's model (r3 = the object),
 // whichever pass asks (call stacks at the hair's set-up, logged 2026-10-17):
 // sub_822B6FB8 (from its vtable 0x82041734 slots 6 and 8) and sub_822B6DB0
@@ -1065,8 +1407,7 @@ void OutfitsPreviewCharacter(PPCRegister& r5, PPCRegister& r6) {
   // (PER-PLAYER PREVIEWS: one of ours being built = its own outfit.)
   const int building = outfit_previews::BuildingOutfit();
   const uint32_t shown = building >= 0 ? uint32_t(building) : Read32(kSelection);
-  r5.u64 = IsCoco(GameSkin(int(std::min<uint32_t>(shown, uint32_t(kLastOutfit))))) ? kPreviewCocoMoves
-                                                                               : kPreviewCrashMoves;
+  r5.u64 = IsCoco(GameSkin(ValidOutfit(int(shown)) ? int(shown) : 0)) ? kPreviewCocoMoves : kPreviewCrashMoves;
   r6.u64 = IsCarbon(int(shown)) ? 1u : 0u;
 }
 extern "C" REX_FUNC(sub_820E0C98) {
@@ -1076,7 +1417,7 @@ extern "C" REX_FUNC(sub_820E0C98) {
   const int own = outfit_previews::OutfitOfScreen(screen);
   const uint32_t shown = own >= 0 ? uint32_t(own) : Read32(kSelection);
   Write32(screen + kScreenPage,
-          IsCoco(GameSkin(int(std::min<uint32_t>(shown, uint32_t(kLastOutfit))))) ? 1u : 0u);
+          IsCoco(GameSkin(ValidOutfit(int(shown)) ? int(shown) : 0)) ? 1u : 0u);
   __imp__sub_820E0C98(ctx, base);
   Write32(screen + kScreenPage, page);
 }
@@ -1090,9 +1431,10 @@ extern "C" REX_FUNC(sub_820E1228) {
   __imp__sub_820E1228(ctx, base);
   if (!g_list || index >= g_list_count) return;
   const int outfit = int(Read32(g_list + index * kEntryBytes));
-  const CrashColour* c = outfit == kCarbon ? nullptr : ColourOf(outfit);
+  const CrashColour* c = outfit == kCarbon ? nullptr : ColourOf(FurColourOf(outfit));
   if (!c) return;
-  scrooby::SetText(ctx, base, Read32(screen + 0x24), c->name);
+  if (IsTinted(outfit)) return;  // (a coloured look: the picker writes its own name)
+  scrooby::SetText(ctx, base, Read32(screen + 0x24), OutfitName(outfit, u""));
   if (Read32(kSelection) != uint32_t(outfit)) return;  // (a locked entry shows "Locked")
   scrooby::SetText(ctx, base, Read32(screen + 0x28), c->text);
   scrooby::SetText(ctx, base, Read32(screen + 0x2C), c->text);
@@ -1284,7 +1626,7 @@ extern "C" REX_FUNC(sub_82123880) {
   const int p = int(Read32(front_end + kChooser));
   const int outfit = int(Read32(kSelection));
   const uint32_t actor = p >= 0 && p < kMaxPlayers ? more_players::CharacterOfPlayer(p) : 0;
-  if (actor && outfit >= 0 && outfit <= kLastOutfit) {
+  if (actor && ValidOutfit(outfit)) {
     const uint32_t old_skin = GameSkin(OutfitOf(p));
     const uint32_t new_skin = GameSkin(outfit);
     g_wearing_player = p;

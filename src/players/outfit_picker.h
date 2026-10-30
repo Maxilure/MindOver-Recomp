@@ -24,6 +24,10 @@ namespace outfit_picker {
 // Registers the data patches (call before the game runs: CrashMomApp).
 void Register();
 
+// The picker is on (setting outfit_picker): the chest's list then also holds
+// the coloured looks (outfits.cpp BuildList), which only the picker offers.
+bool Enabled();
+
 // Right after the skin screen's own Update (outfits.cpp's wrapper of
 // sub_820E0858): opens the picker, reads every player, draws the panels.
 void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen);
