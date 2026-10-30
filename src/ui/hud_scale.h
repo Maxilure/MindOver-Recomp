@@ -18,9 +18,15 @@
 // WHAT IT COVERS: each player's corner (portrait, health / special bars,
 // level-up ring, mojo count, multiplier, the "Join Game" text), the combo
 // meters, the "counter now" prompts (star + its Y), the pocketed mutant's
-// display and a timed challenge's clock (both toward the top centre), the
-// collectable counter. NOT: the markers over the players' heads (they're in
-// the world), the message bar, announcements, hints and menus.
+// display (toward the top centre), the collectable counter and a timed
+// challenge's clock under it (toward the top RIGHT corner: the original lays
+// them out as a column right under player 2's corner, as far from the right
+// edge as player 1's portrait is from the left; 2026-10-30, they shrank toward
+// the top centre at first, which pulled them toward the middle), the
+// announcement prompt ("Attack" + button, a dig spot's prompt: toward the
+// screen's left edge at its own height). NOT: the markers over the players'
+// heads (they're in the world), the message bar, hints, the mission title
+// and menus.
 //
 // HOW: the game draws all of the HUD through PDDI's MODELVIEW matrix stack
 // (type 0; findings/53). The context's slot 15 pushes a copy of the top,
@@ -52,6 +58,8 @@ namespace hud_scale {
 
 // Where a part shrinks toward: a player's corner (0-3) or the top centre.
 constexpr int kTopCentre = 10;
+constexpr int kTopRight = 1;       // = player 2's corner
+constexpr int kAnnouncement = 11;  // the left edge, at the announcement's height
 constexpr int kNone = -1;
 
 // The scale in use now (1 = untouched).
@@ -83,5 +91,14 @@ class Scope {
 // every frame) -> the player, else kNone.
 void NoteText(uint32_t text, int player);
 int WhereOfText(uint32_t text);
+
+// DEBUG (console "cheat hudtest counter|timer|announce|all", game thread):
+// shows the HUD parts that only appear in certain places, through the game's
+// own functions: a collectable counter "0/6" (frontend +1628: add
+// sub_8225C520, show sub_8225C7E8), a timed challenge's clock (*(frontend
+// +260): seconds +12, start sub_8226EC40), the announcement (frontend +72:
+// seconds +16, text +12).
+void ShowTestParts(PPCContext& ctx, uint8_t* base, int what);
+constexpr int kTestCounter = 1, kTestTimer = 2, kTestAnnouncement = 4;
 
 }  // namespace hud_scale

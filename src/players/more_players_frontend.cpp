@@ -31,6 +31,7 @@
 // =============================================================================
 #include "more_players.h"
 #include "more_players_hud.h"
+#include "reticle_idle.h"
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 #include "../input/title_any_button.h"
@@ -582,7 +583,10 @@ void ForgetReticle(uint32_t reticle) {
 // Update (r3 = the reticle behaviour, r4 = its owner).
 extern "C" REX_FUNC(sub_82161B40) {
   const uint32_t reticle = ctx.r3.u32, owner = ctx.r4.u32;
+  // (reticle_idle.h: its aim ray, inside, tells which player it aims for.)
+  reticle_idle::BeginBehaviourUpdate(ctx, base, reticle, owner);
   __imp__sub_82161B40(ctx, base);
+  reticle_idle::EndBehaviourUpdate();
   if (more_players::LocalPlayerCount() <= 2) return;
   bool registered = false;
   for (uint32_t i = 0; i < 3; ++i) {
@@ -599,17 +603,34 @@ extern "C" REX_FUNC(sub_82161B40) {
 // Destructor body: out of ours too.
 extern "C" REX_FUNC(sub_82161A08) {
   ForgetReticle(ctx.r3.u32);
+  reticle_idle::Forget(ctx.r3.u32);
   __imp__sub_82161A08(ctx, base);
 }
 // Draw (no arguments): as the original, over ours (the shared one in player 1's colours).
 extern "C" REX_FUNC(__imp__sub_82162540);
+// Both ways skip a plain mask's reticle while its player doesn't aim
+// (reticle_idle.h). With 1-2 players: the original's draw, the hidden ones
+// taken out of its table for the call and put back right after.
 extern "C" REX_FUNC(sub_82162540) {
-  if (more_players::LocalPlayerCount() <= 2) { __imp__sub_82162540(ctx, base); return; }
+  if (more_players::LocalPlayerCount() <= 2) {
+    uint32_t taken[3] = {};
+    for (uint32_t i = 0; i < 3; ++i) {
+      const uint32_t r = Read32(kReticleTable + 4 * i);
+      if (r && reticle_idle::SkipDraw(r)) {
+        taken[i] = r;
+        Write32(kReticleTable + 4 * i, 0);
+      }
+    }
+    __imp__sub_82162540(ctx, base);
+    for (uint32_t i = 0; i < 3; ++i)
+      if (taken[i]) Write32(kReticleTable + 4 * i, taken[i]);
+    return;
+  }
   const uint32_t game = Read32(0x8259B190);
   if (*Guest(game + 168) & 0x20) return;
   for (int slot = 0; slot < kReticleSlots; ++slot) {
     const uint32_t r = g_reticles[slot];
-    if (!r) continue;
+    if (!r || reticle_idle::SkipDraw(r)) continue;
     const uint8_t flags = *Guest(r + 264);
     if (!(flags & 0x80) && !(flags & 0x40)) continue;
     CallGame(__imp__sub_82262FA8, ctx, base, Read32(game + 52), 1, 0, 1);

@@ -2279,6 +2279,67 @@ pause again three times = the Tab picture every time; player 2 (controller)
 as the owner = same closing and drop out. 0 errors. Not reached: the pause
 screen without Save.
 
+
+## 57. A mask's reticle shows only while it aims
+
+A player riding as a mask (Aku Aku on a Crash on foot) has an aiming
+reticle on screen all the time in the original, even when they don't aim:
+a large circle in the player's colour, in mid-screen or wherever it was
+left. Now a **plain mask's reticle shows only while its player aims**: it
+locks in (its own animation) the moment it moves (stick, WASD or the mouse) or its player shoots
+(X, Y, a shoulder button or a trigger), and locks out again after
+`reticle_hide_idle_ms` (default 2000 ms) without aiming. A player who has just
+become a mask starts with it hidden. A mask on a host who rides a titan
+keeps the original's reticle (it aims the mutant's abilities there), and
+`reticle_hide_idle_ms = 0` brings back the original everywhere.
+
+* **Moved or not:** the 2D spot is the player's `CReticleController`
+  (s.19, findings/47). The wrapper of its Update (`sub_82255160`,
+  `input/mouse_reticle.cpp`) reads the shown position (`+0x14` x, `+0x28` y)
+  before the game's update and after the mouse has been applied: more than
+  0.25 canvas units = moved. Turning on (`+48` bit `0x80`, off to on) =
+  "not aimed yet".
+* **Which player a drawn reticle belongs to:** the reticle that is drawn is a
+  `CReticleAimingBehaviour` (Update `sub_82161B40`, r4 = the host actor), one
+  per host, not per player. Its ray reads the 2D spot of a player found by
+  controller (`sub_822AD0A0`: `*(*(r4 + 16))` -> `+36` controller object
+  (`sub_8221D478` -> its number) or `+32` a number -> `sub_822661B8`). A
+  wrapper of `sub_822AD0A0`, while a behaviour's Update runs, repeats that
+  lookup and remembers the player per behaviour.
+* **Hiding with the reticle's own animations:** the reticle's switch
+  (`sub_822ACD78`, r3 = behaviour + 28, r4 on, r5 at once) works on the
+  behaviour's flags `+264`: on = bit `0x80` + animation 0 (LOCK IN: the four
+  pieces fly together), off = bit `0x40` "closing" + animation 2 (LOCK OUT:
+  they fly apart and fade), at once = both bits off + animation 4. The
+  animation player is behaviour `+60` (`sub_822AE1F8(it, animation)`),
+  restarted by `sub_822AE910(behaviour + 92)`; the aim update `sub_822AC668`
+  clears `0x40` when the lock out is done (state 3 at `+84`), and the draw
+  shows a reticle while `0x80` or `0x40` is set. The switch also writes the
+  player's 2D reticle's "on" bit; the port does only the behaviour part, so a
+  hidden reticle's spot keeps moving and moving it counts. Idle = lock out;
+  aiming again = lock in (also halfway through a lock out); a fresh mask that
+  never aimed = off at once (no lock in + lock out on becoming a mask).
+* **Keeping the game from undoing it:** the behaviour's Update compares the
+  WANTED state (`+292` bit `0x80`, set by the scripts) with the shown one and
+  calls the switch when they differ. While the port hides a reticle, the
+  wanted bit reads "off" for the Update's call and is put back right after.
+* **The draw** (`sub_82162540`): a fully hidden reticle is out of the draw
+  tables by the game's own rule (neither bit set); for the frames before the
+  first switch (its player not known yet) the draw still skips it: with 1-2
+  players the original draw runs with it taken out of `0x8259AFAC` for the
+  call, with 3-4 players the port's own draw (s.19) skips it. Hidden = its
+  player is a mask (co-op state 1), the host is not any player's titan, and
+  they haven't aimed within the time.
+
+`players/reticle_idle.*`. Checked by the debug console with a fake second
+controller on Wumpa Island (player 2 joins as a mask): no reticle after
+joining; the stick held 1.2 s -> shown 1 s after the release, gone 3 s
+after; player 2's X (a shot) -> shown again; with
+`--reticle_hide_idle_ms=0` the reticle shows in every frame, as in the
+original. Photos 120 ms apart: idle -> the lock out (pieces apart, faded) ->
+gone; the stick again -> the lock in (pieces flying together) -> locked.
+0 errors. Not reached: a mask on a titan, 3-4 masks at once.
+
 ## 58. Taking over from the lost-controller box
 
 **The bug.** Player 1 drops out while player 2 plays on with a controller.

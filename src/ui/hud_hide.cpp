@@ -47,13 +47,16 @@ bool IsHudPage(uint32_t page) {
 }  // namespace
 
 // The HUD size (hud_scale.h): "Join Game" pages = their player's corner, the
-// collectable counter = the top centre, the others (InGame: its per-player
-// texts are scaled one by one; announcements) untouched.
+// collectable counter = the top RIGHT corner (it sits under player 2's
+// corner; toward the top centre it drifted to the middle of the right half),
+// the announcement = the left edge at its height, InGame untouched (its
+// per-player texts are scaled one by one).
 int WhereOfPage(uint32_t page) {
   for (size_t i = 0; i < kPageCount; ++i) {
     if (g_pages[i].load(std::memory_order_relaxed) != page) continue;
     if (i >= 2 && i <= 5) return int(i) - 2;          // InGame_CoOp_Player1-4
-    if (i == 6) return hud_scale::kTopCentre;         // InGame_CollectableCounter
+    if (i == 6) return hud_scale::kTopRight;          // InGame_CollectableCounter
+    if (i == 1) return hud_scale::kAnnouncement;      // InGame_Announcement
     return hud_scale::kNone;
   }
   return hud_scale::kNone;
@@ -140,7 +143,11 @@ extern "C" REX_FUNC(sub_8226E688) {
 extern "C" REX_FUNC(__imp__sub_8226EBF8);
 extern "C" REX_FUNC(sub_8226EBF8) {
   if (cheats::HudHidden()) return;
-  hud_scale::Scope scale(ctx, base, hud_scale::kTopCentre);
+  // The clock sits right under the collectable counter, right-aligned with
+  // it (both as far from the right edge as player 1's portrait is from the
+  // left): the same top-right corner. Toward the top centre (the first
+  // version) it drifted to the middle of the screen at small sizes.
+  hud_scale::Scope scale(ctx, base, hud_scale::kTopRight);
   __imp__sub_8226EBF8(ctx, base);
 }
 extern "C" REX_FUNC(__imp__sub_822685F0);

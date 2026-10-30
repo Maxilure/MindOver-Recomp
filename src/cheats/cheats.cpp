@@ -25,6 +25,7 @@
 #include "../achievements/achievements.h"
 #include "../data/fight_tree.h"
 #include "../players/more_players.h"
+#include "../ui/hud_scale.h"
 #include "cheat_menu.h"
 #include "free_camera.h"
 #include "spawn.h"
@@ -197,6 +198,7 @@ struct Requests {
   float hurt[kPlayers] = {};  // debug FIFO only: damage through the game's own path
   int combo[kPlayers] = {};   // debug FIFO only: hits on the combo meter (findings/26 s.25)
   bool counter[kPlayers] = {};  // debug FIFO only: show the "counter now" prompt (findings/26 s.27)
+  int hud_test = 0;  // debug FIFO only: HUD parts shown on demand (hud_scale::ShowTestParts)
   bool respawn = false;  // debug FIFO only: respawn every player, as a Crash <-> Coco outfit pick does
   bool free_jack[kPlayers] = {};
   bool unlock[size_t(UnlockKind::kCount)] = {};
@@ -618,6 +620,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
     REXLOG_INFO("Cheats: unlocked all {} ({} added, {}/{} now)", list.name, added,
                 UnlockedCount(list), list.count);
   }
+  if (requests.hud_test && in_level) hud_scale::ShowTestParts(ctx, base, requests.hud_test);
   if (requests.respawn && in_level) {
     // The outfit chest's Crash <-> Coco path (players/outfits.cpp): every player rebuilt.
     CallGame(__imp__sub_8227C5A0, ctx, base, Read32(0x8259B190), 0);
@@ -822,6 +825,16 @@ bool DebugCommand(std::string_view command) {
   else if (verb == "counter" && player_ok) {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_requests.counter[player] = true;
+  }
+  else if (verb == "hudtest" && count > 1) {
+    const std::string_view what = words[1];
+    int bits = what == "counter" ? hud_scale::kTestCounter
+             : what == "timer" ? hud_scale::kTestTimer
+             : what == "announce" ? hud_scale::kTestAnnouncement
+             : what == "all" ? hud_scale::kTestCounter | hud_scale::kTestTimer | hud_scale::kTestAnnouncement : 0;
+    if (!bits) return false;
+    std::lock_guard<std::mutex> lock(g_mutex);
+    g_requests.hud_test |= bits;
   }
   else if (verb == "respawn") {
     std::lock_guard<std::mutex> lock(g_mutex);

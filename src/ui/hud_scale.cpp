@@ -15,6 +15,13 @@
 #include <rex/system/xmemory.h>
 
 #include "../players/more_players.h"
+#include "scrooby.h"
+
+// The game's functions the test parts use (ShowTestParts).
+extern "C" REX_FUNC(__imp__sub_8236ACB8);  // name key (r3, 8 bytes) from a C string (r4)
+extern "C" REX_FUNC(__imp__sub_8225C520);  // collectable counter: add one (counter, name, icon, max, flag)
+extern "C" REX_FUNC(__imp__sub_8225C7E8);  // collectable counter: show it (counter, name, r5 1, f1 seconds)
+extern "C" REX_FUNC(__imp__sub_8226EC40);  // timer display: start
 
 REXCVAR_DEFINE_INT32(hud_size, 80, "CrashMoM",
                      "HUD size in percent (30-100; default 80; 100 = the original): every HUD part shrinks toward "
@@ -51,6 +58,14 @@ constexpr float kFourPlayerMaxSize = 0.8f;
 // Working there, not in a part's own units (Scrooby texts draw in canvas /
 // 640 units, the displays in canvas units), one anchor fits every part.
 constexpr float kViewHalfWidth = 0.5f, kViewHalfHeight = 0.28125f;
+// THE ANNOUNCEMENT ("Attack" + its button, a dig spot's prompt; the page
+// InGame_Announcement): its set-up sub_8225B5E8 puts the text 50 canvas units
+// in from the screen's left edge (x = (W - 640) x -0.5 + 50, W = 853 wide)
+// at y 300 (li r5,300 at 0x8225B674), 36 units tall, centred in that box.
+// It shrinks toward the left edge at its own middle (canvas y 318), so it
+// stays at its height and keeps a smaller margin, like the corners.
+constexpr float kAnnouncementCanvasY = 300.0f + 36.0f / 2.0f;
+constexpr float kAnnouncementY = (kAnnouncementCanvasY - 240.0f) * 1.5f / 1280.0f;
 uint32_t g_matrix = 0;  // guest scratch: the matrix we load (64 bytes)
 
 uint32_t Read32(uint8_t* base, uint32_t a) {
@@ -126,6 +141,8 @@ bool Push(PPCContext& ctx, uint8_t* base, int where) {
   float ax, ay;
   if (where == kTopCentre) {
     ax = 0.0f, ay = kViewHalfHeight;
+  } else if (where == kAnnouncement) {
+    ax = -kViewHalfWidth, ay = kAnnouncementY;
   } else {
     ax = (where & 1) ? kViewHalfWidth : -kViewHalfWidth;
     ay = where >= 2 ? -kViewHalfHeight : kViewHalfHeight;
@@ -176,6 +193,48 @@ int WhereOfText(uint32_t text) {
     if (g_texts[i].text == text) return Fresh(g_texts[i], now) ? g_texts[i].where : kNone;
   }
   return kNone;
+}
+
+void ShowTestParts(PPCContext& ctx, uint8_t* base, int what) {
+  const uint32_t uber = Read32(base, 0x8259B190);
+  const uint32_t fe = uber ? Read32(base, uber + 52) : 0;
+  if (!fe) return;
+  if (what & kTestCounter) {
+    // A counter named "porttest", icon frame 7 (HUD_Icon_Prop: the purple
+    // wrench), 0 of 6; shown for 10 s. Adding twice is harmless (the add
+    // looks the name up first).
+    static uint32_t name = 0;
+    if (!name) name = rex::system::kernel_memory()->SystemHeapAlloc(8);
+    if (name) {
+      scrooby::Call(__imp__sub_8236ACB8, ctx, base, name, scrooby::GuestAscii("porttest"));
+      const PPCContext saved = ctx;
+      ctx.r3.u64 = fe + 1628, ctx.r4.u64 = name, ctx.r5.u64 = 7, ctx.r6.u64 = 6, ctx.r7.u64 = 0;
+      __imp__sub_8225C520(ctx, base);
+      ctx = saved;
+      ctx.r3.u64 = fe + 1628, ctx.r4.u64 = name, ctx.r5.u64 = 1, ctx.f1.f64 = 10.0;
+      __imp__sub_8225C7E8(ctx, base);
+      ctx = saved;
+    }
+  }
+  if (what & kTestTimer) {
+    if (const uint32_t timer = Read32(base, fe + 260)) {
+      WriteFloat(timer + 12, 30.0f);  // seconds left
+      uint8_t* p = rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(timer + 16);
+      p[0] = p[1] = p[2] = p[3] = 0xFF;  // last whole second shown: none (-1)
+      scrooby::Call(__imp__sub_8226EC40, ctx, base, timer);
+      // Shown (CFrontendElement slot 5 sub_8225F0F0 = set +4 bit 0x40): the
+      // update slides it in only then; the objectives normally do this.
+      *rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(timer + 4) |= 0x40;
+    }
+  }
+  if (what & kTestAnnouncement) {
+    const uint32_t a = fe + 72;
+    if (const uint32_t text = Read32(base, a + 12)) {
+      scrooby::SetText(ctx, base, text, u"Attack TEST");
+      WriteFloat(a + 16, 8.0f);  // seconds shown
+    }
+  }
+  REXLOG_INFO("HUD: test parts shown ({})", what);
 }
 
 }  // namespace hud_scale

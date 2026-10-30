@@ -17,6 +17,7 @@
 #include "keyboard_mouse.h"
 #include "players.h"
 #include "../players/more_players.h"
+#include "../players/reticle_idle.h"
 #include "../ui/wii_cursor.h"
 
 REXCVAR_DEFINE_INT32(mouse_reticle, 1, "CrashMoM",
@@ -45,6 +46,12 @@ constexpr uint8_t kOn = 0x80;
 uint32_t Read32(const uint8_t* base, uint32_t a) {
   const uint8_t* p = GuestPtr(base, a);
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
+}
+float ReadFloat(const uint8_t* base, uint32_t a) {
+  const uint32_t v = Read32(base, a);
+  float f;
+  std::memcpy(&f, &v, 4);
+  return f;
 }
 void WriteFloat(uint8_t* base, uint32_t a, float f) {
   uint32_t v;
@@ -111,6 +118,15 @@ extern "C" REX_FUNC(sub_82255160) {
   // Once per frame (player 1's reticle always exists and updates): the
   // game's own Wii cursor on / off for crosshair mode (ui/wii_cursor.h).
   if (mouse_reticle::Read32(base, reticle + 44) == 0) wii_cursor::SwitchGameCursors(ctx, base);
+  // Its spot before and after (stick + mouse): moved = its player aims
+  // (players/reticle_idle.h hides a plain mask's reticle while they don't).
+  const float x0 = mouse_reticle::ReadFloat(base, reticle + 0x14);
+  const float y0 = mouse_reticle::ReadFloat(base, reticle + 0x28);
   __imp__sub_82255160(ctx, base);
   mouse_reticle::FollowPointer(ctx, base, reticle);
+  const float dx = mouse_reticle::ReadFloat(base, reticle + 0x14) - x0;
+  const float dy = mouse_reticle::ReadFloat(base, reticle + 0x28) - y0;
+  const bool on = (*GuestPtr(base, reticle + 48) & 0x80) != 0;
+  reticle_idle::NoteReticleUpdate(ctx, base, int32_t(mouse_reticle::Read32(base, reticle + 44)), on,
+                                  dx * dx + dy * dy > 0.25f * 0.25f);
 }
