@@ -108,6 +108,9 @@ std::u16string KeysText(int action);
 // character per key, space between), "" when there are none or no pictures.
 std::u16string KeyPictures(int action);
 std::u16string ActionName(int action);
+// One key's name in the text language ("Enter", "Left Mouse"; letters and
+// F-keys as printed), for messages where no picture is drawn.
+std::u16string KeyLabel(int input);
 
 // What the screen needs from the rest of the port (set by CrashMomApp).
 struct Hooks {

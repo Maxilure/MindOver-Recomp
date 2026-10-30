@@ -33,6 +33,7 @@
 #include "../ui/marquee.h"
 #include "../ui/menu_pictures.h"
 #include "../ui/scrooby.h"
+#include "../language/texts.h"
 
 
 extern "C" REX_FUNC(__imp__sub_8226C5E8);  // the game's message bar: add a message (the game's)
@@ -544,7 +545,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   } else if (id && page_shown) {
     if (id != g_showing_id) {
       g_showing_id = id;
-      std::u16string heading = u"Achievement Unlocked", name;
+      std::u16string heading = tr(u"Achievement Unlocked"), name;
       {
         std::lock_guard lock(g_mutex);
         if (id == kNoticeId) {

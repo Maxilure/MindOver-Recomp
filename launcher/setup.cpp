@@ -1165,6 +1165,10 @@ std::vector<Command> Setup::GameJob() {
       if (!ec) {
         fs::copy(from / "assets", fresh / "assets", fs::copy_options::recursive, ec);
       }
+      // The translations of the port's texts (languages/*.po, src/language/texts.h).
+      if (!ec && fs::is_directory(from / "languages")) {
+        fs::copy(from / "languages", fresh / "languages", fs::copy_options::recursive, ec);
+      }
       if (ec) {
         *message = "Couldn't copy the game: " + ec.message();
         return false;

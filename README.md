@@ -252,7 +252,7 @@ user/                      YOUR files: saves, settings, controls, photos, logs
 
 ## 🤝 Contributing
 
-Contributions of any kind are welcome: code, reverse engineering, testing, bug reports, corrections. Every human contribution is credited by name in [CREDITS.md](CREDITS.md). Reviews from people who know Xbox 360 internals, Radical's engine, ReXGlue / Xenia or Vulkan are especially valuable.
+Contributions of any kind are welcome: code, reverse engineering, testing, bug reports, corrections. **Speak another language?** The port's own menus are machine-translated into 11 languages and need people to check them: see [languages/](languages/README.md), no programming needed. Every human contribution is credited by name in [CREDITS.md](CREDITS.md). Reviews from people who know Xbox 360 internals, Radical's engine, ReXGlue / Xenia or Vulkan are especially valuable.
 
 > [!NOTE]
 > **Developed with extensive AI assistance** (Claude, via Claude Code). The code, the reverse-engineering notes and the documentation were largely written by the AI. The maintainer sets direction, tests every change on the real game and reviews the results, but isn't a specialist in recompilation or reverse engineering. Findings are checked against the running game, not reviewed by experts: treat them as working notes, and please report errors.

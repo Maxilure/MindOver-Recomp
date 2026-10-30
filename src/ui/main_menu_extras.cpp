@@ -16,6 +16,7 @@
 #include "../guest_memory.h"
 #include "../options/options_page.h"
 #include "scrooby.h"
+#include "../language/texts.h"
 
 namespace main_menu_extras {
 namespace {
@@ -41,7 +42,7 @@ constexpr uint32_t kBackSoundReturn = 0x820CEED8;
 
 constexpr std::string_view kMainMenuPage = "GameStart_Start_Xenon";
 constexpr std::string_view kMainMenuMenu = "StartMenu";
-constexpr std::u16string_view kExtrasWords = u"Extras";
+constexpr std::u16string_view kExtrasWords = trn(u"Extras");  // shown as tr()
 
 // THE SWAP'S TRANSITION (2026-10-30: the new set just popped in): the set
 // coming in slides kSlideUnits in from the side (the right going into Extras,
@@ -171,7 +172,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     if (!g_home_x.empty()) g_home_x.clear();  // (the page is gone: its elements too)
     return;
   }
-  Word(ctx, base, menu, options_page::kMainMenuExtrasItem, kExtrasWords);
+  Word(ctx, base, menu, options_page::kMainMenuExtrasItem, tr(kExtrasWords));
   ShowSet(ctx, base, menu);
 }
 

@@ -32,6 +32,7 @@
 #include "../ui/scrooby.h"
 #include "../ui/window_mode.h"
 #include "../language/language.h"
+#include "../language/texts.h"
 #include "global_options.h"
 #include "options_menu.h"
 
@@ -145,10 +146,11 @@ std::u16string Utf16(const std::string& s) { return std::u16string(s.begin(), s.
 //   KeyOf(input): one given key (F9, Esc...);
 //   Pad(name):   a controller button / stick by its 360 name ("LB", "X",
 //                "Left stick"), in the Controller Icons style.
+std::u16string KeyName(kbm::Input key);  // below, with the key names
 std::u16string KeyOf(kbm::Input key) {
   if (key == kbm::kNoInput) return u"";
   if (const char16_t g = prompt_icons::KeyGlyph(key, prompt_icons::SlotSize::kCard)) return std::u16string(1, g);
-  return Utf16(kbm::InputLabel(key));
+  return KeyName(key);
 }
 std::u16string Key(kbm::Action action) {
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
@@ -167,16 +169,17 @@ std::u16string Pad(std::string_view name) {
 // "[pad] or [key]" for a move both have; the pad alone without a key.
 std::u16string PadOrKey(std::string_view pad, kbm::Action action) {
   const std::u16string key = Key(action);
-  return key.empty() ? Pad(pad) : Pad(pad) + u" or " + key;
+  // TR: {0} = a controller button's picture, {1} = a key's picture ("[LB] or [Q]").
+  return key.empty() ? Pad(pad) : trf(tr(u"{0} or {1}"), {Pad(pad), key});
 }
 
 Row FrameRateRow() {
   Row r;
-  r.label = u"Frame-rate Cap";
+  r.label = tr(u"Frame-rate Cap");
   r.values = [](Env&) {
     std::vector<std::u16string> out;
     for (int c : CapList()) {
-      out.push_back(c == 30 ? u"30 (original)" : c == 0 ? u"Unlimited" : Utf16(std::to_string(c)));
+      out.push_back(c == 30 ? tr(u"30 (original)") : c == 0 ? tr(u"Unlimited") : Utf16(std::to_string(c)));
     }
     return out;
   };
@@ -189,12 +192,12 @@ Row FrameRateRow() {
     if (i >= 0 && i < int(caps.size())) SetFlag("fps_cap", std::to_string(caps[size_t(i)]));
   };
   r.describe = [](Env&, int) {
-    return std::u16string(u"The most frames a second the game draws. The original runs at 30.");
+    return std::u16string(tr(u"The most frames a second the game draws. The original runs at 30."));
   };
   r.warn = [](Env&, int i) {
     const auto caps = CapList();
     const int c = i >= 0 && i < int(caps.size()) ? caps[size_t(i)] : 30;
-    return c == 0 || c > 60 ? std::u16string(u"Above 60, jumps and timings may feel different.")
+    return c == 0 || c > 60 ? std::u16string(tr(u"Above 60, jumps and timings may feel different."))
                             : std::u16string();
   };
   return r;
@@ -207,12 +210,12 @@ enum Renderer { kEmulatedOnly, kEmulated, kNative, kNativeOnly };
 
 Row RendererRow() {
   Row r;
-  r.label = u"Renderer";
+  r.label = tr(u"Renderer");
   // Without a native renderer (not Vulkan) there is one value.
   auto none = [] { return !g_hooks.native_shown; };
   r.values = [none](Env&) {
-    if (none()) return std::vector<std::u16string>{u"Emulated"};
-    return std::vector<std::u16string>{u"Emulated Only", u"Emulated", u"Native", u"Native Only"};
+    if (none()) return std::vector<std::u16string>{tr(u"Emulated")};
+    return std::vector<std::u16string>{tr(u"Emulated Only"), tr(u"Emulated"), tr(u"Native"), tr(u"Native Only")};
   };
   r.get = [none](Env&) {
     if (none()) return 0;
@@ -234,23 +237,26 @@ Row RendererRow() {
     // two renderers (not with Emulated Only: the port's renderer is off then).
     // Was F9 until 2026-10-29 (ui/tools_menu.h).
     const std::u16string tools = KeyOf(kbm::ParseInput("F1"));
-    if (none()) return u"The Xbox 360's graphics chip, imitated step by step: looks like the original.";
+    if (none()) return tr(u"The Xbox 360's graphics chip, imitated step by step: looks like the original.");
     switch (i) {
+      // TR: {0} = the picture of the key that opens the Tools menu (F1).
       case kEmulatedOnly:
-        return u"Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the " + tools +
-               u" Tools menu doesn't switch.";
+        return trf(tr(u"Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the {0} "
+                      u"Tools menu doesn't switch."), {tools});
+      // TR: {0} = the picture of the key that opens the Tools menu (F1).
       case kEmulated:
-        return u"The Xbox 360's graphics chip, imitated step by step: looks like the original. The " + tools +
-               u" Tools menu switches to the port's renderer.";
+        return trf(tr(u"The Xbox 360's graphics chip, imitated step by step: looks like the original. The {0} "
+                      u"Tools menu switches to the port's renderer."), {tools});
+      // TR: {0} = the picture of the key that opens the Tools menu (F1).
       case kNative:
-        return u"The port's own renderer, made for PC. The imitation keeps drawing behind it: the " + tools +
-               u" Tools menu switches back at once.";
-      default: return u"The port's own renderer alone: the lightest on your PC.";
+        return trf(tr(u"The port's own renderer, made for PC. The imitation keeps drawing behind it: the {0} "
+                      u"Tools menu switches back at once."), {tools});
+      default: return tr(u"The port's own renderer alone: the lightest on your PC.");
     }
   };
   r.warn = [none](Env&, int i) {
     return !none() && (i == kNative || i == kNativeOnly)
-               ? std::u16string(u"Still being finished: an effect may look wrong.")
+               ? std::u16string(tr(u"Still being finished: an effect may look wrong."))
                : std::u16string();
   };
   return r;
@@ -261,7 +267,7 @@ Row RendererRow() {
 // Native (both renderers draw there; Native Only turns the emulated one off,
 // Emulated Only the native one).
 void AddDualMode(Row& r) {
-  r.x_label = u"Dual Mode";
+  r.x_label = tr(u"Dual Mode");
   r.x_shown = [](Env&, int i) {
     return g_hooks.toggle_dual && g_hooks.native_shown && (i == kEmulated || i == kNative);
   };
@@ -283,12 +289,12 @@ int BrightnessStep() {
 
 Row BrightnessRow() {
   Row r;
-  r.label = u"Brightness";
+  r.label = tr(u"Brightness");
   r.guide = true;
   r.values = [](Env&) {
     std::vector<std::u16string> out;
     for (int step = -kBrightnessSteps; step <= kBrightnessSteps; ++step) {
-      out.push_back(step == 0   ? std::u16string(u"0 (original)")
+      out.push_back(step == 0   ? std::u16string(tr(u"0 (original)"))
                     : step > 0  ? u"+" + Utf16(std::to_string(step))
                                 : Utf16(std::to_string(step)));
     }
@@ -300,7 +306,7 @@ Row BrightnessRow() {
     SetFlag("gamma_ramp_power", step == 0 ? "1.0" : fmt::format("{:.4f}", std::exp2(-step / 10.0)));
   };
   r.describe = [](Env&, int) {
-    return std::u16string(u"Raise it until the darkest squares above can just be told apart.");
+    return std::u16string(tr(u"Raise it until the darkest squares above can just be told apart."));
   };
   return r;
 }
@@ -309,11 +315,11 @@ Row BrightnessRow() {
 // mode FIFO) and the game runs at most at its refresh rate. The swapchain
 // picks its mode when it's made: made again right away (Hooks::refresh_present).
 Row VsyncRow() {
-  Row r = OnOffRow(u"V-sync", "present_vsync", u"On", u"Off",
-                   u"Matches your monitor: whole pictures only, no tearing, and the game runs at "
-                   u"most at its refresh rate.",
-                   u"Pictures show the moment they're ready: the least delay, but the picture can "
-                   u"tear.",
+  Row r = OnOffRow(tr(u"V-sync"), "present_vsync", tr(u"On"), tr(u"Off"),
+                   tr(u"Matches your monitor: whole pictures only, no tearing, and the game runs at "
+                   u"most at its refresh rate."),
+                   tr(u"Pictures show the moment they're ready: the least delay, but the picture can "
+                   u"tear."),
                    /*off_first=*/true);
   const auto set = r.set;
   r.set = [set](Env& e, int i) {
@@ -327,18 +333,18 @@ Row VsyncRow() {
 // FPS COUNTER (fps_overlay.h): the port's own, in three styles.
 Row FpsCounterRow() {
   Row r;
-  r.label = u"FPS Counter";
+  r.label = tr(u"FPS Counter");
   r.values = [](Env&) {
-    return std::vector<std::u16string>{u"Off", u"Simple", u"Average", u"Detailed"};
+    return std::vector<std::u16string>{tr(u"Off"), tr(u"Simple"), tr(u"Average"), tr(u"Detailed")};
   };
   r.get = [](Env&) { return std::clamp(int(rex::cvar::Query<int32_t>("fps_overlay")), 0, 3); };
   r.set = [](Env&, int i) { SetFlag("fps_overlay", std::to_string(i)); };
   r.describe = [](Env&, int i) -> std::u16string {
     switch (i) {
-      case 0: return u"No frame-rate counter.";
-      case 1: return u"The frame rate, in a corner of the screen (FPS Position).";
-      case 2: return u"The frame rate, its average and its slowest 1 % (the 1% low).";
-      default: return u"Also how long a frame takes, and how much of it the game works or waits.";
+      case 0: return tr(u"No frame-rate counter.");
+      case 1: return tr(u"The frame rate, in a corner of the screen (FPS Position).");
+      case 2: return tr(u"The frame rate, its average and its slowest 1 % (the 1% low).");
+      default: return tr(u"Also how long a frame takes, and how much of it the game works or waits.");
     }
   };
   return r;
@@ -346,17 +352,17 @@ Row FpsCounterRow() {
 
 Row FpsPositionRow() {
   Row r;
-  r.label = u"FPS Position";
+  r.label = tr(u"FPS Position");
   r.values = [](Env&) {
-    return std::vector<std::u16string>{u"Top Left", u"Top Centre", u"Top Right", u"Bottom Left",
-                                       u"Bottom Right"};
+    return std::vector<std::u16string>{tr(u"Top Left"), tr(u"Top Centre"), tr(u"Top Right"), tr(u"Bottom Left"),
+                                       tr(u"Bottom Right")};
   };
   r.get = [](Env&) {
     return std::clamp(int(rex::cvar::Query<int32_t>("fps_overlay_position")), 0, 4);
   };
   r.set = [](Env&, int i) { SetFlag("fps_overlay_position", std::to_string(i)); };
   r.describe = [](Env&, int) {
-    return std::u16string(u"Where the frame-rate counter sits on the screen.");
+    return std::u16string(tr(u"Where the frame-rate counter sits on the screen."));
   };
   return r;
 }
@@ -367,7 +373,7 @@ constexpr int kHudSizes[] = {30, 40, 50, 60, 70, 80, 90, 100};
 
 Row HudSizeRow() {
   Row r;
-  r.label = u"HUD Size";
+  r.label = tr(u"HUD Size");
   r.values = [](Env&) {
     std::vector<std::u16string> v;
     for (int size : kHudSizes) {
@@ -387,16 +393,16 @@ Row HudSizeRow() {
   r.set = [](Env&, int i) { SetFlag("hud_size", std::to_string(kHudSizes[i])); };
   r.describe = [](Env&, int i) -> std::u16string {
     return i == int(std::size(kHudSizes)) - 1
-               ? u"The original size."
-               : u"The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen.";
+               ? tr(u"The original size.")
+               : tr(u"The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen.");
   };
   return r;
 }
 
 Row HudFourPlayersRow() {
-  return OnOffRow(u"Smaller for 3-4 Players", "hud_smaller_four_players", u"On", u"Off",
-                  u"With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is.",
-                  u"The HUD keeps the HUD Size above with any number of players.");
+  return OnOffRow(tr(u"Smaller for 3-4 Players"), "hud_smaller_four_players", tr(u"On"), tr(u"Off"),
+                  tr(u"With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is."),
+                  tr(u"The HUD keeps the HUD Size above with any number of players."));
 }
 
 // WINDOW MODE (ui/window_mode.h, findings/50): Windowed or Fullscreen; the
@@ -404,16 +410,16 @@ Row HudFourPlayersRow() {
 // its own mode: quick to switch away, behaves the same on every system).
 Row WindowModeRow() {
   Row r;
-  r.label = u"Window Mode";
-  r.values = [](Env&) { return std::vector<std::u16string>{u"Windowed", u"Fullscreen"}; };
+  r.label = tr(u"Window Mode");
+  r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Windowed"), tr(u"Fullscreen")}; };
   r.get = [](Env&) { return window_mode::Current() == window_mode::Mode::kWindowed ? 0 : 1; };
   r.set = [](Env&, int i) {
     window_mode::Set(i == 0 ? window_mode::Mode::kWindowed : window_mode::Mode::kFullscreen,
                      [](const char* name, const std::string& value) { SetFlag(name, value); });
   };
   r.describe = [](Env&, int i) -> std::u16string {
-    return i == 0 ? u"Plays in a window you can move and resize."
-                  : u"Fills the whole monitor (the one picked under Monitor).";
+    return i == 0 ? tr(u"Plays in a window you can move and resize.")
+                  : tr(u"Fills the whole monitor (the one picked under Monitor).");
   };
   return r;
 }
@@ -427,25 +433,26 @@ std::u16string MonitorName(const std::string& name) {
   }
   while (!out.empty() && out.back() == u' ') out.pop_back();
   if (out.size() > 16) out = out.substr(0, 15) + u".";
-  return out.empty() ? std::u16string(u"Monitor") : out;
+  return out.empty() ? std::u16string(tr(u"Monitor")) : out;
 }
 
 // MONITOR (ui/window_mode.h): the SDK's monitor flag, 0 = Automatic, 1..N =
 // the connected monitors (SDL's order), read again each time it's shown.
 Row MonitorRow() {
   Row r;
-  r.label = u"Monitor";
+  r.label = tr(u"Monitor");
   r.values = [](Env&) {
     window_mode::RefreshDisplays();  // monitors plugged in since: next time
     const auto displays = window_mode::Displays();
-    std::vector<std::u16string> values{u"Automatic"};
+    std::vector<std::u16string> values{tr(u"Automatic")};
     for (size_t i = 0; i < displays.size(); ++i) {
       values.push_back(Utf16(std::to_string(i + 1)) + u": " + MonitorName(displays[i].short_name));
     }
     // A monitor picked earlier that isn't connected now keeps its place.
     const int now = int(rex::cvar::Query<int32_t>("monitor"));
     while (now >= int(values.size())) {
-      values.push_back(Utf16(std::to_string(values.size())) + u": Not Connected");
+      // TR: {0} = the monitor's number.
+      values.push_back(trf(tr(u"{0}: Not Connected"), {Utf16(std::to_string(values.size()))}));
     }
     return values;
   };
@@ -455,11 +462,11 @@ Row MonitorRow() {
     window_mode::AfterChange();
   };
   r.describe = [](Env&, int i) -> std::u16string {
-    if (i == 0) return u"Fullscreen fills the monitor the game is on.";
+    if (i == 0) return tr(u"Fullscreen fills the monitor the game is on.");
     if (i > int(window_mode::Displays().size())) {
-      return u"This monitor isn't connected: fullscreen fills the one the game is on.";
+      return tr(u"This monitor isn't connected: fullscreen fills the one the game is on.");
     }
-    return u"Fullscreen fills this monitor.";
+    return tr(u"Fullscreen fills this monitor.");
   };
   return r;
 }
@@ -489,17 +496,17 @@ void NeedsNative(Row& r) {
   r.unavailable = [](Env&) {
     const bool native = g_hooks.native_shown && g_hooks.native_shown();
     return native ? std::u16string()
-                  : std::u16string(u"Needs the port's renderer: set Renderer to Native on the Graphics tab.");
+                  : std::u16string(tr(u"Needs the port's renderer: set Renderer to Native on the Graphics tab."));
   };
 }
 
 // MOTION BLUR (findings/34): ours (the 360 game has none), native only.
 Row MotionBlurRow() {
-  Row r = LevelRow(u"Motion Blur", "motion_blur", {u"Off (original)", u"Low", u"Medium", u"High"},
-                   {u"No motion blur, like the original game.",
-                    u"A light smear of the scenery when the camera moves. The players stay sharp.",
-                    u"The scenery smears more when the camera moves. The players stay sharp.",
-                    u"A strong smear, as long as one frame of the original game's movement."});
+  Row r = LevelRow(tr(u"Motion Blur"), "motion_blur", {tr(u"Off (original)"), tr(u"Low"), tr(u"Medium"), tr(u"High")},
+                   {tr(u"No motion blur, like the original game."),
+                    tr(u"A light smear of the scenery when the camera moves. The players stay sharp."),
+                    tr(u"The scenery smears more when the camera moves. The players stay sharp."),
+                    tr(u"A strong smear, as long as one frame of the original game's movement.")});
   NeedsNative(r);
   return r;
 }
@@ -507,12 +514,12 @@ Row MotionBlurRow() {
 // RENDER RESOLUTION (findings/45): how many pixels the native renderer draws
 // the game with (its surfaces x 1 / 1.5 / 2 / 3), native only.
 Row RenderResolutionRow() {
-  Row r = LevelRow(u"Resolution", "render_resolution",
-                   {u"720p (original)", u"1080p", u"1440p", u"4K"},
-                   {u"Drawn at 1280 x 720, like the Xbox 360.",
-                    u"Drawn at 1920 x 1080: sharper on a Full HD screen.",
-                    u"Drawn at 2560 x 1440: sharper still, heavier on your graphics card.",
-                    u"Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."});
+  Row r = LevelRow(tr(u"Resolution"), "render_resolution",
+                   {tr(u"720p (original)"), tr(u"1080p"), tr(u"1440p"), tr(u"4K")},
+                   {tr(u"Drawn at 1280 x 720, like the Xbox 360."),
+                    tr(u"Drawn at 1920 x 1080: sharper on a Full HD screen."),
+                    tr(u"Drawn at 2560 x 1440: sharper still, heavier on your graphics card."),
+                    tr(u"Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card.")});
   NeedsNative(r);
   return r;
 }
@@ -521,11 +528,11 @@ Row RenderResolutionRow() {
 // multisampled 3D surfaces, native only. Values up to what this GPU can do
 // (they're in order, so the list is just cut).
 Row AntiAliasingRow() {
-  Row r = LevelRow(u"Anti-aliasing", "anti_aliasing", {u"Off", u"2x (original)", u"4x", u"8x"},
-                   {u"No smoothing: jagged, shimmering edges, the lightest on your graphics card.",
-                    u"Edges smoothed with 2 samples per pixel, like the Xbox 360.",
-                    u"Smoother edges, 4 samples per pixel.",
-                    u"The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."});
+  Row r = LevelRow(tr(u"Anti-aliasing"), "anti_aliasing", {tr(u"Off"), tr(u"2x (original)"), tr(u"4x"), tr(u"8x")},
+                   {tr(u"No smoothing: jagged, shimmering edges, the lightest on your graphics card."),
+                    tr(u"Edges smoothed with 2 samples per pixel, like the Xbox 360."),
+                    tr(u"Smoother edges, 4 samples per pixel."),
+                    tr(u"The smoothest edges, 8 samples per pixel: the heaviest on your graphics card.")});
   const auto all = r.values;
   r.values = [all](Env& e) {
     auto values = all(e);
@@ -542,11 +549,11 @@ Row AntiAliasingRow() {
 // tested, so the multisampling can't smooth them) get coverage from their
 // alpha, native only; needs anti-aliasing on.
 Row SmoothCutoutsRow() {
-  Row r = LevelRow(u"Smooth Leaves", "smooth_cutouts", {u"Off (original)", u"On"},
-                   {u"Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the "
-                    u"original game.",
-                    u"Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing "
-                    u"on."});
+  Row r = LevelRow(tr(u"Smooth Leaves"), "smooth_cutouts", {tr(u"Off (original)"), tr(u"On")},
+                   {tr(u"Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the "
+                    u"original game."),
+                    tr(u"Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing "
+                    u"on.")});
   NeedsNative(r);
   return r;
 }
@@ -554,10 +561,10 @@ Row SmoothCutoutsRow() {
 // TEXTURE SHARPNESS (findings/36): a more detailed mip level for the
 // mipmapped textures (the native renderer's samplers), native only.
 Row TextureSharpnessRow() {
-  Row r = LevelRow(u"Texture Sharpness", "texture_sharpness", {u"Original", u"Sharper", u"Sharpest"},
-                   {u"Textures soften in the distance like the Xbox 360's.",
-                    u"Textures stay crisper in the distance and on slanted ground.",
-                    u"The crispest distance, with a little more shimmer when moving."});
+  Row r = LevelRow(tr(u"Texture Sharpness"), "texture_sharpness", {tr(u"Original"), tr(u"Sharper"), tr(u"Sharpest")},
+                   {tr(u"Textures soften in the distance like the Xbox 360's."),
+                    tr(u"Textures stay crisper in the distance and on slanted ground."),
+                    tr(u"The crispest distance, with a little more shimmer when moving.")});
   NeedsNative(r);
   return r;
 }
@@ -565,11 +572,11 @@ Row TextureSharpnessRow() {
 // SHADOW SOFTNESS (findings/41): how wide the characters' soft shadows fade
 // at their edge (the shadow material's blur), native only.
 Row ShadowSoftnessRow() {
-  Row r = LevelRow(u"Shadow Softness", "shadow_softness", {u"Sharper", u"Original", u"Softer", u"Softest"},
-                   {u"Shadows under the characters get a crisper edge.",
-                    u"Shadows fade at their edge like the Xbox 360's.",
-                    u"Shadows fade over a wider edge.",
-                    u"The softest shadows, fading the widest."});
+  Row r = LevelRow(tr(u"Shadow Softness"), "shadow_softness", {tr(u"Sharper"), tr(u"Original"), tr(u"Softer"), tr(u"Softest")},
+                   {tr(u"Shadows under the characters get a crisper edge."),
+                    tr(u"Shadows fade at their edge like the Xbox 360's."),
+                    tr(u"Shadows fade over a wider edge."),
+                    tr(u"The softest shadows, fading the widest.")});
   NeedsNative(r);
   return r;
 }
@@ -577,11 +584,11 @@ Row ShadowSoftnessRow() {
 // SHARPENING (findings/41): a contrast-adaptive sharpening filter over the
 // whole finished picture (our present pass), native only.
 Row SharpeningRow() {
-  Row r = LevelRow(u"Sharpening", "sharpening", {u"Off (original)", u"Low", u"Medium", u"High"},
-                   {u"No sharpening, like the original game.",
-                    u"Fine detail a little crisper. Hard edges stay clean.",
-                    u"Crisper detail across the picture.",
-                    u"The crispest picture: may look grainy in places."});
+  Row r = LevelRow(tr(u"Sharpening"), "sharpening", {tr(u"Off (original)"), tr(u"Low"), tr(u"Medium"), tr(u"High")},
+                   {tr(u"No sharpening, like the original game."),
+                    tr(u"Fine detail a little crisper. Hard edges stay clean."),
+                    tr(u"Crisper detail across the picture."),
+                    tr(u"The crispest picture: may look grainy in places.")});
   NeedsNative(r);
   return r;
 }
@@ -589,10 +596,10 @@ Row SharpeningRow() {
 // DEPTH OF FIELD (findings/15): the game's own gentle blur of the distance,
 // scaled on the way into its renderer, so both pictures follow.
 Row DepthOfFieldRow() {
-  return LevelRow(u"Depth of Field", "depth_of_field", {u"Off", u"Original", u"Strong"},
-                  {u"The distance stays sharp.",
-                   u"The distance is gently blurred, like the original game.",
-                   u"The distance is blurred twice as much."});
+  return LevelRow(tr(u"Depth of Field"), "depth_of_field", {tr(u"Off"), tr(u"Original"), tr(u"Strong")},
+                  {tr(u"The distance stays sharp."),
+                   tr(u"The distance is gently blurred, like the original game."),
+                   tr(u"The distance is blurred twice as much.")});
 }
 
 // ---------------------------------------------------------------------------
@@ -654,8 +661,8 @@ int InvertAxisSlot(Env& e) {
 
 Row InvertAxisRow() {
   Row r;
-  r.label = u"Invert Axis";
-  r.values = [](Env&) { return std::vector<std::u16string>{u"Off", u"On"}; };
+  r.label = tr(u"Invert Axis");
+  r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Off"), tr(u"On")}; };
   r.get = [](Env& e) {
     const int slot = InvertAxisSlot(e);
     return slot >= 0 && global_options::InvertAxis(slot) ? 1 : 0;
@@ -667,8 +674,8 @@ Row InvertAxisRow() {
     global_options::ApplyInvertAxis(e.base, FrontEnd(e.base));
   };
   r.describe = [](Env&, int i) {
-    return i == 1 ? std::u16string(u"Up and down are flipped when you aim the reticle.")
-                  : std::u16string(u"Aiming the reticle: up is up.");
+    return i == 1 ? std::u16string(tr(u"Up and down are flipped when you aim the reticle."))
+                  : std::u16string(tr(u"Aiming the reticle: up is up."));
   };
   return r;
 }
@@ -689,28 +696,28 @@ Row InvertAxisRow() {
 struct KeyRowInfo {
   kbm::Action action;
   const char16_t* text;
-  // The controller's way, around its picture: "[stick] up" (the four moves),
-  // "lean [stick] part of the way" (Walk). Null = the picture alone.
-  const char16_t* before = nullptr;
-  const char16_t* after = nullptr;
+  // The controller's way, a sentence around its picture {0}: "{0} up." (the
+  // four moves), "lean {0} part of the way." (Walk). Null = the picture alone
+  // (no full stop after a picture: it stood apart, playtest photo).
+  const char16_t* way = nullptr;
 };
 constexpr KeyRowInfo kKeyRows[] = {
-    {kbm::kMoveUp, u"Move up.", nullptr, u"up"},
-    {kbm::kMoveDown, u"Move down.", nullptr, u"down"},
-    {kbm::kMoveLeft, u"Move left.", nullptr, u"left"},
-    {kbm::kMoveRight, u"Move right.", nullptr, u"right"},
-    {kbm::kWalk, u"Hold while moving to walk instead of run.", u"lean", u"part of the way"},
-    {kbm::kSpin, u"The spin attack."},  // its controller line: SpinCard below
-    {kbm::kJump, u"Jump. Press again in the air to double jump."},
+    {kbm::kMoveUp, trn(u"Move up."), trn(u"{0} up.")},
+    {kbm::kMoveDown, trn(u"Move down."), trn(u"{0} down.")},
+    {kbm::kMoveLeft, trn(u"Move left."), trn(u"{0} left.")},
+    {kbm::kMoveRight, trn(u"Move right."), trn(u"{0} right.")},
+    {kbm::kWalk, trn(u"Hold while moving to walk instead of run."), trn(u"lean {0} part of the way.")},
+    {kbm::kSpin, trn(u"The spin attack.")},  // its controller line: SpinCard below
+    {kbm::kJump, trn(u"Jump. Press again in the air to double jump.")},
     // Right after Jump: the key players need most after moving and jumping, and
     // the one the floating B over save totems and stunned titans shows.
-    {kbm::kJack, u"Use a save totem, or jump on a stunned titan. Again to get off."},
-    {kbm::kLightAttack, u"A quick attack."},
-    {kbm::kHeavyAttack, u"A strong attack."},
-    {kbm::kBlock, u"Hold to block attacks."},
-    {kbm::kTitanSpecial, u"Your titan's special attack."},
-    {kbm::kPocket, u"Store your titan, and bring it back later."},
-    {kbm::kMap, u"Open the map. In the pause menu: drop out (someone else stays in)."},
+    {kbm::kJack, trn(u"Use a save totem, or jump on a stunned titan. Again to get off.")},
+    {kbm::kLightAttack, trn(u"A quick attack.")},
+    {kbm::kHeavyAttack, trn(u"A strong attack.")},
+    {kbm::kBlock, trn(u"Hold to block attacks.")},
+    {kbm::kTitanSpecial, trn(u"Your titan's special attack.")},
+    {kbm::kPocket, trn(u"Store your titan, and bring it back later.")},
+    {kbm::kMap, trn(u"Open the map. In the pause menu: drop out (someone else stays in).")},
 };
 
 // "Light attack" -> "Light Attack", "Walk (hold)" -> "Walk (Hold)": the
@@ -725,9 +732,40 @@ std::u16string TitleCase(std::string_view s) {
   return out;
 }
 
+// A key's name in words, for where its picture can't be drawn (the font
+// patch missing). Keys with WORDS on them are translated; letters, digits,
+// F-keys and symbols stay as the keyboard prints them.
+struct KeyWord {
+  const char* label;          // kbm::InputLabel's English
+  const char16_t* name;       // as the Options rows write it
+};
+constexpr KeyWord kKeyWords[] = {
+    {"Left mouse", trcn("key name", u"Left Mouse")},     {"Right mouse", trcn("key name", u"Right Mouse")},
+    {"Middle mouse", trcn("key name", u"Middle Mouse")}, {"Mouse 4 (back)", trcn("key name", u"Mouse 4 (Back)")},
+    {"Mouse 5 (forward)", trcn("key name", u"Mouse 5 (Forward)")}, {"Wheel up", trcn("key name", u"Wheel Up")},
+    {"Wheel down", trcn("key name", u"Wheel Down")},     {"Space", trcn("key name", u"Space")},
+    {"Enter", trcn("key name", u"Enter")},               {"Backspace", trcn("key name", u"Backspace")},
+    {"Caps Lock", trcn("key name", u"Caps Lock")},       {"Up arrow", trcn("key name", u"Up Arrow")},
+    {"Down arrow", trcn("key name", u"Down Arrow")},     {"Left arrow", trcn("key name", u"Left Arrow")},
+    {"Right arrow", trcn("key name", u"Right Arrow")},   {"Insert", trcn("key name", u"Insert")},
+    {"Delete", trcn("key name", u"Delete")},             {"Home", trcn("key name", u"Home")},
+    {"End", trcn("key name", u"End")},                   {"Page Up", trcn("key name", u"Page Up")},
+    {"Page Down", trcn("key name", u"Page Down")},       {"Pause", trcn("key name", u"Pause")},
+    {"Scroll Lock", trcn("key name", u"Scroll Lock")},   {"Num Lock", trcn("key name", u"Num Lock")},
+    {"Print Screen", trcn("key name", u"Print Screen")}, {"Menu key", trcn("key name", u"Menu Key")},
+};
+
+std::u16string KeyName(kbm::Input key) {
+  const std::string label = kbm::InputLabel(key);
+  for (const KeyWord& w : kKeyWords) {
+    if (label == w.label) return trc("key name", w.name);
+  }
+  return TitleCase(label);  // "Numpad 4", "F1", "Q": no words to translate
+}
+
 std::u16string NoKeyboard(Env&) {
   return kbm::KeyboardMouseDriver::Get() ? std::u16string()
-                                         : std::u16string(u"The keyboard and mouse are turned off.");
+                                         : std::u16string(tr(u"The keyboard and mouse are turned off."));
 }
 
 // The pictures in the game's button prompts (input/prompt_icons.h): one
@@ -735,50 +773,57 @@ std::u16string NoKeyboard(Env&) {
 // device used last (keys after a key press, buttons after a controller's).
 Row KeyboardIconsRow() {
   Row r;
-  r.label = u"Keyboard Icons";
-  r.values = [](Env&) { return std::vector<std::u16string>{u"Light", u"Dark"}; };
+  r.label = tr(u"Keyboard Icons");
+  r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Light"), tr(u"Dark")}; };
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(keyboard_icons)), 0, 1); };
   r.set = [](Env&, int i) { SetFlag("keyboard_icons", std::to_string(i)); };
   r.describe = [](Env&, int i) {
     // An example in the style now on (the slots follow it): Jump's key.
     const std::u16string example = Key(kbm::kJump);
-    return std::u16string(i == 1 ? u"Dark keys in the button prompts" : u"Light keys in the button prompts") +
-           (example.empty() ? u"." : u", like " + example);  // (no "." after a picture: it stood apart)
+    if (example.empty()) {
+      return std::u16string(i == 1 ? tr(u"Dark keys in the button prompts.") : tr(u"Light keys in the button prompts."));
+    }
+    // (no "." after a picture: it stood apart)
+    // TR: {0} = a key's picture (Jump's key), drawn in this style.
+    return trf(i == 1 ? tr(u"Dark keys in the button prompts, like {0}") : tr(u"Light keys in the button prompts, like {0}"),
+               {example});
   };
   return r;
 }
 
 Row ControllerIconsRow() {
   Row r;
-  r.label = u"Controller Icons";
+  r.label = tr(u"Controller Icons");
   r.values = [](Env&) {
-    return std::vector<std::u16string>{u"Automatic", u"Xbox 360", u"Xbox Series", u"PlayStation 5",
+    // The consoles' own names stay as they are in every language.
+    return std::vector<std::u16string>{tr(u"Automatic"), u"Xbox 360", u"Xbox Series", u"PlayStation 5",
                                        u"PlayStation 4", u"Switch"};
   };
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(controller_icons)), 0, 5); };
   r.set = [](Env&, int i) { SetFlag("controller_icons", std::to_string(i)); };
   r.describe = [](Env&, int i) {
     // An example in the style now on: the A button (the bottom one).
-    const std::u16string example = u" Now: " + Pad("A") + u" " + Pad("B") + u" " + Pad("X") + u" " + Pad("Y");
+    // TR: {0}-{3} = the A, B, X and Y buttons' pictures in this style.
+    const std::u16string example = u" " + trf(tr(u"Now: {0} {1} {2} {3}"), {Pad("A"), Pad("B"), Pad("X"), Pad("Y")});
     if (i == 0) {
-      return u"The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other "
-             u"controller: the game's own Xbox 360 buttons." + example;
+      return tr(u"The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other "
+             u"controller: the game's own Xbox 360 buttons.") + example;
     }
-    return std::u16string(i == 1 ? u"The game's own Xbox 360 buttons, whatever controller you use."
-                                 : u"These buttons in the prompts, whatever controller you use.") + example;
+    return std::u16string(i == 1 ? tr(u"The game's own Xbox 360 buttons, whatever controller you use.")
+                                 : tr(u"These buttons in the prompts, whatever controller you use.")) + example;
   };
   return r;
 }
 
 Row DefaultKeysRow() {
   Row r;
-  r.label = u"Default Keys";
+  r.label = tr(u"Default Keys");
   r.kind = Kind::kAction;
   r.describe = [](Env&, int) {
-    return std::u16string(u"Every keyboard and mouse key back as it came.");
+    return std::u16string(tr(u"Every keyboard and mouse key back as it came."));
   };
   r.unavailable = NoKeyboard;
-  r.confirm = u"Revert Keybinds to Defaults?";
+  r.confirm = tr(u"Revert Keybinds to Defaults?");
   r.activate = [](Env&) {
     kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
     if (!driver) return;
@@ -796,11 +841,11 @@ Row DefaultKeysRow() {
 // MOUSE AIMING (findings/47): how a keyboard-and-mouse player aims as a mask,
 // and the Wii-style cursor in play (input/mouse_reticle.h, ui/wii_cursor.h).
 Row MouseAimingRow() {
-  Row r = LevelRow(u"Mouse Aiming", "mouse_reticle", {u"Off", u"Reticle", u"Crosshair"},
-                   {u"As a mask, the aiming reticle moves with the movement keys, like the original game.",
-                    u"As a mask, the aiming reticle follows the mouse.",
-                    u"The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that "
-                    u"grows over targets and pulls in mojo, like the Wii version's pointer."});
+  Row r = LevelRow(tr(u"Mouse Aiming"), "mouse_reticle", {tr(u"Off"), tr(u"Reticle"), tr(u"Crosshair")},
+                   {tr(u"As a mask, the aiming reticle moves with the movement keys, like the original game."),
+                    tr(u"As a mask, the aiming reticle follows the mouse."),
+                    tr(u"The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that "
+                    u"grows over targets and pulls in mojo, like the Wii version's pointer.")});
   r.unavailable = NoKeyboard;
   return r;
 }
@@ -809,10 +854,10 @@ Row MouseAimingRow() {
 // does while the game window isn't focused: keep playing, or the game pauses
 // itself the moment the window loses the focus.
 Row BackgroundInputRow() {
-  Row r = OnOffRow(u"Window Not Focused", "background_input", u"Keep Playing", u"Pause",
-                   u"Controllers keep playing while another window is in front. The keyboard and mouse "
-                   u"stop until you click back into the game.",
-                   u"The game pauses by itself when its window loses the focus in a level.");
+  Row r = OnOffRow(tr(u"Window Not Focused"), "background_input", tr(u"Keep Playing"), tr(u"Pause"),
+                   tr(u"Controllers keep playing while another window is in front. The keyboard and mouse "
+                      u"stop until you click back into the game."),
+                   tr(u"The game pauses by itself when its window loses the focus in a level."));
   const auto set = r.set;
   // SDL is told at once (its background-events hint), not at the next frame.
   r.set = [set](Env& e, int i) {
@@ -823,30 +868,31 @@ Row BackgroundInputRow() {
 }
 
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), BackgroundInputRow(), Heading(u"Button Pictures"), KeyboardIconsRow(),
+  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), BackgroundInputRow(), Heading(tr(u"Button Pictures")), KeyboardIconsRow(),
                         ControllerIconsRow()};
   // The keys start under a heading of their own.
-  rows.push_back(Heading(u"Keyboard and Mouse Keys"));
+  rows.push_back(Heading(tr(u"Keyboard and Mouse Keys")));
   for (const KeyRowInfo& k : kKeyRows) {
     Row r;
     r.label = ActionName(k.action);
     r.kind = Kind::kKey;
     r.key_action = k.action;
-    const std::u16string text = k.text;
-    const std::u16string before = k.before ? std::u16string(k.before) + u" " : u"";
-    const std::u16string after = k.after ? u" " + std::u16string(k.after) : u"";
-    r.describe = [text, before, after, action = k.action](Env&, int) -> std::u16string {
+    r.describe = [k](Env&, int) -> std::u16string {
       // The controller's button as a picture in the Controller Icons style
-      // (Pad: a card-sized picture), its way around it ("[stick] up").
-      if (action == kbm::kSpin) {
+      // (Pad: a card-sized picture), its way around it ("[stick] up.").
+      std::u16string way;
+      if (k.action == kbm::kSpin) {
         // Simple Spinning on: LB too (the stick still works).
-        return text + u" Controller: " +
-               (rex::cvar::Query<bool>("simple_spinning") ? Pad("LB") + u", or circle " + Pad("Left stick")
-                                                          : u"circle " + Pad("Left stick"));
+        // TR: {0} = the LB button's picture, {1} = the left stick's picture.
+        way = rex::cvar::Query<bool>("simple_spinning") ? trf(tr(u"{0}, or circle {1}"), {Pad("LB"), Pad("Left stick")})
+                                                        // TR: {0} = the left stick's picture.
+                                                        : trf(tr(u"circle {0}"), {Pad("Left stick")});
+      } else {
+        const std::u16string pad = Pad(kbm::Info(k.action).pad);
+        way = k.way ? trf(tr(k.way), {pad}) : pad;
       }
-      // A sentence ending in a picture gets no full stop (it stood apart,
-      // after the picture's own room: playtest photo).
-      return text + u" Controller: " + before + Pad(kbm::Info(action).pad) + (after.empty() ? u"" : after + u".");
+      // TR: {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
+      return trf(tr(u"{0} Controller: {1}"), {tr(k.text), way});
     };
     r.unavailable = NoKeyboard;
     // The Spin key works only with Simple Spinning (Options -> Gameplay):
@@ -858,8 +904,9 @@ std::vector<Row> ControlsRows() {
         if (!keyboard.empty()) return keyboard;
         return rex::cvar::Query<bool>("simple_spinning")
                    ? std::u16string()
-                   : u"To spin, circle a controller's " + Pad("Left stick") +
-                         u", or turn on Simple Spinning (Gameplay tab) to spin with this key.";
+                   // TR: {0} = the left stick's picture.
+                   : trf(tr(u"To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin "
+                            u"with this key."), {Pad("Left stick")});
       };
     }
     rows.push_back(std::move(r));
@@ -878,57 +925,64 @@ std::vector<Row> ControlsRows() {
 // ---------------------------------------------------------------------------
 
 std::vector<Row> GameplayRows() {
-  Row friendly_fire = OnOffRow(u"Friendly Fire", "friendly_fire", u"On", u"Off",
-                               u"Players' attacks hurt each other, as in the original game.",
-                               u"A partner's hits pass harmlessly: no damage, combos untouched.");
-  Row partner_hits = OnOffRow(u"Partner Hits", "friendly_hits_break_combo", u"End Combos", u"Keep Combos",
-                              u"Getting hit by a partner ends your hit combo, as in the original game.",
-                              u"A partner's hit doesn't end your combo.");
+  Row friendly_fire = OnOffRow(tr(u"Friendly Fire"), "friendly_fire", tr(u"On"), tr(u"Off"),
+                               tr(u"Players' attacks hurt each other, as in the original game."),
+                               tr(u"A partner's hits pass harmlessly: no damage, combos untouched."));
+  Row partner_hits = OnOffRow(tr(u"Partner Hits"), "friendly_hits_break_combo", tr(u"End Combos"), tr(u"Keep Combos"),
+                              tr(u"Getting hit by a partner ends your hit combo, as in the original game."),
+                              tr(u"A partner's hit doesn't end your combo."));
   // Nothing to keep when partners can't hit each other at all.
   partner_hits.unavailable = [](Env&) {
     return rex::cvar::Query<bool>("friendly_fire") ? std::u16string()
-                                                   : std::u16string(u"Friendly Fire is off: partners can't hit you.");
+                                                   : std::u16string(tr(u"Friendly Fire is off: partners can't hit you."));
   };
-  Row simple_spinning = OnOffRow(u"Simple Spinning", "simple_spinning", u"On", u"Off", u"", u"",
+  Row simple_spinning = OnOffRow(tr(u"Simple Spinning"), "simple_spinning", tr(u"On"), tr(u"Off"), u"", u"",
                                  /*off_first=*/true);
   // The texts show the buttons (the Spin key as it's bound now).
   simple_spinning.describe = [](Env&, int i) -> std::u16string {
     const std::u16string key = Key(kbm::kSpin);
     if (i == 1) {
-      return u"One button spins: " + Pad("LB") + u" on a controller" +
-             (key.empty() ? std::u16string(u".") : u", " + key + u" on the keyboard.") +
-             u" Circling " + Pad("Left stick") + u" still works.";
+      // TR: {0} = the LB button's picture, {1} = the left stick's picture.
+      if (key.empty()) return trf(tr(u"One button spins: {0} on a controller. Circling {1} still works."),
+                                  {Pad("LB"), Pad("Left stick")});
+      // TR: {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
+      return trf(tr(u"One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."),
+                 {Pad("LB"), key, Pad("Left stick")});
     }
-    return u"Circle " + Pad("Left stick") + u" to spin, as in the original game." +
-           (key.empty() ? std::u16string() : u" " + key + u" does nothing.");
+    // TR: {0} = the left stick's picture.
+    if (key.empty()) return trf(tr(u"Circle {0} to spin, as in the original game."), {Pad("Left stick")});
+    // TR: {0} = the left stick's picture, {1} = the Spin key's picture.
+    return trf(tr(u"Circle {0} to spin, as in the original game. {1} does nothing."), {Pad("Left stick"), key});
   };
-  Row keep_spinning = OnOffRow(u"Keep Spinning", "keep_spinning", u"Hold to Spin", u"Original", u"", u"",
+  Row keep_spinning = OnOffRow(tr(u"Keep Spinning"), "keep_spinning", tr(u"Hold to Spin"), tr(u"Original"), u"", u"",
                                /*off_first=*/true);
   keep_spinning.describe = [](Env&, int i) -> std::u16string {
     if (i == 1) {
-      return u"Hold " + PadOrKey("LB", kbm::kSpin) + u" (or keep circling " + Pad("Left stick") +
-             u") and Crash keeps spinning, until he gets dizzy.";
+      // TR: {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
+      return trf(tr(u"Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."),
+                 {PadOrKey("LB", kbm::kSpin), Pad("Left stick")});
     }
-    return u"Spin, then press " + PadOrKey("X", kbm::kLightAttack) +
-           u" again and again to keep spinning, as in the original game.";
+    // TR: {0} = the light attack's button / key pictures ("[X] or [LMB]").
+    return trf(tr(u"Spin, then press {0} again and again to keep spinning, as in the original game."),
+               {PadOrKey("X", kbm::kLightAttack)});
   };
   // Holding the spin needs a spin you can hold: the button of Simple Spinning.
   keep_spinning.unavailable = [](Env&) {
     return rex::cvar::Query<bool>("simple_spinning") ? std::u16string()
-                                                     : std::u16string(u"Turn on Simple Spinning first.");
+                                                     : std::u16string(tr(u"Turn on Simple Spinning first."));
   };
   // Co-op first (the camera rows were a tab of their own until 2026-10-24:
   // both only matter with partners), then spinning.
-  return {Heading(u"Co-op"),
+  return {Heading(tr(u"Co-op")),
           friendly_fire,
           partner_hits,
-          OnOffRow(u"Co-op Camera", "coop_camera", u"Frame Everyone", u"Original",
-                   u"The camera pulls back to keep every player on screen.",
-                   u"The camera of the original game."),
-          OnOffRow(u"Camera Follows", "coop_camera_near_focus", u"Nearest Player", u"Middle",
-                   u"Front to back, the camera stays with the player nearest to it.",
-                   u"The camera aims at the middle of the group."),
-          Heading(u"Spinning"),
+          OnOffRow(tr(u"Co-op Camera"), "coop_camera", tr(u"Frame Everyone"), tr(u"Original"),
+                   tr(u"The camera pulls back to keep every player on screen."),
+                   tr(u"The camera of the original game.")),
+          OnOffRow(tr(u"Camera Follows"), "coop_camera_near_focus", tr(u"Nearest Player"), tr(u"Middle"),
+                   tr(u"Front to back, the camera stays with the player nearest to it."),
+                   tr(u"The camera aims at the middle of the group.")),
+          Heading(tr(u"Spinning")),
           simple_spinning,
           keep_spinning};
 }
@@ -953,14 +1007,14 @@ std::vector<int> VoicesOnDisc() {
 void AddRestart(Row& r) {
   r.warn = [](Env&, int) {
     return language::RestartNeeded()
-               ? std::u16string(u"Takes effect when the game starts again: Restart Now, or next time you play.")
+               ? std::u16string(tr(u"Takes effect when the game starts again: Restart Now, or next time you play."))
                : std::u16string();
   };
-  r.x_label = u"Restart Now";
+  r.x_label = tr(u"Restart Now");
   r.x_shown = [](Env&, int) { return language::RestartNeeded(); };
   r.x_confirm = [](Env&) {
     return options_menu::InMainMenu() ? std::u16string()
-                                      : std::u16string(u"Restart now? Anything since your last save will be lost.");
+                                      : std::u16string(tr(u"Restart now? Anything since your last save will be lost."));
   };
   r.x_action = [](Env&) {
     SaveChanged();  // the new choice must be in settings.toml for the next start
@@ -973,7 +1027,7 @@ void AddRestart(Row& r) {
 // 2026-10-24).
 Row TextLanguageRow() {
   Row r;
-  r.label = u"Text";
+  r.label = tr(u"Text");
   r.values = [](Env&) {
     std::vector<std::u16string> v;
     for (const auto& t : language::TextLanguages()) v.push_back(t.name);
@@ -981,8 +1035,21 @@ Row TextLanguageRow() {
   };
   r.get = [](Env&) { return language::ChosenText(); };
   r.set = [](Env&, int i) { SetFlag("text_language", language::TextLanguages()[size_t(i)].key); };
-  r.describe = [](Env&, int) {
-    return std::u16string(u"Menus, tutorials and messages in this language. The voices are chosen below.");
+  r.describe = [](Env&, int i) {
+    const auto& langs = language::TextLanguages();
+    std::u16string text = tr(u"Menus, tutorials and messages in this language. The voices are chosen below.");
+    // Brazilian Portuguese is the port's texts only (texts.h): the disc has
+    // no Portuguese, so the game's own menus and subtitles stay English.
+    if (i >= 0 && i < int(langs.size()) && std::string(langs[size_t(i)].key) == "pt-br") {
+      text = tr(u"The port's own menus in this language. The game's own texts stay in English: the disc has no "
+                u"Portuguese.");
+    }
+    // The language running now: its port texts are machine drafts nobody
+    // has checked yet (languages/*.po "fuzzy" entries).
+    if (i == language::RunningText() && texts::CheckedPercent() < 100) {
+      text += u" " + tr(u"The port's own texts are a machine translation, not yet checked by a native speaker.");
+    }
+    return text;
   };
   AddRestart(r);
   return r;
@@ -990,10 +1057,10 @@ Row TextLanguageRow() {
 
 Row VoiceLanguageRow() {
   Row r;
-  r.label = u"Voices";
+  r.label = tr(u"Voices");
   r.values = [](Env&) {
     const auto& voices = language::VoiceLanguages();
-    std::vector<std::u16string> v{u"Same as Text"};
+    std::vector<std::u16string> v{tr(u"Same as Text")};
     for (int i : VoicesOnDisc()) v.push_back(voices[size_t(i)].name);
     return v;
   };
@@ -1015,11 +1082,12 @@ Row VoiceLanguageRow() {
       const auto& text = language::TextLanguages()[size_t(language::ChosenText())];
       const auto& voice = voices[size_t(language::AutomaticVoice(language::ChosenText()))];
       if (std::string(voice.key) != text.voice) {
-        return std::u16string(u"The disc has no voices in the text's language: the characters speak English.");
+        return std::u16string(tr(u"The disc has no voices in the text's language: the characters speak English."));
       }
-      return u"The characters speak the text's language: " + std::u16string(voice.name) + u".";
+      // TR: {0} = the language's name in its own language ("Deutsch").
+      return trf(tr(u"The characters speak the text's language: {0}."), {voice.name});
     }
-    return std::u16string(u"The characters speak this language, whatever the text is.");
+    return std::u16string(tr(u"The characters speak this language, whatever the text is."));
   };
   AddRestart(r);
   return r;
@@ -1028,16 +1096,16 @@ Row VoiceLanguageRow() {
 // ACHIEVEMENTS (achievements/achievements.h): the notification (through the
 // game's message bar), and its jingle (the game's own stinger_reward).
 Row AchievementPopupsRow() {
-  return OnOffRow(u"Notifications", "achievement_popups", u"On", u"Off",
-                  u"A card slides up at the bottom of the screen when you earn an achievement.",
-                  u"No card: achievements are still earned and kept.");
+  return OnOffRow(tr(u"Notifications"), "achievement_popups", tr(u"On"), tr(u"Off"),
+                  tr(u"A card slides up at the bottom of the screen when you earn an achievement."),
+                  tr(u"No card: achievements are still earned and kept."));
 }
 Row AchievementJingleRow() {
-  Row r = OnOffRow(u"Jingle", "achievement_sound", u"On", u"Off",
-                   u"One of the game's own jingles plays with the card.", u"The card shows without a sound.");
+  Row r = OnOffRow(tr(u"Jingle"), "achievement_sound", tr(u"On"), tr(u"Off"),
+                   tr(u"One of the game's own jingles plays with the card."), tr(u"The card shows without a sound."));
   r.unavailable = [](Env&) {
     return rex::cvar::Query<bool>("achievement_popups") ? std::u16string()
-                                                        : std::u16string(u"Notifications are off.");
+                                                        : std::u16string(tr(u"Notifications are off."));
   };
   return r;
 }
@@ -1049,28 +1117,28 @@ std::vector<Tab> Build() {
   std::vector<Tab> tabs;
   Row renderer = RendererRow();
   AddDualMode(renderer);
-  tabs.push_back({u"Display",
+  tabs.push_back({tr(u"Display"),
                   {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
-                   Heading(u"HUD"), HudSizeRow(), HudFourPlayersRow(),
-                   Heading(u"Frame Counter"), FpsCounterRow(), FpsPositionRow(),
+                   Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(),
+                   Heading(tr(u"Frame Counter")), FpsCounterRow(), FpsPositionRow(),
                    // achievements/achievements.h: the card at the bottom centre.
-                   Heading(u"Achievements"), AchievementPopupsRow(), AchievementJingleRow()}});
+                   Heading(tr(u"Achievements")), AchievementPopupsRow(), AchievementJingleRow()}});
   // Renderer first: it decides which rows under it are greyed out.
-  tabs.push_back({u"Graphics",
-                  {renderer, Heading(u"Quality"), RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(),
-                   TextureSharpnessRow(), SharpeningRow(), Heading(u"Effects"), ShadowSoftnessRow(),
+  tabs.push_back({tr(u"Graphics"),
+                  {renderer, Heading(tr(u"Quality")), RenderResolutionRow(), AntiAliasingRow(), SmoothCutoutsRow(),
+                   TextureSharpnessRow(), SharpeningRow(), Heading(tr(u"Effects")), ShadowSoftnessRow(),
                    MotionBlurRow(), DepthOfFieldRow()}});
   tabs.push_back(
-      {u"Audio",
-       {VolumeRow(u"Music", {global_options::Volume::kMusic, 0, 0},
-                  u"How loud the music plays.", true),
-        VolumeRow(u"Dialogue", {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
-                  u"How loud the characters talk.", false),
-        VolumeRow(u"SFX", {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
-                  u"How loud hits, crates, footsteps and the rest are.", false)}});
-  tabs.push_back({u"Controls", ControlsRows()});
-  tabs.push_back({u"Gameplay", GameplayRows()});
-  tabs.push_back({u"Language", {TextLanguageRow(), VoiceLanguageRow()}});
+      {tr(u"Audio"),
+       {VolumeRow(tr(u"Music"), {global_options::Volume::kMusic, 0, 0},
+                  tr(u"How loud the music plays."), true),
+        VolumeRow(tr(u"Dialogue"), {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
+                  tr(u"How loud the characters talk."), false),
+        VolumeRow(tr(u"SFX"), {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
+                  tr(u"How loud hits, crates, footsteps and the rest are."), false)}});
+  tabs.push_back({tr(u"Controls"), ControlsRows()});
+  tabs.push_back({tr(u"Gameplay"), GameplayRows()});
+  tabs.push_back({tr(u"Language"), {TextLanguageRow(), VoiceLanguageRow()}});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
   // every heading that doesn't open its tab.
@@ -1112,9 +1180,9 @@ std::u16string KeysText(int action) {
   for (const kbm::Input key : b.keys[size_t(action)]) {
     if (key == kbm::kNoInput) continue;
     if (!text.empty()) text += u", ";
-    text += TitleCase(kbm::InputLabel(key));
+    text += KeyName(key);
   }
-  return text.empty() ? u"None" : text;
+  return text.empty() ? tr(u"None") : text;
 }
 
 std::u16string KeyPictures(int action) {
@@ -1132,8 +1200,25 @@ std::u16string KeyPictures(int action) {
   return text;
 }
 
+// The moves' names as the Options rows show them (Title Case), in the
+// order of kbm::Action (input/bindings.h). bindings.cpp keeps its own
+// English labels for controls.toml and the F6 developer window.
+constexpr const char16_t* kActionNames[] = {
+    trn(u"Move Up"), trn(u"Move Down"), trn(u"Move Left"), trn(u"Move Right"), trn(u"Walk (Hold)"),
+    trn(u"Spin"), trn(u"Jump"), trn(u"Light Attack"), trn(u"Heavy Attack"), trn(u"Block (Hold)"),
+    trn(u"Jack / Use"), trn(u"Titan Special Attack"), trn(u"Pocket / Unpocket"), trn(u"Map"), trn(u"Pause"),
+    trn(u"Menu: Confirm"), trn(u"Menu: Back"), trn(u"Menu: Previous Tab"), trn(u"Menu: Next Tab"),
+    trn(u"Menu: X Action"), trn(u"Menu: Y Action"), trn(u"D-pad Up"), trn(u"D-pad Down"), trn(u"D-pad Left"),
+    trn(u"D-pad Right"), trn(u"Right Stick Up"), trn(u"Right Stick Down"), trn(u"Right Stick Left"),
+    trn(u"Right Stick Right"), trn(u"Left Bumper"), trn(u"Left Stick Click"), trn(u"Right Stick Click"),
+};
+static_assert(std::size(kActionNames) == kbm::kActionCount, "one name per action, in kbm::Action order");
+
+std::u16string KeyLabel(int input) { return KeyName(kbm::Input(input)); }
+
 std::u16string ActionName(int action) {
-  return TitleCase(kbm::Info(kbm::Action(action)).label);
+  if (action < 0 || action >= kbm::kActionCount) return {};
+  return tr(kActionNames[action]);
 }
 
 void SetHooks(Hooks hooks) { g_hooks = std::move(hooks); }

@@ -1,0 +1,2029 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Mind over Recomp\n"
+"Language: ru\n"
+"Report-Msgid-Bugs-To: https://github.com/Maxilure/MindOver-Recomp/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/achievements/achievements.cpp:548
+#, fuzzy
+msgid "Achievement Unlocked"
+msgstr "Достижение получено"
+
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1037 src/options/options_menu.cpp:2281 src/options/options_settings.cpp:1125
+#, fuzzy
+msgid "Achievements"
+msgstr "Достижения"
+
+#: src/achievements/achievements_screen.cpp:42
+#, fuzzy
+msgid "Players"
+msgstr "Игроки"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "Cheats Enabled"
+msgstr "Читы включены"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "No achievements until a save is loaded"
+msgstr "Достижений не будет, пока не загрузишь сохранение"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "Save Made With Cheats"
+msgstr "Сохранено с читами"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "No achievements while playing this save"
+msgstr "С этим сохранением достижений не будет"
+
+#. a tutorial's extra line: {0} = the Spin key / LB button's picture.
+#: src/input/prompt_icons.cpp:2305
+#, fuzzy
+msgid "Or press {0}"
+msgstr "Или нажми {0}"
+
+#. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the Spin key / LB button's picture.
+#: src/input/prompt_icons.cpp:2310
+#, fuzzy
+msgid "OR Hold {0}"
+msgstr "ИЛИ удерживай {0}"
+
+#. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the game's own line with the Spin key's picture.
+#: src/input/prompt_icons.cpp:2316
+#, fuzzy
+msgid "OR {0}"
+msgstr "ИЛИ {0}"
+
+#: src/input/title_any_button.cpp:46
+#, fuzzy
+msgid "Press Any Button"
+msgstr "Нажми любую кнопку"
+
+#: src/options/options_menu.cpp:798 src/options/options_menu.cpp:844
+#, fuzzy
+msgid "Press a Key"
+msgstr "Нажми клавишу"
+
+#. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
+#: src/options/options_menu.cpp:854
+#, fuzzy
+msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
+msgstr "Нажми новую вторую клавишу или кнопку мыши для действия \"{0}\". {1} или {2}: отмена."
+
+#: src/options/options_menu.cpp:855
+#, fuzzy
+msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
+msgstr "Нажми новую клавишу или кнопку мыши для действия \"{0}\". {1} или {2}: отмена."
+
+#: src/options/options_menu.cpp:872
+#, fuzzy
+msgid "Second Key"
+msgstr "Вторая клавиша"
+
+#: src/options/options_menu.cpp:878
+#, fuzzy
+msgid "Remove Key"
+msgstr "Убрать клавишу"
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "Jan"
+msgstr "янв."
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "Feb"
+msgstr "февр."
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "Mar"
+msgstr "марта"
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "Apr"
+msgstr "апр."
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "May"
+msgstr "мая"
+
+#: src/options/options_menu.cpp:1002
+#, fuzzy
+msgid "Jun"
+msgstr "июня"
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Jul"
+msgstr "июля"
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Aug"
+msgstr "авг."
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Sep"
+msgstr "сент."
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Oct"
+msgstr "окт."
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Nov"
+msgstr "нояб."
+
+#: src/options/options_menu.cpp:1003
+#, fuzzy
+msgid "Dec"
+msgstr "дек."
+
+#. a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
+#: src/options/options_menu.cpp:1006
+#, fuzzy
+msgid "{0} {1} {2}"
+msgstr "{0} {1} {2}"
+
+#. {0} = the date it was earned ("12 Oct 2026").
+#: src/options/options_menu.cpp:1068
+#, fuzzy
+msgid "Earned {0}"
+msgstr "Получено {0}"
+
+#. {0} = the date it was earned ("12 Oct 2026").
+#: src/options/options_menu.cpp:1068
+#, fuzzy
+msgid "Locked"
+msgstr "Недоступно"
+
+#: src/options/options_menu.cpp:1318
+#, fuzzy
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#: src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1331 src/players/outfit_picker.cpp:1090
+#, fuzzy
+msgid "Back"
+msgstr "Назад"
+
+#: src/options/options_menu.cpp:1322
+#, fuzzy
+msgid "Swap"
+msgstr "Поменять"
+
+#: src/options/options_menu.cpp:1322
+#, fuzzy
+msgid "Move Here"
+msgstr "Сюда"
+
+#: src/options/options_menu.cpp:1324
+#, fuzzy
+msgid "Cancel"
+msgstr "Отмена"
+
+#: src/options/options_menu.cpp:1327
+#, fuzzy
+msgid "Buttons"
+msgstr "Кнопки"
+
+#: src/options/options_menu.cpp:1328
+#, fuzzy
+msgid "Move"
+msgstr "Переместить"
+
+#: src/options/options_menu.cpp:1329
+#, fuzzy
+msgid "Remove"
+msgstr "Убрать"
+
+#: src/options/options_menu.cpp:1452
+#, fuzzy
+msgid "No room for this player"
+msgstr "Для этого игрока нет места"
+
+#: src/options/options_menu.cpp:1456 src/options/options_menu.cpp:1464
+#, fuzzy
+msgid "Keyboard and Mouse"
+msgstr "Клавиатура и мышь"
+
+#. {0} = a player's number (1-4).
+#: src/options/options_menu.cpp:1461
+#, fuzzy
+msgid "Moving to Player {0}"
+msgstr "К игроку {0}"
+
+#. {0} = a player's number (1-4).
+#: src/options/options_menu.cpp:1461
+#, fuzzy
+msgid "Pick a player"
+msgstr "Выбери игрока"
+
+#: src/options/options_menu.cpp:1466
+#, fuzzy
+msgid "Press any button to join"
+msgstr "Нажми любую кнопку, чтобы вступить"
+
+#: src/options/options_menu.cpp:1868
+#, fuzzy
+msgid "Not changed."
+msgstr "Без изменений."
+
+#. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
+#: src/options/options_menu.cpp:1875
+#, fuzzy
+msgid "{0} is the menus' {1}: pick another key."
+msgstr "{0} занята меню ({1}): выбери другую клавишу."
+
+#: src/options/options_menu.cpp:1887
+#, fuzzy
+msgid "{0} was {1}'s key: it's {2}'s now."
+msgstr "{0} была клавишей действия \"{1}\": теперь она для \"{2}\"."
+
+#: src/options/options_menu.cpp:1908
+#, fuzzy
+msgid "No key to remove."
+msgstr "Нечего убирать."
+
+#. {0} = a key's name.
+#: src/options/options_menu.cpp:1916
+#, fuzzy
+msgid "{0} removed."
+msgstr "{0}: убрана."
+
+#. {0} = a controller button's picture, {1} = a key's picture ("[LB] or [Q]").
+#: src/options/options_settings.cpp:173
+#, fuzzy
+msgid "{0} or {1}"
+msgstr "{0} или {1}"
+
+#: src/options/options_settings.cpp:178
+#, fuzzy
+msgid "Frame-rate Cap"
+msgstr "Предел кадров"
+
+#: src/options/options_settings.cpp:182
+#, fuzzy
+msgid "30 (original)"
+msgstr "30 (оригинал)"
+
+#: src/options/options_settings.cpp:182
+#, fuzzy
+msgid "Unlimited"
+msgstr "Без предела"
+
+#: src/options/options_settings.cpp:195
+#, fuzzy
+msgid "The most frames a second the game draws. The original runs at 30."
+msgstr "Наибольшее число кадров в секунду, которое рисует игра. Оригинал идет на 30."
+
+#: src/options/options_settings.cpp:200
+#, fuzzy
+msgid "Above 60, jumps and timings may feel different."
+msgstr "Выше 60 прыжки и тайминги могут ощущаться иначе."
+
+#: src/options/options_settings.cpp:213
+#, fuzzy
+msgid "Renderer"
+msgstr "Рендерер"
+
+#: src/options/options_settings.cpp:217 src/options/options_settings.cpp:218
+#, fuzzy
+msgid "Emulated"
+msgstr "Эмуляция"
+
+#: src/options/options_settings.cpp:218
+#, fuzzy
+msgid "Emulated Only"
+msgstr "Только эмуляция"
+
+#: src/options/options_settings.cpp:218
+#, fuzzy
+msgid "Native"
+msgstr "Родной"
+
+#: src/options/options_settings.cpp:218
+#, fuzzy
+msgid "Native Only"
+msgstr "Только родной"
+
+#: src/options/options_settings.cpp:240
+#, fuzzy
+msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original."
+msgstr "Графический чип Xbox 360, воссозданный шаг за шагом: выглядит как оригинал."
+
+#: src/options/options_settings.cpp:244
+#, fuzzy
+msgid "Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the {0} Tools menu doesn't switch."
+msgstr "Только воссозданный графический чип Xbox 360: собственный рендерер порта выключен, и меню \"Инструменты\" {0} не переключает."
+
+#: src/options/options_settings.cpp:248
+#, fuzzy
+msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original. The {0} Tools menu switches to the port's renderer."
+msgstr "Графический чип Xbox 360, воссозданный шаг за шагом: выглядит как оригинал. Меню \"Инструменты\" {0} переключает на рендерер порта."
+
+#: src/options/options_settings.cpp:252
+#, fuzzy
+msgid "The port's own renderer, made for PC. The imitation keeps drawing behind it: the {0} Tools menu switches back at once."
+msgstr "Собственный рендерер порта, сделанный для ПК. Эмуляция продолжает рисовать за ним: меню \"Инструменты\" {0} сразу переключает обратно."
+
+#: src/options/options_settings.cpp:254
+#, fuzzy
+msgid "The port's own renderer alone: the lightest on your PC."
+msgstr "Только рендерер порта: самый легкий для твоего ПК."
+
+#: src/options/options_settings.cpp:259
+#, fuzzy
+msgid "Still being finished: an effect may look wrong."
+msgstr "Еще не доделано: какой-то эффект может выглядеть неправильно."
+
+#: src/options/options_settings.cpp:270
+#, fuzzy
+msgid "Dual Mode"
+msgstr "Двойной режим"
+
+#: src/options/options_settings.cpp:292
+#, fuzzy
+msgid "Brightness"
+msgstr "Яркость"
+
+#: src/options/options_settings.cpp:297
+#, fuzzy
+msgid "0 (original)"
+msgstr "0 (оригинал)"
+
+#: src/options/options_settings.cpp:309
+#, fuzzy
+msgid "Raise it until the darkest squares above can just be told apart."
+msgstr "Повышай, пока самые темные квадраты сверху не станут едва различимы."
+
+#: src/options/options_settings.cpp:318
+#, fuzzy
+msgid "V-sync"
+msgstr "Вертикальная синхр."
+
+#: src/options/options_settings.cpp:318 src/options/options_settings.cpp:403 src/options/options_settings.cpp:552 src/options/options_settings.cpp:665 src/options/options_settings.cpp:928 src/options/options_settings.cpp:939 src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1104
+#, fuzzy
+msgid "On"
+msgstr "Вкл."
+
+#: src/options/options_settings.cpp:318 src/options/options_settings.cpp:338 src/options/options_settings.cpp:403 src/options/options_settings.cpp:531 src/options/options_settings.cpp:599 src/options/options_settings.cpp:665 src/options/options_settings.cpp:844 src/options/options_settings.cpp:928 src/options/options_settings.cpp:939 src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1104
+#, fuzzy
+msgid "Off"
+msgstr "Выкл."
+
+#: src/options/options_settings.cpp:319
+#, fuzzy
+msgid "Matches your monitor: whole pictures only, no tearing, and the game runs at most at its refresh rate."
+msgstr "Под твой монитор: только целые кадры, без разрывов, и игра идет не быстрее его частоты обновления."
+
+#: src/options/options_settings.cpp:321
+#, fuzzy
+msgid "Pictures show the moment they're ready: the least delay, but the picture can tear."
+msgstr "Кадры показываются сразу, как готовы: минимальная задержка, но изображение может рваться."
+
+#: src/options/options_settings.cpp:336
+#, fuzzy
+msgid "FPS Counter"
+msgstr "Счетчик FPS"
+
+#: src/options/options_settings.cpp:338
+#, fuzzy
+msgid "Simple"
+msgstr "Простой"
+
+#: src/options/options_settings.cpp:338
+#, fuzzy
+msgid "Average"
+msgstr "Среднее"
+
+#: src/options/options_settings.cpp:338
+#, fuzzy
+msgid "Detailed"
+msgstr "Подробный"
+
+#: src/options/options_settings.cpp:344
+#, fuzzy
+msgid "No frame-rate counter."
+msgstr "Без счетчика кадров."
+
+#: src/options/options_settings.cpp:345
+#, fuzzy
+msgid "The frame rate, in a corner of the screen (FPS Position)."
+msgstr "Частота кадров в углу экрана (Положение FPS)."
+
+#: src/options/options_settings.cpp:346
+#, fuzzy
+msgid "The frame rate, its average and its slowest 1 % (the 1% low)."
+msgstr "Частота кадров, ее среднее и самый медленный 1 % (1% low)."
+
+#: src/options/options_settings.cpp:347
+#, fuzzy
+msgid "Also how long a frame takes, and how much of it the game works or waits."
+msgstr "А также длительность кадра и сколько из нее игра работает или ждет."
+
+#: src/options/options_settings.cpp:355
+#, fuzzy
+msgid "FPS Position"
+msgstr "Положение FPS"
+
+#: src/options/options_settings.cpp:357
+#, fuzzy
+msgid "Top Left"
+msgstr "Вверху слева"
+
+#: src/options/options_settings.cpp:357
+#, fuzzy
+msgid "Top Centre"
+msgstr "Вверху по центру"
+
+#: src/options/options_settings.cpp:357
+#, fuzzy
+msgid "Top Right"
+msgstr "Вверху справа"
+
+#: src/options/options_settings.cpp:357
+#, fuzzy
+msgid "Bottom Left"
+msgstr "Внизу слева"
+
+#: src/options/options_settings.cpp:358
+#, fuzzy
+msgid "Bottom Right"
+msgstr "Внизу справа"
+
+#: src/options/options_settings.cpp:365
+#, fuzzy
+msgid "Where the frame-rate counter sits on the screen."
+msgstr "Где на экране находится счетчик кадров."
+
+#: src/options/options_settings.cpp:376
+#, fuzzy
+msgid "HUD Size"
+msgstr "Размер интерфейса"
+
+#: src/options/options_settings.cpp:396
+#, fuzzy
+msgid "The original size."
+msgstr "Исходный размер."
+
+#: src/options/options_settings.cpp:397
+#, fuzzy
+msgid "The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen."
+msgstr "Портреты, полоски, счетчики и шкалы комбо меньше, каждый к своему углу экрана."
+
+#: src/options/options_settings.cpp:403
+#, fuzzy
+msgid "Smaller for 3-4 Players"
+msgstr "Меньше для 3-4 игроков"
+
+#: src/options/options_settings.cpp:404
+#, fuzzy
+msgid "With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is."
+msgstr "С третьим или четвертым игроком интерфейс не больше 80 %, чтобы поместились четыре угла. Размер 80 % и меньше не меняется."
+
+#: src/options/options_settings.cpp:405
+#, fuzzy
+msgid "The HUD keeps the HUD Size above with any number of players."
+msgstr "Интерфейс сохраняет размер, указанный выше, при любом числе игроков."
+
+#: src/options/options_settings.cpp:413
+#, fuzzy
+msgid "Window Mode"
+msgstr "Режим окна"
+
+#: src/options/options_settings.cpp:414
+#, fuzzy
+msgid "Windowed"
+msgstr "В окне"
+
+#: src/options/options_settings.cpp:414
+#, fuzzy
+msgid "Fullscreen"
+msgstr "Полный экран"
+
+#: src/options/options_settings.cpp:421
+#, fuzzy
+msgid "Plays in a window you can move and resize."
+msgstr "Игра в окне, которое можно двигать и менять в размере."
+
+#: src/options/options_settings.cpp:422
+#, fuzzy
+msgid "Fills the whole monitor (the one picked under Monitor)."
+msgstr "Заполняет весь монитор (выбранный в пункте \"Монитор\")."
+
+#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443
+#, fuzzy
+msgid "Monitor"
+msgstr "Монитор"
+
+#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799
+#, fuzzy
+msgid "Automatic"
+msgstr "Автоматически"
+
+#. {0} = the monitor's number.
+#: src/options/options_settings.cpp:455
+#, fuzzy
+msgid "{0}: Not Connected"
+msgstr "{0}: не подключен"
+
+#: src/options/options_settings.cpp:465
+#, fuzzy
+msgid "Fullscreen fills the monitor the game is on."
+msgstr "Полный экран заполняет монитор, на котором игра."
+
+#: src/options/options_settings.cpp:467
+#, fuzzy
+msgid "This monitor isn't connected: fullscreen fills the one the game is on."
+msgstr "Этот монитор не подключен: полный экран заполняет тот, на котором игра."
+
+#: src/options/options_settings.cpp:469
+#, fuzzy
+msgid "Fullscreen fills this monitor."
+msgstr "Полный экран заполняет этот монитор."
+
+#: src/options/options_settings.cpp:499
+#, fuzzy
+msgid "Needs the port's renderer: set Renderer to Native on the Graphics tab."
+msgstr "Нужен рендерер порта: выбери \"Родной\" в пункте \"Рендерер\" на вкладке \"Графика\"."
+
+#: src/options/options_settings.cpp:505
+#, fuzzy
+msgid "Motion Blur"
+msgstr "Размытие движения"
+
+#: src/options/options_settings.cpp:505 src/options/options_settings.cpp:552 src/options/options_settings.cpp:587
+#, fuzzy
+msgid "Off (original)"
+msgstr "Выкл. (оригинал)"
+
+#: src/options/options_settings.cpp:505 src/options/options_settings.cpp:587
+#, fuzzy
+msgid "Low"
+msgstr "Низкое"
+
+#: src/options/options_settings.cpp:505 src/options/options_settings.cpp:587
+#, fuzzy
+msgid "Medium"
+msgstr "Среднее"
+
+#: src/options/options_settings.cpp:505 src/options/options_settings.cpp:587
+#, fuzzy
+msgid "High"
+msgstr "Высокое"
+
+#: src/options/options_settings.cpp:506
+#, fuzzy
+msgid "No motion blur, like the original game."
+msgstr "Без размытия движения, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:507
+#, fuzzy
+msgid "A light smear of the scenery when the camera moves. The players stay sharp."
+msgstr "Окружение слегка размывается при движении камеры. Игроки остаются четкими."
+
+#: src/options/options_settings.cpp:508
+#, fuzzy
+msgid "The scenery smears more when the camera moves. The players stay sharp."
+msgstr "Окружение сильнее размывается при движении камеры. Игроки остаются четкими."
+
+#: src/options/options_settings.cpp:509
+#, fuzzy
+msgid "A strong smear, as long as one frame of the original game's movement."
+msgstr "Сильное размытие длиной в один кадр движения оригинальной игры."
+
+#: src/options/options_settings.cpp:517
+#, fuzzy
+msgid "Resolution"
+msgstr "Разрешение"
+
+#: src/options/options_settings.cpp:518
+#, fuzzy
+msgid "720p (original)"
+msgstr "720p (оригинал)"
+
+#: src/options/options_settings.cpp:518
+#, fuzzy
+msgid "1080p"
+msgstr "1080p"
+
+#: src/options/options_settings.cpp:518
+#, fuzzy
+msgid "1440p"
+msgstr "1440p"
+
+#: src/options/options_settings.cpp:518
+#, fuzzy
+msgid "4K"
+msgstr "4K"
+
+#: src/options/options_settings.cpp:519
+#, fuzzy
+msgid "Drawn at 1280 x 720, like the Xbox 360."
+msgstr "Рисуется в 1280 x 720, как на Xbox 360."
+
+#: src/options/options_settings.cpp:520
+#, fuzzy
+msgid "Drawn at 1920 x 1080: sharper on a Full HD screen."
+msgstr "Рисуется в 1920 x 1080: четче на экране Full HD."
+
+#: src/options/options_settings.cpp:521
+#, fuzzy
+msgid "Drawn at 2560 x 1440: sharper still, heavier on your graphics card."
+msgstr "Рисуется в 2560 x 1440: еще четче, тяжелее для видеокарты."
+
+#: src/options/options_settings.cpp:522
+#, fuzzy
+msgid "Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."
+msgstr "Рисуется в 3840 x 2160: самое четкое изображение, самое тяжелое для видеокарты."
+
+#: src/options/options_settings.cpp:531
+#, fuzzy
+msgid "Anti-aliasing"
+msgstr "Сглаживание"
+
+#: src/options/options_settings.cpp:531
+#, fuzzy
+msgid "2x (original)"
+msgstr "2x (оригинал)"
+
+#: src/options/options_settings.cpp:531
+#, fuzzy
+msgid "4x"
+msgstr "4x"
+
+#: src/options/options_settings.cpp:531
+#, fuzzy
+msgid "8x"
+msgstr "8x"
+
+#: src/options/options_settings.cpp:532
+#, fuzzy
+msgid "No smoothing: jagged, shimmering edges, the lightest on your graphics card."
+msgstr "Без сглаживания: зубчатые, мерцающие края, самое легкое для видеокарты."
+
+#: src/options/options_settings.cpp:533
+#, fuzzy
+msgid "Edges smoothed with 2 samples per pixel, like the Xbox 360."
+msgstr "Края сглажены по 2 выборкам на пиксель, как на Xbox 360."
+
+#: src/options/options_settings.cpp:534
+#, fuzzy
+msgid "Smoother edges, 4 samples per pixel."
+msgstr "Края глаже, 4 выборки на пиксель."
+
+#: src/options/options_settings.cpp:535
+#, fuzzy
+msgid "The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."
+msgstr "Самые гладкие края, 8 выборок на пиксель: самое тяжелое для видеокарты."
+
+#: src/options/options_settings.cpp:552
+#, fuzzy
+msgid "Smooth Leaves"
+msgstr "Гладкая листва"
+
+#: src/options/options_settings.cpp:553
+#, fuzzy
+msgid "Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the original game."
+msgstr "Листья, заборы и другие вырезанные формы сохраняют резкие, мерцающие края, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:555
+#, fuzzy
+msgid "Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing on."
+msgstr "Сглаживает края листьев, заборов и других вырезанных форм. Нужно включенное сглаживание."
+
+#: src/options/options_settings.cpp:564
+#, fuzzy
+msgid "Texture Sharpness"
+msgstr "Четкость текстур"
+
+#: src/options/options_settings.cpp:564 src/options/options_settings.cpp:575 src/options/options_settings.cpp:599 src/options/options_settings.cpp:957 src/options/options_settings.cpp:979
+#, fuzzy
+msgid "Original"
+msgstr "Оригинал"
+
+#: src/options/options_settings.cpp:564 src/options/options_settings.cpp:575
+#, fuzzy
+msgid "Sharper"
+msgstr "Четче"
+
+#: src/options/options_settings.cpp:564
+#, fuzzy
+msgid "Sharpest"
+msgstr "Максимум"
+
+#: src/options/options_settings.cpp:565
+#, fuzzy
+msgid "Textures soften in the distance like the Xbox 360's."
+msgstr "Текстуры смягчаются вдали, как на Xbox 360."
+
+#: src/options/options_settings.cpp:566
+#, fuzzy
+msgid "Textures stay crisper in the distance and on slanted ground."
+msgstr "Текстуры остаются четче вдали и на наклонной земле."
+
+#: src/options/options_settings.cpp:567
+#, fuzzy
+msgid "The crispest distance, with a little more shimmer when moving."
+msgstr "Самая четкая даль, с чуть большим мерцанием в движении."
+
+#: src/options/options_settings.cpp:575
+#, fuzzy
+msgid "Shadow Softness"
+msgstr "Мягкость теней"
+
+#: src/options/options_settings.cpp:575
+#, fuzzy
+msgid "Softer"
+msgstr "Мягче"
+
+#: src/options/options_settings.cpp:575
+#, fuzzy
+msgid "Softest"
+msgstr "Максимум"
+
+#: src/options/options_settings.cpp:576
+#, fuzzy
+msgid "Shadows under the characters get a crisper edge."
+msgstr "Тени персонажей получают более четкий край."
+
+#: src/options/options_settings.cpp:577
+#, fuzzy
+msgid "Shadows fade at their edge like the Xbox 360's."
+msgstr "Тени растушевываются по краю, как на Xbox 360."
+
+#: src/options/options_settings.cpp:578
+#, fuzzy
+msgid "Shadows fade over a wider edge."
+msgstr "Тени растушевываются по более широкому краю."
+
+#: src/options/options_settings.cpp:579
+#, fuzzy
+msgid "The softest shadows, fading the widest."
+msgstr "Самые мягкие тени с самым широким краем."
+
+#: src/options/options_settings.cpp:587
+#, fuzzy
+msgid "Sharpening"
+msgstr "Резкость"
+
+#: src/options/options_settings.cpp:588
+#, fuzzy
+msgid "No sharpening, like the original game."
+msgstr "Без повышения резкости, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:589
+#, fuzzy
+msgid "Fine detail a little crisper. Hard edges stay clean."
+msgstr "Мелкие детали немного четче. Резкие края остаются чистыми."
+
+#: src/options/options_settings.cpp:590
+#, fuzzy
+msgid "Crisper detail across the picture."
+msgstr "Детали четче по всему изображению."
+
+#: src/options/options_settings.cpp:591
+#, fuzzy
+msgid "The crispest picture: may look grainy in places."
+msgstr "Самое четкое изображение: местами может выглядеть зернистым."
+
+#: src/options/options_settings.cpp:599
+#, fuzzy
+msgid "Depth of Field"
+msgstr "Глубина резкости"
+
+#: src/options/options_settings.cpp:599
+#, fuzzy
+msgid "Strong"
+msgstr "Сильная"
+
+#: src/options/options_settings.cpp:600
+#, fuzzy
+msgid "The distance stays sharp."
+msgstr "Даль остается четкой."
+
+#: src/options/options_settings.cpp:601
+#, fuzzy
+msgid "The distance is gently blurred, like the original game."
+msgstr "Даль слегка размыта, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:602
+#, fuzzy
+msgid "The distance is blurred twice as much."
+msgstr "Даль размыта вдвое сильнее."
+
+#: src/options/options_settings.cpp:664
+#, fuzzy
+msgid "Invert Axis"
+msgstr "Инверсия осей"
+
+#: src/options/options_settings.cpp:677
+#, fuzzy
+msgid "Up and down are flipped when you aim the reticle."
+msgstr "Верх и низ меняются местами, когда целишься прицелом."
+
+#: src/options/options_settings.cpp:678
+#, fuzzy
+msgid "Aiming the reticle: up is up."
+msgstr "Прицел: вверх значит вверх."
+
+#: src/options/options_settings.cpp:705
+#, fuzzy
+msgid "Move up."
+msgstr "Двигаться вверх."
+
+#: src/options/options_settings.cpp:705
+#, fuzzy
+msgid "{0} up."
+msgstr "{0} вверх."
+
+#: src/options/options_settings.cpp:706
+#, fuzzy
+msgid "Move down."
+msgstr "Двигаться вниз."
+
+#: src/options/options_settings.cpp:706
+#, fuzzy
+msgid "{0} down."
+msgstr "{0} вниз."
+
+#: src/options/options_settings.cpp:707
+#, fuzzy
+msgid "Move left."
+msgstr "Двигаться влево."
+
+#: src/options/options_settings.cpp:707
+#, fuzzy
+msgid "{0} left."
+msgstr "{0} влево."
+
+#: src/options/options_settings.cpp:708
+#, fuzzy
+msgid "Move right."
+msgstr "Двигаться вправо."
+
+#: src/options/options_settings.cpp:708
+#, fuzzy
+msgid "{0} right."
+msgstr "{0} вправо."
+
+#: src/options/options_settings.cpp:709
+#, fuzzy
+msgid "Hold while moving to walk instead of run."
+msgstr "Удерживай при движении, чтобы идти шагом, а не бежать."
+
+#: src/options/options_settings.cpp:709
+#, fuzzy
+msgid "lean {0} part of the way."
+msgstr "наклони {0} не до конца."
+
+#: src/options/options_settings.cpp:710
+#, fuzzy
+msgid "The spin attack."
+msgstr "Атака волчком."
+
+#: src/options/options_settings.cpp:711
+#, fuzzy
+msgid "Jump. Press again in the air to double jump."
+msgstr "Прыжок. Нажми еще раз в воздухе для двойного прыжка."
+
+#: src/options/options_settings.cpp:714
+#, fuzzy
+msgid "Use a save totem, or jump on a stunned titan. Again to get off."
+msgstr "Воспользоваться тотемом сохранения или запрыгнуть на оглушенного титана. Еще раз, чтобы спрыгнуть."
+
+#: src/options/options_settings.cpp:715
+#, fuzzy
+msgid "A quick attack."
+msgstr "Быстрая атака."
+
+#: src/options/options_settings.cpp:716
+#, fuzzy
+msgid "A strong attack."
+msgstr "Мощная атака."
+
+#: src/options/options_settings.cpp:717
+#, fuzzy
+msgid "Hold to block attacks."
+msgstr "Удерживай, чтобы блокировать атаки."
+
+#: src/options/options_settings.cpp:718
+#, fuzzy
+msgid "Your titan's special attack."
+msgstr "Особая атака твоего титана."
+
+#: src/options/options_settings.cpp:719
+#, fuzzy
+msgid "Store your titan, and bring it back later."
+msgstr "Помести титана в карман и достань его позже."
+
+#: src/options/options_settings.cpp:720
+#, fuzzy
+msgid "Open the map. In the pause menu: drop out (someone else stays in)."
+msgstr "Открыть карту. В меню паузы: отключиться (другой игрок остается)."
+
+#: src/options/options_settings.cpp:743
+#, fuzzy
+msgctxt "key name"
+msgid "Left Mouse"
+msgstr "Левая кнопка мыши"
+
+#: src/options/options_settings.cpp:743
+#, fuzzy
+msgctxt "key name"
+msgid "Right Mouse"
+msgstr "Правая кнопка мыши"
+
+#: src/options/options_settings.cpp:744
+#, fuzzy
+msgctxt "key name"
+msgid "Middle Mouse"
+msgstr "Средняя кнопка мыши"
+
+#: src/options/options_settings.cpp:744
+#, fuzzy
+msgctxt "key name"
+msgid "Mouse 4 (Back)"
+msgstr "Мышь 4 (назад)"
+
+#: src/options/options_settings.cpp:745
+#, fuzzy
+msgctxt "key name"
+msgid "Mouse 5 (Forward)"
+msgstr "Мышь 5 (вперед)"
+
+#: src/options/options_settings.cpp:745
+#, fuzzy
+msgctxt "key name"
+msgid "Wheel Up"
+msgstr "Колесо вверх"
+
+#: src/options/options_settings.cpp:746
+#, fuzzy
+msgctxt "key name"
+msgid "Wheel Down"
+msgstr "Колесо вниз"
+
+#: src/options/options_settings.cpp:746
+#, fuzzy
+msgctxt "key name"
+msgid "Space"
+msgstr "Пробел"
+
+#: src/options/options_settings.cpp:747
+#, fuzzy
+msgctxt "key name"
+msgid "Enter"
+msgstr "Enter"
+
+#: src/options/options_settings.cpp:747
+#, fuzzy
+msgctxt "key name"
+msgid "Backspace"
+msgstr "Backspace"
+
+#: src/options/options_settings.cpp:748
+#, fuzzy
+msgctxt "key name"
+msgid "Caps Lock"
+msgstr "Caps Lock"
+
+#: src/options/options_settings.cpp:748
+#, fuzzy
+msgctxt "key name"
+msgid "Up Arrow"
+msgstr "Стрелка вверх"
+
+#: src/options/options_settings.cpp:749
+#, fuzzy
+msgctxt "key name"
+msgid "Down Arrow"
+msgstr "Стрелка вниз"
+
+#: src/options/options_settings.cpp:749
+#, fuzzy
+msgctxt "key name"
+msgid "Left Arrow"
+msgstr "Стрелка влево"
+
+#: src/options/options_settings.cpp:750
+#, fuzzy
+msgctxt "key name"
+msgid "Right Arrow"
+msgstr "Стрелка вправо"
+
+#: src/options/options_settings.cpp:750
+#, fuzzy
+msgctxt "key name"
+msgid "Insert"
+msgstr "Insert"
+
+#: src/options/options_settings.cpp:751
+#, fuzzy
+msgctxt "key name"
+msgid "Delete"
+msgstr "Delete"
+
+#: src/options/options_settings.cpp:751
+#, fuzzy
+msgctxt "key name"
+msgid "Home"
+msgstr "Home"
+
+#: src/options/options_settings.cpp:752
+#, fuzzy
+msgctxt "key name"
+msgid "End"
+msgstr "End"
+
+#: src/options/options_settings.cpp:752
+#, fuzzy
+msgctxt "key name"
+msgid "Page Up"
+msgstr "Page Up"
+
+#: src/options/options_settings.cpp:753
+#, fuzzy
+msgctxt "key name"
+msgid "Page Down"
+msgstr "Page Down"
+
+#: src/options/options_settings.cpp:753
+#, fuzzy
+msgctxt "key name"
+msgid "Pause"
+msgstr "Pause"
+
+#: src/options/options_settings.cpp:754
+#, fuzzy
+msgctxt "key name"
+msgid "Scroll Lock"
+msgstr "Scroll Lock"
+
+#: src/options/options_settings.cpp:754
+#, fuzzy
+msgctxt "key name"
+msgid "Num Lock"
+msgstr "Num Lock"
+
+#: src/options/options_settings.cpp:755
+#, fuzzy
+msgctxt "key name"
+msgid "Print Screen"
+msgstr "Print Screen"
+
+#: src/options/options_settings.cpp:755
+#, fuzzy
+msgctxt "key name"
+msgid "Menu Key"
+msgstr "Клавиша меню"
+
+#: src/options/options_settings.cpp:768
+#, fuzzy
+msgid "The keyboard and mouse are turned off."
+msgstr "Клавиатура и мышь выключены."
+
+#: src/options/options_settings.cpp:776
+#, fuzzy
+msgid "Keyboard Icons"
+msgstr "Значки клавиатуры"
+
+#: src/options/options_settings.cpp:777
+#, fuzzy
+msgid "Light"
+msgstr "Светлые"
+
+#: src/options/options_settings.cpp:777
+#, fuzzy
+msgid "Dark"
+msgstr "Темные"
+
+#: src/options/options_settings.cpp:784
+#, fuzzy
+msgid "Dark keys in the button prompts."
+msgstr "Темные клавиши в подсказках кнопок."
+
+#: src/options/options_settings.cpp:784
+#, fuzzy
+msgid "Light keys in the button prompts."
+msgstr "Светлые клавиши в подсказках кнопок."
+
+#. {0} = a key's picture (Jump's key), drawn in this style.
+#: src/options/options_settings.cpp:788
+#, fuzzy
+msgid "Dark keys in the button prompts, like {0}"
+msgstr "Темные клавиши в подсказках кнопок, например {0}"
+
+#. {0} = a key's picture (Jump's key), drawn in this style.
+#: src/options/options_settings.cpp:788
+#, fuzzy
+msgid "Light keys in the button prompts, like {0}"
+msgstr "Светлые клавиши в подсказках кнопок, например {0}"
+
+#: src/options/options_settings.cpp:796
+#, fuzzy
+msgid "Controller Icons"
+msgstr "Значки контроллера"
+
+#. {0}-{3} = the A, B, X and Y buttons' pictures in this style.
+#: src/options/options_settings.cpp:807
+#, fuzzy
+msgid "Now: {0} {1} {2} {3}"
+msgstr "Сейчас: {0} {1} {2} {3}"
+
+#: src/options/options_settings.cpp:809
+#, fuzzy
+msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
+msgstr "Кнопки контроллера, которым ты играешь: PlayStation, Switch или Xbox. Любой другой контроллер: кнопки Xbox 360 из игры."
+
+#: src/options/options_settings.cpp:812
+#, fuzzy
+msgid "The game's own Xbox 360 buttons, whatever controller you use."
+msgstr "Кнопки Xbox 360 из игры, какой бы контроллер ты ни использовал."
+
+#: src/options/options_settings.cpp:813
+#, fuzzy
+msgid "These buttons in the prompts, whatever controller you use."
+msgstr "Эти кнопки в подсказках, какой бы контроллер ты ни использовал."
+
+#: src/options/options_settings.cpp:820
+#, fuzzy
+msgid "Default Keys"
+msgstr "Клавиши по умолчанию"
+
+#: src/options/options_settings.cpp:823
+#, fuzzy
+msgid "Every keyboard and mouse key back as it came."
+msgstr "Все клавиши клавиатуры и мыши как были изначально."
+
+#: src/options/options_settings.cpp:826
+#, fuzzy
+msgid "Revert Keybinds to Defaults?"
+msgstr "Вернуть клавиши по умолчанию?"
+
+#: src/options/options_settings.cpp:844
+#, fuzzy
+msgid "Mouse Aiming"
+msgstr "Прицел мышью"
+
+#: src/options/options_settings.cpp:844
+#, fuzzy
+msgid "Reticle"
+msgstr "Прицел"
+
+#: src/options/options_settings.cpp:844
+#, fuzzy
+msgid "Crosshair"
+msgstr "Указатель"
+
+#: src/options/options_settings.cpp:845
+#, fuzzy
+msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
+msgstr "В роли маски прицел двигается клавишами движения, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:846
+#, fuzzy
+msgid "As a mask, the aiming reticle follows the mouse."
+msgstr "В роли маски прицел следует за мышью."
+
+#: src/options/options_settings.cpp:847
+#, fuzzy
+msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+msgstr "Прицел следует за мышью, а в игре указатель становится светящимся пузырем, который растет над целями и притягивает моджо, как указатель версии для Wii."
+
+#: src/options/options_settings.cpp:857
+#, fuzzy
+msgid "Window Not Focused"
+msgstr "Окно в фоне"
+
+#: src/options/options_settings.cpp:857
+#, fuzzy
+msgid "Keep Playing"
+msgstr "Продолжать игру"
+
+#: src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Pause"
+msgstr "Пауза"
+
+#: src/options/options_settings.cpp:858
+#, fuzzy
+msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
+msgstr "Контроллеры продолжают играть, когда впереди другое окно. Клавиатура и мышь останавливаются, пока не щелкнешь по игре снова."
+
+#: src/options/options_settings.cpp:860
+#, fuzzy
+msgid "The game pauses by itself when its window loses the focus in a level."
+msgstr "Игра сама встает на паузу, когда ее окно уходит в фон на уровне."
+
+#: src/options/options_settings.cpp:871
+#, fuzzy
+msgid "Button Pictures"
+msgstr "Изображения кнопок"
+
+#: src/options/options_settings.cpp:874
+#, fuzzy
+msgid "Keyboard and Mouse Keys"
+msgstr "Клавиши клавиатуры и мыши"
+
+#. {0} = the LB button's picture, {1} = the left stick's picture.
+#: src/options/options_settings.cpp:887
+#, fuzzy
+msgid "{0}, or circle {1}"
+msgstr "{0}, или вращай {1}"
+
+#. {0} = the left stick's picture.
+#: src/options/options_settings.cpp:889
+#, fuzzy
+msgid "circle {0}"
+msgstr "вращай {0}"
+
+#. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
+#: src/options/options_settings.cpp:895
+#, fuzzy
+msgid "{0} Controller: {1}"
+msgstr "{0} Контроллер: {1}"
+
+#. {0} = the left stick's picture.
+#: src/options/options_settings.cpp:908
+#, fuzzy
+msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
+msgstr "Чтобы крутиться, вращай {0} контроллера или включи \"Простое вращение\" (вкладка \"Игра\"), чтобы крутиться этой клавишей."
+
+#: src/options/options_settings.cpp:928
+#, fuzzy
+msgid "Friendly Fire"
+msgstr "Огонь по своим"
+
+#: src/options/options_settings.cpp:929
+#, fuzzy
+msgid "Players' attacks hurt each other, as in the original game."
+msgstr "Атаки игроков ранят друг друга, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:930
+#, fuzzy
+msgid "A partner's hits pass harmlessly: no damage, combos untouched."
+msgstr "Удары напарника безвредны: без урона, комбо не прерываются."
+
+#: src/options/options_settings.cpp:931
+#, fuzzy
+msgid "Partner Hits"
+msgstr "Удары напарника"
+
+#: src/options/options_settings.cpp:931
+#, fuzzy
+msgid "End Combos"
+msgstr "Прерывают комбо"
+
+#: src/options/options_settings.cpp:931
+#, fuzzy
+msgid "Keep Combos"
+msgstr "Не прерывают"
+
+#: src/options/options_settings.cpp:932
+#, fuzzy
+msgid "Getting hit by a partner ends your hit combo, as in the original game."
+msgstr "Удар напарника прерывает твое комбо, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:933
+#, fuzzy
+msgid "A partner's hit doesn't end your combo."
+msgstr "Удар напарника не прерывает твое комбо."
+
+#: src/options/options_settings.cpp:937
+#, fuzzy
+msgid "Friendly Fire is off: partners can't hit you."
+msgstr "Огонь по своим выключен: напарники не могут тебя ударить."
+
+#: src/options/options_settings.cpp:939
+#, fuzzy
+msgid "Simple Spinning"
+msgstr "Простое вращение"
+
+#. {0} = the LB button's picture, {1} = the left stick's picture.
+#: src/options/options_settings.cpp:946
+#, fuzzy
+msgid "One button spins: {0} on a controller. Circling {1} still works."
+msgstr "Одна кнопка для вращения: {0} на контроллере. Вращение {1} тоже работает."
+
+#. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
+#: src/options/options_settings.cpp:949
+#, fuzzy
+msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
+msgstr "Одна кнопка для вращения: {0} на контроллере, {1} на клавиатуре. Вращение {2} тоже работает."
+
+#. {0} = the left stick's picture.
+#: src/options/options_settings.cpp:953
+#, fuzzy
+msgid "Circle {0} to spin, as in the original game."
+msgstr "Вращай {0}, чтобы крутиться, как в оригинальной игре."
+
+#. {0} = the left stick's picture, {1} = the Spin key's picture.
+#: src/options/options_settings.cpp:955
+#, fuzzy
+msgid "Circle {0} to spin, as in the original game. {1} does nothing."
+msgstr "Вращай {0}, чтобы крутиться, как в оригинальной игре. {1} ничего не делает."
+
+#: src/options/options_settings.cpp:957
+#, fuzzy
+msgid "Keep Spinning"
+msgstr "Долгое вращение"
+
+#: src/options/options_settings.cpp:957
+#, fuzzy
+msgid "Hold to Spin"
+msgstr "Удерживать"
+
+#. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
+#: src/options/options_settings.cpp:962
+#, fuzzy
+msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
+msgstr "Удерживай {0} (или продолжай вращать {1}), и Крэш крутится, пока у него не закружится голова."
+
+#. {0} = the light attack's button / key pictures ("[X] or [LMB]").
+#: src/options/options_settings.cpp:966
+#, fuzzy
+msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
+msgstr "Закрутись, а потом жми {0} снова и снова, чтобы крутиться дальше, как в оригинальной игре."
+
+#: src/options/options_settings.cpp:972
+#, fuzzy
+msgid "Turn on Simple Spinning first."
+msgstr "Сначала включи \"Простое вращение\"."
+
+#: src/options/options_settings.cpp:976
+#, fuzzy
+msgid "Co-op"
+msgstr "Совместная игра"
+
+#: src/options/options_settings.cpp:979
+#, fuzzy
+msgid "Co-op Camera"
+msgstr "Камера совместной игры"
+
+#: src/options/options_settings.cpp:979
+#, fuzzy
+msgid "Frame Everyone"
+msgstr "Все в кадре"
+
+#: src/options/options_settings.cpp:980
+#, fuzzy
+msgid "The camera pulls back to keep every player on screen."
+msgstr "Камера отъезжает, чтобы все игроки были на экране."
+
+#: src/options/options_settings.cpp:981
+#, fuzzy
+msgid "The camera of the original game."
+msgstr "Камера оригинальной игры."
+
+#: src/options/options_settings.cpp:982
+#, fuzzy
+msgid "Camera Follows"
+msgstr "Камера следит"
+
+#: src/options/options_settings.cpp:982
+#, fuzzy
+msgid "Nearest Player"
+msgstr "За ближайшим"
+
+#: src/options/options_settings.cpp:982
+#, fuzzy
+msgid "Middle"
+msgstr "За центром"
+
+#: src/options/options_settings.cpp:983
+#, fuzzy
+msgid "Front to back, the camera stays with the player nearest to it."
+msgstr "По глубине камера держится игрока, который ближе всего к ней."
+
+#: src/options/options_settings.cpp:984
+#, fuzzy
+msgid "The camera aims at the middle of the group."
+msgstr "Камера смотрит в центр группы."
+
+#: src/options/options_settings.cpp:985
+#, fuzzy
+msgid "Spinning"
+msgstr "Вращение"
+
+#: src/options/options_settings.cpp:1010
+#, fuzzy
+msgid "Takes effect when the game starts again: Restart Now, or next time you play."
+msgstr "Вступит в силу при следующем запуске игры: \"Перезапустить сейчас\" или в следующий раз."
+
+#: src/options/options_settings.cpp:1013
+#, fuzzy
+msgid "Restart Now"
+msgstr "Перезапустить сейчас"
+
+#: src/options/options_settings.cpp:1017
+#, fuzzy
+msgid "Restart now? Anything since your last save will be lost."
+msgstr "Перезапустить сейчас? Все после последнего сохранения будет потеряно."
+
+#: src/options/options_settings.cpp:1030
+#, fuzzy
+msgid "Text"
+msgstr "Текст"
+
+#: src/options/options_settings.cpp:1040
+#, fuzzy
+msgid "Menus, tutorials and messages in this language. The voices are chosen below."
+msgstr "Меню, обучение и сообщения на этом языке. Голоса выбираются ниже."
+
+#: src/options/options_settings.cpp:1044
+#, fuzzy
+msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
+msgstr "Меню порта на этом языке. Тексты самой игры остаются на английском: на диске нет португальского."
+
+#: src/options/options_settings.cpp:1050
+#, fuzzy
+msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
+msgstr "Тексты порта переведены машиной и еще не проверены носителем языка."
+
+#: src/options/options_settings.cpp:1060
+#, fuzzy
+msgid "Voices"
+msgstr "Голоса"
+
+#: src/options/options_settings.cpp:1063
+#, fuzzy
+msgid "Same as Text"
+msgstr "Как текст"
+
+#: src/options/options_settings.cpp:1085
+#, fuzzy
+msgid "The disc has no voices in the text's language: the characters speak English."
+msgstr "На диске нет голосов на языке текста: персонажи говорят по-английски."
+
+#. {0} = the language's name in its own language ("Deutsch").
+#: src/options/options_settings.cpp:1088
+#, fuzzy
+msgid "The characters speak the text's language: {0}."
+msgstr "Персонажи говорят на языке текста: {0}."
+
+#: src/options/options_settings.cpp:1090
+#, fuzzy
+msgid "The characters speak this language, whatever the text is."
+msgstr "Персонажи говорят на этом языке, какой бы ни был текст."
+
+#: src/options/options_settings.cpp:1099
+#, fuzzy
+msgid "Notifications"
+msgstr "Уведомления"
+
+#: src/options/options_settings.cpp:1100
+#, fuzzy
+msgid "A card slides up at the bottom of the screen when you earn an achievement."
+msgstr "Внизу экрана появляется карточка, когда ты получаешь достижение."
+
+#: src/options/options_settings.cpp:1101
+#, fuzzy
+msgid "No card: achievements are still earned and kept."
+msgstr "Без карточки: достижения все равно получаются и сохраняются."
+
+#: src/options/options_settings.cpp:1104
+#, fuzzy
+msgid "Jingle"
+msgstr "Мелодия"
+
+#: src/options/options_settings.cpp:1105
+#, fuzzy
+msgid "One of the game's own jingles plays with the card."
+msgstr "Вместе с карточкой звучит одна из мелодий игры."
+
+#: src/options/options_settings.cpp:1105
+#, fuzzy
+msgid "The card shows without a sound."
+msgstr "Карточка появляется без звука."
+
+#: src/options/options_settings.cpp:1108
+#, fuzzy
+msgid "Notifications are off."
+msgstr "Уведомления выключены."
+
+#: src/options/options_settings.cpp:1120
+#, fuzzy
+msgid "Display"
+msgstr "Экран"
+
+#: src/options/options_settings.cpp:1122
+#, fuzzy
+msgid "HUD"
+msgstr "Интерфейс"
+
+#: src/options/options_settings.cpp:1123
+#, fuzzy
+msgid "Frame Counter"
+msgstr "Счетчик кадров"
+
+#: src/options/options_settings.cpp:1127
+#, fuzzy
+msgid "Graphics"
+msgstr "Графика"
+
+#: src/options/options_settings.cpp:1128
+#, fuzzy
+msgid "Quality"
+msgstr "Качество"
+
+#: src/options/options_settings.cpp:1129
+#, fuzzy
+msgid "Effects"
+msgstr "Эффекты"
+
+#: src/options/options_settings.cpp:1132
+#, fuzzy
+msgid "Audio"
+msgstr "Звук"
+
+#: src/options/options_settings.cpp:1133
+#, fuzzy
+msgid "Music"
+msgstr "Музыка"
+
+#: src/options/options_settings.cpp:1134
+#, fuzzy
+msgid "How loud the music plays."
+msgstr "Громкость музыки."
+
+#: src/options/options_settings.cpp:1135
+#, fuzzy
+msgid "Dialogue"
+msgstr "Диалоги"
+
+#: src/options/options_settings.cpp:1136
+#, fuzzy
+msgid "How loud the characters talk."
+msgstr "Громкость голосов персонажей."
+
+#: src/options/options_settings.cpp:1137
+#, fuzzy
+msgid "SFX"
+msgstr "Эффекты"
+
+#: src/options/options_settings.cpp:1138
+#, fuzzy
+msgid "How loud hits, crates, footsteps and the rest are."
+msgstr "Громкость ударов, ящиков, шагов и всего остального."
+
+#: src/options/options_settings.cpp:1139
+#, fuzzy
+msgid "Controls"
+msgstr "Управление"
+
+#: src/options/options_settings.cpp:1140
+#, fuzzy
+msgid "Gameplay"
+msgstr "Игра"
+
+#: src/options/options_settings.cpp:1141
+#, fuzzy
+msgid "Language"
+msgstr "Язык"
+
+#: src/options/options_settings.cpp:1185
+#, fuzzy
+msgid "None"
+msgstr "Нет"
+
+#: src/options/options_settings.cpp:1207
+#, fuzzy
+msgid "Move Up"
+msgstr "Вверх"
+
+#: src/options/options_settings.cpp:1207
+#, fuzzy
+msgid "Move Down"
+msgstr "Вниз"
+
+#: src/options/options_settings.cpp:1207
+#, fuzzy
+msgid "Move Left"
+msgstr "Влево"
+
+#: src/options/options_settings.cpp:1207
+#, fuzzy
+msgid "Move Right"
+msgstr "Вправо"
+
+#: src/options/options_settings.cpp:1207
+#, fuzzy
+msgid "Walk (Hold)"
+msgstr "Шаг (удерживать)"
+
+#: src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Spin"
+msgstr "Вращение"
+
+#: src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Jump"
+msgstr "Прыжок"
+
+#: src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Light Attack"
+msgstr "Легкая атака"
+
+#: src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Heavy Attack"
+msgstr "Мощная атака"
+
+#: src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Block (Hold)"
+msgstr "Блок (удерживать)"
+
+#: src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Jack / Use"
+msgstr "Подчинить / Использовать"
+
+#: src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Titan Special Attack"
+msgstr "Особая атака титана"
+
+#: src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Pocket / Unpocket"
+msgstr "В карман / Из кармана"
+
+#: src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Map"
+msgstr "Карта"
+
+#: src/options/options_settings.cpp:1210
+#, fuzzy
+msgid "Menu: Confirm"
+msgstr "Меню: подтвердить"
+
+#: src/options/options_settings.cpp:1210
+#, fuzzy
+msgid "Menu: Back"
+msgstr "Меню: назад"
+
+#: src/options/options_settings.cpp:1210
+#, fuzzy
+msgid "Menu: Previous Tab"
+msgstr "Меню: предыдущая вкладка"
+
+#: src/options/options_settings.cpp:1210
+#, fuzzy
+msgid "Menu: Next Tab"
+msgstr "Меню: следующая вкладка"
+
+#: src/options/options_settings.cpp:1211
+#, fuzzy
+msgid "Menu: X Action"
+msgstr "Меню: действие X"
+
+#: src/options/options_settings.cpp:1211
+#, fuzzy
+msgid "Menu: Y Action"
+msgstr "Меню: действие Y"
+
+#: src/options/options_settings.cpp:1211
+#, fuzzy
+msgid "D-pad Up"
+msgstr "Крестовина вверх"
+
+#: src/options/options_settings.cpp:1211
+#, fuzzy
+msgid "D-pad Down"
+msgstr "Крестовина вниз"
+
+#: src/options/options_settings.cpp:1211
+#, fuzzy
+msgid "D-pad Left"
+msgstr "Крестовина влево"
+
+#: src/options/options_settings.cpp:1212
+#, fuzzy
+msgid "D-pad Right"
+msgstr "Крестовина вправо"
+
+#: src/options/options_settings.cpp:1212
+#, fuzzy
+msgid "Right Stick Up"
+msgstr "Правый стик вверх"
+
+#: src/options/options_settings.cpp:1212
+#, fuzzy
+msgid "Right Stick Down"
+msgstr "Правый стик вниз"
+
+#: src/options/options_settings.cpp:1212
+#, fuzzy
+msgid "Right Stick Left"
+msgstr "Правый стик влево"
+
+#: src/options/options_settings.cpp:1213
+#, fuzzy
+msgid "Right Stick Right"
+msgstr "Правый стик вправо"
+
+#: src/options/options_settings.cpp:1213
+#, fuzzy
+msgid "Left Bumper"
+msgstr "Левый бампер"
+
+#: src/options/options_settings.cpp:1213
+#, fuzzy
+msgid "Left Stick Click"
+msgstr "Нажатие левого стика"
+
+#: src/options/options_settings.cpp:1213
+#, fuzzy
+msgid "Right Stick Click"
+msgstr "Нажатие правого стика"
+
+#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+#: src/players/lost_controller.cpp:189
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or Player {1}: press {2} to take over."
+msgstr ""
+"Контроллер игрока {0} отключен.\n"
+"Подключи его снова, или игрок {1}: нажми {2}, чтобы сменить его."
+
+#: src/players/lost_controller.cpp:193
+#, fuzzy
+msgid ""
+"Controller reconnected.\n"
+"Press any button to resume."
+msgstr ""
+"Контроллер снова подключен.\n"
+"Нажми любую кнопку, чтобы продолжить."
+
+#: src/players/lost_controller.cpp:194
+#, fuzzy
+msgid ""
+"Controller disconnected.\n"
+"Reconnect your controller to continue."
+msgstr ""
+"Контроллер отключен.\n"
+"Подключи контроллер снова, чтобы продолжить."
+
+#. the question box (2 lines): {0} = the player's number.
+#: src/players/lost_controller.cpp:198
+#, fuzzy
+msgid ""
+"Player {0}'s controller is back.\n"
+"Player {0}: press any button to resume."
+msgstr ""
+"Контроллер игрока {0} вернулся.\n"
+"Игрок {0}: нажми любую кнопку, чтобы продолжить."
+
+#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+#: src/players/lost_controller.cpp:205
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or press {1} to drop out Player {0}."
+msgstr ""
+"Контроллер игрока {0} отключен.\n"
+"Подключи его снова или нажми {1}, чтобы отключить игрока {0}."
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Normal"
+msgstr "Обычный"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Greeny"
+msgstr "Зеленый"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Bluey"
+msgstr "Синий"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Reddy"
+msgstr "Красный"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Snipe"
+msgstr "Язвилла"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Ratcicle"
+msgstr "Хладокрыс"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Magmadon"
+msgstr "Магмадон"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Skeleton"
+msgstr "Скелет"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Spike"
+msgstr "Вредень"
+
+#. the heroes' names, as the game writes them in this language.
+#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#, fuzzy
+msgid "Coco"
+msgstr "Коко"
+
+#: src/players/outfit_picker.cpp:509
+#, fuzzy
+msgid "Old School"
+msgstr "Старая школа"
+
+#: src/players/outfit_picker.cpp:520
+#, fuzzy
+msgid "Orange"
+msgstr "Оранжевый"
+
+#. the heroes' names, as the game writes them in this language.
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#, fuzzy
+msgid "Crash"
+msgstr "Крэш"
+
+#: src/players/outfit_picker.cpp:1091
+#, fuzzy
+msgid "Wear"
+msgstr "Надеть"
+
+#. the chest: this player has picked an outfit.
+#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#, fuzzy
+msgid "Ready!"
+msgstr "Готов!"
+
+#. {0} = the B button's picture (change the pick again).
+#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#, fuzzy
+msgid "{0} Change"
+msgstr "{0} Сменить"
+
+#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#, fuzzy
+msgid "Loading"
+msgstr "Загрузка"
+
+#. {0} = the A button's picture (wear this outfit).
+#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#, fuzzy
+msgid "{0} Wear"
+msgstr "{0} Надеть"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Ruby"
+msgstr "Рубиновый"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Exactly the same in every way but red"
+msgstr "Точно такой же, только красный"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Topaz"
+msgstr "Топазовый"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Exactly the same in every way but yellow"
+msgstr "Точно такой же, только желтый"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Jade"
+msgstr "Нефритовый"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Exactly the same in every way but green"
+msgstr "Точно такой же, только зеленый"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Sapphire"
+msgstr "Сапфировый"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Exactly the same in every way but blue"
+msgstr "Точно такой же, только синий"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Amethyst"
+msgstr "Аметистовый"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Exactly the same in every way but purple"
+msgstr "Точно такой же, только фиолетовый"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Rose Quartz"
+msgstr "Розовый кварц"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Exactly the same in every way but pink"
+msgstr "Точно такой же, только розовый"
+
+#: src/players/outfits.cpp:239
+#, fuzzy
+msgid "Carbon"
+msgstr "Черный"
+
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfits.cpp:852
+#, fuzzy
+msgctxt "outfit name"
+msgid "{0} {1}"
+msgstr "{0} {1}"
+
+#: src/players/pause_drop_out.cpp:43
+#, fuzzy
+msgid "Drop Out"
+msgstr "Отключиться"
+
+#: src/saves/save_library.cpp:764
+#, fuzzy
+msgid "Create New Save"
+msgstr "Новое сохранение"
+
+#: src/saves/save_library.cpp:848
+#, fuzzy
+msgid "Delete"
+msgstr "Удалить"
+
+#: src/saves/save_library.cpp:850
+#, fuzzy
+msgid "Rename"
+msgstr "Переименовать"
+
+#: src/saves/save_library.cpp:1095
+#, fuzzy
+msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+msgstr "Удалить это сохранение? Оно будет перемещено в папку Deleted saves."
+
+#: src/saves/save_library.cpp:1875
+#, fuzzy
+msgid "Backspace"
+msgstr "Стереть"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#, fuzzy
+msgid "HUD Hidden"
+msgstr "Интерфейс скрыт"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74
+#, fuzzy
+msgid "Press {0} to show it again"
+msgstr "Нажми {0}, чтобы показать снова"
+
+#: src/ui/main_menu_extras.cpp:45
+#, fuzzy
+msgid "Extras"
+msgstr "Дополнительно"
+
+#: src/ui/quit_game.cpp:55
+#, fuzzy
+msgid "Quit Game"
+msgstr "Выйти из игры"
+
+#: src/ui/quit_game.cpp:56
+#, fuzzy
+msgid "Are you sure you want to quit the game?"
+msgstr "Выйти из игры?"

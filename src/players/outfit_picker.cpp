@@ -115,6 +115,7 @@
 #include "more_players.h"
 #include "outfit_previews.h"
 #include "outfits.h"
+#include "../language/texts.h"
 
 REXCVAR_DEFINE_BOOL(outfit_picker, true, "CrashMoM",
                     "The chest in Crash's house: every player picks their outfit at the same time on a card "
@@ -502,10 +503,10 @@ struct Look {
   int outfit;  // for Crash's own look: the orange one (colours replace it)
   const char16_t* name;
 };
-constexpr Look kCrashLooks[] = {{0, u"Normal"},     {1, u"Greeny"},    {2, u"Bluey"},
-                                {3, u"Reddy"},      {4, u"Snipe"},     {5, u"Ratcicle"},
-                                {6, u"Magmadon"},   {7, u"Skeleton"},  {8, u"Spike"}};
-constexpr Look kCocoLooks[] = {{9, u"Coco"}, {10, u"Old School"}};
+constexpr Look kCrashLooks[] = {{0, trn(u"Normal")},     {1, trn(u"Greeny")},    {2, trn(u"Bluey")},
+                                {3, trn(u"Reddy")},      {4, trn(u"Snipe")},     {5, trn(u"Ratcicle")},
+                                {6, trn(u"Magmadon")},   {7, trn(u"Skeleton")},  {8, trn(u"Spike")}};
+constexpr Look kCocoLooks[] = {{9, trn(u"Coco")}, {10, trn(u"Old School")}};
 struct Colour {
   int outfit;  // the fur colour (0 = the look's own: orange)
 };
@@ -516,9 +517,10 @@ constexpr Colour kColours[kColourChoices] = {
     {0},                     {outfits::kCarbon},     {outfits::kCrashRed},    {outfits::kCrashYellow},
     {outfits::kCrashGreen}, {outfits::kCrashBlue}, {outfits::kCrashPurple}, {outfits::kCrashPink}};
 const char16_t* ColourName(int colour) {
-  return kColours[colour].outfit == 0 ? u"Orange" : outfits::FurWord(kColours[colour].outfit);
+  return kColours[colour].outfit == 0 ? tr(u"Orange").c_str() : outfits::FurWord(kColours[colour].outfit);
 }
-const char16_t* CharacterName(int character) { return character == 1 ? u"Coco" : u"Crash"; }
+// TR: the heroes' names, as the game writes them in this language.
+const char16_t* CharacterName(int character) { return character == 1 ? tr(u"Coco").c_str() : tr(u"Crash").c_str(); }
 constexpr int kCrashLookCount = int(std::size(kCrashLooks)), kCocoLookCount = int(std::size(kCocoLooks));
 
 struct Pick {
@@ -526,6 +528,8 @@ struct Pick {
 };
 int LookCount(int character) { return character == kCoco ? kCocoLookCount : kCrashLookCount; }
 const Look& LookOf(const Pick& k) { return k.character == kCoco ? kCocoLooks[k.look] : kCrashLooks[k.look]; }
+// The look's name in the text language (the tables keep the English: texts.h trn).
+const char16_t* LookName(const Pick& k) { return tr(LookOf(k).name).c_str(); }
 bool HasColour(const Pick& k) {
   return k.character == kCrash && (k.look == 0 || outfits::CanTint(LookOf(k).outfit));
 }
@@ -538,7 +542,7 @@ int OutfitOfPick(const Pick& k) {
 // name "Normal" is the look row's word).
 std::u16string PickName(const Pick& k) {
   const int outfit = OutfitOfPick(k);
-  return outfit == 0 ? std::u16string(u"Crash") : outfits::OutfitName(outfit, LookOf(k).name);
+  return outfit == 0 ? tr(u"Crash") : outfits::OutfitName(outfit, LookName(k));
 }
 Pick PickOfOutfit(int outfit) {
   Pick k;
@@ -1083,8 +1087,8 @@ void PromptBar(PPCContext& ctx, uint8_t* base, bool one, bool wear, bool hover_b
     const char* name;
     std::u16string_view one;
   };
-  const P prompts[] = {{"LowerLeftText", u"Back"}, {"LowerLeftButton", u"\u00B2"},
-                       {"LowerRightText", wear ? u"Wear" : u""}, {"LowerRightButton", wear ? u"\u00B1" : u""},
+  const P prompts[] = {{"LowerLeftText", tr(u"Back")}, {"LowerLeftButton", u"\u00B2"},
+                       {"LowerRightText", wear ? std::u16string_view(tr(u"Wear")) : u""}, {"LowerRightButton", wear ? u"\u00B1" : u""},
                        {"UpperLeftText", u""},  {"UpperLeftButton", u""},
                        {"UpperRightText", u""}, {"UpperRightButton", u""}};
   for (const P& q : prompts) {
@@ -1350,15 +1354,17 @@ void DrawPage(PPCContext& ctx, uint8_t* base, int side, int p, const PageXf& xf,
     Hide(base, d.desc);
     Hide(base, d.arrow_l);
     Hide(base, d.arrow_r);
-    PlaceText(ctx, base, c.ready, u"Ready!", mid_x, PageLineTop(xf, 190, 1.45f), kFontAtScale1 * 1.45f * xf.k, kYellow);
-    PlaceText(ctx, base, c.prompt, ForPlayer(u"² Change", p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
+    // TR: the chest: this player has picked an outfit.
+    PlaceText(ctx, base, c.ready, tr(u"Ready!"), mid_x, PageLineTop(xf, 190, 1.45f), kFontAtScale1 * 1.45f * xf.k, kYellow);
+    // TR: {0} = the B button's picture (change the pick again).
+    PlaceText(ctx, base, c.prompt, ForPlayer(trf(tr(u"{0} Change"), {u"²"}), p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
               kFontAtScale1 * 0.8f * xf.k, Hovered(p, kHitChange) ? kYellow : kCyan);
     AddHit(p, kHitChange, -1, mid_x, xf.Y(kPgPromptLine + 18), width * 0.6f, font);
   } else {
     // The three choices by name (the arrows drawn below, the page's own).
     PlaceChoice(ctx, base, c, p, kRowCharacter, c.character, CharacterName(pl.pick.character), mid_x,
                 PageLineTop(xf, kPgRowLine[0], kPgRowScale), font, room, width, 0, 0);
-    PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookOf(pl.pick).name, mid_x,
+    PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookName(pl.pick), mid_x,
                 PageLineTop(xf, kPgRowLine[1], kPgRowScale), font, room, width, 0, 0);
     if (HasColour(pl.pick)) {
       PlaceChoice(ctx, base, c, p, kRowColour, c.colour, ColourName(pl.pick.colour), mid_x,
@@ -1390,14 +1396,15 @@ void DrawPage(PPCContext& ctx, uint8_t* base, int side, int p, const PageXf& xf,
     PlaceDescription(ctx, base, d.desc, xf, key, own);
     // "Loading" where the model stands while the pick loads (the original's).
     if (pl.waiting || (!alone && !locked && outfit_previews::Active() && outfit_previews::Loading(side))) {
-      PlaceText(ctx, base, c.ready, u"Loading", xf.X(kPgLoading[0]), PageLineTop(xf, kPgLoading[1] - 18, 1.0f),
+      PlaceText(ctx, base, c.ready, tr(u"Loading"), xf.X(kPgLoading[0]), PageLineTop(xf, kPgLoading[1] - 18, 1.0f),
                 kFontAtScale1 * xf.k * Pulse(), kCyan);
     } else {
       Hide(base, c.ready);
     }
     // 2 players: the page's own "A Wear" under the panel (1 player: the bar).
     if (!alone && !locked) {
-      PlaceText(ctx, base, c.prompt, ForPlayer(u"± Wear", p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
+      // TR: {0} = the A button's picture (wear this outfit).
+      PlaceText(ctx, base, c.prompt, ForPlayer(trf(tr(u"{0} Wear"), {u"±"}), p), mid_x, PageLineTop(xf, kPgPromptLine, 0.8f),
                 kFontAtScale1 * 0.8f * xf.k, Hovered(p, kHitWear) ? kYellow : kCyan);
       AddHit(p, kHitWear, -1, mid_x, xf.Y(kPgPromptLine + 18), width * 0.6f, font);
     } else {
@@ -1455,8 +1462,10 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
     Hide(base, c.arrow_l);
     Hide(base, c.arrow_r);
     PlaceName(ctx, base, c.outfit, PickName(pl.pick), cx, y + 8, fs, kGreen, w - 40);
-    PlaceText(ctx, base, c.ready, u"Ready!", cx, y + row + 6, fs * 1.45f, kYellow);
-    PlaceText(ctx, base, c.prompt, ForPlayer(u"² Change", p), cx, y + row * 2 + 30, fs * 0.8f,
+    // TR: the chest: this player has picked an outfit.
+    PlaceText(ctx, base, c.ready, tr(u"Ready!"), cx, y + row + 6, fs * 1.45f, kYellow);
+    // TR: {0} = the B button's picture (change the pick again).
+    PlaceText(ctx, base, c.prompt, ForPlayer(trf(tr(u"{0} Change"), {u"²"}), p), cx, y + row * 2 + 30, fs * 0.8f,
               Hovered(p, kHitChange) ? kYellow : kCyan);
     AddHit(p, kHitChange, -1, cx, y + row * 2 + 30 + fs * 0.4f, w * 0.6f, fs);
     return;
@@ -1470,7 +1479,7 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
   PlaceChoice(ctx, base, c, p, kRowCharacter, c.character, CharacterName(pl.pick.character), cx, y, fs, room, w,
               arrow_dx, L.arrow);
   y += row;
-  PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookOf(pl.pick).name, cx, y, fs, room, w, arrow_dx, L.arrow);
+  PlaceChoice(ctx, base, c, p, kRowOutfit, c.outfit, LookName(pl.pick), cx, y, fs, room, w, arrow_dx, L.arrow);
   y += row;
   if (HasColour(pl.pick)) {
     PlaceChoice(ctx, base, c, p, kRowColour, c.colour, ColourName(pl.pick.colour), cx, y, fs, room, w, arrow_dx,
@@ -1482,9 +1491,10 @@ void DrawCard(PPCContext& ctx, uint8_t* base, int slot, int p, const RowLayout& 
   // The prompt: "Loading" while the pick (or its model) loads, "A Wear" (not
   // on a locked look).
   if (pl.waiting || (!locked && outfit_previews::Active() && outfit_previews::Loading(slot))) {
-    PlaceText(ctx, base, c.prompt, u"Loading", cx, y + 6, fs * 0.8f * Pulse(), kCyan);
+    PlaceText(ctx, base, c.prompt, tr(u"Loading"), cx, y + 6, fs * 0.8f * Pulse(), kCyan);
   } else if (!locked) {
-    PlaceText(ctx, base, c.prompt, ForPlayer(u"± Wear", p), cx, y, fs * 0.8f,
+    // TR: {0} = the A button's picture (wear this outfit).
+    PlaceText(ctx, base, c.prompt, ForPlayer(trf(tr(u"{0} Wear"), {u"±"}), p), cx, y, fs * 0.8f,
               Hovered(p, kHitWear) ? kYellow : kCyan);
     AddHit(p, kHitWear, -1, cx, y + fs * 0.4f, w * 0.6f, fs);
   } else {

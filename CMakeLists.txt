@@ -35,6 +35,7 @@ set(CRASHMOM_SOURCES
     src/settings_list.cpp        # --list_settings: every setting written out for the launcher
     src/app_restart.cpp          # Options -> "Restart Now": the game closes and starts again
     src/language/language.cpp    # text and voice language from the settings (findings/49)
+    src/language/texts.cpp       # the port's own texts in the player's language (languages/*.po)
     src/crash_report.cpp         # a crash writes its named call stack into the log + crash-*.txt
     src/debug/host_symbols.cpp   # host code address -> function name / original PowerPC instruction
     src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
@@ -308,6 +309,9 @@ endif()
 add_custom_target(crash_mom_stage_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/assets $<TARGET_FILE_DIR:crash_mom>/assets
+    # The translations of the port's own texts (src/language/texts.h).
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/languages $<TARGET_FILE_DIR:crash_mom>/languages
     VERBATIM)
 add_dependencies(crash_mom_stage_assets crash_mom)  # the exe's folder exists by then
 

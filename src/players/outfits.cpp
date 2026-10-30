@@ -84,6 +84,7 @@
 #include "more_players.h"
 #include "outfit_picker.h"
 #include "outfit_previews.h"
+#include "../language/texts.h"
 
 REXCVAR_DEFINE_BOOL(carbon_colours, true, "CrashMoM",
                     "Crash in colours at the chest (red, yellow, green, blue, purple, pink: players 3-4 start "
@@ -215,17 +216,17 @@ struct CrashColour {
 // In the chest's order. Tattoos: the yellow Crash's arm stripes are blue-violet
 // in the short; the others' are a deeper shade of their fur.
 constexpr CrashColour kColours[] = {
-    {kCrashRed, "red", u"Ruby", u"Exactly the same in every way but red",
+    {kCrashRed, "red", trn(u"Ruby"), trn(u"Exactly the same in every way but red"),
      {9, .66f, .84f}, {12, .34f, 1.0f}, {5, .70f, .40f}, {352, .66f, .42f}, {7, .70f, .56f}},
-    {kCrashYellow, "yellow", u"Topaz", u"Exactly the same in every way but yellow",
+    {kCrashYellow, "yellow", trn(u"Topaz"), trn(u"Exactly the same in every way but yellow"),
      {48, .56f, .90f}, {52, .28f, 1.0f}, {28, .66f, .40f}, {248, .42f, .66f}, {30, .62f, .54f}},
-    {kCrashGreen, "green", u"Jade", u"Exactly the same in every way but green",
+    {kCrashGreen, "green", trn(u"Jade"), trn(u"Exactly the same in every way but green"),
      {104, .45f, .76f}, {92, .24f, .94f}, {105, .55f, .34f}, {125, .60f, .33f}, {110, .58f, .50f}},
-    {kCrashBlue, "blue", u"Sapphire", u"Exactly the same in every way but blue",
+    {kCrashBlue, "blue", trn(u"Sapphire"), trn(u"Exactly the same in every way but blue"),
      {228, .40f, .92f}, {224, .17f, 1.0f}, {225, .40f, .33f}, {236, .55f, .42f}, {224, .40f, .50f}},
-    {kCrashPurple, "purple", u"Amethyst", u"Exactly the same in every way but purple",
+    {kCrashPurple, "purple", trn(u"Amethyst"), trn(u"Exactly the same in every way but purple"),
      {284, .40f, .80f}, {290, .18f, .98f}, {285, .45f, .33f}, {270, .55f, .36f}, {282, .45f, .50f}},
-    {kCrashPink, "pink", u"Rose Quartz", u"Exactly the same in every way but pink",
+    {kCrashPink, "pink", trn(u"Rose Quartz"), trn(u"Exactly the same in every way but pink"),
      {350, .36f, 1.0f}, {350, .15f, 1.0f}, {350, .50f, .46f}, {335, .60f, .50f}, {352, .52f, .70f}},
 };
 constexpr int kColourCount = int(sizeof(kColours) / sizeof(kColours[0]));
@@ -235,7 +236,7 @@ constexpr int kColourCount = int(sizeof(kColours) / sizeof(kColours[0]));
 // texture (Crash_Player2.bmp) where the orange one has each part: fur h 45
 // s 0.36 v 0.91, chest h 60 s 0.13 v 1.0, eyebrows h 38 s 0.29 v 0.36,
 // tattoos h 48 s 0.31 v 0.43 (medians).
-constexpr CrashColour kCarbonHair = {kCarbon, "carbon", u"Carbon", u"",
+constexpr CrashColour kCarbonHair = {kCarbon, "carbon", trn(u"Carbon"), u"",
                                      {48, .36f, .91f}, {60, .13f, 1.0f}, {38, .29f, .36f}, {48, .31f, .43f},
                                      {36, .33f, .54f}};
 const CrashColour* ColourOf(int outfit) {
@@ -841,13 +842,14 @@ int ColourIndex(int outfit) {
 }
 const char16_t* FurWord(int fur) {
   const CrashColour* c = ColourOf(fur);
-  return c ? c->word : u"";
+  return c ? tr(c->word).c_str() : u"";  // (texts.h: the reference lives all session)
 }
 std::u16string OutfitName(int outfit, const char16_t* look_name) {
   const int fur = FurColourOf(outfit);
   if (!fur) return std::u16string(look_name);
   // Crash's own look: "Ruby Crash", "Carbon Crash"; another look: "Ruby Ratcicle".
-  return std::u16string(FurWord(fur)) + u" " + (LookOfOutfit(outfit) == 0 ? u"Crash" : look_name);
+  // TR: an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+  return trf(trc("outfit name", u"{0} {1}"), {FurWord(fur), LookOfOutfit(outfit) == 0 ? tr(u"Crash").c_str() : look_name});
 }
 int ColourCount() { return kColourCount; }
 float ColourHue(int index) { return index >= 0 && index < kColourCount ? kColours[index].body.h : 0.0f; }
@@ -871,7 +873,7 @@ uint32_t ListEntryOf(int outfit) {
 const char16_t* ColourDescription(int outfit) {
   if (outfit == kCarbon || !IsCarbon(outfit)) return u"";  // (Carbon: the game's own text)
   const CrashColour* c = ColourOf(outfit);
-  return c ? c->text : u"";
+  return c && *c->text ? tr(c->text).c_str() : u"";
 }
 int ShownOutfit() { return int(Read32(kSelection)); }
 uint32_t ShownTemplateKey() { return kSelection + 12; }
@@ -1445,8 +1447,8 @@ extern "C" REX_FUNC(sub_820E1228) {
   if (IsTinted(outfit)) return;  // (a coloured look: the picker writes its own name)
   scrooby::SetText(ctx, base, Read32(screen + 0x24), OutfitName(outfit, u""));
   if (Read32(kSelection) != uint32_t(outfit)) return;  // (a locked entry shows "Locked")
-  scrooby::SetText(ctx, base, Read32(screen + 0x28), c->text);
-  scrooby::SetText(ctx, base, Read32(screen + 0x2C), c->text);
+  scrooby::SetText(ctx, base, Read32(screen + 0x28), tr(c->text));
+  scrooby::SetText(ctx, base, Read32(screen + 0x2C), tr(c->text));
 }
 
 extern "C" REX_FUNC(sub_820E15A8) {

@@ -16,6 +16,7 @@
 #include "../players/pause_drop_out.h"
 #include "../players/players_setup.h"
 #include "../ui/scrooby.h"
+#include "../language/texts.h"
 
 extern "C" REX_FUNC(__imp__sub_82121B48);  // the pause menu's decision (node 868)
 extern "C" REX_FUNC(__imp__sub_82121EA8);  // the pause menu without Save's decision (node 901)
@@ -27,7 +28,7 @@ std::atomic<bool> g_open_next{false};
 
 // Scrooby menu item: +140 its look (the Text drawn); Text +152 its string.
 constexpr uint32_t kItemLook = 140, kTextString = 152;
-constexpr std::u16string_view kWords = u"Achievements";
+constexpr std::u16string_view kWords = trn(u"Achievements");  // shown as tr()
 
 // THE PAUSE MENU'S EXTRA ITEMS (options_page.cpp AddPauseItems): right
 // after Options, "Players" (players/players_setup.h) then "Achievements".
@@ -38,7 +39,7 @@ constexpr std::u16string_view kWords = u"Achievements";
 // player out now: players/pause_drop_out.h), so on them every shown item
 // from index 3 on is one place higher than the decision counts it.
 constexpr int kExtras = 2;  // Players, Achievements
-constexpr std::u16string_view kExtraWords[kExtras] = {u"Players", kWords};
+constexpr std::u16string_view kExtraWords[kExtras] = {trn(u"Players"), kWords};
 constexpr int kDropOutIndex = 3;  // Drop Out's place in the decisions' numbering
 struct PausePage {
   std::string_view name;
@@ -133,12 +134,12 @@ bool OpenNextPending() { return g_open_next.load(); }
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (options_page::PauseAchievementsAvailable()) {
     for (const PausePage& p : kPausePages) {
-      for (int e = 0; e < kExtras; ++e) Word(ctx, base, p.name, "PauseMenu", ShownOptionsItem(p) + 1 + e, kExtraWords[e]);
+      for (int e = 0; e < kExtras; ++e) Word(ctx, base, p.name, "PauseMenu", ShownOptionsItem(p) + 1 + e, tr(kExtraWords[e]));
     }
   }
   // The main menu's "Players" (options_page.cpp PatchMainMenu).
   if (options_page::MainMenuAvailable()) {
-    Word(ctx, base, "GameStart_Start_Xenon", "StartMenu", options_page::kMainMenuPlayersItem, kExtraWords[0]);
+    Word(ctx, base, "GameStart_Start_Xenon", "StartMenu", options_page::kMainMenuPlayersItem, tr(kExtraWords[0]));
   }
 }
 

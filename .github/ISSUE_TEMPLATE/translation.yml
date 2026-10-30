@@ -1,0 +1,54 @@
+# The "Translation" form on GitHub's New issue page (languages/README.md links it).
+name: Translation
+description: A wrong, odd or missing text in one of the port's languages.
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping with the translations. The port's own texts started as machine drafts, so fixes from
+        people who speak the language are the most useful kind. See [languages/README.md](https://github.com/Maxilure/MindOver-Recomp/blob/main/languages/README.md).
+        Texts that come from the game itself (its menus, tutorials, subtitles) are the original translations and
+        stay as they are.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Français (French)
+        - Deutsch (German)
+        - Italiano (Italian)
+        - Español (Spanish)
+        - Nederlands (Dutch)
+        - Dansk (Danish)
+        - Suomi (Finnish)
+        - Norsk (Norwegian)
+        - Svenska (Swedish)
+        - Русский (Russian)
+        - Português (Brasil)
+        - Another language (say which below)
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where it shows
+      description: The screen or menu, for example "Options, Graphics tab, Motion Blur".
+  - type: textarea
+    id: now
+    attributes:
+      label: What it says now
+    validations:
+      required: true
+  - type: textarea
+    id: better
+    attributes:
+      label: What it should say
+      description: Your version. A note on why helps (the game's own word for it, a grammar slip, too long for its box...).
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag a picture in here.

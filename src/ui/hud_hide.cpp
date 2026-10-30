@@ -18,6 +18,7 @@
 #include "../cheats/cheats.h"
 #include "hud_scale.h"
 #include "scrooby.h"
+#include "../language/texts.h"
 
 namespace hud_hide {
 namespace {
@@ -69,10 +70,10 @@ void Toggle() {
     // The key the bind has now (F2 unless changed in settings.toml).
     std::string key = rex::cvar::GetFlagByName("bind_hide_hud");
     if (key.empty()) key = "F2";
-    const std::string line = "Press " + key + " to show it again";
-    achievements::ShowNotice(u"HUD Hidden", std::u16string(line.begin(), line.end()));
+    // TR: {0} = the key that shows the HUD again ("F2").
+    achievements::ShowNotice(tr(u"HUD Hidden"), trf(tr(u"Press {0} to show it again"), {std::u16string(key.begin(), key.end())}));
   } else {
-    achievements::DropWaitingNotice(u"HUD Hidden");  // not shown yet: no longer true
+    achievements::DropWaitingNotice(tr(u"HUD Hidden"));  // not shown yet: no longer true
   }
   REXLOG_INFO("HUD: {} (key, not a cheat)", hide ? "hidden" : "shown");
 }

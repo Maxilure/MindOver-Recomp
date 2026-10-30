@@ -44,7 +44,7 @@
 
 REXCVAR_DEFINE_STRING(text_language, "en-us", "CrashMoM",
                       "Language of the game's text: en-us (default), en-gb, fr, fr-ca, de, it, es, nl, da, "
-                      "fi, no, sv, ru. Takes effect at the next start");
+                      "fi, no, sv, ru, pt-br (the port's own texts only; the game's stay English). Takes effect at the next start");
 REXCVAR_DEFINE_STRING(voice_language, "auto", "CrashMoM",
                       "Language of the voices: auto (the text language's own, else English), "
                       "english, french, german, italian, spanish, dutch, danish, finnish, "
@@ -55,7 +55,7 @@ extern "C" REX_FUNC(__imp__sub_82279D48);  // mount one more .rcf archive (r3 it
 namespace language {
 namespace {
 
-// The 13 real text languages of the banks (letters: sub_82262980 and the
+// The 13 real text languages of the banks (+ pt-br, last) (letters: sub_82262980 and the
 // bank sub-chunk names, findings/49 s.1). Order = the Options row's.
 const std::vector<Text> kTexts = {
     {"en-us", 'U', u"English (US)", "english"},
@@ -71,6 +71,9 @@ const std::vector<Text> kTexts = {
     {"no", 'N', u"Norsk", "norwegian"},
     {"sv", 'W', u"Svenska", "swedish"},
     {"ru", 'R', u"Русский", "russian"},
+    // Not a disc language: the game's own text stays English (US) (letter U),
+    // only the port's texts are Brazilian Portuguese (texts.h, languages/pt_BR.po).
+    {"pt-br", 'U', u"Português (Brasil)", "english"},
 };
 
 // The voices: folder name (= setting value), archive. The game's own pairs

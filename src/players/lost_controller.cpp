@@ -19,6 +19,7 @@
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
 #include "more_players.h"
+#include "../language/texts.h"
 
 REXCVAR_DEFINE_BOOL(lost_controller, true, "CrashMoM",
                     "A player in a level loses its controller: pause with the game's question box, any "
@@ -184,24 +185,25 @@ std::u16string Message(int phase, int p, bool solo, int joiner = -1) {
   const std::u16string n(1, char16_t(u'1' + p));
   if (solo && phase == kLost && joiner >= 0) {
     // Someone out of the game can take over (TAKING OVER above).
-    return u"Player " + n + u"'s controller disconnected.\nReconnect it, or Player " +
-           std::u16string(1, char16_t(u'1' + joiner)) + u": press " + std::u16string(1, kGlyphStart) +
-           u" to take over.";
+    // TR: the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+    return trf(tr(u"Player {0}'s controller disconnected.\nReconnect it, or Player {1}: press {2} to take over."),
+               {n, std::u16string(1, char16_t(u'1' + joiner)), std::u16string(1, kGlyphStart)});
   }
   if (solo) {
-    return phase == kBack ? u"Controller reconnected.\nPress any button to resume."
-                          : u"Controller disconnected.\nReconnect your controller to continue.";
+    return phase == kBack ? tr(u"Controller reconnected.\nPress any button to resume.")
+                          : tr(u"Controller disconnected.\nReconnect your controller to continue.");
   }
   if (phase == kBack) {
-    return u"Player " + n + u"'s controller is back.\nPlayer " + n +
-           u": press any button to resume.";
+    // TR: the question box (2 lines): {0} = the player's number.
+    return trf(tr(u"Player {0}'s controller is back.\nPlayer {0}: press any button to resume."), {n});
   }
   // The MENU's Y picture, not the play prompt's: the box is a menu, so on the
   // keyboard its Y is the menu Y key (Backspace by default), while the play
   // prompt "´" showed Heavy attack's key (right mouse button), which in a menu
   // means Back: pressing what the box showed did nothing (2026-10-15).
-  return u"Player " + n + u"'s controller disconnected.\nReconnect it, or press " +
-         std::u16string(1, prompt_icons::MenuGlyph(kGlyphY)) + u" to drop out Player " + n + u".";
+  // TR: the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+  return trf(tr(u"Player {0}'s controller disconnected.\nReconnect it, or press {1} to drop out Player {0}."),
+             {n, std::u16string(1, prompt_icons::MenuGlyph(kGlyphY))});
 }
 
 void SetText(PPCContext& ctx, uint8_t* base, uint32_t fe, const std::u16string& text) {

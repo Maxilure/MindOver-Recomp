@@ -16,6 +16,7 @@
 #include "../input_record.h"
 #include "../ui/scrooby.h"
 #include "lost_controller.h"
+#include "../language/texts.h"
 
 extern "C" REX_FUNC(sub_82261800);         // front end: play a sound (the port's wrapper, saves/save_library.cpp)
 extern "C" REX_FUNC(__imp__sub_820D9E48);  // menu screen action: the "open" step (A / B / START)
@@ -39,7 +40,7 @@ constexpr uint32_t kSoundSelect = 0x82022450, kSoundBack = 0x820222DC, kSoundWip
 // picture; prompt_icons turns it into the owner's look (Tab on a keyboard).
 constexpr std::string_view kButtonsPage = "FE_Buttons";
 constexpr std::string_view kPromptText = "UpperLeftText", kPromptButton = "UpperLeftButton";
-constexpr std::u16string_view kWords = u"Drop Out", kGlyph = u"µ";
+constexpr std::u16string_view kWords = trn(u"Drop Out"), kGlyph = u"µ";  // words shown as tr(kWords)
 // A pause decision that hasn't run for this long = the pause menu was left
 // (or not up): presses are counted afresh (a Back held while the menu opens
 // isn't a press).
@@ -99,9 +100,9 @@ void ShowPrompt(PPCContext& ctx, uint8_t* base, bool show) {
   const uint32_t text = scrooby::FindText(ctx, base, page, kPromptText);
   const uint32_t button = scrooby::FindText(ctx, base, page, kPromptButton);
   if (!text || !button) return;
-  const bool ours = Says(base, text, kWords);
+  const bool ours = Says(base, text, tr(kWords));
   if (show) {
-    if (!ours) scrooby::SetText(ctx, base, text, kWords);
+    if (!ours) scrooby::SetText(ctx, base, text, tr(kWords));
     if (!ours || TextOf(base, button).empty()) scrooby::SetText(ctx, base, button, kGlyph);
   } else if (ours) {  // another screen's prompt there now: left alone
     scrooby::SetText(ctx, base, text, u"");

@@ -53,6 +53,7 @@
 #include "quick_load.h"
 #include "rename_screen.h"
 #include "save_files.h"
+#include "../language/texts.h"
 
 // The originals of the functions we override, and the ones we call.
 extern "C" REX_FUNC(__imp__sub_82258DE8);  // slot -> file name
@@ -760,7 +761,7 @@ void DecoratePanels(PPCContext& ctx, uint8_t* base) {
     // (Enter 0x820CC910: element 16 + slot gets GameSlot_Empty, Name an
     // empty string), so it looks like the game's own empty slot.
     if (item == kCreateNew) {
-      SetText(ctx, base, text(g.preview_shown ? "Name" : "Date"), u"Create New Save");
+      SetText(ctx, base, text(g.preview_shown ? "Name" : "Date"), tr(u"Create New Save"));
     }
     // The menu item: selectable only while the panel shows.
     if (g.slot_menu) {
@@ -844,9 +845,9 @@ void Refill(PPCContext& ctx, uint8_t* base, uint32_t screen) {
 // that sets all eight FE_Buttons texts (empty first, then its own: Back,
 // Select) and it starts after the screen: texts set in Enter were wiped.
 void SetPrompts(PPCContext& ctx, uint8_t* base, bool on) {
-  SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", on ? u"Delete" : u"");
+  SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", on ? std::u16string_view(tr(u"Delete")) : u"");
   SetPromptText(ctx, base, "FE_Buttons", "UpperLeftButton", on ? u"´" : u"");
-  SetPromptText(ctx, base, "FE_Buttons", "UpperRightText", on ? u"Rename" : u"");
+  SetPromptText(ctx, base, "FE_Buttons", "UpperRightText", on ? std::u16string_view(tr(u"Rename")) : u"");
   SetPromptText(ctx, base, "FE_Buttons", "UpperRightButton", on ? u"³" : u"");
   g.prompts_shown = on ? 1 : 0;
 }
@@ -1091,8 +1092,8 @@ void HandleDeleteQuestion(PPCContext& ctx, uint8_t* base, int32_t no, int32_t ye
                                                            : "FE_TRG_Message";
     }
     SetPromptText(ctx, base, page, "Message",
-                  u"Are you sure you wish to delete this save file? "
-                  u"It will be moved to the Deleted saves folder.");
+                  tr(u"Are you sure you wish to delete this save file? "
+                     u"It will be moved to the Deleted saves folder."));
   }
   const int32_t exit = int32_t(ctx.r3.u32);
   if (exit != no && exit != yes) {
@@ -1871,7 +1872,7 @@ extern "C" REX_FUNC(sub_820D58B8) {
   if (REXCVAR_GET(save_library) && Read32(base, self + kNameScreenState) == kNameScreenTyping) {
     if (!g_backspace_prompt) {
       g_backspace_prompt = true;
-      SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", u"Backspace");
+      SetPromptText(ctx, base, "FE_Buttons", "UpperLeftText", tr(u"Backspace"));
       SetPromptText(ctx, base, "FE_Buttons", "UpperLeftButton", u"³");
     }
     const uint16_t down = MenuButtonsDown(ctx, base, rex::input::X_INPUT_GAMEPAD_X);

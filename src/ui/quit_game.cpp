@@ -14,6 +14,7 @@
 #include "../options/options_page.h"
 #include "main_menu_extras.h"
 #include "scrooby.h"
+#include "../language/texts.h"
 
 extern "C" REX_FUNC(__imp__sub_8225F758);  // ShowConfirmMessage (front end, r4 text name, f1 timer)
 extern "C" REX_FUNC(__imp__sub_823574E8);  // make heap r3 current, returns the previous
@@ -51,8 +52,8 @@ constexpr uint32_t kStateOpen = 3, kStatePicked = 5;
 
 constexpr std::string_view kMainMenuPage = "GameStart_Start_Xenon";
 constexpr std::string_view kMainMenuMenu = "StartMenu";
-constexpr std::u16string_view kItemWords = u"Quit Game";
-constexpr std::u16string_view kQuestion = u"Are you sure you want to quit the game?";
+constexpr std::u16string_view kItemWords = trn(u"Quit Game");  // shown as tr(kItemWords)
+constexpr std::u16string_view kQuestion = trn(u"Are you sure you want to quit the game?");
 
 bool g_asking = false;
 // After No: the press that answered (A on "No", or B) is still the newest
@@ -110,7 +111,7 @@ void Ask(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     ctx = saved;
   }
   scrooby::Call(__imp__sub_823574E8, ctx, base, heap);
-  scrooby::SetText(ctx, base, Read32(base, fe + kBoxTextElement), kQuestion);
+  scrooby::SetText(ctx, base, Read32(base, fe + kBoxTextElement), tr(kQuestion));
   if (const uint32_t menu = MainMenu(ctx, base)) scrooby::SetVisible(base, menu, false);
   *GuestPtr(base, fe + kMenuFlags) &= uint8_t(~kMenusTakeInput);
   g_asking = true;
@@ -153,7 +154,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   const uint32_t item = scrooby::Item(base, menu, options_page::kMainMenuQuitItem);
   const uint32_t text = item ? Read32(base, item + kItemLook) : 0;
   // Written once per page load (the page keeps our string until it's freed).
-  if (text && !Says(base, text, kItemWords)) scrooby::SetText(ctx, base, text, kItemWords);
+  if (text && !Says(base, text, tr(kItemWords))) scrooby::SetText(ctx, base, text, tr(kItemWords));
 }
 
 bool HoldDecision(PPCContext& ctx, uint8_t* base) {

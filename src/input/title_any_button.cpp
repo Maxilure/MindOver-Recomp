@@ -18,6 +18,7 @@
 #include "keyboard_mouse.h"
 #include "movie_skip.h"
 #include "players.h"
+#include "../language/texts.h"
 
 namespace title_any_button {
 namespace {
@@ -41,9 +42,8 @@ constexpr uint8_t kTriggerPressed = 30;
 // rate; the title acts on the first one it sees).
 constexpr auto kStartHold = std::chrono::milliseconds(150);
 
-// The title's text (English only: another language's string is left alone).
-constexpr std::u16string_view kOriginalText = u"Press START";
-constexpr std::u16string_view kOurText = u"Press Any Button";
+// The title's text, in every language (the port's own words, src/language/texts.h).
+constexpr std::u16string_view kOurText = trn(u"Press Any Button");  // shown as tr()
 constexpr uint32_t kTextString = 156;  // a text element's string (UTF-16 BE)
 
 uint32_t Read32(const uint8_t* base, uint32_t a) {
@@ -144,9 +144,11 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     if (!ch) break;
     now.push_back(ch);
   }
-  if (now != kOriginalText) return;  // ours already, or another language
-  scrooby::SetText(ctx, base, text, kOurText);
-  REXLOG_INFO("Title: \"{}\" -> \"Press Any Button\"", "Press START");
+  // Any language: the element is the title's own "Press START" line (in
+  // the game's text language), and ours is in the port's one (texts.h).
+  if (now == tr(kOurText)) return;  // ours already
+  scrooby::SetText(ctx, base, text, tr(kOurText));
+  REXLOG_INFO("Title: the \"Press START\" line -> \"Press Any Button\" (in the text language)");
 }
 
 }  // namespace title_any_button

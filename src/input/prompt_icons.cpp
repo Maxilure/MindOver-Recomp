@@ -47,6 +47,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
 #include "stb_image.h"
+#include "../language/texts.h"
 
 REXCVAR_DEFINE_INT32(button_prompts, 0, "CrashMoM",
                      "Button prompts: 0 = the device used last, 1 = keyboard and mouse keys, "
@@ -2300,16 +2301,19 @@ std::u16string SpinLine(const std::u16string& text) {
     button = ButtonGlyph("LB", words ? SlotSize::kText : SlotSize::kBig);
   }
   if (!button) return {};
-  if (words) return u"Or press " + std::u16string(1, button);
+  // TR: a tutorial's extra line: {0} = the Spin key / LB button's picture.
+  if (words) return trf(tr(u"Or press {0}"), {std::u16string(1, button)});
   // "OR" first: the two lines are two ways to do the same move (playtest).
   const std::u16string spin = u"\u00B9\u00BC";
   const bool old_skool = text.find(u"\u00B3,\u00B3,\u00B3") != std::u16string::npos;
-  if (old_skool && REXCVAR_GET(keep_spinning)) return u"OR Hold " + std::u16string(1, button);
+  // TR: a tutorial's 2nd line (capitals like the game's tutorials): {0} = the Spin key / LB button's picture.
+  if (old_skool && REXCVAR_GET(keep_spinning)) return trf(tr(u"OR Hold {0}"), {std::u16string(1, button)});
   std::u16string line = text;
   for (size_t at = line.find(spin); at != std::u16string::npos; at = line.find(spin, at + 1)) {
     line.replace(at, spin.size(), 1, button);
   }
-  return u"OR " + line;
+  // TR: a tutorial's 2nd line (capitals like the game's tutorials): {0} = the game's own line with the Spin key's picture.
+  return trf(tr(u"OR {0}"), {line});
 }
 
 // One text: its spin line (above) and its prompt characters as player

@@ -29,6 +29,7 @@
 #include "cheat_menu.h"
 #include "free_camera.h"
 #include "spawn.h"
+#include "../language/texts.h"
 
 namespace cheats {
 namespace {
@@ -226,7 +227,7 @@ void MarkCheated() {
                 "is marked as made with cheats");
     // The message on the game's own bar (achievements.h ShowNotice): shown
     // once a level is played (the bar only exists there).
-    achievements::ShowNotice(u"Cheats Enabled", u"No achievements until a save is loaded");
+    achievements::ShowNotice(tr(u"Cheats Enabled"), tr(u"No achievements until a save is loaded"));
   }
 }
 
@@ -725,7 +726,7 @@ void OnGameStarted(bool from_marked_save, int save_number) {
   }
   if (from_marked_save) {
     REXLOG_INFO("Cheats: save {} was MADE WITH CHEATS: no achievements while playing it", save_number);
-    achievements::ShowNotice(u"Save Made With Cheats", u"No achievements while playing this save");
+    achievements::ShowNotice(tr(u"Save Made With Cheats"), tr(u"No achievements while playing this save"));
   }
 }
 void OnSaveWritten(bool marked) {

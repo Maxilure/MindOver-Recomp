@@ -135,6 +135,36 @@ title logo is localized too (Il Dominio Sui Mutanti). 0 errors. Not tested:
 Windows.
 
 ## 7. The port's own text
-Texts written by the port (Options rows and descriptions, "Press Any Button",
-save-library prompts, the lost-controller question) are English only. A
-translation system for them is planned separately.
+
+The texts the port adds (Options rows and descriptions, the Players screen,
+the outfit chest, prompts, question boxes, "Press Any Button") are written in
+English in the code as `tr(u"...")` and translated through gettext `.po`
+files in `languages/` (src/language/texts.h, languages/README.md):
+
+- **Which file**: the running text language (`language::RunningText()`, fixed
+  for the session like the game's own letter). English (US/UK) = the code's
+  texts; French (Canada) reads `fr.po` under `fr_CA.po`; Norwegian = `nb.po`.
+  A missing entry falls back to English. `<game folder>/user/languages/<code>.po`
+  is read instead of the shipped file (translators' tests).
+- **Brazilian Portuguese** (`pt-br`) is a text choice of its own: the game
+  runs with letter U (English US), only the port's texts are Portuguese. The
+  disc has no Portuguese bank.
+- **Glossary**: `tools/text_banks.py` pairs every string of the game's four
+  banks (bootup, frontend, ingame, persistent; 1,352 strings) with its English
+  by KEY (the same in every language of a bank), so translations use the
+  game's own terms (titan and outfit names, "jack", "drop out", the informal
+  "you" of its tutorials). The disc's own lines are used where the port says
+  the same thing ("Are you sure you want to quit the game?").
+- **The font**: Titans Small/Large draw ASCII, Latin-1 except × ÷, a few
+  Central European letters, Cyrillic А-я (no Ё/ё) and ’ † …. U+00A5-00BE are
+  its BUTTON PICTURES (± = A, µ = Back, « » = arrows and buttons, not quotes),
+  except © ® °. `tools/translations.py check` refuses anything else.
+- Machine drafts carry gettext's `fuzzy` flag until a speaker checks them; the
+  Language tab says so for the running language.
+- Not translated: the developer tools (F1 Tools, cheats, the F6 controls
+  window), the logs (kept English for bug reports), the FPS overlay's labels,
+  the launcher (later).
+- The title's "Press START" line is replaced in every language (by its element,
+  not its words). The save-wait messages (findings/33: "do not turn off the
+  Xbox 360 console" -> "Saving...") are still matched and reworded in the
+  ENGLISH bank only: other languages show the original console wording.

@@ -34,6 +34,7 @@
 #include "../ui/scrooby.h"
 #include "options_page.h"
 #include "options_settings.h"
+#include "../language/texts.h"
 
 extern "C" REX_FUNC(__imp__sub_820D2828);  // CMenuAction::Enter
 extern "C" REX_FUNC(__imp__sub_820D2A00);  // CMenuAction::Update
@@ -794,7 +795,7 @@ void Refresh(Env& env) {
       } else if (row->kind == Kind::kKey) {
         // The keys as pictures (the names are on the card), else as names.
         if (row->key_action == g.capture_action) {
-          value = u"Press a Key";
+          value = tr(u"Press a Key");
         } else {
           value = options_settings::KeyPictures(row->key_action);
           if (value.empty()) value = options_settings::KeysText(row->key_action);
@@ -840,17 +841,19 @@ void Refresh(Env& env) {
   if (row.kind == Kind::kKey) {
     // The keys as the heading; while one is asked for, what to do.
     const bool asking = row.key_action == g.capture_action;
-    heading = asking ? std::u16string(u"Press a Key") : options_settings::KeysText(row.key_action);
+    heading = asking ? tr(u"Press a Key") : options_settings::KeysText(row.key_action);
     if (asking) {
       // Esc as its picture (a card slot, prompt_icons.h), its name without the slots.
       const kbm::Input esc = kbm::ParseInput("Escape");
       const char16_t esc_glyph = prompt_icons::KeyGlyph(esc, prompt_icons::SlotSize::kCard);
-      const std::string esc_name = kbm::InputLabel(esc);
-      const char16_t b_glyph = prompt_icons::ButtonGlyph("B", prompt_icons::SlotSize::kCard);
-      description = u"Press the new " + std::u16string(g.capture_slot ? u"second " : u"") +
-                    u"key or mouse button for " + row.label + u". " +
-                    (esc_glyph ? std::u16string(1, esc_glyph) : std::u16string(esc_name.begin(), esc_name.end())) +
-                    u" or " + (b_glyph ? std::u16string(1, b_glyph) : std::u16string(u"B")) + u": cancel.";
+            const char16_t b_glyph = prompt_icons::ButtonGlyph("B", prompt_icons::SlotSize::kCard);
+      const std::u16string esc_text =
+          esc_glyph ? std::u16string(1, esc_glyph) : options_settings::KeyLabel(int(esc));
+      const std::u16string b_text = b_glyph ? std::u16string(1, b_glyph) : std::u16string(u"B");
+      // TR: {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
+      description = trf(g.capture_slot ? tr(u"Press the new second key or mouse button for {0}. {1} or {2}: cancel.")
+                                       : tr(u"Press the new key or mouse button for {0}. {1} or {2}: cancel."),
+                        {row.label, esc_text, b_text});
       warning.clear();
     } else if (g.key_message_row == First() + sel && unavailable.empty()) {
       warning = g.key_message;
@@ -866,13 +869,13 @@ void Refresh(Env& env) {
   const bool x = key_row || (row.x_action && row.x_shown && row.x_shown(env, current));
   if (x != g.x_showing || x) {
     scrooby::SetText(ctx, base, g.x_button, x ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphX)) : u"");
-    scrooby::SetText(ctx, base, g.x_text, !x ? u"" : key_row ? u"Second Key" : row.x_label);
+    scrooby::SetText(ctx, base, g.x_text, !x ? u"" : key_row ? tr(u"Second Key") : row.x_label);
     g.x_showing = x;
   }
   if (key_row != g.y_showing || key_row) {
     scrooby::SetText(ctx, base, g.y_button,
                      key_row ? std::u16string(1, prompt_icons::MenuGlyph(kGlyphY)) : u"");
-    scrooby::SetText(ctx, base, g.y_text, key_row ? u"Remove Key" : u"");
+    scrooby::SetText(ctx, base, g.y_text, key_row ? tr(u"Remove Key") : u"");
     g.y_showing = key_row;
   }
   // The Music row plays its preview while it has the cursor (in game: the
@@ -993,11 +996,14 @@ std::u16string DateText(int64_t unix_seconds) {
 #else
   localtime_r(&t, &tm);
 #endif
-  char text[32];
-  std::strftime(text, sizeof(text), "%d %b %Y", &tm);
-  std::string s = text;
-  if (s.size() > 1 && s[0] == '0') s.erase(0, 1);
-  return std::u16string(s.begin(), s.end());
+  // The month's short name in the text language (strftime's %b would be
+  // the system's English one).
+  static const char16_t* const kMonths[] = {
+      trn(u"Jan"), trn(u"Feb"), trn(u"Mar"), trn(u"Apr"), trn(u"May"), trn(u"Jun"),
+      trn(u"Jul"), trn(u"Aug"), trn(u"Sep"), trn(u"Oct"), trn(u"Nov"), trn(u"Dec")};
+  const auto num = [](int n) { const std::string s = std::to_string(n); return std::u16string(s.begin(), s.end()); };
+  // TR: a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
+  return trf(tr(u"{0} {1} {2}"), {num(tm.tm_mday), tr(kMonths[std::clamp(tm.tm_mon, 0, 11)]), num(tm.tm_year + 1900)});
 }
 
 // A text's box placed so that, drawn at `scale` around the box's centre,
@@ -1028,7 +1034,7 @@ void RefreshAchievements(Env& env) {
   ShowOptionsFurniture(ctx, base, false);
   // The heading in the tabs' line, under the game's "P1 Paused" (in the main
   // menu the panel's own title says "Achievements": Enter).
-  scrooby::SetText(ctx, base, g.ach_heading, u"Achievements");
+  scrooby::SetText(ctx, base, g.ach_heading, tr(u"Achievements"));
   scrooby::SetVisible(base, g.ach_heading, g.title == 0);
   const std::vector<achievements::Info> list = achievements::List();
   const int cards = int(g.ach_cards.size());
@@ -1058,7 +1064,8 @@ void RefreshAchievements(Env& env) {
     const std::u16string name = Utf16(a.name);
     scrooby::SetText(ctx, base, c.name, name);
     scrooby::SetColour(ctx, base, c.name, selected ? kAchYellow : a.unlocked ? kAchGreen : kLockedName);
-    const std::u16string state = a.unlocked ? u"Earned " + DateText(a.unlocked_at) : std::u16string(u"Locked");
+    // TR: {0} = the date it was earned ("12 Oct 2026").
+    const std::u16string state = a.unlocked ? trf(tr(u"Earned {0}"), {DateText(a.unlocked_at)}) : tr(u"Locked");
     // The name gets the line up to the state (a gap of 16): smaller when it
     // doesn't fit ("Would You Like Fries With That?" ran into the date).
     {
@@ -1308,20 +1315,20 @@ std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& b
   std::vector<PlyPrompt> out;
   const players_setup::Box& sel = boxes[size_t(g.ply_sel)];
   if (g.ply_styling != kPlyNone) {
-    out.push_back({kGlyphA, u"Confirm", kPlyActButtons});
-    out.push_back({kGlyphB, u"Back", kPlyActBack});
+    out.push_back({kGlyphA, tr(u"Confirm"), kPlyActButtons});
+    out.push_back({kGlyphB, tr(u"Back"), kPlyActBack});
   } else if (g.ply_moving != kPlyNone) {
     if (g.ply_sel != g.ply_moving && players_setup::CanMoveTo(g.ply_sel)) {
-      out.push_back({kGlyphA, sel.has_pad ? u"Swap" : u"Move Here", kPlyActMove});
+      out.push_back({kGlyphA, sel.has_pad ? tr(u"Swap") : tr(u"Move Here"), kPlyActMove});
     }
-    out.push_back({kGlyphB, u"Cancel", kPlyActBack});
+    out.push_back({kGlyphB, tr(u"Cancel"), kPlyActBack});
   } else {
     if (sel.has_pad) {
-      out.push_back({kGlyphA, u"Buttons", kPlyActButtons});
-      out.push_back({kGlyphX, u"Move", kPlyActMove});
-      out.push_back({kGlyphY, u"Remove", kPlyActRemove});
+      out.push_back({kGlyphA, tr(u"Buttons"), kPlyActButtons});
+      out.push_back({kGlyphX, tr(u"Move"), kPlyActMove});
+      out.push_back({kGlyphY, tr(u"Remove"), kPlyActRemove});
     }
-    out.push_back({kGlyphB, u"Back", kPlyActBack});
+    out.push_back({kGlyphB, tr(u"Back"), kPlyActBack});
   }
   return out;
 }
@@ -1442,20 +1449,21 @@ void RefreshPlayers(Env& env) {
         }
       }
       if (!players_setup::CanMoveTo(k)) {
-        info = u"No room for this player";
+        info = tr(u"No room for this player");
         colour = kPlyCyan;
       } else if (moved) {
         picture = moved->picture;
-        info = Utf16(moved->name);
+        info = moved->keyboard ? tr(u"Keyboard and Mouse") : Utf16(moved->name);
         colour = kPlyYellow;
       }
     } else if (k == mover) {
-      info = dropping ? Utf16(fmt::format("Moving to Player {}", g.ply_sel + 1)) : u"Pick a player";
+      // TR: {0} = a player's number (1-4).
+      info = dropping ? trf(tr(u"Moving to Player {0}"), {Utf16(std::to_string(g.ply_sel + 1))}) : tr(u"Pick a player");
       colour = kPlyYellow;
     } else if (d) {
-      info = Utf16(d->name);
+      info = d->keyboard ? tr(u"Keyboard and Mouse") : Utf16(d->name);
     } else {
-      info = u"Press any button to join";
+      info = tr(u"Press any button to join");
       colour = kPlyCyan;
     }
     scrooby::SetFrame(ctx, base, c.pic, uint32_t(picture));
@@ -1857,15 +1865,15 @@ void EndCapture(Env& env, int result) {
   if (driver) driver->CancelCapture();  // (nothing waiting after a key arrived)
   g.key_message_row = First() + scrooby::Selection(env.base, g.menu);
   if (result < 0 || !driver || action < 0) {
-    g.key_message = u"Not changed.";
+    g.key_message = tr(u"Not changed.");
     REXLOG_INFO("Options: key change cancelled");
   } else if (const kbm::Action owner = MenuKeyOwner(driver->bindings(), action, kbm::Input(result));
              owner < kbm::kActionCount) {
     // A key the menus need (the arrows, Enter, Escape, Backspace, Q / E...):
     // taking it would leave a menu without its key. Not changed.
-    const std::string label = kbm::InputLabel(kbm::Input(result));
-    g.key_message = std::u16string(label.begin(), label.end()) + u" is the menus' " +
-                    options_settings::ActionName(owner) + u": pick another key.";
+    // TR: {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
+    g.key_message = trf(tr(u"{0} is the menus' {1}: pick another key."),
+                        {options_settings::KeyLabel(result), options_settings::ActionName(owner)});
     REXLOG_INFO("Options: {} refused for {} (the menus' {})", kbm::InputName(kbm::Input(result)),
                 kbm::Info(kbm::Action(action)).id, kbm::Info(owner).id);
   } else {
@@ -1874,11 +1882,10 @@ void EndCapture(Env& env, int result) {
     const kbm::Action lost = b.Assign(kbm::Action(action), g.capture_slot, key);
     KeepKeys(b);
     const std::u16string name = options_settings::ActionName(action);
-    const std::string label = kbm::InputLabel(key);
-    const std::u16string key_text(label.begin(), label.end());
+    // TR: {0} = a key's name, {1} = the move that had it, {2} = the move that has it now.
     g.key_message = lost < kbm::kActionCount
-                        ? key_text + u" was " + options_settings::ActionName(lost) +
-                              u"'s key: it's " + name + u"'s now."
+                        ? trf(tr(u"{0} was {1}'s key: it's {2}'s now."),
+                              {options_settings::KeyLabel(int(key)), options_settings::ActionName(lost), name})
                         : std::u16string();
     REXLOG_INFO("Options: {} key {} = {}{}", kbm::Info(kbm::Action(action)).id, g.capture_slot + 1,
                 kbm::InputName(key),
@@ -1898,15 +1905,15 @@ void RemoveKey(Env& env, int action) {
   const kbm::Input key = b.keys[size_t(action)][size_t(slot)];
   g.key_message_row = First() + scrooby::Selection(env.base, g.menu);
   if (key == kbm::kNoInput) {
-    g.key_message = u"No key to remove.";
+    g.key_message = tr(u"No key to remove.");
   } else {
     b.Assign(kbm::Action(action), slot, kbm::kNoInput);
     if (slot == 1 && b.keys[size_t(action)][0] == kbm::kNoInput) {
       std::swap(b.keys[size_t(action)][0], b.keys[size_t(action)][1]);
     }
     KeepKeys(b);
-    const std::string label = kbm::InputLabel(key);
-    g.key_message = std::u16string(label.begin(), label.end()) + u" removed.";
+    // TR: {0} = a key's name.
+    g.key_message = trf(tr(u"{0} removed."), {options_settings::KeyLabel(int(key))});
     REXLOG_INFO("Options: {} key {} removed", kbm::Info(kbm::Action(action)).id, kbm::InputName(key));
   }
   scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kMove);
@@ -2271,7 +2278,7 @@ extern "C" REX_FUNC(sub_820D2828) {
   g.title = main_menu ? scrooby::FindText(ctx, base, g.page, "OptTitle") : 0;
   g.paused_title = main_menu ? 0 : scrooby::FindText(ctx, base, g.page, "Paused");
   if (g.title && g.achievements) {
-    scrooby::SetText(ctx, base, g.title, u"Achievements");
+    scrooby::SetText(ctx, base, g.title, tr(u"Achievements"));
   } else if (g.title) {  // the game's own translated "Options" (options_page.cpp: the PS2 item's string)
     scrooby::Call(__imp__sub_82371CE0, ctx, base, g.title, scrooby::GuestAscii("GameStart_MainMenu_Options"));
   }
