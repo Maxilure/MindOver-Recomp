@@ -187,3 +187,23 @@ spot that isn't finite or lies beyond 1e6 units is replaced by a point far
 below the world (0, -100000, 0), where the vacuum touches nothing; the next
 good frame puts it back on the pointer. Logged as `Wii cursor: aim ray gave a
 bad spot ...`.
+
+## 7. No cursor in play for a player who isn't on the keyboard
+
+In play, the bubble used to show while the keyboard's player was on foot
+**or not in the game** (co-op state 0, meant for the pause menu's Join
+Game). Player 1 always has the keyboard and may also have a controller, so
+the bubble floated over play when player 1 played on a controller, or had
+dropped out.
+
+Now, in play, it shows only for the keyboard's player on foot **and playing
+on the keyboard and mouse right now**: for player 1, the device used last
+decides, the same rule as the button pictures (`prompt_icons::KeysShown`).
+The game's own cursor behaviour (section 5: the ray and its mojo pull at the
+pointer) follows the same rule, so a controller player doesn't pull mojo
+toward a hidden pointer. A key press or mouse use brings both back at once.
+Menus are unchanged: the bubble shows there whatever the device.
+
+Tested with the debug console in crosshair mode: the game's cursor switched
+on at the level start (keyboard), off at player 1's first controller press
+(it stayed off while the stick moved), and on again at the next key press.

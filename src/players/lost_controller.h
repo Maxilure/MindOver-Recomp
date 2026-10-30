@@ -33,6 +33,11 @@
 //   * the only player in game: "Controller disconnected. Reconnect your
 //     controller to continue." / "Controller reconnected. Press any button
 //     to resume." (no number, no drop out);
+//   * the only player in game, while another player with a device is OUT
+//     (player 1 dropped out earlier, then player 2's controller went):
+//     "... Reconnect it, or Player 1: press START to take over." That START
+//     closes the box, the game's own join takes it, and the player without a
+//     controller drops out (findings/26 s.58; lost_controller.cpp TAKING OVER);
 //   * several controllers gone: one player at a time, straight from one to
 //     the next (the game stays paused);
 //   * a pause menu that is up when it happens comes first (the box waits);

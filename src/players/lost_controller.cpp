@@ -3,6 +3,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstring>
 #include <string>
 
@@ -80,7 +81,33 @@ constexpr uint32_t kFrontEndHeap = 7;          // the heap the box's own text ch
 // XINPUT_GAMEPAD buttons (big-endian u16 at +0 of the gamepad); prompt
 // glyphs in the game's fonts (findings/23): U+00B4 = the Y button.
 constexpr uint16_t kButtonY = 0x8000;
+constexpr uint16_t kButtonStart = 0x0010;
 constexpr char16_t kGlyphY = u'´';
+constexpr char16_t kGlyphStart = u'¶';  // drawn in player 1's look (prompt_icons.h)
+
+// TAKING OVER (2026-10-30, playtest): player 1 dropped out, player 2 played
+// on alone, then player 2's controller went: the box said "Reconnect your
+// controller to continue" (the last player in game can't drop out) and
+// player 1, keyboard in hand, could do nothing: the game's own join (front
+// end per-frame update sub_82264988, START or B from a controller of a free
+// player) refuses while the game is paused (+168 bit 0x20 at 0x82265050), and
+// the box keeps it paused. Now, when the box is about the ONLY player in game
+// and another player with a device is out ("a joiner"):
+//   * the box says "... or Player 1: press START to take over.";
+//   * that START closes the box and the game runs again; the lost player is
+//     left out of the box for up to kJoinWindow. The START, still held, now
+//     reaches the running game (the box hid it until then: a fresh press for
+//     the game) and the game's own join takes it, as in play (no press faked);
+//   * once the joiner is in game, the player without a controller drops out
+//     (the box's usual Y): play goes on with the joiner (player 1 comes back
+//     as the mask; the drop-out forces riders out: on foot).
+//   * no join within kJoinWindow (a tap too short): the box comes back.
+// TRIED FIRST: lifting the pause bit (and +8594 bit 0x80, "menu on screen",
+// whose path at 0x82264B34 skips the join) around the update while paused,
+// with that START let through: the join picked player 1 but never finished
+// (no controller stored: it completes through a message to the player's
+// character, unanswered while the game is paused).
+constexpr auto kJoinWindow = std::chrono::seconds(2);  // the press's chance to be taken
 
 // What the box says (game's main thread writes, input poll reads).
 enum Phase : int { kNone, kLost, kBack };
@@ -89,6 +116,14 @@ std::atomic<int> g_lost{-1};          // the player concerned
 std::atomic<bool> g_can_drop{false};  // someone else is in game: "drop out" offered
 // Presses taken by FilterPad, carried out by Update on the next frame.
 std::atomic<bool> g_want_drop{false}, g_want_resume{false};
+// Taking over: the player the box offers it to (-1 = none; input thread
+// reads), their START seen (FilterPad -> Update).
+std::atomic<int> g_offered_joiner{-1};
+std::atomic<bool> g_want_takeover{false};
+// Game's main thread: a take-over under way (box closed, game running):
+// who joins, who drops out once they're in, and until when.
+int g_handover_joiner = -1, g_handover_lost = -1;
+std::chrono::steady_clock::time_point g_handover_until;
 // The buttons each socket held at its last read: only a NEW press counts.
 std::array<uint16_t, kMaxPlayers> g_held{};
 
@@ -145,8 +180,14 @@ uint32_t UseHeap(PPCContext& ctx, uint8_t* base, uint32_t heap) {
 // The box's text (the game's own font, wrapped by the text element; "´" is
 // drawn as the Y button). `solo` = nobody else is in game: no player number,
 // no drop out (the last player in game can't drop out).
-std::u16string Message(int phase, int p, bool solo) {
+std::u16string Message(int phase, int p, bool solo, int joiner = -1) {
   const std::u16string n(1, char16_t(u'1' + p));
+  if (solo && phase == kLost && joiner >= 0) {
+    // Someone out of the game can take over (TAKING OVER above).
+    return u"Player " + n + u"'s controller disconnected.\nReconnect it, or Player " +
+           std::u16string(1, char16_t(u'1' + joiner)) + u": press " + std::u16string(1, kGlyphStart) +
+           u" to take over.";
+  }
   if (solo) {
     return phase == kBack ? u"Controller reconnected.\nPress any button to resume."
                           : u"Controller disconnected.\nReconnect your controller to continue.";
@@ -204,7 +245,7 @@ void HideMenu(uint32_t fe, bool hide) {
 std::array<bool, kMaxPlayers> g_dropping{};
 
 // A player in game without a device, not being dropped out: needs the box.
-bool Waiting(int p) { return InGame(p) && !HasDevice(p) && !g_dropping[p]; }
+bool Waiting(int p) { return InGame(p) && !HasDevice(p) && !g_dropping[p] && p != g_handover_lost; }
 // Is anyone else in game (so p may be dropped out)?
 bool SomeoneElse(int p) {
   for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
@@ -212,6 +253,15 @@ bool SomeoneElse(int p) {
   }
   return false;
 }
+// A player out of the game who has a device and could join (the box offers
+// them to take over), -1 = none. The first one in player order.
+int Joiner(int lost) {
+  for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
+    if (q != lost && !InGame(q) && HasDevice(q)) return q;
+  }
+  return -1;
+}
+
 int FirstWaiting() {
   for (int p = 0; p < more_players::LocalPlayerCount(); ++p) {
     if (Waiting(p)) return p;
@@ -226,7 +276,9 @@ void ShowFor(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
   g_can_drop = SomeoneElse(p);
   g_lost = p;
   g_phase = kLost;
-  SetText(ctx, base, fe, Message(kLost, p, !g_can_drop.load()));
+  g_want_takeover = false;
+  g_offered_joiner = g_can_drop.load() ? -1 : Joiner(p);
+  SetText(ctx, base, fe, Message(kLost, p, !g_can_drop.load(), g_offered_joiner.load()));
   g_shown_phase = kLost;
   g_shown_solo = !g_can_drop.load();
   REXLOG_INFO("Lost controller: player {} has no controller: game paused{}", p + 1,
@@ -260,6 +312,8 @@ void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
   g_lost = -1;
   g_shown_phase = kNone;
   g_want_drop = g_want_resume = false;
+  g_offered_joiner = -1;
+  g_want_takeover = false;
   if (g_we_paused) CallGame(__imp__sub_8227C8E8, ctx, base, Read32(kGameGlobal), 0);
   g_we_paused = false;
 }
@@ -269,6 +323,20 @@ void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
 void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   for (int p = 0; p < kMaxPlayers; ++p) {
     if (!InGame(p) || HasDevice(p)) g_dropping[p] = false;  // dropped out (or back after all)
+  }
+  // A take-over under way: the joiner is in -> the lost player drops out;
+  // the lost player's controller came back, or no join in time -> over (the
+  // box asks again if it's still needed).
+  if (g_handover_lost >= 0) {
+    const int joiner = g_handover_joiner, lost = g_handover_lost;
+    if (InGame(joiner) || !InGame(lost) || HasDevice(lost) || std::chrono::steady_clock::now() > g_handover_until) {
+      g_handover_joiner = g_handover_lost = -1;
+      if (InGame(joiner) && InGame(lost) && !HasDevice(lost)) {
+        DropOut(ctx, base, lost, ("player " + std::to_string(joiner + 1) + " took over").c_str());
+      } else if (!InGame(joiner)) {
+        REXLOG_INFO("Lost controller: player {} didn't join in time: asking again", joiner + 1);
+      }
+    }
   }
   const int lost = g_lost.load();
   if (lost < 0) {
@@ -292,6 +360,17 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     g_phase = phase;
   }
   g_can_drop = SomeoneElse(lost);
+  // Taking over: the box closes and the game runs, for the join (TAKING OVER).
+  if (phase == kLost && g_want_takeover.exchange(false)) {
+    const int joiner = g_offered_joiner.load();
+    if (!g_can_drop.load() && joiner >= 0 && joiner == Joiner(lost)) {
+      g_handover_joiner = joiner;
+      g_handover_lost = lost;
+      g_handover_until = std::chrono::steady_clock::now() + kJoinWindow;
+      return Finish(ctx, base, fe,
+                    ("is taken over by player " + std::to_string(joiner + 1) + ": game runs for the join").c_str());
+    }
+  }
   if (phase == kLost && g_want_drop.exchange(false) && g_can_drop.load()) {
     // The pause menu's Drop Out, for this player: it acts on the menu owner,
     // so the owner is this player for the call. It completes once the game
@@ -307,8 +386,10 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     return Finish(ctx, base, fe, "pressed a button on its controller");
   }
   const bool solo = !g_can_drop.load();
-  if (g_shown_phase != phase || g_shown_solo != solo) {
-    SetText(ctx, base, fe, Message(phase, lost, solo));
+  const int offered = solo && phase == kLost ? Joiner(lost) : -1;
+  if (g_shown_phase != phase || g_shown_solo != solo || g_offered_joiner.load() != offered) {
+    g_offered_joiner = offered;
+    SetText(ctx, base, fe, Message(phase, lost, solo, offered));
     g_shown_phase = phase;
     g_shown_solo = solo;
   }
@@ -344,6 +425,8 @@ void FilterPad(int user, uint8_t* gamepad, bool connected) {
   g_held[user] = buttons;
   if (phase == kLost && (pressed & kButtonY)) g_want_drop = true;              // anyone
   if (phase == kBack && pressed && user == g_lost.load()) g_want_resume = true;  // that player
+  // Taking over: the offered player's START (TAKING OVER above).
+  if (phase == kLost && user == g_offered_joiner.load() && (pressed & kButtonStart)) g_want_takeover = true;
   std::memset(gamepad, 0, 12);  // the game sees a connected, untouched pad
 }
 
@@ -363,3 +446,4 @@ extern "C" REX_FUNC(sub_82262D78) {
   }
   Update(ctx, base, ctx.r3.u32);
 }
+

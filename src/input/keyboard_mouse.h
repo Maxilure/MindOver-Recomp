@@ -125,9 +125,10 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   //               controls, F2 save box, the SDK's F4 settings / console...):
   //               the system pointer SHOWS (it was hidden by the bubble or by
   //               the SDK's auto-hide, which only reveals it on the next move);
-  //   in_play   = a level is played and none of the game's menus is on screen:
-  //               the pointer is HIDDEN (with Mouse Aiming Off it used to come
-  //               back with every mouse move).
+  //   in_play   = a level is played and none of the game's menus is on screen,
+  //               or a menu the mouse doesn't work in is (another player's:
+  //               mouse_menus MouseBlocked): the pointer is HIDDEN (with Mouse
+  //               Aiming Off it used to come back with every mouse move).
   // Otherwise (the game's menus without the bubble, e.g. only pads play):
   // auto-hidden as before. Aiming / the bubble hide it as before
   // (HidePointerWhileAiming), unless a ui_window is open. Any thread.

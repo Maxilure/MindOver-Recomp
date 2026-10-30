@@ -418,3 +418,50 @@ skipped. Right click and the prompt bar's Back / Select were already
 covered by the shared front-end code. The wheel does nothing here (ten
 levels fit, nothing scrolls). Log line once per visit: "Mouse in menus: the
 minigame level list".
+
+## 7. The window loses the focus: controllers play on, or the game pauses
+
+Status: built (`input/background_input.*`), setting `background_input`,
+Options -> Controls "Window Not Focused" (Keep Playing / Pause).
+
+**Before.** With no game window focused, the SDK's input check
+(`ReXApp::ConstructRuntime`'s "active" callback) gave the game a neutral
+controller. The game kept running with nobody at the controls.
+
+**Keep Playing (the default).** Two things blocked a controller in the
+background:
+
+1. the SDK's active check. The port's own check (already used for the second
+   window) is now installed at start-up for every driver. Unfocused, it
+   answers with the setting.
+2. SDL itself drops joystick and gamepad events while none of its windows
+   has the keyboard focus (`SDL_PrivateJoystickShouldIgnoreEvent`), unless
+   `SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS` is "1". SDL watches that hint
+   with a callback, so changing the row takes effect at once.
+
+The keyboard and mouse still stop while unfocused (their presses go to the
+other window).
+
+**Pause.** The front end's in-game decision (`sub_8211E850`, run every frame
+in the GameRunning state, 489) is wrapped. Its exits, read from the code:
+
+| exit | taken when |
+|---|---|
+| 502 | IsButtonPressed button 32 (Back) at `0x8211E9D0`, or the map flag (+8592 bit 0x20): the MAP screen (state 927) |
+| 516 | button 36 (START) at `0x8211EAF4`, only if the game isn't paused (game +168 bit 0x20) and `sub_82265A60` says "no" (every player's controller locked, as in cutscenes): the PAUSE MENU (state 868) |
+| -1 | nothing happened |
+
+When the focus is lost and the original answers -1, the wrapper makes the
+same two checks START's branch makes and returns 516. No press is faked. A
+first try returned 502 and opened the map. The pause also waits for the
+level's fade-in (front end +144 back to 0): the first version paused 0.2 s
+into a level, over a black picture. It pauses once per focus loss. A focus
+lost in menus or while loading pauses at the level's first visible frame,
+unless the focus is back by then. The pause menu's owner is whoever last
+pressed START (`StoreWhoPausedGame`), or nobody (anyone answers) before the
+first START.
+
+Tested with the debug console on a test copy, window unfocused: setting off =
+pause menu 1.1 s after the level started (exit 516, state 868); B = back in
+play, no second pause; a scripted START also takes exit 516. Setting on = no
+pause. A real controller in the background is not tested yet.

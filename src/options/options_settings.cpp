@@ -27,6 +27,7 @@
 #include "../guest_memory.h"
 #include "../input/bindings.h"
 #include "../input/keyboard_mouse.h"
+#include "../input/background_input.h"
 #include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
 #include "../ui/window_mode.h"
@@ -804,8 +805,25 @@ Row MouseAimingRow() {
   return r;
 }
 
+// IN THE BACKGROUND (input/background_input.h, 2026-10-30): what a controller
+// does while the game window isn't focused: keep playing, or the game pauses
+// itself the moment the window loses the focus.
+Row BackgroundInputRow() {
+  Row r = OnOffRow(u"Window Not Focused", "background_input", u"Keep Playing", u"Pause",
+                   u"Controllers keep playing while another window is in front. The keyboard and mouse "
+                   u"stop until you click back into the game.",
+                   u"The game pauses by itself when its window loses the focus in a level.");
+  const auto set = r.set;
+  // SDL is told at once (its background-events hint), not at the next frame.
+  r.set = [set](Env& e, int i) {
+    set(e, i);
+    background_input::Apply();
+  };
+  return r;
+}
+
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), Heading(u"Button Pictures"), KeyboardIconsRow(),
+  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), BackgroundInputRow(), Heading(u"Button Pictures"), KeyboardIconsRow(),
                         ControllerIconsRow()};
   // The keys start under a heading of their own.
   rows.push_back(Heading(u"Keyboard and Mouse Keys"));

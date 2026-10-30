@@ -65,6 +65,7 @@
 #include "input/name_typing.h"
 #include "input/controls_menu.h"
 #include "input/keyboard_mouse.h"
+#include "input/background_input.h"
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
@@ -364,6 +365,13 @@ class CrashMomApp : public rex::ReXApp {
       input->SetDeviceAssignment(std::move(assignment));
       input->AddDriver(std::move(kbm_driver));
     }
+    // Controllers while the window isn't focused (input/background_input.h):
+    // the setting's SDL hint, the focus check its pause-on-focus-loss reads,
+    // and our "active" check in place of the SDK's (for every driver, the
+    // ones added above included).
+    background_input::Apply();
+    background_input::SetFocusCheck([this] { return AnyWindowFocused(); });
+    UseEitherWindowForInput();
   }
 
   // First thing on shutdown, while the presenter still exists (the game's
@@ -496,20 +504,28 @@ class CrashMomApp : public rex::ReXApp {
   // mouse over the achievement pop-up while it shows pauses input too.
   // Keyboard-as-controller (--mnk_mode) keeps its own focus check on the
   // main window.
+  //
+  // Since 2026-10-30 installed at start-up (not only with the second window),
+  // for the setting background_input (input/background_input.h): on, the
+  // controllers keep playing while no game window is focused.
   void UseEitherWindowForInput() {
     auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system());
     if (!input) {
       return;
     }
     input->SetActiveCallback([this]() {
-      const bool focused = (window() && window()->HasFocus()) ||
-                           native_window_focused_.load(std::memory_order_relaxed);
-      if (!focused) {
-        return false;
+      if (!AnyWindowFocused()) {
+        // Unfocused: the ImGui overlays can't be in use, so only the setting decides.
+        return background_input::Allowed();
       }
       rex::ui::ImGuiDrawer* drawer = imgui_drawer();
       return !drawer || !drawer->GetIO().WantCaptureMouse;
     });
+  }
+
+  // Has the main window or the second (native) window the keyboard focus?
+  bool AnyWindowFocused() {
+    return (window() && window()->HasFocus()) || native_window_focused_.load(std::memory_order_relaxed);
   }
 
   DebugFrameCapture frame_capture_;

@@ -63,6 +63,7 @@ set(CRASHMOM_SOURCES
     src/input/name_typing.cpp       # typing a name on the keyboard, the mouse on the on-screen keys
     src/input/title_any_button.cpp  # the title screen starts on any button ("Press Any Button")
     src/input/movie_skip.cpp  # any button brings up a movie's "Skip" prompt in a level
+    src/input/background_input.cpp  # controllers while the window is not focused; else pause on focus loss
     src/input/mouse_menus.cpp    # the mouse in the game's menus: hover selects, click chooses, right click = back
     src/input/mouse_screens.cpp  # the mouse on Crash's house's picture screens (TV, comic, tiki face, chest)
     src/input/mouse_minigame.cpp  # the mouse on the minigame level picker (CMiniGameScreenAction)

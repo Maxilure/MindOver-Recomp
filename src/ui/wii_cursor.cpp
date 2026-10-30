@@ -33,6 +33,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/mouse_menus.h"
 #include "../input/mouse_reticle.h"
+#include "../input/prompt_icons.h"
 #include "../input/players.h"
 #include "../pddi/intercept.h"
 #include "../players/more_players.h"
@@ -135,12 +136,21 @@ uint32_t Read32(uint32_t a) {
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
 }
 
-// The player the keyboard plays as, if they're on foot in a level; else -1.
+// Is player p playing on the keyboard and mouse right now? Player 1 always
+// has the keyboard and may also have a controller (players_setup.h): the
+// device used LAST decides, as for the button pictures (prompt_icons.h
+// KeysShown = player 1's look). Another player the keyboard answers for has
+// no other device.
+bool OnKeyboardNow(int p) { return p != 0 || prompt_icons::KeysShown(); }
+
+// The player the keyboard plays as, if they're on foot in a level and the
+// keyboard is their device right now; else -1 (2026-10-30: player 1 on a
+// controller, or not in the game, has no in-play cursor).
 int KeyboardPlayerOnFoot() {
   const kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get();
   if (!players) return -1;
   for (int p = 0; p < kMaxPlayers; ++p) {
-    if (players->KeyboardAnswersFor(uint32_t(p)) && Read32(kCoOpState + 4 * p) == 2) return p;
+    if (players->KeyboardAnswersFor(uint32_t(p)) && Read32(kCoOpState + 4 * p) == 2 && OnKeyboardNow(p)) return p;
   }
   return -1;
 }
@@ -149,10 +159,13 @@ int KeyboardPlayerOnFoot() {
 // Should the cursor show (game thread)? In MENUS always, whatever Mouse Aiming
 // says (on the Wii the menus are pointed at with the same bubble): the front
 // end, and in a level any of the game's menus on screen (pause, totem, save
-// list...). In PLAY only in crosshair mode. Only while a keyboard plays; not
-// while the keyboard's player is a mask in a level (they aim: the reticle
-// shows, the Wii version hid its cursor then), and not while our own ImGui
-// windows (F6 Controls, F5 cheats) want the pointer.
+// list...). In PLAY only in crosshair mode, only for the keyboard's player
+// ON FOOT and playing on the keyboard right now: not as a mask (they aim:
+// the reticle shows, the Wii version hid its cursor then), not while out of
+// the game, not while player 1 plays on a controller (2026-10-30, playtest:
+// the bubble floated over play for nobody); back as soon as the keyboard or
+// mouse is used again. Never while our own ImGui windows (F6 Controls, F5
+// cheats) want the pointer.
 bool ShouldShow() {
   const bool menu = !more_players::InPlay() || menu_input::MenuOnScreen();
   if ((!menu && mouse_reticle::Mode() != 2) || g_imgui_mouse.load() || g_imgui_window.load() ||
@@ -164,11 +177,11 @@ bool ShouldShow() {
   if (!driver || driver->menu_open() || !players) return false;
   for (int p = 0; p < kMaxPlayers; ++p) {
     if (!players->KeyboardAnswersFor(uint32_t(p))) continue;
-    // In a level: the keyboard's player on foot (2) or not in yet (0: the
-    // pause menu's Join Game...); any other state = a mask (or getting there).
+    // Menus (the pause menu's Join Game included): always. In play: the
+    // keyboard's player on foot (2) on the keyboard; not joined (0), a mask
+    // (or getting there), or on a controller = none.
     if (menu) return true;
-    const uint32_t state = Read32(kCoOpState + 4 * p);
-    return state == 2 || state == 0;
+    return Read32(kCoOpState + 4 * p) == 2 && OnKeyboardNow(p);
   }
   return false;
 }
@@ -178,10 +191,14 @@ void OnFrameEnd(void*) {
   g_show.store(show);
   // The system pointer's rule (keyboard_mouse.h SetPointerRule): shown while
   // an ImGui window of ours is open, hidden in play (whatever Mouse Aiming
-  // says: Off had it back with every move).
+  // says: Off had it back with every move), and hidden in a menu the mouse
+  // doesn't work in (another player's: mouse_menus MouseBlocked). The bubble
+  // hides there too; the system pointer took its place (2026-10-30, playtest:
+  // player 1 out, player 2 paused = the plain pointer over player 2's menu).
   if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) {
-    const bool in_play = more_players::InPlay() && !menu_input::MenuOnScreen();
-    driver->SetPointerRule(g_imgui_window.load(), in_play);
+    const bool menu = !more_players::InPlay() || menu_input::MenuOnScreen();
+    const bool hide = !menu || mouse_menus::MouseBlocked();
+    driver->SetPointerRule(g_imgui_window.load(), hide);
   }
   // The bubble stands in for the system pointer: hidden while it shows (it
   // comes back ~0.2 s after the last frame that asked, keyboard_mouse.h).

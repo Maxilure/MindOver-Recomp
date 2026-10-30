@@ -2279,3 +2279,43 @@ pause again three times = the Tab picture every time; player 2 (controller)
 as the owner = same closing and drop out. 0 errors. Not reached: the pause
 screen without Save.
 
+## 58. Taking over from the lost-controller box
+
+**The bug.** Player 1 drops out while player 2 plays on with a controller.
+Then player 2's controller disconnects. The box (section 33) says
+"Controller disconnected. Reconnect your controller to continue.": player 2
+is the last player in game, so it can't be dropped out. Player 1 has a
+device but can't join. The game's own join (the front end's per-frame update
+`sub_82264988`: START or B from a free player's controller) refuses while
+the game is paused (`+168` bit `0x20` at `0x82265050`), and the box keeps
+the game paused. Nobody could go on until that controller came back.
+
+**The fix** (`players/lost_controller.cpp`, "TAKING OVER"). When the box is
+about the only player in game and another player with a device is out:
+
+* the box says "Player 2's controller disconnected. Reconnect it, or
+  Player 1: press START to take over.";
+* that START closes the box and the game runs again. The lost player is left
+  out of the box for up to 2 s;
+* the START is still held. The box hid it until then, so the running game
+  sees a fresh press, and its own join takes it (player 1 comes back as the
+  mask, as in play);
+* once the joiner is in game, the player without a controller drops out
+  (the box's own Drop Out). Dropping out a host forces its riders out, so
+  player 1 is on foot at once;
+* no join within 2 s (a tap released too early): the box comes back.
+
+**Tried first, and why it failed.** The first attempt lifted the pause bit
+around the update while the box stayed up, and let that one START through.
+A second gate turned up: with front end `+8594` bit `0x80` ("a menu is on
+screen") set, the update takes its menu path at `0x82264B34` and never
+reaches the join. With that bit lifted too, the join picked player 1
+("joins as player 1") but never finished: no controller was stored and the
+state stayed "not joined". The join completes through a message to the
+player's character, which isn't answered while the game is paused.
+
+Tested with a fake controller for player 2 and the scripted one for player
+1: both join, player 1 drops out (pause, Back), player 2's controller is
+unplugged (`p2.unplug`), the box offers the take-over, player 1's START
+gives states `1 2` (player 1 the mask) and then `2 0` within 0.1 s; player
+1 walks; no errors.
