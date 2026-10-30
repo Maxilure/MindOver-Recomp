@@ -35,6 +35,7 @@
 
 #include "../input/keyboard_mouse.h"
 #include "../options/options_menu.h"
+#include "../ui/main_menu_extras.h"
 #include "../ui/scrooby.h"
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
@@ -1680,7 +1681,8 @@ extern "C" REX_FUNC(sub_8237A550) {
 // screen's Enter plays the menu's "back" swipe each time it runs).
 extern "C" REX_FUNC(sub_82261800) {
   using namespace save_library;
-  if (g.refilling || scrooby::SoundsMuted()) {  // (scrooby.h SetSoundsMuted)
+  if (g.refilling || scrooby::SoundsMuted() ||
+      main_menu_extras::DropSound(uint32_t(ctx.lr))) {  // (scrooby.h SetSoundsMuted; ui/main_menu_extras.h)
     ctx.r3.u64 = 0;
     return;
   }

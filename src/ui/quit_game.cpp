@@ -12,6 +12,7 @@
 
 #include "../guest_memory.h"
 #include "../options/options_page.h"
+#include "main_menu_extras.h"
 #include "scrooby.h"
 
 extern "C" REX_FUNC(__imp__sub_8225F758);  // ShowConfirmMessage (front end, r4 text name, f1 timer)
@@ -191,6 +192,7 @@ extern "C" REX_FUNC(sub_820CEB58) {
   const uint32_t before = quit_game::ScreenState(base, screen);
   __imp__sub_820CEB58(ctx, base);
   const uint64_t result = ctx.r3.u64;  // (the original always answers 1)
+  main_menu_extras::AfterScreenUpdate(ctx, base, screen, before);  // (Extras / Back first: ui/main_menu_extras.h)
   quit_game::AfterScreenUpdate(ctx, base, screen, before);
   ctx.r3.u64 = result;
 }

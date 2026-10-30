@@ -838,8 +838,10 @@ constexpr std::string_view kInGamePackage = "package\\7a8185b0.p3d";  // any in-
 // bar: 45 apart keeps the list's top where it was. (An "Achievements" item
 // was here for a few days; it lives in the pause menu only now: the
 // achievements are earned in play.)
-// Six items since "Players" (2026-10-29): 40 apart, the last at y 95.
-constexpr int kMainItemTopY = 295, kMainItemStep = 40;
+// Six items since "Players" (2026-10-29), 40 apart; since EXTRAS (2026-10-30,
+// ui/main_menu_extras.h) two sets of at most five, shown one at a time: 45
+// apart again, each set from the top.
+constexpr int kMainItemTopY = 295, kMainItemStep = 45;
 constexpr std::string_view kCalibrationItem = "CalibrationItem";
 
 std::atomic<bool> g_main_menu_patched{false};
@@ -927,34 +929,42 @@ bool PatchMainMenu(const Bytes& original, Bytes* patched) {
           if (calibration == items.end()) return false;
           items.erase(calibration);
           items.insert(items.begin() + kMainMenuOptionsItem, ps2_item);
-          // "Players" right after it (players/players_setup.h): a copy of
-          // Options' item (same look), its words set at run time like Quit's
-          // (achievements/achievements_screen.cpp FrontEndFrame).
-          {
-            Node players = ps2_item;
-            pure3d::SetNodeName(players, "PlayersItem");
-            if (players.children.empty() || players.children[0].children.empty()) return false;
-            pure3d::SetNodeName(players.children[0].children[0], "PlayersItemText");
-            items.insert(items.begin() + kMainMenuPlayersItem, players);
+          // The order (options_page.h): New Game, Load Game, Options, EXTRAS,
+          // QUIT GAME | PLAYERS, Credits. The new items are copies of
+          // Options' (Extras, Players) or Credits' (Quit) item, renamed
+          // (siblings keep unique names); their words go in at run time
+          // (achievements_screen.cpp, quit_game.cpp, main_menu_extras.cpp:
+          // the menus' text bank has none of these strings).
+          if (items.size() != 4) return false;  // New, Load, Options, Credits
+          const Node credits = items[3];
+          items.pop_back();
+          auto copy = [&](const Node& from, const char* item_name, const char* text_name) {
+            Node n = from;
+            pure3d::SetNodeName(n, item_name);
+            if (n.children.empty() || n.children[0].children.empty()) return false;
+            pure3d::SetNodeName(n.children[0].children[0], text_name);
+            items.push_back(std::move(n));
+            return true;
+          };
+          if (!copy(ps2_item, "ExtrasItem", "ExtrasItemText") || !copy(credits, "QuitItem", "QuitItemText") ||
+              !copy(ps2_item, "PlayersItem", "PlayersItemText")) {
+            return false;
           }
-          // "Quit Game": a copy of the last item (Credits: same font, colour,
-          // look), renamed (siblings keep unique names). Its text still names
-          // Credits' string in the bank; the words go in at run time
-          // (ui/quit_game.cpp: the menus' text bank has no such string).
-          {
-            Node quit = items.back();
-            pure3d::SetNodeName(quit, "QuitItem");
-            if (quit.children.empty() || quit.children[0].children.empty()) return false;
-            pure3d::SetNodeName(quit.children[0].children[0], "QuitItemText");
-            items.push_back(quit);
-          }
-          // Evenly apart (each item's text: look -> text).
+          items.push_back(credits);
+          if (int(items.size()) != kMainMenuItemCount) return false;
+          // Evenly apart (each item's text: look -> text), each set CENTRED on
+          // the same middle (the first set's: its third item, y 205).
           for (size_t i = 0; i < menu->children.size(); ++i) {
             Node& item = menu->children[i];
             if (item.children.empty() || item.children[0].children.empty()) return false;
             Node& text = item.children[0].children[0];
             const size_t e = pure3d::NameEnd(text);
-            SetBox(text, int(pure3d::NodeLe32(text, e + 4)), kMainItemTopY - kMainItemStep * int(i),
+            const bool top = int(i) < kMainMenuTopItems;
+            const int row = top ? int(i) : int(i) - kMainMenuTopItems;
+            const int count = top ? kMainMenuTopItems : kMainMenuItemCount - kMainMenuTopItems;
+            const int middle = kMainItemTopY - kMainItemStep * (kMainMenuTopItems - 1) / 2;
+            const int y = middle + kMainItemStep * (count - 1) / 2 - kMainItemStep * row;
+            SetBox(text, int(pure3d::NodeLe32(text, e + 4)), y,
                    int(pure3d::NodeLe32(text, e + 12)), int(pure3d::NodeLe32(text, e + 16)));
           }
           return true;

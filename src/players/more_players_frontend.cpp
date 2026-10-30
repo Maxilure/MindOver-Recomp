@@ -34,6 +34,7 @@
 #include "../input/mouse_menus.h"
 #include "../input/prompt_icons.h"
 #include "../input/title_any_button.h"
+#include "../ui/main_menu_extras.h"
 #include "../ui/quit_game.h"
 #include "../achievements/achievements.h"
 #include "../achievements/achievements_screen.h"
@@ -199,6 +200,8 @@ extern "C" REX_FUNC(sub_82261C40) {
   title_any_button::FrontEndFrame(ctx, base);
   // The main menu's "Quit Game" words (ui/quit_game.h).
   quit_game::FrontEndFrame(ctx, base);
+  // The main menu's "Extras" set (ui/main_menu_extras.h).
+  main_menu_extras::FrontEndFrame(ctx, base);
   // A waiting achievement notification starts (achievements/achievements.h).
   achievements::FrontEndFrame(ctx, base);
   // The "Achievements" items' words (achievements/achievements_screen.h).

@@ -87,11 +87,18 @@ bool Available();
 // Whether the main menu got its "Options" item and our page (as its third
 // item, the page in place of the unused PS2 Options page: options_page.cpp).
 bool MainMenuAvailable();
-// The main menu's items with it: New Game, Load Game, OPTIONS, PLAYERS,
-// Credits, QUIT GAME (ui/quit_game.h). (Achievements: the pause menu only.)
+// The main menu's items with it, in TWO SETS (2026-10-30, ui/main_menu_extras.h:
+// the list had grown to six). Shown first: New Game, Load Game, OPTIONS,
+// EXTRAS, QUIT GAME (ui/quit_game.h). Extras swaps the list for the second
+// set: PLAYERS, Credits (B goes back). One menu holds all seven (the hidden
+// set is hidden and not selectable). (Achievements: the pause menu only.)
 constexpr int kMainMenuOptionsItem = 2;
-constexpr int kMainMenuPlayersItem = 3;
-constexpr int kMainMenuQuitItem = 5;
+constexpr int kMainMenuExtrasItem = 3;
+constexpr int kMainMenuQuitItem = 4;
+constexpr int kMainMenuPlayersItem = 5;
+constexpr int kMainMenuCreditsItem = 6;
+constexpr int kMainMenuTopItems = 5;    // items 0-4: the first set
+constexpr int kMainMenuItemCount = 7;   // + 5-6: the Extras set
 // Whether the pause pages got their "Players" and "Achievements" items
 // (right after Options, in that order; options_page.cpp AddPauseItems).
 bool PauseAchievementsAvailable();

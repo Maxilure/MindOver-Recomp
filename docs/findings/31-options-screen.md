@@ -566,3 +566,53 @@ port's Options screen is.
 Tested with the debug console on the test copy: the item reads "Quit Game"
 in the game's font, A asks, No keeps the menu (the cursor moves, Quit Game
 selected), asking again works, Yes ends the game; 0 errors.
+
+## 12. Extras: the main menu in two sets (2026-10-30)
+
+![The main menu and its Extras set](../images/main-menu-extras.jpg)
+
+The port's additions had grown the main menu to six items (New Game, Load
+Game, Options, Players, Credits, Quit Game), down near the prompt bar. The
+items a player needs less often moved one step in, in the same list
+(`src/ui/main_menu_extras.*`):
+
+| Set | Items |
+|---|---|
+| First | New Game, Load Game, Options, Extras, Quit Game |
+| Extras | Players, Credits (B goes back) |
+
+* **The items.** The main menu package patch (s.4) gives the StartMenu all
+  seven, in that order (indices in `options/options_page.h`): Extras and
+  Players are copies of Options' item, Quit Game of Credits'; their words go
+  in at run time (the menus' text bank has none of them). Both sets are
+  centred on the same middle (the first set's third row), 45 units apart.
+  (A "Back" item was there for a day: the prompt bar already says B Back.)
+* **Which set shows.** Every front-end update, the other set's items are
+  hidden (their Text, item +140, not drawn) and not selectable (item +137
+  bit 0x80): the list's up and down step over them and wrap inside the set,
+  and the mouse only finds shown texts. A selection left on a hidden item
+  moves into the shown set.
+* **The swap.** Like Quit Game's pick (s.11), a step of the screen's state
+  from open (3) to picked (5) on Extras, or to closing (4) on B while the
+  Extras set shows, is taken back: state 3, the result flags cleared, and the
+  other set shown (the cursor on Players, or back on Extras). The set coming
+  in slides 60 units in from the side (from the right into Extras, from the
+  left back out) and fades in, eased out over 0.22 s (element +92 and the
+  alpha byte); the menus' input comes back when it's over. B in the first
+  set leaves to the title as before. The decision answers "stay" for Extras
+  should it reach it.
+* **B's sound.** The screen's B (`sub_820CEE40`: button 12 -> state 4) plays
+  its closing "shutter" sound at once (`0x820CEED4`), the sound of leaving
+  for the title. In the Extras set that one call is dropped (the front end's
+  sound player, wrapped in `saves/save_library.cpp`, asks
+  `main_menu_extras::DropSound(return address)`) and the menu's move sound
+  plays instead; the log says "B's closing sound dropped".
+* **Players and Credits** leave the menu as before (Options' exit with the
+  Players request; exit 88). Back from either, the Extras set is still the
+  one shown, the cursor on the item picked (the game's menu comes back on its
+  first item; the last pick is put back).
+
+Tested with the debug console on the test copy: Extras and back with B, the
+transition (photos 60 ms apart), the cursor wrapping inside each set, Credits
+and back (cursor on Credits), Players and back (cursor on Players), Quit Game
+in its new place and its question; 0 errors. The pause menu is unchanged.

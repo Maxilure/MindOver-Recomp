@@ -2650,8 +2650,9 @@ extern "C" REX_FUNC(sub_820CE2C8) {
 // selected item into an exit when the accept flag is up: GetMenuIndex
 // (sub_821239C8, page GameStart_Start_Xenon, menu StartMenu) 0-3 -> 86 New
 // Game, 87 Load Game, 88 Credits, 89 Calibration. Ours: New Game, Load Game,
-// Options, Players, Credits, Quit Game (Calibration gave its place; Players = the Options screen's
-// third mode, players/players_setup.h; Quit = ui/quit_game.h); 2 and 3 = exit 77, the PS2 menu's ExitOptions -> the
+// Options, Extras, Quit Game | Players, Credits, Back (Calibration gave its place; Players = the Options screen's
+// third mode, players/players_setup.h; Quit = ui/quit_game.h; Extras / Back =
+// ui/main_menu_extras.h); Options and Players = exit 77, the PS2 menu's ExitOptions -> the
 // OptionsScreen state 96 (the engine follows any exit's target, not only a
 // child of the current state: saves/rename_screen.cpp).
 extern "C" REX_FUNC(__imp__sub_8211B6C8);  // MainMenuScreen's decision
@@ -2685,15 +2686,19 @@ extern "C" REX_FUNC(sub_8211B6C8) {
   const int index = int(ctx.r3.s32);
   ctx = saved;
   // (Calibration, 89, is no longer in the list: options_page.cpp.)
+  // The seven items (options_page.h; two sets, ui/main_menu_extras.h):
   // "Players" (players/players_setup.h) = the Options screen in its third
-  // mode: Options' exit, plus the request.
-  constexpr int32_t kExits[] = {kExitNewGame, kExitLoadGame, kExitOptions, kExitOptions, kExitCredits};
+  // mode: Options' exit, plus the request. Extras and Quit Game have
+  // no exit: their picks never close the screen (main_menu_extras.cpp /
+  // quit_game.cpp take them back); should one get here, stay.
+  constexpr int32_t kStay = -1;
+  constexpr int32_t kExits[] = {kExitNewGame, kExitLoadGame, kExitOptions, kStay,
+                                kStay,        kExitOptions,  kExitCredits};
+  static_assert(std::size(kExits) == options_page::kMainMenuItemCount);
   static_assert(kExits[options_page::kMainMenuOptionsItem] == kExitOptions);
   static_assert(kExits[options_page::kMainMenuPlayersItem] == kExitOptions);
-  // The last item, "Quit Game", has no exit: its pick never closes the
-  // screen (ui/quit_game.cpp takes it back and asks); should one get here,
-  // stay.
-  if (index == options_page::kMainMenuQuitItem) {
+  static_assert(kExits[options_page::kMainMenuCreditsItem] == kExitCredits);
+  if (index >= 0 && index < int(std::size(kExits)) && kExits[index] == kStay) {
     ctx.r3.s64 = -1;
     return;
   }
