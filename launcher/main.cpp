@@ -85,6 +85,7 @@
 #include "saves.h"
 #include "settings_page.h"
 #include "setup.h"
+#include "texts.h"
 #include "update.h"
 
 namespace fs = std::filesystem;
@@ -199,19 +200,20 @@ void MutedText(const char* text) {
 // Text helpers
 // -----------------------------------------------------------------------------
 
-const char* const kMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+// TR: Short month names (3 letters if the language has short forms), in the save list's dates.
+const char* const kMonths[] = {trsn("Jan"), trsn("Feb"), trsn("Mar"), trsn("Apr"), trsn("May"), trsn("Jun"),
+                               trsn("Jul"), trsn("Aug"), trsn("Sep"), trsn("Oct"), trsn("Nov"), trsn("Dec")};
 
 // "1 h 05 min" / "12 min" / "40 s".
 std::string Duration(double seconds) {
   const long total = long(seconds);
   char text[48];
   if (total >= 3600) {
-    std::snprintf(text, sizeof(text), "%ld h %02ld min", total / 3600, total / 60 % 60);
+    std::snprintf(text, sizeof(text), trs("%ld h %02ld min"), total / 3600, total / 60 % 60);
   } else if (total >= 60) {
-    std::snprintf(text, sizeof(text), "%ld min", total / 60);
+    std::snprintf(text, sizeof(text), trs("%ld min"), total / 60);
   } else {
-    std::snprintf(text, sizeof(text), "%ld s", total);
+    std::snprintf(text, sizeof(text), trs("%ld s"), total);
   }
   return text;
 }
@@ -222,7 +224,8 @@ std::string SavedAt(const saves::Save& save) {
     return "?";
   }
   char text[48];
-  std::snprintf(text, sizeof(text), "%s %d, %02d:%02d", kMonths[save.month - 1], save.day,
+  // TR: A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
+  std::snprintf(text, sizeof(text), trs("%s %d, %02d:%02d"), trs(kMonths[save.month - 1]), save.day,
                 save.hour, save.minute);
   return text;
 }
@@ -243,13 +246,13 @@ std::string PlayedWhen(int64_t ticks) {
   const long days = long(std::difftime(std::mktime(&now_day), std::mktime(&then_day)) / 86400.0 + 0.5);
   char text[48];
   if (days <= 0) {
-    std::snprintf(text, sizeof(text), "today %02d:%02d", then.tm_hour, then.tm_min);
+    std::snprintf(text, sizeof(text), trs("today %02d:%02d"), then.tm_hour, then.tm_min);
   } else if (days == 1) {
-    std::snprintf(text, sizeof(text), "yesterday %02d:%02d", then.tm_hour, then.tm_min);
+    std::snprintf(text, sizeof(text), trs("yesterday %02d:%02d"), then.tm_hour, then.tm_min);
   } else if (days < 7) {
-    std::snprintf(text, sizeof(text), "%ld days ago", days);
+    std::snprintf(text, sizeof(text), trs("%ld days ago"), days);
   } else {
-    std::snprintf(text, sizeof(text), "%s %d", kMonths[then.tm_mon], then.tm_mday);
+    std::snprintf(text, sizeof(text), trs("%s %d"), trs(kMonths[then.tm_mon]), then.tm_mday);
   }
   return text;
 }
@@ -372,17 +375,17 @@ struct Launcher {
 
 void Launcher::DrawHeader() {
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.9f);
-  ImGui::TextUnformatted("Mind over Recomp");
+  ImGui::TextUnformatted(trs("Mind over Recomp"));
   ImGui::PopFont();
   ImGui::SameLine();
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().FontSizeBase * 0.65f);
   ImGui::PushStyleColor(ImGuiCol_Text, kOrange);
   static const std::string version = update::InstalledVersion(folders);
-  ImGui::Text("%s", version.empty() ? "(alpha)" : version.c_str());
+  ImGui::Text("%s", version.empty() ? trs("(alpha)") : version.c_str());
   ImGui::PopStyleColor();
   // The port is named after the project; the game's name only says what it
   // is a port of (it's not an official product).
-  ImGui::TextDisabled("An unofficial PC port of Crash: Mind over Mutant");
+  ImGui::TextDisabled(trs("An unofficial PC port of Crash: Mind over Mutant"));
   ImGui::Spacing();
 }
 
@@ -397,30 +400,30 @@ bool Launcher::DrawProblems() {
     ImGui::Spacing();
   };
   if (folders.root.empty()) {
-    problem("Couldn't find the game.",
-            "Put the launcher in the game's folder (next to program/), or start it with "
-            "--game_folder=<path to the game folder>.");
+    problem(trs("Couldn't find the game."),
+            trs("Put the launcher in the game's folder (next to program/), or start it with "
+            "--game_folder=<path to the game folder>."));
     return true;
   }
   bool blocked = false;
   if ((!folders.ExeExists() || !folders.DiscExists()) && setup) {
-    ImGui::TextUnformatted("The game isn't ready to play yet.");
-    if (ImGui::Button("Open Setup")) {
+    ImGui::TextUnformatted(trs("The game isn't ready to play yet."));
+    if (ImGui::Button(trs("Open Setup"))) {
       select_tab = 3;
     }
     ImGui::Spacing();
   }
   if (!folders.ExeExists()) {
-    problem("The game isn't built yet.",
-            "Expected at " + folders::Pretty(folders.exe) +
-                ". Build it first (docs/01-building.md, steps 2 to 4).");
+    problem(trs("The game isn't built yet."),
+            trf(trs("Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."),
+                {folders::Pretty(folders.exe)}));
     blocked = true;
   }
   if (!folders.DiscExists()) {
-    problem("The disc's files aren't there.",
-            "Expected in " + folders::Pretty(folders.disc) +
-                " (default.xex and the rest). Extract your disc image first "
-                "(docs/01-building.md, step 1).");
+    problem(trs("The disc's files aren't there."),
+            trf(trs("Expected in {0} (default.xex and the rest). Extract your disc image first "
+                    "(docs/01-building.md, step 1)."),
+                {folders::Pretty(folders.disc)}));
     blocked = true;
   }
   return blocked;
@@ -430,30 +433,30 @@ void Launcher::DrawRunning() {
   const auto elapsed = std::chrono::duration<double>(Clock::now() - game->started()).count();
   ImGui::BeginChild("running", {0, 0}, ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.35f);
-  ImGui::TextColored(kGood, "Playing");
+  ImGui::TextColored(kGood, trs("Playing"));
   ImGui::PopFont();
   ImGui::SameLine();
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetStyle().FontSizeBase * 0.2f);
-  ImGui::TextColored(kMuted, "for %s", Duration(elapsed).c_str());
-  MutedText("The game is running in its own window. This window can stay open: it shows how the "
-            "session ended when the game closes.");
-  if (ImGui::Button("Watch the game log")) {
+  ImGui::TextColored(kMuted, trs("for %s"), Duration(elapsed).c_str());
+  MutedText(trs("The game is running in its own window. This window can stay open: it shows how the "
+            "session ended when the game closes."));
+  if (ImGui::Button(trs("Watch the game log"))) {
     select_tab = 2;
   }
   ImGui::SameLine();
-  if (ImGui::Button("Stop the game...")) {
+  if (ImGui::Button(trs("Stop the game..."))) {
     confirm_stop = true;
-    ImGui::OpenPopup("Stop the game?");
+    ImGui::OpenPopup(trs("Stop the game?"));
   }
-  if (ImGui::BeginPopupModal("Stop the game?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-    ImGui::TextUnformatted("Progress since your last save is lost.");
+  if (ImGui::BeginPopupModal(trs("Stop the game?"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::TextUnformatted(trs("Progress since your last save is lost."));
     ImGui::Spacing();
-    if (ImGui::Button("Stop it")) {
+    if (ImGui::Button(trs("Stop it"))) {
       game->Stop();
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Keep playing") || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    if (ImGui::Button(trs("Keep playing")) || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
@@ -467,59 +470,58 @@ void Launcher::DrawReport() {
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.2f);
   const std::string played = Duration(double(result.played.count()));
   if (result.crashed) {
-    ImGui::TextColored(kBad, "The game crashed after %s", played.c_str());
+    ImGui::TextColored(kBad, trs("The game crashed after %s"), played.c_str());
   } else if (result.killed) {
-    ImGui::TextColored(kWarn, "The game was ended from outside after %s", played.c_str());
+    ImGui::TextColored(kWarn, trs("The game was ended from outside after %s"), played.c_str());
   } else if (result.stopped_by_launcher) {
-    ImGui::TextColored(kWarn, "The game was stopped after %s", played.c_str());
+    ImGui::TextColored(kWarn, trs("The game was stopped after %s"), played.c_str());
   } else if (result.exit_code != 0) {
-    ImGui::TextColored(kWarn, "The game quit with an error (code %d) after %s", result.exit_code,
+    ImGui::TextColored(kWarn, trs("The game quit with an error (code %d) after %s"), result.exit_code,
                        played.c_str());
   } else {
-    ImGui::TextColored(kGood, "The game closed normally after %s", played.c_str());
+    ImGui::TextColored(kGood, trs("The game closed normally after %s"), played.c_str());
   }
   ImGui::PopFont();
   if (result.crashed || result.killed) {
     // (Linux SIGKILL = 9: also what the system does when memory runs out.)
-    ImGui::TextColored(kMuted, "Ended by %s.%s", result.ended_by.c_str(),
+    ImGui::TextColored(kMuted, trs("Ended by %s.%s"), result.ended_by.c_str(),
                        result.killed && result.raw == 9
-                           ? " (Also what the system does when memory runs out.)"
+                           ? trs(" (Also what the system does when memory runs out.)")
                            : "");
   }
   if (!result.log.empty()) {
-    ImGui::TextColored(kMuted, "Log: %s", folders::Pretty(result.log).c_str());
+    ImGui::TextColored(kMuted, trs("Log: %s"), folders::Pretty(result.log).c_str());
     if (log.errors || log.warnings) {
       ImGui::SameLine();
       ImGui::TextColored(log.errors ? kBad : kWarn,
-                         " %d error%s (%d different), %d warning%s (%d different)", log.errors,
-                         log.errors == 1 ? "" : "s", log.error_kinds, log.warnings,
-                         log.warnings == 1 ? "" : "s", log.warning_kinds);
+                         trs(" Errors: %d (%d different), warnings: %d (%d different)"), log.errors,
+                         log.error_kinds, log.warnings, log.warning_kinds);
     }
   }
   if (!result.fps.empty()) {
-    ImGui::TextColored(kMuted, "Frame rate: %s", result.fps.c_str());
+    ImGui::TextColored(kMuted, trs("Frame rate: %s"), result.fps.c_str());
   }
   ImGui::Spacing();
-  if (!result.log.empty() && ImGui::Button("Open the log")) {
+  if (!result.log.empty() && ImGui::Button(trs("Open the log"))) {
     OpenPath(result.log);
   }
   ImGui::SameLine();
-  if (ImGui::Button("Logs folder")) {
+  if (ImGui::Button(trs("Logs folder"))) {
     OpenPath(folders.user / "logs");
   }
   ImGui::SameLine();
-  if (ImGui::Button("Show the game log")) {
+  if (ImGui::Button(trs("Show the game log"))) {
     select_tab = 2;
   }
   ImGui::SameLine();
   // Something went wrong: the report button stands out.
   const bool went_wrong = result.crashed || result.killed || result.exit_code != 0 || log.errors;
-  if (went_wrong ? AccentButton("Report a problem...", {0, 0})
-                 : ImGui::Button("Report a problem...")) {
+  if (went_wrong ? AccentButton(trs("Report a problem..."), {0, 0})
+                 : ImGui::Button(trs("Report a problem..."))) {
     OpenReport();
   }
   ImGui::SameLine();
-  if (ImGui::Button("OK")) {
+  if (ImGui::Button(trs("OK"))) {
     game->Forget();
   }
   ImGui::EndChild();
@@ -531,15 +533,15 @@ void Launcher::DrawPlay() {
   const float width = ImGui::GetStyle().FontSizeBase * ImGui::GetStyle().FontScaleDpi * 15.0f;
 
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.25f);
-  const bool play = AccentButton("Play", {width, big});
+  const bool play = AccentButton(trs("Play"), {width, big});
   ImGui::PopFont();
   ImGui::SameLine();
   ImGui::BeginGroup();
   ImGui::SetCursorPosY(ImGui::GetCursorPosY() + big * 0.12f);
   ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted("From the start");
+  ImGui::TextUnformatted(trs("From the start"));
   ImGui::PopFont();
-  MutedText("Intro movies (Esc or Start skips them), the title screen and the menus.");
+  MutedText(trs("Intro movies (Esc or Start skips them), the title screen and the menus."));
   ImGui::EndGroup();
   if (play) {
     Play(0);
@@ -548,7 +550,7 @@ void Launcher::DrawPlay() {
   if (!save_list.empty()) {
     const saves::Save& last = save_list.front();
     ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.25f);
-    const bool resume = AccentButton("Continue", {width, big});
+    const bool resume = AccentButton(trs("Continue"), {width, big});
     ImGui::PopFont();
     ImGui::SameLine();
     ImGui::BeginGroup();
@@ -558,7 +560,8 @@ void Launcher::DrawPlay() {
     ImGui::PopFont();
     char details[160];
     std::snprintf(details, sizeof(details),
-                  "%d%%  \u00b7  %s  \u00b7  played %s. Straight in: no movies or menus.",
+                  // TR: Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
+                  trs("%d%%  \u00b7  %s  \u00b7  played %s. Straight in: no movies or menus."),
                   last.percent, Duration(last.play_seconds).c_str(),
                   PlayedWhen(last.played).c_str());
     MutedText(details);
@@ -575,19 +578,19 @@ void Launcher::DrawPlay() {
 
 void Launcher::DrawSaves() {
   ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.1f);
-  ImGui::Text("Your saves");
+  ImGui::Text(trs("Your saves"));
   ImGui::PopFont();
   ImGui::SameLine();
-  ImGui::TextColored(kMuted, "(%zu)", save_list.size());
+  ImGui::TextColored(kMuted, trs("(%zu)"), save_list.size());
   if (save_list.empty()) {
-    MutedText("No saves yet. Start a New Game from the main menu: it makes its own save.");
+    MutedText(trs("No saves yet. Start a New Game from the main menu: it makes its own save."));
     return;
   }
   ImGui::SameLine();
   const float filter_width = ImGui::GetStyle().FontSizeBase * ImGui::GetStyle().FontScaleDpi * 14;
   ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x - filter_width);
   ImGui::SetNextItemWidth(filter_width);
-  ImGui::InputTextWithHint("##filter", "Find a save...", filter, sizeof(filter));
+  ImGui::InputTextWithHint("##filter", trs("Find a save..."), filter, sizeof(filter));
 
   // Leave room under the table for the folder buttons.
   const float below = ImGui::GetFrameHeightWithSpacing() * 1.6f;
@@ -598,11 +601,11 @@ void Launcher::DrawSaves() {
     return;
   }
   ImGui::TableSetupScrollFreeze(0, 1);
-  ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 3.0f);
-  ImGui::TableSetupColumn("Progress", ImGuiTableColumnFlags_WidthStretch, 1.1f);
-  ImGui::TableSetupColumn("Play time", ImGuiTableColumnFlags_WidthStretch, 1.4f);
-  ImGui::TableSetupColumn("Difficulty", ImGuiTableColumnFlags_WidthStretch, 1.2f);
-  ImGui::TableSetupColumn("Last played", ImGuiTableColumnFlags_WidthStretch, 1.8f);
+  ImGui::TableSetupColumn(trs("Name"), ImGuiTableColumnFlags_WidthStretch, 3.0f);
+  ImGui::TableSetupColumn(trs("Progress"), ImGuiTableColumnFlags_WidthStretch, 1.1f);
+  ImGui::TableSetupColumn(trs("Play time"), ImGuiTableColumnFlags_WidthStretch, 1.4f);
+  ImGui::TableSetupColumn(trs("Difficulty"), ImGuiTableColumnFlags_WidthStretch, 1.2f);
+  ImGui::TableSetupColumn(trs("Last played"), ImGuiTableColumnFlags_WidthStretch, 1.8f);
   ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
   ImGui::TableHeadersRow();
 
@@ -629,7 +632,7 @@ void Launcher::DrawSaves() {
     ImGui::TableNextColumn();
     ImGui::AlignTextToFramePadding();
     // The whole row is one selectable: click selects, double-click plays.
-    const bool picked = ImGui::Selectable(save.name.empty() ? "(no name)" : save.name.c_str(),
+    const bool picked = ImGui::Selectable(save.name.empty() ? trs("(no name)") : save.name.c_str(),
                                           selected == i,
                                           ImGuiSelectableFlags_SpanAllColumns |
                                               ImGuiSelectableFlags_AllowOverlap |
@@ -642,7 +645,7 @@ void Launcher::DrawSaves() {
       }
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
-      ImGui::SetTooltip("Save file %d, saved %s", save.number, SavedAt(save).c_str());
+      ImGui::SetTooltip(trs("Save file %d, saved %s"), save.number, SavedAt(save).c_str());
     }
     ImGui::TableNextColumn();
     ImGui::AlignTextToFramePadding();
@@ -657,7 +660,7 @@ void Launcher::DrawSaves() {
     ImGui::AlignTextToFramePadding();
     ImGui::TextColored(kMuted, "%s", PlayedWhen(save.played).c_str());
     ImGui::TableNextColumn();
-    if (ImGui::SmallButton("Play")) {
+    if (ImGui::SmallButton(trs("Play"))) {
       play_number = save.number;
     }
     ImGui::PopID();
@@ -670,32 +673,32 @@ void Launcher::DrawSaves() {
 
 void Launcher::DrawFolders() {
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(kMuted, "Open:");
+  ImGui::TextColored(kMuted, trs("Open:"));
   ImGui::SameLine();
-  if (ImGui::Button("Saves")) {
+  if (ImGui::Button(trs("Saves"))) {
     OpenPath(folders.user / "saves");
   }
   ImGui::SameLine();
-  if (ImGui::Button("Photos (F10)")) {
+  if (ImGui::Button(trs("Photos (F10)"))) {
     OpenPath(folders.user / "photos");
   }
   ImGui::SameLine();
-  if (ImGui::Button("Logs")) {
+  if (ImGui::Button(trs("Logs"))) {
     OpenPath(folders.user / "logs");
   }
   ImGui::SameLine();
-  if (ImGui::Button("Settings file")) {
+  if (ImGui::Button(trs("Settings file"))) {
     OpenPath(folders.user / "settings.toml");
   }
   ImGui::SameLine();
-  if (ImGui::Button("Report a problem...")) {
+  if (ImGui::Button(trs("Report a problem..."))) {
     OpenReport();
   }
 
   // The applications menu entry (desktop_entry.h), at the row's right end.
-  const char* label = desktop == desktop_entry::Status::kMissing    ? "Add to the applications menu"
-                      : desktop == desktop_entry::Status::kOutdated ? "Update the menu entry"
-                                                                    : "Remove from the menu";
+  const char* label = desktop == desktop_entry::Status::kMissing    ? trs("Add to the applications menu")
+                      : desktop == desktop_entry::Status::kOutdated ? trs("Update the menu entry")
+                                                                    : trs("Remove from the menu");
   const float width = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2;
   const float right = ImGui::GetWindowContentRegionMax().x - width;
   // The folder's path in between, when there's room for it.
@@ -717,10 +720,10 @@ void Launcher::DrawFolders() {
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
     ImGui::SetTooltip("%s\n%s",
                       desktop == desktop_entry::Status::kCurrent
-                          ? "The launcher is in your applications menu (right-click it there for "
-                            "\"Continue last save\")."
-                          : "Puts the launcher in your desktop's applications menu, with a "
-                            "\"Continue last save\" shortcut on right-click.",
+                          ? trs("The launcher is in your applications menu (right-click it there for "
+                            "\"Continue last save\").")
+                          : trs("Puts the launcher in your desktop's applications menu, with a "
+                            "\"Continue last save\" shortcut on right-click."),
                       folders::Pretty(desktop_entry::EntryPath()).c_str());
   }
   if (!desktop_error.empty()) {
@@ -732,9 +735,9 @@ void Launcher::DrawPlayTab(game_process::State state) {
   std::string newer;
   if (setup && setup->UpdateAvailable(&newer)) {
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(kOrange, "Version %s is out.", newer.c_str());
+    ImGui::TextColored(kOrange, trs("Version %s is out."), newer.c_str());
     ImGui::SameLine();
-    if (ImGui::SmallButton("See the update")) {
+    if (ImGui::SmallButton(trs("See the update"))) {
       select_tab = 3;
     }
     ImGui::Spacing();
@@ -746,17 +749,17 @@ void Launcher::DrawPlayTab(game_process::State state) {
   if (!whats_new.empty()) {
     ImGui::BeginChild("whatsnew", {0, 0}, ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
     ImGui::PushFont(fonts.bold, ImGui::GetStyle().FontSizeBase * 1.2f);
-    ImGui::TextColored(kGood, "Updated to %s", update::InstalledVersion(folders).c_str());
+    ImGui::TextColored(kGood, trs("Updated to %s"), update::InstalledVersion(folders).c_str());
     ImGui::PopFont();
-    ImGui::TextUnformatted("What's new:");
+    ImGui::TextUnformatted(trs("What's new:"));
     ImGui::Indent();
     ImGui::TextWrapped("%s", whats_new.c_str());
     ImGui::Unindent();
-    if (ImGui::Button("OK")) {
+    if (ImGui::Button(trs("OK"))) {
       whats_new.clear();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Release page")) {
+    if (ImGui::Button(trs("Release page"))) {
       SDL_OpenURL(update::ReleasePage(update::InstalledVersion(folders)).c_str());
     }
     ImGui::EndChild();
@@ -765,16 +768,16 @@ void Launcher::DrawPlayTab(game_process::State state) {
   // The game not (yet) rebuilt for this version: playing would start the old
   // build (Setup::GameNeedsBuild).
   if (setup && setup->Building()) {
-    ImGui::TextColored(kOrange, "Building the game for this version...");
+    ImGui::TextColored(kOrange, trs("Building the game for this version..."));
     ImGui::SameLine();
-    if (ImGui::SmallButton("Watch it in Setup")) {
+    if (ImGui::SmallButton(trs("Watch it in Setup"))) {
       select_tab = 3;
     }
     ImGui::Spacing();
   } else if (setup && setup->GameNeedsBuild()) {
-    ImGui::TextColored(kWarn, "The game isn't rebuilt for this version yet: Play starts the old build.");
+    ImGui::TextColored(kWarn, trs("The game isn't rebuilt for this version yet: Play starts the old build."));
     ImGui::SameLine();
-    if (ImGui::SmallButton("Rebuild it in Setup")) {
+    if (ImGui::SmallButton(trs("Rebuild it in Setup"))) {
       select_tab = 3;
     }
     ImGui::Spacing();
@@ -787,8 +790,8 @@ void Launcher::DrawPlayTab(game_process::State state) {
       DrawReport();
     }
     if (other_game_running) {
-      ImGui::TextColored(kWarn, "The game is already running (started some other way).");
-      MutedText("Close it first: two copies at once would fight over the saves.");
+      ImGui::TextColored(kWarn, trs("The game is already running (started some other way)."));
+      MutedText(trs("Close it first: two copies at once would fight over the saves."));
     } else {
       // (No playing while it builds: the build replaces the game's files.)
       ImGui::BeginDisabled(setup && setup->Building());
@@ -808,9 +811,9 @@ void Launcher::DrawPlayTab(game_process::State state) {
 void Launcher::DrawLogTab() {
   if (log.file.empty()) {
     ImGui::Spacing();
-    MutedText("Nothing yet: once the game starts from here, its log shows up in this tab as it is "
-              "written. Earlier sessions' logs are in the logs folder.");
-    if (ImGui::Button("Logs folder")) {
+    MutedText(trs("Nothing yet: once the game starts from here, its log shows up in this tab as it is "
+              "written. Earlier sessions' logs are in the logs folder."));
+    if (ImGui::Button(trs("Logs folder"))) {
       OpenPath(folders.user / "logs");
     }
     return;
@@ -819,29 +822,28 @@ void Launcher::DrawLogTab() {
   // The file, its counts, buttons.
   const bool running = game->state() == game_process::State::kRunning;
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(running ? kGood : kMuted, running ? "Live" : "Last session");
+  ImGui::TextColored(running ? kGood : kMuted, running ? trs("Live") : trs("Last session"));
   ImGui::SameLine();
-  ImGui::TextColored(log.errors ? kBad : kMuted, " %d error%s", log.errors,
-                     log.errors == 1 ? "" : "s");
+  ImGui::TextColored(log.errors ? kBad : kMuted, trs(" Errors: %d"), log.errors);
   ImGui::SameLine();
-  ImGui::TextColored(log.warnings ? kWarn : kMuted, "%d warning%s (%d different)", log.warnings,
-                     log.warnings == 1 ? "" : "s", log.warning_kinds);
+  ImGui::TextColored(log.warnings ? kWarn : kMuted, trs("Warnings: %d (%d different)"), log.warnings,
+                     log.warning_kinds);
   ImGui::TextColored(kMuted, "%s", folders::Pretty(log.file).c_str());
 
   const float filter_width = ImGui::GetStyle().FontSizeBase * ImGui::GetStyle().FontScaleDpi * 18;
   ImGui::SetNextItemWidth(filter_width);
-  ImGui::InputTextWithHint("##logfilter", "Show only lines containing...", log_filter,
+  ImGui::InputTextWithHint("##logfilter", trs("Show only lines containing..."), log_filter,
                            sizeof(log_filter));
   ImGui::SameLine();
-  ImGui::Checkbox("Errors and warnings only", &log_problems_only);
+  ImGui::Checkbox(trs("Errors and warnings only"), &log_problems_only);
   ImGui::SameLine();
-  ImGui::Checkbox("Follow new lines", &log_follow);
+  ImGui::Checkbox(trs("Follow new lines"), &log_follow);
   ImGui::SameLine();
-  if (ImGui::Button("Open in an editor")) {
+  if (ImGui::Button(trs("Open in an editor"))) {
     OpenPath(log.file);
   }
   ImGui::SameLine();
-  if (ImGui::Button("Logs folder")) {
+  if (ImGui::Button(trs("Logs folder"))) {
     OpenPath(folders.user / "logs");
   }
 
@@ -872,7 +874,7 @@ void Launcher::DrawLogTab() {
     log_shown_problems = log_problems_only;
   }
   if (log.dropped) {
-    ImGui::TextColored(kMuted, "(the first %zu lines are only in the file)", log.dropped);
+    ImGui::TextColored(kMuted, trs("(the first %zu lines are only in the file)"), log.dropped);
   }
 
   // The lines: only the visible ones are drawn (ImGuiListClipper), so a long
@@ -949,38 +951,38 @@ void Launcher::OpenReport() {
 
 void Launcher::DrawReportWindow() {
   if (report_open) {
-    ImGui::OpenPopup("Report a problem");
+    ImGui::OpenPopup(trs("Report a problem"));
     report_open = false;
   }
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowSize({viewport->WorkSize.x * 0.8f, viewport->WorkSize.y * 0.85f},
                           ImGuiCond_Appearing);
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, {0.5f, 0.5f});
-  if (!ImGui::BeginPopupModal("Report a problem", nullptr, ImGuiWindowFlags_NoSavedSettings)) {
+  if (!ImGui::BeginPopupModal(trs("Report a problem"), nullptr, ImGuiWindowFlags_NoSavedSettings)) {
     return;
   }
-  MutedText("Makes one .zip file with what's needed to look into a problem: the logs of the "
+  MutedText(trs("Makes one .zip file with what's needed to look into a problem: the logs of the "
             "sessions you pick, your settings and a short summary (version, system, graphics "
             "card), plus a save if you pick one. Nothing is sent anywhere: you attach the file "
-            "to a bug report yourself. Your home folder's name is taken out of the files.");
+            "to a bug report yourself. Your home folder's name is taken out of the files."));
   ImGui::Spacing();
 
   ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted("What happened?");
+  ImGui::TextUnformatted(trs("What happened?"));
   ImGui::PopFont();
   ImGui::SameLine();
-  ImGui::TextColored(kMuted, "(optional: where in the game, what you did, what you saw)");
+  ImGui::TextColored(kMuted, trs("(optional: where in the game, what you did, what you saw)"));
   ImGui::InputTextMultiline("##what", report_text, sizeof(report_text),
                             {-1, ImGui::GetTextLineHeight() * 5});
   ImGui::Spacing();
 
   ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted("Sessions to include");
+  ImGui::TextUnformatted(trs("Sessions to include"));
   ImGui::PopFont();
   ImGui::SameLine();
-  ImGui::TextColored(kMuted, "(newest first)");
+  ImGui::TextColored(kMuted, trs("(newest first)"));
   if (report_sessions.empty()) {
-    MutedText("No game sessions logged yet.");
+    MutedText(trs("No game sessions logged yet."));
   }
   // One row per session: [x] when, how long, how it ended.
   const float list_height =
@@ -991,9 +993,9 @@ void Launcher::DrawReportWindow() {
                             ImGuiTableFlags_ScrollY,
                         {0, list_height})) {
     ImGui::TableSetupColumn("##chosen", ImGuiTableColumnFlags_WidthFixed);
-    ImGui::TableSetupColumn("When", ImGuiTableColumnFlags_WidthFixed);
-    ImGui::TableSetupColumn("Played", ImGuiTableColumnFlags_WidthFixed);
-    ImGui::TableSetupColumn("How it ended", ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(trs("When"), ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn(trs("Played"), ImGuiTableColumnFlags_WidthFixed);
+    ImGui::TableSetupColumn(trs("How it ended"), ImGuiTableColumnFlags_WidthStretch);
     for (size_t i = 0; i < report_sessions.size(); ++i) {
       const report::Session& session = report_sessions[i];
       ImGui::PushID(int(i));
@@ -1020,16 +1022,16 @@ void Launcher::DrawReportWindow() {
       const bool bad = !ended.empty() && ended != "closed normally" &&
                        ended.find("Stop button") == std::string::npos;
       ImGui::TextColored(bad ? kBad : kMuted, "%s",
-                         ended.empty() ? "(not recorded)" : ended.c_str());
+                         ended.empty() ? trs("(not recorded)") : ended.c_str());
       ImGui::PopID();
     }
     ImGui::EndTable();
   }
 
   // The extras.
-  ImGui::Checkbox("Settings and controls (settings.toml, controls.toml)", &report_settings);
+  ImGui::Checkbox(trs("Settings and controls (settings.toml, controls.toml)"), &report_settings);
   if (!report_setup_log.empty()) {
-    ImGui::Checkbox("The newest Setup log (for problems while setting up or building)",
+    ImGui::Checkbox(trs("The newest Setup log (for problems while setting up or building)"),
                     &report_setup);
   }
   int photos = 0;
@@ -1042,15 +1044,16 @@ void Launcher::DrawReportWindow() {
   }
   // One save (optional): the problem spot, loadable on a copy (report.h).
   ImGui::AlignTextToFramePadding();
-  ImGui::TextUnformatted("Include a save:");
+  ImGui::TextUnformatted(trs("Include a save:"));
   ImGui::SameLine();
   auto save_label = [&](int index) {
     if (index < 0 || index >= int(save_list.size())) {
-      return std::string("None");
+      return std::string(trs("None"));
     }
     const saves::Save& save = save_list[size_t(index)];
-    return std::to_string(save.number) + "  " + save.name + "  (" + std::to_string(save.percent) +
-           "%, saved " + SavedAt(save) + ")";
+    // TR: A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
+    return trf(trs("{0}  {1}  ({2}%, saved {3})"),
+               {std::to_string(save.number), save.name, std::to_string(save.percent), SavedAt(save)});
   };
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 24);
   if (ImGui::BeginCombo("##save", save_label(report_save).c_str())) {
@@ -1062,13 +1065,13 @@ void Launcher::DrawReportWindow() {
     ImGui::EndCombo();
   }
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
-    ImGui::SetTooltip("A save near the spot where it happens lets the problem be seen first-hand.\n"
-                      "It holds the save's name and the game's progress, nothing else.");
+    ImGui::SetTooltip(trs("A save near the spot where it happens lets the problem be seen first-hand.\n"
+                      "It holds the save's name and the game's progress, nothing else."));
   }
 
   if (photos > 0) {
     char label[160];
-    std::snprintf(label, sizeof(label), "F10 photos taken in those sessions (%d files, %.1f MB)",
+    std::snprintf(label, sizeof(label), trs("F10 photos taken in those sessions (%d files, %.1f MB)"),
                   photos, photo_bytes / 1048576.0);
     ImGui::Checkbox(label, &report_photos);
   }
@@ -1085,15 +1088,15 @@ void Launcher::DrawReportWindow() {
     }
   }
   ImGui::AlignTextToFramePadding();
-  ImGui::TextUnformatted("Save the report in:");
+  ImGui::TextUnformatted(trs("Save the report in:"));
   ImGui::SameLine();
-  if (ImGui::Button("Change...")) {
+  if (ImGui::Button(trs("Change..."))) {
     const std::string start = report_folder.string();
     SDL_ShowOpenFolderDialog(OnFolderPicked, nullptr, nullptr, start.c_str(), false);
   }
   if (report_folder != folders.user / "reports") {
     ImGui::SameLine();
-    if (ImGui::Button("Back to the default")) {
+    if (ImGui::Button(trs("Back to the default"))) {
       report_folder = folders.user / "reports";
       report::RememberReportFolder(folders, {});
     }
@@ -1110,7 +1113,7 @@ void Launcher::DrawReportWindow() {
   }
   // (Greyed for 2 s after a press: a double click made two identical files.)
   ImGui::BeginDisabled(!any || Clock::now() - report_made < std::chrono::seconds(2));
-  if (AccentButton("Make the report", {0, 0})) {
+  if (AccentButton(trs("Make the report"), {0, 0})) {
     report_made = Clock::now();
     report::Request request;
     request.what_happened = report_text;
@@ -1135,7 +1138,7 @@ void Launcher::DrawReportWindow() {
   }
   ImGui::EndDisabled();
   ImGui::SameLine();
-  if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+  if (ImGui::Button(trs("Close")) || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
     ImGui::CloseCurrentPopup();
   }
   if (!report_error.empty()) {
@@ -1146,31 +1149,31 @@ void Launcher::DrawReportWindow() {
   if (!report_built.file.empty()) {
     ImGui::Separator();
     ImGui::Spacing();
-    ImGui::TextColored(kGood, "Report saved:");
+    ImGui::TextColored(kGood, trs("Report saved:"));
     ImGui::SameLine();
-    ImGui::TextWrapped("%s (%.1f MB)", folders::Pretty(report_built.file).c_str(),
+    ImGui::TextWrapped(trs("%s (%.1f MB)"), folders::Pretty(report_built.file).c_str(),
                        report_built.bytes / 1048576.0);
     std::string contents;
     for (const std::string& item : report_built.contents) {
       contents += (contents.empty() ? "" : ", ") + item;
     }
     ImGui::PushStyleColor(ImGuiCol_Text, kMuted);
-    ImGui::TextWrapped("Inside: %s", contents.c_str());
+    ImGui::TextWrapped(trs("Inside: %s"), contents.c_str());
     ImGui::PopStyleColor();
-    if (ImGui::Button("Show the file")) {
+    if (ImGui::Button(trs("Show the file"))) {
       OpenPath(report_built.file.parent_path());
     }
     ImGui::SameLine();
-    if (AccentButton("Open the bug report form on GitHub", {0, 0})) {
+    if (AccentButton(trs("Open the bug report form on GitHub"), {0, 0})) {
       SDL_OpenURL(report_built.issue_url.c_str());
     }
     ImGui::SameLine();
-    if (ImGui::Button("Copy the summary")) {
+    if (ImGui::Button(trs("Copy the summary"))) {
       ImGui::SetClipboardText(report_built.summary.c_str());
     }
-    MutedText("The form opens with the version, system, graphics card and settings filled in. "
+    MutedText(trs("The form opens with the version, system, graphics card and settings filled in. "
               "Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub "
-              "account is needed to post. No account? Send the .zip to whoever asked for it.)");
+              "account is needed to post. No account? Send the .zip to whoever asked for it.)"));
   }
   ImGui::EndPopup();
 }
@@ -1201,12 +1204,12 @@ void Launcher::Draw() {
     const auto flags = [&](int tab) {
       return select_tab == tab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None;
     };
-    if (ImGui::BeginTabItem("Play", nullptr, flags(0))) {
+    if (ImGui::BeginTabItem(trs("Play"), nullptr, flags(0))) {
       ImGui::Spacing();
       DrawPlayTab(state);
       ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("Settings", nullptr, flags(1))) {
+    if (ImGui::BeginTabItem(trs("Settings"), nullptr, flags(1))) {
       ImGui::Spacing();
       if (settings) {
         const settings_page::Look look{fonts.bold, kMuted, kWarn, kBad, kOrange};
@@ -1214,15 +1217,15 @@ void Launcher::Draw() {
       }
       ImGui::EndTabItem();
     }
-    if (setup && ImGui::BeginTabItem("Setup", nullptr, flags(3))) {
+    if (setup && ImGui::BeginTabItem(trs("Setup"), nullptr, flags(3))) {
       ImGui::Spacing();
       const setup::Look look{fonts.bold, fonts.mono, kMuted, kGood, kWarn, kBad, kOrange};
       setup->Draw(look, state == game_process::State::kRunning || other_game_running);
       ImGui::EndTabItem();
     }
-    char log_label[64];
-    std::snprintf(log_label, sizeof(log_label), "Game log%s###log",
-                  state == game_process::State::kRunning ? " (live)" : "");
+    char log_label[128];
+    std::snprintf(log_label, sizeof(log_label), "%s###log",
+                  state == game_process::State::kRunning ? trs("Game log (live)") : trs("Game log"));
     if (ImGui::BeginTabItem(log_label, nullptr, flags(2))) {
       ImGui::Spacing();
       DrawLogTab();
@@ -1376,6 +1379,8 @@ int main(int argc, char** argv) {
 
   Launcher launcher;
   launcher.folders = folders::Find(override_root);
+  // The launcher's texts in the game's text language (texts.h).
+  texts::Init(launcher.folders.user, launcher.folders.exe.parent_path(), launcher.folders.source);
   launcher.fonts = LoadFonts();
   launcher.RefreshSaves(true);
   launcher.select_tab = start_tab;

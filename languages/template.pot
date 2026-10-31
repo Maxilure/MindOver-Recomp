@@ -6,32 +6,717 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/achievements/achievements.cpp:548
+#: src/crash_mom_app.h:449 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+msgid "EMULATED ONLY"
+msgstr ""
+
+#: src/crash_mom_app.h:449
+msgid "No second window with --emulated_only"
+msgstr ""
+
+#. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
+#: src/fps_overlay.cpp:145
+msgctxt "fps counter"
+msgid "{0} FPS"
+msgstr ""
+
+#. Frame-rate counter: the average frame rate. Keep it short, capitals.
+#: src/fps_overlay.cpp:148
+msgctxt "fps counter"
+msgid "AVG {0}"
+msgstr ""
+
+#. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
+#: src/fps_overlay.cpp:150
+msgctxt "fps counter"
+msgid "1% LOW {0}"
+msgstr ""
+
+#. Frame-rate counter: milliseconds per frame. Capitals.
+#: src/fps_overlay.cpp:154
+msgctxt "fps counter"
+msgid "{0} MS"
+msgstr ""
+
+#. Frame-rate counter: how long the game's own work took (ms). Capitals.
+#: src/fps_overlay.cpp:156
+msgctxt "fps counter"
+msgid "GAME {0}"
+msgstr ""
+
+#. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
+#: src/fps_overlay.cpp:158
+msgctxt "fps counter"
+msgid "SWAP {0}"
+msgstr ""
+
+#: src/achievements/achievements.cpp:667
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1037 src/options/options_menu.cpp:2281 src/options/options_settings.cpp:1125
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2263 src/options/options_settings.cpp:1125
 msgid "Achievements"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:42
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
 msgid "Players"
 msgstr ""
 
-#: src/cheats/cheats.cpp:230
-msgid "Cheats Enabled"
+#: src/native/native_renderer.cpp:718
+msgid "No switching with --emulated_only"
 msgstr ""
 
-#: src/cheats/cheats.cpp:230
-msgid "No achievements until a save is loaded"
+#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
+msgid "DUAL MODE"
 msgstr ""
 
-#: src/cheats/cheats.cpp:729
-msgid "Save Made With Cheats"
+#: src/native/native_renderer.cpp:724
+msgid "No switching while the second window is open (Tools closes it)"
 msgstr ""
 
-#: src/cheats/cheats.cpp:729
-msgid "No achievements while playing this save"
+#: src/native/native_renderer.cpp:1442
+msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1445
+msgid "Xbox 360 GPU emulation; native renderer off"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1447
+msgid "NATIVE (Vulkan)"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1449
+msgid "native only: the emulated GPU is off   F1 Tools switches"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1450
+msgid "the emulated GPU still draws in the background   F1 Tools switches"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1452
+msgid "EMULATED (Xbox 360 GPU)"
+msgstr ""
+
+#: src/native/native_renderer.cpp:1452
+msgid "native renderer idle   F1 Tools switches"
+msgstr ""
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+msgid "HUD Hidden"
+msgstr ""
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74
+msgid "Press {0} to show it again"
+msgstr ""
+
+#: src/ui/main_menu_extras.cpp:45
+msgid "Extras"
+msgstr ""
+
+#: src/ui/quit_game.cpp:55
+msgid "Quit Game"
+msgstr ""
+
+#: src/ui/quit_game.cpp:56
+msgid "Are you sure you want to quit the game?"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:44 src/ui/tools_menu.cpp:49 src/ui/tools_menu.cpp:51 src/ui/tools_menu.cpp:55 src/ui/tools_menu.cpp:57
+msgid "Game"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:44
+msgid "Cheats..."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:45
+msgid ""
+"Level ups, mojo, god mode, spawns, game speed, free camera.\n"
+"OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
+"meanwhile is marked as made with cheats (achievements stay off for it)."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:49
+msgid "Controls (keys)..."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:50
+msgid "Keyboard and mouse keys, and which device plays as which player."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:51
+msgid "Hide / show the HUD"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:52
+msgid ""
+"Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
+"Not a cheat: achievements are untouched. The message bar keeps showing."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:55
+msgid "Fullscreen on / off"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:55
+msgid "F11 (still F11)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:56
+msgid "Borderless fullscreen on the monitor picked in Options -> Display."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:57
+msgid "Take a photo"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:58
+msgid ""
+"A PNG of the next frame into the photos folder (both renderers' pictures\n"
+"while the native one is drawn). The menus over the picture aren't in it."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+msgid "Picture"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:62
+msgid "Switch renderer (emulated / native)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:63
+msgid ""
+"Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
+"port's own renderer. Off with Emulated Only or while the second window is open."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:66
+msgid "Second window (dual mode)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:67
+msgid "A second window with the port's picture; the main one shows the emulated one."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:678
+msgid "Saves"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:69
+msgid "Rename the save under the cursor"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:69
+msgid "F2 (F2 hides the HUD now)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:70
+msgid "On the Load / Save Game screen only (X there opens the game's own name screen)."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:71
+msgid "Delete the save under the cursor"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:71
+msgid "Delete (still Delete)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:72
+msgid ""
+"On the Load / Save Game screen only (Y there does the same). The file is moved\n"
+"to user/saves/Deleted saves, never really deleted."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:76 src/ui/tools_menu.cpp:78 src/ui/tools_menu.cpp:80 src/ui/tools_menu.cpp:82 src/ui/tools_menu.cpp:84 src/ui/tools_menu.cpp:88 src/ui/tools_menu.cpp:92 src/ui/tools_menu.cpp:96 src/ui/tools_menu.cpp:99
+msgid "Developer"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:76
+msgid "Debug overlay"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:77
+msgid "The SDK's frame times and threads."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:78
+msgid "Log console"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:79
+msgid "The SDK's live log."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:80
+msgid "All settings (flags)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:81
+msgid "Every setting by name, as in settings.toml. Prefer the in-game Options screen."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:82
+msgid "SDK achievements list"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:83
+msgid "The SDK's own list (the port keeps achievements itself: pause -> Achievements)."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:84
+msgid "Highlight a material (cycles)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:85
+msgid ""
+"Paints one material magenta in the native picture: bump, particles, motion\n"
+"trails, off."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:88
+msgid "Particle experiment (cycles)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:89
+msgid ""
+"Changes how particles are drawn in the native picture, then erases groups of\n"
+"them in both pictures, then normal again."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:92
+msgid "Test: fake achievement card"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:93
+msgid ""
+"The achievement card on the game's message bar with a made-up name (in a level).\n"
+"Nothing is earned or recorded."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:96
+msgid "Test: long fake achievement card"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:97
+msgid "The same with a name too long for the card: it scrolls (ui/marquee.h)."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:99
+msgid "Test: game-style message (voodoo doll look)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:100
+msgid ""
+"A message in the message bar's own wide look (title, message, counter), as the\n"
+"game shows a voodoo doll or an objective. Nothing else happens."
+msgstr ""
+
+#: src/ui/tools_menu.cpp:136
+msgid "Tools (F1)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:150
+msgid "NOT AVAILABLE"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:160
+msgid "Tools"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:162
+msgid "F1 opens / closes   F2 = HUD   F11 = fullscreen"
+msgstr ""
+
+#. Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
+#: src/ui/tools_menu.cpp:174
+msgid ""
+"%s\n"
+"\n"
+"(Key, or the key it used to have: %s. Setting name: %s)"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:181
+msgid "Achievements are off: %s"
+msgstr ""
+
+#: src/ui/tools_menu.cpp:183
+msgid "Opening it turns achievements off until a save is loaded."
+msgstr ""
+
+#: src/input/bindings.cpp:146
+msgid "Move up"
+msgstr ""
+
+#: src/input/bindings.cpp:146
+msgid "Also moves through menus."
+msgstr ""
+
+#: src/input/bindings.cpp:146 src/input/bindings.cpp:148 src/input/bindings.cpp:150 src/input/bindings.cpp:152 src/input/bindings.cpp:154
+msgid "Left stick"
+msgstr ""
+
+#: src/input/bindings.cpp:148
+msgid "Move down"
+msgstr ""
+
+#: src/input/bindings.cpp:150
+msgid "Move left"
+msgstr ""
+
+#: src/input/bindings.cpp:152
+msgid "Move right"
+msgstr ""
+
+#: src/input/bindings.cpp:154
+msgid "Walk (hold)"
+msgstr ""
+
+#: src/input/bindings.cpp:154
+msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
+msgstr ""
+
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1208
+msgid "Spin"
+msgstr ""
+
+#: src/input/bindings.cpp:155
+msgid "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to jump off a titan...). Crash still moves with the movement keys while spinning."
+msgstr ""
+
+#: src/input/bindings.cpp:157
+msgid "Left stick circles"
+msgstr ""
+
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1208
+msgid "Jump"
+msgstr ""
+
+#: src/input/bindings.cpp:158
+msgid "Press again in the air for a double jump."
+msgstr ""
+
+#: src/input/bindings.cpp:161
+msgid "Light attack"
+msgstr ""
+
+#: src/input/bindings.cpp:163
+msgid "Heavy attack"
+msgstr ""
+
+#: src/input/bindings.cpp:165
+msgid "Block (hold)"
+msgstr ""
+
+#: src/input/bindings.cpp:165
+msgid "Hold to block an enemy's light attack."
+msgstr ""
+
+#: src/input/bindings.cpp:170
+msgid "Jack / use"
+msgstr ""
+
+#: src/input/bindings.cpp:170
+msgid "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. Also uses save totems."
+msgstr ""
+
+#: src/input/bindings.cpp:172
+msgid "Titan special attack"
+msgstr ""
+
+#: src/input/bindings.cpp:172
+msgid "The special attack of the titan you control (watch its mutant meter)."
+msgstr ""
+
+#: src/input/bindings.cpp:174
+msgid "Pocket / unpocket"
+msgstr ""
+
+#: src/input/bindings.cpp:174
+msgid "Store the titan you control, and bring it back later."
+msgstr ""
+
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1209
+msgid "Map"
+msgstr ""
+
+#: src/input/bindings.cpp:178
+msgid "In the pause menu: drop out (another player stays in)."
+msgstr ""
+
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1301 src/options/options_menu.cpp:1313
+msgid "Back"
+msgstr ""
+
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
+msgid "Pause"
+msgstr ""
+
+#: src/input/bindings.cpp:180
+msgid "Opens the pause menu (in menus, Menu: back closes it)."
+msgstr ""
+
+#: src/input/bindings.cpp:180
+msgid "Start"
+msgstr ""
+
+#: src/input/bindings.cpp:182
+msgid "Menu: confirm"
+msgstr ""
+
+#: src/input/bindings.cpp:182
+msgid "Choose the selected item."
+msgstr ""
+
+#: src/input/bindings.cpp:184
+msgid "Menu: back"
+msgstr ""
+
+#: src/input/bindings.cpp:184
+msgid "Back to the previous screen; in the pause menu: play on."
+msgstr ""
+
+#: src/input/bindings.cpp:186
+msgid "Menu: previous tab"
+msgstr ""
+
+#: src/input/bindings.cpp:186
+msgid "The Options screen's tabs."
+msgstr ""
+
+#: src/input/bindings.cpp:188
+msgid "Menu: next tab"
+msgstr ""
+
+#: src/input/bindings.cpp:190
+msgid "Menu: X action"
+msgstr ""
+
+#: src/input/bindings.cpp:190
+msgid "What the menu's X prompt says: rename a save, Dual Mode, erase a letter on the name screen."
+msgstr ""
+
+#: src/input/bindings.cpp:193
+msgid "Menu: Y action"
+msgstr ""
+
+#: src/input/bindings.cpp:193
+msgid "What the menu's Y prompt says: delete a save, remove a key (Options -> Controls)."
+msgstr ""
+
+#: src/input/bindings.cpp:195
+msgid "D-pad up"
+msgstr ""
+
+#: src/input/bindings.cpp:195 src/input/bindings.cpp:197 src/input/bindings.cpp:199 src/input/bindings.cpp:201
+msgid "D-pad"
+msgstr ""
+
+#: src/input/bindings.cpp:197
+msgid "D-pad down"
+msgstr ""
+
+#: src/input/bindings.cpp:199
+msgid "D-pad left"
+msgstr ""
+
+#: src/input/bindings.cpp:201
+msgid "D-pad right"
+msgstr ""
+
+#: src/input/bindings.cpp:204
+msgid "Right stick up"
+msgstr ""
+
+#: src/input/bindings.cpp:204
+msgid "The camera follows Crash by itself; this is for the few things that use the right stick."
+msgstr ""
+
+#: src/input/bindings.cpp:205 src/input/bindings.cpp:207 src/input/bindings.cpp:209 src/input/bindings.cpp:211
+msgid "Right stick"
+msgstr ""
+
+#: src/input/bindings.cpp:207
+msgid "Right stick down"
+msgstr ""
+
+#: src/input/bindings.cpp:209
+msgid "Right stick left"
+msgstr ""
+
+#: src/input/bindings.cpp:211
+msgid "Right stick right"
+msgstr ""
+
+#: src/input/bindings.cpp:213
+msgid "Left bumper"
+msgstr ""
+
+#: src/input/bindings.cpp:213
+msgid "No use in play found so far."
+msgstr ""
+
+#: src/input/bindings.cpp:215
+msgid "Left stick click"
+msgstr ""
+
+#: src/input/bindings.cpp:215 src/input/bindings.cpp:217
+msgid "No use in the game found so far."
+msgstr ""
+
+#: src/input/bindings.cpp:217
+msgid "Right stick click"
+msgstr ""
+
+#: src/input/bindings.cpp:372
+msgid "Moving"
+msgstr ""
+
+#: src/input/bindings.cpp:374
+msgid "Fighting"
+msgstr ""
+
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+msgid "Titans"
+msgstr ""
+
+#: src/input/bindings.cpp:378
+msgid "Menus and map"
+msgstr ""
+
+#: src/input/bindings.cpp:380
+msgid "Rest of the controller"
+msgstr ""
+
+#: src/input/controls_menu.cpp:51
+msgid "NO KEYBOARD CONTROLS"
+msgstr ""
+
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1139 launcher/settings_page.cpp:539
+msgid "Controls"
+msgstr ""
+
+#: src/input/controls_menu.cpp:117
+msgid "Keys"
+msgstr ""
+
+#: src/input/controls_menu.cpp:130 launcher/main.cpp:1141
+msgid "Close"
+msgstr ""
+
+#: src/input/controls_menu.cpp:142
+msgid "Click a key to change it, then press the new key or mouse button (Esc cancels). Right-click a key to remove it. The game's button prompts show Xbox buttons: the middle column says which one each action presses. A controller works at the same time."
+msgstr ""
+
+#: src/input/controls_menu.cpp:158
+msgid "Spin held (spins per second)"
+msgstr ""
+
+#: src/input/controls_menu.cpp:161
+msgid "Spin speed saved."
+msgstr ""
+
+#: src/input/controls_menu.cpp:163
+msgid "While Spin is held, how often it counts as one more spin (a press is one at once). On a controller each full circle of the left stick is one."
+msgstr ""
+
+#: src/input/controls_menu.cpp:166
+msgid "Walk (how far the stick leans)"
+msgstr ""
+
+#: src/input/controls_menu.cpp:169
+msgid "Walk saved."
+msgstr ""
+
+#: src/input/controls_menu.cpp:171
+msgid "Reset keys to defaults"
+msgstr ""
+
+#: src/input/controls_menu.cpp:178
+msgid "Back to the default keys."
+msgstr ""
+
+#: src/input/controls_menu.cpp:186
+msgid "Player assignment isn't available in this run."
+msgstr ""
+
+#: src/input/controls_menu.cpp:190
+msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
+msgstr ""
+
+#: src/input/controls_menu.cpp:201
+msgid "Device"
+msgstr ""
+
+#: src/input/controls_menu.cpp:202
+msgid "Plays as"
+msgstr ""
+
+#: src/input/controls_menu.cpp:218
+msgid "No controller connected. Connect one: it shows up here."
+msgstr ""
+
+#: src/input/controls_menu.cpp:227
+msgid "Off (not used)"
+msgstr ""
+
+#: src/input/controls_menu.cpp:229
+msgid "Automatic (Player {})"
+msgstr ""
+
+#: src/input/controls_menu.cpp:230
+msgid "Automatic (not used)"
+msgstr ""
+
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+msgid "Player {}"
+msgstr ""
+
+#: src/input/controls_menu.cpp:277
+msgid "Action"
+msgstr ""
+
+#: src/input/controls_menu.cpp:279
+msgid "Key 1"
+msgstr ""
+
+#: src/input/controls_menu.cpp:280
+msgid "Key 2"
+msgstr ""
+
+#: src/input/controls_menu.cpp:304
+msgid "(menus)"
+msgstr ""
+
+#: src/input/controls_menu.cpp:331
+msgid "press a key..."
+msgstr ""
+
+#: src/input/controls_menu.cpp:348
+msgid "Press the new key for {}."
+msgstr ""
+
+#: src/input/controls_menu.cpp:359
+msgid "{0} removed from {1}."
+msgstr ""
+
+#: src/input/controls_menu.cpp:372
+msgid "Cancelled."
+msgstr ""
+
+#: src/input/controls_menu.cpp:378
+msgid "{0} -> {1} (taken from {2})."
+msgstr ""
+
+#: src/input/controls_menu.cpp:380
+msgid "{0} -> {1}."
+msgstr ""
+
+#: src/input/controls_menu.cpp:387
+msgid "Couldn't save the controls file (see the log)."
 msgstr ""
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
@@ -53,163 +738,789 @@ msgstr ""
 msgid "Press Any Button"
 msgstr ""
 
-#: src/options/options_menu.cpp:798 src/options/options_menu.cpp:844
+#: src/saves/save_library.cpp:764
+msgid "Create New Save"
+msgstr ""
+
+#: src/saves/save_library.cpp:848
+msgid "Delete"
+msgstr ""
+
+#: src/saves/save_library.cpp:850
+msgid "Rename"
+msgstr ""
+
+#: src/saves/save_library.cpp:1021
+msgid "Rename failed"
+msgstr ""
+
+#: src/saves/save_library.cpp:1066
+msgid "Delete failed"
+msgstr ""
+
+#: src/saves/save_library.cpp:1095
+msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+msgstr ""
+
+#: src/saves/save_library.cpp:1193
+msgid "Rename save"
+msgstr ""
+
+#: src/saves/save_library.cpp:1232
+msgid "Rename \"%s\""
+msgstr ""
+
+#: src/saves/save_library.cpp:1233
+msgid "Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"
+msgstr ""
+
+#: src/saves/save_library.cpp:1245
+msgid "Rename (Enter)"
+msgstr ""
+
+#: src/saves/save_library.cpp:1248
+msgid "Cancel (Esc)"
+msgstr ""
+
+#: src/saves/save_library.cpp:1875
+msgid "Backspace"
+msgstr ""
+
+#. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
+#: src/saves/save_screen_waits.cpp:263
+msgid "Reading save files..."
+msgstr ""
+
+#. Shown while a save is loaded. Short.
+#: src/saves/save_screen_waits.cpp:265
+msgid "Loading..."
+msgstr ""
+
+#. Shown while the game saves. Short.
+#: src/saves/save_screen_waits.cpp:267
+msgid "Saving..."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:90 src/cheats/cheat_menu.cpp:103
+msgid "Cheats"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:105
+msgid "for testing (not saved by us; the game saves what they change)"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:108
+msgid "Not in a level: character cheats wait until you're playing one."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:115
+msgid "Everyone"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:117
+msgid "God mode"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:119
+msgid ""
+"Every player's Crash and titan loses no health (and refills).\n"
+"Deaths that skip health (pits?) may still happen."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:122
+msgid "No AI"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:123
+msgid ""
+"Enemies and enemy titans stop thinking: no attacks, no moving.\n"
+"They can still be hit and beaten."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:130
+msgid "Screen"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:132
+msgid "Hide the HUD"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:133
+msgid "Portraits, health and special bars. The mojo count text stays."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:135
+msgid "All mojo collected: %s"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:137
+msgid "Achievements are off: %s."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:139
+msgid "Loading a save turns them back on (with this window closed and the"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:140
+msgid "switches off). A save made now is marked as made with cheats."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:145
+msgid "Character"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:155
+msgid "Player %d isn't in the level."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:162
+msgid "In a titan: %s"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:164
+msgid "Riding another player as a mask (cheats act on the shared upgrades)"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:166
+msgid "On foot"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:169
+msgid "Level: %d of %d  (fully upgraded)"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:169
+msgid "Level: %d of %d"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:172
+msgid "Level: %d"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:175
+msgid "Every mojo upgrade bought: the rest come with the story"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:177
+msgid "Mojo toward the next upgrade: %s / %s"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:180
+msgid "Mojo toward upgrades: %s"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:184
+msgid "Health %.0f / %.0f"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:190
+msgid "Level up"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:192
+msgid "Buys this titan's next upgrade (with the game's upgrade screen)."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:193
+msgid ""
+"Gives Crash the mojo his level's script waits for: the game then\n"
+"upgrades him itself (screen and all). If nothing happens, the\n"
+"script isn't waiting for an upgrade right now."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:197
+msgid "Max level"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:198
+msgid "Buys every upgrade left at once (no screens)."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:199
+msgid ""
+"Feeds Crash every upgrade his scripts ask for, one at a time:\n"
+"close each \"Level Up!\" screen (B) for the next one.\n"
+"Mojo buys 18 of them (the last at 220,000); the others\n"
+"of the 32 are unlocked by the story."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:209
+msgid "+{} mojo, as if picked up"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:212
+msgid "Refill health"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:216
+msgid "Kill"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:219
+msgid ""
+"In a titan: the titan dies and the player is thrown out.\n"
+"On foot: the player dies (back at the checkpoint). Works with god mode."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:223
+msgid "Free jack"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:226
+msgid ""
+"The game's Free Jack power-up: jack any titan (B) without beating\n"
+"it first. Lasts until the next jack. On foot only."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:233
+msgid "Spawn"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:258
+msgid "How many"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:261
+msgid "Ready to jack"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:263
+msgid ""
+"Arrives already down, ready to jack: walk up and press B.\n"
+"Off: a normal titan, ready to fight. Or use Free jack (Character)."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:268
+msgid "Spawn in front of player {}"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:275
+msgid "or a template, e.g. Characters:Znu"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:278
+msgid ""
+"Any template the game's data names (\"Group:Name\"). Experimental:\n"
+"only titans are tested; other things can crash the game."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:282
+msgid "Spawn by name"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:287
+msgid "Last: %s"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:288
+msgid "Not in this level? It's loaded first (takes a moment)."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:293
+msgid "Unlocks"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:305
+msgid "Unlocked / all. Click to unlock all of them."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:307
+msgid "Unlock everything"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:311
+msgid ""
+"Every outfit (Coco and the titan suits included: pick them at the chest),\n"
+"concept art, enemy info and tutorial page, in the game being played.\n"
+"Kept when the game saves. Nobody's outfit changes by itself."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:319
+msgid "Time"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:322
+msgid "Game speed"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:333
+msgid "Freeze"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:335
+msgid ""
+"Everything stops; the picture keeps drawing (with the free camera:\n"
+"a photo mode). The game's own \"pause for screenshots\"."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:339
+msgid "Step one frame"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:346
+msgid "Dummy players"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:349
+msgid "No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:350
+msgid "(1-3 dummies) and restart the game."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:353
+msgid "START joins, B leaves a mask. Hold a direction on the pad to walk."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:354
+msgid "Idle (buttons only)"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:354
+msgid "Follow player 1"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:354
+msgid "Follow player 2"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:354
+msgid "Follow player 3"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:355
+msgid "Follow player 4"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:355
+msgid "Copy player 1"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:355
+msgid "Copy player 2"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:355
+msgid "Copy player 3"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:356
+msgid "Copy player 4"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:361
+msgid "Dummy controller %d: player %d"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:363
+msgid "Dummy controller %d: plays as nobody (Controls -> Players)"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:377
+msgid ""
+"Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
+"below them. Copy: repeats that player's controller (not START / BACK).\n"
+"The buttons and the stick pad work in every mode."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:391
+msgid ""
+"Which controller this dummy pretends to be. With Controller Icons on\n"
+"Automatic, the game detects it from its maker and model like a real pad\n"
+"and shows that player's prompts in its button pictures."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:434
+msgid "Camera"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:436
+msgid "Free camera"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:440
+msgid "Keys move the camera"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:443
+msgid ""
+"On: the keyboard and mouse fly the camera (Crash stands still;\n"
+"a controller still plays). Off: the camera stays put and the keys\n"
+"play the game again."
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:447
+msgid "W A S D move, E / Q up / down, Shift fast, Ctrl slow,"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:448
+msgid "right mouse button held (or arrow keys) = look around"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:451
+msgid "Flying speed"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:457
+msgid "Look speed"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:460
+msgid "Back to the game's camera"
+msgstr ""
+
+#: src/cheats/cheat_menu.cpp:463
+msgid "Camera at (%.1f, %.1f, %.1f)"
+msgstr ""
+
+#: src/cheats/cheats.cpp:105
+msgid "Outfits"
+msgstr ""
+
+#: src/cheats/cheats.cpp:106
+msgid "Concept art"
+msgstr ""
+
+#: src/cheats/cheats.cpp:107
+msgid "Enemy info"
+msgstr ""
+
+#: src/cheats/cheats.cpp:108
+msgid "Tutorials"
+msgstr ""
+
+#: src/cheats/cheats.cpp:230
+msgid "Cheats Enabled"
+msgstr ""
+
+#: src/cheats/cheats.cpp:230
+msgid "No achievements until a save is loaded"
+msgstr ""
+
+#: src/cheats/cheats.cpp:698
+msgid "this game was saved with cheats on"
+msgstr ""
+
+#: src/cheats/cheats.cpp:699
+msgid "cheats were used (until a save is loaded)"
+msgstr ""
+
+#: src/cheats/cheats.cpp:729
+msgid "Save Made With Cheats"
+msgstr ""
+
+#: src/cheats/cheats.cpp:729
+msgid "No achievements while playing this save"
+msgstr ""
+
+#: src/cheats/spawn.cpp:447
+msgid "Crunch (boss)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:447
+msgid "Cortex (boss)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:448
+msgid "Enemies"
+msgstr ""
+
+#: src/players/dummy_players.cpp:232
+msgid "Test pad (no model)"
+msgstr ""
+
+#: src/players/dummy_players.cpp:233
+msgid "Xbox 360 controller"
+msgstr ""
+
+#: src/players/dummy_players.cpp:234
+msgid "Xbox Series controller"
+msgstr ""
+
+#: src/players/dummy_players.cpp:235
+msgid "PlayStation 4 (DualShock 4)"
+msgstr ""
+
+#: src/players/dummy_players.cpp:236
+msgid "PlayStation 5 (DualSense)"
+msgstr ""
+
+#: src/players/dummy_players.cpp:237
+msgid "Switch Pro controller"
+msgstr ""
+
+#: src/players/dummy_players.cpp:238
+msgid "Another maker (8BitDo)"
+msgstr ""
+
+#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+#: src/players/lost_controller.cpp:189
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or Player {1}: press {2} to take over."
+msgstr ""
+
+#: src/players/lost_controller.cpp:193
+msgid ""
+"Controller reconnected.\n"
+"Press any button to resume."
+msgstr ""
+
+#: src/players/lost_controller.cpp:194
+msgid ""
+"Controller disconnected.\n"
+"Reconnect your controller to continue."
+msgstr ""
+
+#. the question box (2 lines): {0} = the player's number.
+#: src/players/lost_controller.cpp:198
+msgid ""
+"Player {0}'s controller is back.\n"
+"Player {0}: press any button to resume."
+msgstr ""
+
+#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+#: src/players/lost_controller.cpp:205
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or press {1} to drop out Player {0}."
+msgstr ""
+
+#: src/players/outfit_picker.cpp:506
+msgid "Normal"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:506
+msgid "Greeny"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:506
+msgid "Bluey"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:507
+msgid "Reddy"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:507
+msgid "Snipe"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:507
+msgid "Ratcicle"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:508
+msgid "Magmadon"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:508
+msgid "Skeleton"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:508
+msgid "Spike"
+msgstr ""
+
+#. the heroes' names, as the game writes them in this language.
+#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+msgid "Coco"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:509
+msgid "Old School"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:520
+msgid "Orange"
+msgstr ""
+
+#. the heroes' names, as the game writes them in this language.
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+msgid "Crash"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:1091
+msgid "Wear"
+msgstr ""
+
+#. the chest: this player has picked an outfit.
+#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+msgid "Ready!"
+msgstr ""
+
+#. {0} = the B button's picture (change the pick again).
+#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+msgid "{0} Change"
+msgstr ""
+
+#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+msgid "Loading"
+msgstr ""
+
+#. {0} = the A button's picture (wear this outfit).
+#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+msgid "{0} Wear"
+msgstr ""
+
+#: src/players/outfits.cpp:219
+msgid "Ruby"
+msgstr ""
+
+#: src/players/outfits.cpp:219
+msgid "Exactly the same in every way but red"
+msgstr ""
+
+#: src/players/outfits.cpp:221
+msgid "Topaz"
+msgstr ""
+
+#: src/players/outfits.cpp:221
+msgid "Exactly the same in every way but yellow"
+msgstr ""
+
+#: src/players/outfits.cpp:223
+msgid "Jade"
+msgstr ""
+
+#: src/players/outfits.cpp:223
+msgid "Exactly the same in every way but green"
+msgstr ""
+
+#: src/players/outfits.cpp:225
+msgid "Sapphire"
+msgstr ""
+
+#: src/players/outfits.cpp:225
+msgid "Exactly the same in every way but blue"
+msgstr ""
+
+#: src/players/outfits.cpp:227
+msgid "Amethyst"
+msgstr ""
+
+#: src/players/outfits.cpp:227
+msgid "Exactly the same in every way but purple"
+msgstr ""
+
+#: src/players/outfits.cpp:229
+msgid "Rose Quartz"
+msgstr ""
+
+#: src/players/outfits.cpp:229
+msgid "Exactly the same in every way but pink"
+msgstr ""
+
+#: src/players/outfits.cpp:239
+msgid "Carbon"
+msgstr ""
+
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfits.cpp:852
+msgctxt "outfit name"
+msgid "{0} {1}"
+msgstr ""
+
+#: src/players/pause_drop_out.cpp:43
+msgid "Drop Out"
+msgstr ""
+
+#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:853
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:855
+#: src/options/options_menu.cpp:854
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:872
+#: src/options/options_menu.cpp:871
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:878
+#: src/options/options_menu.cpp:877
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1002
-msgid "Jan"
-msgstr ""
-
-#: src/options/options_menu.cpp:1002
-msgid "Feb"
-msgstr ""
-
-#: src/options/options_menu.cpp:1002
-msgid "Mar"
-msgstr ""
-
-#: src/options/options_menu.cpp:1002
-msgid "Apr"
-msgstr ""
-
-#: src/options/options_menu.cpp:1002
-msgid "May"
-msgstr ""
-
-#: src/options/options_menu.cpp:1002
-msgid "Jun"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Jul"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Aug"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Sep"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Oct"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Nov"
-msgstr ""
-
-#: src/options/options_menu.cpp:1003
-msgid "Dec"
-msgstr ""
-
-#. a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
-#: src/options/options_menu.cpp:1006
-msgid "{0} {1} {2}"
-msgstr ""
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
-msgid "Earned {0}"
-msgstr ""
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
+#: src/options/options_menu.cpp:1050
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1300
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1331 src/players/outfit_picker.cpp:1090
-msgid "Back"
-msgstr ""
-
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1324
+#: src/options/options_menu.cpp:1306 launcher/setup.cpp:1441
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1309
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1328
+#: src/options/options_menu.cpp:1310
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1329
+#: src/options/options_menu.cpp:1311
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1452
+#: src/options/options_menu.cpp:1434
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1456 src/options/options_menu.cpp:1464
+#: src/options/options_menu.cpp:1438 src/options/options_menu.cpp:1446
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1448
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1850
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1875
+#: src/options/options_menu.cpp:1857
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:1887
+#: src/options/options_menu.cpp:1869
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:1908
+#: src/options/options_menu.cpp:1890
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1916
+#: src/options/options_menu.cpp:1898
 msgid "{0} removed."
 msgstr ""
 
@@ -226,7 +1537,7 @@ msgstr ""
 msgid "30 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:182
+#: src/options/options_settings.cpp:182 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
 msgid "Unlimited"
 msgstr ""
 
@@ -238,7 +1549,7 @@ msgstr ""
 msgid "Above 60, jumps and timings may feel different."
 msgstr ""
 
-#: src/options/options_settings.cpp:213
+#: src/options/options_settings.cpp:213 launcher/settings_page.cpp:390
 msgid "Renderer"
 msgstr ""
 
@@ -406,11 +1717,11 @@ msgstr ""
 msgid "Window Mode"
 msgstr ""
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 msgid "Windowed"
 msgstr ""
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 msgid "Fullscreen"
 msgstr ""
 
@@ -422,11 +1733,11 @@ msgstr ""
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr ""
 
-#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443
+#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
 msgid "Monitor"
 msgstr ""
 
-#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799
+#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799 launcher/settings_page.cpp:471
 msgid "Automatic"
 msgstr ""
 
@@ -980,10 +2291,6 @@ msgstr ""
 msgid "Keep Playing"
 msgstr ""
 
-#: src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
-msgid "Pause"
-msgstr ""
-
 #: src/options/options_settings.cpp:858
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr ""
@@ -1102,7 +2409,7 @@ msgstr ""
 msgid "Turn on Simple Spinning first."
 msgstr ""
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:976 launcher/settings_page.cpp:497
 msgid "Co-op"
 msgstr ""
 
@@ -1275,10 +2582,6 @@ msgstr ""
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr ""
 
-#: src/options/options_settings.cpp:1139
-msgid "Controls"
-msgstr ""
-
 #: src/options/options_settings.cpp:1140
 msgid "Gameplay"
 msgstr ""
@@ -1287,7 +2590,7 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1185
+#: src/options/options_settings.cpp:1185 launcher/main.cpp:1051
 msgid "None"
 msgstr ""
 
@@ -1312,14 +2615,6 @@ msgid "Walk (Hold)"
 msgstr ""
 
 #: src/options/options_settings.cpp:1208
-msgid "Spin"
-msgstr ""
-
-#: src/options/options_settings.cpp:1208
-msgid "Jump"
-msgstr ""
-
-#: src/options/options_settings.cpp:1208
 msgid "Light Attack"
 msgstr ""
 
@@ -1341,10 +2636,6 @@ msgstr ""
 
 #: src/options/options_settings.cpp:1209
 msgid "Pocket / Unpocket"
-msgstr ""
-
-#: src/options/options_settings.cpp:1209
-msgid "Map"
 msgstr ""
 
 #: src/options/options_settings.cpp:1210
@@ -1415,217 +2706,1316 @@ msgstr ""
 msgid "Right Stick Click"
 msgstr ""
 
-#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
-msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or Player {1}: press {2} to take over."
+#: launcher/desktop_entry.cpp:138 launcher/report.cpp:518 launcher/settings.cpp:284
+msgid "Couldn't write {0}"
 msgstr ""
 
-#: src/players/lost_controller.cpp:193
-msgid ""
-"Controller reconnected.\n"
-"Press any button to resume."
+#: launcher/desktop_entry.cpp:144
+msgid "Couldn't write {0}: {1}"
 msgstr ""
 
-#: src/players/lost_controller.cpp:194
-msgid ""
-"Controller disconnected.\n"
-"Reconnect your controller to continue."
+#: launcher/desktop_entry.cpp:292
+msgid "Couldn't write the Start menu shortcut."
 msgstr ""
 
-#. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
-msgid ""
-"Player {0}'s controller is back.\n"
-"Player {0}: press any button to resume."
+#: launcher/desktop_entry.cpp:315
+msgid "Couldn't remove the Start menu shortcut: {0}"
 msgstr ""
 
-#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
-msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or press {1} to drop out Player {0}."
+#: launcher/desktop_entry.cpp:346
+msgid "Couldn't remove {0}: {1}"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/game_process.cpp:98
+msgid "The game is already running."
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "Jan"
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "Feb"
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "Mar"
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "Apr"
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "May"
+msgstr ""
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+msgid "Jun"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Jul"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Aug"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Sep"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Oct"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Nov"
+msgstr ""
+
+#: launcher/main.cpp:205
+msgid "Dec"
+msgstr ""
+
+#: launcher/main.cpp:212
+msgid "%ld h %02ld min"
+msgstr ""
+
+#: launcher/main.cpp:214
+msgid "%ld min"
+msgstr ""
+
+#: launcher/main.cpp:216
+msgid "%ld s"
+msgstr ""
+
+#. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
+#: launcher/main.cpp:228
+msgid "%s %d, %02d:%02d"
+msgstr ""
+
+#: launcher/main.cpp:249
+msgid "today %02d:%02d"
+msgstr ""
+
+#: launcher/main.cpp:251
+msgid "yesterday %02d:%02d"
+msgstr ""
+
+#: launcher/main.cpp:253
+msgid "%ld days ago"
+msgstr ""
+
+#: launcher/main.cpp:255
+msgid "%s %d"
+msgstr ""
+
+#: launcher/main.cpp:378
+msgid "Mind over Recomp"
+msgstr ""
+
+#: launcher/main.cpp:384
+msgid "(alpha)"
+msgstr ""
+
+#: launcher/main.cpp:388
+msgid "An unofficial PC port of Crash: Mind over Mutant"
+msgstr ""
+
+#: launcher/main.cpp:403
+msgid "Couldn't find the game."
+msgstr ""
+
+#: launcher/main.cpp:404
+msgid "Put the launcher in the game's folder (next to program/), or start it with --game_folder=<path to the game folder>."
+msgstr ""
+
+#: launcher/main.cpp:410
+msgid "The game isn't ready to play yet."
+msgstr ""
+
+#: launcher/main.cpp:411
+msgid "Open Setup"
+msgstr ""
+
+#: launcher/main.cpp:417
+msgid "The game isn't built yet."
+msgstr ""
+
+#: launcher/main.cpp:418
+msgid "Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."
+msgstr ""
+
+#: launcher/main.cpp:423
+msgid "The disc's files aren't there."
+msgstr ""
+
+#: launcher/main.cpp:424
+msgid "Expected in {0} (default.xex and the rest). Extract your disc image first (docs/01-building.md, step 1)."
+msgstr ""
+
+#: launcher/main.cpp:436
+msgid "Playing"
+msgstr ""
+
+#: launcher/main.cpp:440
+msgid "for %s"
+msgstr ""
+
+#: launcher/main.cpp:441
+msgid "The game is running in its own window. This window can stay open: it shows how the session ended when the game closes."
+msgstr ""
+
+#: launcher/main.cpp:443
+msgid "Watch the game log"
+msgstr ""
+
+#: launcher/main.cpp:447
+msgid "Stop the game..."
+msgstr ""
+
+#: launcher/main.cpp:449 launcher/main.cpp:451
+msgid "Stop the game?"
+msgstr ""
+
+#: launcher/main.cpp:452
+msgid "Progress since your last save is lost."
+msgstr ""
+
+#: launcher/main.cpp:454
+msgid "Stop it"
+msgstr ""
+
+#: launcher/main.cpp:459
+msgid "Keep playing"
+msgstr ""
+
+#: launcher/main.cpp:473
+msgid "The game crashed after %s"
+msgstr ""
+
+#: launcher/main.cpp:475
+msgid "The game was ended from outside after %s"
+msgstr ""
+
+#: launcher/main.cpp:477
+msgid "The game was stopped after %s"
+msgstr ""
+
+#: launcher/main.cpp:479
+msgid "The game quit with an error (code %d) after %s"
+msgstr ""
+
+#: launcher/main.cpp:482
+msgid "The game closed normally after %s"
+msgstr ""
+
+#: launcher/main.cpp:487
+msgid "Ended by %s.%s"
+msgstr ""
+
+#: launcher/main.cpp:489
+msgid " (Also what the system does when memory runs out.)"
+msgstr ""
+
+#: launcher/main.cpp:493 launcher/setup.cpp:1455
+msgid "Log: %s"
+msgstr ""
+
+#: launcher/main.cpp:497
+msgid " Errors: %d (%d different), warnings: %d (%d different)"
+msgstr ""
+
+#: launcher/main.cpp:502
+msgid "Frame rate: %s"
+msgstr ""
+
+#: launcher/main.cpp:505
+msgid "Open the log"
+msgstr ""
+
+#: launcher/main.cpp:509 launcher/main.cpp:816 launcher/main.cpp:846
+msgid "Logs folder"
+msgstr ""
+
+#: launcher/main.cpp:513
+msgid "Show the game log"
+msgstr ""
+
+#: launcher/main.cpp:519 launcher/main.cpp:520 launcher/main.cpp:694
+msgid "Report a problem..."
+msgstr ""
+
+#: launcher/main.cpp:524 launcher/main.cpp:758 launcher/setup.cpp:1450
+msgid "OK"
+msgstr ""
+
+#: launcher/main.cpp:536 launcher/main.cpp:663 launcher/main.cpp:1207
+msgid "Play"
+msgstr ""
+
+#: launcher/main.cpp:542
+msgid "From the start"
+msgstr ""
+
+#: launcher/main.cpp:544
+msgid "Intro movies (Esc or Start skips them), the title screen and the menus."
+msgstr ""
+
+#: launcher/main.cpp:553
+msgid "Continue"
+msgstr ""
+
+#. Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
+#: launcher/main.cpp:564
+msgid "%d%%  ·  %s  ·  played %s. Straight in: no movies or menus."
+msgstr ""
+
+#: launcher/main.cpp:581
+msgid "Your saves"
+msgstr ""
+
+#: launcher/main.cpp:584
+msgid "(%zu)"
+msgstr ""
+
+#: launcher/main.cpp:586
+msgid "No saves yet. Start a New Game from the main menu: it makes its own save."
+msgstr ""
+
+#: launcher/main.cpp:593
+msgid "Find a save..."
+msgstr ""
+
+#: launcher/main.cpp:604
+msgid "Name"
+msgstr ""
+
+#: launcher/main.cpp:605
+msgid "Progress"
+msgstr ""
+
+#: launcher/main.cpp:606
+msgid "Play time"
+msgstr ""
+
+#: launcher/main.cpp:607
+msgid "Difficulty"
+msgstr ""
+
+#: launcher/main.cpp:608
+msgid "Last played"
+msgstr ""
+
+#: launcher/main.cpp:635
+msgid "(no name)"
+msgstr ""
+
+#: launcher/main.cpp:648
+msgid "Save file %d, saved %s"
+msgstr ""
+
+#: launcher/main.cpp:676
+msgid "Open:"
+msgstr ""
+
+#: launcher/main.cpp:682
+msgid "Photos (F10)"
+msgstr ""
+
+#: launcher/main.cpp:686
+msgid "Logs"
+msgstr ""
+
+#: launcher/main.cpp:690
+msgid "Settings file"
+msgstr ""
+
+#: launcher/main.cpp:699
+msgid "Add to the applications menu"
+msgstr ""
+
+#: launcher/main.cpp:700
+msgid "Update the menu entry"
+msgstr ""
+
+#: launcher/main.cpp:701
+msgid "Remove from the menu"
+msgstr ""
+
+#: launcher/main.cpp:723
+msgid "The launcher is in your applications menu (right-click it there for \"Continue last save\")."
+msgstr ""
+
+#: launcher/main.cpp:725
+msgid "Puts the launcher in your desktop's applications menu, with a \"Continue last save\" shortcut on right-click."
+msgstr ""
+
+#: launcher/main.cpp:738
+msgid "Version %s is out."
+msgstr ""
+
+#: launcher/main.cpp:740
+msgid "See the update"
+msgstr ""
+
+#: launcher/main.cpp:752
+msgid "Updated to %s"
+msgstr ""
+
+#: launcher/main.cpp:754
+msgid "What's new:"
+msgstr ""
+
+#: launcher/main.cpp:762 launcher/setup.cpp:678
+msgid "Release page"
+msgstr ""
+
+#: launcher/main.cpp:771
+msgid "Building the game for this version..."
+msgstr ""
+
+#: launcher/main.cpp:773
+msgid "Watch it in Setup"
+msgstr ""
+
+#: launcher/main.cpp:778
+msgid "The game isn't rebuilt for this version yet: Play starts the old build."
+msgstr ""
+
+#: launcher/main.cpp:780
+msgid "Rebuild it in Setup"
+msgstr ""
+
+#: launcher/main.cpp:793
+msgid "The game is already running (started some other way)."
+msgstr ""
+
+#: launcher/main.cpp:794
+msgid "Close it first: two copies at once would fight over the saves."
+msgstr ""
+
+#: launcher/main.cpp:814
+msgid "Nothing yet: once the game starts from here, its log shows up in this tab as it is written. Earlier sessions' logs are in the logs folder."
+msgstr ""
+
+#: launcher/main.cpp:825
+msgid "Live"
+msgstr ""
+
+#: launcher/main.cpp:825
+msgid "Last session"
+msgstr ""
+
+#: launcher/main.cpp:827
+msgid " Errors: %d"
+msgstr ""
+
+#: launcher/main.cpp:829
+msgid "Warnings: %d (%d different)"
+msgstr ""
+
+#: launcher/main.cpp:835
+msgid "Show only lines containing..."
+msgstr ""
+
+#: launcher/main.cpp:838
+msgid "Errors and warnings only"
+msgstr ""
+
+#: launcher/main.cpp:840
+msgid "Follow new lines"
+msgstr ""
+
+#: launcher/main.cpp:842
+msgid "Open in an editor"
+msgstr ""
+
+#: launcher/main.cpp:877
+msgid "(the first %zu lines are only in the file)"
+msgstr ""
+
+#: launcher/main.cpp:954 launcher/main.cpp:961
+msgid "Report a problem"
+msgstr ""
+
+#: launcher/main.cpp:964
+msgid "Makes one .zip file with what's needed to look into a problem: the logs of the sessions you pick, your settings and a short summary (version, system, graphics card), plus a save if you pick one. Nothing is sent anywhere: you attach the file to a bug report yourself. Your home folder's name is taken out of the files."
+msgstr ""
+
+#: launcher/main.cpp:971
+msgid "What happened?"
+msgstr ""
+
+#: launcher/main.cpp:974
+msgid "(optional: where in the game, what you did, what you saw)"
+msgstr ""
+
+#: launcher/main.cpp:980
+msgid "Sessions to include"
+msgstr ""
+
+#: launcher/main.cpp:983
+msgid "(newest first)"
+msgstr ""
+
+#: launcher/main.cpp:985
+msgid "No game sessions logged yet."
+msgstr ""
+
+#: launcher/main.cpp:996
+msgid "When"
+msgstr ""
+
+#: launcher/main.cpp:997
+msgid "Played"
+msgstr ""
+
+#: launcher/main.cpp:998
+msgid "How it ended"
+msgstr ""
+
+#: launcher/main.cpp:1025
+msgid "(not recorded)"
+msgstr ""
+
+#: launcher/main.cpp:1032
+msgid "Settings and controls (settings.toml, controls.toml)"
+msgstr ""
+
+#: launcher/main.cpp:1034
+msgid "The newest Setup log (for problems while setting up or building)"
+msgstr ""
+
+#: launcher/main.cpp:1047
+msgid "Include a save:"
+msgstr ""
+
+#. A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
+#: launcher/main.cpp:1055
+msgid "{0}  {1}  ({2}%, saved {3})"
+msgstr ""
+
+#: launcher/main.cpp:1068
+msgid ""
+"A save near the spot where it happens lets the problem be seen first-hand.\n"
+"It holds the save's name and the game's progress, nothing else."
+msgstr ""
+
+#: launcher/main.cpp:1074
+msgid "F10 photos taken in those sessions (%d files, %.1f MB)"
+msgstr ""
+
+#: launcher/main.cpp:1091
+msgid "Save the report in:"
+msgstr ""
+
+#: launcher/main.cpp:1093
+msgid "Change..."
+msgstr ""
+
+#: launcher/main.cpp:1099
+msgid "Back to the default"
+msgstr ""
+
+#: launcher/main.cpp:1116
+msgid "Make the report"
+msgstr ""
+
+#: launcher/main.cpp:1152
+msgid "Report saved:"
+msgstr ""
+
+#: launcher/main.cpp:1154
+msgid "%s (%.1f MB)"
+msgstr ""
+
+#: launcher/main.cpp:1161
+msgid "Inside: %s"
+msgstr ""
+
+#: launcher/main.cpp:1163
+msgid "Show the file"
+msgstr ""
+
+#: launcher/main.cpp:1167
+msgid "Open the bug report form on GitHub"
+msgstr ""
+
+#: launcher/main.cpp:1171
+msgid "Copy the summary"
+msgstr ""
+
+#: launcher/main.cpp:1174
+msgid "The form opens with the version, system, graphics card and settings filled in. Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub account is needed to post. No account? Send the .zip to whoever asked for it.)"
+msgstr ""
+
+#: launcher/main.cpp:1212
+msgid "Settings"
+msgstr ""
+
+#: launcher/main.cpp:1220
+msgid "Setup"
+msgstr ""
+
+#: launcher/main.cpp:1228
+msgid "Game log (live)"
+msgstr ""
+
+#: launcher/main.cpp:1228
+msgid "Game log"
+msgstr ""
+
+#: launcher/report.cpp:672
+msgid "Couldn't finish {0} (disk full?)"
+msgstr ""
+
+#: launcher/saves.cpp:197
+msgctxt "difficulty"
+msgid "Easy"
+msgstr ""
+
+#: launcher/saves.cpp:198
+msgctxt "difficulty"
 msgid "Normal"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
-msgid "Greeny"
+#: launcher/saves.cpp:199
+msgctxt "difficulty"
+msgid "Hard"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
-msgid "Bluey"
+#: launcher/settings.cpp:105
+msgid "The game isn't built yet: its settings come from the game itself."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
-msgid "Reddy"
+#: launcher/settings.cpp:120
+msgid "The game couldn't list its settings (exit code {0}). A build from before 2026-10-06 doesn't know --list_settings: rebuild it."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
-msgid "Snipe"
+#: launcher/settings.cpp:130
+msgid "The settings list is damaged: {0}"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
-msgid "Ratcicle"
+#: launcher/settings.cpp:164
+msgid "The settings list is empty."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
-msgid "Magmadon"
+#: launcher/settings.cpp:291
+msgid "Couldn't replace {0}: {1}"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
-msgid "Skeleton"
+#: launcher/settings_page.cpp:38 launcher/settings_page.cpp:58
+msgid "Experimental"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
-msgid "Spike"
+#: launcher/settings_page.cpp:39
+msgid "Above 60 fps is experimental. The game was made for 30: physics, animations, cutscenes and scripted moments may misbehave (60 is tested and fine). If something looks wrong, try 60 and report it."
 msgstr ""
 
-#. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
-msgid "Coco"
+#: launcher/settings_page.cpp:45
+msgid "In development"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:509
-msgid "Old School"
+#: launcher/settings_page.cpp:46
+msgid "The native renderer draws nearly everything, but an effect may still be missing or look different. F9 switches back to the emulated picture while playing."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:520
-msgid "Orange"
+#: launcher/settings_page.cpp:52
+msgid "Heavy on the GPU"
 msgstr ""
 
-#. the heroes' names, as the game writes them in this language.
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
-msgid "Crash"
+#: launcher/settings_page.cpp:53
+msgid "Two windows: the emulated picture and the native one, both drawn live. Meant for comparing the two; it needs a strong graphics card."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1091
-msgid "Wear"
+#: launcher/settings_page.cpp:59
+msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
 msgstr ""
 
-#. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
-msgid "Ready!"
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
+msgid "Native renderer only"
 msgstr ""
 
-#. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
-msgid "{0} Change"
+#: launcher/settings_page.cpp:65
+msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
-msgid "Loading"
+#: launcher/settings_page.cpp:71
+msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
 msgstr ""
 
-#. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
-msgid "{0} Wear"
+#: launcher/settings_page.cpp:77
+msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
 msgstr ""
 
-#: src/players/outfits.cpp:219
-msgid "Ruby"
+#: launcher/settings_page.cpp:83
+msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
 msgstr ""
 
-#: src/players/outfits.cpp:219
-msgid "Exactly the same in every way but red"
+#: launcher/settings_page.cpp:88
+msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
 msgstr ""
 
-#: src/players/outfits.cpp:221
-msgid "Topaz"
+#: launcher/settings_page.cpp:94
+msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
 msgstr ""
 
-#: src/players/outfits.cpp:221
-msgid "Exactly the same in every way but yellow"
+#: launcher/settings_page.cpp:100
+msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
 msgstr ""
 
-#: src/players/outfits.cpp:223
-msgid "Jade"
+#: launcher/settings_page.cpp:105
+msgid "Less to go on"
 msgstr ""
 
-#: src/players/outfits.cpp:223
-msgid "Exactly the same in every way but green"
+#: launcher/settings_page.cpp:106
+msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
 msgstr ""
 
-#: src/players/outfits.cpp:225
-msgid "Sapphire"
+#: launcher/settings_page.cpp:112
+msgid "Falls"
 msgstr ""
 
-#: src/players/outfits.cpp:225
-msgid "Exactly the same in every way but blue"
+#: launcher/settings_page.cpp:113
+msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
 msgstr ""
 
-#: src/players/outfits.cpp:227
-msgid "Amethyst"
+#: launcher/settings_page.cpp:161
+msgid "Emulated (the default)"
 msgstr ""
 
-#: src/players/outfits.cpp:227
-msgid "Exactly the same in every way but purple"
+#: launcher/settings_page.cpp:162
+msgid "Native renderer"
 msgstr ""
 
-#: src/players/outfits.cpp:229
-msgid "Rose Quartz"
+#: launcher/settings_page.cpp:163
+msgid "Native only (fastest, default)"
 msgstr ""
 
-#: src/players/outfits.cpp:229
-msgid "Exactly the same in every way but pink"
+#: launcher/settings_page.cpp:164
+msgid "Both, in two windows"
 msgstr ""
 
-#: src/players/outfits.cpp:239
-msgid "Carbon"
+#: launcher/settings_page.cpp:165
+msgid "Emulated only"
 msgstr ""
 
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
-msgctxt "outfit name"
-msgid "{0} {1}"
+#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
+msgid "Default"
 msgstr ""
 
-#: src/players/pause_drop_out.cpp:43
-msgid "Drop Out"
+#: launcher/settings_page.cpp:333
+msgid "Frame rate"
 msgstr ""
 
-#: src/saves/save_library.cpp:764
-msgid "Create New Save"
+#: launcher/settings_page.cpp:335
+msgid "Frame rate cap"
 msgstr ""
 
-#: src/saves/save_library.cpp:848
-msgid "Delete"
+#: launcher/settings_page.cpp:336
+msgid "How many frames per second the game runs at. 30 is the original game's rate."
 msgstr ""
 
-#: src/saves/save_library.cpp:850
-msgid "Rename"
+#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
+msgid "%d (the original)"
 msgstr ""
 
-#: src/saves/save_library.cpp:1095
-msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+#: launcher/settings_page.cpp:362
+msgid "Other..."
 msgstr ""
 
-#: src/saves/save_library.cpp:1875
-msgid "Backspace"
+#: launcher/settings_page.cpp:371
+msgid "   Frames per second"
 msgstr ""
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
-msgid "HUD Hidden"
+#: launcher/settings_page.cpp:381
+msgid "Ground grace"
 msgstr ""
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74
-msgid "Press {0} to show it again"
+#: launcher/settings_page.cpp:382
+msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
 msgstr ""
 
-#: src/ui/main_menu_extras.cpp:45
-msgid "Extras"
+#: launcher/settings_page.cpp:391
+msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
 msgstr ""
 
-#: src/ui/quit_game.cpp:55
-msgid "Quit Game"
+#: launcher/settings_page.cpp:444
+msgid "Window"
 msgstr ""
 
-#: src/ui/quit_game.cpp:56
-msgid "Are you sure you want to quit the game?"
+#: launcher/settings_page.cpp:449
+msgid "Window mode"
+msgstr ""
+
+#: launcher/settings_page.cpp:449
+msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
+msgstr ""
+
+#: launcher/settings_page.cpp:469
+msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
+msgstr ""
+
+#: launcher/settings_page.cpp:481
+msgid "{0}: not connected"
+msgstr ""
+
+#: launcher/settings_page.cpp:499
+msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
+msgstr ""
+
+#: launcher/settings_page.cpp:502
+msgid "2 (the original)"
+msgstr ""
+
+#: launcher/settings_page.cpp:502
+msgid "4 (default)"
+msgstr ""
+
+#: launcher/settings_page.cpp:513
+msgid "Co-op camera"
+msgstr ""
+
+#: launcher/settings_page.cpp:514
+msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
+msgstr ""
+
+#: launcher/settings_page.cpp:517
+msgid "   Farthest zoom-out"
+msgstr ""
+
+#: launcher/settings_page.cpp:518
+msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
+msgstr ""
+
+#: launcher/settings_page.cpp:520
+msgid "   Room around players"
+msgstr ""
+
+#: launcher/settings_page.cpp:521
+msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
+msgstr ""
+
+#: launcher/settings_page.cpp:524
+msgid "   Stay with the nearest player"
+msgstr ""
+
+#: launcher/settings_page.cpp:525
+msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
+msgstr ""
+
+#: launcher/settings_page.cpp:528
+msgid "   Group focus"
+msgstr ""
+
+#: launcher/settings_page.cpp:529
+msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
+msgstr ""
+
+#: launcher/settings_page.cpp:532
+msgid "Lost controller pause"
+msgstr ""
+
+#: launcher/settings_page.cpp:533
+msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
+msgstr ""
+
+#: launcher/settings_page.cpp:541
+msgid "Keyboard and mouse"
+msgstr ""
+
+#: launcher/settings_page.cpp:542
+msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
+msgstr ""
+
+#: launcher/settings_page.cpp:548
+msgid "Sound and logging"
+msgstr ""
+
+#: launcher/settings_page.cpp:550
+msgid "Mute the sound"
+msgstr ""
+
+#: launcher/settings_page.cpp:551
+msgid "Event logs (for bug reports)"
+msgstr ""
+
+#: launcher/settings_page.cpp:552
+msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
+msgstr ""
+
+#: launcher/settings_page.cpp:621
+msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
+msgstr ""
+
+#: launcher/settings_page.cpp:625
+msgid "Search names and descriptions..."
+msgstr ""
+
+#: launcher/settings_page.cpp:628
+msgid "Show developer settings (debug_...)"
+msgstr ""
+
+#: launcher/settings_page.cpp:690
+msgid "Default: %s%s"
+msgstr ""
+
+#: launcher/settings_page.cpp:691
+msgid "  (read at start only)"
+msgstr ""
+
+#: launcher/settings_page.cpp:702
+msgid "Asking the game for its settings..."
+msgstr ""
+
+#: launcher/settings_page.cpp:714
+msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
+msgstr ""
+
+#: launcher/settings_page.cpp:718
+msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
+msgstr ""
+
+#: launcher/settings_page.cpp:730
+msgid "All settings (advanced)"
+msgstr ""
+
+#: launcher/setup.cpp:157
+msgid "Replacing link files with copies (Git for Windows)"
+msgstr ""
+
+#: launcher/setup.cpp:372
+msgid "checking..."
+msgstr ""
+
+#: launcher/setup.cpp:373
+msgid "done"
+msgstr ""
+
+#: launcher/setup.cpp:374
+msgid "out of date"
+msgstr ""
+
+#: launcher/setup.cpp:375
+msgid "to do"
+msgstr ""
+
+#: launcher/setup.cpp:376
+msgid "needs attention"
+msgstr ""
+
+#: launcher/setup.cpp:444 launcher/setup.cpp:452 launcher/setup.cpp:460 launcher/setup.cpp:466 launcher/setup.cpp:477 launcher/setup.cpp:497 launcher/setup.cpp:508 launcher/setup.cpp:510 launcher/setup.cpp:560 launcher/setup.cpp:577 launcher/setup.cpp:583
+msgid "not found"
+msgstr ""
+
+#: launcher/setup.cpp:448 launcher/setup.cpp:457 launcher/setup.cpp:555 launcher/setup.cpp:565
+msgid "too old: {0} ({1} or newer needed)"
+msgstr ""
+
+#: launcher/setup.cpp:464
+msgid "not found (or only the Store shortcut)"
+msgstr ""
+
+#: launcher/setup.cpp:550
+msgid "not found (clang and clang++)"
+msgstr ""
+
+#: launcher/setup.cpp:572
+msgid "not found (needs pkg-config too)"
+msgstr ""
+
+#: launcher/setup.cpp:627
+msgid "Version %s"
+msgstr ""
+
+#: launcher/setup.cpp:630
+msgid " -  a developer copy: update it with git pull"
+msgstr ""
+
+#: launcher/setup.cpp:635
+msgid " -  updated to %s: restart the launcher to finish"
+msgstr ""
+
+#: launcher/setup.cpp:638
+msgid "Restart the launcher"
+msgstr ""
+
+#: launcher/setup.cpp:642
+msgid "Couldn't restart: start the launcher again by hand."
+msgstr ""
+
+#: launcher/setup.cpp:652
+msgid " -  checking for updates..."
+msgstr ""
+
+#: launcher/setup.cpp:654
+msgid " -  %s is available%s%s"
+msgstr ""
+
+#: launcher/setup.cpp:659 launcher/setup.cpp:664
+msgid "Update to {0}"
+msgstr ""
+
+#: launcher/setup.cpp:674
+msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
+msgstr ""
+
+#: launcher/setup.cpp:683
+msgid " -  the newest version"
+msgstr ""
+
+#: launcher/setup.cpp:690
+msgid "Check for updates"
+msgstr ""
+
+#: launcher/setup.cpp:699
+msgid "What's new in %s"
+msgstr ""
+
+#: launcher/setup.cpp:764
+msgid "the ReXGlue SDK and its libraries are there"
+msgstr ""
+
+#: launcher/setup.cpp:765
+msgid "the ReXGlue SDK isn't downloaded yet"
+msgstr ""
+
+#: launcher/setup.cpp:766
+msgid "the ReXGlue SDK submodule isn't downloaded yet"
+msgstr ""
+
+#: launcher/setup.cpp:776
+msgid "this version needs another ReXGlue SDK ({0}): download it again"
+msgstr ""
+
+#: launcher/setup.cpp:790
+msgid "extracted in {0}"
+msgstr ""
+
+#: launcher/setup.cpp:793
+msgid "no disc image found yet: pick your .iso"
+msgstr ""
+
+#: launcher/setup.cpp:794
+msgid "ready to extract {0}"
+msgstr ""
+
+#: launcher/setup.cpp:825
+msgid "needs the source parts first"
+msgstr ""
+
+#: launcher/setup.cpp:832
+msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
+msgstr ""
+
+#: launcher/setup.cpp:836
+msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
+msgstr ""
+
+#: launcher/setup.cpp:842
+msgid "patched, not built yet"
+msgstr ""
+
+#: launcher/setup.cpp:842
+msgid "not patched or built yet"
+msgstr ""
+
+#: launcher/setup.cpp:847
+msgid "built without our patches: rebuild it"
+msgstr ""
+
+#: launcher/setup.cpp:848
+msgid "the patches changed since the SDK was built: rebuild it"
+msgstr ""
+
+#: launcher/setup.cpp:851
+msgid "built and installed, {0} patches"
+msgstr ""
+
+#: launcher/setup.cpp:858
+msgid "not built yet"
+msgstr ""
+
+#: launcher/setup.cpp:861
+msgid "built, not copied into program/ yet"
+msgstr ""
+
+#: launcher/setup.cpp:878
+msgid "the sources changed since the last build: rebuild it"
+msgstr ""
+
+#: launcher/setup.cpp:881
+msgid "built: {0}"
+msgstr ""
+
+#: launcher/setup.cpp:904
+msgid "Downloading the source parts (git submodules)"
+msgstr ""
+
+#: launcher/setup.cpp:922
+msgid "Finishing the SDK's libraries (a download was stopped)"
+msgstr ""
+
+#: launcher/setup.cpp:927
+msgid "Removing the old SDK download"
+msgstr ""
+
+#: launcher/setup.cpp:940
+msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
+msgstr ""
+
+#: launcher/setup.cpp:945
+msgid "Checking the SDK's version"
+msgstr ""
+
+#: launcher/setup.cpp:963
+msgid "Pick your disc image (.iso) first."
+msgstr ""
+
+#: launcher/setup.cpp:970
+msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
+msgstr ""
+
+#: launcher/setup.cpp:983
+msgid "That file isn't an Xbox 360 disc image the extractor can read."
+msgstr ""
+
+#: launcher/setup.cpp:987
+msgid "That disc image has no default.xex: not a game disc?"
+msgstr ""
+
+#: launcher/setup.cpp:990
+msgid "Extracting the disc into game/"
+msgstr ""
+
+#: launcher/setup.cpp:1002
+msgid "Checking the game's executable"
+msgstr ""
+
+#: launcher/setup.cpp:1008
+msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
+msgstr ""
+
+#: launcher/setup.cpp:1012
+msgid "Title id 565507FA: Crash: Mind over Mutant."
+msgstr ""
+
+#: launcher/setup.cpp:1034
+msgid "Undoing the old patches"
+msgstr ""
+
+#: launcher/setup.cpp:1035
+msgid "Removing files the old patches added"
+msgstr ""
+
+#: launcher/setup.cpp:1038
+msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
+msgstr ""
+
+#: launcher/setup.cpp:1053
+msgid "Configuring the SDK"
+msgstr ""
+
+#: launcher/setup.cpp:1055
+msgid "Building the SDK (Release: the recompiler)"
+msgstr ""
+
+#: launcher/setup.cpp:1059
+msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
+msgstr ""
+
+#: launcher/setup.cpp:1067
+msgid "Noting which patches the SDK was built with"
+msgstr ""
+
+#: launcher/setup.cpp:1087
+msgid "Linking source/game to the disc's files"
+msgstr ""
+
+#: launcher/setup.cpp:1118
+msgid "Configuring the game's build"
+msgstr ""
+
+#: launcher/setup.cpp:1128
+msgid "Recompiling the game's code (default.xex -> C++)"
+msgstr ""
+
+#: launcher/setup.cpp:1134
+msgid "Compiling the game ({0} at a time; the first build takes a while)"
+msgstr ""
+
+#: launcher/setup.cpp:1146
+msgid "Copying the game into program/"
+msgstr ""
+
+#: launcher/setup.cpp:1237
+msgid "Setting up"
+msgstr ""
+
+#: launcher/setup.cpp:1424
+msgid "%s: done"
+msgstr ""
+
+#: launcher/setup.cpp:1426
+msgid "%s: cancelled"
+msgstr ""
+
+#: launcher/setup.cpp:1428
+msgid "%s: failed"
+msgstr ""
+
+#: launcher/setup.cpp:1448
+msgid "This step can't be stopped: a few seconds."
+msgstr ""
+
+#: launcher/setup.cpp:1457
+msgid "Follow"
+msgstr ""
+
+#: launcher/setup.cpp:1531
+msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
+msgstr ""
+
+#: launcher/setup.cpp:1553
+msgid "Checking what's there..."
+msgstr ""
+
+#: launcher/setup.cpp:1555
+msgid "Everything is set up: the game is ready to play."
+msgstr ""
+
+#: launcher/setup.cpp:1557
+msgid "Some steps are left."
+msgstr ""
+
+#: launcher/setup.cpp:1561
+msgid "Check again"
+msgstr ""
+
+#: launcher/setup.cpp:1577
+msgid "Set up everything"
+msgstr ""
+
+#: launcher/setup.cpp:1582
+msgid "Install the missing build tools first (step 1)."
+msgstr ""
+
+#: launcher/setup.cpp:1586
+msgid "The game is running: building waits until it's closed."
+msgstr ""
+
+#: launcher/setup.cpp:1599
+msgid "Build tools"
+msgstr ""
+
+#: launcher/setup.cpp:1600
+msgid "everything needed to build is installed"
+msgstr ""
+
+#: launcher/setup.cpp:1607
+msgid "found"
+msgstr ""
+
+#: launcher/setup.cpp:1607
+msgid "missing"
+msgstr ""
+
+#: launcher/setup.cpp:1612
+msgid "  -  package: "
+msgstr ""
+
+#: launcher/setup.cpp:1619
+msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
+msgstr ""
+
+#: launcher/setup.cpp:1628 launcher/setup.cpp:1633
+msgid "Source parts"
+msgstr ""
+
+#: launcher/setup.cpp:1632
+msgid "Download them"
+msgstr ""
+
+#: launcher/setup.cpp:1640
+msgid "Your disc"
+msgstr ""
+
+#: launcher/setup.cpp:1644
+msgid "Disc image: %s"
+msgstr ""
+
+#: launcher/setup.cpp:1647
+msgid "Pick the disc image..."
+msgstr ""
+
+#: launcher/setup.cpp:1648
+msgid "Xbox 360 disc image"
+msgstr ""
+
+#: launcher/setup.cpp:1663
+msgid "Extract it"
+msgstr ""
+
+#: launcher/setup.cpp:1667
+msgid "Disc"
+msgstr ""
+
+#: launcher/setup.cpp:1674
+msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
+msgstr ""
+
+#: launcher/setup.cpp:1680 launcher/setup.cpp:1689
+msgid "ReXGlue SDK"
+msgstr ""
+
+#: launcher/setup.cpp:1685
+msgid "Rebuild the SDK"
+msgstr ""
+
+#: launcher/setup.cpp:1685
+msgid "Build the SDK"
+msgstr ""
+
+#: launcher/setup.cpp:1695
+msgid "A few minutes."
+msgstr ""
+
+#: launcher/setup.cpp:1700 launcher/setup.cpp:1709
+msgid "The game"
+msgstr ""
+
+#: launcher/setup.cpp:1705
+msgid "Build the game"
+msgstr ""
+
+#: launcher/setup.cpp:1706
+msgid "Rebuild (update)"
+msgstr ""
+
+#: launcher/setup.cpp:1707
+msgid "Rebuild"
+msgstr ""
+
+#: launcher/setup.cpp:1712
+msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
+msgstr ""
+
+#: launcher/update.cpp:270
+msgid "Preparing"
+msgstr ""
+
+#: launcher/update.cpp:285
+msgid "Checking the download"
+msgstr ""
+
+#: launcher/update.cpp:303
+msgid "Swapping in the new version"
 msgstr ""

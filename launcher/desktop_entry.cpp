@@ -2,6 +2,7 @@
 // desktop_entry.cpp -- see desktop_entry.h
 // =============================================================================
 #include "desktop_entry.h"
+#include "texts.h"
 
 #include "platform.h"
 
@@ -134,13 +135,13 @@ bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* e
     std::ofstream out(temp, std::ios::trunc);
     out << text.str();
     if (!out) {
-      *error = "Couldn't write " + temp.string();
+      *error = trf(trs("Couldn't write {0}"), {temp.string()});
       return false;
     }
   }
   fs::rename(temp, entry, ec);
   if (ec) {
-    *error = "Couldn't write " + entry.string() + ": " + ec.message();
+    *error = trf(trs("Couldn't write {0}: {1}"), {entry.string(), ec.message()});
     return false;
   }
   RefreshMenus(entry.parent_path());
@@ -288,7 +289,7 @@ bool Write(const fs::path& launcher, const fs::path& game_folder, std::string* e
   if (!WriteShortcut(EntryPath(), launcher, L"", game_folder,
                      L"Mind over Recomp (alpha), an unofficial PC port of Crash: Mind over Mutant",
                      launcher)) {
-    *error = "Couldn't write the Start menu shortcut.";
+    *error = trs("Couldn't write the Start menu shortcut.");
     return false;
   }
   WriteShortcut(ContinuePath(), launcher, L"--play=last", game_folder,
@@ -311,7 +312,7 @@ bool Remove(std::string* error) {
   RemoveOldShortcuts();
   fs::remove(EntryPath(), ec);
   if (ec) {
-    *error = "Couldn't remove the Start menu shortcut: " + ec.message();
+    *error = trf(trs("Couldn't remove the Start menu shortcut: {0}"), {ec.message()});
     return false;
   }
   fs::remove(ContinuePath(), ec);
@@ -342,7 +343,7 @@ bool Remove(std::string* error) {
   std::error_code ec;
   fs::remove(entry, ec);
   if (ec) {
-    *error = "Couldn't remove " + entry.string() + ": " + ec.message();
+    *error = trf(trs("Couldn't remove {0}: {1}"), {entry.string(), ec.message()});
     return false;
   }
   RefreshMenus(entry.parent_path());

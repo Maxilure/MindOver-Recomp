@@ -7,40 +7,909 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/achievements/achievements.cpp:548
+#: src/crash_mom_app.h:449 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "EMULATED ONLY"
+msgstr "VAIN EMULOITU"
+
+#: src/crash_mom_app.h:449
+#, fuzzy
+msgid "No second window with --emulated_only"
+msgstr "Ei toista ikkunaa asetuksella --emulated_only"
+
+#. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
+#: src/fps_overlay.cpp:145
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} FPS"
+msgstr "{0} FPS"
+
+#. Frame-rate counter: the average frame rate. Keep it short, capitals.
+#: src/fps_overlay.cpp:148
+#, fuzzy
+msgctxt "fps counter"
+msgid "AVG {0}"
+msgstr "KESKI {0}"
+
+#. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
+#: src/fps_overlay.cpp:150
+#, fuzzy
+msgctxt "fps counter"
+msgid "1% LOW {0}"
+msgstr "1% ALIN {0}"
+
+#. Frame-rate counter: milliseconds per frame. Capitals.
+#: src/fps_overlay.cpp:154
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} MS"
+msgstr "{0} MS"
+
+#. Frame-rate counter: how long the game's own work took (ms). Capitals.
+#: src/fps_overlay.cpp:156
+#, fuzzy
+msgctxt "fps counter"
+msgid "GAME {0}"
+msgstr "PELI {0}"
+
+#. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
+#: src/fps_overlay.cpp:158
+#, fuzzy
+msgctxt "fps counter"
+msgid "SWAP {0}"
+msgstr "NÄYTTÖ {0}"
+
+#: src/achievements/achievements.cpp:667
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Saavutus avattu"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1037 src/options/options_menu.cpp:2281 src/options/options_settings.cpp:1125
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2263 src/options/options_settings.cpp:1125
 #, fuzzy
 msgid "Achievements"
 msgstr "Saavutukset"
 
-#: src/achievements/achievements_screen.cpp:42
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
 #, fuzzy
 msgid "Players"
 msgstr "Pelaajat"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:718
 #, fuzzy
-msgid "Cheats Enabled"
-msgstr "Huijaukset käytössä"
+msgid "No switching with --emulated_only"
+msgstr "Ei vaihtoa asetuksella --emulated_only"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements until a save is loaded"
-msgstr "Ei saavutuksia, ennen kuin tallennus ladataan"
+msgid "DUAL MODE"
+msgstr "KAKSOISTILA"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:724
 #, fuzzy
-msgid "Save Made With Cheats"
-msgstr "Tallennettu huijausten kanssa"
+msgid "No switching while the second window is open (Tools closes it)"
+msgstr "Ei vaihtoa, kun toinen ikkuna on auki (Työkalut sulkee sen)"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements while playing this save"
-msgstr "Ei saavutuksia tällä tallennuksella"
+msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
+msgstr "tämä ikkuna: emuloitu (Xbox 360 -näytönohjain)   toinen ikkuna: natiivi (Vulkan)   F1 Työkalut sulkee sen"
+
+#: src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "Xbox 360 GPU emulation; native renderer off"
+msgstr "Xbox 360 -näytönohjaimen emulointi; natiivi piirtomoottori pois"
+
+#: src/native/native_renderer.cpp:1447
+#, fuzzy
+msgid "NATIVE (Vulkan)"
+msgstr "NATIIVI (Vulkan)"
+
+#: src/native/native_renderer.cpp:1449
+#, fuzzy
+msgid "native only: the emulated GPU is off   F1 Tools switches"
+msgstr "vain natiivi: emuloitu näytönohjain on pois   F1 Työkalut vaihtaa"
+
+#: src/native/native_renderer.cpp:1450
+#, fuzzy
+msgid "the emulated GPU still draws in the background   F1 Tools switches"
+msgstr "emuloitu näytönohjain piirtää yhä taustalla   F1 Työkalut vaihtaa"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "EMULATED (Xbox 360 GPU)"
+msgstr "EMULOITU (Xbox 360 -näytönohjain)"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "native renderer idle   F1 Tools switches"
+msgstr "natiivi piirtomoottori joutilaana   F1 Työkalut vaihtaa"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#, fuzzy
+msgid "HUD Hidden"
+msgstr "Näyttötiedot piilotettu"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74
+#, fuzzy
+msgid "Press {0} to show it again"
+msgstr "Näytä uudelleen painamalla {0}"
+
+#: src/ui/main_menu_extras.cpp:45
+#, fuzzy
+msgid "Extras"
+msgstr "Lisät"
+
+#: src/ui/quit_game.cpp:55
+#, fuzzy
+msgid "Quit Game"
+msgstr "Lopeta peli"
+
+#: src/ui/quit_game.cpp:56
+#, fuzzy
+msgid "Are you sure you want to quit the game?"
+msgstr "Haluatko varmasti lopettaa pelin?"
+
+#: src/ui/tools_menu.cpp:44 src/ui/tools_menu.cpp:49 src/ui/tools_menu.cpp:51 src/ui/tools_menu.cpp:55 src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Game"
+msgstr "Peli"
+
+#: src/ui/tools_menu.cpp:44
+#, fuzzy
+msgid "Cheats..."
+msgstr "Huijaukset..."
+
+#: src/ui/tools_menu.cpp:45
+#, fuzzy
+msgid ""
+"Level ups, mojo, god mode, spawns, game speed, free camera.\n"
+"OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
+"meanwhile is marked as made with cheats (achievements stay off for it)."
+msgstr ""
+"Tasonnousut, mojo, jumaltila, luonnit, pelinopeus, vapaa kamera.\n"
+"AVAAMINEN POISTAA SAAVUTUKSET KÄYTÖSTÄ, kunnes tallennus ladataan, ja sillä välin\n"
+"tehty tallennus merkitään huijauksilla tehdyksi (saavutukset pysyvät poissa sille)."
+
+#: src/ui/tools_menu.cpp:49
+#, fuzzy
+msgid "Controls (keys)..."
+msgstr "Ohjaus (näppäimet)..."
+
+#: src/ui/tools_menu.cpp:50
+#, fuzzy
+msgid "Keyboard and mouse keys, and which device plays as which player."
+msgstr "Näppäimistön ja hiiren näppäimet sekä mikä laite pelaa minäkin pelaajana."
+
+#: src/ui/tools_menu.cpp:51
+#, fuzzy
+msgid "Hide / show the HUD"
+msgstr "Piilota / näytä näyttötiedot"
+
+#: src/ui/tools_menu.cpp:52
+#, fuzzy
+msgid ""
+"Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
+"Not a cheat: achievements are untouched. The message bar keeps showing."
+msgstr ""
+"Piilottaa kaikki näyttötiedot (muotokuvat, palkit, mojolaskuri, kombomittarit, merkit, vihjeet).\n"
+"Ei huijaus: saavutuksiin ei kosketa. Viestipalkki pysyy näkyvissä."
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "Fullscreen on / off"
+msgstr "Koko näyttö päälle / pois"
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "F11 (still F11)"
+msgstr "F11 (yhä F11)"
+
+#: src/ui/tools_menu.cpp:56
+#, fuzzy
+msgid "Borderless fullscreen on the monitor picked in Options -> Display."
+msgstr "Reunaton koko näyttö näytöllä, joka on valittu kohdassa Asetukset -> Näyttö."
+
+#: src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Take a photo"
+msgstr "Ota kuva"
+
+#: src/ui/tools_menu.cpp:58
+#, fuzzy
+msgid ""
+"A PNG of the next frame into the photos folder (both renderers' pictures\n"
+"while the native one is drawn). The menus over the picture aren't in it."
+msgstr ""
+"PNG seuraavasta ruudusta valokuvakansioon (molempien piirtomoottorien kuvat,\n"
+"kun natiivi piirtää). Kuvan päällä olevat valikot eivät ole siinä."
+
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+#, fuzzy
+msgid "Picture"
+msgstr "Kuva"
+
+#: src/ui/tools_menu.cpp:62
+#, fuzzy
+msgid "Switch renderer (emulated / native)"
+msgstr "Vaihda piirtomoottori (emuloitu / natiivi)"
+
+#: src/ui/tools_menu.cpp:63
+#, fuzzy
+msgid ""
+"Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
+"port's own renderer. Off with Emulated Only or while the second window is open."
+msgstr ""
+"Mitä kuvaa pääikkuna näyttää: jäljiteltyä Xbox 360 -näytönohjainta vai\n"
+"portin omaa piirtomoottoria. Pois, kun Vain emuloitu tai toinen ikkuna on auki."
+
+#: src/ui/tools_menu.cpp:66
+#, fuzzy
+msgid "Second window (dual mode)"
+msgstr "Toinen ikkuna (kaksoistila)"
+
+#: src/ui/tools_menu.cpp:67
+#, fuzzy
+msgid "A second window with the port's picture; the main one shows the emulated one."
+msgstr "Toinen ikkuna portin kuvalla; pääikkuna näyttää emuloidun."
+
+#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:678
+#, fuzzy
+msgid "Saves"
+msgstr "Tallennukset"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "Rename the save under the cursor"
+msgstr "Nimeä osoittimen alla oleva tallennus uudelleen"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "F2 (F2 hides the HUD now)"
+msgstr "F2 (F2 piilottaa nyt näyttötiedot)"
+
+#: src/ui/tools_menu.cpp:70
+#, fuzzy
+msgid "On the Load / Save Game screen only (X there opens the game's own name screen)."
+msgstr "Vain Lataa / Tallenna -ruudulla (X avaa siellä pelin oman nimiruudun)."
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete the save under the cursor"
+msgstr "Poista osoittimen alla oleva tallennus"
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete (still Delete)"
+msgstr "Delete (yhä Delete)"
+
+#: src/ui/tools_menu.cpp:72
+#, fuzzy
+msgid ""
+"On the Load / Save Game screen only (Y there does the same). The file is moved\n"
+"to user/saves/Deleted saves, never really deleted."
+msgstr ""
+"Vain Lataa / Tallenna -ruudulla (Y tekee siellä saman). Tiedosto siirretään\n"
+"kansioon user/saves/Deleted saves, sitä ei koskaan oikeasti poisteta."
+
+#: src/ui/tools_menu.cpp:76 src/ui/tools_menu.cpp:78 src/ui/tools_menu.cpp:80 src/ui/tools_menu.cpp:82 src/ui/tools_menu.cpp:84 src/ui/tools_menu.cpp:88 src/ui/tools_menu.cpp:92 src/ui/tools_menu.cpp:96 src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Developer"
+msgstr "Kehittäjä"
+
+#: src/ui/tools_menu.cpp:76
+#, fuzzy
+msgid "Debug overlay"
+msgstr "Vianetsintäpeite"
+
+#: src/ui/tools_menu.cpp:77
+#, fuzzy
+msgid "The SDK's frame times and threads."
+msgstr "SDK:n ruutuajat ja säikeet."
+
+#: src/ui/tools_menu.cpp:78
+#, fuzzy
+msgid "Log console"
+msgstr "Lokikonsoli"
+
+#: src/ui/tools_menu.cpp:79
+#, fuzzy
+msgid "The SDK's live log."
+msgstr "SDK:n reaaliaikainen loki."
+
+#: src/ui/tools_menu.cpp:80
+#, fuzzy
+msgid "All settings (flags)"
+msgstr "Kaikki asetukset (liput)"
+
+#: src/ui/tools_menu.cpp:81
+#, fuzzy
+msgid "Every setting by name, as in settings.toml. Prefer the in-game Options screen."
+msgstr "Jokainen asetus nimeltä, kuten settings.toml-tiedostossa. Käytä mieluummin pelin Asetukset-ruutua."
+
+#: src/ui/tools_menu.cpp:82
+#, fuzzy
+msgid "SDK achievements list"
+msgstr "SDK:n saavutuslista"
+
+#: src/ui/tools_menu.cpp:83
+#, fuzzy
+msgid "The SDK's own list (the port keeps achievements itself: pause -> Achievements)."
+msgstr "SDK:n oma lista (portti pitää saavutukset itse: tauko -> Saavutukset)."
+
+#: src/ui/tools_menu.cpp:84
+#, fuzzy
+msgid "Highlight a material (cycles)"
+msgstr "Korosta materiaali (vuorotellen)"
+
+#: src/ui/tools_menu.cpp:85
+#, fuzzy
+msgid ""
+"Paints one material magenta in the native picture: bump, particles, motion\n"
+"trails, off."
+msgstr ""
+"Värittää yhden materiaalin magentaksi natiivissa kuvassa: kohokuvio, hiukkaset, liike-\n"
+"jäljet, pois."
+
+#: src/ui/tools_menu.cpp:88
+#, fuzzy
+msgid "Particle experiment (cycles)"
+msgstr "Hiukkaskoe (vuorotellen)"
+
+#: src/ui/tools_menu.cpp:89
+#, fuzzy
+msgid ""
+"Changes how particles are drawn in the native picture, then erases groups of\n"
+"them in both pictures, then normal again."
+msgstr ""
+"Muuttaa hiukkasten piirtämistä natiivissa kuvassa, sitten pyyhkii niiden ryhmiä\n"
+"molemmista kuvista, sitten taas normaali."
+
+#: src/ui/tools_menu.cpp:92
+#, fuzzy
+msgid "Test: fake achievement card"
+msgstr "Testi: väärennetty saavutuskortti"
+
+#: src/ui/tools_menu.cpp:93
+#, fuzzy
+msgid ""
+"The achievement card on the game's message bar with a made-up name (in a level).\n"
+"Nothing is earned or recorded."
+msgstr ""
+"Saavutuskortti pelin viestipalkissa keksityllä nimellä (kentässä).\n"
+"Mitään ei ansaita eikä tallenneta."
+
+#: src/ui/tools_menu.cpp:96
+#, fuzzy
+msgid "Test: long fake achievement card"
+msgstr "Testi: pitkä väärennetty saavutuskortti"
+
+#: src/ui/tools_menu.cpp:97
+#, fuzzy
+msgid "The same with a name too long for the card: it scrolls (ui/marquee.h)."
+msgstr "Sama nimellä, joka on liian pitkä kortille: se vierii (ui/marquee.h)."
+
+#: src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Test: game-style message (voodoo doll look)"
+msgstr "Testi: pelin viesti (voodoo-nukke-tyyli)"
+
+#: src/ui/tools_menu.cpp:100
+#, fuzzy
+msgid ""
+"A message in the message bar's own wide look (title, message, counter), as the\n"
+"game shows a voodoo doll or an objective. Nothing else happens."
+msgstr ""
+"Viesti viestipalkin omassa leveässä tyylissä (otsikko, viesti, laskuri), kuten\n"
+"peli näyttää voodoo-nuken tai tavoitteen. Muuta ei tapahdu."
+
+#: src/ui/tools_menu.cpp:136
+#, fuzzy
+msgid "Tools (F1)"
+msgstr "Työkalut (F1)"
+
+#: src/ui/tools_menu.cpp:150
+#, fuzzy
+msgid "NOT AVAILABLE"
+msgstr "EI KÄYTETTÄVISSÄ"
+
+#: src/ui/tools_menu.cpp:160
+#, fuzzy
+msgid "Tools"
+msgstr "Työkalut"
+
+#: src/ui/tools_menu.cpp:162
+#, fuzzy
+msgid "F1 opens / closes   F2 = HUD   F11 = fullscreen"
+msgstr "F1 avaa / sulkee   F2 = näyttötiedot   F11 = koko näyttö"
+
+#. Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
+#: src/ui/tools_menu.cpp:174
+#, fuzzy
+msgid ""
+"%s\n"
+"\n"
+"(Key, or the key it used to have: %s. Setting name: %s)"
+msgstr ""
+"%s\n"
+"\n"
+"(Näppäin, tai se, joka sillä ennen oli: %s. Asetuksen nimi: %s)"
+
+#: src/ui/tools_menu.cpp:181
+#, fuzzy
+msgid "Achievements are off: %s"
+msgstr "Saavutukset ovat pois: %s"
+
+#: src/ui/tools_menu.cpp:183
+#, fuzzy
+msgid "Opening it turns achievements off until a save is loaded."
+msgstr "Avaaminen poistaa saavutukset käytöstä, kunnes tallennus ladataan."
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Move up"
+msgstr "Ylös"
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Also moves through menus."
+msgstr "Liikkuu myös valikoissa."
+
+#: src/input/bindings.cpp:146 src/input/bindings.cpp:148 src/input/bindings.cpp:150 src/input/bindings.cpp:152 src/input/bindings.cpp:154
+#, fuzzy
+msgid "Left stick"
+msgstr "Vasen sauva"
+
+#: src/input/bindings.cpp:148
+#, fuzzy
+msgid "Move down"
+msgstr "Alas"
+
+#: src/input/bindings.cpp:150
+#, fuzzy
+msgid "Move left"
+msgstr "Vasemmalle"
+
+#: src/input/bindings.cpp:152
+#, fuzzy
+msgid "Move right"
+msgstr "Oikealle"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Walk (hold)"
+msgstr "Kävele (pidä pohjassa)"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
+msgstr "Pidä suunnan kanssa: sauva kallistuu vain osittain, joten Crash kulkee hitaammin."
+
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Spin"
+msgstr "Kieppuminen"
+
+#: src/input/bindings.cpp:155
+#, fuzzy
+msgid "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to jump off a titan...). Crash still moves with the movement keys while spinning."
+msgstr "Kieppumishyökkäys (ohjaimella: \"Pyöritä vasenta analogista sauvaa\"). Pidä pohjassa, niin kieppuminen jatkuu. Muilla näppäimillä: kieppumisliikkeet (Kieppuminen, sitten Raskas hyökkäys; Kieppuminen, sitten Ota haltuun hypätäksesi titaanin selästä...). Crash liikkuu yhä liikenäppäimillä kieppuessaan."
+
+#: src/input/bindings.cpp:157
+#, fuzzy
+msgid "Left stick circles"
+msgstr "Vasemman sauvan ympyrät"
+
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Jump"
+msgstr "Hyppy"
+
+#: src/input/bindings.cpp:158
+#, fuzzy
+msgid "Press again in the air for a double jump."
+msgstr "Paina uudelleen ilmassa tuplahyppyä varten."
+
+#: src/input/bindings.cpp:161
+#, fuzzy
+msgid "Light attack"
+msgstr "Kevyt hyökkäys"
+
+#: src/input/bindings.cpp:163
+#, fuzzy
+msgid "Heavy attack"
+msgstr "Raskas hyökkäys"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Block (hold)"
+msgstr "Torju (pidä pohjassa)"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Hold to block an enemy's light attack."
+msgstr "Pidä pohjassa torjuaksesi vihollisen kevyen hyökkäyksen."
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Jack / use"
+msgstr "Ota haltuun / käytä"
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. Also uses save totems."
+msgstr "Tyrmää vihollinen ja paina hypätäksesi sen selkään ja ohjataksesi sitä. Paina uudelleen laskeutuaksesi. Käyttää myös tallennustotemeja."
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "Titan special attack"
+msgstr "Titaanin erikoishyökkäys"
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "The special attack of the titan you control (watch its mutant meter)."
+msgstr "Ohjaamasi titaanin erikoishyökkäys (katso sen mutanttimittaria)."
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Pocket / unpocket"
+msgstr "Talteen / esiin"
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Store the titan you control, and bring it back later."
+msgstr "Ottaa ohjaamasi titaanin talteen, jotta sen voi tuoda myöhemmin esiin."
+
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Map"
+msgstr "Kartta"
+
+#: src/input/bindings.cpp:178
+#, fuzzy
+msgid "In the pause menu: drop out (another player stays in)."
+msgstr "Taukovalikossa: poistu pelistä (toinen pelaaja jää)."
+
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1301 src/options/options_menu.cpp:1313
+#, fuzzy
+msgid "Back"
+msgstr "Palaa"
+
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Pause"
+msgstr "Tauko"
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Opens the pause menu (in menus, Menu: back closes it)."
+msgstr "Avaa taukovalikon (valikoissa Valikko: takaisin sulkee sen)."
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Start"
+msgstr "Start"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Menu: confirm"
+msgstr "Valikko: vahvista"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Choose the selected item."
+msgstr "Valitsee korostetun kohdan."
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Menu: back"
+msgstr "Valikko: takaisin"
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Back to the previous screen; in the pause menu: play on."
+msgstr "Takaisin edelliseen ruutuun; taukovalikossa: jatka pelaamista."
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "Menu: previous tab"
+msgstr "Valikko: edellinen välilehti"
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "The Options screen's tabs."
+msgstr "Asetukset-ruudun välilehdet."
+
+#: src/input/bindings.cpp:188
+#, fuzzy
+msgid "Menu: next tab"
+msgstr "Valikko: seuraava välilehti"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "Menu: X action"
+msgstr "Valikko: X-toiminto"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "What the menu's X prompt says: rename a save, Dual Mode, erase a letter on the name screen."
+msgstr "Mitä valikon X-ohje sanoo: nimeä tallennus uudelleen, Kaksoistila, poista kirjain nimiruudulla."
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "Menu: Y action"
+msgstr "Valikko: Y-toiminto"
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "What the menu's Y prompt says: delete a save, remove a key (Options -> Controls)."
+msgstr "Mitä valikon Y-ohje sanoo: poista tallennus, poista näppäin (Asetukset -> Ohjaus)."
+
+#: src/input/bindings.cpp:195
+#, fuzzy
+msgid "D-pad up"
+msgstr "Ristiohjain ylös"
+
+#: src/input/bindings.cpp:195 src/input/bindings.cpp:197 src/input/bindings.cpp:199 src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad"
+msgstr "Ristiohjain"
+
+#: src/input/bindings.cpp:197
+#, fuzzy
+msgid "D-pad down"
+msgstr "Ristiohjain alas"
+
+#: src/input/bindings.cpp:199
+#, fuzzy
+msgid "D-pad left"
+msgstr "Ristiohjain vasemmalle"
+
+#: src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad right"
+msgstr "Ristiohjain oikealle"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "Right stick up"
+msgstr "Oikea sauva ylös"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "The camera follows Crash by itself; this is for the few things that use the right stick."
+msgstr "Kamera seuraa Crashia itsestään; tämä on niitä harvoja asioita varten, jotka käyttävät oikeaa sauvaa."
+
+#: src/input/bindings.cpp:205 src/input/bindings.cpp:207 src/input/bindings.cpp:209 src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick"
+msgstr "Oikea sauva"
+
+#: src/input/bindings.cpp:207
+#, fuzzy
+msgid "Right stick down"
+msgstr "Oikea sauva alas"
+
+#: src/input/bindings.cpp:209
+#, fuzzy
+msgid "Right stick left"
+msgstr "Oikea sauva vasemmalle"
+
+#: src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick right"
+msgstr "Oikea sauva oikealle"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "Left bumper"
+msgstr "Vasen olkapainike"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "No use in play found so far."
+msgstr "Pelikäyttöä ei ole löytynyt toistaiseksi."
+
+#: src/input/bindings.cpp:215
+#, fuzzy
+msgid "Left stick click"
+msgstr "Vasemman sauvan painallus"
+
+#: src/input/bindings.cpp:215 src/input/bindings.cpp:217
+#, fuzzy
+msgid "No use in the game found so far."
+msgstr "Käyttöä pelissä ei ole löytynyt toistaiseksi."
+
+#: src/input/bindings.cpp:217
+#, fuzzy
+msgid "Right stick click"
+msgstr "Oikean sauvan painallus"
+
+#: src/input/bindings.cpp:372
+#, fuzzy
+msgid "Moving"
+msgstr "Liikkuminen"
+
+#: src/input/bindings.cpp:374
+#, fuzzy
+msgid "Fighting"
+msgstr "Taistelu"
+
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+#, fuzzy
+msgid "Titans"
+msgstr "Titaanit"
+
+#: src/input/bindings.cpp:378
+#, fuzzy
+msgid "Menus and map"
+msgstr "Valikot ja kartta"
+
+#: src/input/bindings.cpp:380
+#, fuzzy
+msgid "Rest of the controller"
+msgstr "Ohjaimen muut painikkeet"
+
+#: src/input/controls_menu.cpp:51
+#, fuzzy
+msgid "NO KEYBOARD CONTROLS"
+msgstr "EI NÄPPÄIMISTÖOHJAUSTA"
+
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1139 launcher/settings_page.cpp:539
+#, fuzzy
+msgid "Controls"
+msgstr "Ohjaus"
+
+#: src/input/controls_menu.cpp:117
+#, fuzzy
+msgid "Keys"
+msgstr "Näppäimet"
+
+#: src/input/controls_menu.cpp:130 launcher/main.cpp:1141
+#, fuzzy
+msgid "Close"
+msgstr "Sulje"
+
+#: src/input/controls_menu.cpp:142
+#, fuzzy
+msgid "Click a key to change it, then press the new key or mouse button (Esc cancels). Right-click a key to remove it. The game's button prompts show Xbox buttons: the middle column says which one each action presses. A controller works at the same time."
+msgstr "Napsauta näppäintä vaihtaaksesi sen ja paina sitten uutta näppäintä tai hiiren painiketta (Esc peruu). Napsauta näppäintä hiiren oikealla poistaaksesi sen. Pelin painikeohjeet näyttävät Xbox-painikkeita: keskimmäinen sarake kertoo, mitä kukin toiminto painaa. Ohjain toimii samaan aikaan."
+
+#: src/input/controls_menu.cpp:158
+#, fuzzy
+msgid "Spin held (spins per second)"
+msgstr "Kieppuminen pohjassa (kieppumisia sekunnissa)"
+
+#: src/input/controls_menu.cpp:161
+#, fuzzy
+msgid "Spin speed saved."
+msgstr "Kieppumisnopeus tallennettu."
+
+#: src/input/controls_menu.cpp:163
+#, fuzzy
+msgid "While Spin is held, how often it counts as one more spin (a press is one at once). On a controller each full circle of the left stick is one."
+msgstr "Kun Kieppuminen on pohjassa, kuinka usein se lasketaan yhdeksi lisäkieppumiseksi (painallus laskee yhden heti). Ohjaimella jokainen vasemman sauvan täysi ympyrä on yksi."
+
+#: src/input/controls_menu.cpp:166
+#, fuzzy
+msgid "Walk (how far the stick leans)"
+msgstr "Kävely (kuinka paljon sauva kallistuu)"
+
+#: src/input/controls_menu.cpp:169
+#, fuzzy
+msgid "Walk saved."
+msgstr "Kävely tallennettu."
+
+#: src/input/controls_menu.cpp:171
+#, fuzzy
+msgid "Reset keys to defaults"
+msgstr "Palauta oletusnäppäimet"
+
+#: src/input/controls_menu.cpp:178
+#, fuzzy
+msgid "Back to the default keys."
+msgstr "Takaisin oletusnäppäimiin."
+
+#: src/input/controls_menu.cpp:186
+#, fuzzy
+msgid "Player assignment isn't available in this run."
+msgstr "Pelaajien valinta ei ole käytettävissä tässä istunnossa."
+
+#: src/input/controls_menu.cpp:190
+#, fuzzy
+msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
+msgstr "Mikä laite pelaa minäkin pelaajana. Kahdelle: näppäimistö ja hiiri pelaajalle 1, ohjain pelaajalle 2. Paina kentässä toisen laitteen Start-painiketta liittyäksesi (taukovalikossa on myös Liity peliin ja Poistu pelistä). Laitteen siirtäminen pelaajalle vaihtaa sen paikkaa siellä olleen laitteen kanssa. Alkuruudussa ja päävalikoissa kaikki laitteet toimivat. Muutokset tulevat voimaan heti ja muistetaan."
+
+#: src/input/controls_menu.cpp:201
+#, fuzzy
+msgid "Device"
+msgstr "Laite"
+
+#: src/input/controls_menu.cpp:202
+#, fuzzy
+msgid "Plays as"
+msgstr "Pelaa pelaajana"
+
+#: src/input/controls_menu.cpp:218
+#, fuzzy
+msgid "No controller connected. Connect one: it shows up here."
+msgstr "Ohjainta ei ole kytketty. Kytke yksi: se ilmestyy tähän."
+
+#: src/input/controls_menu.cpp:227
+#, fuzzy
+msgid "Off (not used)"
+msgstr "Pois (ei käytössä)"
+
+#: src/input/controls_menu.cpp:229
+#, fuzzy
+msgid "Automatic (Player {})"
+msgstr "Automaattinen (pelaaja {})"
+
+#: src/input/controls_menu.cpp:230
+#, fuzzy
+msgid "Automatic (not used)"
+msgstr "Automaattinen (ei käytössä)"
+
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+#, fuzzy
+msgid "Player {}"
+msgstr "Pelaaja {}"
+
+#: src/input/controls_menu.cpp:277
+#, fuzzy
+msgid "Action"
+msgstr "Toiminto"
+
+#: src/input/controls_menu.cpp:279
+#, fuzzy
+msgid "Key 1"
+msgstr "Näppäin 1"
+
+#: src/input/controls_menu.cpp:280
+#, fuzzy
+msgid "Key 2"
+msgstr "Näppäin 2"
+
+#: src/input/controls_menu.cpp:304
+#, fuzzy
+msgid "(menus)"
+msgstr "(valikot)"
+
+#: src/input/controls_menu.cpp:331
+#, fuzzy
+msgid "press a key..."
+msgstr "paina näppäintä..."
+
+#: src/input/controls_menu.cpp:348
+#, fuzzy
+msgid "Press the new key for {}."
+msgstr "Paina uutta näppäintä toiminnolle {}."
+
+#: src/input/controls_menu.cpp:359
+#, fuzzy
+msgid "{0} removed from {1}."
+msgstr "{0} poistettu toiminnosta {1}."
+
+#: src/input/controls_menu.cpp:372
+#, fuzzy
+msgid "Cancelled."
+msgstr "Peruttu."
+
+#: src/input/controls_menu.cpp:378
+#, fuzzy
+msgid "{0} -> {1} (taken from {2})."
+msgstr "{0} -> {1} (otettu toiminnolta {2})."
+
+#: src/input/controls_menu.cpp:380
+#, fuzzy
+msgid "{0} -> {1}."
+msgstr "{0} -> {1}."
+
+#: src/input/controls_menu.cpp:387
+#, fuzzy
+msgid "Couldn't save the controls file (see the log)."
+msgstr "Ohjaustiedostoa ei voitu tallentaa (katso loki)."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2305
@@ -65,200 +934,1012 @@ msgstr "TAI {0}"
 msgid "Press Any Button"
 msgstr "Paina mitä tahansa painiketta"
 
-#: src/options/options_menu.cpp:798 src/options/options_menu.cpp:844
+#: src/saves/save_library.cpp:764
+#, fuzzy
+msgid "Create New Save"
+msgstr "Uusi tallennus"
+
+#: src/saves/save_library.cpp:848
+#, fuzzy
+msgid "Delete"
+msgstr "Poista"
+
+#: src/saves/save_library.cpp:850
+#, fuzzy
+msgid "Rename"
+msgstr "Nimeä uudelleen"
+
+#: src/saves/save_library.cpp:1021
+#, fuzzy
+msgid "Rename failed"
+msgstr "Uudelleennimeäminen epäonnistui"
+
+#: src/saves/save_library.cpp:1066
+#, fuzzy
+msgid "Delete failed"
+msgstr "Poistaminen epäonnistui"
+
+#: src/saves/save_library.cpp:1095
+#, fuzzy
+msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+msgstr "Haluatko varmasti poistaa tämän tallennuksen? Se siirretään kansioon Deleted saves."
+
+#: src/saves/save_library.cpp:1193
+#, fuzzy
+msgid "Rename save"
+msgstr "Nimeä tallennus uudelleen"
+
+#: src/saves/save_library.cpp:1232
+#, fuzzy
+msgid "Rename \"%s\""
+msgstr "Nimeä \"%s\" uudelleen"
+
+#: src/saves/save_library.cpp:1233
+#, fuzzy
+msgid "Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"
+msgstr "Kirjoita enintään %zu kirjainta, numeroa, välilyöntiä. Ohjain: A nimeää, B peruu"
+
+#: src/saves/save_library.cpp:1245
+#, fuzzy
+msgid "Rename (Enter)"
+msgstr "Nimeä uudelleen (Enter)"
+
+#: src/saves/save_library.cpp:1248
+#, fuzzy
+msgid "Cancel (Esc)"
+msgstr "Peruuta (Esc)"
+
+#: src/saves/save_library.cpp:1875
+#, fuzzy
+msgid "Backspace"
+msgstr "Pyyhi"
+
+#. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
+#: src/saves/save_screen_waits.cpp:263
+#, fuzzy
+msgid "Reading save files..."
+msgstr "Luetaan tallennuksia..."
+
+#. Shown while a save is loaded. Short.
+#: src/saves/save_screen_waits.cpp:265
+#, fuzzy
+msgid "Loading..."
+msgstr "Ladataan..."
+
+#. Shown while the game saves. Short.
+#: src/saves/save_screen_waits.cpp:267
+#, fuzzy
+msgid "Saving..."
+msgstr "Tallennetaan..."
+
+#: src/cheats/cheat_menu.cpp:90 src/cheats/cheat_menu.cpp:103
+#, fuzzy
+msgid "Cheats"
+msgstr "Huijaukset"
+
+#: src/cheats/cheat_menu.cpp:105
+#, fuzzy
+msgid "for testing (not saved by us; the game saves what they change)"
+msgstr "testaamiseen (emme tallenna niitä; peli tallentaa sen, mitä ne muuttavat)"
+
+#: src/cheats/cheat_menu.cpp:108
+#, fuzzy
+msgid "Not in a level: character cheats wait until you're playing one."
+msgstr "Ei kentässä: hahmohuijaukset odottavat, kunnes pelaat kenttää."
+
+#: src/cheats/cheat_menu.cpp:115
+#, fuzzy
+msgid "Everyone"
+msgstr "Kaikki"
+
+#: src/cheats/cheat_menu.cpp:117
+#, fuzzy
+msgid "God mode"
+msgstr "Jumaltila"
+
+#: src/cheats/cheat_menu.cpp:119
+#, fuzzy
+msgid ""
+"Every player's Crash and titan loses no health (and refills).\n"
+"Deaths that skip health (pits?) may still happen."
+msgstr ""
+"Jokaisen pelaajan Crash ja titaani eivät menetä kuntoa (ja täyttyvät).\n"
+"Kuolemat, jotka ohittavat kunnon (kuopat?), voivat yhä sattua."
+
+#: src/cheats/cheat_menu.cpp:122
+#, fuzzy
+msgid "No AI"
+msgstr "Ei tekoälyä"
+
+#: src/cheats/cheat_menu.cpp:123
+#, fuzzy
+msgid ""
+"Enemies and enemy titans stop thinking: no attacks, no moving.\n"
+"They can still be hit and beaten."
+msgstr ""
+"Viholliset ja vihollistitaanit lakkaavat ajattelemasta: ei hyökkäyksiä, ei liikettä.\n"
+"Niitä voi yhä lyödä ja kukistaa."
+
+#: src/cheats/cheat_menu.cpp:130
+#, fuzzy
+msgid "Screen"
+msgstr "Ruutu"
+
+#: src/cheats/cheat_menu.cpp:132
+#, fuzzy
+msgid "Hide the HUD"
+msgstr "Piilota näyttötiedot"
+
+#: src/cheats/cheat_menu.cpp:133
+#, fuzzy
+msgid "Portraits, health and special bars. The mojo count text stays."
+msgstr "Muotokuvat, kunto- ja erikoispalkit. Mojolaskurin teksti jää."
+
+#: src/cheats/cheat_menu.cpp:135
+#, fuzzy
+msgid "All mojo collected: %s"
+msgstr "Mojoa kerätty yhteensä: %s"
+
+#: src/cheats/cheat_menu.cpp:137
+#, fuzzy
+msgid "Achievements are off: %s."
+msgstr "Saavutukset ovat pois: %s."
+
+#: src/cheats/cheat_menu.cpp:139
+#, fuzzy
+msgid "Loading a save turns them back on (with this window closed and the"
+msgstr "Tallennuksen lataaminen palauttaa ne (kun tämä ikkuna on suljettu ja"
+
+#: src/cheats/cheat_menu.cpp:140
+#, fuzzy
+msgid "switches off). A save made now is marked as made with cheats."
+msgstr "kytkimet pois). Nyt tehty tallennus merkitään huijauksilla tehdyksi."
+
+#: src/cheats/cheat_menu.cpp:145
+#, fuzzy
+msgid "Character"
+msgstr "Hahmo"
+
+#: src/cheats/cheat_menu.cpp:155
+#, fuzzy
+msgid "Player %d isn't in the level."
+msgstr "Pelaaja %d ei ole kentässä."
+
+#: src/cheats/cheat_menu.cpp:162
+#, fuzzy
+msgid "In a titan: %s"
+msgstr "Titaanissa: %s"
+
+#: src/cheats/cheat_menu.cpp:164
+#, fuzzy
+msgid "Riding another player as a mask (cheats act on the shared upgrades)"
+msgstr "Ratsastaa toisen pelaajan päällä naamiona (huijaukset vaikuttavat jaettuihin tehosteisiin)"
+
+#: src/cheats/cheat_menu.cpp:166
+#, fuzzy
+msgid "On foot"
+msgstr "Jalan"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d  (fully upgraded)"
+msgstr "Taso: %d / %d  (täysin tehostettu)"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d"
+msgstr "Taso: %d / %d"
+
+#: src/cheats/cheat_menu.cpp:172
+#, fuzzy
+msgid "Level: %d"
+msgstr "Taso: %d"
+
+#: src/cheats/cheat_menu.cpp:175
+#, fuzzy
+msgid "Every mojo upgrade bought: the rest come with the story"
+msgstr "Kaikki mojotehosteet ostettu: loput tulevat tarinan mukana"
+
+#: src/cheats/cheat_menu.cpp:177
+#, fuzzy
+msgid "Mojo toward the next upgrade: %s / %s"
+msgstr "Mojoa seuraavaan tehosteeseen: %s / %s"
+
+#: src/cheats/cheat_menu.cpp:180
+#, fuzzy
+msgid "Mojo toward upgrades: %s"
+msgstr "Mojoa tehosteisiin: %s"
+
+#: src/cheats/cheat_menu.cpp:184
+#, fuzzy
+msgid "Health %.0f / %.0f"
+msgstr "Kunto %.0f / %.0f"
+
+#: src/cheats/cheat_menu.cpp:190
+#, fuzzy
+msgid "Level up"
+msgstr "Tasonnousu"
+
+#: src/cheats/cheat_menu.cpp:192
+#, fuzzy
+msgid "Buys this titan's next upgrade (with the game's upgrade screen)."
+msgstr "Ostaa tämän titaanin seuraavan tehosteen (pelin tehosteruudun kanssa)."
+
+#: src/cheats/cheat_menu.cpp:193
+#, fuzzy
+msgid ""
+"Gives Crash the mojo his level's script waits for: the game then\n"
+"upgrades him itself (screen and all). If nothing happens, the\n"
+"script isn't waiting for an upgrade right now."
+msgstr ""
+"Antaa Crashille mojon, jota hänen tasonsa skripti odottaa: peli\n"
+"tehostaa hänet sitten itse (ruutuineen). Jos mitään ei tapahdu,\n"
+"skripti ei odota tehostetta juuri nyt."
+
+#: src/cheats/cheat_menu.cpp:197
+#, fuzzy
+msgid "Max level"
+msgstr "Enimmäistaso"
+
+#: src/cheats/cheat_menu.cpp:198
+#, fuzzy
+msgid "Buys every upgrade left at once (no screens)."
+msgstr "Ostaa kaikki jäljellä olevat tehosteet kerralla (ilman ruutuja)."
+
+#: src/cheats/cheat_menu.cpp:199
+#, fuzzy
+msgid ""
+"Feeds Crash every upgrade his scripts ask for, one at a time:\n"
+"close each \"Level Up!\" screen (B) for the next one.\n"
+"Mojo buys 18 of them (the last at 220,000); the others\n"
+"of the 32 are unlocked by the story."
+msgstr ""
+"Antaa Crashille jokaisen tehosteen, jota hänen skriptinsä pyytävät, yksi kerrallaan:\n"
+"sulje jokainen \"Taso nousi!\" -ruutu (B) seuraavaa varten.\n"
+"Mojolla saa 18 niistä (viimeinen 220 000:lla); muut\n"
+"32:sta avautuvat tarinan myötä."
+
+#: src/cheats/cheat_menu.cpp:209
+#, fuzzy
+msgid "+{} mojo, as if picked up"
+msgstr "+{} mojoa, kuin poimittuna"
+
+#: src/cheats/cheat_menu.cpp:212
+#, fuzzy
+msgid "Refill health"
+msgstr "Täytä kunto"
+
+#: src/cheats/cheat_menu.cpp:216
+#, fuzzy
+msgid "Kill"
+msgstr "Tapa"
+
+#: src/cheats/cheat_menu.cpp:219
+#, fuzzy
+msgid ""
+"In a titan: the titan dies and the player is thrown out.\n"
+"On foot: the player dies (back at the checkpoint). Works with god mode."
+msgstr ""
+"Titaanissa: titaani kuolee ja pelaaja sinkoutuu ulos.\n"
+"Jalan: pelaaja kuolee (takaisin tarkistuspisteeseen). Toimii jumaltilan kanssa."
+
+#: src/cheats/cheat_menu.cpp:223
+#, fuzzy
+msgid "Free jack"
+msgstr "Ilmainen haltuunotto"
+
+#: src/cheats/cheat_menu.cpp:226
+#, fuzzy
+msgid ""
+"The game's Free Jack power-up: jack any titan (B) without beating\n"
+"it first. Lasts until the next jack. On foot only."
+msgstr ""
+"Pelin Ilmainen haltuunotto -tehoste: ota mikä tahansa titaani haltuun (B) kukistamatta\n"
+"sitä ensin. Kestää seuraavaan haltuunottoon. Vain jalan."
+
+#: src/cheats/cheat_menu.cpp:233
+#, fuzzy
+msgid "Spawn"
+msgstr "Luo"
+
+#: src/cheats/cheat_menu.cpp:258
+#, fuzzy
+msgid "How many"
+msgstr "Kuinka monta"
+
+#: src/cheats/cheat_menu.cpp:261
+#, fuzzy
+msgid "Ready to jack"
+msgstr "Valmis haltuunotettavaksi"
+
+#: src/cheats/cheat_menu.cpp:263
+#, fuzzy
+msgid ""
+"Arrives already down, ready to jack: walk up and press B.\n"
+"Off: a normal titan, ready to fight. Or use Free jack (Character)."
+msgstr ""
+"Saapuu jo maassa, valmiina haltuunotettavaksi: kävele luo ja paina B.\n"
+"Pois: tavallinen titaani, valmis taistelemaan. Tai käytä Ilmaista haltuunottoa (Hahmo)."
+
+#: src/cheats/cheat_menu.cpp:268
+#, fuzzy
+msgid "Spawn in front of player {}"
+msgstr "Luo pelaajan {} eteen"
+
+#: src/cheats/cheat_menu.cpp:275
+#, fuzzy
+msgid "or a template, e.g. Characters:Znu"
+msgstr "tai malli, esim. Characters:Znu"
+
+#: src/cheats/cheat_menu.cpp:278
+#, fuzzy
+msgid ""
+"Any template the game's data names (\"Group:Name\"). Experimental:\n"
+"only titans are tested; other things can crash the game."
+msgstr ""
+"Mikä tahansa malli, jonka pelin data nimeää (\"Ryhmä:Nimi\"). Kokeellinen:\n"
+"vain titaanit on testattu; muut voivat kaataa pelin."
+
+#: src/cheats/cheat_menu.cpp:282
+#, fuzzy
+msgid "Spawn by name"
+msgstr "Luo nimellä"
+
+#: src/cheats/cheat_menu.cpp:287
+#, fuzzy
+msgid "Last: %s"
+msgstr "Viimeksi: %s"
+
+#: src/cheats/cheat_menu.cpp:288
+#, fuzzy
+msgid "Not in this level? It's loaded first (takes a moment)."
+msgstr "Ei tässä kentässä? Se ladataan ensin (vie hetken)."
+
+#: src/cheats/cheat_menu.cpp:293
+#, fuzzy
+msgid "Unlocks"
+msgstr "Avaukset"
+
+#: src/cheats/cheat_menu.cpp:305
+#, fuzzy
+msgid "Unlocked / all. Click to unlock all of them."
+msgstr "Avattu / kaikki. Napsauta avataksesi kaikki."
+
+#: src/cheats/cheat_menu.cpp:307
+#, fuzzy
+msgid "Unlock everything"
+msgstr "Avaa kaikki"
+
+#: src/cheats/cheat_menu.cpp:311
+#, fuzzy
+msgid ""
+"Every outfit (Coco and the titan suits included: pick them at the chest),\n"
+"concept art, enemy info and tutorial page, in the game being played.\n"
+"Kept when the game saves. Nobody's outfit changes by itself."
+msgstr ""
+"Jokainen asu (Coco ja titaaniasut mukaan lukien: valitse ne arkulta),\n"
+"luonnoskuva, vihollistieto ja opetussivu meneillään olevassa pelissä.\n"
+"Säilyy, kun peli tallentaa. Kenenkään asu ei vaihdu itsestään."
+
+#: src/cheats/cheat_menu.cpp:319
+#, fuzzy
+msgid "Time"
+msgstr "Aika"
+
+#: src/cheats/cheat_menu.cpp:322
+#, fuzzy
+msgid "Game speed"
+msgstr "Pelinopeus"
+
+#: src/cheats/cheat_menu.cpp:333
+#, fuzzy
+msgid "Freeze"
+msgstr "Jäädytä"
+
+#: src/cheats/cheat_menu.cpp:335
+#, fuzzy
+msgid ""
+"Everything stops; the picture keeps drawing (with the free camera:\n"
+"a photo mode). The game's own \"pause for screenshots\"."
+msgstr ""
+"Kaikki pysähtyy; kuvaa piirretään yhä (vapaalla kameralla:\n"
+"valokuvatila). Pelin oma \"tauko kuvakaappauksia varten\"."
+
+#: src/cheats/cheat_menu.cpp:339
+#, fuzzy
+msgid "Step one frame"
+msgstr "Yksi ruutu eteenpäin"
+
+#: src/cheats/cheat_menu.cpp:346
+#, fuzzy
+msgid "Dummy players"
+msgstr "Testipelaajat"
+
+#: src/cheats/cheat_menu.cpp:349
+#, fuzzy
+msgid "No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml"
+msgstr "Ei testiohjaimia. Lisää  debug_fake_pads = 3  tiedostoon user/settings.toml"
+
+#: src/cheats/cheat_menu.cpp:350
+#, fuzzy
+msgid "(1-3 dummies) and restart the game."
+msgstr "(1-3 testiohjainta) ja käynnistä peli uudelleen."
+
+#: src/cheats/cheat_menu.cpp:353
+#, fuzzy
+msgid "START joins, B leaves a mask. Hold a direction on the pad to walk."
+msgstr "START liittyy, B jättää naamion. Pidä suuntaa alustalla kävelläksesi."
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Idle (buttons only)"
+msgstr "Joutilas (vain painikkeet)"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 1"
+msgstr "Seuraa pelaajaa 1"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 2"
+msgstr "Seuraa pelaajaa 2"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 3"
+msgstr "Seuraa pelaajaa 3"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Follow player 4"
+msgstr "Seuraa pelaajaa 4"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 1"
+msgstr "Matki pelaajaa 1"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 2"
+msgstr "Matki pelaajaa 2"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 3"
+msgstr "Matki pelaajaa 3"
+
+#: src/cheats/cheat_menu.cpp:356
+#, fuzzy
+msgid "Copy player 4"
+msgstr "Matki pelaajaa 4"
+
+#: src/cheats/cheat_menu.cpp:361
+#, fuzzy
+msgid "Dummy controller %d: player %d"
+msgstr "Testiohjain %d: pelaaja %d"
+
+#: src/cheats/cheat_menu.cpp:363
+#, fuzzy
+msgid "Dummy controller %d: plays as nobody (Controls -> Players)"
+msgstr "Testiohjain %d: ei pelaa kenenkään pelaajana (Ohjaus -> Pelaajat)"
+
+#: src/cheats/cheat_menu.cpp:377
+#, fuzzy
+msgid ""
+"Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
+"below them. Copy: repeats that player's controller (not START / BACK).\n"
+"The buttons and the stick pad work in every mode."
+msgstr ""
+"Seuraa: kävelee pelaajan perässä, pysähtyy ~3 yksikön päähän, hyppää, kun jää jumiin\n"
+"tämän alapuolelle. Matki: toistaa pelaajan ohjainta (ei START / BACK).\n"
+"Painikkeet ja sauva-alusta toimivat joka tilassa."
+
+#: src/cheats/cheat_menu.cpp:391
+#, fuzzy
+msgid ""
+"Which controller this dummy pretends to be. With Controller Icons on\n"
+"Automatic, the game detects it from its maker and model like a real pad\n"
+"and shows that player's prompts in its button pictures."
+msgstr ""
+"Mitä ohjainta tämä testiohjain esittää. Kun Ohjainkuvakkeet on\n"
+"Automaattinen, peli tunnistaa sen valmistajan ja mallin perusteella kuin oikean\n"
+"ja näyttää pelaajan ohjeet sen painikekuvilla."
+
+#: src/cheats/cheat_menu.cpp:434
+#, fuzzy
+msgid "Camera"
+msgstr "Kamera"
+
+#: src/cheats/cheat_menu.cpp:436
+#, fuzzy
+msgid "Free camera"
+msgstr "Vapaa kamera"
+
+#: src/cheats/cheat_menu.cpp:440
+#, fuzzy
+msgid "Keys move the camera"
+msgstr "Näppäimet liikuttavat kameraa"
+
+#: src/cheats/cheat_menu.cpp:443
+#, fuzzy
+msgid ""
+"On: the keyboard and mouse fly the camera (Crash stands still;\n"
+"a controller still plays). Off: the camera stays put and the keys\n"
+"play the game again."
+msgstr ""
+"Päällä: näppäimistö ja hiiri lennättävät kameraa (Crash seisoo paikallaan;\n"
+"ohjain pelaa yhä). Pois: kamera pysyy paikallaan ja näppäimet\n"
+"pelaavat taas peliä."
+
+#: src/cheats/cheat_menu.cpp:447
+#, fuzzy
+msgid "W A S D move, E / Q up / down, Shift fast, Ctrl slow,"
+msgstr "W A S D liiku, E / Q ylös / alas, Shift nopea, Ctrl hidas,"
+
+#: src/cheats/cheat_menu.cpp:448
+#, fuzzy
+msgid "right mouse button held (or arrow keys) = look around"
+msgstr "hiiren oikea painike pohjassa (tai nuolinäppäimet) = katsele ympärilleen"
+
+#: src/cheats/cheat_menu.cpp:451
+#, fuzzy
+msgid "Flying speed"
+msgstr "Lentonopeus"
+
+#: src/cheats/cheat_menu.cpp:457
+#, fuzzy
+msgid "Look speed"
+msgstr "Katsenopeus"
+
+#: src/cheats/cheat_menu.cpp:460
+#, fuzzy
+msgid "Back to the game's camera"
+msgstr "Takaisin pelin kameraan"
+
+#: src/cheats/cheat_menu.cpp:463
+#, fuzzy
+msgid "Camera at (%.1f, %.1f, %.1f)"
+msgstr "Kamera kohdassa (%.1f, %.1f, %.1f)"
+
+#: src/cheats/cheats.cpp:105
+#, fuzzy
+msgid "Outfits"
+msgstr "Asut"
+
+#: src/cheats/cheats.cpp:106
+#, fuzzy
+msgid "Concept art"
+msgstr "Luonnoskuvat"
+
+#: src/cheats/cheats.cpp:107
+#, fuzzy
+msgid "Enemy info"
+msgstr "Vihollistiedot"
+
+#: src/cheats/cheats.cpp:108
+#, fuzzy
+msgid "Tutorials"
+msgstr "Opetukset"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "Cheats Enabled"
+msgstr "Huijaukset käytössä"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "No achievements until a save is loaded"
+msgstr "Ei saavutuksia, ennen kuin tallennus ladataan"
+
+#: src/cheats/cheats.cpp:698
+#, fuzzy
+msgid "this game was saved with cheats on"
+msgstr "tämä peli tallennettiin huijaukset päällä"
+
+#: src/cheats/cheats.cpp:699
+#, fuzzy
+msgid "cheats were used (until a save is loaded)"
+msgstr "huijauksia käytettiin (kunnes tallennus ladataan)"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "Save Made With Cheats"
+msgstr "Tallennettu huijausten kanssa"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "No achievements while playing this save"
+msgstr "Ei saavutuksia tällä tallennuksella"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Crunch (boss)"
+msgstr "Crunch (pomo)"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Cortex (boss)"
+msgstr "Cortex (pomo)"
+
+#: src/cheats/spawn.cpp:448
+#, fuzzy
+msgid "Enemies"
+msgstr "Viholliset"
+
+#: src/players/dummy_players.cpp:232
+#, fuzzy
+msgid "Test pad (no model)"
+msgstr "Testiohjain (ei mallia)"
+
+#: src/players/dummy_players.cpp:233
+#, fuzzy
+msgid "Xbox 360 controller"
+msgstr "Xbox 360 -ohjain"
+
+#: src/players/dummy_players.cpp:234
+#, fuzzy
+msgid "Xbox Series controller"
+msgstr "Xbox Series -ohjain"
+
+#: src/players/dummy_players.cpp:235
+#, fuzzy
+msgid "PlayStation 4 (DualShock 4)"
+msgstr "PlayStation 4 (DualShock 4)"
+
+#: src/players/dummy_players.cpp:236
+#, fuzzy
+msgid "PlayStation 5 (DualSense)"
+msgstr "PlayStation 5 (DualSense)"
+
+#: src/players/dummy_players.cpp:237
+#, fuzzy
+msgid "Switch Pro controller"
+msgstr "Switch Pro -ohjain"
+
+#: src/players/dummy_players.cpp:238
+#, fuzzy
+msgid "Another maker (8BitDo)"
+msgstr "Muu valmistaja (8BitDo)"
+
+#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+#: src/players/lost_controller.cpp:189
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or Player {1}: press {2} to take over."
+msgstr ""
+"Pelaajan {0} ohjain irrotettiin.\n"
+"Kytke se takaisin, tai pelaaja {1}: ota vuoro painamalla {2}."
+
+#: src/players/lost_controller.cpp:193
+#, fuzzy
+msgid ""
+"Controller reconnected.\n"
+"Press any button to resume."
+msgstr ""
+"Ohjain kytketty takaisin.\n"
+"Jatka painamalla mitä tahansa painiketta."
+
+#: src/players/lost_controller.cpp:194
+#, fuzzy
+msgid ""
+"Controller disconnected.\n"
+"Reconnect your controller to continue."
+msgstr ""
+"Ohjain irrotettiin.\n"
+"Kytke ohjain takaisin jatkaaksesi."
+
+#. the question box (2 lines): {0} = the player's number.
+#: src/players/lost_controller.cpp:198
+#, fuzzy
+msgid ""
+"Player {0}'s controller is back.\n"
+"Player {0}: press any button to resume."
+msgstr ""
+"Pelaajan {0} ohjain on takaisin.\n"
+"Pelaaja {0}: jatka painamalla mitä tahansa painiketta."
+
+#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+#: src/players/lost_controller.cpp:205
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or press {1} to drop out Player {0}."
+msgstr ""
+"Pelaajan {0} ohjain irrotettiin.\n"
+"Kytke se takaisin, tai paina {1}, niin pelaaja {0} poistuu pelistä."
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Normal"
+msgstr "Tavallinen"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Greeny"
+msgstr "Viher"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Bluey"
+msgstr "Sini"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Reddy"
+msgstr "Puna"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Snipe"
+msgstr "Väijy"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Ratcicle"
+msgstr "Jäärotta"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Magmadon"
+msgstr "Magmadon"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Skeleton"
+msgstr "Luuranko"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Spike"
+msgstr "Vaarna"
+
+#. the heroes' names, as the game writes them in this language.
+#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#, fuzzy
+msgid "Coco"
+msgstr "Coco"
+
+#: src/players/outfit_picker.cpp:509
+#, fuzzy
+msgid "Old School"
+msgstr "Perinteinen"
+
+#: src/players/outfit_picker.cpp:520
+#, fuzzy
+msgid "Orange"
+msgstr "Oranssi"
+
+#. the heroes' names, as the game writes them in this language.
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#, fuzzy
+msgid "Crash"
+msgstr "Crash"
+
+#: src/players/outfit_picker.cpp:1091
+#, fuzzy
+msgid "Wear"
+msgstr "Pue"
+
+#. the chest: this player has picked an outfit.
+#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#, fuzzy
+msgid "Ready!"
+msgstr "Valmis!"
+
+#. {0} = the B button's picture (change the pick again).
+#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#, fuzzy
+msgid "{0} Change"
+msgstr "{0} Vaihda"
+
+#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#, fuzzy
+msgid "Loading"
+msgstr "Ladataan"
+
+#. {0} = the A button's picture (wear this outfit).
+#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#, fuzzy
+msgid "{0} Wear"
+msgstr "{0} Pue"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Ruby"
+msgstr "Rubiini"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Exactly the same in every way but red"
+msgstr "Täysin samanlainen, mutta punainen"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Topaz"
+msgstr "Topaasi"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Exactly the same in every way but yellow"
+msgstr "Täysin samanlainen, mutta keltainen"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Jade"
+msgstr "Jade"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Exactly the same in every way but green"
+msgstr "Täysin samanlainen, mutta vihreä"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Sapphire"
+msgstr "Safiiri"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Exactly the same in every way but blue"
+msgstr "Täysin samanlainen, mutta sininen"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Amethyst"
+msgstr "Ametisti"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Exactly the same in every way but purple"
+msgstr "Täysin samanlainen, mutta violetti"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Rose Quartz"
+msgstr "Ruusukvartsi"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Exactly the same in every way but pink"
+msgstr "Täysin samanlainen, mutta vaaleanpunainen"
+
+#: src/players/outfits.cpp:239
+#, fuzzy
+msgid "Carbon"
+msgstr "Hiili"
+
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfits.cpp:852
+#, fuzzy
+msgctxt "outfit name"
+msgid "{0} {1}"
+msgstr "{0}-{1}"
+
+#: src/players/pause_drop_out.cpp:43
+#, fuzzy
+msgid "Drop Out"
+msgstr "Poistu pelistä"
+
+#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
 #, fuzzy
 msgid "Press a Key"
 msgstr "Paina näppäintä"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:853
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Paina uutta toista näppäintä tai hiiren painiketta toiminnolle {0}. {1} tai {2}: peruuta."
 
-#: src/options/options_menu.cpp:855
+#: src/options/options_menu.cpp:854
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Paina uutta näppäintä tai hiiren painiketta toiminnolle {0}. {1} tai {2}: peruuta."
 
-#: src/options/options_menu.cpp:872
+#: src/options/options_menu.cpp:871
 #, fuzzy
 msgid "Second Key"
 msgstr "Toinen näppäin"
 
-#: src/options/options_menu.cpp:878
+#: src/options/options_menu.cpp:877
 #, fuzzy
 msgid "Remove Key"
 msgstr "Poista näppäin"
 
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jan"
-msgstr "tammi"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Feb"
-msgstr "helmi"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Mar"
-msgstr "maalis"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Apr"
-msgstr "huhti"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "May"
-msgstr "touko"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jun"
-msgstr "kesä"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Jul"
-msgstr "heinä"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Aug"
-msgstr "elo"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Sep"
-msgstr "syys"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Oct"
-msgstr "loka"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Nov"
-msgstr "marras"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Dec"
-msgstr "joulu"
-
-#. a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
-#: src/options/options_menu.cpp:1006
-#, fuzzy
-msgid "{0} {1} {2}"
-msgstr "{0}. {1}kuuta {2}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
-#, fuzzy
-msgid "Earned {0}"
-msgstr "Saavutettu {0}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
+#: src/options/options_menu.cpp:1050
 #, fuzzy
 msgid "Locked"
 msgstr "Lukittu"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1300
 #, fuzzy
 msgid "Confirm"
 msgstr "Vahvista"
 
-#: src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1331 src/players/outfit_picker.cpp:1090
-#, fuzzy
-msgid "Back"
-msgstr "Palaa"
-
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Swap"
 msgstr "Vaihda"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Move Here"
 msgstr "Siirrä tähän"
 
-#: src/options/options_menu.cpp:1324
+#: src/options/options_menu.cpp:1306 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Peruuta"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1309
 #, fuzzy
 msgid "Buttons"
 msgstr "Painikkeet"
 
-#: src/options/options_menu.cpp:1328
+#: src/options/options_menu.cpp:1310
 #, fuzzy
 msgid "Move"
 msgstr "Siirrä"
 
-#: src/options/options_menu.cpp:1329
+#: src/options/options_menu.cpp:1311
 #, fuzzy
 msgid "Remove"
 msgstr "Poista"
 
-#: src/options/options_menu.cpp:1452
+#: src/options/options_menu.cpp:1434
 #, fuzzy
 msgid "No room for this player"
 msgstr "Tälle pelaajalle ei ole tilaa"
 
-#: src/options/options_menu.cpp:1456 src/options/options_menu.cpp:1464
+#: src/options/options_menu.cpp:1438 src/options/options_menu.cpp:1446
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Näppäimistö ja hiiri"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Siirto: pelaaja {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Pick a player"
 msgstr "Valitse pelaaja"
 
-#: src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1448
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Liity peliin painamalla mitä tahansa painiketta"
 
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1850
 #, fuzzy
 msgid "Not changed."
 msgstr "Ei muutettu."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1875
+#: src/options/options_menu.cpp:1857
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} on valikoiden käytössä ({1}): valitse toinen näppäin."
 
-#: src/options/options_menu.cpp:1887
+#: src/options/options_menu.cpp:1869
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} oli toiminnon {1} näppäin: nyt se kuuluu toiminnolle {2}."
 
-#: src/options/options_menu.cpp:1908
+#: src/options/options_menu.cpp:1890
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ei poistettavaa näppäintä."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1916
+#: src/options/options_menu.cpp:1898
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} poistettu."
@@ -279,7 +1960,7 @@ msgstr "Ruudunpäivitysraja"
 msgid "30 (original)"
 msgstr "30 (alkuperäinen)"
 
-#: src/options/options_settings.cpp:182
+#: src/options/options_settings.cpp:182 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
 #, fuzzy
 msgid "Unlimited"
 msgstr "Rajaton"
@@ -294,7 +1975,7 @@ msgstr "Enimmäismäärä kuvia sekunnissa, jotka peli piirtää. Alkuperäinen 
 msgid "Above 60, jumps and timings may feel different."
 msgstr "Yli 60:llä hypyt ja ajoitukset voivat tuntua erilaisilta."
 
-#: src/options/options_settings.cpp:213
+#: src/options/options_settings.cpp:213 launcher/settings_page.cpp:390
 #, fuzzy
 msgid "Renderer"
 msgstr "Piirtomoottori"
@@ -504,12 +2185,12 @@ msgstr "Näyttötiedot pitävät yllä valitun koon pelaajamäärästä riippuma
 msgid "Window Mode"
 msgstr "Ikkunatila"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Windowed"
 msgstr "Ikkuna"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Fullscreen"
 msgstr "Koko näyttö"
@@ -524,12 +2205,12 @@ msgstr "Peli ikkunassa, jota voit siirtää ja jonka kokoa voit muuttaa."
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr "Täyttää koko näytön (kohdassa Näyttö valitun)."
 
-#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443
+#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
 #, fuzzy
 msgid "Monitor"
 msgstr "Näyttö"
 
-#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799
+#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799 launcher/settings_page.cpp:471
 #, fuzzy
 msgid "Automatic"
 msgstr "Automaattinen"
@@ -1214,11 +2895,6 @@ msgstr "Ikkuna taustalla"
 msgid "Keep Playing"
 msgstr "Jatka pelaamista"
 
-#: src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Pause"
-msgstr "Tauko"
-
 #: src/options/options_settings.cpp:858
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
@@ -1364,7 +3040,7 @@ msgstr "Kiepu ja paina sitten yhä uudelleen {0} jatkaaksesi, kuten alkuperäise
 msgid "Turn on Simple Spinning first."
 msgstr "Ota ensin käyttöön Helppo kieppuminen."
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:976 launcher/settings_page.cpp:497
 #, fuzzy
 msgid "Co-op"
 msgstr "Yhteistyöpeli"
@@ -1580,11 +3256,6 @@ msgstr "Tehosteet"
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Iskujen, laatikoiden, askelten ja muun äänenvoimakkuus."
 
-#: src/options/options_settings.cpp:1139
-#, fuzzy
-msgid "Controls"
-msgstr "Ohjaus"
-
 #: src/options/options_settings.cpp:1140
 #, fuzzy
 msgid "Gameplay"
@@ -1595,7 +3266,7 @@ msgstr "Pelattavuus"
 msgid "Language"
 msgstr "Kieli"
 
-#: src/options/options_settings.cpp:1185
+#: src/options/options_settings.cpp:1185 launcher/main.cpp:1051
 #, fuzzy
 msgid "None"
 msgstr "Ei mitään"
@@ -1627,16 +3298,6 @@ msgstr "Kävele (pidä)"
 
 #: src/options/options_settings.cpp:1208
 #, fuzzy
-msgid "Spin"
-msgstr "Kieppuminen"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
-msgid "Jump"
-msgstr "Hyppy"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
 msgid "Light Attack"
 msgstr "Kevyt hyökkäys"
 
@@ -1664,11 +3325,6 @@ msgstr "Titaanin erikoishyökkäys"
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Talteen / Esiin"
-
-#: src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Map"
-msgstr "Kartta"
 
 #: src/options/options_settings.cpp:1210
 #, fuzzy
@@ -1755,275 +3411,1651 @@ msgstr "Vasemman sauvan painallus"
 msgid "Right Stick Click"
 msgstr "Oikean sauvan painallus"
 
-#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: launcher/desktop_entry.cpp:138 launcher/report.cpp:518 launcher/settings.cpp:284
+#, fuzzy
+msgid "Couldn't write {0}"
+msgstr "Ei voitu kirjoittaa: {0}"
+
+#: launcher/desktop_entry.cpp:144
+#, fuzzy
+msgid "Couldn't write {0}: {1}"
+msgstr "Ei voitu kirjoittaa {0}: {1}"
+
+#: launcher/desktop_entry.cpp:292
+#, fuzzy
+msgid "Couldn't write the Start menu shortcut."
+msgstr "Käynnistä-valikon pikakuvaketta ei voitu kirjoittaa."
+
+#: launcher/desktop_entry.cpp:315
+#, fuzzy
+msgid "Couldn't remove the Start menu shortcut: {0}"
+msgstr "Käynnistä-valikon pikakuvaketta ei voitu poistaa: {0}"
+
+#: launcher/desktop_entry.cpp:346
+#, fuzzy
+msgid "Couldn't remove {0}: {1}"
+msgstr "Ei voitu poistaa {0}: {1}"
+
+#: launcher/game_process.cpp:98
+#, fuzzy
+msgid "The game is already running."
+msgstr "Peli on jo käynnissä."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jan"
+msgstr "tammi"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Feb"
+msgstr "helmi"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Mar"
+msgstr "maalis"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Apr"
+msgstr "huhti"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "May"
+msgstr "touko"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jun"
+msgstr "kesä"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Jul"
+msgstr "heinä"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Aug"
+msgstr "elo"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Sep"
+msgstr "syys"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Oct"
+msgstr "loka"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Nov"
+msgstr "marras"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Dec"
+msgstr "joulu"
+
+#: launcher/main.cpp:212
+#, fuzzy
+msgid "%ld h %02ld min"
+msgstr "%ld h %02ld min"
+
+#: launcher/main.cpp:214
+#, fuzzy
+msgid "%ld min"
+msgstr "%ld min"
+
+#: launcher/main.cpp:216
+#, fuzzy
+msgid "%ld s"
+msgstr "%ld s"
+
+#. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
+#: launcher/main.cpp:228
+#, fuzzy
+msgid "%s %d, %02d:%02d"
+msgstr "%s %d, %02d:%02d"
+
+#: launcher/main.cpp:249
+#, fuzzy
+msgid "today %02d:%02d"
+msgstr "tänään %02d:%02d"
+
+#: launcher/main.cpp:251
+#, fuzzy
+msgid "yesterday %02d:%02d"
+msgstr "eilen %02d:%02d"
+
+#: launcher/main.cpp:253
+#, fuzzy
+msgid "%ld days ago"
+msgstr "%ld päivää sitten"
+
+#: launcher/main.cpp:255
+#, fuzzy
+msgid "%s %d"
+msgstr "%s %d"
+
+#: launcher/main.cpp:378
+#, fuzzy
+msgid "Mind over Recomp"
+msgstr "Mind over Recomp"
+
+#: launcher/main.cpp:384
+#, fuzzy
+msgid "(alpha)"
+msgstr "(alfa)"
+
+#: launcher/main.cpp:388
+#, fuzzy
+msgid "An unofficial PC port of Crash: Mind over Mutant"
+msgstr "Epävirallinen PC-portti pelistä Crash: Mind over Mutant"
+
+#: launcher/main.cpp:403
+#, fuzzy
+msgid "Couldn't find the game."
+msgstr "Peliä ei löytynyt."
+
+#: launcher/main.cpp:404
+#, fuzzy
+msgid "Put the launcher in the game's folder (next to program/), or start it with --game_folder=<path to the game folder>."
+msgstr "Laita käynnistin pelin kansioon (program/-kansion viereen) tai käynnistä se asetuksella --game_folder=<polku pelin kansioon>."
+
+#: launcher/main.cpp:410
+#, fuzzy
+msgid "The game isn't ready to play yet."
+msgstr "Peli ei ole vielä valmis pelattavaksi."
+
+#: launcher/main.cpp:411
+#, fuzzy
+msgid "Open Setup"
+msgstr "Avaa Asennus"
+
+#: launcher/main.cpp:417
+#, fuzzy
+msgid "The game isn't built yet."
+msgstr "Peliä ei ole vielä käännetty."
+
+#: launcher/main.cpp:418
+#, fuzzy
+msgid "Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."
+msgstr "Odotettiin kohteessa {0}. Käännä se ensin (docs/01-building.md, vaiheet 2-4)."
+
+#: launcher/main.cpp:423
+#, fuzzy
+msgid "The disc's files aren't there."
+msgstr "Levyn tiedostoja ei ole."
+
+#: launcher/main.cpp:424
+#, fuzzy
+msgid "Expected in {0} (default.xex and the rest). Extract your disc image first (docs/01-building.md, step 1)."
+msgstr "Odotettiin kohteessa {0} (default.xex ja muut). Pura levykuva ensin (docs/01-building.md, vaihe 1)."
+
+#: launcher/main.cpp:436
+#, fuzzy
+msgid "Playing"
+msgstr "Pelataan"
+
+#: launcher/main.cpp:440
+#, fuzzy
+msgid "for %s"
+msgstr "jo %s"
+
+#: launcher/main.cpp:441
+#, fuzzy
+msgid "The game is running in its own window. This window can stay open: it shows how the session ended when the game closes."
+msgstr "Peli on käynnissä omassa ikkunassaan. Tämä ikkuna voi jäädä auki: se näyttää, miten istunto päättyi, kun peli sulkeutuu."
+
+#: launcher/main.cpp:443
+#, fuzzy
+msgid "Watch the game log"
+msgstr "Seuraa pelin lokia"
+
+#: launcher/main.cpp:447
+#, fuzzy
+msgid "Stop the game..."
+msgstr "Pysäytä peli..."
+
+#: launcher/main.cpp:449 launcher/main.cpp:451
+#, fuzzy
+msgid "Stop the game?"
+msgstr "Pysäytetäänkö peli?"
+
+#: launcher/main.cpp:452
+#, fuzzy
+msgid "Progress since your last save is lost."
+msgstr "Edistyminen viimeisen tallennuksen jälkeen menetetään."
+
+#: launcher/main.cpp:454
+#, fuzzy
+msgid "Stop it"
+msgstr "Pysäytä"
+
+#: launcher/main.cpp:459
+#, fuzzy
+msgid "Keep playing"
+msgstr "Jatka pelaamista"
+
+#: launcher/main.cpp:473
+#, fuzzy
+msgid "The game crashed after %s"
+msgstr "Peli kaatui %s jälkeen"
+
+#: launcher/main.cpp:475
+#, fuzzy
+msgid "The game was ended from outside after %s"
+msgstr "Peli lopetettiin ulkopuolelta %s jälkeen"
+
+#: launcher/main.cpp:477
+#, fuzzy
+msgid "The game was stopped after %s"
+msgstr "Peli pysäytettiin %s jälkeen"
+
+#: launcher/main.cpp:479
+#, fuzzy
+msgid "The game quit with an error (code %d) after %s"
+msgstr "Peli päättyi virheeseen (koodi %d) %s jälkeen"
+
+#: launcher/main.cpp:482
+#, fuzzy
+msgid "The game closed normally after %s"
+msgstr "Peli sulkeutui normaalisti %s jälkeen"
+
+#: launcher/main.cpp:487
+#, fuzzy
+msgid "Ended by %s.%s"
+msgstr "Lopettaja: %s.%s"
+
+#: launcher/main.cpp:489
+#, fuzzy
+msgid " (Also what the system does when memory runs out.)"
+msgstr " (Näin tekee myös järjestelmä, kun muisti loppuu.)"
+
+#: launcher/main.cpp:493 launcher/setup.cpp:1455
+#, fuzzy
+msgid "Log: %s"
+msgstr "Loki: %s"
+
+#: launcher/main.cpp:497
+#, fuzzy
+msgid " Errors: %d (%d different), warnings: %d (%d different)"
+msgstr " Virheitä: %d (%d erilaista), varoituksia: %d (%d erilaista)"
+
+#: launcher/main.cpp:502
+#, fuzzy
+msgid "Frame rate: %s"
+msgstr "Ruudunpäivitys: %s"
+
+#: launcher/main.cpp:505
+#, fuzzy
+msgid "Open the log"
+msgstr "Avaa loki"
+
+#: launcher/main.cpp:509 launcher/main.cpp:816 launcher/main.cpp:846
+#, fuzzy
+msgid "Logs folder"
+msgstr "Lokikansio"
+
+#: launcher/main.cpp:513
+#, fuzzy
+msgid "Show the game log"
+msgstr "Näytä pelin loki"
+
+#: launcher/main.cpp:519 launcher/main.cpp:520 launcher/main.cpp:694
+#, fuzzy
+msgid "Report a problem..."
+msgstr "Ilmoita ongelmasta..."
+
+#: launcher/main.cpp:524 launcher/main.cpp:758 launcher/setup.cpp:1450
+#, fuzzy
+msgid "OK"
+msgstr "OK"
+
+#: launcher/main.cpp:536 launcher/main.cpp:663 launcher/main.cpp:1207
+#, fuzzy
+msgid "Play"
+msgstr "Pelaa"
+
+#: launcher/main.cpp:542
+#, fuzzy
+msgid "From the start"
+msgstr "Alusta"
+
+#: launcher/main.cpp:544
+#, fuzzy
+msgid "Intro movies (Esc or Start skips them), the title screen and the menus."
+msgstr "Introvideot (Esc tai Start ohittaa ne), alkuruutu ja valikot."
+
+#: launcher/main.cpp:553
+#, fuzzy
+msgid "Continue"
+msgstr "Jatka"
+
+#. Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
+#: launcher/main.cpp:564
+#, fuzzy
+msgid "%d%%  ·  %s  ·  played %s. Straight in: no movies or menus."
+msgstr "%d%%  ·  %s  ·  pelattu %s. Suoraan peliin: ei videoita eikä valikoita."
+
+#: launcher/main.cpp:581
+#, fuzzy
+msgid "Your saves"
+msgstr "Tallennuksesi"
+
+#: launcher/main.cpp:584
+#, fuzzy
+msgid "(%zu)"
+msgstr "(%zu)"
+
+#: launcher/main.cpp:586
+#, fuzzy
+msgid "No saves yet. Start a New Game from the main menu: it makes its own save."
+msgstr "Ei vielä tallennuksia. Aloita Uusi peli päävalikosta: se tekee oman tallennuksensa."
+
+#: launcher/main.cpp:593
+#, fuzzy
+msgid "Find a save..."
+msgstr "Etsi tallennus..."
+
+#: launcher/main.cpp:604
+#, fuzzy
+msgid "Name"
+msgstr "Nimi"
+
+#: launcher/main.cpp:605
+#, fuzzy
+msgid "Progress"
+msgstr "Edistyminen"
+
+#: launcher/main.cpp:606
+#, fuzzy
+msgid "Play time"
+msgstr "Peliaika"
+
+#: launcher/main.cpp:607
+#, fuzzy
+msgid "Difficulty"
+msgstr "Vaikeustaso"
+
+#: launcher/main.cpp:608
+#, fuzzy
+msgid "Last played"
+msgstr "Viimeksi pelattu"
+
+#: launcher/main.cpp:635
+#, fuzzy
+msgid "(no name)"
+msgstr "(ei nimeä)"
+
+#: launcher/main.cpp:648
+#, fuzzy
+msgid "Save file %d, saved %s"
+msgstr "Tallennustiedosto %d, tallennettu %s"
+
+#: launcher/main.cpp:676
+#, fuzzy
+msgid "Open:"
+msgstr "Avaa:"
+
+#: launcher/main.cpp:682
+#, fuzzy
+msgid "Photos (F10)"
+msgstr "Kuvat (F10)"
+
+#: launcher/main.cpp:686
+#, fuzzy
+msgid "Logs"
+msgstr "Lokit"
+
+#: launcher/main.cpp:690
+#, fuzzy
+msgid "Settings file"
+msgstr "Asetustiedosto"
+
+#: launcher/main.cpp:699
+#, fuzzy
+msgid "Add to the applications menu"
+msgstr "Lisää sovellusvalikkoon"
+
+#: launcher/main.cpp:700
+#, fuzzy
+msgid "Update the menu entry"
+msgstr "Päivitä valikon kohta"
+
+#: launcher/main.cpp:701
+#, fuzzy
+msgid "Remove from the menu"
+msgstr "Poista valikosta"
+
+#: launcher/main.cpp:723
+#, fuzzy
+msgid "The launcher is in your applications menu (right-click it there for \"Continue last save\")."
+msgstr "Käynnistin on sovellusvalikossasi (napsauta sitä siellä hiiren oikealla saadaksesi \"Jatka viimeisintä tallennusta\")."
+
+#: launcher/main.cpp:725
+#, fuzzy
+msgid "Puts the launcher in your desktop's applications menu, with a \"Continue last save\" shortcut on right-click."
+msgstr "Lisää käynnistimen työpöytäsi sovellusvalikkoon, ja hiiren oikealla saa pikakuvakkeen \"Jatka viimeisintä tallennusta\"."
+
+#: launcher/main.cpp:738
+#, fuzzy
+msgid "Version %s is out."
+msgstr "Versio %s on julkaistu."
+
+#: launcher/main.cpp:740
+#, fuzzy
+msgid "See the update"
+msgstr "Katso päivitys"
+
+#: launcher/main.cpp:752
+#, fuzzy
+msgid "Updated to %s"
+msgstr "Päivitetty versioon %s"
+
+#: launcher/main.cpp:754
+#, fuzzy
+msgid "What's new:"
+msgstr "Uutta:"
+
+#: launcher/main.cpp:762 launcher/setup.cpp:678
+#, fuzzy
+msgid "Release page"
+msgstr "Julkaisusivu"
+
+#: launcher/main.cpp:771
+#, fuzzy
+msgid "Building the game for this version..."
+msgstr "Peliä käännetään tälle versiolle..."
+
+#: launcher/main.cpp:773
+#, fuzzy
+msgid "Watch it in Setup"
+msgstr "Seuraa Asennuksessa"
+
+#: launcher/main.cpp:778
+#, fuzzy
+msgid "The game isn't rebuilt for this version yet: Play starts the old build."
+msgstr "Peliä ei ole vielä käännetty uudelleen tälle versiolle: Pelaa käynnistää vanhan käännöksen."
+
+#: launcher/main.cpp:780
+#, fuzzy
+msgid "Rebuild it in Setup"
+msgstr "Käännä uudelleen Asennuksessa"
+
+#: launcher/main.cpp:793
+#, fuzzy
+msgid "The game is already running (started some other way)."
+msgstr "Peli on jo käynnissä (käynnistetty muuten)."
+
+#: launcher/main.cpp:794
+#, fuzzy
+msgid "Close it first: two copies at once would fight over the saves."
+msgstr "Sulje se ensin: kaksi kopiota yhtä aikaa tappelisi tallennuksista."
+
+#: launcher/main.cpp:814
+#, fuzzy
+msgid "Nothing yet: once the game starts from here, its log shows up in this tab as it is written. Earlier sessions' logs are in the logs folder."
+msgstr "Ei vielä mitään: kun peli käynnistetään täältä, sen loki näkyy tällä välilehdellä sitä mukaa kuin sitä kirjoitetaan. Aiempien istuntojen lokit ovat lokikansiossa."
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Live"
+msgstr "Reaaliaikainen"
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Last session"
+msgstr "Viime istunto"
+
+#: launcher/main.cpp:827
+#, fuzzy
+msgid " Errors: %d"
+msgstr " Virheitä: %d"
+
+#: launcher/main.cpp:829
+#, fuzzy
+msgid "Warnings: %d (%d different)"
+msgstr "Varoituksia: %d (%d erilaista)"
+
+#: launcher/main.cpp:835
+#, fuzzy
+msgid "Show only lines containing..."
+msgstr "Näytä vain rivit, joissa on..."
+
+#: launcher/main.cpp:838
+#, fuzzy
+msgid "Errors and warnings only"
+msgstr "Vain virheet ja varoitukset"
+
+#: launcher/main.cpp:840
+#, fuzzy
+msgid "Follow new lines"
+msgstr "Seuraa uusia rivejä"
+
+#: launcher/main.cpp:842
+#, fuzzy
+msgid "Open in an editor"
+msgstr "Avaa editorissa"
+
+#: launcher/main.cpp:877
+#, fuzzy
+msgid "(the first %zu lines are only in the file)"
+msgstr "(ensimmäiset %zu riviä ovat vain tiedostossa)"
+
+#: launcher/main.cpp:954 launcher/main.cpp:961
+#, fuzzy
+msgid "Report a problem"
+msgstr "Ilmoita ongelmasta"
+
+#: launcher/main.cpp:964
+#, fuzzy
+msgid "Makes one .zip file with what's needed to look into a problem: the logs of the sessions you pick, your settings and a short summary (version, system, graphics card), plus a save if you pick one. Nothing is sent anywhere: you attach the file to a bug report yourself. Your home folder's name is taken out of the files."
+msgstr "Tekee yhden .zip-tiedoston, jossa on ongelman tutkimiseen tarvittava: valitsemiesi istuntojen lokit, asetuksesi ja lyhyt yhteenveto (versio, järjestelmä, näytönohjain) sekä tallennus, jos valitset sellaisen. Mitään ei lähetetä minnekään: liität tiedoston itse virheraporttiin. Kotikansiosi nimi poistetaan tiedostoista."
+
+#: launcher/main.cpp:971
+#, fuzzy
+msgid "What happened?"
+msgstr "Mitä tapahtui?"
+
+#: launcher/main.cpp:974
+#, fuzzy
+msgid "(optional: where in the game, what you did, what you saw)"
+msgstr "(vapaaehtoinen: missä pelissä, mitä teit, mitä näit)"
+
+#: launcher/main.cpp:980
+#, fuzzy
+msgid "Sessions to include"
+msgstr "Mukaan otettavat istunnot"
+
+#: launcher/main.cpp:983
+#, fuzzy
+msgid "(newest first)"
+msgstr "(uusin ensin)"
+
+#: launcher/main.cpp:985
+#, fuzzy
+msgid "No game sessions logged yet."
+msgstr "Peli-istuntoja ei ole vielä kirjattu."
+
+#: launcher/main.cpp:996
+#, fuzzy
+msgid "When"
+msgstr "Milloin"
+
+#: launcher/main.cpp:997
+#, fuzzy
+msgid "Played"
+msgstr "Pelattu"
+
+#: launcher/main.cpp:998
+#, fuzzy
+msgid "How it ended"
+msgstr "Miten päättyi"
+
+#: launcher/main.cpp:1025
+#, fuzzy
+msgid "(not recorded)"
+msgstr "(ei kirjattu)"
+
+#: launcher/main.cpp:1032
+#, fuzzy
+msgid "Settings and controls (settings.toml, controls.toml)"
+msgstr "Asetukset ja ohjaus (settings.toml, controls.toml)"
+
+#: launcher/main.cpp:1034
+#, fuzzy
+msgid "The newest Setup log (for problems while setting up or building)"
+msgstr "Uusin asennusloki (asennuksen tai kääntämisen ongelmia varten)"
+
+#: launcher/main.cpp:1047
+#, fuzzy
+msgid "Include a save:"
+msgstr "Ota mukaan tallennus:"
+
+#. A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
+#: launcher/main.cpp:1055
+#, fuzzy
+msgid "{0}  {1}  ({2}%, saved {3})"
+msgstr "{0}  {1}  ({2} %, tallennettu {3})"
+
+#: launcher/main.cpp:1068
 #, fuzzy
 msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or Player {1}: press {2} to take over."
+"A save near the spot where it happens lets the problem be seen first-hand.\n"
+"It holds the save's name and the game's progress, nothing else."
 msgstr ""
-"Pelaajan {0} ohjain irrotettiin.\n"
-"Kytke se takaisin, tai pelaaja {1}: ota vuoro painamalla {2}."
+"Tallennus läheltä paikkaa, jossa se tapahtuu, näyttää ongelman omin silmin.\n"
+"Siinä on tallennuksen nimi ja pelin edistyminen, ei muuta."
 
-#: src/players/lost_controller.cpp:193
+#: launcher/main.cpp:1074
 #, fuzzy
-msgid ""
-"Controller reconnected.\n"
-"Press any button to resume."
-msgstr ""
-"Ohjain kytketty takaisin.\n"
-"Jatka painamalla mitä tahansa painiketta."
+msgid "F10 photos taken in those sessions (%d files, %.1f MB)"
+msgstr "Näiden istuntojen F10-kuvat (%d tiedostoa, %.1f Mt)"
 
-#: src/players/lost_controller.cpp:194
+#: launcher/main.cpp:1091
 #, fuzzy
-msgid ""
-"Controller disconnected.\n"
-"Reconnect your controller to continue."
-msgstr ""
-"Ohjain irrotettiin.\n"
-"Kytke ohjain takaisin jatkaaksesi."
+msgid "Save the report in:"
+msgstr "Tallenna raportti kansioon:"
 
-#. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: launcher/main.cpp:1093
 #, fuzzy
-msgid ""
-"Player {0}'s controller is back.\n"
-"Player {0}: press any button to resume."
-msgstr ""
-"Pelaajan {0} ohjain on takaisin.\n"
-"Pelaaja {0}: jatka painamalla mitä tahansa painiketta."
+msgid "Change..."
+msgstr "Vaihda..."
 
-#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: launcher/main.cpp:1099
 #, fuzzy
-msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or press {1} to drop out Player {0}."
-msgstr ""
-"Pelaajan {0} ohjain irrotettiin.\n"
-"Kytke se takaisin, tai paina {1}, niin pelaaja {0} poistuu pelistä."
+msgid "Back to the default"
+msgstr "Takaisin oletukseen"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/main.cpp:1116
 #, fuzzy
+msgid "Make the report"
+msgstr "Tee raportti"
+
+#: launcher/main.cpp:1152
+#, fuzzy
+msgid "Report saved:"
+msgstr "Raportti tallennettu:"
+
+#: launcher/main.cpp:1154
+#, fuzzy
+msgid "%s (%.1f MB)"
+msgstr "%s (%.1f Mt)"
+
+#: launcher/main.cpp:1161
+#, fuzzy
+msgid "Inside: %s"
+msgstr "Sisältö: %s"
+
+#: launcher/main.cpp:1163
+#, fuzzy
+msgid "Show the file"
+msgstr "Näytä tiedosto"
+
+#: launcher/main.cpp:1167
+#, fuzzy
+msgid "Open the bug report form on GitHub"
+msgstr "Avaa virheraporttilomake GitHubissa"
+
+#: launcher/main.cpp:1171
+#, fuzzy
+msgid "Copy the summary"
+msgstr "Kopioi yhteenveto"
+
+#: launcher/main.cpp:1174
+#, fuzzy
+msgid "The form opens with the version, system, graphics card and settings filled in. Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub account is needed to post. No account? Send the .zip to whoever asked for it.)"
+msgstr "Lomake aukeaa versio, järjestelmä, näytönohjain ja asetukset valmiiksi täytettyinä. Kuvaile ongelma siellä ja vedä .zip sen \"Log\"-kenttään. (Julkaisemiseen tarvitaan GitHub-tili. Ei tiliä? Lähetä .zip sille, joka sitä pyysi.)"
+
+#: launcher/main.cpp:1212
+#, fuzzy
+msgid "Settings"
+msgstr "Asetukset"
+
+#: launcher/main.cpp:1220
+#, fuzzy
+msgid "Setup"
+msgstr "Asennus"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log (live)"
+msgstr "Pelin loki (reaaliaikainen)"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log"
+msgstr "Pelin loki"
+
+#: launcher/report.cpp:672
+#, fuzzy
+msgid "Couldn't finish {0} (disk full?)"
+msgstr "Kohdetta {0} ei voitu viimeistellä (levy täynnä?)"
+
+#: launcher/saves.cpp:197
+#, fuzzy
+msgctxt "difficulty"
+msgid "Easy"
+msgstr "Helppo"
+
+#: launcher/saves.cpp:198
+#, fuzzy
+msgctxt "difficulty"
 msgid "Normal"
-msgstr "Tavallinen"
+msgstr "Normaali"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/saves.cpp:199
 #, fuzzy
-msgid "Greeny"
-msgstr "Viher"
+msgctxt "difficulty"
+msgid "Hard"
+msgstr "Vaikea"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/settings.cpp:105
 #, fuzzy
-msgid "Bluey"
-msgstr "Sini"
+msgid "The game isn't built yet: its settings come from the game itself."
+msgstr "Peliä ei ole vielä käännetty: sen asetukset tulevat pelistä itsestään."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:120
 #, fuzzy
-msgid "Reddy"
-msgstr "Puna"
+msgid "The game couldn't list its settings (exit code {0}). A build from before 2026-10-06 doesn't know --list_settings: rebuild it."
+msgstr "Peli ei pystynyt luettelemaan asetuksiaan (lopetuskoodi {0}). 2026-10-06 vanhempi käännös ei tunne asetusta --list_settings: käännä se uudelleen."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:130
 #, fuzzy
-msgid "Snipe"
-msgstr "Väijy"
+msgid "The settings list is damaged: {0}"
+msgstr "Asetusluettelo on vioittunut: {0}"
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:164
 #, fuzzy
-msgid "Ratcicle"
-msgstr "Jäärotta"
+msgid "The settings list is empty."
+msgstr "Asetusluettelo on tyhjä."
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings.cpp:291
 #, fuzzy
-msgid "Magmadon"
-msgstr "Magmadon"
+msgid "Couldn't replace {0}: {1}"
+msgstr "Ei voitu korvata {0}: {1}"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:38 launcher/settings_page.cpp:58
 #, fuzzy
-msgid "Skeleton"
-msgstr "Luuranko"
+msgid "Experimental"
+msgstr "Kokeellinen"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:39
 #, fuzzy
-msgid "Spike"
-msgstr "Vaarna"
+msgid "Above 60 fps is experimental. The game was made for 30: physics, animations, cutscenes and scripted moments may misbehave (60 is tested and fine). If something looks wrong, try 60 and report it."
+msgstr "Yli 60 FPS on kokeellista. Peli tehtiin 30:lle: fysiikka, animaatiot, välivideot ja käsikirjoitetut hetket voivat toimia väärin (60 on testattu ja kunnossa). Jos jokin näyttää väärältä, kokeile 60:tä ja ilmoita siitä."
 
-#. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: launcher/settings_page.cpp:45
 #, fuzzy
-msgid "Coco"
-msgstr "Coco"
+msgid "In development"
+msgstr "Kehitteillä"
 
-#: src/players/outfit_picker.cpp:509
+#: launcher/settings_page.cpp:46
 #, fuzzy
-msgid "Old School"
-msgstr "Perinteinen"
+msgid "The native renderer draws nearly everything, but an effect may still be missing or look different. F9 switches back to the emulated picture while playing."
+msgstr "Natiivi piirtomoottori piirtää lähes kaiken, mutta jokin tehoste voi vielä puuttua tai näyttää erilaiselta. F9 vaihtaa pelatessa takaisin emuloituun kuvaan."
 
-#: src/players/outfit_picker.cpp:520
+#: launcher/settings_page.cpp:52
 #, fuzzy
-msgid "Orange"
-msgstr "Oranssi"
+msgid "Heavy on the GPU"
+msgstr "Raskas näytönohjaimelle"
 
-#. the heroes' names, as the game writes them in this language.
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:53
 #, fuzzy
-msgid "Crash"
-msgstr "Crash"
+msgid "Two windows: the emulated picture and the native one, both drawn live. Meant for comparing the two; it needs a strong graphics card."
+msgstr "Kaksi ikkunaa: emuloitu kuva ja natiivi, molemmat piirretään reaaliajassa. Tarkoitettu niiden vertailuun; se vaatii tehokkaan näytönohjaimen."
 
-#: src/players/outfit_picker.cpp:1091
+#: launcher/settings_page.cpp:59
 #, fuzzy
-msgid "Wear"
-msgstr "Pue"
+msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
+msgstr "Uusi yhteistyökamera pitää jokaisen pelaajan kuvassa. Sitä pitää vielä testata taisteluissa, ahtaissa paikoissa ja välivideoissa. Ota se pois päältä saadaksesi alkuperäisen kameran."
 
-#. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
 #, fuzzy
-msgid "Ready!"
-msgstr "Valmis!"
+msgid "Native renderer only"
+msgstr "Vain natiivi piirtomoottori"
 
-#. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: launcher/settings_page.cpp:65
 #, fuzzy
-msgid "{0} Change"
-msgstr "{0} Vaihda"
+msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
+msgstr "Liike-epäterävyys on tämän portin oma tehoste (alkuperäisessä sitä ei ole). Vain natiivi piirtomoottori piirtää sen: emuloidulla kuvalla se ei tee mitään."
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: launcher/settings_page.cpp:71
 #, fuzzy
-msgid "Loading"
-msgstr "Ladataan"
+msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
+msgstr "Vain natiivi piirtomoottori piirtää suuremmalla tarkkuudella: emuloitu kuva pysyy 720p:nä. 4K on raskas: se vaatii tehokkaan näytönohjaimen."
 
-#. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: launcher/settings_page.cpp:77
 #, fuzzy
-msgid "{0} Wear"
-msgstr "{0} Pue"
+msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
+msgstr "Vain natiivi piirtomoottori muuttaa reunanpehmennystään: emuloitu kuva pitää Xbox 360:n 2x:n."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:83
 #, fuzzy
-msgid "Ruby"
-msgstr "Rubiini"
+msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
+msgstr "Vain natiivi piirtomoottori pehmentää leikattuja reunoja, ja vain kun reunanpehmennys on päällä."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:88
 #, fuzzy
-msgid "Exactly the same in every way but red"
-msgstr "Täysin samanlainen, mutta punainen"
+msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Vain natiivi piirtomoottori terävöittää tekstuureja: emuloitu kuva pysyy sellaisena kuin Xbox 360 sen piirsi."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:94
 #, fuzzy
-msgid "Topaz"
-msgstr "Topaasi"
+msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Vain natiivi piirtomoottori terävöittää kuvaa: emuloitu kuva pysyy sellaisena kuin Xbox 360 sen piirsi."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:100
 #, fuzzy
-msgid "Exactly the same in every way but yellow"
-msgstr "Täysin samanlainen, mutta keltainen"
+msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
+msgstr "Vain natiivi piirtomoottori muuttaa varjojen reunaa: emuloitu kuva pitää Xbox 360:n reunan."
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:105
 #, fuzzy
-msgid "Jade"
-msgstr "Jade"
+msgid "Less to go on"
+msgstr "Vähemmän tietoa"
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:106
 #, fuzzy
-msgid "Exactly the same in every way but green"
-msgstr "Täysin samanlainen, mutta vihreä"
+msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
+msgstr "Näiden istuntojen ongelmaraportit eivät näytä, mitä peli teki (ruudunpäivitys, äänet, yhteistyö, valikot): virhettä voi olla mahdoton jäljittää."
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:112
 #, fuzzy
-msgid "Sapphire"
-msgstr "Safiiri"
+msgid "Falls"
+msgstr "Putoamiset"
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:113
 #, fuzzy
-msgid "Exactly the same in every way but blue"
-msgstr "Täysin samanlainen, mutta sininen"
+msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
+msgstr "Pois yli 30 FPS:llä: Crash voi välähtää putoamisanimaatioonsa sekunnin murto-osaksi laskeutuessaan epätasaista maata. 40 ms on testattu arvo."
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:161
 #, fuzzy
-msgid "Amethyst"
-msgstr "Ametisti"
+msgid "Emulated (the default)"
+msgstr "Emuloitu (oletus)"
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:162
 #, fuzzy
-msgid "Exactly the same in every way but purple"
-msgstr "Täysin samanlainen, mutta violetti"
+msgid "Native renderer"
+msgstr "Natiivi piirtomoottori"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:163
 #, fuzzy
-msgid "Rose Quartz"
-msgstr "Ruusukvartsi"
+msgid "Native only (fastest, default)"
+msgstr "Vain natiivi (nopein, oletus)"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:164
 #, fuzzy
-msgid "Exactly the same in every way but pink"
-msgstr "Täysin samanlainen, mutta vaaleanpunainen"
+msgid "Both, in two windows"
+msgstr "Molemmat, kahdessa ikkunassa"
 
-#: src/players/outfits.cpp:239
+#: launcher/settings_page.cpp:165
 #, fuzzy
-msgid "Carbon"
-msgstr "Hiili"
+msgid "Emulated only"
+msgstr "Vain emuloitu"
 
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
 #, fuzzy
-msgctxt "outfit name"
-msgid "{0} {1}"
-msgstr "{0}-{1}"
+msgid "Default"
+msgstr "Oletus"
 
-#: src/players/pause_drop_out.cpp:43
+#: launcher/settings_page.cpp:333
 #, fuzzy
-msgid "Drop Out"
-msgstr "Poistu pelistä"
+msgid "Frame rate"
+msgstr "Ruudunpäivitys"
 
-#: src/saves/save_library.cpp:764
+#: launcher/settings_page.cpp:335
 #, fuzzy
-msgid "Create New Save"
-msgstr "Uusi tallennus"
+msgid "Frame rate cap"
+msgstr "Ruudunpäivitysraja"
 
-#: src/saves/save_library.cpp:848
+#: launcher/settings_page.cpp:336
 #, fuzzy
-msgid "Delete"
-msgstr "Poista"
+msgid "How many frames per second the game runs at. 30 is the original game's rate."
+msgstr "Kuinka monta ruutua sekunnissa peli pyörii. 30 on alkuperäisen pelin tahti."
 
-#: src/saves/save_library.cpp:850
+#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 #, fuzzy
-msgid "Rename"
-msgstr "Nimeä uudelleen"
+msgid "%d (the original)"
+msgstr "%d (alkuperäinen)"
 
-#: src/saves/save_library.cpp:1095
+#: launcher/settings_page.cpp:362
 #, fuzzy
-msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
-msgstr "Haluatko varmasti poistaa tämän tallennuksen? Se siirretään kansioon Deleted saves."
+msgid "Other..."
+msgstr "Muu..."
 
-#: src/saves/save_library.cpp:1875
+#: launcher/settings_page.cpp:371
 #, fuzzy
-msgid "Backspace"
-msgstr "Pyyhi"
+msgid "   Frames per second"
+msgstr "   Ruutua sekunnissa"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#: launcher/settings_page.cpp:381
 #, fuzzy
-msgid "HUD Hidden"
-msgstr "Näyttötiedot piilotettu"
+msgid "Ground grace"
+msgstr "Maakosketuksen armo"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74
+#: launcher/settings_page.cpp:382
 #, fuzzy
-msgid "Press {0} to show it again"
-msgstr "Näytä uudelleen painamalla {0}"
+msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
+msgstr "Yli 30 FPS:llä: kuinka kauan menetetty maakosketus annetaan anteeksi, jotta Crash ei välähdä putoamisanimaatioonsa laskeutuessaan epätasaista maata. 40 ms on testattu arvo; 0 = pois."
 
-#: src/ui/main_menu_extras.cpp:45
+#: launcher/settings_page.cpp:391
 #, fuzzy
-msgid "Extras"
-msgstr "Lisät"
+msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
+msgstr "Emuloitu = Xbox 360:n grafiikkasiru emuloituna (vertailukuva). Natiivi = tämän portin oma piirtomoottori, joka piirtää pelin suoraan (kehitteillä). F9 vaihtaa niiden välillä pelatessa, F8 avaa toisen ikkunan."
 
-#: src/ui/quit_game.cpp:55
+#: launcher/settings_page.cpp:444
 #, fuzzy
-msgid "Quit Game"
-msgstr "Lopeta peli"
+msgid "Window"
+msgstr "Ikkuna"
 
-#: src/ui/quit_game.cpp:56
+#: launcher/settings_page.cpp:449
 #, fuzzy
-msgid "Are you sure you want to quit the game?"
-msgstr "Haluatko varmasti lopettaa pelin?"
+msgid "Window mode"
+msgstr "Ikkunatila"
+
+#: launcher/settings_page.cpp:449
+#, fuzzy
+msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
+msgstr "Ikkuna: ikkuna, jota voi siirtää ja jonka kokoa voi muuttaa. Koko näyttö: täyttää koko näytön (Näyttö-kohdassa valitun)."
+
+#: launcher/settings_page.cpp:469
+#, fuzzy
+msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
+msgstr "Minkä näytön koko näyttö täyttää. Automaattinen = se, jolla peli on."
+
+#: launcher/settings_page.cpp:481
+#, fuzzy
+msgid "{0}: not connected"
+msgstr "{0}: ei kytketty"
+
+#: launcher/settings_page.cpp:499
+#, fuzzy
+msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
+msgstr "Kuinka monta pelaajaa voi pelata yhtä aikaa (oletuksena 4; alkuperäisessä pelissä 2). Pelaajat liittyvät Pelaajat-ruudulta (päävalikko tai taukovalikko) tai START-painikkeella."
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "2 (the original)"
+msgstr "2 (alkuperäinen)"
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "4 (default)"
+msgstr "4 (oletus)"
+
+#: launcher/settings_page.cpp:513
+#, fuzzy
+msgid "Co-op camera"
+msgstr "Yhteistyökamera"
+
+#: launcher/settings_page.cpp:514
+#, fuzzy
+msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
+msgstr "Pidä jokainen pelaaja kuvassa: kamera keskittyy pelaajien väliin ja vetäytyy, kunnes kaikki mahtuvat. Pois = alkuperäinen kamera, joka seuraa yhtä pelaajaa."
+
+#: launcher/settings_page.cpp:517
+#, fuzzy
+msgid "   Farthest zoom-out"
+msgstr "   Kaukaisin loitonnus"
+
+#: launcher/settings_page.cpp:518
+#, fuzzy
+msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
+msgstr "Kuinka kauas yhteistyökamera saa vetäytyä saadakseen kaikki kuvaan (alkuperäinen kamera ulottuu noin 12-20). Sen jälkeen poisjuokseva pelaaja poistuu ruudulta."
+
+#: launcher/settings_page.cpp:520
+#, fuzzy
+msgid "   Room around players"
+msgstr "   Tilaa pelaajien ympärillä"
+
+#: launcher/settings_page.cpp:521
+#, fuzzy
+msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
+msgstr "Kuinka paljon maastoa kunkin pelaajan ympäriltä pysyy kuvassa (vasemmalla, oikealla ja takana), jotta reunalla oleva pelaaja näkee yhä kielekkeen tai pudotuksen. Crash on noin 2 korkea. 0 = vain pelaajat itse."
+
+#: launcher/settings_page.cpp:524
+#, fuzzy
+msgid "   Stay with the nearest player"
+msgstr "   Pysy lähimmän pelaajan luona"
+
+#: launcher/settings_page.cpp:525
+#, fuzzy
+msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
+msgstr "Edestä taakse kamera pysyy lähimmän pelaajan luona, jotta syvälle kuvaan kävelevä pelaaja ei vedä muita ulos alareunasta. Pois = kamera tähtää pelaajien keskelle (vanha tapa)."
+
+#: launcher/settings_page.cpp:528
+#, fuzzy
+msgid "   Group focus"
+msgstr "   Ryhmän painotus"
+
+#: launcher/settings_page.cpp:529
+#, fuzzy
+msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
+msgstr "3-4 pelaajaa: kuinka paljon enemmän pelaajaryhmä painaa kuin yksittäinen pelaaja, kun kamera valitsee keskipisteensä. 0 = kaikki samanarvoisia."
+
+#: launcher/settings_page.cpp:532
+#, fuzzy
+msgid "Lost controller pause"
+msgstr "Tauko, kun ohjain katoaa"
+
+#: launcher/settings_page.cpp:533
+#, fuzzy
+msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
+msgstr "Kun pelaajan ohjaimen yhteys katkeaa kentässä: tauko ja kysymys, jotta toinen pelaaja voi poistaa sen pelaajan pelistä, tai ohjaimen voi kytkeä uudelleen ja jatkaa."
+
+#: launcher/settings_page.cpp:541
+#, fuzzy
+msgid "Keyboard and mouse"
+msgstr "Näppäimistö ja hiiri"
+
+#: launcher/settings_page.cpp:542
+#, fuzzy
+msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
+msgstr "Pelaa näppäimistöllä ja hiirellä (ohjain toimii myös). Näppäimiä vaihdetaan pelissä F6:lla."
+
+#: launcher/settings_page.cpp:548
+#, fuzzy
+msgid "Sound and logging"
+msgstr "Ääni ja lokit"
+
+#: launcher/settings_page.cpp:550
+#, fuzzy
+msgid "Mute the sound"
+msgstr "Mykistä ääni"
+
+#: launcher/settings_page.cpp:551
+#, fuzzy
+msgid "Event logs (for bug reports)"
+msgstr "Tapahtumalokit (virheraportteja varten)"
+
+#: launcher/settings_page.cpp:552
+#, fuzzy
+msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
+msgstr "Istunnon loki kirjaa myös, mitä peli tekee: ruudunpäivityksen 5 s välein, toistetut äänet, yhteistyöliittymiset, mille pelaajalle valikko vastaa, valikkoruudut. Muutama Mt tunnissa; sen \"Ilmoita ongelmasta\" lähettää. Pois = vain perusasiat."
+
+#: launcher/settings_page.cpp:621
+#, fuzzy
+msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
+msgstr "Jokainen pelin asetus suoraan pelistä. Useimmat ovat kehitystä tai vianetsintää varten: muuta niitä vain, jos tiedät, mitä ne tekevät."
+
+#: launcher/settings_page.cpp:625
+#, fuzzy
+msgid "Search names and descriptions..."
+msgstr "Hae nimistä ja kuvauksista..."
+
+#: launcher/settings_page.cpp:628
+#, fuzzy
+msgid "Show developer settings (debug_...)"
+msgstr "Näytä kehittäjäasetukset (debug_...)"
+
+#: launcher/settings_page.cpp:690
+#, fuzzy
+msgid "Default: %s%s"
+msgstr "Oletus: %s%s"
+
+#: launcher/settings_page.cpp:691
+#, fuzzy
+msgid "  (read at start only)"
+msgstr "  (luetaan vain käynnistyksessä)"
+
+#: launcher/settings_page.cpp:702
+#, fuzzy
+msgid "Asking the game for its settings..."
+msgstr "Kysytään peliltä sen asetuksia..."
+
+#: launcher/settings_page.cpp:714
+#, fuzzy
+msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
+msgstr "Peli on käynnissä: muutokset tulevat voimaan, kun se käynnistyy seuraavan kerran. (Sen F4-valikko kirjoittaa saman tiedoston: käytä vain toista.)"
+
+#: launcher/settings_page.cpp:718
+#, fuzzy
+msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
+msgstr "Tallennetaan heti; ne tulevat voimaan pelin seuraavassa käynnistyksessä. Vie hiiri nimen päälle nähdäksesi, mitä se tekee, kolmion päälle nähdäksesi, miksi se on riskialtis."
+
+#: launcher/settings_page.cpp:730
+#, fuzzy
+msgid "All settings (advanced)"
+msgstr "Kaikki asetukset (edistyneet)"
+
+#: launcher/setup.cpp:157
+#, fuzzy
+msgid "Replacing link files with copies (Git for Windows)"
+msgstr "Korvataan linkkitiedostot kopioilla (Git for Windows)"
+
+#: launcher/setup.cpp:372
+#, fuzzy
+msgid "checking..."
+msgstr "tarkistetaan..."
+
+#: launcher/setup.cpp:373
+#, fuzzy
+msgid "done"
+msgstr "valmis"
+
+#: launcher/setup.cpp:374
+#, fuzzy
+msgid "out of date"
+msgstr "vanhentunut"
+
+#: launcher/setup.cpp:375
+#, fuzzy
+msgid "to do"
+msgstr "tekemättä"
+
+#: launcher/setup.cpp:376
+#, fuzzy
+msgid "needs attention"
+msgstr "vaatii huomiota"
+
+#: launcher/setup.cpp:444 launcher/setup.cpp:452 launcher/setup.cpp:460 launcher/setup.cpp:466 launcher/setup.cpp:477 launcher/setup.cpp:497 launcher/setup.cpp:508 launcher/setup.cpp:510 launcher/setup.cpp:560 launcher/setup.cpp:577 launcher/setup.cpp:583
+#, fuzzy
+msgid "not found"
+msgstr "ei löytynyt"
+
+#: launcher/setup.cpp:448 launcher/setup.cpp:457 launcher/setup.cpp:555 launcher/setup.cpp:565
+#, fuzzy
+msgid "too old: {0} ({1} or newer needed)"
+msgstr "liian vanha: {0} (tarvitaan {1} tai uudempi)"
+
+#: launcher/setup.cpp:464
+#, fuzzy
+msgid "not found (or only the Store shortcut)"
+msgstr "ei löytynyt (tai vain Storen pikakuvake)"
+
+#: launcher/setup.cpp:550
+#, fuzzy
+msgid "not found (clang and clang++)"
+msgstr "ei löytynyt (clang ja clang++)"
+
+#: launcher/setup.cpp:572
+#, fuzzy
+msgid "not found (needs pkg-config too)"
+msgstr "ei löytynyt (tarvitsee myös pkg-configin)"
+
+#: launcher/setup.cpp:627
+#, fuzzy
+msgid "Version %s"
+msgstr "Versio %s"
+
+#: launcher/setup.cpp:630
+#, fuzzy
+msgid " -  a developer copy: update it with git pull"
+msgstr " -  kehittäjän kopio: päivitä se komennolla git pull"
+
+#: launcher/setup.cpp:635
+#, fuzzy
+msgid " -  updated to %s: restart the launcher to finish"
+msgstr " -  päivitetty versioon %s: käynnistä käynnistin uudelleen viimeistelläksesi"
+
+#: launcher/setup.cpp:638
+#, fuzzy
+msgid "Restart the launcher"
+msgstr "Käynnistä käynnistin uudelleen"
+
+#: launcher/setup.cpp:642
+#, fuzzy
+msgid "Couldn't restart: start the launcher again by hand."
+msgstr "Uudelleenkäynnistys ei onnistunut: käynnistä käynnistin itse uudelleen."
+
+#: launcher/setup.cpp:652
+#, fuzzy
+msgid " -  checking for updates..."
+msgstr " -  etsitään päivityksiä..."
+
+#: launcher/setup.cpp:654
+#, fuzzy
+msgid " -  %s is available%s%s"
+msgstr " -  %s on saatavilla%s%s"
+
+#: launcher/setup.cpp:659 launcher/setup.cpp:664
+#, fuzzy
+msgid "Update to {0}"
+msgstr "Päivitä versioon {0}"
+
+#: launcher/setup.cpp:674
+#, fuzzy
+msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
+msgstr "Lataa uuden version ja vaihtaa sen paikalleen: tallennuksesi, asetuksesi ja pelin tiedostot säilyvät. Sitten käynnistin käynnistyy uudelleen ja kääntää muuttuneet osat."
+
+#: launcher/setup.cpp:683
+#, fuzzy
+msgid " -  the newest version"
+msgstr " -  uusin versio"
+
+#: launcher/setup.cpp:690
+#, fuzzy
+msgid "Check for updates"
+msgstr "Etsi päivityksiä"
+
+#: launcher/setup.cpp:699
+#, fuzzy
+msgid "What's new in %s"
+msgstr "Uutta versiossa %s"
+
+#: launcher/setup.cpp:764
+#, fuzzy
+msgid "the ReXGlue SDK and its libraries are there"
+msgstr "ReXGlue SDK ja sen kirjastot ovat paikalla"
+
+#: launcher/setup.cpp:765
+#, fuzzy
+msgid "the ReXGlue SDK isn't downloaded yet"
+msgstr "ReXGlue SDK:ta ei ole vielä ladattu"
+
+#: launcher/setup.cpp:766
+#, fuzzy
+msgid "the ReXGlue SDK submodule isn't downloaded yet"
+msgstr "ReXGlue SDK:n alimoduulia ei ole vielä ladattu"
+
+#: launcher/setup.cpp:776
+#, fuzzy
+msgid "this version needs another ReXGlue SDK ({0}): download it again"
+msgstr "tämä versio tarvitsee toisen ReXGlue SDK:n ({0}): lataa se uudelleen"
+
+#: launcher/setup.cpp:790
+#, fuzzy
+msgid "extracted in {0}"
+msgstr "purettu kohteeseen {0}"
+
+#: launcher/setup.cpp:793
+#, fuzzy
+msgid "no disc image found yet: pick your .iso"
+msgstr "levykuvaa ei vielä löytynyt: valitse .iso-tiedostosi"
+
+#: launcher/setup.cpp:794
+#, fuzzy
+msgid "ready to extract {0}"
+msgstr "valmis purkamaan {0}"
+
+#: launcher/setup.cpp:825
+#, fuzzy
+msgid "needs the source parts first"
+msgstr "tarvitsee ensin lähdekoodin osat"
+
+#: launcher/setup.cpp:832
+#, fuzzy
+msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
+msgstr "korjaukset ovat muuttuneet (päivitys): se palautetaan, korjataan uudelleen ja käännetään sitten uudelleen"
+
+#: launcher/setup.cpp:836
+#, fuzzy
+msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
+msgstr "meidän {0} SDK-korjaustamme eivät ole kaikki käytössä eivätkä kaikki poissa: SDK-kansiota on muutettu käsin (tai korjausta on päivitetty). Ei koskettu; katso docs/01-building.md, vaihe 2 (git -C thirdparty/rexglue-sdk status)."
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "patched, not built yet"
+msgstr "korjattu, ei vielä käännetty"
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "not patched or built yet"
+msgstr "ei korjattu eikä käännetty"
+
+#: launcher/setup.cpp:847
+#, fuzzy
+msgid "built without our patches: rebuild it"
+msgstr "käännetty ilman korjauksiamme: käännä uudelleen"
+
+#: launcher/setup.cpp:848
+#, fuzzy
+msgid "the patches changed since the SDK was built: rebuild it"
+msgstr "korjaukset ovat muuttuneet SDK:n kääntämisen jälkeen: käännä uudelleen"
+
+#: launcher/setup.cpp:851
+#, fuzzy
+msgid "built and installed, {0} patches"
+msgstr "käännetty ja asennettu, {0} korjausta"
+
+#: launcher/setup.cpp:858
+#, fuzzy
+msgid "not built yet"
+msgstr "ei vielä käännetty"
+
+#: launcher/setup.cpp:861
+#, fuzzy
+msgid "built, not copied into program/ yet"
+msgstr "käännetty, ei vielä kopioitu kansioon program/"
+
+#: launcher/setup.cpp:878
+#, fuzzy
+msgid "the sources changed since the last build: rebuild it"
+msgstr "lähdekoodi on muuttunut viime käännöksen jälkeen: käännä uudelleen"
+
+#: launcher/setup.cpp:881
+#, fuzzy
+msgid "built: {0}"
+msgstr "käännetty: {0}"
+
+#: launcher/setup.cpp:904
+#, fuzzy
+msgid "Downloading the source parts (git submodules)"
+msgstr "Ladataan lähdekoodin osat (git-alimoduulit)"
+
+#: launcher/setup.cpp:922
+#, fuzzy
+msgid "Finishing the SDK's libraries (a download was stopped)"
+msgstr "Viimeistellään SDK:n kirjastot (lataus keskeytyi)"
+
+#: launcher/setup.cpp:927
+#, fuzzy
+msgid "Removing the old SDK download"
+msgstr "Poistetaan vanha SDK-lataus"
+
+#: launcher/setup.cpp:940
+#, fuzzy
+msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
+msgstr "Ladataan ReXGlue SDK {0} (ja sen kirjastot)"
+
+#: launcher/setup.cpp:945
+#, fuzzy
+msgid "Checking the SDK's version"
+msgstr "Tarkistetaan SDK:n versio"
+
+#: launcher/setup.cpp:963
+#, fuzzy
+msgid "Pick your disc image (.iso) first."
+msgstr "Valitse ensin levykuvasi (.iso)."
+
+#: launcher/setup.cpp:970
+#, fuzzy
+msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
+msgstr "Ei tarpeeksi vapaata tilaa: pelin tiedostot tarvitsevat noin 6,5 Gt, vapaana on %.1f Gt."
+
+#: launcher/setup.cpp:983
+#, fuzzy
+msgid "That file isn't an Xbox 360 disc image the extractor can read."
+msgstr "Tiedosto ei ole Xbox 360 -levykuva, jota purkuohjelma osaa lukea."
+
+#: launcher/setup.cpp:987
+#, fuzzy
+msgid "That disc image has no default.xex: not a game disc?"
+msgstr "Levykuvassa ei ole default.xex-tiedostoa: ei pelilevy?"
+
+#: launcher/setup.cpp:990
+#, fuzzy
+msgid "Extracting the disc into game/"
+msgstr "Puretaan levy kansioon game/"
+
+#: launcher/setup.cpp:1002
+#, fuzzy
+msgid "Checking the game's executable"
+msgstr "Tarkistetaan pelin suoritettava tiedosto"
+
+#: launcher/setup.cpp:1008
+#, fuzzy
+msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
+msgstr "default.xex ei ole Crash: Mind over Mutant (nimikkeen tunnusta 565507FA ei löytynyt). Tiedostot ovat kansiossa game/; tämä portti ajaa vain sitä peliä."
+
+#: launcher/setup.cpp:1012
+#, fuzzy
+msgid "Title id 565507FA: Crash: Mind over Mutant."
+msgstr "Nimikkeen tunnus 565507FA: Crash: Mind over Mutant."
+
+#: launcher/setup.cpp:1034
+#, fuzzy
+msgid "Undoing the old patches"
+msgstr "Perutaan vanhat korjaukset"
+
+#: launcher/setup.cpp:1035
+#, fuzzy
+msgid "Removing files the old patches added"
+msgstr "Poistetaan vanhojen korjausten lisäämät tiedostot"
+
+#: launcher/setup.cpp:1038
+#, fuzzy
+msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
+msgstr "Tehdään korjauksemme SDK:hon (patches/rexglue-sdk)"
+
+#: launcher/setup.cpp:1053
+#, fuzzy
+msgid "Configuring the SDK"
+msgstr "Määritetään SDK"
+
+#: launcher/setup.cpp:1055
+#, fuzzy
+msgid "Building the SDK (Release: the recompiler)"
+msgstr "Käännetään SDK (Release: uudelleenkääntäjä)"
+
+#: launcher/setup.cpp:1059
+#, fuzzy
+msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
+msgstr "Käännetään SDK (RelWithDebInfo: pelin käyttämä ajonaikainen ympäristö)"
+
+#: launcher/setup.cpp:1067
+#, fuzzy
+msgid "Noting which patches the SDK was built with"
+msgstr "Kirjataan, millä korjauksilla SDK käännettiin"
+
+#: launcher/setup.cpp:1087
+#, fuzzy
+msgid "Linking source/game to the disc's files"
+msgstr "Linkitetään source/game levyn tiedostoihin"
+
+#: launcher/setup.cpp:1118
+#, fuzzy
+msgid "Configuring the game's build"
+msgstr "Määritetään pelin käännös"
+
+#: launcher/setup.cpp:1128
+#, fuzzy
+msgid "Recompiling the game's code (default.xex -> C++)"
+msgstr "Käännetään pelin koodi uudelleen (default.xex -> C++)"
+
+#: launcher/setup.cpp:1134
+#, fuzzy
+msgid "Compiling the game ({0} at a time; the first build takes a while)"
+msgstr "Käännetään peliä ({0} kerrallaan; ensimmäinen käännös kestää hetken)"
+
+#: launcher/setup.cpp:1146
+#, fuzzy
+msgid "Copying the game into program/"
+msgstr "Kopioidaan peli kansioon program/"
+
+#: launcher/setup.cpp:1237
+#, fuzzy
+msgid "Setting up"
+msgstr "Asennetaan"
+
+#: launcher/setup.cpp:1424
+#, fuzzy
+msgid "%s: done"
+msgstr "%s: valmis"
+
+#: launcher/setup.cpp:1426
+#, fuzzy
+msgid "%s: cancelled"
+msgstr "%s: peruttu"
+
+#: launcher/setup.cpp:1428
+#, fuzzy
+msgid "%s: failed"
+msgstr "%s: epäonnistui"
+
+#: launcher/setup.cpp:1448
+#, fuzzy
+msgid "This step can't be stopped: a few seconds."
+msgstr "Tätä vaihetta ei voi pysäyttää: muutama sekunti."
+
+#: launcher/setup.cpp:1457
+#, fuzzy
+msgid "Follow"
+msgstr "Seuraa"
+
+#: launcher/setup.cpp:1531
+#, fuzzy
+msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
+msgstr "Asennus kääntää pelin sen lähdekoodista, joten se toimii projektin kansiosta (git-klooni). Tämä kopio on asennettu kopio."
+
+#: launcher/setup.cpp:1553
+#, fuzzy
+msgid "Checking what's there..."
+msgstr "Tarkistetaan, mitä on..."
+
+#: launcher/setup.cpp:1555
+#, fuzzy
+msgid "Everything is set up: the game is ready to play."
+msgstr "Kaikki on asennettu: peli on valmis pelattavaksi."
+
+#: launcher/setup.cpp:1557
+#, fuzzy
+msgid "Some steps are left."
+msgstr "Joitakin vaiheita on jäljellä."
+
+#: launcher/setup.cpp:1561
+#, fuzzy
+msgid "Check again"
+msgstr "Tarkista uudelleen"
+
+#: launcher/setup.cpp:1577
+#, fuzzy
+msgid "Set up everything"
+msgstr "Asenna kaikki"
+
+#: launcher/setup.cpp:1582
+#, fuzzy
+msgid "Install the missing build tools first (step 1)."
+msgstr "Asenna puuttuvat käännöstyökalut ensin (vaihe 1)."
+
+#: launcher/setup.cpp:1586
+#, fuzzy
+msgid "The game is running: building waits until it's closed."
+msgstr "Peli on käynnissä: kääntäminen odottaa, kunnes se suljetaan."
+
+#: launcher/setup.cpp:1599
+#, fuzzy
+msgid "Build tools"
+msgstr "Käännöstyökalut"
+
+#: launcher/setup.cpp:1600
+#, fuzzy
+msgid "everything needed to build is installed"
+msgstr "kaikki kääntämiseen tarvittava on asennettu"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "found"
+msgstr "löytyi"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "missing"
+msgstr "puuttuu"
+
+#: launcher/setup.cpp:1612
+#, fuzzy
+msgid "  -  package: "
+msgstr "  -  paketti: "
+
+#: launcher/setup.cpp:1619
+#, fuzzy
+msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
+msgstr "Asenna puuttuvat paketinhallinnallasi (yllä olevat pakettinimet ovat %s:n), paina sitten Tarkista uudelleen."
+
+#: launcher/setup.cpp:1628 launcher/setup.cpp:1633
+#, fuzzy
+msgid "Source parts"
+msgstr "Lähdekoodin osat"
+
+#: launcher/setup.cpp:1632
+#, fuzzy
+msgid "Download them"
+msgstr "Lataa ne"
+
+#: launcher/setup.cpp:1640
+#, fuzzy
+msgid "Your disc"
+msgstr "Levysi"
+
+#: launcher/setup.cpp:1644
+#, fuzzy
+msgid "Disc image: %s"
+msgstr "Levykuva: %s"
+
+#: launcher/setup.cpp:1647
+#, fuzzy
+msgid "Pick the disc image..."
+msgstr "Valitse levykuva..."
+
+#: launcher/setup.cpp:1648
+#, fuzzy
+msgid "Xbox 360 disc image"
+msgstr "Xbox 360 -levykuva"
+
+#: launcher/setup.cpp:1663
+#, fuzzy
+msgid "Extract it"
+msgstr "Pura se"
+
+#: launcher/setup.cpp:1667
+#, fuzzy
+msgid "Disc"
+msgstr "Levy"
+
+#: launcher/setup.cpp:1674
+#, fuzzy
+msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
+msgstr "Oma kopiosi levystä (täysi on 7,8 Gt); pelin tiedostot (6 Gt) menevät kansioon game/."
+
+#: launcher/setup.cpp:1680 launcher/setup.cpp:1689
+#, fuzzy
+msgid "ReXGlue SDK"
+msgstr "ReXGlue SDK"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Rebuild the SDK"
+msgstr "Käännä SDK uudelleen"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Build the SDK"
+msgstr "Käännä SDK"
+
+#: launcher/setup.cpp:1695
+#, fuzzy
+msgid "A few minutes."
+msgstr "Muutama minuutti."
+
+#: launcher/setup.cpp:1700 launcher/setup.cpp:1709
+#, fuzzy
+msgid "The game"
+msgstr "Peli"
+
+#: launcher/setup.cpp:1705
+#, fuzzy
+msgid "Build the game"
+msgstr "Käännä peli"
+
+#: launcher/setup.cpp:1706
+#, fuzzy
+msgid "Rebuild (update)"
+msgstr "Käännä uudelleen (päivitys)"
+
+#: launcher/setup.cpp:1707
+#, fuzzy
+msgid "Rebuild"
+msgstr "Käännä uudelleen"
+
+#: launcher/setup.cpp:1712
+#, fuzzy
+msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
+msgstr "%d käännöstyötä kerrallaan (nyt vapaan muistin mukaan: sulje isot ohjelmat ensin nopeampaa käännöstä varten). Ensimmäinen käännös kestää hetken; myöhemmät tekevät vain muuttuneen uudelleen."
+
+#: launcher/update.cpp:270
+#, fuzzy
+msgid "Preparing"
+msgstr "Valmistellaan"
+
+#: launcher/update.cpp:285
+#, fuzzy
+msgid "Checking the download"
+msgstr "Tarkistetaan lataus"
+
+#: launcher/update.cpp:303
+#, fuzzy
+msgid "Swapping in the new version"
+msgstr "Vaihdetaan uusi versio paikalleen"
+
+#, fuzzy
+#~ msgid "{0} {1} {2}"
+#~ msgstr "{0}. {1}kuuta {2}"
+
+#, fuzzy
+#~ msgid "Earned {0}"
+#~ msgstr "Saavutettu {0}"

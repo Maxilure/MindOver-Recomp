@@ -28,6 +28,11 @@ The ids are not 0-47: they run from 17 to 78 with gaps (17 "Stone Cold
 Crash", 70 "Neo Is Getting Angry", ...). The console command
 `achievement list` prints the whole list with each one's state.
 
+Their texts follow the player's text language since 2026-10-31: the title
+data's own words in English, German, French, Spanish and Italian, the game's
+in-game list (the one the other consoles show in their pause menus) in the
+disc's other languages. Details: findings/49 s.7.2.
+
 ## 2. How the game earns one
 
 Radical's achievement manager queues 28-byte entries (end pointer at
@@ -172,7 +177,8 @@ glass panel at its full size (the pause menu's: the Options screen draws
 its page and panel at 0.85 x, the list doesn't), three at a time, one
 achievement each: its picture on the left in a dark frame, its name, its
 text in small print under it (the game's own "how to earn it" text while
-locked), and "Earned 29 Sep 2026" / "Locked" on the right. The selected
+locked), and "Locked" on the right of a locked one (an earned card shows
+no date: it said nothing useful, and the name gets the whole line). The selected
 card is solid glass with a yellow name, the others see-through; locked ones
 are darkened. Up / down move one achievement (the list scrolls), left /
 right four, the mouse selects by hovering and its wheel scrolls, the arrows

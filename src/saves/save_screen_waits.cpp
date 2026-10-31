@@ -18,6 +18,8 @@
 #include "../data/data_patcher.h"
 #include "../data/fight_tree.h"
 #include "../guest_memory.h"
+#include "../language/game_text_banks.h"
+#include "../language/texts.h"
 #include "../pddi/intercept.h"
 #include "../ui/scrooby.h"
 
@@ -236,42 +238,35 @@ int32_t SkipSuccessScreen(PPCContext& ctx, uint8_t* base) {
 }
 
 // --- The wording ---------------------------------------------------------
-// The messages are strings of the menu packages' text banks (findings/30:
-// chunk 0x1800D, one sub-chunk per language): UTF-16 big-endian, each ended
-// by a 0 character, packed one after another and found through an offset
-// table. Their English forms (the title's M / O are special characters of
-// the font, so only the ends are matched):
-//   "Accessing Crash: Mind Over Mutant save game files. Please do not turn
-//    off the Xbox 360 console."           (before the save lists)
-//   "Saving Crash: Mind Over Mutant game, please do not turn off the Xbox
-//    360 console."                        (saving, menus)
-//   "Saving content.  Please do not turn off your console."   (saving, in game)
-//   "Loading content.  Please do not turn off your console."  (loading a save)
-// in package/cdd70a8c.p3d (main menus) and the in-game menus' packages
-// (7a8185b0, 7a88cba0, 97597d1b, c1e387c7). The PC text goes over the old one
-// IN PLACE, followed by 0 characters up to the old end: every offset and
-// chunk size stays as it was. Other languages are left alone. (The "Please
-// do not touch the Power Button or RESET" forms are other consoles' and
-// never shown here.)
+// The messages are strings of the menu packages' text banks (findings/30;
+// format in language/game_text_banks.h), the same KEY in every language:
+//   33495  "Accessing Crash: Mind Over Mutant save game files. Please do not
+//          turn off the Xbox 360 console."   (before the save lists)
+//   12194  "Loading content.  Please do not turn off your console."
+//   30106  "Saving content.  Please do not turn off your console." (menus)
+//   35614  the same, or "Saving Crash: Mind Over Mutant game, please do not
+//          turn off the Xbox 360 console." (in game)
+// in package/cdd70a8c.p3d (main menus, bank "frontend") and the in-game
+// menus' packages (bank "ingame": one per language, plus 97597d1b and
+// c1e387c7 with every language). Only the RUNNING language's copy is shown,
+// so only it is changed: the port's text in that language (tr(), the .po
+// files), written IN PLACE over the old one and followed by 0 characters up
+// to its end, so every offset and chunk size stays as it was. A translation
+// that wouldn't fit leaves that message as it was. (The strings are UTF-16
+// LITTLE-endian; the first version searched big-endian English and only
+// matched because plain ASCII lines up one byte off.)
 
-// The endings that make a string one of these messages.
-constexpr std::u16string_view kConsoleEndings[] = {
-    u"Please do not turn off the Xbox 360 console.",
-    u"please do not turn off the Xbox 360 console.",
-    u"Please do not turn off your console.",
-};
-
-// The PC text for a message, by its first word (empty = not ours).
-std::u16string_view PcWording(std::u16string_view message) {
-  if (message.starts_with(u"Accessing")) return u"Reading save files...";
-  if (message.starts_with(u"Saving")) return u"Saving...";
-  if (message.starts_with(u"Loading")) return u"Loading...";
-  return {};
-}
-
-// UTF-16 big-endian character at byte offset `at`.
-char16_t CharAt(const data_patcher::Bytes& data, size_t at) {
-  return char16_t(data[at] << 8 | data[at + 1]);
+// The PC text for a message key (null = not one of ours).
+const std::u16string* PcWording(uint32_t key) {
+  switch (key) {
+    // TR: Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
+    case 33495: return &tr(u"Reading save files...");
+    // TR: Shown while a save is loaded. Short.
+    case 12194: return &tr(u"Loading...");
+    // TR: Shown while the game saves. Short.
+    case 30106: case 35614: return &tr(u"Saving...");
+    default: return nullptr;
+  }
 }
 
 // Data patch for every menu package: swaps the messages' wording. False =
@@ -279,30 +274,20 @@ char16_t CharAt(const data_patcher::Bytes& data, size_t at) {
 bool PatchWording(const data_patcher::Bytes& original, data_patcher::Bytes* patched) {
   *patched = original;
   data_patcher::Bytes& data = *patched;
+  const char letter = game_text_banks::RunningLetter();
   int swapped = 0;
-  for (const std::u16string_view ending : kConsoleEndings) {
-    // The ending as big-endian bytes.
-    data_patcher::Bytes pattern;
-    for (const char16_t c : ending) {
-      pattern.push_back(uint8_t(c >> 8));
-      pattern.push_back(uint8_t(c));
-    }
-    auto hit = data.begin();
-    while ((hit = std::search(hit, data.end(), pattern.begin(), pattern.end())) != data.end()) {
-      const size_t end = size_t(hit - data.begin()) + pattern.size();  // its 0 character
-      hit += pattern.size();
-      if (end + 2 > data.size() || CharAt(data, end) != 0) continue;
-      // Back to the string's first character: right after the previous 0.
-      size_t start = end - pattern.size();
-      while (start >= 2 && CharAt(data, start - 2) != 0) start -= 2;
-      std::u16string message;
-      for (size_t at = start; at < end; at += 2) message += CharAt(data, at);
-      const std::u16string_view pc = PcWording(message);
-      if (pc.empty() || pc.size() >= message.size()) continue;
-      size_t at = start;
-      for (const char16_t c : pc) {
-        data[at] = uint8_t(c >> 8);
-        data[at + 1] = uint8_t(c);
+  for (const game_text_banks::BankLanguage& bank : game_text_banks::Find(data)) {
+    if (bank.letter != letter) continue;
+    for (uint32_t i = 0; i < bank.count; ++i) {
+      const std::u16string* pc = PcWording(bank.KeyAt(data, i));
+      if (!pc) continue;
+      size_t begin, end;  // the string's bytes, `end` = its 0 character
+      bank.SpanOf(data, i, &begin, &end);
+      if (pc->size() * 2 >= end - begin) continue;  // must fit with room to spare
+      size_t at = begin;
+      for (const char16_t c : *pc) {
+        data[at] = uint8_t(c);
+        data[at + 1] = uint8_t(c >> 8);
         at += 2;
       }
       std::fill(data.begin() + ptrdiff_t(at), data.begin() + ptrdiff_t(end), uint8_t(0));

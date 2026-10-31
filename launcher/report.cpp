@@ -2,6 +2,7 @@
 // report.cpp -- see report.h
 // =============================================================================
 #include "report.h"
+#include "texts.h"
 
 #include <algorithm>
 #include <array>
@@ -514,7 +515,7 @@ bool Build(const folders::Folders& folders, const Request& request, Built* built
   result.file = reports / name;
   Zip zip(result.file);
   if (!zip.ok()) {
-    *error = "Couldn't write " + result.file.string();
+    *error = trf(trs("Couldn't write {0}"), {result.file.string()});
     return false;
   }
 
@@ -668,7 +669,7 @@ bool Build(const folders::Folders& folders, const Request& request, Built* built
   zip.Add("summary.txt", summary, now);
   result.contents.insert(result.contents.begin(), "summary.txt");
   if (!zip.Finish()) {
-    *error = "Couldn't finish " + result.file.string() + " (disk full?)";
+    *error = trf(trs("Couldn't finish {0} (disk full?)"), {result.file.string()});
     return false;
   }
   result.bytes = fs::file_size(result.file, ec);

@@ -18,6 +18,7 @@
 #include <rex/ui/keybinds.h>
 #include <rex/ui/vulkan/util.h>
 
+#include "../language/texts.h"
 #include "../pddi/intercept.h"
 #include "../pddi/trace.h"
 #include "ab_capture.h"
@@ -713,15 +714,15 @@ bool NativeRenderer::Initialize() {
                         "Switch the picture between the emulated GPU and the native renderer",
                         [this] {
                           if (emulated_only()) {
-                            overlay_banner::Show("EMULATED ONLY",
-                                                 "No switching with --emulated_only");
+                            overlay_banner::Show(trs("EMULATED ONLY"),
+                                                 trs("No switching with --emulated_only"));
                             return;
                           }
                           // Dual mode: each window already shows one picture.
                           if (window_presenter_.load(std::memory_order_relaxed)) {
-                            overlay_banner::Show("DUAL MODE",
-                                                 "No switching while the second window is open "
-                                                 "(Tools closes it)");
+                            overlay_banner::Show(trs("DUAL MODE"),
+                                                 trs("No switching while the second window is open "
+                                                 "(Tools closes it)"));
                             REXLOG_INFO(
                                 "NativeRenderer: no renderer switch while the native window is open "
                                 "(the main window shows the emulated picture, the native window "
@@ -1438,17 +1439,17 @@ void NativeRenderer::AnnouncePicture() {
   // The on-screen message (overlay_banner.h): which picture the MAIN window
   // shows now, and what the other renderer is doing meanwhile.
   if (window_presenter_.load(std::memory_order_relaxed)) {
-    overlay_banner::Show("DUAL MODE", "this window: emulated (Xbox 360 GPU)   second window: "
-                                      "native (Vulkan)   F1 Tools closes it");
+    overlay_banner::Show(trs("DUAL MODE"), trs("this window: emulated (Xbox 360 GPU)   second window: "
+                                      "native (Vulkan)   F1 Tools closes it"));
   } else if (emulated_only()) {
-    overlay_banner::Show("EMULATED ONLY", "Xbox 360 GPU emulation; native renderer off");
+    overlay_banner::Show(trs("EMULATED ONLY"), trs("Xbox 360 GPU emulation; native renderer off"));
   } else if (show_native()) {
-    overlay_banner::Show("NATIVE (Vulkan)",
+    overlay_banner::Show(trs("NATIVE (Vulkan)"),
                          REXCVAR_GET(native_only)
-                             ? "native only: the emulated GPU is off   F1 Tools switches"
-                             : "the emulated GPU still draws in the background   F1 Tools switches");
+                             ? trs("native only: the emulated GPU is off   F1 Tools switches")
+                             : trs("the emulated GPU still draws in the background   F1 Tools switches"));
   } else {
-    overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle   F1 Tools switches");
+    overlay_banner::Show(trs("EMULATED (Xbox 360 GPU)"), trs("native renderer idle   F1 Tools switches"));
   }
 }
 

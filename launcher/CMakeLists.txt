@@ -87,6 +87,7 @@ add_executable(crash_mom_launcher WIN32   # WIN32: a window, no console (Windows
     task_runner.cpp   # runs a setup step's commands one after another, with progress
     setup.cpp         # the Setup tab: build tools listed, disc, SDK, game builds
     update.cpp        # new versions: the feed, download, swap (release layout)
+    texts.cpp         # the launcher's texts in the player's language (languages/*.po, like the game)
 )
 # toml++ (header only, in the SDK submodule): reads and writes settings.toml.
 # SYSTEM: its headers' own warnings (old literal-operator spelling) aren't ours.

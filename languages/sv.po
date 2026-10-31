@@ -7,40 +7,909 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/achievements/achievements.cpp:548
+#: src/crash_mom_app.h:449 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "EMULATED ONLY"
+msgstr "BARA EMULERAD"
+
+#: src/crash_mom_app.h:449
+#, fuzzy
+msgid "No second window with --emulated_only"
+msgstr "Inget andra fönster med --emulated_only"
+
+#. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
+#: src/fps_overlay.cpp:145
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} FPS"
+msgstr "{0} FPS"
+
+#. Frame-rate counter: the average frame rate. Keep it short, capitals.
+#: src/fps_overlay.cpp:148
+#, fuzzy
+msgctxt "fps counter"
+msgid "AVG {0}"
+msgstr "SNITT {0}"
+
+#. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
+#: src/fps_overlay.cpp:150
+#, fuzzy
+msgctxt "fps counter"
+msgid "1% LOW {0}"
+msgstr "1% LÄGST {0}"
+
+#. Frame-rate counter: milliseconds per frame. Capitals.
+#: src/fps_overlay.cpp:154
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} MS"
+msgstr "{0} MS"
+
+#. Frame-rate counter: how long the game's own work took (ms). Capitals.
+#: src/fps_overlay.cpp:156
+#, fuzzy
+msgctxt "fps counter"
+msgid "GAME {0}"
+msgstr "SPEL {0}"
+
+#. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
+#: src/fps_overlay.cpp:158
+#, fuzzy
+msgctxt "fps counter"
+msgid "SWAP {0}"
+msgstr "VISNING {0}"
+
+#: src/achievements/achievements.cpp:667
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Prestation upplåst"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1037 src/options/options_menu.cpp:2281 src/options/options_settings.cpp:1125
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2263 src/options/options_settings.cpp:1125
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestationer"
 
-#: src/achievements/achievements_screen.cpp:42
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
 #, fuzzy
 msgid "Players"
 msgstr "Spelare"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:718
 #, fuzzy
-msgid "Cheats Enabled"
-msgstr "Fusk påslaget"
+msgid "No switching with --emulated_only"
+msgstr "Inget byte med --emulated_only"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements until a save is loaded"
-msgstr "Inga prestationer förrän ett sparat spel läses in"
+msgid "DUAL MODE"
+msgstr "DUBBELLÄGE"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:724
 #, fuzzy
-msgid "Save Made With Cheats"
-msgstr "Sparat med fusk"
+msgid "No switching while the second window is open (Tools closes it)"
+msgstr "Inget byte medan det andra fönstret är öppet (Verktyg stänger det)"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements while playing this save"
-msgstr "Inga prestationer med det här sparade spelet"
+msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
+msgstr "det här fönstret: emulerad (Xbox 360-GPU)   andra fönstret: inbyggd (Vulkan)   F1 Verktyg stänger det"
+
+#: src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "Xbox 360 GPU emulation; native renderer off"
+msgstr "Emulering av Xbox 360-GPU:n; inbyggd grafikmotor av"
+
+#: src/native/native_renderer.cpp:1447
+#, fuzzy
+msgid "NATIVE (Vulkan)"
+msgstr "INBYGGD (Vulkan)"
+
+#: src/native/native_renderer.cpp:1449
+#, fuzzy
+msgid "native only: the emulated GPU is off   F1 Tools switches"
+msgstr "bara inbyggd: den emulerade GPU:n är av   F1 Verktyg byter"
+
+#: src/native/native_renderer.cpp:1450
+#, fuzzy
+msgid "the emulated GPU still draws in the background   F1 Tools switches"
+msgstr "den emulerade GPU:n ritar fortfarande i bakgrunden   F1 Verktyg byter"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "EMULATED (Xbox 360 GPU)"
+msgstr "EMULERAD (Xbox 360-GPU)"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "native renderer idle   F1 Tools switches"
+msgstr "inbyggd grafikmotor vilar   F1 Verktyg byter"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#, fuzzy
+msgid "HUD Hidden"
+msgstr "HUD dold"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74
+#, fuzzy
+msgid "Press {0} to show it again"
+msgstr "Tryck på {0} för att visa den igen"
+
+#: src/ui/main_menu_extras.cpp:45
+#, fuzzy
+msgid "Extras"
+msgstr "Extra"
+
+#: src/ui/quit_game.cpp:55
+#, fuzzy
+msgid "Quit Game"
+msgstr "Avsluta"
+
+#: src/ui/quit_game.cpp:56
+#, fuzzy
+msgid "Are you sure you want to quit the game?"
+msgstr "Är du säker på att du vill avsluta spelet?"
+
+#: src/ui/tools_menu.cpp:44 src/ui/tools_menu.cpp:49 src/ui/tools_menu.cpp:51 src/ui/tools_menu.cpp:55 src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Game"
+msgstr "Spel"
+
+#: src/ui/tools_menu.cpp:44
+#, fuzzy
+msgid "Cheats..."
+msgstr "Fusk..."
+
+#: src/ui/tools_menu.cpp:45
+#, fuzzy
+msgid ""
+"Level ups, mojo, god mode, spawns, game speed, free camera.\n"
+"OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
+"meanwhile is marked as made with cheats (achievements stay off for it)."
+msgstr ""
+"Nivåhöjningar, mojo, gudaläge, framkallning, spelhastighet, fri kamera.\n"
+"ATT ÖPPNA DEN STÄNGER AV PRESTATIONER tills ett sparat spel laddas, och ett spel som sparas\n"
+"under tiden märks som gjort med fusk (prestationer förblir av för det)."
+
+#: src/ui/tools_menu.cpp:49
+#, fuzzy
+msgid "Controls (keys)..."
+msgstr "Kontroller (tangenter)..."
+
+#: src/ui/tools_menu.cpp:50
+#, fuzzy
+msgid "Keyboard and mouse keys, and which device plays as which player."
+msgstr "Tangenter på tangentbord och mus, och vilken enhet som spelar som vilken spelare."
+
+#: src/ui/tools_menu.cpp:51
+#, fuzzy
+msgid "Hide / show the HUD"
+msgstr "Dölj / visa HUD"
+
+#: src/ui/tools_menu.cpp:52
+#, fuzzy
+msgid ""
+"Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
+"Not a cheat: achievements are untouched. The message bar keeps showing."
+msgstr ""
+"Döljer hela HUD:en (porträtt, mätare, mojoräknare, kombomätare, markörer, tips).\n"
+"Inget fusk: prestationer påverkas inte. Meddelandefältet visas fortfarande."
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "Fullscreen on / off"
+msgstr "Helskärm på / av"
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "F11 (still F11)"
+msgstr "F11 (fortfarande F11)"
+
+#: src/ui/tools_menu.cpp:56
+#, fuzzy
+msgid "Borderless fullscreen on the monitor picked in Options -> Display."
+msgstr "Kantlös helskärm på skärmen som valts under Alternativ -> Visning."
+
+#: src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Take a photo"
+msgstr "Ta ett foto"
+
+#: src/ui/tools_menu.cpp:58
+#, fuzzy
+msgid ""
+"A PNG of the next frame into the photos folder (both renderers' pictures\n"
+"while the native one is drawn). The menus over the picture aren't in it."
+msgstr ""
+"En PNG av nästa bildruta i fotomappen (båda grafikmotorernas bilder\n"
+"när den inbyggda ritar). Menyerna över bilden finns inte med."
+
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+#, fuzzy
+msgid "Picture"
+msgstr "Bild"
+
+#: src/ui/tools_menu.cpp:62
+#, fuzzy
+msgid "Switch renderer (emulated / native)"
+msgstr "Byt grafikmotor (emulerad / inbyggd)"
+
+#: src/ui/tools_menu.cpp:63
+#, fuzzy
+msgid ""
+"Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
+"port's own renderer. Off with Emulated Only or while the second window is open."
+msgstr ""
+"Vilken bild huvudfönstret visar: den efterliknade Xbox 360-GPU:n eller\n"
+"portens egen grafikmotor. Av med Bara emulerad eller när det andra fönstret är öppet."
+
+#: src/ui/tools_menu.cpp:66
+#, fuzzy
+msgid "Second window (dual mode)"
+msgstr "Andra fönstret (dubbelläge)"
+
+#: src/ui/tools_menu.cpp:67
+#, fuzzy
+msgid "A second window with the port's picture; the main one shows the emulated one."
+msgstr "Ett andra fönster med portens bild; huvudfönstret visar den emulerade."
+
+#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:678
+#, fuzzy
+msgid "Saves"
+msgstr "Sparade spel"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "Rename the save under the cursor"
+msgstr "Byt namn på det sparade spelet under markören"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "F2 (F2 hides the HUD now)"
+msgstr "F2 (F2 döljer nu HUD:en)"
+
+#: src/ui/tools_menu.cpp:70
+#, fuzzy
+msgid "On the Load / Save Game screen only (X there opens the game's own name screen)."
+msgstr "Bara på skärmen Ladda / Spara (X öppnar där spelets egen namnskärm)."
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete the save under the cursor"
+msgstr "Ta bort det sparade spelet under markören"
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete (still Delete)"
+msgstr "Delete (fortfarande Delete)"
+
+#: src/ui/tools_menu.cpp:72
+#, fuzzy
+msgid ""
+"On the Load / Save Game screen only (Y there does the same). The file is moved\n"
+"to user/saves/Deleted saves, never really deleted."
+msgstr ""
+"Bara på skärmen Ladda / Spara (Y gör samma sak där). Filen flyttas\n"
+"till user/saves/Deleted saves, aldrig riktigt borttagen."
+
+#: src/ui/tools_menu.cpp:76 src/ui/tools_menu.cpp:78 src/ui/tools_menu.cpp:80 src/ui/tools_menu.cpp:82 src/ui/tools_menu.cpp:84 src/ui/tools_menu.cpp:88 src/ui/tools_menu.cpp:92 src/ui/tools_menu.cpp:96 src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Developer"
+msgstr "Utvecklare"
+
+#: src/ui/tools_menu.cpp:76
+#, fuzzy
+msgid "Debug overlay"
+msgstr "Felsökningsöverlägg"
+
+#: src/ui/tools_menu.cpp:77
+#, fuzzy
+msgid "The SDK's frame times and threads."
+msgstr "SDK:ns bildrutetider och trådar."
+
+#: src/ui/tools_menu.cpp:78
+#, fuzzy
+msgid "Log console"
+msgstr "Loggkonsol"
+
+#: src/ui/tools_menu.cpp:79
+#, fuzzy
+msgid "The SDK's live log."
+msgstr "SDK:ns logg i realtid."
+
+#: src/ui/tools_menu.cpp:80
+#, fuzzy
+msgid "All settings (flags)"
+msgstr "Alla inställningar (flaggor)"
+
+#: src/ui/tools_menu.cpp:81
+#, fuzzy
+msgid "Every setting by name, as in settings.toml. Prefer the in-game Options screen."
+msgstr "Varje inställning med namn, som i settings.toml. Använd hellre spelets Alternativ-skärm."
+
+#: src/ui/tools_menu.cpp:82
+#, fuzzy
+msgid "SDK achievements list"
+msgstr "SDK:ns prestationslista"
+
+#: src/ui/tools_menu.cpp:83
+#, fuzzy
+msgid "The SDK's own list (the port keeps achievements itself: pause -> Achievements)."
+msgstr "SDK:ns egen lista (porten håller själv reda på prestationer: paus -> Prestationer)."
+
+#: src/ui/tools_menu.cpp:84
+#, fuzzy
+msgid "Highlight a material (cycles)"
+msgstr "Markera ett material (växlar)"
+
+#: src/ui/tools_menu.cpp:85
+#, fuzzy
+msgid ""
+"Paints one material magenta in the native picture: bump, particles, motion\n"
+"trails, off."
+msgstr ""
+"Färgar ett material magenta i den inbyggda bilden: relief, partiklar, rörelse-\n"
+"spår, av."
+
+#: src/ui/tools_menu.cpp:88
+#, fuzzy
+msgid "Particle experiment (cycles)"
+msgstr "Partikelexperiment (växlar)"
+
+#: src/ui/tools_menu.cpp:89
+#, fuzzy
+msgid ""
+"Changes how particles are drawn in the native picture, then erases groups of\n"
+"them in both pictures, then normal again."
+msgstr ""
+"Ändrar hur partiklar ritas i den inbyggda bilden, raderar sedan grupper\n"
+"av dem i båda bilderna, och sedan normalt igen."
+
+#: src/ui/tools_menu.cpp:92
+#, fuzzy
+msgid "Test: fake achievement card"
+msgstr "Test: falskt prestationskort"
+
+#: src/ui/tools_menu.cpp:93
+#, fuzzy
+msgid ""
+"The achievement card on the game's message bar with a made-up name (in a level).\n"
+"Nothing is earned or recorded."
+msgstr ""
+"Prestationskortet på spelets meddelandefält med ett påhittat namn (i en bana).\n"
+"Inget förtjänas eller sparas."
+
+#: src/ui/tools_menu.cpp:96
+#, fuzzy
+msgid "Test: long fake achievement card"
+msgstr "Test: långt falskt prestationskort"
+
+#: src/ui/tools_menu.cpp:97
+#, fuzzy
+msgid "The same with a name too long for the card: it scrolls (ui/marquee.h)."
+msgstr "Samma sak med ett namn som är för långt för kortet: det rullar (ui/marquee.h)."
+
+#: src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Test: game-style message (voodoo doll look)"
+msgstr "Test: spelmeddelande (voodoodocka-stil)"
+
+#: src/ui/tools_menu.cpp:100
+#, fuzzy
+msgid ""
+"A message in the message bar's own wide look (title, message, counter), as the\n"
+"game shows a voodoo doll or an objective. Nothing else happens."
+msgstr ""
+"Ett meddelande i meddelandefältets egen breda stil (titel, meddelande, räknare), så som\n"
+"spelet visar en voodoodocka eller ett mål. Inget annat händer."
+
+#: src/ui/tools_menu.cpp:136
+#, fuzzy
+msgid "Tools (F1)"
+msgstr "Verktyg (F1)"
+
+#: src/ui/tools_menu.cpp:150
+#, fuzzy
+msgid "NOT AVAILABLE"
+msgstr "INTE TILLGÄNGLIGT"
+
+#: src/ui/tools_menu.cpp:160
+#, fuzzy
+msgid "Tools"
+msgstr "Verktyg"
+
+#: src/ui/tools_menu.cpp:162
+#, fuzzy
+msgid "F1 opens / closes   F2 = HUD   F11 = fullscreen"
+msgstr "F1 öppnar / stänger   F2 = HUD   F11 = helskärm"
+
+#. Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
+#: src/ui/tools_menu.cpp:174
+#, fuzzy
+msgid ""
+"%s\n"
+"\n"
+"(Key, or the key it used to have: %s. Setting name: %s)"
+msgstr ""
+"%s\n"
+"\n"
+"(Tangent, eller den den hade förut: %s. Inställningens namn: %s)"
+
+#: src/ui/tools_menu.cpp:181
+#, fuzzy
+msgid "Achievements are off: %s"
+msgstr "Prestationer är av: %s"
+
+#: src/ui/tools_menu.cpp:183
+#, fuzzy
+msgid "Opening it turns achievements off until a save is loaded."
+msgstr "Att öppna den stänger av prestationer tills ett sparat spel laddas."
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Move up"
+msgstr "Upp"
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Also moves through menus."
+msgstr "Flyttar också i menyer."
+
+#: src/input/bindings.cpp:146 src/input/bindings.cpp:148 src/input/bindings.cpp:150 src/input/bindings.cpp:152 src/input/bindings.cpp:154
+#, fuzzy
+msgid "Left stick"
+msgstr "Vänster spak"
+
+#: src/input/bindings.cpp:148
+#, fuzzy
+msgid "Move down"
+msgstr "Ned"
+
+#: src/input/bindings.cpp:150
+#, fuzzy
+msgid "Move left"
+msgstr "Vänster"
+
+#: src/input/bindings.cpp:152
+#, fuzzy
+msgid "Move right"
+msgstr "Höger"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Walk (hold)"
+msgstr "Gå (håll)"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
+msgstr "Håll med en riktning: spaken lutas bara delvis, så Crash går långsammare."
+
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Spin"
+msgstr "Snurra"
+
+#: src/input/bindings.cpp:155
+#, fuzzy
+msgid "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to jump off a titan...). Crash still moves with the movement keys while spinning."
+msgstr "Snurrattacken (på en handkontroll: \"Snurra den vänstra analoga spaken\"). Håll för att fortsätta snurra. Med andra tangenter: snurrdragen (Snurra, sedan Tung attack; Snurra, sedan Kapa för att hoppa av en titan...). Crash rör sig fortfarande med rörelsetangenterna medan han snurrar."
+
+#: src/input/bindings.cpp:157
+#, fuzzy
+msgid "Left stick circles"
+msgstr "Cirklar med vänster spak"
+
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Jump"
+msgstr "Hoppa"
+
+#: src/input/bindings.cpp:158
+#, fuzzy
+msgid "Press again in the air for a double jump."
+msgstr "Tryck igen i luften för ett dubbelhopp."
+
+#: src/input/bindings.cpp:161
+#, fuzzy
+msgid "Light attack"
+msgstr "Lätt attack"
+
+#: src/input/bindings.cpp:163
+#, fuzzy
+msgid "Heavy attack"
+msgstr "Tung attack"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Block (hold)"
+msgstr "Blockera (håll)"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Hold to block an enemy's light attack."
+msgstr "Håll för att blockera en fiendes lätta attack."
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Jack / use"
+msgstr "Kapa / använd"
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. Also uses save totems."
+msgstr "Paralysera en fiende och tryck sedan för att hoppa upp på den och styra den (\"kapa\"). Tryck igen för att kliva av. Använder också sparatotem."
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "Titan special attack"
+msgstr "Titanens specialattack"
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "The special attack of the titan you control (watch its mutant meter)."
+msgstr "Specialattacken för titanen du styr (håll koll på dess mutantmätare)."
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Pocket / unpocket"
+msgstr "Plocka på dig / släpp"
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Store the titan you control, and bring it back later."
+msgstr "Plockar på dig titanen du styr, så att du kan ta fram den senare."
+
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Map"
+msgstr "Karta"
+
+#: src/input/bindings.cpp:178
+#, fuzzy
+msgid "In the pause menu: drop out (another player stays in)."
+msgstr "I pausmenyn: hoppa av (en annan spelare blir kvar)."
+
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1301 src/options/options_menu.cpp:1313
+#, fuzzy
+msgid "Back"
+msgstr "Tillbaka"
+
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Pause"
+msgstr "Paus"
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Opens the pause menu (in menus, Menu: back closes it)."
+msgstr "Öppnar pausmenyn (i menyer stänger Meny: tillbaka den)."
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Start"
+msgstr "Start"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Menu: confirm"
+msgstr "Meny: bekräfta"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Choose the selected item."
+msgstr "Väljer det markerade alternativet."
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Menu: back"
+msgstr "Meny: tillbaka"
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Back to the previous screen; in the pause menu: play on."
+msgstr "Tillbaka till föregående skärm; i pausmenyn: spela vidare."
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "Menu: previous tab"
+msgstr "Meny: föregående flik"
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "The Options screen's tabs."
+msgstr "Flikarna på Alternativ-skärmen."
+
+#: src/input/bindings.cpp:188
+#, fuzzy
+msgid "Menu: next tab"
+msgstr "Meny: nästa flik"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "Menu: X action"
+msgstr "Meny: X-åtgärd"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "What the menu's X prompt says: rename a save, Dual Mode, erase a letter on the name screen."
+msgstr "Det menyns X-tips säger: byta namn på ett sparat spel, Dubbelläge, radera en bokstav på namnskärmen."
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "Menu: Y action"
+msgstr "Meny: Y-åtgärd"
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "What the menu's Y prompt says: delete a save, remove a key (Options -> Controls)."
+msgstr "Det menyns Y-tips säger: ta bort ett sparat spel, ta bort en tangent (Alternativ -> Kontroller)."
+
+#: src/input/bindings.cpp:195
+#, fuzzy
+msgid "D-pad up"
+msgstr "Styrknapp upp"
+
+#: src/input/bindings.cpp:195 src/input/bindings.cpp:197 src/input/bindings.cpp:199 src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad"
+msgstr "Styrknapp"
+
+#: src/input/bindings.cpp:197
+#, fuzzy
+msgid "D-pad down"
+msgstr "Styrknapp ned"
+
+#: src/input/bindings.cpp:199
+#, fuzzy
+msgid "D-pad left"
+msgstr "Styrknapp vänster"
+
+#: src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad right"
+msgstr "Styrknapp höger"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "Right stick up"
+msgstr "Höger spak upp"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "The camera follows Crash by itself; this is for the few things that use the right stick."
+msgstr "Kameran följer Crash av sig själv; detta är för de få saker som använder höger spak."
+
+#: src/input/bindings.cpp:205 src/input/bindings.cpp:207 src/input/bindings.cpp:209 src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick"
+msgstr "Höger spak"
+
+#: src/input/bindings.cpp:207
+#, fuzzy
+msgid "Right stick down"
+msgstr "Höger spak ned"
+
+#: src/input/bindings.cpp:209
+#, fuzzy
+msgid "Right stick left"
+msgstr "Höger spak vänster"
+
+#: src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick right"
+msgstr "Höger spak höger"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "Left bumper"
+msgstr "Vänster axelknapp"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "No use in play found so far."
+msgstr "Ingen användning i spelet hittad än så länge."
+
+#: src/input/bindings.cpp:215
+#, fuzzy
+msgid "Left stick click"
+msgstr "Tryck på vänster spak"
+
+#: src/input/bindings.cpp:215 src/input/bindings.cpp:217
+#, fuzzy
+msgid "No use in the game found so far."
+msgstr "Ingen användning i spelet hittad än så länge."
+
+#: src/input/bindings.cpp:217
+#, fuzzy
+msgid "Right stick click"
+msgstr "Tryck på höger spak"
+
+#: src/input/bindings.cpp:372
+#, fuzzy
+msgid "Moving"
+msgstr "Rörelse"
+
+#: src/input/bindings.cpp:374
+#, fuzzy
+msgid "Fighting"
+msgstr "Strid"
+
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+#, fuzzy
+msgid "Titans"
+msgstr "Titaner"
+
+#: src/input/bindings.cpp:378
+#, fuzzy
+msgid "Menus and map"
+msgstr "Menyer och karta"
+
+#: src/input/bindings.cpp:380
+#, fuzzy
+msgid "Rest of the controller"
+msgstr "Resten av handkontrollen"
+
+#: src/input/controls_menu.cpp:51
+#, fuzzy
+msgid "NO KEYBOARD CONTROLS"
+msgstr "INGEN TANGENTBORDSSTYRNING"
+
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1139 launcher/settings_page.cpp:539
+#, fuzzy
+msgid "Controls"
+msgstr "Kontroller"
+
+#: src/input/controls_menu.cpp:117
+#, fuzzy
+msgid "Keys"
+msgstr "Tangenter"
+
+#: src/input/controls_menu.cpp:130 launcher/main.cpp:1141
+#, fuzzy
+msgid "Close"
+msgstr "Stäng"
+
+#: src/input/controls_menu.cpp:142
+#, fuzzy
+msgid "Click a key to change it, then press the new key or mouse button (Esc cancels). Right-click a key to remove it. The game's button prompts show Xbox buttons: the middle column says which one each action presses. A controller works at the same time."
+msgstr "Klicka på en tangent för att ändra den, tryck sedan den nya tangenten eller musknappen (Esc avbryter). Högerklicka på en tangent för att ta bort den. Spelets knapptips visar Xbox-knappar: mittenkolumnen säger vilken varje åtgärd trycker. En handkontroll fungerar samtidigt."
+
+#: src/input/controls_menu.cpp:158
+#, fuzzy
+msgid "Spin held (spins per second)"
+msgstr "Snurra hållen (snurr per sekund)"
+
+#: src/input/controls_menu.cpp:161
+#, fuzzy
+msgid "Spin speed saved."
+msgstr "Snurrhastighet sparad."
+
+#: src/input/controls_menu.cpp:163
+#, fuzzy
+msgid "While Spin is held, how often it counts as one more spin (a press is one at once). On a controller each full circle of the left stick is one."
+msgstr "Hur ofta en hållen Snurra räknas som ett snurr till (ett tryck räknas som ett direkt). På en handkontroll är varje hel cirkel med vänster spak ett."
+
+#: src/input/controls_menu.cpp:166
+#, fuzzy
+msgid "Walk (how far the stick leans)"
+msgstr "Gå (hur långt spaken lutas)"
+
+#: src/input/controls_menu.cpp:169
+#, fuzzy
+msgid "Walk saved."
+msgstr "Gå sparat."
+
+#: src/input/controls_menu.cpp:171
+#, fuzzy
+msgid "Reset keys to defaults"
+msgstr "Återställ tangenterna"
+
+#: src/input/controls_menu.cpp:178
+#, fuzzy
+msgid "Back to the default keys."
+msgstr "Tillbaka till standardtangenterna."
+
+#: src/input/controls_menu.cpp:186
+#, fuzzy
+msgid "Player assignment isn't available in this run."
+msgstr "Spelartilldelning är inte tillgänglig i den här sessionen."
+
+#: src/input/controls_menu.cpp:190
+#, fuzzy
+msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
+msgstr "Vilken enhet som spelar som vilken spelare. För två: tangentbord och mus på spelare 1, en handkontroll på spelare 2. I en bana trycker du Start på den andra enheten för att gå med (pausmenyn har också Gå med och Hoppa av). Att flytta en enhet till en spelare byter plats med enheten som fanns där. På titelskärmen och i huvudmenyerna fungerar alla enheter. Ändringar gäller direkt och kom ihåg."
+
+#: src/input/controls_menu.cpp:201
+#, fuzzy
+msgid "Device"
+msgstr "Enhet"
+
+#: src/input/controls_menu.cpp:202
+#, fuzzy
+msgid "Plays as"
+msgstr "Spelar som"
+
+#: src/input/controls_menu.cpp:218
+#, fuzzy
+msgid "No controller connected. Connect one: it shows up here."
+msgstr "Ingen handkontroll ansluten. Anslut en: den dyker upp här."
+
+#: src/input/controls_menu.cpp:227
+#, fuzzy
+msgid "Off (not used)"
+msgstr "Av (används inte)"
+
+#: src/input/controls_menu.cpp:229
+#, fuzzy
+msgid "Automatic (Player {})"
+msgstr "Automatisk (spelare {})"
+
+#: src/input/controls_menu.cpp:230
+#, fuzzy
+msgid "Automatic (not used)"
+msgstr "Automatisk (används inte)"
+
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+#, fuzzy
+msgid "Player {}"
+msgstr "Spelare {}"
+
+#: src/input/controls_menu.cpp:277
+#, fuzzy
+msgid "Action"
+msgstr "Åtgärd"
+
+#: src/input/controls_menu.cpp:279
+#, fuzzy
+msgid "Key 1"
+msgstr "Tangent 1"
+
+#: src/input/controls_menu.cpp:280
+#, fuzzy
+msgid "Key 2"
+msgstr "Tangent 2"
+
+#: src/input/controls_menu.cpp:304
+#, fuzzy
+msgid "(menus)"
+msgstr "(menyer)"
+
+#: src/input/controls_menu.cpp:331
+#, fuzzy
+msgid "press a key..."
+msgstr "tryck en tangent..."
+
+#: src/input/controls_menu.cpp:348
+#, fuzzy
+msgid "Press the new key for {}."
+msgstr "Tryck den nya tangenten för {}."
+
+#: src/input/controls_menu.cpp:359
+#, fuzzy
+msgid "{0} removed from {1}."
+msgstr "{0} borttagen från {1}."
+
+#: src/input/controls_menu.cpp:372
+#, fuzzy
+msgid "Cancelled."
+msgstr "Avbrutet."
+
+#: src/input/controls_menu.cpp:378
+#, fuzzy
+msgid "{0} -> {1} (taken from {2})."
+msgstr "{0} -> {1} (tagen från {2})."
+
+#: src/input/controls_menu.cpp:380
+#, fuzzy
+msgid "{0} -> {1}."
+msgstr "{0} -> {1}."
+
+#: src/input/controls_menu.cpp:387
+#, fuzzy
+msgid "Couldn't save the controls file (see the log)."
+msgstr "Kunde inte spara kontrollfilen (se loggen)."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2305
@@ -65,200 +934,1012 @@ msgstr "ELLER {0}"
 msgid "Press Any Button"
 msgstr "Tryck på valfri knapp"
 
-#: src/options/options_menu.cpp:798 src/options/options_menu.cpp:844
+#: src/saves/save_library.cpp:764
+#, fuzzy
+msgid "Create New Save"
+msgstr "Nytt sparat spel"
+
+#: src/saves/save_library.cpp:848
+#, fuzzy
+msgid "Delete"
+msgstr "Radera"
+
+#: src/saves/save_library.cpp:850
+#, fuzzy
+msgid "Rename"
+msgstr "Byt namn"
+
+#: src/saves/save_library.cpp:1021
+#, fuzzy
+msgid "Rename failed"
+msgstr "Namnbytet misslyckades"
+
+#: src/saves/save_library.cpp:1066
+#, fuzzy
+msgid "Delete failed"
+msgstr "Borttagningen misslyckades"
+
+#: src/saves/save_library.cpp:1095
+#, fuzzy
+msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+msgstr "Vill du verkligen radera det här sparade spelet? Det flyttas till mappen Deleted saves."
+
+#: src/saves/save_library.cpp:1193
+#, fuzzy
+msgid "Rename save"
+msgstr "Byt namn på sparat spel"
+
+#: src/saves/save_library.cpp:1232
+#, fuzzy
+msgid "Rename \"%s\""
+msgstr "Byt namn på \"%s\""
+
+#: src/saves/save_library.cpp:1233
+#, fuzzy
+msgid "Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"
+msgstr "Skriv upp till %zu bokstäver, siffror, mellanslag. Handkontroll: A byter namn, B avbryter"
+
+#: src/saves/save_library.cpp:1245
+#, fuzzy
+msgid "Rename (Enter)"
+msgstr "Byt namn (Enter)"
+
+#: src/saves/save_library.cpp:1248
+#, fuzzy
+msgid "Cancel (Esc)"
+msgstr "Avbryt (Esc)"
+
+#: src/saves/save_library.cpp:1875
+#, fuzzy
+msgid "Backspace"
+msgstr "Radera"
+
+#. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
+#: src/saves/save_screen_waits.cpp:263
+#, fuzzy
+msgid "Reading save files..."
+msgstr "Läser sparade spel..."
+
+#. Shown while a save is loaded. Short.
+#: src/saves/save_screen_waits.cpp:265
+#, fuzzy
+msgid "Loading..."
+msgstr "Laddar..."
+
+#. Shown while the game saves. Short.
+#: src/saves/save_screen_waits.cpp:267
+#, fuzzy
+msgid "Saving..."
+msgstr "Sparar..."
+
+#: src/cheats/cheat_menu.cpp:90 src/cheats/cheat_menu.cpp:103
+#, fuzzy
+msgid "Cheats"
+msgstr "Fusk"
+
+#: src/cheats/cheat_menu.cpp:105
+#, fuzzy
+msgid "for testing (not saved by us; the game saves what they change)"
+msgstr "för tester (sparas inte av oss; spelet sparar det de ändrar)"
+
+#: src/cheats/cheat_menu.cpp:108
+#, fuzzy
+msgid "Not in a level: character cheats wait until you're playing one."
+msgstr "Inte i en bana: figurfusk väntar tills du spelar en."
+
+#: src/cheats/cheat_menu.cpp:115
+#, fuzzy
+msgid "Everyone"
+msgstr "Alla"
+
+#: src/cheats/cheat_menu.cpp:117
+#, fuzzy
+msgid "God mode"
+msgstr "Gudaläge"
+
+#: src/cheats/cheat_menu.cpp:119
+#, fuzzy
+msgid ""
+"Every player's Crash and titan loses no health (and refills).\n"
+"Deaths that skip health (pits?) may still happen."
+msgstr ""
+"Varje spelares Crash och titan förlorar ingen hälsa (och fylls på).\n"
+"Dödsfall som hoppar över hälsan (gropar?) kan fortfarande hända."
+
+#: src/cheats/cheat_menu.cpp:122
+#, fuzzy
+msgid "No AI"
+msgstr "Ingen AI"
+
+#: src/cheats/cheat_menu.cpp:123
+#, fuzzy
+msgid ""
+"Enemies and enemy titans stop thinking: no attacks, no moving.\n"
+"They can still be hit and beaten."
+msgstr ""
+"Fiender och fientliga titaner slutar tänka: inga attacker, ingen rörelse.\n"
+"De kan fortfarande träffas och besegras."
+
+#: src/cheats/cheat_menu.cpp:130
+#, fuzzy
+msgid "Screen"
+msgstr "Skärm"
+
+#: src/cheats/cheat_menu.cpp:132
+#, fuzzy
+msgid "Hide the HUD"
+msgstr "Dölj HUD:en"
+
+#: src/cheats/cheat_menu.cpp:133
+#, fuzzy
+msgid "Portraits, health and special bars. The mojo count text stays."
+msgstr "Porträtt, hälso- och specialmätare. Mojoräknarens text finns kvar."
+
+#: src/cheats/cheat_menu.cpp:135
+#, fuzzy
+msgid "All mojo collected: %s"
+msgstr "All mojo insamlad: %s"
+
+#: src/cheats/cheat_menu.cpp:137
+#, fuzzy
+msgid "Achievements are off: %s."
+msgstr "Prestationer är av: %s."
+
+#: src/cheats/cheat_menu.cpp:139
+#, fuzzy
+msgid "Loading a save turns them back on (with this window closed and the"
+msgstr "Att ladda ett sparat spel slår på dem igen (med det här fönstret stängt och"
+
+#: src/cheats/cheat_menu.cpp:140
+#, fuzzy
+msgid "switches off). A save made now is marked as made with cheats."
+msgstr "brytarna av). Ett spel som sparas nu märks som gjort med fusk."
+
+#: src/cheats/cheat_menu.cpp:145
+#, fuzzy
+msgid "Character"
+msgstr "Figur"
+
+#: src/cheats/cheat_menu.cpp:155
+#, fuzzy
+msgid "Player %d isn't in the level."
+msgstr "Spelare %d är inte i banan."
+
+#: src/cheats/cheat_menu.cpp:162
+#, fuzzy
+msgid "In a titan: %s"
+msgstr "I en titan: %s"
+
+#: src/cheats/cheat_menu.cpp:164
+#, fuzzy
+msgid "Riding another player as a mask (cheats act on the shared upgrades)"
+msgstr "Rider på en annan spelare som mask (fusk påverkar de delade uppgraderingarna)"
+
+#: src/cheats/cheat_menu.cpp:166
+#, fuzzy
+msgid "On foot"
+msgstr "Till fots"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d  (fully upgraded)"
+msgstr "Nivå: %d av %d  (fullt uppgraderad)"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d"
+msgstr "Nivå: %d av %d"
+
+#: src/cheats/cheat_menu.cpp:172
+#, fuzzy
+msgid "Level: %d"
+msgstr "Nivå: %d"
+
+#: src/cheats/cheat_menu.cpp:175
+#, fuzzy
+msgid "Every mojo upgrade bought: the rest come with the story"
+msgstr "Alla mojouppgraderingar köpta: resten kommer med berättelsen"
+
+#: src/cheats/cheat_menu.cpp:177
+#, fuzzy
+msgid "Mojo toward the next upgrade: %s / %s"
+msgstr "Mojo mot nästa uppgradering: %s / %s"
+
+#: src/cheats/cheat_menu.cpp:180
+#, fuzzy
+msgid "Mojo toward upgrades: %s"
+msgstr "Mojo mot uppgraderingar: %s"
+
+#: src/cheats/cheat_menu.cpp:184
+#, fuzzy
+msgid "Health %.0f / %.0f"
+msgstr "Hälsa %.0f / %.0f"
+
+#: src/cheats/cheat_menu.cpp:190
+#, fuzzy
+msgid "Level up"
+msgstr "Nivå upp"
+
+#: src/cheats/cheat_menu.cpp:192
+#, fuzzy
+msgid "Buys this titan's next upgrade (with the game's upgrade screen)."
+msgstr "Köper titanens nästa uppgradering (med spelets uppgraderingsskärm)."
+
+#: src/cheats/cheat_menu.cpp:193
+#, fuzzy
+msgid ""
+"Gives Crash the mojo his level's script waits for: the game then\n"
+"upgrades him itself (screen and all). If nothing happens, the\n"
+"script isn't waiting for an upgrade right now."
+msgstr ""
+"Ger Crash den mojo som banans skript väntar på: spelet\n"
+"uppgraderar honom sedan självt (skärm och allt). Händer inget,\n"
+"väntar skriptet inte på någon uppgradering just nu."
+
+#: src/cheats/cheat_menu.cpp:197
+#, fuzzy
+msgid "Max level"
+msgstr "Maxnivå"
+
+#: src/cheats/cheat_menu.cpp:198
+#, fuzzy
+msgid "Buys every upgrade left at once (no screens)."
+msgstr "Köper alla återstående uppgraderingar på en gång (utan skärmar)."
+
+#: src/cheats/cheat_menu.cpp:199
+#, fuzzy
+msgid ""
+"Feeds Crash every upgrade his scripts ask for, one at a time:\n"
+"close each \"Level Up!\" screen (B) for the next one.\n"
+"Mojo buys 18 of them (the last at 220,000); the others\n"
+"of the 32 are unlocked by the story."
+msgstr ""
+"Ger Crash varje uppgradering hans skript ber om, en i taget:\n"
+"stäng varje \"Nivå upp!\"-skärm (B) för nästa.\n"
+"Mojo köper 18 av dem (den sista vid 220 000); resten\n"
+"av de 32 låses upp av berättelsen."
+
+#: src/cheats/cheat_menu.cpp:209
+#, fuzzy
+msgid "+{} mojo, as if picked up"
+msgstr "+{} mojo, som om upplockad"
+
+#: src/cheats/cheat_menu.cpp:212
+#, fuzzy
+msgid "Refill health"
+msgstr "Fyll på hälsan"
+
+#: src/cheats/cheat_menu.cpp:216
+#, fuzzy
+msgid "Kill"
+msgstr "Döda"
+
+#: src/cheats/cheat_menu.cpp:219
+#, fuzzy
+msgid ""
+"In a titan: the titan dies and the player is thrown out.\n"
+"On foot: the player dies (back at the checkpoint). Works with god mode."
+msgstr ""
+"I en titan: titanen dör och spelaren kastas ut.\n"
+"Till fots: spelaren dör (tillbaka vid kontrollpunkten). Fungerar med gudaläge."
+
+#: src/cheats/cheat_menu.cpp:223
+#, fuzzy
+msgid "Free jack"
+msgstr "Gratis kapning"
+
+#: src/cheats/cheat_menu.cpp:226
+#, fuzzy
+msgid ""
+"The game's Free Jack power-up: jack any titan (B) without beating\n"
+"it first. Lasts until the next jack. On foot only."
+msgstr ""
+"Spelets Gratis kapning-power-up: kapa vilken titan som helst (B) utan att besegra\n"
+"den först. Varar till nästa kapning. Bara till fots."
+
+#: src/cheats/cheat_menu.cpp:233
+#, fuzzy
+msgid "Spawn"
+msgstr "Framkalla"
+
+#: src/cheats/cheat_menu.cpp:258
+#, fuzzy
+msgid "How many"
+msgstr "Hur många"
+
+#: src/cheats/cheat_menu.cpp:261
+#, fuzzy
+msgid "Ready to jack"
+msgstr "Redo att kapas"
+
+#: src/cheats/cheat_menu.cpp:263
+#, fuzzy
+msgid ""
+"Arrives already down, ready to jack: walk up and press B.\n"
+"Off: a normal titan, ready to fight. Or use Free jack (Character)."
+msgstr ""
+"Kommer redan nedslagen, redo att kapas: gå fram och tryck B.\n"
+"Av: en vanlig titan, redo att slåss. Eller använd Gratis kapning (Figur)."
+
+#: src/cheats/cheat_menu.cpp:268
+#, fuzzy
+msgid "Spawn in front of player {}"
+msgstr "Framkalla framför spelare {}"
+
+#: src/cheats/cheat_menu.cpp:275
+#, fuzzy
+msgid "or a template, e.g. Characters:Znu"
+msgstr "eller en mall, t.ex. Characters:Znu"
+
+#: src/cheats/cheat_menu.cpp:278
+#, fuzzy
+msgid ""
+"Any template the game's data names (\"Group:Name\"). Experimental:\n"
+"only titans are tested; other things can crash the game."
+msgstr ""
+"Vilken mall som helst som spelets data nämner (\"Grupp:Namn\"). Experimentellt:\n"
+"bara titaner är testade; annat kan få spelet att krascha."
+
+#: src/cheats/cheat_menu.cpp:282
+#, fuzzy
+msgid "Spawn by name"
+msgstr "Framkalla med namn"
+
+#: src/cheats/cheat_menu.cpp:287
+#, fuzzy
+msgid "Last: %s"
+msgstr "Senast: %s"
+
+#: src/cheats/cheat_menu.cpp:288
+#, fuzzy
+msgid "Not in this level? It's loaded first (takes a moment)."
+msgstr "Inte i den här banan? Den laddas först (tar en stund)."
+
+#: src/cheats/cheat_menu.cpp:293
+#, fuzzy
+msgid "Unlocks"
+msgstr "Upplåsningar"
+
+#: src/cheats/cheat_menu.cpp:305
+#, fuzzy
+msgid "Unlocked / all. Click to unlock all of them."
+msgstr "Upplåsta / alla. Klicka för att låsa upp alla."
+
+#: src/cheats/cheat_menu.cpp:307
+#, fuzzy
+msgid "Unlock everything"
+msgstr "Lås upp allt"
+
+#: src/cheats/cheat_menu.cpp:311
+#, fuzzy
+msgid ""
+"Every outfit (Coco and the titan suits included: pick them at the chest),\n"
+"concept art, enemy info and tutorial page, in the game being played.\n"
+"Kept when the game saves. Nobody's outfit changes by itself."
+msgstr ""
+"Varje utstyrsel (Coco och titandräkterna inräknade: välj dem vid kistan),\n"
+"konceptkonst, fiendeinfo och handledningssida, i spelet som spelas.\n"
+"Behålls när spelet sparar. Ingens utstyrsel ändras av sig själv."
+
+#: src/cheats/cheat_menu.cpp:319
+#, fuzzy
+msgid "Time"
+msgstr "Tid"
+
+#: src/cheats/cheat_menu.cpp:322
+#, fuzzy
+msgid "Game speed"
+msgstr "Spelhastighet"
+
+#: src/cheats/cheat_menu.cpp:333
+#, fuzzy
+msgid "Freeze"
+msgstr "Frys"
+
+#: src/cheats/cheat_menu.cpp:335
+#, fuzzy
+msgid ""
+"Everything stops; the picture keeps drawing (with the free camera:\n"
+"a photo mode). The game's own \"pause for screenshots\"."
+msgstr ""
+"Allt stannar; bilden ritas fortfarande (med den fria kameran:\n"
+"ett fotoläge). Spelets egen \"paus för skärmbilder\"."
+
+#: src/cheats/cheat_menu.cpp:339
+#, fuzzy
+msgid "Step one frame"
+msgstr "En bildruta framåt"
+
+#: src/cheats/cheat_menu.cpp:346
+#, fuzzy
+msgid "Dummy players"
+msgstr "Låtsasspelare"
+
+#: src/cheats/cheat_menu.cpp:349
+#, fuzzy
+msgid "No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml"
+msgstr "Inga låtsaskontroller. Lägg till  debug_fake_pads = 3  i user/settings.toml"
+
+#: src/cheats/cheat_menu.cpp:350
+#, fuzzy
+msgid "(1-3 dummies) and restart the game."
+msgstr "(1-3 låtsas) och starta om spelet."
+
+#: src/cheats/cheat_menu.cpp:353
+#, fuzzy
+msgid "START joins, B leaves a mask. Hold a direction on the pad to walk."
+msgstr "START går med, B lämnar en mask. Håll en riktning på plattan för att gå."
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Idle (buttons only)"
+msgstr "Overksam (bara knappar)"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 1"
+msgstr "Följ spelare 1"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 2"
+msgstr "Följ spelare 2"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 3"
+msgstr "Följ spelare 3"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Follow player 4"
+msgstr "Följ spelare 4"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 1"
+msgstr "Härma spelare 1"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 2"
+msgstr "Härma spelare 2"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 3"
+msgstr "Härma spelare 3"
+
+#: src/cheats/cheat_menu.cpp:356
+#, fuzzy
+msgid "Copy player 4"
+msgstr "Härma spelare 4"
+
+#: src/cheats/cheat_menu.cpp:361
+#, fuzzy
+msgid "Dummy controller %d: player %d"
+msgstr "Låtsaskontroll %d: spelare %d"
+
+#: src/cheats/cheat_menu.cpp:363
+#, fuzzy
+msgid "Dummy controller %d: plays as nobody (Controls -> Players)"
+msgstr "Låtsaskontroll %d: spelar som ingen (Kontroller -> Spelare)"
+
+#: src/cheats/cheat_menu.cpp:377
+#, fuzzy
+msgid ""
+"Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
+"below them. Copy: repeats that player's controller (not START / BACK).\n"
+"The buttons and the stick pad work in every mode."
+msgstr ""
+"Följ: går efter spelaren, stannar ~3 enheter bort, hoppar när den fastnar\n"
+"nedanför spelaren. Härma: upprepar spelarens handkontroll (inte START / BACK).\n"
+"Knapparna och spakplattan fungerar i alla lägen."
+
+#: src/cheats/cheat_menu.cpp:391
+#, fuzzy
+msgid ""
+"Which controller this dummy pretends to be. With Controller Icons on\n"
+"Automatic, the game detects it from its maker and model like a real pad\n"
+"and shows that player's prompts in its button pictures."
+msgstr ""
+"Vilken handkontroll den här låtsaskontrollen låtsas vara. Med Handkontrollsikoner på\n"
+"Automatisk känner spelet igen den på märke och modell som en riktig\n"
+"och visar spelarens tips med dess knappbilder."
+
+#: src/cheats/cheat_menu.cpp:434
+#, fuzzy
+msgid "Camera"
+msgstr "Kamera"
+
+#: src/cheats/cheat_menu.cpp:436
+#, fuzzy
+msgid "Free camera"
+msgstr "Fri kamera"
+
+#: src/cheats/cheat_menu.cpp:440
+#, fuzzy
+msgid "Keys move the camera"
+msgstr "Tangenterna flyttar kameran"
+
+#: src/cheats/cheat_menu.cpp:443
+#, fuzzy
+msgid ""
+"On: the keyboard and mouse fly the camera (Crash stands still;\n"
+"a controller still plays). Off: the camera stays put and the keys\n"
+"play the game again."
+msgstr ""
+"På: tangentbord och mus flyger kameran (Crash står still;\n"
+"en handkontroll spelar fortfarande). Av: kameran står kvar och tangenterna\n"
+"spelar spelet igen."
+
+#: src/cheats/cheat_menu.cpp:447
+#, fuzzy
+msgid "W A S D move, E / Q up / down, Shift fast, Ctrl slow,"
+msgstr "W A S D flytta, E / Q upp / ned, Skift snabbt, Ctrl långsamt,"
+
+#: src/cheats/cheat_menu.cpp:448
+#, fuzzy
+msgid "right mouse button held (or arrow keys) = look around"
+msgstr "höger musknapp hållen (eller piltangenter) = se dig omkring"
+
+#: src/cheats/cheat_menu.cpp:451
+#, fuzzy
+msgid "Flying speed"
+msgstr "Flyghastighet"
+
+#: src/cheats/cheat_menu.cpp:457
+#, fuzzy
+msgid "Look speed"
+msgstr "Blickhastighet"
+
+#: src/cheats/cheat_menu.cpp:460
+#, fuzzy
+msgid "Back to the game's camera"
+msgstr "Tillbaka till spelets kamera"
+
+#: src/cheats/cheat_menu.cpp:463
+#, fuzzy
+msgid "Camera at (%.1f, %.1f, %.1f)"
+msgstr "Kamera vid (%.1f, %.1f, %.1f)"
+
+#: src/cheats/cheats.cpp:105
+#, fuzzy
+msgid "Outfits"
+msgstr "Utstyrslar"
+
+#: src/cheats/cheats.cpp:106
+#, fuzzy
+msgid "Concept art"
+msgstr "Konceptkonst"
+
+#: src/cheats/cheats.cpp:107
+#, fuzzy
+msgid "Enemy info"
+msgstr "Fiendeinfo"
+
+#: src/cheats/cheats.cpp:108
+#, fuzzy
+msgid "Tutorials"
+msgstr "Handledningar"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "Cheats Enabled"
+msgstr "Fusk påslaget"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "No achievements until a save is loaded"
+msgstr "Inga prestationer förrän ett sparat spel läses in"
+
+#: src/cheats/cheats.cpp:698
+#, fuzzy
+msgid "this game was saved with cheats on"
+msgstr "det här spelet sparades med fusk på"
+
+#: src/cheats/cheats.cpp:699
+#, fuzzy
+msgid "cheats were used (until a save is loaded)"
+msgstr "fusk användes (tills ett sparat spel laddas)"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "Save Made With Cheats"
+msgstr "Sparat med fusk"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "No achievements while playing this save"
+msgstr "Inga prestationer med det här sparade spelet"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Crunch (boss)"
+msgstr "Crunch (boss)"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Cortex (boss)"
+msgstr "Cortex (boss)"
+
+#: src/cheats/spawn.cpp:448
+#, fuzzy
+msgid "Enemies"
+msgstr "Fiender"
+
+#: src/players/dummy_players.cpp:232
+#, fuzzy
+msgid "Test pad (no model)"
+msgstr "Testkontroll (ingen modell)"
+
+#: src/players/dummy_players.cpp:233
+#, fuzzy
+msgid "Xbox 360 controller"
+msgstr "Xbox 360-handkontroll"
+
+#: src/players/dummy_players.cpp:234
+#, fuzzy
+msgid "Xbox Series controller"
+msgstr "Xbox Series-handkontroll"
+
+#: src/players/dummy_players.cpp:235
+#, fuzzy
+msgid "PlayStation 4 (DualShock 4)"
+msgstr "PlayStation 4 (DualShock 4)"
+
+#: src/players/dummy_players.cpp:236
+#, fuzzy
+msgid "PlayStation 5 (DualSense)"
+msgstr "PlayStation 5 (DualSense)"
+
+#: src/players/dummy_players.cpp:237
+#, fuzzy
+msgid "Switch Pro controller"
+msgstr "Switch Pro-handkontroll"
+
+#: src/players/dummy_players.cpp:238
+#, fuzzy
+msgid "Another maker (8BitDo)"
+msgstr "Annat märke (8BitDo)"
+
+#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+#: src/players/lost_controller.cpp:189
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or Player {1}: press {2} to take over."
+msgstr ""
+"Spelare {0}s handkontroll är frånkopplad.\n"
+"Anslut den igen, eller spelare {1}: tryck på {2} för att ta över."
+
+#: src/players/lost_controller.cpp:193
+#, fuzzy
+msgid ""
+"Controller reconnected.\n"
+"Press any button to resume."
+msgstr ""
+"Handkontrollen är ansluten igen.\n"
+"Tryck på en knapp för att fortsätta."
+
+#: src/players/lost_controller.cpp:194
+#, fuzzy
+msgid ""
+"Controller disconnected.\n"
+"Reconnect your controller to continue."
+msgstr ""
+"Handkontrollen är frånkopplad.\n"
+"Anslut handkontrollen igen för att fortsätta."
+
+#. the question box (2 lines): {0} = the player's number.
+#: src/players/lost_controller.cpp:198
+#, fuzzy
+msgid ""
+"Player {0}'s controller is back.\n"
+"Player {0}: press any button to resume."
+msgstr ""
+"Spelare {0}s handkontroll är tillbaka.\n"
+"Spelare {0}: tryck på en knapp för att fortsätta."
+
+#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+#: src/players/lost_controller.cpp:205
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or press {1} to drop out Player {0}."
+msgstr ""
+"Spelare {0}s handkontroll är frånkopplad.\n"
+"Anslut den igen, eller tryck på {1} så hoppar spelare {0} av."
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Normal"
+msgstr "Vanlig"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Greeny"
+msgstr "Gröningen"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Bluey"
+msgstr "Blåingen"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Reddy"
+msgstr "Rödingen"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Snipe"
+msgstr "Sniken"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Ratcicle"
+msgstr "Frysråtta"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Magmadon"
+msgstr "Magmadon"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Skeleton"
+msgstr "Skelett"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Spike"
+msgstr "Tagg"
+
+#. the heroes' names, as the game writes them in this language.
+#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#, fuzzy
+msgid "Coco"
+msgstr "Coco"
+
+#: src/players/outfit_picker.cpp:509
+#, fuzzy
+msgid "Old School"
+msgstr "Klassikern"
+
+#: src/players/outfit_picker.cpp:520
+#, fuzzy
+msgid "Orange"
+msgstr "Orange"
+
+#. the heroes' names, as the game writes them in this language.
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#, fuzzy
+msgid "Crash"
+msgstr "Crash"
+
+#: src/players/outfit_picker.cpp:1091
+#, fuzzy
+msgid "Wear"
+msgstr "Ta på"
+
+#. the chest: this player has picked an outfit.
+#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#, fuzzy
+msgid "Ready!"
+msgstr "Klar!"
+
+#. {0} = the B button's picture (change the pick again).
+#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#, fuzzy
+msgid "{0} Change"
+msgstr "{0} Ändra"
+
+#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#, fuzzy
+msgid "Loading"
+msgstr "Laddar"
+
+#. {0} = the A button's picture (wear this outfit).
+#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#, fuzzy
+msgid "{0} Wear"
+msgstr "{0} Ta på"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Ruby"
+msgstr "Rubin"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Exactly the same in every way but red"
+msgstr "Exakt likadan, fast röd"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Topaz"
+msgstr "Topas"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Exactly the same in every way but yellow"
+msgstr "Exakt likadan, fast gul"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Jade"
+msgstr "Jade"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Exactly the same in every way but green"
+msgstr "Exakt likadan, fast grön"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Sapphire"
+msgstr "Safir"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Exactly the same in every way but blue"
+msgstr "Exakt likadan, fast blå"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Amethyst"
+msgstr "Ametist"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Exactly the same in every way but purple"
+msgstr "Exakt likadan, fast lila"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Rose Quartz"
+msgstr "Rosenkvarts"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Exactly the same in every way but pink"
+msgstr "Exakt likadan, fast rosa"
+
+#: src/players/outfits.cpp:239
+#, fuzzy
+msgid "Carbon"
+msgstr "Kopia"
+
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfits.cpp:852
+#, fuzzy
+msgctxt "outfit name"
+msgid "{0} {1}"
+msgstr "{0}-{1}"
+
+#: src/players/pause_drop_out.cpp:43
+#, fuzzy
+msgid "Drop Out"
+msgstr "Hoppa av"
+
+#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
 #, fuzzy
 msgid "Press a Key"
 msgstr "Tryck på en tangent"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:853
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Tryck på den nya andra tangenten eller musknappen för {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:855
+#: src/options/options_menu.cpp:854
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Tryck på den nya tangenten eller musknappen för {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:872
+#: src/options/options_menu.cpp:871
 #, fuzzy
 msgid "Second Key"
 msgstr "Andra tangent"
 
-#: src/options/options_menu.cpp:878
+#: src/options/options_menu.cpp:877
 #, fuzzy
 msgid "Remove Key"
 msgstr "Ta bort tangent"
 
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jan"
-msgstr "jan."
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Feb"
-msgstr "feb."
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Mar"
-msgstr "mars"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Apr"
-msgstr "apr."
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "May"
-msgstr "maj"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jun"
-msgstr "juni"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Jul"
-msgstr "juli"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Aug"
-msgstr "aug."
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Sep"
-msgstr "sep."
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Oct"
-msgstr "okt."
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Nov"
-msgstr "nov."
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Dec"
-msgstr "dec."
-
-#. a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
-#: src/options/options_menu.cpp:1006
-#, fuzzy
-msgid "{0} {1} {2}"
-msgstr "{0} {1} {2}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
-#, fuzzy
-msgid "Earned {0}"
-msgstr "Uppnådd {0}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
+#: src/options/options_menu.cpp:1050
 #, fuzzy
 msgid "Locked"
 msgstr "Låst"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1300
 #, fuzzy
 msgid "Confirm"
 msgstr "Bekräfta"
 
-#: src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1331 src/players/outfit_picker.cpp:1090
-#, fuzzy
-msgid "Back"
-msgstr "Tillbaka"
-
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Swap"
 msgstr "Byt"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Move Here"
 msgstr "Flytta hit"
 
-#: src/options/options_menu.cpp:1324
+#: src/options/options_menu.cpp:1306 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1309
 #, fuzzy
 msgid "Buttons"
 msgstr "Knappar"
 
-#: src/options/options_menu.cpp:1328
+#: src/options/options_menu.cpp:1310
 #, fuzzy
 msgid "Move"
 msgstr "Flytta"
 
-#: src/options/options_menu.cpp:1329
+#: src/options/options_menu.cpp:1311
 #, fuzzy
 msgid "Remove"
 msgstr "Ta bort"
 
-#: src/options/options_menu.cpp:1452
+#: src/options/options_menu.cpp:1434
 #, fuzzy
 msgid "No room for this player"
 msgstr "Ingen plats för den här spelaren"
 
-#: src/options/options_menu.cpp:1456 src/options/options_menu.cpp:1464
+#: src/options/options_menu.cpp:1438 src/options/options_menu.cpp:1446
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tangentbord och mus"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Till spelare {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Pick a player"
 msgstr "Välj en spelare"
 
-#: src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1448
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Tryck på en knapp för att ansluta"
 
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1850
 #, fuzzy
 msgid "Not changed."
 msgstr "Inte ändrat."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1875
+#: src/options/options_menu.cpp:1857
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} används av menyerna ({1}): välj en annan tangent."
 
-#: src/options/options_menu.cpp:1887
+#: src/options/options_menu.cpp:1869
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} var tangenten för {1}: nu hör den till {2}."
 
-#: src/options/options_menu.cpp:1908
+#: src/options/options_menu.cpp:1890
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ingen tangent att ta bort."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1916
+#: src/options/options_menu.cpp:1898
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} borttagen."
@@ -279,7 +1960,7 @@ msgstr "Bildfrekvensgräns"
 msgid "30 (original)"
 msgstr "30 (original)"
 
-#: src/options/options_settings.cpp:182
+#: src/options/options_settings.cpp:182 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
 #, fuzzy
 msgid "Unlimited"
 msgstr "Obegränsad"
@@ -294,7 +1975,7 @@ msgstr "Det högsta antalet bilder per sekund som spelet ritar. Originalet går 
 msgid "Above 60, jumps and timings may feel different."
 msgstr "Över 60 kan hopp och tajming kännas annorlunda."
 
-#: src/options/options_settings.cpp:213
+#: src/options/options_settings.cpp:213 launcher/settings_page.cpp:390
 #, fuzzy
 msgid "Renderer"
 msgstr "Grafikmotor"
@@ -504,12 +2185,12 @@ msgstr "HUD:en behåller HUD-storleken ovanför med valfritt antal spelare."
 msgid "Window Mode"
 msgstr "Fönsterläge"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Windowed"
 msgstr "Fönster"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Fullscreen"
 msgstr "Helskärm"
@@ -524,12 +2205,12 @@ msgstr "Spelar i ett fönster du kan flytta och ändra storlek på."
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr "Fyller hela skärmen (den som är vald under Skärm)."
 
-#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443
+#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
 #, fuzzy
 msgid "Monitor"
 msgstr "Skärm"
 
-#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799
+#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799 launcher/settings_page.cpp:471
 #, fuzzy
 msgid "Automatic"
 msgstr "Automatisk"
@@ -1214,11 +2895,6 @@ msgstr "Fönster i bakgrunden"
 msgid "Keep Playing"
 msgstr "Fortsätt spela"
 
-#: src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Pause"
-msgstr "Paus"
-
 #: src/options/options_settings.cpp:858
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
@@ -1364,7 +3040,7 @@ msgstr "Snurra och tryck sedan på {0} om och om igen för att fortsätta, som i
 msgid "Turn on Simple Spinning first."
 msgstr "Slå på Enkel snurr först."
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:976 launcher/settings_page.cpp:497
 #, fuzzy
 msgid "Co-op"
 msgstr "Samarbete"
@@ -1580,11 +3256,6 @@ msgstr "Effekter"
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Hur höga slag, lådor, fotsteg och resten är."
 
-#: src/options/options_settings.cpp:1139
-#, fuzzy
-msgid "Controls"
-msgstr "Kontroller"
-
 #: src/options/options_settings.cpp:1140
 #, fuzzy
 msgid "Gameplay"
@@ -1595,7 +3266,7 @@ msgstr "Spelupplägg"
 msgid "Language"
 msgstr "Språk"
 
-#: src/options/options_settings.cpp:1185
+#: src/options/options_settings.cpp:1185 launcher/main.cpp:1051
 #, fuzzy
 msgid "None"
 msgstr "Ingen"
@@ -1627,16 +3298,6 @@ msgstr "Gå (håll)"
 
 #: src/options/options_settings.cpp:1208
 #, fuzzy
-msgid "Spin"
-msgstr "Snurra"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
-msgid "Jump"
-msgstr "Hoppa"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
 msgid "Light Attack"
 msgstr "Lätt attack"
 
@@ -1664,11 +3325,6 @@ msgstr "Titanens specialattack"
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Plocka på / Ta fram"
-
-#: src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Map"
-msgstr "Karta"
 
 #: src/options/options_settings.cpp:1210
 #, fuzzy
@@ -1755,275 +3411,1651 @@ msgstr "Tryck vänster spak"
 msgid "Right Stick Click"
 msgstr "Tryck höger spak"
 
-#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: launcher/desktop_entry.cpp:138 launcher/report.cpp:518 launcher/settings.cpp:284
+#, fuzzy
+msgid "Couldn't write {0}"
+msgstr "Kunde inte skriva {0}"
+
+#: launcher/desktop_entry.cpp:144
+#, fuzzy
+msgid "Couldn't write {0}: {1}"
+msgstr "Kunde inte skriva {0}: {1}"
+
+#: launcher/desktop_entry.cpp:292
+#, fuzzy
+msgid "Couldn't write the Start menu shortcut."
+msgstr "Kunde inte skriva genvägen i Start-menyn."
+
+#: launcher/desktop_entry.cpp:315
+#, fuzzy
+msgid "Couldn't remove the Start menu shortcut: {0}"
+msgstr "Kunde inte ta bort genvägen i Start-menyn: {0}"
+
+#: launcher/desktop_entry.cpp:346
+#, fuzzy
+msgid "Couldn't remove {0}: {1}"
+msgstr "Kunde inte ta bort {0}: {1}"
+
+#: launcher/game_process.cpp:98
+#, fuzzy
+msgid "The game is already running."
+msgstr "Spelet körs redan."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jan"
+msgstr "jan."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Feb"
+msgstr "feb."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Mar"
+msgstr "mars"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Apr"
+msgstr "apr."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "May"
+msgstr "maj"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jun"
+msgstr "juni"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Jul"
+msgstr "juli"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Aug"
+msgstr "aug."
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Sep"
+msgstr "sep."
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Oct"
+msgstr "okt."
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Nov"
+msgstr "nov."
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Dec"
+msgstr "dec."
+
+#: launcher/main.cpp:212
+#, fuzzy
+msgid "%ld h %02ld min"
+msgstr "%ld h %02ld min"
+
+#: launcher/main.cpp:214
+#, fuzzy
+msgid "%ld min"
+msgstr "%ld min"
+
+#: launcher/main.cpp:216
+#, fuzzy
+msgid "%ld s"
+msgstr "%ld s"
+
+#. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
+#: launcher/main.cpp:228
+#, fuzzy
+msgid "%s %d, %02d:%02d"
+msgstr "%s %d, %02d:%02d"
+
+#: launcher/main.cpp:249
+#, fuzzy
+msgid "today %02d:%02d"
+msgstr "i dag %02d:%02d"
+
+#: launcher/main.cpp:251
+#, fuzzy
+msgid "yesterday %02d:%02d"
+msgstr "i går %02d:%02d"
+
+#: launcher/main.cpp:253
+#, fuzzy
+msgid "%ld days ago"
+msgstr "för %ld dagar sedan"
+
+#: launcher/main.cpp:255
+#, fuzzy
+msgid "%s %d"
+msgstr "%s %d"
+
+#: launcher/main.cpp:378
+#, fuzzy
+msgid "Mind over Recomp"
+msgstr "Mind over Recomp"
+
+#: launcher/main.cpp:384
+#, fuzzy
+msgid "(alpha)"
+msgstr "(alfa)"
+
+#: launcher/main.cpp:388
+#, fuzzy
+msgid "An unofficial PC port of Crash: Mind over Mutant"
+msgstr "En inofficiell PC-port av Crash: Mind over Mutant"
+
+#: launcher/main.cpp:403
+#, fuzzy
+msgid "Couldn't find the game."
+msgstr "Hittade inte spelet."
+
+#: launcher/main.cpp:404
+#, fuzzy
+msgid "Put the launcher in the game's folder (next to program/), or start it with --game_folder=<path to the game folder>."
+msgstr "Lägg startprogrammet i spelets mapp (bredvid program/), eller starta det med --game_folder=<sökväg till spelmappen>."
+
+#: launcher/main.cpp:410
+#, fuzzy
+msgid "The game isn't ready to play yet."
+msgstr "Spelet är inte redo att spelas än."
+
+#: launcher/main.cpp:411
+#, fuzzy
+msgid "Open Setup"
+msgstr "Öppna Installation"
+
+#: launcher/main.cpp:417
+#, fuzzy
+msgid "The game isn't built yet."
+msgstr "Spelet är inte byggt än."
+
+#: launcher/main.cpp:418
+#, fuzzy
+msgid "Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."
+msgstr "Väntades i {0}. Bygg det först (docs/01-building.md, steg 2 till 4)."
+
+#: launcher/main.cpp:423
+#, fuzzy
+msgid "The disc's files aren't there."
+msgstr "Skivans filer finns inte där."
+
+#: launcher/main.cpp:424
+#, fuzzy
+msgid "Expected in {0} (default.xex and the rest). Extract your disc image first (docs/01-building.md, step 1)."
+msgstr "Väntades i {0} (default.xex och resten). Packa upp din skivavbild först (docs/01-building.md, steg 1)."
+
+#: launcher/main.cpp:436
+#, fuzzy
+msgid "Playing"
+msgstr "Spelar"
+
+#: launcher/main.cpp:440
+#, fuzzy
+msgid "for %s"
+msgstr "i %s"
+
+#: launcher/main.cpp:441
+#, fuzzy
+msgid "The game is running in its own window. This window can stay open: it shows how the session ended when the game closes."
+msgstr "Spelet körs i sitt eget fönster. Det här fönstret kan vara öppet: det visar hur sessionen slutade när spelet stängs."
+
+#: launcher/main.cpp:443
+#, fuzzy
+msgid "Watch the game log"
+msgstr "Följ spelets logg"
+
+#: launcher/main.cpp:447
+#, fuzzy
+msgid "Stop the game..."
+msgstr "Stoppa spelet..."
+
+#: launcher/main.cpp:449 launcher/main.cpp:451
+#, fuzzy
+msgid "Stop the game?"
+msgstr "Stoppa spelet?"
+
+#: launcher/main.cpp:452
+#, fuzzy
+msgid "Progress since your last save is lost."
+msgstr "Framsteg sedan du senast sparade går förlorade."
+
+#: launcher/main.cpp:454
+#, fuzzy
+msgid "Stop it"
+msgstr "Stoppa det"
+
+#: launcher/main.cpp:459
+#, fuzzy
+msgid "Keep playing"
+msgstr "Spela vidare"
+
+#: launcher/main.cpp:473
+#, fuzzy
+msgid "The game crashed after %s"
+msgstr "Spelet kraschade efter %s"
+
+#: launcher/main.cpp:475
+#, fuzzy
+msgid "The game was ended from outside after %s"
+msgstr "Spelet avslutades utifrån efter %s"
+
+#: launcher/main.cpp:477
+#, fuzzy
+msgid "The game was stopped after %s"
+msgstr "Spelet stoppades efter %s"
+
+#: launcher/main.cpp:479
+#, fuzzy
+msgid "The game quit with an error (code %d) after %s"
+msgstr "Spelet avslutades med ett fel (kod %d) efter %s"
+
+#: launcher/main.cpp:482
+#, fuzzy
+msgid "The game closed normally after %s"
+msgstr "Spelet stängdes normalt efter %s"
+
+#: launcher/main.cpp:487
+#, fuzzy
+msgid "Ended by %s.%s"
+msgstr "Avslutat av %s.%s"
+
+#: launcher/main.cpp:489
+#, fuzzy
+msgid " (Also what the system does when memory runs out.)"
+msgstr " (Det är också vad systemet gör när minnet tar slut.)"
+
+#: launcher/main.cpp:493 launcher/setup.cpp:1455
+#, fuzzy
+msgid "Log: %s"
+msgstr "Logg: %s"
+
+#: launcher/main.cpp:497
+#, fuzzy
+msgid " Errors: %d (%d different), warnings: %d (%d different)"
+msgstr " Fel: %d (%d olika), varningar: %d (%d olika)"
+
+#: launcher/main.cpp:502
+#, fuzzy
+msgid "Frame rate: %s"
+msgstr "Bildfrekvens: %s"
+
+#: launcher/main.cpp:505
+#, fuzzy
+msgid "Open the log"
+msgstr "Öppna loggen"
+
+#: launcher/main.cpp:509 launcher/main.cpp:816 launcher/main.cpp:846
+#, fuzzy
+msgid "Logs folder"
+msgstr "Loggmapp"
+
+#: launcher/main.cpp:513
+#, fuzzy
+msgid "Show the game log"
+msgstr "Visa spelets logg"
+
+#: launcher/main.cpp:519 launcher/main.cpp:520 launcher/main.cpp:694
+#, fuzzy
+msgid "Report a problem..."
+msgstr "Rapportera ett problem..."
+
+#: launcher/main.cpp:524 launcher/main.cpp:758 launcher/setup.cpp:1450
+#, fuzzy
+msgid "OK"
+msgstr "OK"
+
+#: launcher/main.cpp:536 launcher/main.cpp:663 launcher/main.cpp:1207
+#, fuzzy
+msgid "Play"
+msgstr "Spela"
+
+#: launcher/main.cpp:542
+#, fuzzy
+msgid "From the start"
+msgstr "Från början"
+
+#: launcher/main.cpp:544
+#, fuzzy
+msgid "Intro movies (Esc or Start skips them), the title screen and the menus."
+msgstr "Introfilmer (Esc eller Start hoppar över dem), titelskärmen och menyerna."
+
+#: launcher/main.cpp:553
+#, fuzzy
+msgid "Continue"
+msgstr "Fortsätt"
+
+#. Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
+#: launcher/main.cpp:564
+#, fuzzy
+msgid "%d%%  ·  %s  ·  played %s. Straight in: no movies or menus."
+msgstr "%d%%  ·  %s  ·  spelat %s. Rakt in: inga filmer eller menyer."
+
+#: launcher/main.cpp:581
+#, fuzzy
+msgid "Your saves"
+msgstr "Dina sparade spel"
+
+#: launcher/main.cpp:584
+#, fuzzy
+msgid "(%zu)"
+msgstr "(%zu)"
+
+#: launcher/main.cpp:586
+#, fuzzy
+msgid "No saves yet. Start a New Game from the main menu: it makes its own save."
+msgstr "Inga sparade spel än. Starta ett Nytt spel från huvudmenyn: det gör ett eget sparat spel."
+
+#: launcher/main.cpp:593
+#, fuzzy
+msgid "Find a save..."
+msgstr "Hitta ett sparat spel..."
+
+#: launcher/main.cpp:604
+#, fuzzy
+msgid "Name"
+msgstr "Namn"
+
+#: launcher/main.cpp:605
+#, fuzzy
+msgid "Progress"
+msgstr "Framsteg"
+
+#: launcher/main.cpp:606
+#, fuzzy
+msgid "Play time"
+msgstr "Speltid"
+
+#: launcher/main.cpp:607
+#, fuzzy
+msgid "Difficulty"
+msgstr "Svårighetsgrad"
+
+#: launcher/main.cpp:608
+#, fuzzy
+msgid "Last played"
+msgstr "Senast spelat"
+
+#: launcher/main.cpp:635
+#, fuzzy
+msgid "(no name)"
+msgstr "(inget namn)"
+
+#: launcher/main.cpp:648
+#, fuzzy
+msgid "Save file %d, saved %s"
+msgstr "Sparfil %d, sparad %s"
+
+#: launcher/main.cpp:676
+#, fuzzy
+msgid "Open:"
+msgstr "Öppna:"
+
+#: launcher/main.cpp:682
+#, fuzzy
+msgid "Photos (F10)"
+msgstr "Foton (F10)"
+
+#: launcher/main.cpp:686
+#, fuzzy
+msgid "Logs"
+msgstr "Loggar"
+
+#: launcher/main.cpp:690
+#, fuzzy
+msgid "Settings file"
+msgstr "Inställningsfil"
+
+#: launcher/main.cpp:699
+#, fuzzy
+msgid "Add to the applications menu"
+msgstr "Lägg till i programmenyn"
+
+#: launcher/main.cpp:700
+#, fuzzy
+msgid "Update the menu entry"
+msgstr "Uppdatera menyposten"
+
+#: launcher/main.cpp:701
+#, fuzzy
+msgid "Remove from the menu"
+msgstr "Ta bort från menyn"
+
+#: launcher/main.cpp:723
+#, fuzzy
+msgid "The launcher is in your applications menu (right-click it there for \"Continue last save\")."
+msgstr "Startprogrammet finns i din programmeny (högerklicka det där för \"Fortsätt senast sparade spel\")."
+
+#: launcher/main.cpp:725
+#, fuzzy
+msgid "Puts the launcher in your desktop's applications menu, with a \"Continue last save\" shortcut on right-click."
+msgstr "Lägger startprogrammet i skrivbordets programmeny, med en genväg \"Fortsätt senast sparade spel\" vid högerklick."
+
+#: launcher/main.cpp:738
+#, fuzzy
+msgid "Version %s is out."
+msgstr "Version %s är ute."
+
+#: launcher/main.cpp:740
+#, fuzzy
+msgid "See the update"
+msgstr "Se uppdateringen"
+
+#: launcher/main.cpp:752
+#, fuzzy
+msgid "Updated to %s"
+msgstr "Uppdaterad till %s"
+
+#: launcher/main.cpp:754
+#, fuzzy
+msgid "What's new:"
+msgstr "Nyheter:"
+
+#: launcher/main.cpp:762 launcher/setup.cpp:678
+#, fuzzy
+msgid "Release page"
+msgstr "Utgivningssida"
+
+#: launcher/main.cpp:771
+#, fuzzy
+msgid "Building the game for this version..."
+msgstr "Bygger spelet för den här versionen..."
+
+#: launcher/main.cpp:773
+#, fuzzy
+msgid "Watch it in Setup"
+msgstr "Följ i Installation"
+
+#: launcher/main.cpp:778
+#, fuzzy
+msgid "The game isn't rebuilt for this version yet: Play starts the old build."
+msgstr "Spelet är inte ombyggt för den här versionen än: Spela startar det gamla bygget."
+
+#: launcher/main.cpp:780
+#, fuzzy
+msgid "Rebuild it in Setup"
+msgstr "Bygg om det i Installation"
+
+#: launcher/main.cpp:793
+#, fuzzy
+msgid "The game is already running (started some other way)."
+msgstr "Spelet körs redan (startat på annat sätt)."
+
+#: launcher/main.cpp:794
+#, fuzzy
+msgid "Close it first: two copies at once would fight over the saves."
+msgstr "Stäng det först: två kopior samtidigt skulle bråka om de sparade spelen."
+
+#: launcher/main.cpp:814
+#, fuzzy
+msgid "Nothing yet: once the game starts from here, its log shows up in this tab as it is written. Earlier sessions' logs are in the logs folder."
+msgstr "Inget än: när spelet startas härifrån visas dess logg i den här fliken medan den skrivs. Loggar från tidigare sessioner finns i loggmappen."
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Live"
+msgstr "Live"
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Last session"
+msgstr "Senaste session"
+
+#: launcher/main.cpp:827
+#, fuzzy
+msgid " Errors: %d"
+msgstr " Fel: %d"
+
+#: launcher/main.cpp:829
+#, fuzzy
+msgid "Warnings: %d (%d different)"
+msgstr "Varningar: %d (%d olika)"
+
+#: launcher/main.cpp:835
+#, fuzzy
+msgid "Show only lines containing..."
+msgstr "Visa bara rader som innehåller..."
+
+#: launcher/main.cpp:838
+#, fuzzy
+msgid "Errors and warnings only"
+msgstr "Bara fel och varningar"
+
+#: launcher/main.cpp:840
+#, fuzzy
+msgid "Follow new lines"
+msgstr "Följ nya rader"
+
+#: launcher/main.cpp:842
+#, fuzzy
+msgid "Open in an editor"
+msgstr "Öppna i en redigerare"
+
+#: launcher/main.cpp:877
+#, fuzzy
+msgid "(the first %zu lines are only in the file)"
+msgstr "(de första %zu raderna finns bara i filen)"
+
+#: launcher/main.cpp:954 launcher/main.cpp:961
+#, fuzzy
+msgid "Report a problem"
+msgstr "Rapportera ett problem"
+
+#: launcher/main.cpp:964
+#, fuzzy
+msgid "Makes one .zip file with what's needed to look into a problem: the logs of the sessions you pick, your settings and a short summary (version, system, graphics card), plus a save if you pick one. Nothing is sent anywhere: you attach the file to a bug report yourself. Your home folder's name is taken out of the files."
+msgstr "Gör en .zip-fil med det som behövs för att undersöka ett problem: loggarna från sessionerna du väljer, dina inställningar och en kort sammanfattning (version, system, grafikkort), plus ett sparat spel om du väljer ett. Inget skickas någonstans: du bifogar själv filen till en felrapport. Namnet på din hemmapp tas bort ur filerna."
+
+#: launcher/main.cpp:971
+#, fuzzy
+msgid "What happened?"
+msgstr "Vad hände?"
+
+#: launcher/main.cpp:974
+#, fuzzy
+msgid "(optional: where in the game, what you did, what you saw)"
+msgstr "(valfritt: var i spelet, vad du gjorde, vad du såg)"
+
+#: launcher/main.cpp:980
+#, fuzzy
+msgid "Sessions to include"
+msgstr "Sessioner att ta med"
+
+#: launcher/main.cpp:983
+#, fuzzy
+msgid "(newest first)"
+msgstr "(nyaste först)"
+
+#: launcher/main.cpp:985
+#, fuzzy
+msgid "No game sessions logged yet."
+msgstr "Inga spelsessioner loggade än."
+
+#: launcher/main.cpp:996
+#, fuzzy
+msgid "When"
+msgstr "När"
+
+#: launcher/main.cpp:997
+#, fuzzy
+msgid "Played"
+msgstr "Spelat"
+
+#: launcher/main.cpp:998
+#, fuzzy
+msgid "How it ended"
+msgstr "Hur det slutade"
+
+#: launcher/main.cpp:1025
+#, fuzzy
+msgid "(not recorded)"
+msgstr "(inte registrerat)"
+
+#: launcher/main.cpp:1032
+#, fuzzy
+msgid "Settings and controls (settings.toml, controls.toml)"
+msgstr "Inställningar och kontroller (settings.toml, controls.toml)"
+
+#: launcher/main.cpp:1034
+#, fuzzy
+msgid "The newest Setup log (for problems while setting up or building)"
+msgstr "Den nyaste installationsloggen (för problem vid installation eller bygge)"
+
+#: launcher/main.cpp:1047
+#, fuzzy
+msgid "Include a save:"
+msgstr "Ta med ett sparat spel:"
+
+#. A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
+#: launcher/main.cpp:1055
+#, fuzzy
+msgid "{0}  {1}  ({2}%, saved {3})"
+msgstr "{0}  {1}  ({2} %, sparat {3})"
+
+#: launcher/main.cpp:1068
 #, fuzzy
 msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or Player {1}: press {2} to take over."
+"A save near the spot where it happens lets the problem be seen first-hand.\n"
+"It holds the save's name and the game's progress, nothing else."
 msgstr ""
-"Spelare {0}s handkontroll är frånkopplad.\n"
-"Anslut den igen, eller spelare {1}: tryck på {2} för att ta över."
+"Ett sparat spel nära platsen där det händer låter problemet ses med egna ögon.\n"
+"Det innehåller det sparade spelets namn och spelets framsteg, inget annat."
 
-#: src/players/lost_controller.cpp:193
+#: launcher/main.cpp:1074
 #, fuzzy
-msgid ""
-"Controller reconnected.\n"
-"Press any button to resume."
-msgstr ""
-"Handkontrollen är ansluten igen.\n"
-"Tryck på en knapp för att fortsätta."
+msgid "F10 photos taken in those sessions (%d files, %.1f MB)"
+msgstr "F10-foton tagna under de sessionerna (%d filer, %.1f MB)"
 
-#: src/players/lost_controller.cpp:194
+#: launcher/main.cpp:1091
 #, fuzzy
-msgid ""
-"Controller disconnected.\n"
-"Reconnect your controller to continue."
-msgstr ""
-"Handkontrollen är frånkopplad.\n"
-"Anslut handkontrollen igen för att fortsätta."
+msgid "Save the report in:"
+msgstr "Spara rapporten i:"
 
-#. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: launcher/main.cpp:1093
 #, fuzzy
-msgid ""
-"Player {0}'s controller is back.\n"
-"Player {0}: press any button to resume."
-msgstr ""
-"Spelare {0}s handkontroll är tillbaka.\n"
-"Spelare {0}: tryck på en knapp för att fortsätta."
+msgid "Change..."
+msgstr "Ändra..."
 
-#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: launcher/main.cpp:1099
 #, fuzzy
-msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or press {1} to drop out Player {0}."
-msgstr ""
-"Spelare {0}s handkontroll är frånkopplad.\n"
-"Anslut den igen, eller tryck på {1} så hoppar spelare {0} av."
+msgid "Back to the default"
+msgstr "Tillbaka till standard"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/main.cpp:1116
 #, fuzzy
+msgid "Make the report"
+msgstr "Gör rapporten"
+
+#: launcher/main.cpp:1152
+#, fuzzy
+msgid "Report saved:"
+msgstr "Rapport sparad:"
+
+#: launcher/main.cpp:1154
+#, fuzzy
+msgid "%s (%.1f MB)"
+msgstr "%s (%.1f MB)"
+
+#: launcher/main.cpp:1161
+#, fuzzy
+msgid "Inside: %s"
+msgstr "Innehåll: %s"
+
+#: launcher/main.cpp:1163
+#, fuzzy
+msgid "Show the file"
+msgstr "Visa filen"
+
+#: launcher/main.cpp:1167
+#, fuzzy
+msgid "Open the bug report form on GitHub"
+msgstr "Öppna felrapportformuläret på GitHub"
+
+#: launcher/main.cpp:1171
+#, fuzzy
+msgid "Copy the summary"
+msgstr "Kopiera sammanfattningen"
+
+#: launcher/main.cpp:1174
+#, fuzzy
+msgid "The form opens with the version, system, graphics card and settings filled in. Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub account is needed to post. No account? Send the .zip to whoever asked for it.)"
+msgstr "Formuläret öppnas med version, system, grafikkort och inställningar redan ifyllda. Beskriv problemet där och dra .zip-filen till dess ruta \"Log\". (Det krävs ett GitHub-konto för att posta. Inget konto? Skicka .zip-filen till den som bad om den.)"
+
+#: launcher/main.cpp:1212
+#, fuzzy
+msgid "Settings"
+msgstr "Inställningar"
+
+#: launcher/main.cpp:1220
+#, fuzzy
+msgid "Setup"
+msgstr "Installation"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log (live)"
+msgstr "Spelets logg (live)"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log"
+msgstr "Spelets logg"
+
+#: launcher/report.cpp:672
+#, fuzzy
+msgid "Couldn't finish {0} (disk full?)"
+msgstr "Kunde inte göra klart {0} (disken full?)"
+
+#: launcher/saves.cpp:197
+#, fuzzy
+msgctxt "difficulty"
+msgid "Easy"
+msgstr "Lätt"
+
+#: launcher/saves.cpp:198
+#, fuzzy
+msgctxt "difficulty"
 msgid "Normal"
-msgstr "Vanlig"
+msgstr "Normal"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/saves.cpp:199
 #, fuzzy
-msgid "Greeny"
-msgstr "Gröningen"
+msgctxt "difficulty"
+msgid "Hard"
+msgstr "Svår"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/settings.cpp:105
 #, fuzzy
-msgid "Bluey"
-msgstr "Blåingen"
+msgid "The game isn't built yet: its settings come from the game itself."
+msgstr "Spelet är inte byggt än: dess inställningar kommer från spelet självt."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:120
 #, fuzzy
-msgid "Reddy"
-msgstr "Rödingen"
+msgid "The game couldn't list its settings (exit code {0}). A build from before 2026-10-06 doesn't know --list_settings: rebuild it."
+msgstr "Spelet kunde inte lista sina inställningar (slutkod {0}). Ett bygge från före 2026-10-06 känner inte till --list_settings: bygg om det."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:130
 #, fuzzy
-msgid "Snipe"
-msgstr "Sniken"
+msgid "The settings list is damaged: {0}"
+msgstr "Inställningslistan är skadad: {0}"
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:164
 #, fuzzy
-msgid "Ratcicle"
-msgstr "Frysråtta"
+msgid "The settings list is empty."
+msgstr "Inställningslistan är tom."
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings.cpp:291
 #, fuzzy
-msgid "Magmadon"
-msgstr "Magmadon"
+msgid "Couldn't replace {0}: {1}"
+msgstr "Kunde inte ersätta {0}: {1}"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:38 launcher/settings_page.cpp:58
 #, fuzzy
-msgid "Skeleton"
-msgstr "Skelett"
+msgid "Experimental"
+msgstr "Experimentellt"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:39
 #, fuzzy
-msgid "Spike"
-msgstr "Tagg"
+msgid "Above 60 fps is experimental. The game was made for 30: physics, animations, cutscenes and scripted moments may misbehave (60 is tested and fine). If something looks wrong, try 60 and report it."
+msgstr "Över 60 fps är experimentellt. Spelet gjordes för 30: fysik, animationer, mellansekvenser och skriptade ögonblick kan bete sig fel (60 är testat och fungerar). Ser något fel ut, prova 60 och rapportera det."
 
-#. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: launcher/settings_page.cpp:45
 #, fuzzy
-msgid "Coco"
-msgstr "Coco"
+msgid "In development"
+msgstr "Under utveckling"
 
-#: src/players/outfit_picker.cpp:509
+#: launcher/settings_page.cpp:46
 #, fuzzy
-msgid "Old School"
-msgstr "Klassikern"
+msgid "The native renderer draws nearly everything, but an effect may still be missing or look different. F9 switches back to the emulated picture while playing."
+msgstr "Den inbyggda grafikmotorn ritar nästan allt, men en effekt kan fortfarande saknas eller se annorlunda ut. F9 byter tillbaka till den emulerade bilden medan du spelar."
 
-#: src/players/outfit_picker.cpp:520
+#: launcher/settings_page.cpp:52
 #, fuzzy
-msgid "Orange"
-msgstr "Orange"
+msgid "Heavy on the GPU"
+msgstr "Tungt för GPU:n"
 
-#. the heroes' names, as the game writes them in this language.
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:53
 #, fuzzy
-msgid "Crash"
-msgstr "Crash"
+msgid "Two windows: the emulated picture and the native one, both drawn live. Meant for comparing the two; it needs a strong graphics card."
+msgstr "Två fönster: den emulerade bilden och den inbyggda, båda ritade live. Tänkt för att jämföra dem; det kräver ett kraftfullt grafikkort."
 
-#: src/players/outfit_picker.cpp:1091
+#: launcher/settings_page.cpp:59
 #, fuzzy
-msgid "Wear"
-msgstr "Ta på"
+msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
+msgstr "Den nya samarbetskameran håller alla spelare i bild. Den behöver testas mer i strider, trånga platser och mellansekvenser. Stäng av den för originalkameran."
 
-#. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
 #, fuzzy
-msgid "Ready!"
-msgstr "Klar!"
+msgid "Native renderer only"
+msgstr "Bara inbyggd grafikmotor"
 
-#. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: launcher/settings_page.cpp:65
 #, fuzzy
-msgid "{0} Change"
-msgstr "{0} Ändra"
+msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
+msgstr "Rörelseoskärpa är den här portens egen effekt (originalet har ingen). Bara den inbyggda grafikmotorn ritar den: med den emulerade bilden gör den inget."
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: launcher/settings_page.cpp:71
 #, fuzzy
-msgid "Loading"
-msgstr "Laddar"
+msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
+msgstr "Bara den inbyggda grafikmotorn ritar i högre upplösning: den emulerade bilden stannar på 720p. 4K är tungt: det kräver ett kraftfullt grafikkort."
 
-#. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: launcher/settings_page.cpp:77
 #, fuzzy
-msgid "{0} Wear"
-msgstr "{0} Ta på"
+msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
+msgstr "Bara den inbyggda grafikmotorn ändrar sin kantutjämning: den emulerade bilden behåller Xbox 360:s 2x."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:83
 #, fuzzy
-msgid "Ruby"
-msgstr "Rubin"
+msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
+msgstr "Bara den inbyggda grafikmotorn jämnar ut urklippta kanter, och bara när kantutjämning är på."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:88
 #, fuzzy
-msgid "Exactly the same in every way but red"
-msgstr "Exakt likadan, fast röd"
+msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Bara den inbyggda grafikmotorn skärper texturer: den emulerade bilden förblir som Xbox 360 ritade den."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:94
 #, fuzzy
-msgid "Topaz"
-msgstr "Topas"
+msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Bara den inbyggda grafikmotorn skärper bilden: den emulerade bilden förblir som Xbox 360 ritade den."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:100
 #, fuzzy
-msgid "Exactly the same in every way but yellow"
-msgstr "Exakt likadan, fast gul"
+msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
+msgstr "Bara den inbyggda grafikmotorn ändrar skuggornas kant: den emulerade bilden behåller Xbox 360:s."
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:105
 #, fuzzy
-msgid "Jade"
-msgstr "Jade"
+msgid "Less to go on"
+msgstr "Mindre att gå på"
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:106
 #, fuzzy
-msgid "Exactly the same in every way but green"
-msgstr "Exakt likadan, fast grön"
+msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
+msgstr "Problemrapporter från de här sessionerna visar inte vad spelet gjorde (bildfrekvens, ljud, samarbete, menyer): ett fel kan bli omöjligt att spåra."
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:112
 #, fuzzy
-msgid "Sapphire"
-msgstr "Safir"
+msgid "Falls"
+msgstr "Fall"
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:113
 #, fuzzy
-msgid "Exactly the same in every way but blue"
-msgstr "Exakt likadan, fast blå"
+msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
+msgstr "Av över 30 fps: Crash kan blinka in i sin fallanimation en bråkdels sekund när han går ned för ojämn mark. 40 ms är det testade värdet."
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:161
 #, fuzzy
-msgid "Amethyst"
-msgstr "Ametist"
+msgid "Emulated (the default)"
+msgstr "Emulerad (standard)"
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:162
 #, fuzzy
-msgid "Exactly the same in every way but purple"
-msgstr "Exakt likadan, fast lila"
+msgid "Native renderer"
+msgstr "Inbyggd grafikmotor"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:163
 #, fuzzy
-msgid "Rose Quartz"
-msgstr "Rosenkvarts"
+msgid "Native only (fastest, default)"
+msgstr "Bara inbyggd (snabbast, standard)"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:164
 #, fuzzy
-msgid "Exactly the same in every way but pink"
-msgstr "Exakt likadan, fast rosa"
+msgid "Both, in two windows"
+msgstr "Båda, i två fönster"
 
-#: src/players/outfits.cpp:239
+#: launcher/settings_page.cpp:165
 #, fuzzy
-msgid "Carbon"
-msgstr "Kopia"
+msgid "Emulated only"
+msgstr "Bara emulerad"
 
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
 #, fuzzy
-msgctxt "outfit name"
-msgid "{0} {1}"
-msgstr "{0}-{1}"
+msgid "Default"
+msgstr "Standard"
 
-#: src/players/pause_drop_out.cpp:43
+#: launcher/settings_page.cpp:333
 #, fuzzy
-msgid "Drop Out"
-msgstr "Hoppa av"
+msgid "Frame rate"
+msgstr "Bildfrekvens"
 
-#: src/saves/save_library.cpp:764
+#: launcher/settings_page.cpp:335
 #, fuzzy
-msgid "Create New Save"
-msgstr "Nytt sparat spel"
+msgid "Frame rate cap"
+msgstr "Bildfrekvensgräns"
 
-#: src/saves/save_library.cpp:848
+#: launcher/settings_page.cpp:336
 #, fuzzy
-msgid "Delete"
-msgstr "Radera"
+msgid "How many frames per second the game runs at. 30 is the original game's rate."
+msgstr "Hur många bildrutor per sekund spelet går i. 30 är originalspelets takt."
 
-#: src/saves/save_library.cpp:850
+#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 #, fuzzy
-msgid "Rename"
-msgstr "Byt namn"
+msgid "%d (the original)"
+msgstr "%d (originalet)"
 
-#: src/saves/save_library.cpp:1095
+#: launcher/settings_page.cpp:362
 #, fuzzy
-msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
-msgstr "Vill du verkligen radera det här sparade spelet? Det flyttas till mappen Deleted saves."
+msgid "Other..."
+msgstr "Annat..."
 
-#: src/saves/save_library.cpp:1875
+#: launcher/settings_page.cpp:371
 #, fuzzy
-msgid "Backspace"
-msgstr "Radera"
+msgid "   Frames per second"
+msgstr "   Bildrutor per sekund"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#: launcher/settings_page.cpp:381
 #, fuzzy
-msgid "HUD Hidden"
-msgstr "HUD dold"
+msgid "Ground grace"
+msgstr "Markmarginal"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74
+#: launcher/settings_page.cpp:382
 #, fuzzy
-msgid "Press {0} to show it again"
-msgstr "Tryck på {0} för att visa den igen"
+msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
+msgstr "Över 30 fps: hur länge en förlorad markkontakt förlåts, så att Crash inte blinkar in i sin fallanimation när han går ned för ojämn mark. 40 ms är det testade värdet; 0 = av."
 
-#: src/ui/main_menu_extras.cpp:45
+#: launcher/settings_page.cpp:391
 #, fuzzy
-msgid "Extras"
-msgstr "Extra"
+msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
+msgstr "Emulerad = Xbox 360:s grafikkrets, emulerad (referensbilden). Inbyggd = den här portens egen grafikmotor som ritar spelet direkt (under utveckling). F9 byter mellan dem medan du spelar, F8 öppnar det andra fönstret."
 
-#: src/ui/quit_game.cpp:55
+#: launcher/settings_page.cpp:444
 #, fuzzy
-msgid "Quit Game"
-msgstr "Avsluta"
+msgid "Window"
+msgstr "Fönster"
 
-#: src/ui/quit_game.cpp:56
+#: launcher/settings_page.cpp:449
 #, fuzzy
-msgid "Are you sure you want to quit the game?"
-msgstr "Är du säker på att du vill avsluta spelet?"
+msgid "Window mode"
+msgstr "Fönsterläge"
+
+#: launcher/settings_page.cpp:449
+#, fuzzy
+msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
+msgstr "Fönster: ett fönster du kan flytta och ändra storlek på. Helskärm: fyller hela skärmen (den som valts under Skärm)."
+
+#: launcher/settings_page.cpp:469
+#, fuzzy
+msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
+msgstr "Vilken skärm helskärm fyller. Automatisk = den som spelet är på."
+
+#: launcher/settings_page.cpp:481
+#, fuzzy
+msgid "{0}: not connected"
+msgstr "{0}: inte ansluten"
+
+#: launcher/settings_page.cpp:499
+#, fuzzy
+msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
+msgstr "Hur många spelare som kan spela samtidigt (4 som standard; originalspelet har 2). Spelare går med från Spelare-skärmen (huvudmenyn eller pausmenyn) eller med START."
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "2 (the original)"
+msgstr "2 (originalet)"
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "4 (default)"
+msgstr "4 (standard)"
+
+#: launcher/settings_page.cpp:513
+#, fuzzy
+msgid "Co-op camera"
+msgstr "Samarbetskamera"
+
+#: launcher/settings_page.cpp:514
+#, fuzzy
+msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
+msgstr "Håll alla spelare i bild: kameran centreras mellan spelarna och backar tills alla får plats. Av = originalkameran, som följer en spelare."
+
+#: launcher/settings_page.cpp:517
+#, fuzzy
+msgid "   Farthest zoom-out"
+msgstr "   Längst ut"
+
+#: launcher/settings_page.cpp:518
+#, fuzzy
+msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
+msgstr "Hur långt samarbetskameran får backa för att få med alla (originalkameran går från ungefär 12 till 20). Bortom det lämnar en spelare som springer iväg skärmen."
+
+#: launcher/settings_page.cpp:520
+#, fuzzy
+msgid "   Room around players"
+msgstr "   Plats runt spelarna"
+
+#: launcher/settings_page.cpp:521
+#, fuzzy
+msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
+msgstr "Hur mycket mark runt varje spelare som stannar i bild (till vänster, höger och bortom dem), så att en spelare vid kanten fortfarande ser en avsats eller ett stup. Crash är ungefär 2 hög. 0 = bara spelarna själva."
+
+#: launcher/settings_page.cpp:524
+#, fuzzy
+msgid "   Stay with the nearest player"
+msgstr "   Stanna hos närmaste spelare"
+
+#: launcher/settings_page.cpp:525
+#, fuzzy
+msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
+msgstr "Framifrån och bakåt stannar kameran hos spelaren som är närmast den, så att en spelare som går djupt in i bilden inte drar ut de andra nedtill. Av = kameran siktar på mitten av spelarna (det gamla sättet)."
+
+#: launcher/settings_page.cpp:528
+#, fuzzy
+msgid "   Group focus"
+msgstr "   Gruppvikt"
+
+#: launcher/settings_page.cpp:529
+#, fuzzy
+msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
+msgstr "3-4 spelare: hur mycket mer en grupp spelare räknas än en ensam spelare när kameran väljer sin mitt. 0 = alla lika."
+
+#: launcher/settings_page.cpp:532
+#, fuzzy
+msgid "Lost controller pause"
+msgstr "Paus vid förlorad handkontroll"
+
+#: launcher/settings_page.cpp:533
+#, fuzzy
+msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
+msgstr "När en spelares handkontroll kopplas från i en bana: paus med en fråga, så att en annan spelare kan ta ut den spelaren, eller ansluta den igen och fortsätta."
+
+#: launcher/settings_page.cpp:541
+#, fuzzy
+msgid "Keyboard and mouse"
+msgstr "Tangentbord och mus"
+
+#: launcher/settings_page.cpp:542
+#, fuzzy
+msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
+msgstr "Spela med tangentbord och mus (en handkontroll fungerar också). Tangenterna ändras i spelet med F6."
+
+#: launcher/settings_page.cpp:548
+#, fuzzy
+msgid "Sound and logging"
+msgstr "Ljud och loggar"
+
+#: launcher/settings_page.cpp:550
+#, fuzzy
+msgid "Mute the sound"
+msgstr "Stäng av ljudet"
+
+#: launcher/settings_page.cpp:551
+#, fuzzy
+msgid "Event logs (for bug reports)"
+msgstr "Händelseloggar (för felrapporter)"
+
+#: launcher/settings_page.cpp:552
+#, fuzzy
+msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
+msgstr "Sessionens logg registrerar också vad spelet gör: bildfrekvens var 5:e sekund, ljuden det spelar, samarbetsanslutningar, vilken spelare en meny svarar, menyskärmar. Några MB i timmen; det är det som \"Rapportera ett problem\" skickar. Av = bara det viktigaste."
+
+#: launcher/settings_page.cpp:621
+#, fuzzy
+msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
+msgstr "Varje inställning spelet har, direkt från spelet. De flesta är för utveckling eller felsökning: ändra dem bara om du vet vad de gör."
+
+#: launcher/settings_page.cpp:625
+#, fuzzy
+msgid "Search names and descriptions..."
+msgstr "Sök i namn och beskrivningar..."
+
+#: launcher/settings_page.cpp:628
+#, fuzzy
+msgid "Show developer settings (debug_...)"
+msgstr "Visa utvecklarinställningar (debug_...)"
+
+#: launcher/settings_page.cpp:690
+#, fuzzy
+msgid "Default: %s%s"
+msgstr "Standard: %s%s"
+
+#: launcher/settings_page.cpp:691
+#, fuzzy
+msgid "  (read at start only)"
+msgstr "  (läses bara vid start)"
+
+#: launcher/settings_page.cpp:702
+#, fuzzy
+msgid "Asking the game for its settings..."
+msgstr "Frågar spelet om dess inställningar..."
+
+#: launcher/settings_page.cpp:714
+#, fuzzy
+msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
+msgstr "Spelet körs: ändringar gäller nästa gång det startar. (Dess F4-meny skriver samma fil: använd den ena eller den andra.)"
+
+#: launcher/settings_page.cpp:718
+#, fuzzy
+msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
+msgstr "Sparas direkt; de gäller nästa gång spelet startar. Håll över ett namn för vad det gör, över en triangel för varför det är riskabelt."
+
+#: launcher/settings_page.cpp:730
+#, fuzzy
+msgid "All settings (advanced)"
+msgstr "Alla inställningar (avancerat)"
+
+#: launcher/setup.cpp:157
+#, fuzzy
+msgid "Replacing link files with copies (Git for Windows)"
+msgstr "Ersätter länkfiler med kopior (Git för Windows)"
+
+#: launcher/setup.cpp:372
+#, fuzzy
+msgid "checking..."
+msgstr "kontrollerar..."
+
+#: launcher/setup.cpp:373
+#, fuzzy
+msgid "done"
+msgstr "klart"
+
+#: launcher/setup.cpp:374
+#, fuzzy
+msgid "out of date"
+msgstr "inaktuellt"
+
+#: launcher/setup.cpp:375
+#, fuzzy
+msgid "to do"
+msgstr "att göra"
+
+#: launcher/setup.cpp:376
+#, fuzzy
+msgid "needs attention"
+msgstr "behöver uppmärksamhet"
+
+#: launcher/setup.cpp:444 launcher/setup.cpp:452 launcher/setup.cpp:460 launcher/setup.cpp:466 launcher/setup.cpp:477 launcher/setup.cpp:497 launcher/setup.cpp:508 launcher/setup.cpp:510 launcher/setup.cpp:560 launcher/setup.cpp:577 launcher/setup.cpp:583
+#, fuzzy
+msgid "not found"
+msgstr "hittades inte"
+
+#: launcher/setup.cpp:448 launcher/setup.cpp:457 launcher/setup.cpp:555 launcher/setup.cpp:565
+#, fuzzy
+msgid "too old: {0} ({1} or newer needed)"
+msgstr "för gammal: {0} ({1} eller nyare behövs)"
+
+#: launcher/setup.cpp:464
+#, fuzzy
+msgid "not found (or only the Store shortcut)"
+msgstr "hittades inte (eller bara Store-genvägen)"
+
+#: launcher/setup.cpp:550
+#, fuzzy
+msgid "not found (clang and clang++)"
+msgstr "hittades inte (clang och clang++)"
+
+#: launcher/setup.cpp:572
+#, fuzzy
+msgid "not found (needs pkg-config too)"
+msgstr "hittades inte (behöver också pkg-config)"
+
+#: launcher/setup.cpp:627
+#, fuzzy
+msgid "Version %s"
+msgstr "Version %s"
+
+#: launcher/setup.cpp:630
+#, fuzzy
+msgid " -  a developer copy: update it with git pull"
+msgstr " -  en utvecklarkopia: uppdatera den med git pull"
+
+#: launcher/setup.cpp:635
+#, fuzzy
+msgid " -  updated to %s: restart the launcher to finish"
+msgstr " -  uppdaterad till %s: starta om startprogrammet för att slutföra"
+
+#: launcher/setup.cpp:638
+#, fuzzy
+msgid "Restart the launcher"
+msgstr "Starta om startprogrammet"
+
+#: launcher/setup.cpp:642
+#, fuzzy
+msgid "Couldn't restart: start the launcher again by hand."
+msgstr "Kunde inte starta om: starta startprogrammet igen själv."
+
+#: launcher/setup.cpp:652
+#, fuzzy
+msgid " -  checking for updates..."
+msgstr " -  söker efter uppdateringar..."
+
+#: launcher/setup.cpp:654
+#, fuzzy
+msgid " -  %s is available%s%s"
+msgstr " -  %s är tillgänglig%s%s"
+
+#: launcher/setup.cpp:659 launcher/setup.cpp:664
+#, fuzzy
+msgid "Update to {0}"
+msgstr "Uppdatera till {0}"
+
+#: launcher/setup.cpp:674
+#, fuzzy
+msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
+msgstr "Laddar ned den nya versionen och sätter den på plats: dina sparade spel, inställningar och spelets filer finns kvar. Sedan startar startprogrammet om och bygger om det som ändrats."
+
+#: launcher/setup.cpp:683
+#, fuzzy
+msgid " -  the newest version"
+msgstr " -  den senaste versionen"
+
+#: launcher/setup.cpp:690
+#, fuzzy
+msgid "Check for updates"
+msgstr "Sök efter uppdateringar"
+
+#: launcher/setup.cpp:699
+#, fuzzy
+msgid "What's new in %s"
+msgstr "Nytt i %s"
+
+#: launcher/setup.cpp:764
+#, fuzzy
+msgid "the ReXGlue SDK and its libraries are there"
+msgstr "ReXGlue-SDK:n och dess bibliotek finns där"
+
+#: launcher/setup.cpp:765
+#, fuzzy
+msgid "the ReXGlue SDK isn't downloaded yet"
+msgstr "ReXGlue-SDK:n är inte nedladdad än"
+
+#: launcher/setup.cpp:766
+#, fuzzy
+msgid "the ReXGlue SDK submodule isn't downloaded yet"
+msgstr "ReXGlue-SDK:ns undermodul är inte nedladdad än"
+
+#: launcher/setup.cpp:776
+#, fuzzy
+msgid "this version needs another ReXGlue SDK ({0}): download it again"
+msgstr "den här versionen behöver en annan ReXGlue-SDK ({0}): ladda ned den igen"
+
+#: launcher/setup.cpp:790
+#, fuzzy
+msgid "extracted in {0}"
+msgstr "uppackad i {0}"
+
+#: launcher/setup.cpp:793
+#, fuzzy
+msgid "no disc image found yet: pick your .iso"
+msgstr "ingen skivavbild hittad än: välj din .iso"
+
+#: launcher/setup.cpp:794
+#, fuzzy
+msgid "ready to extract {0}"
+msgstr "redo att packa upp {0}"
+
+#: launcher/setup.cpp:825
+#, fuzzy
+msgid "needs the source parts first"
+msgstr "behöver källdelarna först"
+
+#: launcher/setup.cpp:832
+#, fuzzy
+msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
+msgstr "korrigeringarna har ändrats (en uppdatering): den återställs, korrigeras igen och byggs sedan om"
+
+#: launcher/setup.cpp:836
+#, fuzzy
+msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
+msgstr "våra {0} SDK-korrigeringar är varken alla tillämpade eller alla borta: SDK-mappen ändrades för hand (eller en korrigering uppdaterades). Inte rörd; se docs/01-building.md, steg 2 (git -C thirdparty/rexglue-sdk status)."
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "patched, not built yet"
+msgstr "korrigerad, inte byggd än"
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "not patched or built yet"
+msgstr "varken korrigerad eller byggd"
+
+#: launcher/setup.cpp:847
+#, fuzzy
+msgid "built without our patches: rebuild it"
+msgstr "byggd utan våra korrigeringar: bygg om den"
+
+#: launcher/setup.cpp:848
+#, fuzzy
+msgid "the patches changed since the SDK was built: rebuild it"
+msgstr "korrigeringarna har ändrats sedan SDK:n byggdes: bygg om den"
+
+#: launcher/setup.cpp:851
+#, fuzzy
+msgid "built and installed, {0} patches"
+msgstr "byggd och installerad, {0} korrigeringar"
+
+#: launcher/setup.cpp:858
+#, fuzzy
+msgid "not built yet"
+msgstr "inte byggt än"
+
+#: launcher/setup.cpp:861
+#, fuzzy
+msgid "built, not copied into program/ yet"
+msgstr "byggt, inte kopierat till program/ än"
+
+#: launcher/setup.cpp:878
+#, fuzzy
+msgid "the sources changed since the last build: rebuild it"
+msgstr "källkoden har ändrats sedan senaste bygget: bygg om"
+
+#: launcher/setup.cpp:881
+#, fuzzy
+msgid "built: {0}"
+msgstr "byggt: {0}"
+
+#: launcher/setup.cpp:904
+#, fuzzy
+msgid "Downloading the source parts (git submodules)"
+msgstr "Laddar ned källdelarna (git-undermoduler)"
+
+#: launcher/setup.cpp:922
+#, fuzzy
+msgid "Finishing the SDK's libraries (a download was stopped)"
+msgstr "Gör klart SDK:ns bibliotek (en nedladdning stoppades)"
+
+#: launcher/setup.cpp:927
+#, fuzzy
+msgid "Removing the old SDK download"
+msgstr "Tar bort den gamla SDK-nedladdningen"
+
+#: launcher/setup.cpp:940
+#, fuzzy
+msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
+msgstr "Laddar ned ReXGlue-SDK {0} (och dess bibliotek)"
+
+#: launcher/setup.cpp:945
+#, fuzzy
+msgid "Checking the SDK's version"
+msgstr "Kontrollerar SDK:ns version"
+
+#: launcher/setup.cpp:963
+#, fuzzy
+msgid "Pick your disc image (.iso) first."
+msgstr "Välj din skivavbild (.iso) först."
+
+#: launcher/setup.cpp:970
+#, fuzzy
+msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
+msgstr "Inte tillräckligt med ledigt utrymme: spelets filer behöver ungefär 6,5 GB, %.1f GB är ledigt."
+
+#: launcher/setup.cpp:983
+#, fuzzy
+msgid "That file isn't an Xbox 360 disc image the extractor can read."
+msgstr "Den filen är inte en Xbox 360-skivavbild som uppackaren kan läsa."
+
+#: launcher/setup.cpp:987
+#, fuzzy
+msgid "That disc image has no default.xex: not a game disc?"
+msgstr "Den skivavbilden har ingen default.xex: inte en spelskiva?"
+
+#: launcher/setup.cpp:990
+#, fuzzy
+msgid "Extracting the disc into game/"
+msgstr "Packar upp skivan till game/"
+
+#: launcher/setup.cpp:1002
+#, fuzzy
+msgid "Checking the game's executable"
+msgstr "Kontrollerar spelets programfil"
+
+#: launcher/setup.cpp:1008
+#, fuzzy
+msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
+msgstr "default.xex är inte Crash: Mind over Mutant (titel-id 565507FA hittades inte). Filerna finns i game/; den här porten kör bara det spelet."
+
+#: launcher/setup.cpp:1012
+#, fuzzy
+msgid "Title id 565507FA: Crash: Mind over Mutant."
+msgstr "Titel-id 565507FA: Crash: Mind over Mutant."
+
+#: launcher/setup.cpp:1034
+#, fuzzy
+msgid "Undoing the old patches"
+msgstr "Ångrar de gamla korrigeringarna"
+
+#: launcher/setup.cpp:1035
+#, fuzzy
+msgid "Removing files the old patches added"
+msgstr "Tar bort filer som de gamla korrigeringarna lade till"
+
+#: launcher/setup.cpp:1038
+#, fuzzy
+msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
+msgstr "Tillämpar våra rättelser på SDK:n (patches/rexglue-sdk)"
+
+#: launcher/setup.cpp:1053
+#, fuzzy
+msgid "Configuring the SDK"
+msgstr "Konfigurerar SDK:n"
+
+#: launcher/setup.cpp:1055
+#, fuzzy
+msgid "Building the SDK (Release: the recompiler)"
+msgstr "Bygger SDK:n (Release: omkompilatorn)"
+
+#: launcher/setup.cpp:1059
+#, fuzzy
+msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
+msgstr "Bygger SDK:n (RelWithDebInfo: körtiden som spelet använder)"
+
+#: launcher/setup.cpp:1067
+#, fuzzy
+msgid "Noting which patches the SDK was built with"
+msgstr "Noterar vilka korrigeringar SDK:n byggdes med"
+
+#: launcher/setup.cpp:1087
+#, fuzzy
+msgid "Linking source/game to the disc's files"
+msgstr "Länkar source/game till skivans filer"
+
+#: launcher/setup.cpp:1118
+#, fuzzy
+msgid "Configuring the game's build"
+msgstr "Konfigurerar spelets bygge"
+
+#: launcher/setup.cpp:1128
+#, fuzzy
+msgid "Recompiling the game's code (default.xex -> C++)"
+msgstr "Omkompilerar spelets kod (default.xex -> C++)"
+
+#: launcher/setup.cpp:1134
+#, fuzzy
+msgid "Compiling the game ({0} at a time; the first build takes a while)"
+msgstr "Kompilerar spelet ({0} åt gången; det första bygget tar en stund)"
+
+#: launcher/setup.cpp:1146
+#, fuzzy
+msgid "Copying the game into program/"
+msgstr "Kopierar spelet till program/"
+
+#: launcher/setup.cpp:1237
+#, fuzzy
+msgid "Setting up"
+msgstr "Installerar"
+
+#: launcher/setup.cpp:1424
+#, fuzzy
+msgid "%s: done"
+msgstr "%s: klart"
+
+#: launcher/setup.cpp:1426
+#, fuzzy
+msgid "%s: cancelled"
+msgstr "%s: avbrutet"
+
+#: launcher/setup.cpp:1428
+#, fuzzy
+msgid "%s: failed"
+msgstr "%s: misslyckades"
+
+#: launcher/setup.cpp:1448
+#, fuzzy
+msgid "This step can't be stopped: a few seconds."
+msgstr "Det här steget kan inte stoppas: några sekunder."
+
+#: launcher/setup.cpp:1457
+#, fuzzy
+msgid "Follow"
+msgstr "Följ"
+
+#: launcher/setup.cpp:1531
+#, fuzzy
+msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
+msgstr "Installation bygger spelet från dess källkod, så det fungerar från projektets mapp (en git-klon). Den här kopian är en installerad kopia."
+
+#: launcher/setup.cpp:1553
+#, fuzzy
+msgid "Checking what's there..."
+msgstr "Kontrollerar vad som finns..."
+
+#: launcher/setup.cpp:1555
+#, fuzzy
+msgid "Everything is set up: the game is ready to play."
+msgstr "Allt är installerat: spelet är redo att spelas."
+
+#: launcher/setup.cpp:1557
+#, fuzzy
+msgid "Some steps are left."
+msgstr "Några steg återstår."
+
+#: launcher/setup.cpp:1561
+#, fuzzy
+msgid "Check again"
+msgstr "Kontrollera igen"
+
+#: launcher/setup.cpp:1577
+#, fuzzy
+msgid "Set up everything"
+msgstr "Installera allt"
+
+#: launcher/setup.cpp:1582
+#, fuzzy
+msgid "Install the missing build tools first (step 1)."
+msgstr "Installera de byggverktyg som saknas först (steg 1)."
+
+#: launcher/setup.cpp:1586
+#, fuzzy
+msgid "The game is running: building waits until it's closed."
+msgstr "Spelet körs: bygget väntar tills det är stängt."
+
+#: launcher/setup.cpp:1599
+#, fuzzy
+msgid "Build tools"
+msgstr "Byggverktyg"
+
+#: launcher/setup.cpp:1600
+#, fuzzy
+msgid "everything needed to build is installed"
+msgstr "allt som behövs för att bygga är installerat"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "found"
+msgstr "hittad"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "missing"
+msgstr "saknas"
+
+#: launcher/setup.cpp:1612
+#, fuzzy
+msgid "  -  package: "
+msgstr "  -  paket: "
+
+#: launcher/setup.cpp:1619
+#, fuzzy
+msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
+msgstr "Installera de som saknas med din pakethanterare (paketnamnen ovan är %s:s), tryck sedan Kontrollera igen."
+
+#: launcher/setup.cpp:1628 launcher/setup.cpp:1633
+#, fuzzy
+msgid "Source parts"
+msgstr "Källdelar"
+
+#: launcher/setup.cpp:1632
+#, fuzzy
+msgid "Download them"
+msgstr "Ladda ned dem"
+
+#: launcher/setup.cpp:1640
+#, fuzzy
+msgid "Your disc"
+msgstr "Din skiva"
+
+#: launcher/setup.cpp:1644
+#, fuzzy
+msgid "Disc image: %s"
+msgstr "Skivavbild: %s"
+
+#: launcher/setup.cpp:1647
+#, fuzzy
+msgid "Pick the disc image..."
+msgstr "Välj skivavbilden..."
+
+#: launcher/setup.cpp:1648
+#, fuzzy
+msgid "Xbox 360 disc image"
+msgstr "Xbox 360-skivavbild"
+
+#: launcher/setup.cpp:1663
+#, fuzzy
+msgid "Extract it"
+msgstr "Packa upp den"
+
+#: launcher/setup.cpp:1667
+#, fuzzy
+msgid "Disc"
+msgstr "Skiva"
+
+#: launcher/setup.cpp:1674
+#, fuzzy
+msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
+msgstr "Din egen kopia av skivan (en hel är 7,8 GB); spelets filer (6 GB) hamnar i game/."
+
+#: launcher/setup.cpp:1680 launcher/setup.cpp:1689
+#, fuzzy
+msgid "ReXGlue SDK"
+msgstr "ReXGlue-SDK"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Rebuild the SDK"
+msgstr "Bygg om SDK:n"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Build the SDK"
+msgstr "Bygg SDK:n"
+
+#: launcher/setup.cpp:1695
+#, fuzzy
+msgid "A few minutes."
+msgstr "Några minuter."
+
+#: launcher/setup.cpp:1700 launcher/setup.cpp:1709
+#, fuzzy
+msgid "The game"
+msgstr "Spelet"
+
+#: launcher/setup.cpp:1705
+#, fuzzy
+msgid "Build the game"
+msgstr "Bygg spelet"
+
+#: launcher/setup.cpp:1706
+#, fuzzy
+msgid "Rebuild (update)"
+msgstr "Bygg om (uppdatering)"
+
+#: launcher/setup.cpp:1707
+#, fuzzy
+msgid "Rebuild"
+msgstr "Bygg om"
+
+#: launcher/setup.cpp:1712
+#, fuzzy
+msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
+msgstr "%d kompileringsjobb åt gången (efter ledigt RAM nu: stäng stora program först för ett snabbare bygge). Det första bygget tar en stund; senare gör bara om det som ändrats."
+
+#: launcher/update.cpp:270
+#, fuzzy
+msgid "Preparing"
+msgstr "Förbereder"
+
+#: launcher/update.cpp:285
+#, fuzzy
+msgid "Checking the download"
+msgstr "Kontrollerar nedladdningen"
+
+#: launcher/update.cpp:303
+#, fuzzy
+msgid "Swapping in the new version"
+msgstr "Sätter den nya versionen på plats"
+
+#, fuzzy
+#~ msgid "{0} {1} {2}"
+#~ msgstr "{0} {1} {2}"
+
+#, fuzzy
+#~ msgid "Earned {0}"
+#~ msgstr "Uppnådd {0}"

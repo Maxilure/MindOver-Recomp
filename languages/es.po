@@ -7,40 +7,909 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/achievements/achievements.cpp:548
+#: src/crash_mom_app.h:449 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "EMULATED ONLY"
+msgstr "SOLO EMULADO"
+
+#: src/crash_mom_app.h:449
+#, fuzzy
+msgid "No second window with --emulated_only"
+msgstr "No hay segunda ventana con --emulated_only"
+
+#. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
+#: src/fps_overlay.cpp:145
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} FPS"
+msgstr "{0} FPS"
+
+#. Frame-rate counter: the average frame rate. Keep it short, capitals.
+#: src/fps_overlay.cpp:148
+#, fuzzy
+msgctxt "fps counter"
+msgid "AVG {0}"
+msgstr "MEDIA {0}"
+
+#. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
+#: src/fps_overlay.cpp:150
+#, fuzzy
+msgctxt "fps counter"
+msgid "1% LOW {0}"
+msgstr "1% MÍN {0}"
+
+#. Frame-rate counter: milliseconds per frame. Capitals.
+#: src/fps_overlay.cpp:154
+#, fuzzy
+msgctxt "fps counter"
+msgid "{0} MS"
+msgstr "{0} MS"
+
+#. Frame-rate counter: how long the game's own work took (ms). Capitals.
+#: src/fps_overlay.cpp:156
+#, fuzzy
+msgctxt "fps counter"
+msgid "GAME {0}"
+msgstr "JUEGO {0}"
+
+#. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
+#: src/fps_overlay.cpp:158
+#, fuzzy
+msgctxt "fps counter"
+msgid "SWAP {0}"
+msgstr "PANTALLA {0}"
+
+#: src/achievements/achievements.cpp:667
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Logro desbloqueado"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1037 src/options/options_menu.cpp:2281 src/options/options_settings.cpp:1125
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2263 src/options/options_settings.cpp:1125
 #, fuzzy
 msgid "Achievements"
 msgstr "Logros"
 
-#: src/achievements/achievements_screen.cpp:42
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
 #, fuzzy
 msgid "Players"
 msgstr "Jugadores"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:718
 #, fuzzy
-msgid "Cheats Enabled"
-msgstr "Trucos activados"
+msgid "No switching with --emulated_only"
+msgstr "No se puede cambiar con --emulated_only"
 
-#: src/cheats/cheats.cpp:230
+#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements until a save is loaded"
-msgstr "Sin logros hasta cargar una partida guardada"
+msgid "DUAL MODE"
+msgstr "MODO DOBLE"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:724
 #, fuzzy
-msgid "Save Made With Cheats"
-msgstr "Partida guardada con trucos"
+msgid "No switching while the second window is open (Tools closes it)"
+msgstr "No se puede cambiar con la segunda ventana abierta (Herramientas la cierra)"
 
-#: src/cheats/cheats.cpp:729
+#: src/native/native_renderer.cpp:1442
 #, fuzzy
-msgid "No achievements while playing this save"
-msgstr "Sin logros mientras juegues esta partida"
+msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
+msgstr "esta ventana: emulado (GPU de Xbox 360)   segunda ventana: nativo (Vulkan)   F1 Herramientas la cierra"
+
+#: src/native/native_renderer.cpp:1445
+#, fuzzy
+msgid "Xbox 360 GPU emulation; native renderer off"
+msgstr "Emulación de la GPU de Xbox 360; renderizado nativo apagado"
+
+#: src/native/native_renderer.cpp:1447
+#, fuzzy
+msgid "NATIVE (Vulkan)"
+msgstr "NATIVO (Vulkan)"
+
+#: src/native/native_renderer.cpp:1449
+#, fuzzy
+msgid "native only: the emulated GPU is off   F1 Tools switches"
+msgstr "solo nativo: la GPU emulada está apagada   F1 Herramientas cambia"
+
+#: src/native/native_renderer.cpp:1450
+#, fuzzy
+msgid "the emulated GPU still draws in the background   F1 Tools switches"
+msgstr "la GPU emulada sigue dibujando en segundo plano   F1 Herramientas cambia"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "EMULATED (Xbox 360 GPU)"
+msgstr "EMULADO (GPU de Xbox 360)"
+
+#: src/native/native_renderer.cpp:1452
+#, fuzzy
+msgid "native renderer idle   F1 Tools switches"
+msgstr "renderizado nativo en reposo   F1 Herramientas cambia"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#, fuzzy
+msgid "HUD Hidden"
+msgstr "HUD oculto"
+
+#. {0} = the key that shows the HUD again ("F2").
+#: src/ui/hud_hide.cpp:74
+#, fuzzy
+msgid "Press {0} to show it again"
+msgstr "Pulsa {0} para volver a mostrarlo"
+
+#: src/ui/main_menu_extras.cpp:45
+#, fuzzy
+msgid "Extras"
+msgstr "Extras"
+
+#: src/ui/quit_game.cpp:55
+#, fuzzy
+msgid "Quit Game"
+msgstr "Salir del juego"
+
+#: src/ui/quit_game.cpp:56
+#, fuzzy
+msgid "Are you sure you want to quit the game?"
+msgstr "¿Seguro que quieres abandonar la partida?"
+
+#: src/ui/tools_menu.cpp:44 src/ui/tools_menu.cpp:49 src/ui/tools_menu.cpp:51 src/ui/tools_menu.cpp:55 src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Game"
+msgstr "Juego"
+
+#: src/ui/tools_menu.cpp:44
+#, fuzzy
+msgid "Cheats..."
+msgstr "Trucos..."
+
+#: src/ui/tools_menu.cpp:45
+#, fuzzy
+msgid ""
+"Level ups, mojo, god mode, spawns, game speed, free camera.\n"
+"OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
+"meanwhile is marked as made with cheats (achievements stay off for it)."
+msgstr ""
+"Subidas de nivel, mojo, modo dios, apariciones, velocidad del juego, cámara libre.\n"
+"ABRIRLO DESACTIVA LOS LOGROS hasta que se cargue una partida, y una partida guardada\n"
+"mientras tanto queda marcada como hecha con trucos (logros desactivados para ella)."
+
+#: src/ui/tools_menu.cpp:49
+#, fuzzy
+msgid "Controls (keys)..."
+msgstr "Controles (teclas)..."
+
+#: src/ui/tools_menu.cpp:50
+#, fuzzy
+msgid "Keyboard and mouse keys, and which device plays as which player."
+msgstr "Teclas de teclado y ratón, y qué dispositivo juega como qué jugador."
+
+#: src/ui/tools_menu.cpp:51
+#, fuzzy
+msgid "Hide / show the HUD"
+msgstr "Ocultar / mostrar el HUD"
+
+#: src/ui/tools_menu.cpp:52
+#, fuzzy
+msgid ""
+"Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
+"Not a cheat: achievements are untouched. The message bar keeps showing."
+msgstr ""
+"Oculta todo el HUD (retratos, barras, contador de mojo, combos, marcadores, pistas).\n"
+"No es un truco: los logros no cambian. La barra de mensajes sigue visible."
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "Fullscreen on / off"
+msgstr "Pantalla completa sí / no"
+
+#: src/ui/tools_menu.cpp:55
+#, fuzzy
+msgid "F11 (still F11)"
+msgstr "F11 (sigue siendo F11)"
+
+#: src/ui/tools_menu.cpp:56
+#, fuzzy
+msgid "Borderless fullscreen on the monitor picked in Options -> Display."
+msgstr "Pantalla completa sin bordes en el monitor elegido en Opciones -> Pantalla."
+
+#: src/ui/tools_menu.cpp:57
+#, fuzzy
+msgid "Take a photo"
+msgstr "Hacer una foto"
+
+#: src/ui/tools_menu.cpp:58
+#, fuzzy
+msgid ""
+"A PNG of the next frame into the photos folder (both renderers' pictures\n"
+"while the native one is drawn). The menus over the picture aren't in it."
+msgstr ""
+"Un PNG del siguiente fotograma en la carpeta de fotos (las imágenes de ambos renderizados\n"
+"cuando el nativo dibuja). Los menús sobre la imagen no aparecen."
+
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+#, fuzzy
+msgid "Picture"
+msgstr "Imagen"
+
+#: src/ui/tools_menu.cpp:62
+#, fuzzy
+msgid "Switch renderer (emulated / native)"
+msgstr "Cambiar renderizado (emulado / nativo)"
+
+#: src/ui/tools_menu.cpp:63
+#, fuzzy
+msgid ""
+"Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
+"port's own renderer. Off with Emulated Only or while the second window is open."
+msgstr ""
+"Qué imagen muestra la ventana principal: la GPU de Xbox 360 imitada o el\n"
+"renderizado propio del port. Desactivado con Solo emulado o con la segunda ventana abierta."
+
+#: src/ui/tools_menu.cpp:66
+#, fuzzy
+msgid "Second window (dual mode)"
+msgstr "Segunda ventana (modo doble)"
+
+#: src/ui/tools_menu.cpp:67
+#, fuzzy
+msgid "A second window with the port's picture; the main one shows the emulated one."
+msgstr "Una segunda ventana con la imagen del port; la principal muestra la emulada."
+
+#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:678
+#, fuzzy
+msgid "Saves"
+msgstr "Partidas"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "Rename the save under the cursor"
+msgstr "Renombrar la partida bajo el cursor"
+
+#: src/ui/tools_menu.cpp:69
+#, fuzzy
+msgid "F2 (F2 hides the HUD now)"
+msgstr "F2 (F2 ahora oculta el HUD)"
+
+#: src/ui/tools_menu.cpp:70
+#, fuzzy
+msgid "On the Load / Save Game screen only (X there opens the game's own name screen)."
+msgstr "Solo en la pantalla Cargar / Guardar (allí X abre la pantalla de nombre del juego)."
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete the save under the cursor"
+msgstr "Borrar la partida bajo el cursor"
+
+#: src/ui/tools_menu.cpp:71
+#, fuzzy
+msgid "Delete (still Delete)"
+msgstr "Supr (sigue siendo Supr)"
+
+#: src/ui/tools_menu.cpp:72
+#, fuzzy
+msgid ""
+"On the Load / Save Game screen only (Y there does the same). The file is moved\n"
+"to user/saves/Deleted saves, never really deleted."
+msgstr ""
+"Solo en la pantalla Cargar / Guardar (allí Y hace lo mismo). El archivo va\n"
+"a user/saves/Deleted saves, nunca se borra de verdad."
+
+#: src/ui/tools_menu.cpp:76 src/ui/tools_menu.cpp:78 src/ui/tools_menu.cpp:80 src/ui/tools_menu.cpp:82 src/ui/tools_menu.cpp:84 src/ui/tools_menu.cpp:88 src/ui/tools_menu.cpp:92 src/ui/tools_menu.cpp:96 src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Developer"
+msgstr "Desarrollador"
+
+#: src/ui/tools_menu.cpp:76
+#, fuzzy
+msgid "Debug overlay"
+msgstr "Superposición de depuración"
+
+#: src/ui/tools_menu.cpp:77
+#, fuzzy
+msgid "The SDK's frame times and threads."
+msgstr "Tiempos de fotograma e hilos del SDK."
+
+#: src/ui/tools_menu.cpp:78
+#, fuzzy
+msgid "Log console"
+msgstr "Consola del registro"
+
+#: src/ui/tools_menu.cpp:79
+#, fuzzy
+msgid "The SDK's live log."
+msgstr "El registro en vivo del SDK."
+
+#: src/ui/tools_menu.cpp:80
+#, fuzzy
+msgid "All settings (flags)"
+msgstr "Todos los ajustes (opciones)"
+
+#: src/ui/tools_menu.cpp:81
+#, fuzzy
+msgid "Every setting by name, as in settings.toml. Prefer the in-game Options screen."
+msgstr "Cada ajuste por su nombre, como en settings.toml. Mejor usa la pantalla Opciones del juego."
+
+#: src/ui/tools_menu.cpp:82
+#, fuzzy
+msgid "SDK achievements list"
+msgstr "Lista de logros del SDK"
+
+#: src/ui/tools_menu.cpp:83
+#, fuzzy
+msgid "The SDK's own list (the port keeps achievements itself: pause -> Achievements)."
+msgstr "La lista propia del SDK (el port lleva los logros él mismo: pausa -> Logros)."
+
+#: src/ui/tools_menu.cpp:84
+#, fuzzy
+msgid "Highlight a material (cycles)"
+msgstr "Resaltar un material (en ciclo)"
+
+#: src/ui/tools_menu.cpp:85
+#, fuzzy
+msgid ""
+"Paints one material magenta in the native picture: bump, particles, motion\n"
+"trails, off."
+msgstr ""
+"Pinta un material de magenta en la imagen nativa: relieve, partículas, estelas\n"
+"de movimiento, nada."
+
+#: src/ui/tools_menu.cpp:88
+#, fuzzy
+msgid "Particle experiment (cycles)"
+msgstr "Experimento de partículas (en ciclo)"
+
+#: src/ui/tools_menu.cpp:89
+#, fuzzy
+msgid ""
+"Changes how particles are drawn in the native picture, then erases groups of\n"
+"them in both pictures, then normal again."
+msgstr ""
+"Cambia cómo se dibujan las partículas en la imagen nativa, luego borra grupos\n"
+"de ellas en ambas imágenes, y luego vuelve a lo normal."
+
+#: src/ui/tools_menu.cpp:92
+#, fuzzy
+msgid "Test: fake achievement card"
+msgstr "Prueba: tarjeta de logro falsa"
+
+#: src/ui/tools_menu.cpp:93
+#, fuzzy
+msgid ""
+"The achievement card on the game's message bar with a made-up name (in a level).\n"
+"Nothing is earned or recorded."
+msgstr ""
+"La tarjeta de logro en la barra de mensajes del juego con un nombre inventado (en un nivel).\n"
+"No se gana ni se guarda nada."
+
+#: src/ui/tools_menu.cpp:96
+#, fuzzy
+msgid "Test: long fake achievement card"
+msgstr "Prueba: tarjeta de logro falsa larga"
+
+#: src/ui/tools_menu.cpp:97
+#, fuzzy
+msgid "The same with a name too long for the card: it scrolls (ui/marquee.h)."
+msgstr "La misma con un nombre demasiado largo para la tarjeta: se desplaza (ui/marquee.h)."
+
+#: src/ui/tools_menu.cpp:99
+#, fuzzy
+msgid "Test: game-style message (voodoo doll look)"
+msgstr "Prueba: mensaje del juego (estilo muñeco vudú)"
+
+#: src/ui/tools_menu.cpp:100
+#, fuzzy
+msgid ""
+"A message in the message bar's own wide look (title, message, counter), as the\n"
+"game shows a voodoo doll or an objective. Nothing else happens."
+msgstr ""
+"Un mensaje con el aspecto ancho de la barra de mensajes (título, mensaje, contador), como\n"
+"el juego muestra un muñeco vudú o un objetivo. No pasa nada más."
+
+#: src/ui/tools_menu.cpp:136
+#, fuzzy
+msgid "Tools (F1)"
+msgstr "Herramientas (F1)"
+
+#: src/ui/tools_menu.cpp:150
+#, fuzzy
+msgid "NOT AVAILABLE"
+msgstr "NO DISPONIBLE"
+
+#: src/ui/tools_menu.cpp:160
+#, fuzzy
+msgid "Tools"
+msgstr "Herramientas"
+
+#: src/ui/tools_menu.cpp:162
+#, fuzzy
+msgid "F1 opens / closes   F2 = HUD   F11 = fullscreen"
+msgstr "F1 abre / cierra   F2 = HUD   F11 = pantalla completa"
+
+#. Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
+#: src/ui/tools_menu.cpp:174
+#, fuzzy
+msgid ""
+"%s\n"
+"\n"
+"(Key, or the key it used to have: %s. Setting name: %s)"
+msgstr ""
+"%s\n"
+"\n"
+"(Tecla, o la que tenía antes: %s. Nombre del ajuste: %s)"
+
+#: src/ui/tools_menu.cpp:181
+#, fuzzy
+msgid "Achievements are off: %s"
+msgstr "Logros desactivados: %s"
+
+#: src/ui/tools_menu.cpp:183
+#, fuzzy
+msgid "Opening it turns achievements off until a save is loaded."
+msgstr "Abrirlo desactiva los logros hasta que se cargue una partida."
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Move up"
+msgstr "Arriba"
+
+#: src/input/bindings.cpp:146
+#, fuzzy
+msgid "Also moves through menus."
+msgstr "También mueve por los menús."
+
+#: src/input/bindings.cpp:146 src/input/bindings.cpp:148 src/input/bindings.cpp:150 src/input/bindings.cpp:152 src/input/bindings.cpp:154
+#, fuzzy
+msgid "Left stick"
+msgstr "Stick izquierdo"
+
+#: src/input/bindings.cpp:148
+#, fuzzy
+msgid "Move down"
+msgstr "Abajo"
+
+#: src/input/bindings.cpp:150
+#, fuzzy
+msgid "Move left"
+msgstr "Izquierda"
+
+#: src/input/bindings.cpp:152
+#, fuzzy
+msgid "Move right"
+msgstr "Derecha"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Walk (hold)"
+msgstr "Caminar (mantener)"
+
+#: src/input/bindings.cpp:154
+#, fuzzy
+msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
+msgstr "Mantener con una dirección: el stick solo se inclina en parte, así que Crash va más despacio."
+
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Spin"
+msgstr "Girar"
+
+#: src/input/bindings.cpp:155
+#, fuzzy
+msgid "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to jump off a titan...). Crash still moves with the movement keys while spinning."
+msgstr "El ataque giratorio (en el mando: \"Gira el stick analógico izquierdo\"). Mantén para seguir girando. Con otras teclas: los movimientos de giro (Girar y luego Ataque fuerte; Girar y luego Dominar para saltar de un titán...). Crash sigue moviéndose con las teclas de movimiento mientras gira."
+
+#: src/input/bindings.cpp:157
+#, fuzzy
+msgid "Left stick circles"
+msgstr "Círculos con el stick izquierdo"
+
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1208
+#, fuzzy
+msgid "Jump"
+msgstr "Saltar"
+
+#: src/input/bindings.cpp:158
+#, fuzzy
+msgid "Press again in the air for a double jump."
+msgstr "Pulsa otra vez en el aire para un doble salto."
+
+#: src/input/bindings.cpp:161
+#, fuzzy
+msgid "Light attack"
+msgstr "Ataque ligero"
+
+#: src/input/bindings.cpp:163
+#, fuzzy
+msgid "Heavy attack"
+msgstr "Ataque fuerte"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Block (hold)"
+msgstr "Bloquear (mantener)"
+
+#: src/input/bindings.cpp:165
+#, fuzzy
+msgid "Hold to block an enemy's light attack."
+msgstr "Mantén para bloquear el ataque ligero de un enemigo."
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Jack / use"
+msgstr "Dominar / usar"
+
+#: src/input/bindings.cpp:170
+#, fuzzy
+msgid "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. Also uses save totems."
+msgstr "Aturde a un enemigo y pulsa para subirte encima y controlarlo. Pulsa otra vez para bajar. También usa los tótems de guardado."
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "Titan special attack"
+msgstr "Ataque especial del titán"
+
+#: src/input/bindings.cpp:172
+#, fuzzy
+msgid "The special attack of the titan you control (watch its mutant meter)."
+msgstr "El ataque especial del titán que controlas (mira su barra de mutante)."
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Pocket / unpocket"
+msgstr "Guardar / sacar del bolsillo"
+
+#: src/input/bindings.cpp:174
+#, fuzzy
+msgid "Store the titan you control, and bring it back later."
+msgstr "Guarda en el bolsillo el titán que controlas, para sacarlo más tarde."
+
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Map"
+msgstr "Mapa"
+
+#: src/input/bindings.cpp:178
+#, fuzzy
+msgid "In the pause menu: drop out (another player stays in)."
+msgstr "En el menú de pausa: abandonar (otro jugador sigue)."
+
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1301 src/options/options_menu.cpp:1313
+#, fuzzy
+msgid "Back"
+msgstr "Atrás"
+
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
+#, fuzzy
+msgid "Pause"
+msgstr "Pausa"
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Opens the pause menu (in menus, Menu: back closes it)."
+msgstr "Abre el menú de pausa (en los menús, Menú: atrás lo cierra)."
+
+#: src/input/bindings.cpp:180
+#, fuzzy
+msgid "Start"
+msgstr "Start"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Menu: confirm"
+msgstr "Menú: aceptar"
+
+#: src/input/bindings.cpp:182
+#, fuzzy
+msgid "Choose the selected item."
+msgstr "Elige la opción seleccionada."
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Menu: back"
+msgstr "Menú: atrás"
+
+#: src/input/bindings.cpp:184
+#, fuzzy
+msgid "Back to the previous screen; in the pause menu: play on."
+msgstr "Vuelve a la pantalla anterior; en el menú de pausa: seguir jugando."
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "Menu: previous tab"
+msgstr "Menú: pestaña anterior"
+
+#: src/input/bindings.cpp:186
+#, fuzzy
+msgid "The Options screen's tabs."
+msgstr "Las pestañas de la pantalla Opciones."
+
+#: src/input/bindings.cpp:188
+#, fuzzy
+msgid "Menu: next tab"
+msgstr "Menú: pestaña siguiente"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "Menu: X action"
+msgstr "Menú: acción X"
+
+#: src/input/bindings.cpp:190
+#, fuzzy
+msgid "What the menu's X prompt says: rename a save, Dual Mode, erase a letter on the name screen."
+msgstr "Lo que dice el aviso X del menú: renombrar una partida, Modo doble, borrar una letra en la pantalla de nombre."
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "Menu: Y action"
+msgstr "Menú: acción Y"
+
+#: src/input/bindings.cpp:193
+#, fuzzy
+msgid "What the menu's Y prompt says: delete a save, remove a key (Options -> Controls)."
+msgstr "Lo que dice el aviso Y del menú: borrar una partida, quitar una tecla (Opciones -> Controles)."
+
+#: src/input/bindings.cpp:195
+#, fuzzy
+msgid "D-pad up"
+msgstr "Cruceta arriba"
+
+#: src/input/bindings.cpp:195 src/input/bindings.cpp:197 src/input/bindings.cpp:199 src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad"
+msgstr "Cruceta"
+
+#: src/input/bindings.cpp:197
+#, fuzzy
+msgid "D-pad down"
+msgstr "Cruceta abajo"
+
+#: src/input/bindings.cpp:199
+#, fuzzy
+msgid "D-pad left"
+msgstr "Cruceta izquierda"
+
+#: src/input/bindings.cpp:201
+#, fuzzy
+msgid "D-pad right"
+msgstr "Cruceta derecha"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "Right stick up"
+msgstr "Stick derecho arriba"
+
+#: src/input/bindings.cpp:204
+#, fuzzy
+msgid "The camera follows Crash by itself; this is for the few things that use the right stick."
+msgstr "La cámara sigue a Crash sola; esto es para las pocas cosas que usan el stick derecho."
+
+#: src/input/bindings.cpp:205 src/input/bindings.cpp:207 src/input/bindings.cpp:209 src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick"
+msgstr "Stick derecho"
+
+#: src/input/bindings.cpp:207
+#, fuzzy
+msgid "Right stick down"
+msgstr "Stick derecho abajo"
+
+#: src/input/bindings.cpp:209
+#, fuzzy
+msgid "Right stick left"
+msgstr "Stick derecho izquierda"
+
+#: src/input/bindings.cpp:211
+#, fuzzy
+msgid "Right stick right"
+msgstr "Stick derecho derecha"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "Left bumper"
+msgstr "Botón LB"
+
+#: src/input/bindings.cpp:213
+#, fuzzy
+msgid "No use in play found so far."
+msgstr "Ningún uso en el juego encontrado hasta ahora."
+
+#: src/input/bindings.cpp:215
+#, fuzzy
+msgid "Left stick click"
+msgstr "Pulsar el stick izquierdo"
+
+#: src/input/bindings.cpp:215 src/input/bindings.cpp:217
+#, fuzzy
+msgid "No use in the game found so far."
+msgstr "Ningún uso en el juego encontrado hasta ahora."
+
+#: src/input/bindings.cpp:217
+#, fuzzy
+msgid "Right stick click"
+msgstr "Pulsar el stick derecho"
+
+#: src/input/bindings.cpp:372
+#, fuzzy
+msgid "Moving"
+msgstr "Movimiento"
+
+#: src/input/bindings.cpp:374
+#, fuzzy
+msgid "Fighting"
+msgstr "Combate"
+
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+#, fuzzy
+msgid "Titans"
+msgstr "Titanes"
+
+#: src/input/bindings.cpp:378
+#, fuzzy
+msgid "Menus and map"
+msgstr "Menús y mapa"
+
+#: src/input/bindings.cpp:380
+#, fuzzy
+msgid "Rest of the controller"
+msgstr "Resto del mando"
+
+#: src/input/controls_menu.cpp:51
+#, fuzzy
+msgid "NO KEYBOARD CONTROLS"
+msgstr "SIN CONTROLES DE TECLADO"
+
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1139 launcher/settings_page.cpp:539
+#, fuzzy
+msgid "Controls"
+msgstr "Controles"
+
+#: src/input/controls_menu.cpp:117
+#, fuzzy
+msgid "Keys"
+msgstr "Teclas"
+
+#: src/input/controls_menu.cpp:130 launcher/main.cpp:1141
+#, fuzzy
+msgid "Close"
+msgstr "Cerrar"
+
+#: src/input/controls_menu.cpp:142
+#, fuzzy
+msgid "Click a key to change it, then press the new key or mouse button (Esc cancels). Right-click a key to remove it. The game's button prompts show Xbox buttons: the middle column says which one each action presses. A controller works at the same time."
+msgstr "Haz clic en una tecla para cambiarla y pulsa la nueva tecla o botón del ratón (Esc cancela). Clic derecho en una tecla para quitarla. Los avisos del juego muestran botones de Xbox: la columna del medio dice cuál pulsa cada acción. Un mando funciona a la vez."
+
+#: src/input/controls_menu.cpp:158
+#, fuzzy
+msgid "Spin held (spins per second)"
+msgstr "Girar mantenido (giros por segundo)"
+
+#: src/input/controls_menu.cpp:161
+#, fuzzy
+msgid "Spin speed saved."
+msgstr "Velocidad de giro guardada."
+
+#: src/input/controls_menu.cpp:163
+#, fuzzy
+msgid "While Spin is held, how often it counts as one more spin (a press is one at once). On a controller each full circle of the left stick is one."
+msgstr "Con Girar mantenido, cada cuánto cuenta como un giro más (una pulsación cuenta uno al instante). En el mando cada círculo completo del stick izquierdo es uno."
+
+#: src/input/controls_menu.cpp:166
+#, fuzzy
+msgid "Walk (how far the stick leans)"
+msgstr "Caminar (cuánto se inclina el stick)"
+
+#: src/input/controls_menu.cpp:169
+#, fuzzy
+msgid "Walk saved."
+msgstr "Caminar guardado."
+
+#: src/input/controls_menu.cpp:171
+#, fuzzy
+msgid "Reset keys to defaults"
+msgstr "Restablecer las teclas"
+
+#: src/input/controls_menu.cpp:178
+#, fuzzy
+msgid "Back to the default keys."
+msgstr "De vuelta a las teclas predeterminadas."
+
+#: src/input/controls_menu.cpp:186
+#, fuzzy
+msgid "Player assignment isn't available in this run."
+msgstr "La asignación de jugadores no está disponible en esta sesión."
+
+#: src/input/controls_menu.cpp:190
+#, fuzzy
+msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
+msgstr "Qué dispositivo juega como qué jugador. Para dos: teclado y ratón para el jugador 1, un mando para el jugador 2. En un nivel, pulsa Start en el segundo dispositivo para unirte (el menú de pausa también ofrece Unirse y Abandonar). Poner un dispositivo en un jugador lo intercambia con el que había. En la pantalla de título y los menús principales funciona cualquier dispositivo. Los cambios se aplican al momento y se recuerdan."
+
+#: src/input/controls_menu.cpp:201
+#, fuzzy
+msgid "Device"
+msgstr "Dispositivo"
+
+#: src/input/controls_menu.cpp:202
+#, fuzzy
+msgid "Plays as"
+msgstr "Juega como"
+
+#: src/input/controls_menu.cpp:218
+#, fuzzy
+msgid "No controller connected. Connect one: it shows up here."
+msgstr "No hay ningún mando conectado. Conecta uno: aparecerá aquí."
+
+#: src/input/controls_menu.cpp:227
+#, fuzzy
+msgid "Off (not used)"
+msgstr "No (sin usar)"
+
+#: src/input/controls_menu.cpp:229
+#, fuzzy
+msgid "Automatic (Player {})"
+msgstr "Automático (jugador {})"
+
+#: src/input/controls_menu.cpp:230
+#, fuzzy
+msgid "Automatic (not used)"
+msgstr "Automático (sin usar)"
+
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+#, fuzzy
+msgid "Player {}"
+msgstr "Jugador {}"
+
+#: src/input/controls_menu.cpp:277
+#, fuzzy
+msgid "Action"
+msgstr "Acción"
+
+#: src/input/controls_menu.cpp:279
+#, fuzzy
+msgid "Key 1"
+msgstr "Tecla 1"
+
+#: src/input/controls_menu.cpp:280
+#, fuzzy
+msgid "Key 2"
+msgstr "Tecla 2"
+
+#: src/input/controls_menu.cpp:304
+#, fuzzy
+msgid "(menus)"
+msgstr "(menús)"
+
+#: src/input/controls_menu.cpp:331
+#, fuzzy
+msgid "press a key..."
+msgstr "pulsa una tecla..."
+
+#: src/input/controls_menu.cpp:348
+#, fuzzy
+msgid "Press the new key for {}."
+msgstr "Pulsa la nueva tecla para {}."
+
+#: src/input/controls_menu.cpp:359
+#, fuzzy
+msgid "{0} removed from {1}."
+msgstr "{0} quitada de {1}."
+
+#: src/input/controls_menu.cpp:372
+#, fuzzy
+msgid "Cancelled."
+msgstr "Cancelado."
+
+#: src/input/controls_menu.cpp:378
+#, fuzzy
+msgid "{0} -> {1} (taken from {2})."
+msgstr "{0} -> {1} (quitada de {2})."
+
+#: src/input/controls_menu.cpp:380
+#, fuzzy
+msgid "{0} -> {1}."
+msgstr "{0} -> {1}."
+
+#: src/input/controls_menu.cpp:387
+#, fuzzy
+msgid "Couldn't save the controls file (see the log)."
+msgstr "No se pudo guardar el archivo de controles (mira el registro)."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2305
@@ -65,200 +934,1012 @@ msgstr "O {0}"
 msgid "Press Any Button"
 msgstr "Pulsa cualquier botón"
 
-#: src/options/options_menu.cpp:798 src/options/options_menu.cpp:844
+#: src/saves/save_library.cpp:764
+#, fuzzy
+msgid "Create New Save"
+msgstr "Nueva partida guardada"
+
+#: src/saves/save_library.cpp:848
+#, fuzzy
+msgid "Delete"
+msgstr "Borrar"
+
+#: src/saves/save_library.cpp:850
+#, fuzzy
+msgid "Rename"
+msgstr "Renombrar"
+
+#: src/saves/save_library.cpp:1021
+#, fuzzy
+msgid "Rename failed"
+msgstr "No se pudo renombrar"
+
+#: src/saves/save_library.cpp:1066
+#, fuzzy
+msgid "Delete failed"
+msgstr "No se pudo borrar"
+
+#: src/saves/save_library.cpp:1095
+#, fuzzy
+msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
+msgstr "¿Seguro que quieres borrar esta partida guardada? Se moverá a la carpeta Deleted saves."
+
+#: src/saves/save_library.cpp:1193
+#, fuzzy
+msgid "Rename save"
+msgstr "Renombrar partida"
+
+#: src/saves/save_library.cpp:1232
+#, fuzzy
+msgid "Rename \"%s\""
+msgstr "Renombrar \"%s\""
+
+#: src/saves/save_library.cpp:1233
+#, fuzzy
+msgid "Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"
+msgstr "Escribe hasta %zu letras, cifras, espacios. Mando: A renombra, B cancela"
+
+#: src/saves/save_library.cpp:1245
+#, fuzzy
+msgid "Rename (Enter)"
+msgstr "Renombrar (Intro)"
+
+#: src/saves/save_library.cpp:1248
+#, fuzzy
+msgid "Cancel (Esc)"
+msgstr "Cancelar (Esc)"
+
+#: src/saves/save_library.cpp:1875
+#, fuzzy
+msgid "Backspace"
+msgstr "Borrar"
+
+#. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
+#: src/saves/save_screen_waits.cpp:263
+#, fuzzy
+msgid "Reading save files..."
+msgstr "Leyendo partidas..."
+
+#. Shown while a save is loaded. Short.
+#: src/saves/save_screen_waits.cpp:265
+#, fuzzy
+msgid "Loading..."
+msgstr "Cargando..."
+
+#. Shown while the game saves. Short.
+#: src/saves/save_screen_waits.cpp:267
+#, fuzzy
+msgid "Saving..."
+msgstr "Guardando..."
+
+#: src/cheats/cheat_menu.cpp:90 src/cheats/cheat_menu.cpp:103
+#, fuzzy
+msgid "Cheats"
+msgstr "Trucos"
+
+#: src/cheats/cheat_menu.cpp:105
+#, fuzzy
+msgid "for testing (not saved by us; the game saves what they change)"
+msgstr "para pruebas (no los guardamos nosotros; el juego guarda lo que cambian)"
+
+#: src/cheats/cheat_menu.cpp:108
+#, fuzzy
+msgid "Not in a level: character cheats wait until you're playing one."
+msgstr "Fuera de un nivel: los trucos de personaje esperan a que juegues uno."
+
+#: src/cheats/cheat_menu.cpp:115
+#, fuzzy
+msgid "Everyone"
+msgstr "Todos"
+
+#: src/cheats/cheat_menu.cpp:117
+#, fuzzy
+msgid "God mode"
+msgstr "Modo dios"
+
+#: src/cheats/cheat_menu.cpp:119
+#, fuzzy
+msgid ""
+"Every player's Crash and titan loses no health (and refills).\n"
+"Deaths that skip health (pits?) may still happen."
+msgstr ""
+"El Crash y el titán de cada jugador no pierden salud (y se rellenan).\n"
+"Las muertes que saltan la salud (¿fosos?) aún pueden pasar."
+
+#: src/cheats/cheat_menu.cpp:122
+#, fuzzy
+msgid "No AI"
+msgstr "Sin IA"
+
+#: src/cheats/cheat_menu.cpp:123
+#, fuzzy
+msgid ""
+"Enemies and enemy titans stop thinking: no attacks, no moving.\n"
+"They can still be hit and beaten."
+msgstr ""
+"Los enemigos y titanes enemigos dejan de pensar: ni ataques ni movimiento.\n"
+"Se les puede seguir golpeando y venciendo."
+
+#: src/cheats/cheat_menu.cpp:130
+#, fuzzy
+msgid "Screen"
+msgstr "Pantalla"
+
+#: src/cheats/cheat_menu.cpp:132
+#, fuzzy
+msgid "Hide the HUD"
+msgstr "Ocultar el HUD"
+
+#: src/cheats/cheat_menu.cpp:133
+#, fuzzy
+msgid "Portraits, health and special bars. The mojo count text stays."
+msgstr "Retratos, barras de salud y especial. El texto del contador de mojo se queda."
+
+#: src/cheats/cheat_menu.cpp:135
+#, fuzzy
+msgid "All mojo collected: %s"
+msgstr "Mojo recogido en total: %s"
+
+#: src/cheats/cheat_menu.cpp:137
+#, fuzzy
+msgid "Achievements are off: %s."
+msgstr "Logros desactivados: %s."
+
+#: src/cheats/cheat_menu.cpp:139
+#, fuzzy
+msgid "Loading a save turns them back on (with this window closed and the"
+msgstr "Cargar una partida los vuelve a activar (con esta ventana cerrada y los"
+
+#: src/cheats/cheat_menu.cpp:140
+#, fuzzy
+msgid "switches off). A save made now is marked as made with cheats."
+msgstr "interruptores apagados). Una partida guardada ahora queda marcada como hecha con trucos."
+
+#: src/cheats/cheat_menu.cpp:145
+#, fuzzy
+msgid "Character"
+msgstr "Personaje"
+
+#: src/cheats/cheat_menu.cpp:155
+#, fuzzy
+msgid "Player %d isn't in the level."
+msgstr "El jugador %d no está en el nivel."
+
+#: src/cheats/cheat_menu.cpp:162
+#, fuzzy
+msgid "In a titan: %s"
+msgstr "En un titán: %s"
+
+#: src/cheats/cheat_menu.cpp:164
+#, fuzzy
+msgid "Riding another player as a mask (cheats act on the shared upgrades)"
+msgstr "Montado en otro jugador como máscara (los trucos actúan sobre las mejoras compartidas)"
+
+#: src/cheats/cheat_menu.cpp:166
+#, fuzzy
+msgid "On foot"
+msgstr "A pie"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d  (fully upgraded)"
+msgstr "Nivel: %d de %d  (mejorado al máximo)"
+
+#: src/cheats/cheat_menu.cpp:169
+#, fuzzy
+msgid "Level: %d of %d"
+msgstr "Nivel: %d de %d"
+
+#: src/cheats/cheat_menu.cpp:172
+#, fuzzy
+msgid "Level: %d"
+msgstr "Nivel: %d"
+
+#: src/cheats/cheat_menu.cpp:175
+#, fuzzy
+msgid "Every mojo upgrade bought: the rest come with the story"
+msgstr "Todas las mejoras de mojo compradas: el resto llega con la historia"
+
+#: src/cheats/cheat_menu.cpp:177
+#, fuzzy
+msgid "Mojo toward the next upgrade: %s / %s"
+msgstr "Mojo hacia la siguiente mejora: %s / %s"
+
+#: src/cheats/cheat_menu.cpp:180
+#, fuzzy
+msgid "Mojo toward upgrades: %s"
+msgstr "Mojo hacia las mejoras: %s"
+
+#: src/cheats/cheat_menu.cpp:184
+#, fuzzy
+msgid "Health %.0f / %.0f"
+msgstr "Salud %.0f / %.0f"
+
+#: src/cheats/cheat_menu.cpp:190
+#, fuzzy
+msgid "Level up"
+msgstr "Subir de nivel"
+
+#: src/cheats/cheat_menu.cpp:192
+#, fuzzy
+msgid "Buys this titan's next upgrade (with the game's upgrade screen)."
+msgstr "Compra la siguiente mejora de este titán (con la pantalla de mejora del juego)."
+
+#: src/cheats/cheat_menu.cpp:193
+#, fuzzy
+msgid ""
+"Gives Crash the mojo his level's script waits for: the game then\n"
+"upgrades him itself (screen and all). If nothing happens, the\n"
+"script isn't waiting for an upgrade right now."
+msgstr ""
+"Le da a Crash el mojo que espera el script de su nivel: el juego\n"
+"lo mejora solo (pantalla incluida). Si no pasa nada, el\n"
+"script no espera ninguna mejora ahora mismo."
+
+#: src/cheats/cheat_menu.cpp:197
+#, fuzzy
+msgid "Max level"
+msgstr "Nivel máximo"
+
+#: src/cheats/cheat_menu.cpp:198
+#, fuzzy
+msgid "Buys every upgrade left at once (no screens)."
+msgstr "Compra de golpe todas las mejoras que quedan (sin pantallas)."
+
+#: src/cheats/cheat_menu.cpp:199
+#, fuzzy
+msgid ""
+"Feeds Crash every upgrade his scripts ask for, one at a time:\n"
+"close each \"Level Up!\" screen (B) for the next one.\n"
+"Mojo buys 18 of them (the last at 220,000); the others\n"
+"of the 32 are unlocked by the story."
+msgstr ""
+"Le da a Crash cada mejora que piden sus scripts, de una en una:\n"
+"cierra cada pantalla \"¡Subes de nivel!\" (B) para la siguiente.\n"
+"El mojo compra 18 (la última a 220.000); las demás\n"
+"de las 32 las desbloquea la historia."
+
+#: src/cheats/cheat_menu.cpp:209
+#, fuzzy
+msgid "+{} mojo, as if picked up"
+msgstr "+{} mojo, como recogido"
+
+#: src/cheats/cheat_menu.cpp:212
+#, fuzzy
+msgid "Refill health"
+msgstr "Rellenar la salud"
+
+#: src/cheats/cheat_menu.cpp:216
+#, fuzzy
+msgid "Kill"
+msgstr "Matar"
+
+#: src/cheats/cheat_menu.cpp:219
+#, fuzzy
+msgid ""
+"In a titan: the titan dies and the player is thrown out.\n"
+"On foot: the player dies (back at the checkpoint). Works with god mode."
+msgstr ""
+"En un titán: el titán muere y el jugador sale despedido.\n"
+"A pie: el jugador muere (vuelve al punto de control). Funciona con el modo dios."
+
+#: src/cheats/cheat_menu.cpp:223
+#, fuzzy
+msgid "Free jack"
+msgstr "Dominar gratis"
+
+#: src/cheats/cheat_menu.cpp:226
+#, fuzzy
+msgid ""
+"The game's Free Jack power-up: jack any titan (B) without beating\n"
+"it first. Lasts until the next jack. On foot only."
+msgstr ""
+"El potenciador Dominar gratis del juego: domina cualquier titán (B) sin\n"
+"vencerlo antes. Dura hasta el siguiente dominio. Solo a pie."
+
+#: src/cheats/cheat_menu.cpp:233
+#, fuzzy
+msgid "Spawn"
+msgstr "Aparecer"
+
+#: src/cheats/cheat_menu.cpp:258
+#, fuzzy
+msgid "How many"
+msgstr "Cuántos"
+
+#: src/cheats/cheat_menu.cpp:261
+#, fuzzy
+msgid "Ready to jack"
+msgstr "Listo para dominar"
+
+#: src/cheats/cheat_menu.cpp:263
+#, fuzzy
+msgid ""
+"Arrives already down, ready to jack: walk up and press B.\n"
+"Off: a normal titan, ready to fight. Or use Free jack (Character)."
+msgstr ""
+"Llega ya caído, listo para dominar: acércate y pulsa B.\n"
+"No: un titán normal, listo para luchar. O usa Dominar gratis (Personaje)."
+
+#: src/cheats/cheat_menu.cpp:268
+#, fuzzy
+msgid "Spawn in front of player {}"
+msgstr "Aparecer delante del jugador {}"
+
+#: src/cheats/cheat_menu.cpp:275
+#, fuzzy
+msgid "or a template, e.g. Characters:Znu"
+msgstr "o una plantilla, p. ej. Characters:Znu"
+
+#: src/cheats/cheat_menu.cpp:278
+#, fuzzy
+msgid ""
+"Any template the game's data names (\"Group:Name\"). Experimental:\n"
+"only titans are tested; other things can crash the game."
+msgstr ""
+"Cualquier plantilla que nombren los datos del juego (\"Grupo:Nombre\"). Experimental:\n"
+"solo los titanes están probados; otras cosas pueden colgar el juego."
+
+#: src/cheats/cheat_menu.cpp:282
+#, fuzzy
+msgid "Spawn by name"
+msgstr "Aparecer por nombre"
+
+#: src/cheats/cheat_menu.cpp:287
+#, fuzzy
+msgid "Last: %s"
+msgstr "Último: %s"
+
+#: src/cheats/cheat_menu.cpp:288
+#, fuzzy
+msgid "Not in this level? It's loaded first (takes a moment)."
+msgstr "¿No está en este nivel? Se carga primero (tarda un momento)."
+
+#: src/cheats/cheat_menu.cpp:293
+#, fuzzy
+msgid "Unlocks"
+msgstr "Desbloqueos"
+
+#: src/cheats/cheat_menu.cpp:305
+#, fuzzy
+msgid "Unlocked / all. Click to unlock all of them."
+msgstr "Desbloqueados / total. Haz clic para desbloquearlos todos."
+
+#: src/cheats/cheat_menu.cpp:307
+#, fuzzy
+msgid "Unlock everything"
+msgstr "Desbloquear todo"
+
+#: src/cheats/cheat_menu.cpp:311
+#, fuzzy
+msgid ""
+"Every outfit (Coco and the titan suits included: pick them at the chest),\n"
+"concept art, enemy info and tutorial page, in the game being played.\n"
+"Kept when the game saves. Nobody's outfit changes by itself."
+msgstr ""
+"Cada traje (Coco y los trajes de titán incluidos: elígelos en el baúl),\n"
+"boceto, ficha de enemigo y página de tutorial, en la partida en curso.\n"
+"Se conservan al guardar. El traje de nadie cambia solo."
+
+#: src/cheats/cheat_menu.cpp:319
+#, fuzzy
+msgid "Time"
+msgstr "Tiempo"
+
+#: src/cheats/cheat_menu.cpp:322
+#, fuzzy
+msgid "Game speed"
+msgstr "Velocidad del juego"
+
+#: src/cheats/cheat_menu.cpp:333
+#, fuzzy
+msgid "Freeze"
+msgstr "Congelar"
+
+#: src/cheats/cheat_menu.cpp:335
+#, fuzzy
+msgid ""
+"Everything stops; the picture keeps drawing (with the free camera:\n"
+"a photo mode). The game's own \"pause for screenshots\"."
+msgstr ""
+"Todo se para; la imagen se sigue dibujando (con la cámara libre:\n"
+"un modo foto). La \"pausa para capturas\" del propio juego."
+
+#: src/cheats/cheat_menu.cpp:339
+#, fuzzy
+msgid "Step one frame"
+msgstr "Avanzar un fotograma"
+
+#: src/cheats/cheat_menu.cpp:346
+#, fuzzy
+msgid "Dummy players"
+msgstr "Jugadores de prueba"
+
+#: src/cheats/cheat_menu.cpp:349
+#, fuzzy
+msgid "No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml"
+msgstr "No hay mandos de prueba. Añade  debug_fake_pads = 3  a user/settings.toml"
+
+#: src/cheats/cheat_menu.cpp:350
+#, fuzzy
+msgid "(1-3 dummies) and restart the game."
+msgstr "(1-3 de prueba) y reinicia el juego."
+
+#: src/cheats/cheat_menu.cpp:353
+#, fuzzy
+msgid "START joins, B leaves a mask. Hold a direction on the pad to walk."
+msgstr "START se une, B deja una máscara. Mantén una dirección en el pad para caminar."
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Idle (buttons only)"
+msgstr "Quieto (solo botones)"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 1"
+msgstr "Seguir al jugador 1"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 2"
+msgstr "Seguir al jugador 2"
+
+#: src/cheats/cheat_menu.cpp:354
+#, fuzzy
+msgid "Follow player 3"
+msgstr "Seguir al jugador 3"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Follow player 4"
+msgstr "Seguir al jugador 4"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 1"
+msgstr "Copiar al jugador 1"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 2"
+msgstr "Copiar al jugador 2"
+
+#: src/cheats/cheat_menu.cpp:355
+#, fuzzy
+msgid "Copy player 3"
+msgstr "Copiar al jugador 3"
+
+#: src/cheats/cheat_menu.cpp:356
+#, fuzzy
+msgid "Copy player 4"
+msgstr "Copiar al jugador 4"
+
+#: src/cheats/cheat_menu.cpp:361
+#, fuzzy
+msgid "Dummy controller %d: player %d"
+msgstr "Mando de prueba %d: jugador %d"
+
+#: src/cheats/cheat_menu.cpp:363
+#, fuzzy
+msgid "Dummy controller %d: plays as nobody (Controls -> Players)"
+msgstr "Mando de prueba %d: no juega como nadie (Controles -> Jugadores)"
+
+#: src/cheats/cheat_menu.cpp:377
+#, fuzzy
+msgid ""
+"Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
+"below them. Copy: repeats that player's controller (not START / BACK).\n"
+"The buttons and the stick pad work in every mode."
+msgstr ""
+"Seguir: camina tras ese jugador, se para a ~3 unidades, salta si se atasca\n"
+"debajo de él. Copiar: repite el mando de ese jugador (salvo START / BACK).\n"
+"Los botones y el pad del stick funcionan en todos los modos."
+
+#: src/cheats/cheat_menu.cpp:391
+#, fuzzy
+msgid ""
+"Which controller this dummy pretends to be. With Controller Icons on\n"
+"Automatic, the game detects it from its maker and model like a real pad\n"
+"and shows that player's prompts in its button pictures."
+msgstr ""
+"Qué mando finge ser este de prueba. Con Iconos del mando en\n"
+"Automático, el juego lo detecta por su marca y modelo como uno real\n"
+"y muestra los avisos de ese jugador con sus imágenes de botones."
+
+#: src/cheats/cheat_menu.cpp:434
+#, fuzzy
+msgid "Camera"
+msgstr "Cámara"
+
+#: src/cheats/cheat_menu.cpp:436
+#, fuzzy
+msgid "Free camera"
+msgstr "Cámara libre"
+
+#: src/cheats/cheat_menu.cpp:440
+#, fuzzy
+msgid "Keys move the camera"
+msgstr "Las teclas mueven la cámara"
+
+#: src/cheats/cheat_menu.cpp:443
+#, fuzzy
+msgid ""
+"On: the keyboard and mouse fly the camera (Crash stands still;\n"
+"a controller still plays). Off: the camera stays put and the keys\n"
+"play the game again."
+msgstr ""
+"Sí: el teclado y el ratón hacen volar la cámara (Crash se queda quieto;\n"
+"un mando sigue jugando). No: la cámara se queda quieta y las teclas\n"
+"vuelven a jugar."
+
+#: src/cheats/cheat_menu.cpp:447
+#, fuzzy
+msgid "W A S D move, E / Q up / down, Shift fast, Ctrl slow,"
+msgstr "W A S D mover, E / Q subir / bajar, Mayús rápido, Ctrl lento,"
+
+#: src/cheats/cheat_menu.cpp:448
+#, fuzzy
+msgid "right mouse button held (or arrow keys) = look around"
+msgstr "botón derecho del ratón mantenido (o flechas) = mirar alrededor"
+
+#: src/cheats/cheat_menu.cpp:451
+#, fuzzy
+msgid "Flying speed"
+msgstr "Velocidad de vuelo"
+
+#: src/cheats/cheat_menu.cpp:457
+#, fuzzy
+msgid "Look speed"
+msgstr "Velocidad de la vista"
+
+#: src/cheats/cheat_menu.cpp:460
+#, fuzzy
+msgid "Back to the game's camera"
+msgstr "Volver a la cámara del juego"
+
+#: src/cheats/cheat_menu.cpp:463
+#, fuzzy
+msgid "Camera at (%.1f, %.1f, %.1f)"
+msgstr "Cámara en (%.1f, %.1f, %.1f)"
+
+#: src/cheats/cheats.cpp:105
+#, fuzzy
+msgid "Outfits"
+msgstr "Trajes"
+
+#: src/cheats/cheats.cpp:106
+#, fuzzy
+msgid "Concept art"
+msgstr "Bocetos"
+
+#: src/cheats/cheats.cpp:107
+#, fuzzy
+msgid "Enemy info"
+msgstr "Fichas de enemigos"
+
+#: src/cheats/cheats.cpp:108
+#, fuzzy
+msgid "Tutorials"
+msgstr "Tutoriales"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "Cheats Enabled"
+msgstr "Trucos activados"
+
+#: src/cheats/cheats.cpp:230
+#, fuzzy
+msgid "No achievements until a save is loaded"
+msgstr "Sin logros hasta cargar una partida guardada"
+
+#: src/cheats/cheats.cpp:698
+#, fuzzy
+msgid "this game was saved with cheats on"
+msgstr "esta partida se guardó con trucos activados"
+
+#: src/cheats/cheats.cpp:699
+#, fuzzy
+msgid "cheats were used (until a save is loaded)"
+msgstr "se han usado trucos (hasta que se cargue una partida)"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "Save Made With Cheats"
+msgstr "Partida guardada con trucos"
+
+#: src/cheats/cheats.cpp:729
+#, fuzzy
+msgid "No achievements while playing this save"
+msgstr "Sin logros mientras juegues esta partida"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Crunch (boss)"
+msgstr "Crunch (jefe)"
+
+#: src/cheats/spawn.cpp:447
+#, fuzzy
+msgid "Cortex (boss)"
+msgstr "Cortex (jefe)"
+
+#: src/cheats/spawn.cpp:448
+#, fuzzy
+msgid "Enemies"
+msgstr "Enemigos"
+
+#: src/players/dummy_players.cpp:232
+#, fuzzy
+msgid "Test pad (no model)"
+msgstr "Mando de prueba (sin modelo)"
+
+#: src/players/dummy_players.cpp:233
+#, fuzzy
+msgid "Xbox 360 controller"
+msgstr "Mando de Xbox 360"
+
+#: src/players/dummy_players.cpp:234
+#, fuzzy
+msgid "Xbox Series controller"
+msgstr "Mando de Xbox Series"
+
+#: src/players/dummy_players.cpp:235
+#, fuzzy
+msgid "PlayStation 4 (DualShock 4)"
+msgstr "PlayStation 4 (DualShock 4)"
+
+#: src/players/dummy_players.cpp:236
+#, fuzzy
+msgid "PlayStation 5 (DualSense)"
+msgstr "PlayStation 5 (DualSense)"
+
+#: src/players/dummy_players.cpp:237
+#, fuzzy
+msgid "Switch Pro controller"
+msgstr "Mando Switch Pro"
+
+#: src/players/dummy_players.cpp:238
+#, fuzzy
+msgid "Another maker (8BitDo)"
+msgstr "Otro fabricante (8BitDo)"
+
+#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
+#: src/players/lost_controller.cpp:189
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or Player {1}: press {2} to take over."
+msgstr ""
+"El mando del jugador {0} se ha desconectado.\n"
+"Vuelve a conectarlo, o jugador {1}: pulsa {2} para tomar el relevo."
+
+#: src/players/lost_controller.cpp:193
+#, fuzzy
+msgid ""
+"Controller reconnected.\n"
+"Press any button to resume."
+msgstr ""
+"Mando reconectado.\n"
+"Pulsa cualquier botón para seguir."
+
+#: src/players/lost_controller.cpp:194
+#, fuzzy
+msgid ""
+"Controller disconnected.\n"
+"Reconnect your controller to continue."
+msgstr ""
+"Mando desconectado.\n"
+"Vuelve a conectar el mando para continuar."
+
+#. the question box (2 lines): {0} = the player's number.
+#: src/players/lost_controller.cpp:198
+#, fuzzy
+msgid ""
+"Player {0}'s controller is back.\n"
+"Player {0}: press any button to resume."
+msgstr ""
+"El mando del jugador {0} ha vuelto.\n"
+"Jugador {0}: pulsa cualquier botón para seguir."
+
+#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
+#: src/players/lost_controller.cpp:205
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it, or press {1} to drop out Player {0}."
+msgstr ""
+"El mando del jugador {0} se ha desconectado.\n"
+"Vuelve a conectarlo, o pulsa {1} para que el jugador {0} abandone."
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Normal"
+msgstr "Normal"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Greeny"
+msgstr "Verdoso"
+
+#: src/players/outfit_picker.cpp:506
+#, fuzzy
+msgid "Bluey"
+msgstr "Azulado"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Reddy"
+msgstr "Rojizo"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Snipe"
+msgstr "Tirador"
+
+#: src/players/outfit_picker.cpp:507
+#, fuzzy
+msgid "Ratcicle"
+msgstr "Ratarámbano"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Magmadon"
+msgstr "Magmadón"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Skeleton"
+msgstr "Esqueleto"
+
+#: src/players/outfit_picker.cpp:508
+#, fuzzy
+msgid "Spike"
+msgstr "Púas"
+
+#. the heroes' names, as the game writes them in this language.
+#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#, fuzzy
+msgid "Coco"
+msgstr "Coco"
+
+#: src/players/outfit_picker.cpp:509
+#, fuzzy
+msgid "Old School"
+msgstr "Vieja escuela"
+
+#: src/players/outfit_picker.cpp:520
+#, fuzzy
+msgid "Orange"
+msgstr "Naranja"
+
+#. the heroes' names, as the game writes them in this language.
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#, fuzzy
+msgid "Crash"
+msgstr "Crash"
+
+#: src/players/outfit_picker.cpp:1091
+#, fuzzy
+msgid "Wear"
+msgstr "Ponerse"
+
+#. the chest: this player has picked an outfit.
+#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#, fuzzy
+msgid "Ready!"
+msgstr "¡Listo!"
+
+#. {0} = the B button's picture (change the pick again).
+#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#, fuzzy
+msgid "{0} Change"
+msgstr "{0} Cambiar"
+
+#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#, fuzzy
+msgid "Loading"
+msgstr "Cargando"
+
+#. {0} = the A button's picture (wear this outfit).
+#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#, fuzzy
+msgid "{0} Wear"
+msgstr "{0} Ponerse"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Ruby"
+msgstr "Rubí"
+
+#: src/players/outfits.cpp:219
+#, fuzzy
+msgid "Exactly the same in every way but red"
+msgstr "Idéntico en todo, pero rojo"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Topaz"
+msgstr "Topacio"
+
+#: src/players/outfits.cpp:221
+#, fuzzy
+msgid "Exactly the same in every way but yellow"
+msgstr "Idéntico en todo, pero amarillo"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Jade"
+msgstr "Jade"
+
+#: src/players/outfits.cpp:223
+#, fuzzy
+msgid "Exactly the same in every way but green"
+msgstr "Idéntico en todo, pero verde"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Sapphire"
+msgstr "Zafiro"
+
+#: src/players/outfits.cpp:225
+#, fuzzy
+msgid "Exactly the same in every way but blue"
+msgstr "Idéntico en todo, pero azul"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Amethyst"
+msgstr "Amatista"
+
+#: src/players/outfits.cpp:227
+#, fuzzy
+msgid "Exactly the same in every way but purple"
+msgstr "Idéntico en todo, pero morado"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Rose Quartz"
+msgstr "Cuarzo rosa"
+
+#: src/players/outfits.cpp:229
+#, fuzzy
+msgid "Exactly the same in every way but pink"
+msgstr "Idéntico en todo, pero rosa"
+
+#: src/players/outfits.cpp:239
+#, fuzzy
+msgid "Carbon"
+msgstr "Carbono"
+
+#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
+#: src/players/outfits.cpp:852
+#, fuzzy
+msgctxt "outfit name"
+msgid "{0} {1}"
+msgstr "{1} {0}"
+
+#: src/players/pause_drop_out.cpp:43
+#, fuzzy
+msgid "Drop Out"
+msgstr "Abandonar"
+
+#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
 #, fuzzy
 msgid "Press a Key"
 msgstr "Pulsa una tecla"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:853
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Pulsa la nueva segunda tecla o botón del ratón para {0}. {1} o {2}: cancelar."
 
-#: src/options/options_menu.cpp:855
+#: src/options/options_menu.cpp:854
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Pulsa la nueva tecla o botón del ratón para {0}. {1} o {2}: cancelar."
 
-#: src/options/options_menu.cpp:872
+#: src/options/options_menu.cpp:871
 #, fuzzy
 msgid "Second Key"
 msgstr "Segunda tecla"
 
-#: src/options/options_menu.cpp:878
+#: src/options/options_menu.cpp:877
 #, fuzzy
 msgid "Remove Key"
 msgstr "Quitar tecla"
 
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jan"
-msgstr "ene"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Feb"
-msgstr "feb"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Mar"
-msgstr "mar"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Apr"
-msgstr "abr"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "May"
-msgstr "may"
-
-#: src/options/options_menu.cpp:1002
-#, fuzzy
-msgid "Jun"
-msgstr "jun"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Jul"
-msgstr "jul"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Aug"
-msgstr "ago"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Sep"
-msgstr "sep"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Oct"
-msgstr "oct"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Nov"
-msgstr "nov"
-
-#: src/options/options_menu.cpp:1003
-#, fuzzy
-msgid "Dec"
-msgstr "dic"
-
-#. a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
-#: src/options/options_menu.cpp:1006
-#, fuzzy
-msgid "{0} {1} {2}"
-msgstr "{0} {1} {2}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
-#, fuzzy
-msgid "Earned {0}"
-msgstr "Conseguido el {0}"
-
-#. {0} = the date it was earned ("12 Oct 2026").
-#: src/options/options_menu.cpp:1068
+#: src/options/options_menu.cpp:1050
 #, fuzzy
 msgid "Locked"
 msgstr "Bloqueado"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1300
 #, fuzzy
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1331 src/players/outfit_picker.cpp:1090
-#, fuzzy
-msgid "Back"
-msgstr "Atrás"
-
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Swap"
 msgstr "Cambiar"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1304
 #, fuzzy
 msgid "Move Here"
 msgstr "Mover aquí"
 
-#: src/options/options_menu.cpp:1324
+#: src/options/options_menu.cpp:1306 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1309
 #, fuzzy
 msgid "Buttons"
 msgstr "Botones"
 
-#: src/options/options_menu.cpp:1328
+#: src/options/options_menu.cpp:1310
 #, fuzzy
 msgid "Move"
 msgstr "Mover"
 
-#: src/options/options_menu.cpp:1329
+#: src/options/options_menu.cpp:1311
 #, fuzzy
 msgid "Remove"
 msgstr "Quitar"
 
-#: src/options/options_menu.cpp:1452
+#: src/options/options_menu.cpp:1434
 #, fuzzy
 msgid "No room for this player"
 msgstr "No hay sitio para este jugador"
 
-#: src/options/options_menu.cpp:1456 src/options/options_menu.cpp:1464
+#: src/options/options_menu.cpp:1438 src/options/options_menu.cpp:1446
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Teclado y ratón"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Al jugador {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1461
+#: src/options/options_menu.cpp:1443
 #, fuzzy
 msgid "Pick a player"
 msgstr "Elige un jugador"
 
-#: src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1448
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Pulsa un botón para unirte"
 
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1850
 #, fuzzy
 msgid "Not changed."
 msgstr "Sin cambios."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1875
+#: src/options/options_menu.cpp:1857
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} es de los menús ({1}): elige otra tecla."
 
-#: src/options/options_menu.cpp:1887
+#: src/options/options_menu.cpp:1869
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} era la tecla de {1}: ahora es de {2}."
 
-#: src/options/options_menu.cpp:1908
+#: src/options/options_menu.cpp:1890
 #, fuzzy
 msgid "No key to remove."
 msgstr "No hay tecla que quitar."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1916
+#: src/options/options_menu.cpp:1898
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} quitada."
@@ -279,7 +1960,7 @@ msgstr "Límite de fotogramas"
 msgid "30 (original)"
 msgstr "30 (original)"
 
-#: src/options/options_settings.cpp:182
+#: src/options/options_settings.cpp:182 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
 #, fuzzy
 msgid "Unlimited"
 msgstr "Sin límite"
@@ -294,7 +1975,7 @@ msgstr "El máximo de fotogramas por segundo que dibuja el juego. El original va
 msgid "Above 60, jumps and timings may feel different."
 msgstr "Por encima de 60, los saltos y los tiempos pueden sentirse distintos."
 
-#: src/options/options_settings.cpp:213
+#: src/options/options_settings.cpp:213 launcher/settings_page.cpp:390
 #, fuzzy
 msgid "Renderer"
 msgstr "Renderizado"
@@ -504,12 +2185,12 @@ msgstr "El HUD mantiene el tamaño de arriba con cualquier número de jugadores.
 msgid "Window Mode"
 msgstr "Modo de ventana"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Windowed"
 msgstr "Ventana"
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:414 launcher/settings_page.cpp:453
 #, fuzzy
 msgid "Fullscreen"
 msgstr "Pantalla completa"
@@ -524,12 +2205,12 @@ msgstr "Se juega en una ventana que puedes mover y cambiar de tamaño."
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr "Llena todo el monitor (el elegido en Monitor)."
 
-#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443
+#: src/options/options_settings.cpp:436 src/options/options_settings.cpp:443 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
 #, fuzzy
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799
+#: src/options/options_settings.cpp:447 src/options/options_settings.cpp:799 launcher/settings_page.cpp:471
 #, fuzzy
 msgid "Automatic"
 msgstr "Automático"
@@ -1214,11 +2895,6 @@ msgstr "Ventana en segundo plano"
 msgid "Keep Playing"
 msgstr "Seguir jugando"
 
-#: src/options/options_settings.cpp:857 src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Pause"
-msgstr "Pausa"
-
 #: src/options/options_settings.cpp:858
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
@@ -1364,7 +3040,7 @@ msgstr "Gira y luego pulsa {0} una y otra vez para seguir girando, como en el ju
 msgid "Turn on Simple Spinning first."
 msgstr "Activa primero Giro sencillo."
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:976 launcher/settings_page.cpp:497
 #, fuzzy
 msgid "Co-op"
 msgstr "Multijugador"
@@ -1580,11 +3256,6 @@ msgstr "Efectos de sonido"
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "El volumen de golpes, cajas, pasos y todo lo demás."
 
-#: src/options/options_settings.cpp:1139
-#, fuzzy
-msgid "Controls"
-msgstr "Controles"
-
 #: src/options/options_settings.cpp:1140
 #, fuzzy
 msgid "Gameplay"
@@ -1595,7 +3266,7 @@ msgstr "Jugabilidad"
 msgid "Language"
 msgstr "Idioma"
 
-#: src/options/options_settings.cpp:1185
+#: src/options/options_settings.cpp:1185 launcher/main.cpp:1051
 #, fuzzy
 msgid "None"
 msgstr "Ninguna"
@@ -1627,16 +3298,6 @@ msgstr "Andar (mantener)"
 
 #: src/options/options_settings.cpp:1208
 #, fuzzy
-msgid "Spin"
-msgstr "Girar"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
-msgid "Jump"
-msgstr "Saltar"
-
-#: src/options/options_settings.cpp:1208
-#, fuzzy
 msgid "Light Attack"
 msgstr "Ataque ligero"
 
@@ -1664,11 +3325,6 @@ msgstr "Ataque especial del titán"
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Guardar / Sacar"
-
-#: src/options/options_settings.cpp:1209
-#, fuzzy
-msgid "Map"
-msgstr "Mapa"
 
 #: src/options/options_settings.cpp:1210
 #, fuzzy
@@ -1755,275 +3411,1651 @@ msgstr "Pulsar stick izquierdo"
 msgid "Right Stick Click"
 msgstr "Pulsar stick derecho"
 
-#. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: launcher/desktop_entry.cpp:138 launcher/report.cpp:518 launcher/settings.cpp:284
+#, fuzzy
+msgid "Couldn't write {0}"
+msgstr "No se pudo escribir {0}"
+
+#: launcher/desktop_entry.cpp:144
+#, fuzzy
+msgid "Couldn't write {0}: {1}"
+msgstr "No se pudo escribir {0}: {1}"
+
+#: launcher/desktop_entry.cpp:292
+#, fuzzy
+msgid "Couldn't write the Start menu shortcut."
+msgstr "No se pudo escribir el acceso directo del menú Inicio."
+
+#: launcher/desktop_entry.cpp:315
+#, fuzzy
+msgid "Couldn't remove the Start menu shortcut: {0}"
+msgstr "No se pudo quitar el acceso directo del menú Inicio: {0}"
+
+#: launcher/desktop_entry.cpp:346
+#, fuzzy
+msgid "Couldn't remove {0}: {1}"
+msgstr "No se pudo quitar {0}: {1}"
+
+#: launcher/game_process.cpp:98
+#, fuzzy
+msgid "The game is already running."
+msgstr "El juego ya está en marcha."
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jan"
+msgstr "ene"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Feb"
+msgstr "feb"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Mar"
+msgstr "mar"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Apr"
+msgstr "abr"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "May"
+msgstr "may"
+
+#. Short month names (3 letters if the language has short forms), in the save list's dates.
+#: launcher/main.cpp:204
+#, fuzzy
+msgid "Jun"
+msgstr "jun"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Jul"
+msgstr "jul"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Aug"
+msgstr "ago"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Sep"
+msgstr "sep"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Oct"
+msgstr "oct"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Nov"
+msgstr "nov"
+
+#: launcher/main.cpp:205
+#, fuzzy
+msgid "Dec"
+msgstr "dic"
+
+#: launcher/main.cpp:212
+#, fuzzy
+msgid "%ld h %02ld min"
+msgstr "%ld h %02ld min"
+
+#: launcher/main.cpp:214
+#, fuzzy
+msgid "%ld min"
+msgstr "%ld min"
+
+#: launcher/main.cpp:216
+#, fuzzy
+msgid "%ld s"
+msgstr "%ld s"
+
+#. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
+#: launcher/main.cpp:228
+#, fuzzy
+msgid "%s %d, %02d:%02d"
+msgstr "%s %d, %02d:%02d"
+
+#: launcher/main.cpp:249
+#, fuzzy
+msgid "today %02d:%02d"
+msgstr "hoy %02d:%02d"
+
+#: launcher/main.cpp:251
+#, fuzzy
+msgid "yesterday %02d:%02d"
+msgstr "ayer %02d:%02d"
+
+#: launcher/main.cpp:253
+#, fuzzy
+msgid "%ld days ago"
+msgstr "hace %ld días"
+
+#: launcher/main.cpp:255
+#, fuzzy
+msgid "%s %d"
+msgstr "%s %d"
+
+#: launcher/main.cpp:378
+#, fuzzy
+msgid "Mind over Recomp"
+msgstr "Mind over Recomp"
+
+#: launcher/main.cpp:384
+#, fuzzy
+msgid "(alpha)"
+msgstr "(alfa)"
+
+#: launcher/main.cpp:388
+#, fuzzy
+msgid "An unofficial PC port of Crash: Mind over Mutant"
+msgstr "Un port no oficial para PC de Crash: Mind over Mutant"
+
+#: launcher/main.cpp:403
+#, fuzzy
+msgid "Couldn't find the game."
+msgstr "No se encuentra el juego."
+
+#: launcher/main.cpp:404
+#, fuzzy
+msgid "Put the launcher in the game's folder (next to program/), or start it with --game_folder=<path to the game folder>."
+msgstr "Pon el lanzador en la carpeta del juego (junto a program/), o ábrelo con --game_folder=<ruta de la carpeta del juego>."
+
+#: launcher/main.cpp:410
+#, fuzzy
+msgid "The game isn't ready to play yet."
+msgstr "El juego aún no está listo para jugar."
+
+#: launcher/main.cpp:411
+#, fuzzy
+msgid "Open Setup"
+msgstr "Abrir Instalación"
+
+#: launcher/main.cpp:417
+#, fuzzy
+msgid "The game isn't built yet."
+msgstr "El juego aún no está compilado."
+
+#: launcher/main.cpp:418
+#, fuzzy
+msgid "Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."
+msgstr "Se esperaba en {0}. Compílalo primero (docs/01-building.md, pasos 2 a 4)."
+
+#: launcher/main.cpp:423
+#, fuzzy
+msgid "The disc's files aren't there."
+msgstr "Los archivos del disco no están."
+
+#: launcher/main.cpp:424
+#, fuzzy
+msgid "Expected in {0} (default.xex and the rest). Extract your disc image first (docs/01-building.md, step 1)."
+msgstr "Se esperaban en {0} (default.xex y el resto). Extrae primero tu imagen de disco (docs/01-building.md, paso 1)."
+
+#: launcher/main.cpp:436
+#, fuzzy
+msgid "Playing"
+msgstr "Jugando"
+
+#: launcher/main.cpp:440
+#, fuzzy
+msgid "for %s"
+msgstr "desde hace %s"
+
+#: launcher/main.cpp:441
+#, fuzzy
+msgid "The game is running in its own window. This window can stay open: it shows how the session ended when the game closes."
+msgstr "El juego está en su propia ventana. Esta ventana puede quedarse abierta: muestra cómo terminó la sesión cuando el juego se cierra."
+
+#: launcher/main.cpp:443
+#, fuzzy
+msgid "Watch the game log"
+msgstr "Ver el registro del juego"
+
+#: launcher/main.cpp:447
+#, fuzzy
+msgid "Stop the game..."
+msgstr "Detener el juego..."
+
+#: launcher/main.cpp:449 launcher/main.cpp:451
+#, fuzzy
+msgid "Stop the game?"
+msgstr "¿Detener el juego?"
+
+#: launcher/main.cpp:452
+#, fuzzy
+msgid "Progress since your last save is lost."
+msgstr "Se pierde el progreso desde tu última partida guardada."
+
+#: launcher/main.cpp:454
+#, fuzzy
+msgid "Stop it"
+msgstr "Detenerlo"
+
+#: launcher/main.cpp:459
+#, fuzzy
+msgid "Keep playing"
+msgstr "Seguir jugando"
+
+#: launcher/main.cpp:473
+#, fuzzy
+msgid "The game crashed after %s"
+msgstr "El juego se colgó tras %s"
+
+#: launcher/main.cpp:475
+#, fuzzy
+msgid "The game was ended from outside after %s"
+msgstr "El juego fue cerrado desde fuera tras %s"
+
+#: launcher/main.cpp:477
+#, fuzzy
+msgid "The game was stopped after %s"
+msgstr "El juego se detuvo tras %s"
+
+#: launcher/main.cpp:479
+#, fuzzy
+msgid "The game quit with an error (code %d) after %s"
+msgstr "El juego salió con un error (código %d) tras %s"
+
+#: launcher/main.cpp:482
+#, fuzzy
+msgid "The game closed normally after %s"
+msgstr "El juego se cerró con normalidad tras %s"
+
+#: launcher/main.cpp:487
+#, fuzzy
+msgid "Ended by %s.%s"
+msgstr "Terminado por %s.%s"
+
+#: launcher/main.cpp:489
+#, fuzzy
+msgid " (Also what the system does when memory runs out.)"
+msgstr " (Es también lo que hace el sistema cuando se queda sin memoria.)"
+
+#: launcher/main.cpp:493 launcher/setup.cpp:1455
+#, fuzzy
+msgid "Log: %s"
+msgstr "Registro: %s"
+
+#: launcher/main.cpp:497
+#, fuzzy
+msgid " Errors: %d (%d different), warnings: %d (%d different)"
+msgstr " Errores: %d (%d distintos), avisos: %d (%d distintos)"
+
+#: launcher/main.cpp:502
+#, fuzzy
+msgid "Frame rate: %s"
+msgstr "Fotogramas: %s"
+
+#: launcher/main.cpp:505
+#, fuzzy
+msgid "Open the log"
+msgstr "Abrir el registro"
+
+#: launcher/main.cpp:509 launcher/main.cpp:816 launcher/main.cpp:846
+#, fuzzy
+msgid "Logs folder"
+msgstr "Carpeta de registros"
+
+#: launcher/main.cpp:513
+#, fuzzy
+msgid "Show the game log"
+msgstr "Mostrar el registro del juego"
+
+#: launcher/main.cpp:519 launcher/main.cpp:520 launcher/main.cpp:694
+#, fuzzy
+msgid "Report a problem..."
+msgstr "Informar de un problema..."
+
+#: launcher/main.cpp:524 launcher/main.cpp:758 launcher/setup.cpp:1450
+#, fuzzy
+msgid "OK"
+msgstr "Aceptar"
+
+#: launcher/main.cpp:536 launcher/main.cpp:663 launcher/main.cpp:1207
+#, fuzzy
+msgid "Play"
+msgstr "Jugar"
+
+#: launcher/main.cpp:542
+#, fuzzy
+msgid "From the start"
+msgstr "Desde el principio"
+
+#: launcher/main.cpp:544
+#, fuzzy
+msgid "Intro movies (Esc or Start skips them), the title screen and the menus."
+msgstr "Vídeos de introducción (Esc o Start los salta), la pantalla de título y los menús."
+
+#: launcher/main.cpp:553
+#, fuzzy
+msgid "Continue"
+msgstr "Continuar"
+
+#. Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
+#: launcher/main.cpp:564
+#, fuzzy
+msgid "%d%%  ·  %s  ·  played %s. Straight in: no movies or menus."
+msgstr "%d%%  ·  %s  ·  jugada %s. Directo: sin vídeos ni menús."
+
+#: launcher/main.cpp:581
+#, fuzzy
+msgid "Your saves"
+msgstr "Tus partidas"
+
+#: launcher/main.cpp:584
+#, fuzzy
+msgid "(%zu)"
+msgstr "(%zu)"
+
+#: launcher/main.cpp:586
+#, fuzzy
+msgid "No saves yet. Start a New Game from the main menu: it makes its own save."
+msgstr "Aún no hay partidas. Empieza una Partida nueva desde el menú principal: crea su propia partida guardada."
+
+#: launcher/main.cpp:593
+#, fuzzy
+msgid "Find a save..."
+msgstr "Buscar una partida..."
+
+#: launcher/main.cpp:604
+#, fuzzy
+msgid "Name"
+msgstr "Nombre"
+
+#: launcher/main.cpp:605
+#, fuzzy
+msgid "Progress"
+msgstr "Progreso"
+
+#: launcher/main.cpp:606
+#, fuzzy
+msgid "Play time"
+msgstr "Tiempo de juego"
+
+#: launcher/main.cpp:607
+#, fuzzy
+msgid "Difficulty"
+msgstr "Dificultad"
+
+#: launcher/main.cpp:608
+#, fuzzy
+msgid "Last played"
+msgstr "Última vez"
+
+#: launcher/main.cpp:635
+#, fuzzy
+msgid "(no name)"
+msgstr "(sin nombre)"
+
+#: launcher/main.cpp:648
+#, fuzzy
+msgid "Save file %d, saved %s"
+msgstr "Archivo de partida %d, guardada %s"
+
+#: launcher/main.cpp:676
+#, fuzzy
+msgid "Open:"
+msgstr "Abrir:"
+
+#: launcher/main.cpp:682
+#, fuzzy
+msgid "Photos (F10)"
+msgstr "Fotos (F10)"
+
+#: launcher/main.cpp:686
+#, fuzzy
+msgid "Logs"
+msgstr "Registros"
+
+#: launcher/main.cpp:690
+#, fuzzy
+msgid "Settings file"
+msgstr "Archivo de ajustes"
+
+#: launcher/main.cpp:699
+#, fuzzy
+msgid "Add to the applications menu"
+msgstr "Añadir al menú de aplicaciones"
+
+#: launcher/main.cpp:700
+#, fuzzy
+msgid "Update the menu entry"
+msgstr "Actualizar la entrada del menú"
+
+#: launcher/main.cpp:701
+#, fuzzy
+msgid "Remove from the menu"
+msgstr "Quitar del menú"
+
+#: launcher/main.cpp:723
+#, fuzzy
+msgid "The launcher is in your applications menu (right-click it there for \"Continue last save\")."
+msgstr "El lanzador está en tu menú de aplicaciones (clic derecho allí para \"Continuar la última partida\")."
+
+#: launcher/main.cpp:725
+#, fuzzy
+msgid "Puts the launcher in your desktop's applications menu, with a \"Continue last save\" shortcut on right-click."
+msgstr "Pone el lanzador en el menú de aplicaciones de tu escritorio, con un acceso \"Continuar la última partida\" al hacer clic derecho."
+
+#: launcher/main.cpp:738
+#, fuzzy
+msgid "Version %s is out."
+msgstr "Ya ha salido la versión %s."
+
+#: launcher/main.cpp:740
+#, fuzzy
+msgid "See the update"
+msgstr "Ver la actualización"
+
+#: launcher/main.cpp:752
+#, fuzzy
+msgid "Updated to %s"
+msgstr "Actualizado a %s"
+
+#: launcher/main.cpp:754
+#, fuzzy
+msgid "What's new:"
+msgstr "Novedades:"
+
+#: launcher/main.cpp:762 launcher/setup.cpp:678
+#, fuzzy
+msgid "Release page"
+msgstr "Página de la versión"
+
+#: launcher/main.cpp:771
+#, fuzzy
+msgid "Building the game for this version..."
+msgstr "Compilando el juego para esta versión..."
+
+#: launcher/main.cpp:773
+#, fuzzy
+msgid "Watch it in Setup"
+msgstr "Verlo en Instalación"
+
+#: launcher/main.cpp:778
+#, fuzzy
+msgid "The game isn't rebuilt for this version yet: Play starts the old build."
+msgstr "El juego aún no está recompilado para esta versión: Jugar abre la compilación antigua."
+
+#: launcher/main.cpp:780
+#, fuzzy
+msgid "Rebuild it in Setup"
+msgstr "Recompilarlo en Instalación"
+
+#: launcher/main.cpp:793
+#, fuzzy
+msgid "The game is already running (started some other way)."
+msgstr "El juego ya está en marcha (abierto de otra forma)."
+
+#: launcher/main.cpp:794
+#, fuzzy
+msgid "Close it first: two copies at once would fight over the saves."
+msgstr "Ciérralo primero: dos copias a la vez se pelearían por las partidas."
+
+#: launcher/main.cpp:814
+#, fuzzy
+msgid "Nothing yet: once the game starts from here, its log shows up in this tab as it is written. Earlier sessions' logs are in the logs folder."
+msgstr "Nada todavía: cuando el juego se abra desde aquí, su registro aparece en esta pestaña a medida que se escribe. Los registros de sesiones anteriores están en la carpeta de registros."
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Live"
+msgstr "En vivo"
+
+#: launcher/main.cpp:825
+#, fuzzy
+msgid "Last session"
+msgstr "Última sesión"
+
+#: launcher/main.cpp:827
+#, fuzzy
+msgid " Errors: %d"
+msgstr " Errores: %d"
+
+#: launcher/main.cpp:829
+#, fuzzy
+msgid "Warnings: %d (%d different)"
+msgstr "Avisos: %d (%d distintos)"
+
+#: launcher/main.cpp:835
+#, fuzzy
+msgid "Show only lines containing..."
+msgstr "Mostrar solo líneas que contengan..."
+
+#: launcher/main.cpp:838
+#, fuzzy
+msgid "Errors and warnings only"
+msgstr "Solo errores y avisos"
+
+#: launcher/main.cpp:840
+#, fuzzy
+msgid "Follow new lines"
+msgstr "Seguir las líneas nuevas"
+
+#: launcher/main.cpp:842
+#, fuzzy
+msgid "Open in an editor"
+msgstr "Abrir en un editor"
+
+#: launcher/main.cpp:877
+#, fuzzy
+msgid "(the first %zu lines are only in the file)"
+msgstr "(las primeras %zu líneas solo están en el archivo)"
+
+#: launcher/main.cpp:954 launcher/main.cpp:961
+#, fuzzy
+msgid "Report a problem"
+msgstr "Informar de un problema"
+
+#: launcher/main.cpp:964
+#, fuzzy
+msgid "Makes one .zip file with what's needed to look into a problem: the logs of the sessions you pick, your settings and a short summary (version, system, graphics card), plus a save if you pick one. Nothing is sent anywhere: you attach the file to a bug report yourself. Your home folder's name is taken out of the files."
+msgstr "Crea un archivo .zip con lo necesario para investigar un problema: los registros de las sesiones que elijas, tus ajustes y un breve resumen (versión, sistema, tarjeta gráfica), y una partida si eliges una. No se envía nada: adjuntas tú el archivo a un informe de error. El nombre de tu carpeta personal se quita de los archivos."
+
+#: launcher/main.cpp:971
+#, fuzzy
+msgid "What happened?"
+msgstr "¿Qué ha pasado?"
+
+#: launcher/main.cpp:974
+#, fuzzy
+msgid "(optional: where in the game, what you did, what you saw)"
+msgstr "(opcional: dónde en el juego, qué hiciste, qué viste)"
+
+#: launcher/main.cpp:980
+#, fuzzy
+msgid "Sessions to include"
+msgstr "Sesiones que incluir"
+
+#: launcher/main.cpp:983
+#, fuzzy
+msgid "(newest first)"
+msgstr "(las más recientes primero)"
+
+#: launcher/main.cpp:985
+#, fuzzy
+msgid "No game sessions logged yet."
+msgstr "Aún no hay sesiones de juego registradas."
+
+#: launcher/main.cpp:996
+#, fuzzy
+msgid "When"
+msgstr "Cuándo"
+
+#: launcher/main.cpp:997
+#, fuzzy
+msgid "Played"
+msgstr "Jugado"
+
+#: launcher/main.cpp:998
+#, fuzzy
+msgid "How it ended"
+msgstr "Cómo terminó"
+
+#: launcher/main.cpp:1025
+#, fuzzy
+msgid "(not recorded)"
+msgstr "(no registrado)"
+
+#: launcher/main.cpp:1032
+#, fuzzy
+msgid "Settings and controls (settings.toml, controls.toml)"
+msgstr "Ajustes y controles (settings.toml, controls.toml)"
+
+#: launcher/main.cpp:1034
+#, fuzzy
+msgid "The newest Setup log (for problems while setting up or building)"
+msgstr "El registro de instalación más reciente (para problemas al instalar o compilar)"
+
+#: launcher/main.cpp:1047
+#, fuzzy
+msgid "Include a save:"
+msgstr "Incluir una partida:"
+
+#. A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
+#: launcher/main.cpp:1055
+#, fuzzy
+msgid "{0}  {1}  ({2}%, saved {3})"
+msgstr "{0}  {1}  ({2}%, guardada {3})"
+
+#: launcher/main.cpp:1068
 #, fuzzy
 msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or Player {1}: press {2} to take over."
+"A save near the spot where it happens lets the problem be seen first-hand.\n"
+"It holds the save's name and the game's progress, nothing else."
 msgstr ""
-"El mando del jugador {0} se ha desconectado.\n"
-"Vuelve a conectarlo, o jugador {1}: pulsa {2} para tomar el relevo."
+"Una partida cerca del lugar donde pasa permite ver el problema de primera mano.\n"
+"Contiene el nombre de la partida y el progreso del juego, nada más."
 
-#: src/players/lost_controller.cpp:193
+#: launcher/main.cpp:1074
 #, fuzzy
-msgid ""
-"Controller reconnected.\n"
-"Press any button to resume."
-msgstr ""
-"Mando reconectado.\n"
-"Pulsa cualquier botón para seguir."
+msgid "F10 photos taken in those sessions (%d files, %.1f MB)"
+msgstr "Fotos F10 hechas en esas sesiones (%d archivos, %.1f MB)"
 
-#: src/players/lost_controller.cpp:194
+#: launcher/main.cpp:1091
 #, fuzzy
-msgid ""
-"Controller disconnected.\n"
-"Reconnect your controller to continue."
-msgstr ""
-"Mando desconectado.\n"
-"Vuelve a conectar el mando para continuar."
+msgid "Save the report in:"
+msgstr "Guardar el informe en:"
 
-#. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: launcher/main.cpp:1093
 #, fuzzy
-msgid ""
-"Player {0}'s controller is back.\n"
-"Player {0}: press any button to resume."
-msgstr ""
-"El mando del jugador {0} ha vuelto.\n"
-"Jugador {0}: pulsa cualquier botón para seguir."
+msgid "Change..."
+msgstr "Cambiar..."
 
-#. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: launcher/main.cpp:1099
 #, fuzzy
-msgid ""
-"Player {0}'s controller disconnected.\n"
-"Reconnect it, or press {1} to drop out Player {0}."
-msgstr ""
-"El mando del jugador {0} se ha desconectado.\n"
-"Vuelve a conectarlo, o pulsa {1} para que el jugador {0} abandone."
+msgid "Back to the default"
+msgstr "Volver al predeterminado"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/main.cpp:1116
 #, fuzzy
+msgid "Make the report"
+msgstr "Crear el informe"
+
+#: launcher/main.cpp:1152
+#, fuzzy
+msgid "Report saved:"
+msgstr "Informe guardado:"
+
+#: launcher/main.cpp:1154
+#, fuzzy
+msgid "%s (%.1f MB)"
+msgstr "%s (%.1f MB)"
+
+#: launcher/main.cpp:1161
+#, fuzzy
+msgid "Inside: %s"
+msgstr "Contiene: %s"
+
+#: launcher/main.cpp:1163
+#, fuzzy
+msgid "Show the file"
+msgstr "Mostrar el archivo"
+
+#: launcher/main.cpp:1167
+#, fuzzy
+msgid "Open the bug report form on GitHub"
+msgstr "Abrir el formulario de error en GitHub"
+
+#: launcher/main.cpp:1171
+#, fuzzy
+msgid "Copy the summary"
+msgstr "Copiar el resumen"
+
+#: launcher/main.cpp:1174
+#, fuzzy
+msgid "The form opens with the version, system, graphics card and settings filled in. Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub account is needed to post. No account? Send the .zip to whoever asked for it.)"
+msgstr "El formulario se abre con la versión, el sistema, la tarjeta gráfica y los ajustes ya rellenos. Describe allí el problema y arrastra el .zip a su casilla \"Log\". (Hace falta una cuenta de GitHub para publicar. ¿Sin cuenta? Envía el .zip a quien te lo pidió.)"
+
+#: launcher/main.cpp:1212
+#, fuzzy
+msgid "Settings"
+msgstr "Ajustes"
+
+#: launcher/main.cpp:1220
+#, fuzzy
+msgid "Setup"
+msgstr "Instalación"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log (live)"
+msgstr "Registro del juego (en vivo)"
+
+#: launcher/main.cpp:1228
+#, fuzzy
+msgid "Game log"
+msgstr "Registro del juego"
+
+#: launcher/report.cpp:672
+#, fuzzy
+msgid "Couldn't finish {0} (disk full?)"
+msgstr "No se pudo terminar {0} (¿disco lleno?)"
+
+#: launcher/saves.cpp:197
+#, fuzzy
+msgctxt "difficulty"
+msgid "Easy"
+msgstr "Fácil"
+
+#: launcher/saves.cpp:198
+#, fuzzy
+msgctxt "difficulty"
 msgid "Normal"
 msgstr "Normal"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/saves.cpp:199
 #, fuzzy
-msgid "Greeny"
-msgstr "Verdoso"
+msgctxt "difficulty"
+msgid "Hard"
+msgstr "Difícil"
 
-#: src/players/outfit_picker.cpp:506
+#: launcher/settings.cpp:105
 #, fuzzy
-msgid "Bluey"
-msgstr "Azulado"
+msgid "The game isn't built yet: its settings come from the game itself."
+msgstr "El juego aún no está compilado: sus ajustes vienen del propio juego."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:120
 #, fuzzy
-msgid "Reddy"
-msgstr "Rojizo"
+msgid "The game couldn't list its settings (exit code {0}). A build from before 2026-10-06 doesn't know --list_settings: rebuild it."
+msgstr "El juego no pudo listar sus ajustes (código de salida {0}). Una compilación anterior al 2026-10-06 no conoce --list_settings: recompílalo."
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:130
 #, fuzzy
-msgid "Snipe"
-msgstr "Tirador"
+msgid "The settings list is damaged: {0}"
+msgstr "La lista de ajustes está dañada: {0}"
 
-#: src/players/outfit_picker.cpp:507
+#: launcher/settings.cpp:164
 #, fuzzy
-msgid "Ratcicle"
-msgstr "Ratarámbano"
+msgid "The settings list is empty."
+msgstr "La lista de ajustes está vacía."
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings.cpp:291
 #, fuzzy
-msgid "Magmadon"
-msgstr "Magmadón"
+msgid "Couldn't replace {0}: {1}"
+msgstr "No se pudo sustituir {0}: {1}"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:38 launcher/settings_page.cpp:58
 #, fuzzy
-msgid "Skeleton"
-msgstr "Esqueleto"
+msgid "Experimental"
+msgstr "Experimental"
 
-#: src/players/outfit_picker.cpp:508
+#: launcher/settings_page.cpp:39
 #, fuzzy
-msgid "Spike"
-msgstr "Púas"
+msgid "Above 60 fps is experimental. The game was made for 30: physics, animations, cutscenes and scripted moments may misbehave (60 is tested and fine). If something looks wrong, try 60 and report it."
+msgstr "Más de 60 FPS es experimental. El juego se hizo para 30: la física, las animaciones, las escenas y los momentos guionizados pueden fallar (60 está probado y va bien). Si algo se ve mal, prueba 60 e infórmalo."
 
-#. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: launcher/settings_page.cpp:45
 #, fuzzy
-msgid "Coco"
-msgstr "Coco"
+msgid "In development"
+msgstr "En desarrollo"
 
-#: src/players/outfit_picker.cpp:509
+#: launcher/settings_page.cpp:46
 #, fuzzy
-msgid "Old School"
-msgstr "Vieja escuela"
+msgid "The native renderer draws nearly everything, but an effect may still be missing or look different. F9 switches back to the emulated picture while playing."
+msgstr "El renderizado nativo dibuja casi todo, pero puede faltar algún efecto o verse distinto. F9 vuelve a la imagen emulada mientras juegas."
 
-#: src/players/outfit_picker.cpp:520
+#: launcher/settings_page.cpp:52
 #, fuzzy
-msgid "Orange"
-msgstr "Naranja"
+msgid "Heavy on the GPU"
+msgstr "Exigente para la GPU"
 
-#. the heroes' names, as the game writes them in this language.
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:53
 #, fuzzy
-msgid "Crash"
-msgstr "Crash"
+msgid "Two windows: the emulated picture and the native one, both drawn live. Meant for comparing the two; it needs a strong graphics card."
+msgstr "Dos ventanas: la imagen emulada y la nativa, ambas dibujadas en vivo. Pensado para compararlas; necesita una tarjeta gráfica potente."
 
-#: src/players/outfit_picker.cpp:1091
+#: launcher/settings_page.cpp:59
 #, fuzzy
-msgid "Wear"
-msgstr "Ponerse"
+msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
+msgstr "La nueva cámara multijugador mantiene a todos los jugadores en la imagen. Hay que probarla más en combates, sitios estrechos y escenas. Desactívala para la cámara original."
 
-#. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
 #, fuzzy
-msgid "Ready!"
-msgstr "¡Listo!"
+msgid "Native renderer only"
+msgstr "Solo renderizado nativo"
 
-#. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: launcher/settings_page.cpp:65
 #, fuzzy
-msgid "{0} Change"
-msgstr "{0} Cambiar"
+msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
+msgstr "El desenfoque de movimiento es un efecto propio de este port (el original no lo tiene). Solo lo dibuja el renderizado nativo: con la imagen emulada no hace nada."
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: launcher/settings_page.cpp:71
 #, fuzzy
-msgid "Loading"
-msgstr "Cargando"
+msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
+msgstr "Solo el renderizado nativo dibuja a más resolución: la imagen emulada se queda en 720p. 4K es exigente: necesita una tarjeta gráfica potente."
 
-#. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: launcher/settings_page.cpp:77
 #, fuzzy
-msgid "{0} Wear"
-msgstr "{0} Ponerse"
+msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
+msgstr "Solo el renderizado nativo cambia su antialiasing: la imagen emulada conserva el 2x de la Xbox 360."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:83
 #, fuzzy
-msgid "Ruby"
-msgstr "Rubí"
+msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
+msgstr "Solo el renderizado nativo suaviza los bordes recortados, y solo con el antialiasing activado."
 
-#: src/players/outfits.cpp:219
+#: launcher/settings_page.cpp:88
 #, fuzzy
-msgid "Exactly the same in every way but red"
-msgstr "Idéntico en todo, pero rojo"
+msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Solo el renderizado nativo hace las texturas más nítidas: la imagen emulada se queda como la dibujaba la Xbox 360."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:94
 #, fuzzy
-msgid "Topaz"
-msgstr "Topacio"
+msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
+msgstr "Solo el renderizado nativo hace la imagen más nítida: la imagen emulada se queda como la dibujaba la Xbox 360."
 
-#: src/players/outfits.cpp:221
+#: launcher/settings_page.cpp:100
 #, fuzzy
-msgid "Exactly the same in every way but yellow"
-msgstr "Idéntico en todo, pero amarillo"
+msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
+msgstr "Solo el renderizado nativo cambia el borde de las sombras: la imagen emulada conserva el de la Xbox 360."
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:105
 #, fuzzy
-msgid "Jade"
-msgstr "Jade"
+msgid "Less to go on"
+msgstr "Menos pistas"
 
-#: src/players/outfits.cpp:223
+#: launcher/settings_page.cpp:106
 #, fuzzy
-msgid "Exactly the same in every way but green"
-msgstr "Idéntico en todo, pero verde"
+msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
+msgstr "Los informes de estas sesiones no mostrarán lo que hacía el juego (fotogramas, sonidos, multijugador, menús): un error podría ser imposible de localizar."
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:112
 #, fuzzy
-msgid "Sapphire"
-msgstr "Zafiro"
+msgid "Falls"
+msgstr "Caídas"
 
-#: src/players/outfits.cpp:225
+#: launcher/settings_page.cpp:113
 #, fuzzy
-msgid "Exactly the same in every way but blue"
-msgstr "Idéntico en todo, pero azul"
+msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
+msgstr "Desactivado por encima de 30 FPS: Crash puede pasar una fracción de segundo a su animación de caída al bajar por suelo irregular. 40 ms es el valor probado."
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:161
 #, fuzzy
-msgid "Amethyst"
-msgstr "Amatista"
+msgid "Emulated (the default)"
+msgstr "Emulado (predeterminado)"
 
-#: src/players/outfits.cpp:227
+#: launcher/settings_page.cpp:162
 #, fuzzy
-msgid "Exactly the same in every way but purple"
-msgstr "Idéntico en todo, pero morado"
+msgid "Native renderer"
+msgstr "Renderizado nativo"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:163
 #, fuzzy
-msgid "Rose Quartz"
-msgstr "Cuarzo rosa"
+msgid "Native only (fastest, default)"
+msgstr "Solo nativo (el más rápido, predeterminado)"
 
-#: src/players/outfits.cpp:229
+#: launcher/settings_page.cpp:164
 #, fuzzy
-msgid "Exactly the same in every way but pink"
-msgstr "Idéntico en todo, pero rosa"
+msgid "Both, in two windows"
+msgstr "Ambos, en dos ventanas"
 
-#: src/players/outfits.cpp:239
+#: launcher/settings_page.cpp:165
 #, fuzzy
-msgid "Carbon"
-msgstr "Carbono"
+msgid "Emulated only"
+msgstr "Solo emulado"
 
-#. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
 #, fuzzy
-msgctxt "outfit name"
-msgid "{0} {1}"
-msgstr "{1} {0}"
+msgid "Default"
+msgstr "Predeterminado"
 
-#: src/players/pause_drop_out.cpp:43
+#: launcher/settings_page.cpp:333
 #, fuzzy
-msgid "Drop Out"
-msgstr "Abandonar"
+msgid "Frame rate"
+msgstr "Fotogramas"
 
-#: src/saves/save_library.cpp:764
+#: launcher/settings_page.cpp:335
 #, fuzzy
-msgid "Create New Save"
-msgstr "Nueva partida guardada"
+msgid "Frame rate cap"
+msgstr "Límite de fotogramas"
 
-#: src/saves/save_library.cpp:848
+#: launcher/settings_page.cpp:336
 #, fuzzy
-msgid "Delete"
-msgstr "Borrar"
+msgid "How many frames per second the game runs at. 30 is the original game's rate."
+msgstr "Cuántos fotogramas por segundo va el juego. 30 es el ritmo del juego original."
 
-#: src/saves/save_library.cpp:850
+#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 #, fuzzy
-msgid "Rename"
-msgstr "Renombrar"
+msgid "%d (the original)"
+msgstr "%d (el original)"
 
-#: src/saves/save_library.cpp:1095
+#: launcher/settings_page.cpp:362
 #, fuzzy
-msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
-msgstr "¿Seguro que quieres borrar esta partida guardada? Se moverá a la carpeta Deleted saves."
+msgid "Other..."
+msgstr "Otro..."
 
-#: src/saves/save_library.cpp:1875
+#: launcher/settings_page.cpp:371
 #, fuzzy
-msgid "Backspace"
-msgstr "Borrar"
+msgid "   Frames per second"
+msgstr "   Fotogramas por segundo"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#: launcher/settings_page.cpp:381
 #, fuzzy
-msgid "HUD Hidden"
-msgstr "HUD oculto"
+msgid "Ground grace"
+msgstr "Margen de suelo"
 
-#. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74
+#: launcher/settings_page.cpp:382
 #, fuzzy
-msgid "Press {0} to show it again"
-msgstr "Pulsa {0} para volver a mostrarlo"
+msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
+msgstr "Por encima de 30 FPS: cuánto tiempo se perdona un contacto con el suelo perdido, para que Crash no pase a su animación de caída al bajar por suelo irregular. 40 ms es el valor probado; 0 = desactivado."
 
-#: src/ui/main_menu_extras.cpp:45
+#: launcher/settings_page.cpp:391
 #, fuzzy
-msgid "Extras"
-msgstr "Extras"
+msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
+msgstr "Emulado = el chip gráfico de la Xbox 360, emulado (la imagen de referencia). Nativo = el renderizado propio de este port que dibuja el juego directamente (en desarrollo). F9 cambia entre ellos mientras juegas, F8 abre la segunda ventana."
 
-#: src/ui/quit_game.cpp:55
+#: launcher/settings_page.cpp:444
 #, fuzzy
-msgid "Quit Game"
-msgstr "Salir del juego"
+msgid "Window"
+msgstr "Ventana"
 
-#: src/ui/quit_game.cpp:56
+#: launcher/settings_page.cpp:449
 #, fuzzy
-msgid "Are you sure you want to quit the game?"
-msgstr "¿Seguro que quieres abandonar la partida?"
+msgid "Window mode"
+msgstr "Modo de ventana"
+
+#: launcher/settings_page.cpp:449
+#, fuzzy
+msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
+msgstr "Ventana: una ventana que puedes mover y cambiar de tamaño. Pantalla completa: llena todo el monitor (el elegido en Monitor)."
+
+#: launcher/settings_page.cpp:469
+#, fuzzy
+msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
+msgstr "Qué monitor llena la pantalla completa. Automático = en el que está el juego."
+
+#: launcher/settings_page.cpp:481
+#, fuzzy
+msgid "{0}: not connected"
+msgstr "{0}: sin conectar"
+
+#: launcher/settings_page.cpp:499
+#, fuzzy
+msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
+msgstr "Cuántos jugadores pueden jugar a la vez (4 por defecto; el juego original tiene 2). Los jugadores se unen desde la pantalla Jugadores (menú principal o de pausa) o con START."
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "2 (the original)"
+msgstr "2 (el original)"
+
+#: launcher/settings_page.cpp:502
+#, fuzzy
+msgid "4 (default)"
+msgstr "4 (predeterminado)"
+
+#: launcher/settings_page.cpp:513
+#, fuzzy
+msgid "Co-op camera"
+msgstr "Cámara multijugador"
+
+#: launcher/settings_page.cpp:514
+#, fuzzy
+msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
+msgstr "Mantiene a todos los jugadores en la imagen: la cámara se centra entre los jugadores y se aleja hasta que caben todos. No = la cámara original, que sigue a un jugador."
+
+#: launcher/settings_page.cpp:517
+#, fuzzy
+msgid "   Farthest zoom-out"
+msgstr "   Alejamiento máximo"
+
+#: launcher/settings_page.cpp:518
+#, fuzzy
+msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
+msgstr "Cuánto puede alejarse la cámara multijugador para que quepan todos (la cámara original va de 12 a 20 más o menos). Más allá, un jugador que se aleja sale de la pantalla."
+
+#: launcher/settings_page.cpp:520
+#, fuzzy
+msgid "   Room around players"
+msgstr "   Espacio alrededor de los jugadores"
+
+#: launcher/settings_page.cpp:521
+#, fuzzy
+msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
+msgstr "Cuánto terreno alrededor de cada jugador queda en la imagen (a su izquierda, derecha y más allá), para que un jugador en el borde aún vea un saliente o una caída. Crash mide unos 2. 0 = solo los jugadores."
+
+#: launcher/settings_page.cpp:524
+#, fuzzy
+msgid "   Stay with the nearest player"
+msgstr "   Quedarse con el jugador más cercano"
+
+#: launcher/settings_page.cpp:525
+#, fuzzy
+msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
+msgstr "De delante a atrás, la cámara se queda con el jugador más cercano a ella, para que un jugador que se adentra en la imagen no saque a los demás por abajo. No = la cámara apunta al centro de los jugadores (la forma antigua)."
+
+#: launcher/settings_page.cpp:528
+#, fuzzy
+msgid "   Group focus"
+msgstr "   Peso de los grupos"
+
+#: launcher/settings_page.cpp:529
+#, fuzzy
+msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
+msgstr "3-4 jugadores: cuánto más cuenta un grupo de jugadores que un jugador solo cuando la cámara elige su centro. 0 = todos igual."
+
+#: launcher/settings_page.cpp:532
+#, fuzzy
+msgid "Lost controller pause"
+msgstr "Pausa por mando perdido"
+
+#: launcher/settings_page.cpp:533
+#, fuzzy
+msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
+msgstr "Cuando el mando de un jugador se desconecta en un nivel: pausa con una pregunta, para que otro jugador lo saque de la partida, o reconectarlo y seguir."
+
+#: launcher/settings_page.cpp:541
+#, fuzzy
+msgid "Keyboard and mouse"
+msgstr "Teclado y ratón"
+
+#: launcher/settings_page.cpp:542
+#, fuzzy
+msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
+msgstr "Jugar con teclado y ratón (un mando también funciona). Las teclas se cambian en el juego con F6."
+
+#: launcher/settings_page.cpp:548
+#, fuzzy
+msgid "Sound and logging"
+msgstr "Sonido y registros"
+
+#: launcher/settings_page.cpp:550
+#, fuzzy
+msgid "Mute the sound"
+msgstr "Silenciar el sonido"
+
+#: launcher/settings_page.cpp:551
+#, fuzzy
+msgid "Event logs (for bug reports)"
+msgstr "Registros de eventos (para informes de error)"
+
+#: launcher/settings_page.cpp:552
+#, fuzzy
+msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
+msgstr "El registro de la sesión también anota lo que hace el juego: fotogramas cada 5 s, los sonidos que suenan, las uniones multijugador, a qué jugador responde un menú, las pantallas de menú. Unos pocos MB por hora; es lo que envía \"Informar de un problema\". No = solo lo básico."
+
+#: launcher/settings_page.cpp:621
+#, fuzzy
+msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
+msgstr "Todos los ajustes del juego, sacados del propio juego. La mayoría son para desarrollo o resolver problemas: cámbialos solo si sabes lo que hacen."
+
+#: launcher/settings_page.cpp:625
+#, fuzzy
+msgid "Search names and descriptions..."
+msgstr "Buscar en nombres y descripciones..."
+
+#: launcher/settings_page.cpp:628
+#, fuzzy
+msgid "Show developer settings (debug_...)"
+msgstr "Mostrar ajustes de desarrollador (debug_...)"
+
+#: launcher/settings_page.cpp:690
+#, fuzzy
+msgid "Default: %s%s"
+msgstr "Predeterminado: %s%s"
+
+#: launcher/settings_page.cpp:691
+#, fuzzy
+msgid "  (read at start only)"
+msgstr "  (se lee solo al iniciar)"
+
+#: launcher/settings_page.cpp:702
+#, fuzzy
+msgid "Asking the game for its settings..."
+msgstr "Pidiendo al juego sus ajustes..."
+
+#: launcher/settings_page.cpp:714
+#, fuzzy
+msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
+msgstr "El juego está en marcha: los cambios se aplican la próxima vez que se inicie. (Su menú F4 escribe el mismo archivo: usa uno u otro.)"
+
+#: launcher/settings_page.cpp:718
+#, fuzzy
+msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
+msgstr "Se guardan al momento; se aplican la próxima vez que se inicie el juego. Pasa por encima de un nombre para ver qué hace, de un triángulo para ver por qué es arriesgado."
+
+#: launcher/settings_page.cpp:730
+#, fuzzy
+msgid "All settings (advanced)"
+msgstr "Todos los ajustes (avanzado)"
+
+#: launcher/setup.cpp:157
+#, fuzzy
+msgid "Replacing link files with copies (Git for Windows)"
+msgstr "Sustituyendo archivos de enlace por copias (Git para Windows)"
+
+#: launcher/setup.cpp:372
+#, fuzzy
+msgid "checking..."
+msgstr "comprobando..."
+
+#: launcher/setup.cpp:373
+#, fuzzy
+msgid "done"
+msgstr "hecho"
+
+#: launcher/setup.cpp:374
+#, fuzzy
+msgid "out of date"
+msgstr "desactualizado"
+
+#: launcher/setup.cpp:375
+#, fuzzy
+msgid "to do"
+msgstr "pendiente"
+
+#: launcher/setup.cpp:376
+#, fuzzy
+msgid "needs attention"
+msgstr "requiere atención"
+
+#: launcher/setup.cpp:444 launcher/setup.cpp:452 launcher/setup.cpp:460 launcher/setup.cpp:466 launcher/setup.cpp:477 launcher/setup.cpp:497 launcher/setup.cpp:508 launcher/setup.cpp:510 launcher/setup.cpp:560 launcher/setup.cpp:577 launcher/setup.cpp:583
+#, fuzzy
+msgid "not found"
+msgstr "no encontrado"
+
+#: launcher/setup.cpp:448 launcher/setup.cpp:457 launcher/setup.cpp:555 launcher/setup.cpp:565
+#, fuzzy
+msgid "too old: {0} ({1} or newer needed)"
+msgstr "demasiado antiguo: {0} (se necesita {1} o más nuevo)"
+
+#: launcher/setup.cpp:464
+#, fuzzy
+msgid "not found (or only the Store shortcut)"
+msgstr "no encontrado (o solo el acceso de la Store)"
+
+#: launcher/setup.cpp:550
+#, fuzzy
+msgid "not found (clang and clang++)"
+msgstr "no encontrado (clang y clang++)"
+
+#: launcher/setup.cpp:572
+#, fuzzy
+msgid "not found (needs pkg-config too)"
+msgstr "no encontrado (también necesita pkg-config)"
+
+#: launcher/setup.cpp:627
+#, fuzzy
+msgid "Version %s"
+msgstr "Versión %s"
+
+#: launcher/setup.cpp:630
+#, fuzzy
+msgid " -  a developer copy: update it with git pull"
+msgstr " -  una copia de desarrollador: actualízala con git pull"
+
+#: launcher/setup.cpp:635
+#, fuzzy
+msgid " -  updated to %s: restart the launcher to finish"
+msgstr " -  actualizado a %s: reinicia el lanzador para terminar"
+
+#: launcher/setup.cpp:638
+#, fuzzy
+msgid "Restart the launcher"
+msgstr "Reiniciar el lanzador"
+
+#: launcher/setup.cpp:642
+#, fuzzy
+msgid "Couldn't restart: start the launcher again by hand."
+msgstr "No se pudo reiniciar: vuelve a abrir el lanzador tú mismo."
+
+#: launcher/setup.cpp:652
+#, fuzzy
+msgid " -  checking for updates..."
+msgstr " -  buscando actualizaciones..."
+
+#: launcher/setup.cpp:654
+#, fuzzy
+msgid " -  %s is available%s%s"
+msgstr " -  %s está disponible%s%s"
+
+#: launcher/setup.cpp:659 launcher/setup.cpp:664
+#, fuzzy
+msgid "Update to {0}"
+msgstr "Actualizar a {0}"
+
+#: launcher/setup.cpp:674
+#, fuzzy
+msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
+msgstr "Descarga la nueva versión y la pone en su sitio: tus partidas, ajustes y los archivos del juego se quedan. Luego el lanzador se reinicia y recompila lo que cambió."
+
+#: launcher/setup.cpp:683
+#, fuzzy
+msgid " -  the newest version"
+msgstr " -  la versión más reciente"
+
+#: launcher/setup.cpp:690
+#, fuzzy
+msgid "Check for updates"
+msgstr "Buscar actualizaciones"
+
+#: launcher/setup.cpp:699
+#, fuzzy
+msgid "What's new in %s"
+msgstr "Novedades de %s"
+
+#: launcher/setup.cpp:764
+#, fuzzy
+msgid "the ReXGlue SDK and its libraries are there"
+msgstr "el SDK de ReXGlue y sus bibliotecas están"
+
+#: launcher/setup.cpp:765
+#, fuzzy
+msgid "the ReXGlue SDK isn't downloaded yet"
+msgstr "el SDK de ReXGlue aún no está descargado"
+
+#: launcher/setup.cpp:766
+#, fuzzy
+msgid "the ReXGlue SDK submodule isn't downloaded yet"
+msgstr "el submódulo del SDK de ReXGlue aún no está descargado"
+
+#: launcher/setup.cpp:776
+#, fuzzy
+msgid "this version needs another ReXGlue SDK ({0}): download it again"
+msgstr "esta versión necesita otro SDK de ReXGlue ({0}): vuelve a descargarlo"
+
+#: launcher/setup.cpp:790
+#, fuzzy
+msgid "extracted in {0}"
+msgstr "extraído en {0}"
+
+#: launcher/setup.cpp:793
+#, fuzzy
+msgid "no disc image found yet: pick your .iso"
+msgstr "aún no se encontró ninguna imagen de disco: elige tu .iso"
+
+#: launcher/setup.cpp:794
+#, fuzzy
+msgid "ready to extract {0}"
+msgstr "listo para extraer {0}"
+
+#: launcher/setup.cpp:825
+#, fuzzy
+msgid "needs the source parts first"
+msgstr "necesita antes las partes del código"
+
+#: launcher/setup.cpp:832
+#, fuzzy
+msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
+msgstr "los parches han cambiado (una actualización): se restablecerá, se volverá a parchear y luego se recompilará"
+
+#: launcher/setup.cpp:836
+#, fuzzy
+msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
+msgstr "nuestros {0} parches del SDK no están ni todos aplicados ni todos ausentes: la carpeta del SDK se cambió a mano (o se actualizó un parche). Sin tocar; mira docs/01-building.md, paso 2 (git -C thirdparty/rexglue-sdk status)."
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "patched, not built yet"
+msgstr "parcheado, aún sin compilar"
+
+#: launcher/setup.cpp:842
+#, fuzzy
+msgid "not patched or built yet"
+msgstr "ni parcheado ni compilado"
+
+#: launcher/setup.cpp:847
+#, fuzzy
+msgid "built without our patches: rebuild it"
+msgstr "compilado sin nuestros parches: recompílalo"
+
+#: launcher/setup.cpp:848
+#, fuzzy
+msgid "the patches changed since the SDK was built: rebuild it"
+msgstr "los parches cambiaron desde que se compiló el SDK: recompílalo"
+
+#: launcher/setup.cpp:851
+#, fuzzy
+msgid "built and installed, {0} patches"
+msgstr "compilado e instalado, {0} parches"
+
+#: launcher/setup.cpp:858
+#, fuzzy
+msgid "not built yet"
+msgstr "aún sin compilar"
+
+#: launcher/setup.cpp:861
+#, fuzzy
+msgid "built, not copied into program/ yet"
+msgstr "compilado, aún sin copiar a program/"
+
+#: launcher/setup.cpp:878
+#, fuzzy
+msgid "the sources changed since the last build: rebuild it"
+msgstr "el código cambió desde la última compilación: recompílalo"
+
+#: launcher/setup.cpp:881
+#, fuzzy
+msgid "built: {0}"
+msgstr "compilado: {0}"
+
+#: launcher/setup.cpp:904
+#, fuzzy
+msgid "Downloading the source parts (git submodules)"
+msgstr "Descargando las partes del código (submódulos de git)"
+
+#: launcher/setup.cpp:922
+#, fuzzy
+msgid "Finishing the SDK's libraries (a download was stopped)"
+msgstr "Terminando las bibliotecas del SDK (se detuvo una descarga)"
+
+#: launcher/setup.cpp:927
+#, fuzzy
+msgid "Removing the old SDK download"
+msgstr "Quitando la descarga antigua del SDK"
+
+#: launcher/setup.cpp:940
+#, fuzzy
+msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
+msgstr "Descargando el SDK de ReXGlue {0} (y sus bibliotecas)"
+
+#: launcher/setup.cpp:945
+#, fuzzy
+msgid "Checking the SDK's version"
+msgstr "Comprobando la versión del SDK"
+
+#: launcher/setup.cpp:963
+#, fuzzy
+msgid "Pick your disc image (.iso) first."
+msgstr "Elige primero tu imagen de disco (.iso)."
+
+#: launcher/setup.cpp:970
+#, fuzzy
+msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
+msgstr "No hay espacio libre suficiente: los archivos del juego necesitan unos 6,5 GB, hay %.1f GB libres."
+
+#: launcher/setup.cpp:983
+#, fuzzy
+msgid "That file isn't an Xbox 360 disc image the extractor can read."
+msgstr "Ese archivo no es una imagen de disco de Xbox 360 que el extractor pueda leer."
+
+#: launcher/setup.cpp:987
+#, fuzzy
+msgid "That disc image has no default.xex: not a game disc?"
+msgstr "Esa imagen de disco no tiene default.xex: ¿no es un disco del juego?"
+
+#: launcher/setup.cpp:990
+#, fuzzy
+msgid "Extracting the disc into game/"
+msgstr "Extrayendo el disco en game/"
+
+#: launcher/setup.cpp:1002
+#, fuzzy
+msgid "Checking the game's executable"
+msgstr "Comprobando el ejecutable del juego"
+
+#: launcher/setup.cpp:1008
+#, fuzzy
+msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
+msgstr "default.xex no es Crash: Mind over Mutant (no se encontró el ID de título 565507FA). Los archivos están en game/; este port solo abre ese juego."
+
+#: launcher/setup.cpp:1012
+#, fuzzy
+msgid "Title id 565507FA: Crash: Mind over Mutant."
+msgstr "ID de título 565507FA: Crash: Mind over Mutant."
+
+#: launcher/setup.cpp:1034
+#, fuzzy
+msgid "Undoing the old patches"
+msgstr "Deshaciendo los parches antiguos"
+
+#: launcher/setup.cpp:1035
+#, fuzzy
+msgid "Removing files the old patches added"
+msgstr "Quitando los archivos que añadieron los parches antiguos"
+
+#: launcher/setup.cpp:1038
+#, fuzzy
+msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
+msgstr "Aplicando nuestras correcciones al SDK (patches/rexglue-sdk)"
+
+#: launcher/setup.cpp:1053
+#, fuzzy
+msgid "Configuring the SDK"
+msgstr "Configurando el SDK"
+
+#: launcher/setup.cpp:1055
+#, fuzzy
+msgid "Building the SDK (Release: the recompiler)"
+msgstr "Compilando el SDK (Release: el recompilador)"
+
+#: launcher/setup.cpp:1059
+#, fuzzy
+msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
+msgstr "Compilando el SDK (RelWithDebInfo: el motor que usa el juego)"
+
+#: launcher/setup.cpp:1067
+#, fuzzy
+msgid "Noting which patches the SDK was built with"
+msgstr "Anotando con qué parches se compiló el SDK"
+
+#: launcher/setup.cpp:1087
+#, fuzzy
+msgid "Linking source/game to the disc's files"
+msgstr "Enlazando source/game con los archivos del disco"
+
+#: launcher/setup.cpp:1118
+#, fuzzy
+msgid "Configuring the game's build"
+msgstr "Configurando la compilación del juego"
+
+#: launcher/setup.cpp:1128
+#, fuzzy
+msgid "Recompiling the game's code (default.xex -> C++)"
+msgstr "Recompilando el código del juego (default.xex -> C++)"
+
+#: launcher/setup.cpp:1134
+#, fuzzy
+msgid "Compiling the game ({0} at a time; the first build takes a while)"
+msgstr "Compilando el juego ({0} a la vez; la primera compilación tarda un rato)"
+
+#: launcher/setup.cpp:1146
+#, fuzzy
+msgid "Copying the game into program/"
+msgstr "Copiando el juego a program/"
+
+#: launcher/setup.cpp:1237
+#, fuzzy
+msgid "Setting up"
+msgstr "Instalando"
+
+#: launcher/setup.cpp:1424
+#, fuzzy
+msgid "%s: done"
+msgstr "%s: hecho"
+
+#: launcher/setup.cpp:1426
+#, fuzzy
+msgid "%s: cancelled"
+msgstr "%s: cancelado"
+
+#: launcher/setup.cpp:1428
+#, fuzzy
+msgid "%s: failed"
+msgstr "%s: falló"
+
+#: launcher/setup.cpp:1448
+#, fuzzy
+msgid "This step can't be stopped: a few seconds."
+msgstr "Este paso no se puede detener: unos segundos."
+
+#: launcher/setup.cpp:1457
+#, fuzzy
+msgid "Follow"
+msgstr "Seguir"
+
+#: launcher/setup.cpp:1531
+#, fuzzy
+msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
+msgstr "La instalación compila el juego desde su código fuente, así que funciona desde la carpeta del proyecto (un clon de git). Esta copia es una copia instalada."
+
+#: launcher/setup.cpp:1553
+#, fuzzy
+msgid "Checking what's there..."
+msgstr "Comprobando qué hay..."
+
+#: launcher/setup.cpp:1555
+#, fuzzy
+msgid "Everything is set up: the game is ready to play."
+msgstr "Todo está instalado: el juego está listo para jugar."
+
+#: launcher/setup.cpp:1557
+#, fuzzy
+msgid "Some steps are left."
+msgstr "Quedan algunos pasos."
+
+#: launcher/setup.cpp:1561
+#, fuzzy
+msgid "Check again"
+msgstr "Comprobar otra vez"
+
+#: launcher/setup.cpp:1577
+#, fuzzy
+msgid "Set up everything"
+msgstr "Instalar todo"
+
+#: launcher/setup.cpp:1582
+#, fuzzy
+msgid "Install the missing build tools first (step 1)."
+msgstr "Instala primero las herramientas de compilación que faltan (paso 1)."
+
+#: launcher/setup.cpp:1586
+#, fuzzy
+msgid "The game is running: building waits until it's closed."
+msgstr "El juego está en marcha: la compilación espera a que se cierre."
+
+#: launcher/setup.cpp:1599
+#, fuzzy
+msgid "Build tools"
+msgstr "Herramientas de compilación"
+
+#: launcher/setup.cpp:1600
+#, fuzzy
+msgid "everything needed to build is installed"
+msgstr "está instalado todo lo necesario para compilar"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "found"
+msgstr "encontrado"
+
+#: launcher/setup.cpp:1607
+#, fuzzy
+msgid "missing"
+msgstr "falta"
+
+#: launcher/setup.cpp:1612
+#, fuzzy
+msgid "  -  package: "
+msgstr "  -  paquete: "
+
+#: launcher/setup.cpp:1619
+#, fuzzy
+msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
+msgstr "Instala las que faltan con tu gestor de paquetes (los nombres de arriba son los de %s) y pulsa Comprobar otra vez."
+
+#: launcher/setup.cpp:1628 launcher/setup.cpp:1633
+#, fuzzy
+msgid "Source parts"
+msgstr "Partes del código"
+
+#: launcher/setup.cpp:1632
+#, fuzzy
+msgid "Download them"
+msgstr "Descargarlas"
+
+#: launcher/setup.cpp:1640
+#, fuzzy
+msgid "Your disc"
+msgstr "Tu disco"
+
+#: launcher/setup.cpp:1644
+#, fuzzy
+msgid "Disc image: %s"
+msgstr "Imagen de disco: %s"
+
+#: launcher/setup.cpp:1647
+#, fuzzy
+msgid "Pick the disc image..."
+msgstr "Elegir la imagen de disco..."
+
+#: launcher/setup.cpp:1648
+#, fuzzy
+msgid "Xbox 360 disc image"
+msgstr "Imagen de disco de Xbox 360"
+
+#: launcher/setup.cpp:1663
+#, fuzzy
+msgid "Extract it"
+msgstr "Extraerla"
+
+#: launcher/setup.cpp:1667
+#, fuzzy
+msgid "Disc"
+msgstr "Disco"
+
+#: launcher/setup.cpp:1674
+#, fuzzy
+msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
+msgstr "Tu propia copia del disco (una completa ocupa 7,8 GB); los archivos del juego (6 GB) van a game/."
+
+#: launcher/setup.cpp:1680 launcher/setup.cpp:1689
+#, fuzzy
+msgid "ReXGlue SDK"
+msgstr "SDK de ReXGlue"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Rebuild the SDK"
+msgstr "Recompilar el SDK"
+
+#: launcher/setup.cpp:1685
+#, fuzzy
+msgid "Build the SDK"
+msgstr "Compilar el SDK"
+
+#: launcher/setup.cpp:1695
+#, fuzzy
+msgid "A few minutes."
+msgstr "Unos minutos."
+
+#: launcher/setup.cpp:1700 launcher/setup.cpp:1709
+#, fuzzy
+msgid "The game"
+msgstr "El juego"
+
+#: launcher/setup.cpp:1705
+#, fuzzy
+msgid "Build the game"
+msgstr "Compilar el juego"
+
+#: launcher/setup.cpp:1706
+#, fuzzy
+msgid "Rebuild (update)"
+msgstr "Recompilar (actualización)"
+
+#: launcher/setup.cpp:1707
+#, fuzzy
+msgid "Rebuild"
+msgstr "Recompilar"
+
+#: launcher/setup.cpp:1712
+#, fuzzy
+msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
+msgstr "%d tareas de compilación a la vez (según la RAM libre ahora: cierra antes los programas grandes para compilar más rápido). La primera compilación tarda un rato; las siguientes solo rehacen lo que cambió."
+
+#: launcher/update.cpp:270
+#, fuzzy
+msgid "Preparing"
+msgstr "Preparando"
+
+#: launcher/update.cpp:285
+#, fuzzy
+msgid "Checking the download"
+msgstr "Comprobando la descarga"
+
+#: launcher/update.cpp:303
+#, fuzzy
+msgid "Swapping in the new version"
+msgstr "Poniendo la nueva versión en su sitio"
+
+#, fuzzy
+#~ msgid "{0} {1} {2}"
+#~ msgstr "{0} {1} {2}"
+
+#, fuzzy
+#~ msgid "Earned {0}"
+#~ msgstr "Conseguido el {0}"

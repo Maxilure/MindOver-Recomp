@@ -13,6 +13,7 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include "../language/texts.h"
 #include "../debug_input_script.h"
 #include "../input/players.h"
 #include "../input_record.h"
@@ -228,13 +229,13 @@ struct Model {
   const char* guid;  // "" = none
 };
 constexpr Model kModels[] = {
-    {"Test pad (no model)", ""},
-    {"Xbox 360 controller", "030000005e0400008e02000000000000"},       // 045E:028E
-    {"Xbox Series controller", "030000005e040000120b000000000000"},    // 045E:0B12
-    {"PlayStation 4 (DualShock 4)", "030000004c050000cc09000000000000"},  // 054C:09CC
-    {"PlayStation 5 (DualSense)", "030000004c050000e60c000000000000"},    // 054C:0CE6
-    {"Switch Pro controller", "030000007e0500000920000000000000"},       // 057E:2009
-    {"Another maker (8BitDo)", "03000000c82d00000160000000000000"},      // 2DC8:6001
+    {trsn("Test pad (no model)"), ""},
+    {trsn("Xbox 360 controller"), "030000005e0400008e02000000000000"},       // 045E:028E
+    {trsn("Xbox Series controller"), "030000005e040000120b000000000000"},    // 045E:0B12
+    {trsn("PlayStation 4 (DualShock 4)"), "030000004c050000cc09000000000000"},  // 054C:09CC
+    {trsn("PlayStation 5 (DualSense)"), "030000004c050000e60c000000000000"},    // 054C:0CE6
+    {trsn("Switch Pro controller"), "030000007e0500000920000000000000"},       // 057E:2009
+    {trsn("Another maker (8BitDo)"), "03000000c82d00000160000000000000"},      // 2DC8:6001
 };
 std::atomic<int> g_models[kMaxDummies] = {};
 

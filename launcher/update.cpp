@@ -2,6 +2,7 @@
 // update.cpp -- see update.h
 // =============================================================================
 #include "update.h"
+#include "texts.h"
 
 #include "sha256.h"
 
@@ -266,7 +267,7 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
   std::vector<Command> commands;
 
   Command prepare;
-  prepare.title = "Preparing";
+  prepare.title = trs("Preparing");
   prepare.function = [work](std::string* message) {
     std::error_code ec;
     fs::remove_all(work, ec);
@@ -281,7 +282,7 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
                       root});
 
   Command verify;
-  verify.title = "Checking the download";
+  verify.title = trs("Checking the download");
   verify.function = [archive, sha = release.sha256](std::string* message) {
     const std::string got = sha256::OfFile(archive);
     if (got.empty() || (!sha.empty() && got != sha)) {
@@ -299,7 +300,7 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
                       root});
 
   Command swap;
-  swap.title = "Swapping in the new version";
+  swap.title = trs("Swapping in the new version");
   swap.function = [root, work, launcher](std::string* message) {
     // The unpacked release's top folder (whatever it's called).
     fs::path fresh;

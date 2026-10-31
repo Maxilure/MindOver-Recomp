@@ -2,6 +2,7 @@
 // settings.cpp -- see settings.h
 // =============================================================================
 #include "settings.h"
+#include "texts.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -101,7 +102,7 @@ bool Catalogue::Load(const fs::path& exe, const fs::path& work_folder, const fs:
   std::error_code ec;
   const auto exe_time = fs::last_write_time(exe, ec);
   if (ec) {
-    *error = "The game isn't built yet: its settings come from the game itself.";
+    *error = trs("The game isn't built yet: its settings come from the game itself.");
     return false;
   }
   const auto cache_time = fs::last_write_time(cache_file, ec);
@@ -116,8 +117,9 @@ bool Catalogue::Load(const fs::path& exe, const fs::path& work_folder, const fs:
 },
                                 work_folder);
     if (code != 0) {
-      *error = "The game couldn't list its settings (exit code " + std::to_string(code) +
-               "). A build from before 2026-10-06 doesn't know --list_settings: rebuild it.";
+      *error = trf(trs("The game couldn't list its settings (exit code {0}). A build from before 2026-10-06 "
+                       "doesn't know --list_settings: rebuild it."),
+                   {std::to_string(code)});
       return false;
     }
   }
@@ -125,7 +127,7 @@ bool Catalogue::Load(const fs::path& exe, const fs::path& work_folder, const fs:
   try {
     file = toml::parse_file(cache_file.string());
   } catch (const toml::parse_error& err) {
-    *error = std::string("The settings list is damaged: ") + err.what();
+    *error = trf(trs("The settings list is damaged: {0}"), {err.what()});
     return false;
   }
   settings_.clear();
@@ -159,7 +161,7 @@ bool Catalogue::Load(const fs::path& exe, const fs::path& work_folder, const fs:
     }
   }
   if (settings_.empty()) {
-    *error = "The settings list is empty.";
+    *error = trs("The settings list is empty.");
     return false;
   }
   return true;
@@ -279,14 +281,14 @@ bool Values::Write(const Catalogue*, std::string* error) {
            "# a line can be deleted to put that setting back to its default.\n";
     out << table << "\n";
     if (!out) {
-      *error = "Couldn't write " + temp.string();
+      *error = trf(trs("Couldn't write {0}"), {temp.string()});
       last_error_ = *error;
       return false;
     }
   }
   fs::rename(temp, file_, ec);
   if (ec) {
-    *error = "Couldn't replace " + file_.string() + ": " + ec.message();
+    *error = trf(trs("Couldn't replace {0}: {1}"), {file_.string(), ec.message()});
     last_error_ = *error;
     return false;
   }

@@ -5,7 +5,8 @@ The port's own texts are written in English in the C++ code, wrapped in
 tr(u"..."), trc("context", u"...") or trn(u"...") (src/language/texts.h).
 This tool:
 
-  extract   finds every such text (also trcn("context", u"...")) in src/ and writes languages/template.pot
+  extract   finds every such text (also trcn("context", u"..."), and trs("...") / trsn("...")
+            = UTF-8 texts of the ImGui windows) in src/ and launcher/ and writes languages/template.pot
             (the list translators work from; never edit it by hand)
   update    extract, then brings every languages/<code>.po up to date: new
             texts added (empty), changed references/notes refreshed, texts the
@@ -34,6 +35,7 @@ from collections import OrderedDict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
+LAUNCHER = os.path.join(ROOT, "launcher")  # the launcher reads the same .po files (launcher/texts.h)
 LANG_DIR = os.path.join(ROOT, "languages")
 TEMPLATE = os.path.join(LANG_DIR, "template.pot")
 README = os.path.join(LANG_DIR, "README.md")
@@ -68,17 +70,20 @@ FONT |= set("ĆćČčŁłŃńŘřŚśŠšŸŽž")                           # so
 FONT |= set(chr(c) for c in range(0x0410, 0x0450))         # Cyrillic А-я (no Ё ё)
 FONT |= set("’†…")
 FONT |= set(chr(c) for c in range(0xE000, 0xE200))         # the port's button pictures
+# Listed in the font but EMPTY on the disc (zero width, no picture; findings/49
+# s.8): they draw as a gap. (Ã ã were too: src/ui/font_letters.cpp draws them.)
+FONT -= set('"*<>^_`{|}~')
 FONT |= {"\n"}
 # What translators reach for that the font lacks, and what to use instead.
 FONT_HINTS = {
-    "“": '"', "”": '"', "„": '"', "«": '"', "»": '"', "‘": "'",
+    "“": "'", "”": "'", "„": "'", "«": "'", "»": "'", "‘": "'", '"': "''",
     "–": "-", "—": "-", "€": "EUR", "•": "-", "Ё": "Е", "ё": "е", "«": '"', "»": '"',
 }
 
 # --------------------------------------------------------------------------
 # Extracting texts from the code.
 
-CALL = re.compile(r'\b(trcn|trc|trn|tr)\(')
+CALL = re.compile(r'\b(trcn|trc|trsc|trsn|trs|trn|tr)\(')
 STRING = re.compile(r'u?"((?:[^"\\\n]|\\.)*)"')
 ESCAPES = {"n": "\n", "t": "\t", '"': '"', "\\": "\\", "'": "'", "0": "\0"}
 
@@ -126,14 +131,15 @@ def extract():
     {"refs": [file:line], "notes": [...]}, in file order."""
     found = OrderedDict()
     skipped = []
-    for folder, dirs, files in os.walk(SRC):
+    for folder, dirs, files in [w for top in (SRC, LAUNCHER) for w in os.walk(top)]:
         dirs.sort()
         for name in sorted(files):
             if not name.endswith((".cpp", ".h", ".inc")):
                 continue
             path = os.path.join(folder, name)
             rel = os.path.relpath(path, ROOT)
-            if rel in (os.path.join("src", "language", "texts.h"), os.path.join("src", "language", "texts.cpp")):
+            if rel in (os.path.join("src", "language", "texts.h"), os.path.join("src", "language", "texts.cpp"),
+                       os.path.join("launcher", "texts.h"), os.path.join("launcher", "texts.cpp")):
                 continue  # the lookup itself: its examples are documentation
             text = open(path, encoding="utf-8").read()
             lines = text.split("\n")
@@ -143,7 +149,7 @@ def extract():
                 kind = m.group(1)
                 pos = m.end()
                 context = ""
-                if kind in ("trc", "trcn"):
+                if kind in ("trc", "trcn", "trsc"):
                     got = read_literals(text, pos, wide=False)
                     if not got:
                         skipped.append(f"{rel}:{text.count(chr(10), 0, m.start()) + 1}")
@@ -153,7 +159,7 @@ def extract():
                     if not comma:
                         continue
                     pos = comma.end()
-                got = read_literals(text, pos, wide=True)
+                got = read_literals(text, pos, wide=kind not in ("trs", "trsn", "trsc"))
                 if not got:
                     # tr(variable): a text marked elsewhere (trn) -> fine.
                     continue
@@ -343,7 +349,8 @@ def cmd_new(code):
 
 
 def placeholders(s):
-    return sorted(re.findall(r"\{\d\}", s))
+    # {0} {1}... (tr) and printf's %s %d %.1f... (trs in the ImGui windows); "%%" = a percent sign.
+    return sorted(re.findall(r"\{\d\}", s)) + [m for m in re.findall(r"%%|%[-+#0]*\d*(?:\.\d+)?(?:ll|l|z)?[sdiufxXcgGeEp]", s) if m != "%%"]
 
 
 def cmd_check(codes=None):
@@ -366,6 +373,11 @@ def cmd_check(codes=None):
             if bad:
                 hint = ", ".join(f"{c!r} -> {FONT_HINTS[c]!r}" for c in bad if c in FONT_HINTS)
                 print(f"{where}: the game's font has no {' '.join(bad)}" + (f" (use {hint})" if hint else ""))
+                problems += 1
+            lead = lambda t: len(t) - len(t.lstrip(" "))
+            trail = lambda t: len(t) - len(t.rstrip(" "))
+            if (lead(e.english), trail(e.english)) != (lead(e.translation), trail(e.translation)):
+                print(f"{where}: spaces at the start/end differ from the English (they line things up)")
                 problems += 1
             if e.english.count("\n") != e.translation.count("\n"):
                 print(f"{where}: {e.english.count(chr(10)) + 1} lines in English, "

@@ -36,6 +36,7 @@ set(CRASHMOM_SOURCES
     src/app_restart.cpp          # Options -> "Restart Now": the game closes and starts again
     src/language/language.cpp    # text and voice language from the settings (findings/49)
     src/language/texts.cpp       # the port's own texts in the player's language (languages/*.po)
+    src/language/game_text_banks.cpp  # the game's own text banks (achievements, save messages)
     src/crash_report.cpp         # a crash writes its named call stack into the log + crash-*.txt
     src/debug/host_symbols.cpp   # host code address -> function name / original PowerPC instruction
     src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
@@ -104,6 +105,8 @@ set(CRASHMOM_SOURCES
     src/ui/game_font.cpp         # the game's own font read from the disc data, for text we draw ourselves
     src/ui/wii_cursor.cpp        # the Wii-style gameplay cursor (a bubble on the mouse pointer, crosshair mode)
     src/ui/tools_menu.cpp        # the Tools menu (F1): every tool that had its own F key, as buttons
+    src/ui/font_letters.cpp      # Ã ã composed into the game font (its glyphs for them are empty)
+    src/ui/imgui_fonts.cpp       # Cyrillic / Latin Extended letters merged into the ImGui font (translated tools)
     src/ui/marquee.cpp           # scrolling text: a menu text too long for its box scrolls through it
     src/ui/hud_scale.cpp         # HUD size: each HUD part drawn smaller toward its own screen corner (findings/53)
     src/ui/hud_hide.cpp          # hide the whole HUD (F2, not a cheat; or the Cheats menu): skipped at each piece's draw

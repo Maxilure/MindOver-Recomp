@@ -73,6 +73,9 @@ class Page {
   std::string load_error_;          // written by the loader before loaded_
   std::string write_error_;
   const Look* look_ = nullptr;
+  // The widest row label seen (Row), so the label column fits the longest
+  // translation (some languages run 50 % longer than English).
+  float label_width_ = 0.0f;
   char search_[96] = {};
   bool show_debug_ = false;
 };

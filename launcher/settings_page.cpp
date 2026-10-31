@@ -2,6 +2,7 @@
 // settings_page.cpp -- see settings_page.h
 // =============================================================================
 #include "settings_page.h"
+#include "texts.h"
 
 #include <algorithm>
 #include <cmath>
@@ -34,83 +35,83 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
   if (name == "fps_cap") {
     const double fps = AsNumber(value);
     if (fps == 0 || fps > 60) {
-      return {"Experimental",
-              "Above 60 fps is experimental. The game was made for 30: physics, animations, "
+      return {trsn("Experimental"),
+              trsn("Above 60 fps is experimental. The game was made for 30: physics, animations, "
               "cutscenes and scripted moments may misbehave (60 is tested and fine). If something "
-              "looks wrong, try 60 and report it."};
+              "looks wrong, try 60 and report it.")};
     }
   } else if (name == "picture") {
     if (value == "native") {
-      return {"In development",
-              "The native renderer draws nearly everything, but an effect may still be missing "
-              "or look different. F9 switches back to the emulated picture while playing."};
+      return {trsn("In development"),
+              trsn("The native renderer draws nearly everything, but an effect may still be missing "
+              "or look different. F9 switches back to the emulated picture while playing.")};
     }
     // native_only = the default since 2026-10-10 (the player's pick): no
     // warning on the default; Native (both renderers drawing) keeps its note.
     if (value == "dual") {
-      return {"Heavy on the GPU",
-              "Two windows: the emulated picture and the native one, both drawn live. Meant for "
-              "comparing the two; it needs a strong graphics card."};
+      return {trsn("Heavy on the GPU"),
+              trsn("Two windows: the emulated picture and the native one, both drawn live. Meant for "
+              "comparing the two; it needs a strong graphics card.")};
     }
   } else if (name == "coop_camera") {
     if (AsBool(value)) {
-      return {"Experimental",
-              "The new co-op camera keeps every player in the picture. It needs more testing in "
-              "fights, tight places and cutscenes. Turn it off for the original camera."};
+      return {trsn("Experimental"),
+              trsn("The new co-op camera keeps every player in the picture. It needs more testing in "
+              "fights, tight places and cutscenes. Turn it off for the original camera.")};
     }
   } else if (name == "motion_blur") {
     if (AsNumber(value) > 0) {
-      return {"Native renderer only",
-              "Motion blur is this port's own effect (the original has none). Only the native "
-              "renderer draws it: with the emulated picture it does nothing."};
+      return {trsn("Native renderer only"),
+              trsn("Motion blur is this port's own effect (the original has none). Only the native "
+              "renderer draws it: with the emulated picture it does nothing.")};
     }
   } else if (name == "render_resolution") {
     if (AsNumber(value) > 0) {
-      return {"Native renderer only",
-              "Only the native renderer draws at a higher resolution: the emulated picture stays "
-              "720p. 4K is heavy: it needs a strong graphics card."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer draws at a higher resolution: the emulated picture stays "
+              "720p. 4K is heavy: it needs a strong graphics card.")};
     }
   } else if (name == "anti_aliasing") {
     if (AsNumber(value) != 1) {
-      return {"Native renderer only",
-              "Only the native renderer changes its anti-aliasing: the emulated picture keeps the "
-              "Xbox 360's 2x."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer changes its anti-aliasing: the emulated picture keeps the "
+              "Xbox 360's 2x.")};
     }
   } else if (name == "smooth_cutouts") {
     if (AsNumber(value) > 0) {
-      return {"Native renderer only",
-              "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer smooths cut-out edges, and only while anti-aliasing is on.")};
     }
   } else if (name == "texture_sharpness") {
     if (AsNumber(value) > 0) {
-      return {"Native renderer only",
-              "Only the native renderer sharpens textures: the emulated picture stays as the "
-              "Xbox 360 drew it."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer sharpens textures: the emulated picture stays as the "
+              "Xbox 360 drew it.")};
     }
   } else if (name == "sharpening") {
     if (AsNumber(value) > 0) {
-      return {"Native renderer only",
-              "Only the native renderer sharpens the picture: the emulated picture stays as the "
-              "Xbox 360 drew it."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer sharpens the picture: the emulated picture stays as the "
+              "Xbox 360 drew it.")};
     }
   } else if (name == "shadow_softness") {
     if (AsNumber(value) != 1) {
-      return {"Native renderer only",
-              "Only the native renderer changes the shadows' edge: the emulated picture keeps the "
-              "Xbox 360's."};
+      return {trsn("Native renderer only"),
+              trsn("Only the native renderer changes the shadows' edge: the emulated picture keeps the "
+              "Xbox 360's.")};
     }
   } else if (name == "event_logs") {
     if (!AsBool(value)) {
-      return {"Less to go on",
-              "Problem reports from these sessions won't show what the game was doing (frame "
-              "rate, sounds, co-op, menus): a bug may be impossible to track down."};
+      return {trsn("Less to go on"),
+              trsn("Problem reports from these sessions won't show what the game was doing (frame "
+              "rate, sounds, co-op, menus): a bug may be impossible to track down.")};
     }
   } else if (name == "ground_grace_ms") {
     const double fps = AsNumber(get("fps_cap"));
     if (AsNumber(value) == 0 && fps != 30) {
-      return {"Falls",
-              "Off above 30 fps: Crash may flash into his fall animation for a split second when "
-              "stepping down uneven ground. 40 ms is the tested value."};
+      return {trsn("Falls"),
+              trsn("Off above 30 fps: Crash may flash into his fall animation for a split second when "
+              "stepping down uneven ground. 40 ms is the tested value.")};
     }
   }
   return {};
@@ -135,16 +136,16 @@ void WarningIcon(const Warning& warning, const ImVec4& colour) {
   if (ImGui::IsItemHovered()) {
     ImGui::SetNextWindowSize({size * 26, 0});
     ImGui::BeginTooltip();
-    ImGui::TextWrapped("%s", warning.detail);
+    ImGui::TextWrapped("%s", trs(warning.detail));
     ImGui::EndTooltip();
   }
   ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(colour, "%s", warning.label);
+  ImGui::TextColored(colour, "%s", trs(warning.label));
   if (ImGui::IsItemHovered()) {
     ImGui::SetNextWindowSize({size * 26, 0});
     ImGui::BeginTooltip();
-    ImGui::TextWrapped("%s", warning.detail);
+    ImGui::TextWrapped("%s", trs(warning.detail));
     ImGui::EndTooltip();
   }
 }
@@ -157,11 +158,11 @@ struct PictureChoice {
   const char* label;
 };
 constexpr PictureChoice kPictures[] = {
-    {"emulated", "Emulated (the default)"},
-    {"native", "Native renderer"},
-    {"native_only", "Native only (fastest, default)"},
-    {"dual", "Both, in two windows"},
-    {"emulated_only", "Emulated only"},
+    {"emulated", trsn("Emulated (the default)")},
+    {"native", trsn("Native renderer")},
+    {"native_only", trsn("Native only (fastest, default)")},
+    {"dual", trsn("Both, in two windows")},
+    {"emulated_only", trsn("Emulated only")},
 };
 
 // Not offered in All settings: load_save / log_file are given per session by
@@ -237,6 +238,7 @@ void Page::Row(const char* label, const char* help) {
   ImGui::TableNextColumn();
   ImGui::AlignTextToFramePadding();
   ImGui::TextUnformatted(label);
+  label_width_ = std::max(label_width_, ImGui::GetItemRectSize().x + ImGui::GetStyle().CellPadding.x * 2);
   if (help && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
     ImGui::SetNextWindowSize({ImGui::GetFontSize() * 26, 0});
     ImGui::BeginTooltip();
@@ -261,7 +263,7 @@ bool Page::Status(const std::string& name) {
   bool reset = false;
   if (values_.IsSet(name)) {
     ImGui::PushID(name.c_str());
-    reset = ImGui::SmallButton("Default");
+    reset = ImGui::SmallButton(trs("Default"));
     ImGui::PopID();
     if (reset) {
       std::string error;
@@ -282,18 +284,25 @@ void Page::DrawMain() {
   auto section = [&](const char* title) {
     ImGui::Spacing();
     ImGui::PushFont(look_->bold, ImGui::GetStyle().FontSizeBase * 1.1f);
-    ImGui::TextColored(look_->accent, "%s", title);
+    ImGui::TextColored(look_->accent, "%s", trs(title));
     ImGui::PopFont();
     return ImGui::BeginTable(title, 3, flags);
   };
   auto columns = [&] {
-    ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed, unit * 13);
-    ImGui::TableSetupColumn("control", ImGuiTableColumnFlags_WidthFixed, unit * 15);
+    // Wide enough for the longest label (measured last frame) and the
+    // longest Renderer choice (the widest combo text) in this language.
+    float control = unit * 15;
+    for (const auto& choice : kPictures) {
+      control = std::max(control, ImGui::CalcTextSize(trs(choice.label)).x + ImGui::GetFrameHeight() +
+                                      ImGui::GetStyle().FramePadding.x * 2);
+    }
+    ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed, std::max(unit * 13, label_width_));
+    ImGui::TableSetupColumn("control", ImGuiTableColumnFlags_WidthFixed, control);
     ImGui::TableSetupColumn("status", ImGuiTableColumnFlags_WidthStretch);
   };
   // A tick box for a bool setting.
   auto check = [&](const char* label, const char* name, const char* help) {
-    Row(label, help);
+    Row(trs(label), help ? trs(help) : nullptr);
     bool on = settings::AsBool(Value(name));
     ImGui::PushID(name);
     if (ImGui::Checkbox("##v", &on)) {
@@ -306,7 +315,7 @@ void Page::DrawMain() {
   static std::map<std::string, float> dragging;
   auto slider = [&](const char* label, const char* name, float min, float max, const char* format,
                     const char* help) {
-    Row(label, help);
+    Row(trs(label), help ? trs(help) : nullptr);
     float value = dragging.count(name) ? dragging[name] : float(settings::AsNumber(Value(name)));
     ImGui::PushID(name);
     if (ImGui::SliderFloat("##v", &value, min, max, format)) {
@@ -321,10 +330,10 @@ void Page::DrawMain() {
   };
 
   // --- Frame rate -------------------------------------------------------------
-  if (section("Frame rate")) {
+  if (section(trsn("Frame rate"))) {
     columns();
-    Row("Frame rate cap",
-        "How many frames per second the game runs at. 30 is the original game's rate.");
+    Row(trs("Frame rate cap"),
+        trs("How many frames per second the game runs at. 30 is the original game's rate."));
     const int fps = int(settings::AsNumber(Value("fps_cap")));
     static const int kRates[] = {30, 60, 120, 144, 165, 180, 240, 0};
     static bool custom = false;
@@ -333,24 +342,24 @@ void Page::DrawMain() {
     if (custom || !preset) {
       std::snprintf(current, sizeof(current), "Other: %d", fps);
     } else if (fps == 0) {
-      std::snprintf(current, sizeof(current), "Unlimited");
+      std::snprintf(current, sizeof(current), "%s", trs("Unlimited"));
     } else {
-      std::snprintf(current, sizeof(current), fps == 30 ? "%d (the original)" : "%d", fps);
+      std::snprintf(current, sizeof(current), fps == 30 ? trs("%d (the original)") : "%d", fps);
     }
     if (ImGui::BeginCombo("##fps", current)) {
       for (int rate : kRates) {
         char label[32];
         if (rate == 0) {
-          std::snprintf(label, sizeof(label), "Unlimited");
+          std::snprintf(label, sizeof(label), "%s", trs("Unlimited"));
         } else {
-          std::snprintf(label, sizeof(label), rate == 30 ? "%d (the original)" : "%d", rate);
+          std::snprintf(label, sizeof(label), rate == 30 ? trs("%d (the original)") : "%d", rate);
         }
         if (ImGui::Selectable(label, !custom && preset && rate == fps)) {
           custom = false;
           SetValue("fps_cap", std::to_string(rate));
         }
       }
-      if (ImGui::Selectable("Other...", custom || !preset)) {
+      if (ImGui::Selectable(trs("Other..."), custom || !preset)) {
         custom = true;
       }
       ImGui::EndCombo();
@@ -359,7 +368,7 @@ void Page::DrawMain() {
       custom = false;
     }
     if (custom || !preset) {
-      Row("   Frames per second", nullptr);
+      Row(trs("   Frames per second"), nullptr);
       int value = fps;
       if (ImGui::InputInt("##fpsother", &value, 1, 10)) {
         value = std::clamp(value, 0, 1000);
@@ -369,19 +378,19 @@ void Page::DrawMain() {
       }
       ImGui::TableNextColumn();
     }
-    slider("Ground grace", "ground_grace_ms", 0, 100, "%.0f ms",
-           "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into "
-           "his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off.");
+    slider(trsn("Ground grace"), "ground_grace_ms", 0, 100, "%.0f ms",
+           trsn("Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into "
+           "his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."));
     ImGui::EndTable();
   }
 
   // --- Picture ----------------------------------------------------------------
-  if (section("Picture")) {
+  if (section(trsn("Picture"))) {
     columns();
-    Row("Renderer",
-        "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this "
+    Row(trs("Renderer"),
+        trs("Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this "
         "port's own renderer drawing the game directly (in development). F9 switches between "
-        "them while playing, F8 opens the second window.");
+        "them while playing, F8 opens the second window."));
     std::string picture = "emulated";
     if (settings::AsBool(Value("emulated_only"))) {
       picture = "emulated_only";
@@ -395,12 +404,12 @@ void Page::DrawMain() {
     const char* shown = picture.c_str();
     for (const auto& choice : kPictures) {
       if (picture == choice.id) {
-        shown = choice.label;
+        shown = trs(choice.label);
       }
     }
     if (ImGui::BeginCombo("##picture", shown)) {
       for (const auto& choice : kPictures) {
-        if (ImGui::Selectable(choice.label, picture == choice.id)) {
+        if (ImGui::Selectable(trs(choice.label), picture == choice.id)) {
           const std::string id = choice.id;
           SetValue("renderer", id == "native" ? "native" : "emulated");
           SetValue("native_only", id == "native_only" ? "true" : "false");
@@ -422,7 +431,7 @@ void Page::DrawMain() {
     for (const char* flag : kPictureFlags) {
       any_set |= values_.IsSet(flag);
     }
-    if (any_set && ImGui::SmallButton("Default##picture")) {
+    if (any_set && ImGui::SmallButton((std::string(trs("Default")) + "##picture").c_str())) {
       std::string error;
       for (const char* flag : kPictureFlags) {
         values_.Reset(flag, &error);
@@ -432,16 +441,16 @@ void Page::DrawMain() {
   }
 
   // --- Window -----------------------------------------------------------------
-  if (section("Window")) {
+  if (section(trsn("Window"))) {
     columns();
     // Window mode = the game's fullscreen flag: Windowed or Fullscreen (the
     // borderless kind: fullscreen_exclusive set back to false), as in the
     // game's Options -> Display (src/ui/window_mode.h).
-    Row("Window mode", "Windowed: a window you can move and resize. Fullscreen: fills the whole "
-                       "monitor (the one picked under Monitor).");
+    Row(trs("Window mode"), trs("Windowed: a window you can move and resize. Fullscreen: fills the whole "
+                       "monitor (the one picked under Monitor)."));
     {
       const int mode = settings::AsBool(Value("fullscreen")) ? 1 : 0;
-      const char* modes[] = {"Windowed", "Fullscreen"};
+      const char* modes[] = {trs("Windowed"), trs("Fullscreen")};
       if (ImGui::BeginCombo("##window_mode", modes[mode])) {
         for (int i = 0; i < 2; ++i) {
           if (ImGui::Selectable(modes[i], i == mode)) {
@@ -457,19 +466,19 @@ void Page::DrawMain() {
     }
     // Monitor = the game's monitor flag: 0 = wherever the desktop puts it,
     // 1..N = SDL_GetDisplays() order (the game numbers them the same way).
-    Row("Monitor", "Which monitor Fullscreen fills. Automatic = the one the game is on.");
+    Row(trs("Monitor"), trs("Which monitor Fullscreen fills. Automatic = the one the game is on."));
     {
-      std::vector<std::string> names{"Automatic"};
+      std::vector<std::string> names{trs("Automatic")};
       int count = 0;
       SDL_DisplayID* ids = SDL_GetDisplays(&count);
       for (int i = 0; ids && i < count; ++i) {
         const char* name = SDL_GetDisplayName(ids[i]);
-        names.push_back(std::to_string(i + 1) + ": " + (name && *name ? name : "Monitor"));
+        names.push_back(std::to_string(i + 1) + ": " + (name && *name ? name : trs("Monitor")));
       }
       SDL_free(ids);
       const int monitor = std::max(0, int(settings::AsNumber(Value("monitor"))));
       while (monitor >= int(names.size())) {
-        names.push_back(std::to_string(names.size()) + ": not connected");
+        names.push_back(trf(trs("{0}: not connected"), {std::to_string(names.size())}));
       }
       if (ImGui::BeginCombo("##monitor", names[size_t(monitor)].c_str())) {
         for (int i = 0; i < int(names.size()); ++i) {
@@ -485,12 +494,12 @@ void Page::DrawMain() {
   }
 
   // --- Co-op ------------------------------------------------------------------
-  if (section("Co-op")) {
+  if (section(trsn("Co-op"))) {
     columns();
-    Row("Players", "How many players can play at once (4 by default; the original game has 2). "
-                   "Players join from the Players screen (main menu or pause menu) or with START.");
+    Row(trs("Players"), trs("How many players can play at once (4 by default; the original game has 2). "
+                   "Players join from the Players screen (main menu or pause menu) or with START."));
     const int players = int(settings::AsNumber(Value("local_players")));
-    const char* labels[] = {"2 (the original)", "3", "4 (default)"};
+    const char* labels[] = {trs("2 (the original)"), "3", trs("4 (default)")};
     const int index = std::clamp(players - 2, 0, 2);
     if (ImGui::BeginCombo("##players", labels[index])) {
       for (int i = 0; i < 3; ++i) {
@@ -501,48 +510,48 @@ void Page::DrawMain() {
       ImGui::EndCombo();
     }
     Status("local_players");
-    check("Co-op camera", "coop_camera",
-          "Keep every player in the picture: the camera centres between the players and backs "
-          "off until everyone fits. Off = the original camera, which follows one player.");
+    check(trsn("Co-op camera"), "coop_camera",
+          trsn("Keep every player in the picture: the camera centres between the players and backs "
+          "off until everyone fits. Off = the original camera, which follows one player."));
     if (settings::AsBool(Value("coop_camera"))) {
-      slider("   Farthest zoom-out", "coop_camera_max_distance", 20, 80, "%.0f",
-             "How far the co-op camera may back off to fit everyone (the original camera's "
-             "range is about 12-20). Past it, a player who runs off leaves the screen.");
-      slider("   Room around players", "coop_camera_room", 0, 10, "%.1f",
-             "How much ground around each player stays in the picture (to their left, right and "
+      slider(trsn("   Farthest zoom-out"), "coop_camera_max_distance", 20, 80, "%.0f",
+             trsn("How far the co-op camera may back off to fit everyone (the original camera's "
+             "range is about 12-20). Past it, a player who runs off leaves the screen."));
+      slider(trsn("   Room around players"), "coop_camera_room", 0, 10, "%.1f",
+             trsn("How much ground around each player stays in the picture (to their left, right and "
              "beyond them), so a player at the edge still sees a ledge or a drop. Crash is about "
-             "2 tall. 0 = just the players themselves.");
-      check("   Stay with the nearest player", "coop_camera_near_focus",
-            "Front to back, the camera stays with the player nearest to it, so a player walking deep "
+             "2 tall. 0 = just the players themselves."));
+      check(trsn("   Stay with the nearest player"), "coop_camera_near_focus",
+            trsn("Front to back, the camera stays with the player nearest to it, so a player walking deep "
             "into the picture doesn't pull the others off the bottom. Off = the camera aims at the "
-            "middle of the players (the old way).");
-      slider("   Group focus", "coop_camera_group_focus", 0, 4, "%.1f",
-             "3-4 players: how much more a group of players counts than a player on their own "
-             "when the camera picks its centre. 0 = everyone the same.");
+            "middle of the players (the old way)."));
+      slider(trsn("   Group focus"), "coop_camera_group_focus", 0, 4, "%.1f",
+             trsn("3-4 players: how much more a group of players counts than a player on their own "
+             "when the camera picks its centre. 0 = everyone the same."));
     }
-    check("Lost controller pause", "lost_controller",
-          "When a player's controller disconnects in a level: pause with a question box, so "
-          "another player can drop that player out, or reconnect it and resume.");
+    check(trsn("Lost controller pause"), "lost_controller",
+          trsn("When a player's controller disconnects in a level: pause with a question box, so "
+          "another player can drop that player out, or reconnect it and resume."));
     ImGui::EndTable();
   }
 
   // --- Controls and saves -----------------------------------------------------
-  if (section("Controls")) {
+  if (section(trsn("Controls"))) {
     columns();
-    check("Keyboard and mouse", "keyboard_mouse",
-          "Play with keyboard and mouse (a controller keeps working too). The keys are changed "
-          "in the game with F6.");
+    check(trsn("Keyboard and mouse"), "keyboard_mouse",
+          trsn("Play with keyboard and mouse (a controller keeps working too). The keys are changed "
+          "in the game with F6."));
     ImGui::EndTable();
   }
 
   // --- Sound and logging ------------------------------------------------------
-  if (section("Sound and logging")) {
+  if (section(trsn("Sound and logging"))) {
     columns();
-    check("Mute the sound", "audio_mute", nullptr);
-    check("Event logs (for bug reports)", "event_logs",
-          "The session's log also records what the game does: frame rate every 5 s, the sounds "
+    check(trsn("Mute the sound"), "audio_mute", nullptr);
+    check(trsn("Event logs (for bug reports)"), "event_logs",
+          trsn("The session's log also records what the game does: frame rate every 5 s, the sounds "
           "it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; "
-          "it's what \"Report a problem\" sends. Off = only the basics.");
+          "it's what \"Report a problem\" sends. Off = only the basics."));
     ImGui::EndTable();
   }
 }
@@ -609,14 +618,14 @@ void Page::SettingControl(const settings::Setting& setting) {
 
 void Page::DrawAll() {
   ImGui::TextColored(look_->muted,
-                     "Every setting the game has, straight from the game. Most are for "
-                     "development or troubleshooting: change them only if you know what they do.");
+                     trs("Every setting the game has, straight from the game. Most are for "
+                     "development or troubleshooting: change them only if you know what they do."));
   const float unit = ImGui::GetFontSize();
   ImGui::SetNextItemWidth(unit * 18);
-  ImGui::InputTextWithHint("##search", "Search names and descriptions...", search_,
+  ImGui::InputTextWithHint("##search", trs("Search names and descriptions..."), search_,
                            sizeof(search_));
   ImGui::SameLine();
-  ImGui::Checkbox("Show developer settings (debug_...)", &show_debug_);
+  ImGui::Checkbox(trs("Show developer settings (debug_...)"), &show_debug_);
 
   const std::string needle = Lower(search_);
 
@@ -663,7 +672,7 @@ void Page::DrawAll() {
       ImGui::AlignTextToFramePadding();
       if (values_.IsSet(setting->name)) {
         ImGui::PushID(setting->name.c_str());
-        if (ImGui::SmallButton("Default")) {
+        if (ImGui::SmallButton(trs("Default"))) {
           std::string error;
           values_.Reset(setting->name, &error);
         }
@@ -678,8 +687,8 @@ void Page::DrawAll() {
         ImGui::SetNextWindowSize({unit * 30, 0});
         ImGui::BeginTooltip();
         ImGui::TextWrapped("%s", about.c_str());
-        ImGui::TextColored(look_->muted, "Default: %s%s", setting->default_value.c_str(),
-                           setting->init_only ? "  (read at start only)" : "");
+        ImGui::TextColored(look_->muted, trs("Default: %s%s"), setting->default_value.c_str(),
+                           setting->init_only ? trs("  (read at start only)") : "");
         ImGui::EndTooltip();
       }
     }
@@ -690,7 +699,7 @@ void Page::DrawAll() {
 void Page::Draw(const Look& look, bool game_running) {
   look_ = &look;
   if (!loaded_) {
-    ImGui::TextColored(look.muted, "Asking the game for its settings...");
+    ImGui::TextColored(look.muted, trs("Asking the game for its settings..."));
     return;
   }
   if (!load_error_.empty()) {
@@ -702,12 +711,12 @@ void Page::Draw(const Look& look, bool game_running) {
   ImGui::BeginChild("settings", {0, 0}, ImGuiChildFlags_None);
   if (game_running) {
     ImGui::TextColored(look.warn,
-                       "The game is running: changes apply the next time it starts. (Its F4 menu "
-                       "writes the same file: use one or the other.)");
+                       trs("The game is running: changes apply the next time it starts. (Its F4 menu "
+                       "writes the same file: use one or the other.)"));
   } else {
     ImGui::TextColored(look.muted,
-                       "Saved right away; they apply the next time the game starts. Hover a name "
-                       "for what it does, a triangle for why it's risky.");
+                       trs("Saved right away; they apply the next time the game starts. Hover a name "
+                       "for what it does, a triangle for why it's risky."));
   }
   if (!values_.last_error().empty()) {
     ImGui::TextColored(look.bad, "%s", values_.last_error().c_str());
@@ -718,7 +727,7 @@ void Page::Draw(const Look& look, bool game_running) {
   DrawMain();
   ImGui::Spacing();
   ImGui::Spacing();
-  if (ImGui::CollapsingHeader("All settings (advanced)")) {
+  if (ImGui::CollapsingHeader(trs("All settings (advanced)"))) {
     DrawAll();
   }
   ImGui::EndChild();

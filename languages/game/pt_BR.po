@@ -1,0 +1,5841 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Mind over Recomp\n"
+"Language: pt_BR\n"
+"Report-Msgid-Bugs-To: https://github.com/Maxilure/MindOver-Recomp/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "602"
+msgstr "Não"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "2136"
+msgstr "Crash:†Mind†Over†Mutant usa salvamento automático.  Inserir um memory card (8MB) (para†PlayStation®2) a partir deste ponto pode fazer dados serem substituídos."
+
+#, fuzzy
+msgctxt "bootup"
+msgid "6461"
+msgstr "Tentar de novo"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "10200"
+msgstr "Nederlands"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "14143"
+msgstr "Voltar ao Menu Wii"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "16497"
+msgstr "suomi"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "16952"
+msgstr "Italiano"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "17460"
+msgstr "Sim"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "18271"
+msgstr "Dansk"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "20165"
+msgstr "Deutsch"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "23400"
+msgstr "Escolha o idioma"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "28580"
+msgstr "Selecionar ±"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "31661"
+msgstr "Continuar"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "39156"
+msgstr ""
+"© 2008 Sierra Entertainment Inc.\n"
+"Todos os direitos reservados."
+
+#, fuzzy
+msgctxt "bootup"
+msgid "49397"
+msgstr "Verificando o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "bootup"
+msgid "49944"
+msgstr "Norsk"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "51422"
+msgstr "Nenhum memory card (8MB) (para†PlayStation®2) inserido no slot de MEMORY CARD 1."
+
+#, fuzzy
+msgctxt "bootup"
+msgid "52427"
+msgstr "Svenska"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "58274"
+msgstr "Español"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "58872"
+msgstr "Espaço livre insuficiente no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1.  Insira um memory card (8MB) (para†PlayStation®2) com pelo menos 114KB livres, ou libere espaço pelo navegador interno do console."
+
+#, fuzzy
+msgctxt "bootup"
+msgid "59495"
+msgstr "English"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "59503"
+msgstr "English"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "61624"
+msgstr "Continuar sem salvar"
+
+#, fuzzy
+msgctxt "bootup"
+msgid "62999"
+msgstr "Français"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "213"
+msgstr "Desenvolvimento de Produto da Sierra Entertainment"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "310"
+msgstr "Marketing de Canal"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "317"
+msgstr "Edição de Diálogos, Masterização de Diálogos e Música"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "434"
+msgstr "Crash Verdinho"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "435"
+msgstr "Crash Azulzinho"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "436"
+msgstr "Crash Vermelhinho"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "503"
+msgstr "Diretor Sênior, Serviços de Desenvolvimento Compartilhado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "599"
+msgstr "Austrália"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "602"
+msgstr "Não"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "662"
+msgstr "Diretor de Arte, Marketing do Estúdio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "706"
+msgstr ""
+"Não há mais espaço disponível na Memória do Sistema Wii.\n"
+"Consulte o Manual de Operações do Wii para mais informações."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "779"
+msgstr "A ardência e a coceira do poder flamejante e das explosões."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "968"
+msgstr "Velha Guarda"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "1187"
+msgstr "Ligado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "1316"
+msgstr "Serviços Criativos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "1558"
+msgstr "Scorporilla"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "1600"
+msgstr "Pacote 3/4"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "1763"
+msgstr "Sludge"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2071"
+msgstr "A Coco deixa isso bonito"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2085"
+msgstr "Melhorias"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2117"
+msgstr "Nórdico"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2129"
+msgstr "Vice-Presidente Executivo, Consultor Jurídico Geral"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2338"
+msgstr "Executivos Sêniores da Vivendi"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2506"
+msgstr "Coordenador de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2810"
+msgstr "Relações Públicas"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "2837"
+msgstr "Os servos de Cortex que manipulam o tempo, mutados a partir de... alguma coisa."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "3327"
+msgstr "Você não tem um perfil de jogador ativo. Sem um perfil de jogador ativo, não será possível salvar o seu progresso. Para criar ou carregar um perfil de jogador, aperte o botão Guia Xbox."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "3457"
+msgstr "Artistas de Cenário"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "3686"
+msgstr "Cortex"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "3730"
+msgstr "VP de Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "3897"
+msgstr "Gerente de R.P."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "4315"
+msgstr "Vice-Presidente Executivo, Recursos Humanos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "4341"
+msgstr "Programador-Chefe"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "4578"
+msgstr ""
+"Não há mais espaço disponível na memória do sistema Wii.\n"
+"Consulte o manual de operações do Wii para mais informações."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "4830"
+msgstr "TK"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "4915"
+msgstr "Finlandês"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "5370"
+msgstr "Italiano"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "5452"
+msgstr "Animadores"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "5655"
+msgstr "Gerente de Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "5902"
+msgstr "Gerente de Projeto do Jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6002"
+msgstr "Artista de Efeitos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6118"
+msgstr "Artista de Marketing do Estúdio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6461"
+msgstr "Tentar de novo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6479"
+msgstr "Varredura Progressiva"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6585"
+msgstr "Esqueleto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6627"
+msgstr "Diretor-Presidente"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "6868"
+msgstr "Equipes Globais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7304"
+msgstr "Mixador de Som"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7475"
+msgstr "Advogado Corporativo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7549"
+msgstr "Gerente Sênior de R.P."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7557"
+msgstr "Coordenador de Produção de Áudio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7621"
+msgstr "Alemanha"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7627"
+msgstr "Gerente de Publicação para Consoles"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7688"
+msgstr "O visual clássico do Crash esquecido no micro-ondas, com o sorriso dentuço"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7745"
+msgstr "Produtor Associado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7755"
+msgstr "Gerente de Produto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7830"
+msgstr "Calibragem"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "7910"
+msgstr "Complicado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8058"
+msgstr "Znu"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8388"
+msgstr "Parecida com a Coco, só que malvada, mas você já sabia disso"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8593"
+msgstr "(Em Ordem Alfabética)"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8645"
+msgstr "Melhorias de Monstro"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8850"
+msgstr "Abuse, Use Mal, Recicle"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8851"
+msgstr "Super Bandicoot Número Um!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8852"
+msgstr "Peguei o Crunch!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8853"
+msgstr "Não Sou Seu Parceiro, Amigo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8854"
+msgstr "Não Sou Seu Amigo, Parceiro"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8855"
+msgstr "Punhos de Fúria Laranja"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8856"
+msgstr "Trocadilho Caseiro"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "8914"
+msgstr "Carregado com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9278"
+msgstr "VP de Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9415"
+msgstr "Artistas Conceituais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9464"
+msgstr "Diretor, Publicação Internacional"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9775"
+msgstr "Diretor Técnico Associado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9840"
+msgstr "Obrigado por Jogar!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "9959"
+msgstr "Desligado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10097"
+msgstr "Supervisor do Projeto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10290"
+msgstr "Diretor de Som"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10420"
+msgstr "Escolha a dificuldade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10516"
+msgstr "Diretor, Grupo de Visual Avançado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10553"
+msgstr "Doom Monkey"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "10975"
+msgstr "Elenco de Vozes"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "11418"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "11453"
+msgstr "Reino Unido"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "11724"
+msgstr "Gerente de Vendas e Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "11878"
+msgstr "Gerente de Relações Públicas"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "11941"
+msgstr "Estéreo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12002"
+msgstr "Spike"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12053"
+msgstr "Selvagem, mortal e descontrolado, mas com uma plumagem linda."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12194"
+msgstr "Carregando o conteúdo.  Não desligue o seu console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12256"
+msgstr "Diretor de Tecnologia Avançada"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12685"
+msgstr "VP Executivo de Vendas na Europa"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "12833"
+msgstr "Escolha o idioma"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13088"
+msgstr "Exatamente igual em tudo, só que diferente"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13271"
+msgstr "Pacote do Deserto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13375"
+msgstr "Líderes de Projeto de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13483"
+msgstr "Diretor de Estratégia e Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13791"
+msgstr "Gerente Associado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13861"
+msgstr "Spike"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "13905"
+msgstr "Editor de Vídeo Sênior"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14090"
+msgstr "Falha ao carregar! O arquivo pode estar danificado e não pode ser usado."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14143"
+msgstr "Voltar ao Menu Wii"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14176"
+msgstr "Operações"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14196"
+msgstr "Esperta e fofa, a Coco é o cérebro da família Bandicoot."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14646"
+msgstr "Missões Opcionais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14733"
+msgstr "Os terrores combinados da gaita de foles e do polvo, mas você já sabia disso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14843"
+msgstr "Bloqueado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "14915"
+msgstr "Gerente Sênior"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "15511"
+msgstr "Artistas de Textura"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "15880"
+msgstr "Espanha"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "15990"
+msgstr "Serviços de Apoio do Estúdio - Gerente de Escritório"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16290"
+msgstr "Falha ao carregar! Verifique o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 e tente de novo."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16383"
+msgstr "Direção Técnica"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16414"
+msgstr "Coco"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16485"
+msgstr "O dispositivo de armazenamento foi desconectado. Reconecte o dispositivo de armazenamento e escolha Tentar de novo ou Continuar sem salvar."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16608"
+msgstr "Os habitantes dos vastos desertos de Wumpa, descobertos há pouco."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "16922"
+msgstr "Artistas de Objetos de Cenário"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17012"
+msgstr "Gerente"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17114"
+msgstr "Carregando..."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17176"
+msgstr "Pacote 1/4"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17350"
+msgstr "O visual clássico do Crash e o sorriso dentuço... mas em verde"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17351"
+msgstr "O visual clássico do Crash e o sorriso dentuço... mas mais azul"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17352"
+msgstr "O visual clássico do Crash e o sorriso dentuço... mas meio avermelhado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17377"
+msgstr "Diretor de Arte"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17460"
+msgstr "Sim"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17659"
+msgstr "Garantia de Qualidade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "17727"
+msgstr "Os capangas da Nina a traíram e agora mandam na escola pública do mal."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18066"
+msgstr "Diretor Técnico"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18352"
+msgstr "O memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 não está formatado. Formatar o memory card (8MB) (para†PlayStation®2)?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18382"
+msgstr "Gerente Associado, CRM"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18474"
+msgstr "Ela é toneladas e toneladas de raiva e paixão movidas a cauda."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18550"
+msgstr "Falha ao salvar."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18602"
+msgstr "Designers de Efeitos Sonoros"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18675"
+msgstr "O terror espinhoso da Ilha Wumpa e dos jantares casuais."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18833"
+msgstr "Líder de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "18936"
+msgstr "Editores de Diálogos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "19199"
+msgstr "Gerente Global de Marca"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "19728"
+msgstr "Melhoria do Magmadon"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "19808"
+msgstr "Não há espaço suficiente na memória do sistema Wii para salvar dados novos. Dados existentes de Crash:†Mind†Over†Mutant podem ser carregados e substituídos. Mova dados para um cartão SD ou apague dados na tela de Gerenciamento de Dados."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "19992"
+msgstr "VP, Serviços Criativos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "20035"
+msgstr "Gerente do Grupo de Requisitos Técnicos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "20140"
+msgstr "Dinamarquês"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "20647"
+msgstr "Diretor Sênior, Publicação para Consoles"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "20663"
+msgstr "O salvamento automático está desligado. Para ligá-lo, vá ao menu de pausa e ative o salvamento automático."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21091"
+msgstr "Executivos Sêniores da Vivendi Games"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21494"
+msgstr "O dispositivo de armazenamento escolhido não tem espaço suficiente para criar um arquivo de save."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21516"
+msgstr "Produtor, Versões Portáteis"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21624"
+msgstr "Testadores de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21673"
+msgstr "Aperte START"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21698"
+msgstr "Aviso: se a sua TV não suporta o modo progressivo, a tela vai escurecer. Espere 15 segundos e o menu voltará. Deseja continuar?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21763"
+msgstr "Dominação"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "21786"
+msgstr "Melhoria do Phantom"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22029"
+msgstr "Melhoria do RhinoRoller"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22034"
+msgstr "Alemão"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22195"
+msgstr "Escolha a fase"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22240"
+msgstr "Este jogo foi feito para usar toda a gama de cores. Para melhores resultados, ajuste a sua TV até ver cinco quadrados distintos."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22514"
+msgstr "Missões da História"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22530"
+msgstr "© 2008 Sierra Entertainment, Inc.  Todos os direitos reservados.  Crash, Crash Bandicoot, Sierra e o logotipo da Sierra são marcas registradas ou marcas comerciais da Sierra Entertainment, Inc. nos EUA e/ou em outros países."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22531"
+msgstr "Desenvolvido pela Radical Entertainment.  Radical Entertainment é marca registrada ou marca comercial da Radical Entertainment Inc. no Canadá, nos EUA e/ou em outras jurisdições."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22532"
+msgstr "Usa a tecnologia Bink Video. Copyright © 1997-2008 RAD Game Tools, Inc."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22533"
+msgstr "Todas as outras marcas pertencem aos seus respectivos donos."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22535"
+msgstr "Supervisor Sênior do Grupo de Requisitos Técnicos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22645"
+msgstr "Publicação para Consoles"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "22954"
+msgstr "Magmadon"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "23554"
+msgstr "Holandês"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "23822"
+msgstr "Ratnician"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "24271"
+msgstr "Marketing de Marca da Sierra Entertainment"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "24483"
+msgstr "Agradecimentos Especiais do Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "24502"
+msgstr "Gerente, CRM"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "24614"
+msgstr "Não há dados salvos de Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "24978"
+msgstr "Pacote de Arte Infantil"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "25045"
+msgstr "Serviços de Vídeo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "25190"
+msgstr "Modo de varredura progressiva iniciado."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "25245"
+msgstr "Chefe de Seleção de Elenco - Vivendi Games"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "25578"
+msgstr "Não há espaço suficiente na memória do sistema Wii. Dados existentes de Crash:†Mind†Over†Mutant podem ser carregados ou substituídos. Libere 1 bloco de espaço movendo dados para um cartão SD ou apagando dados na tela de Gerenciamento de Dados."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "25967"
+msgstr "Invencibilidade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26078"
+msgstr "Gerente Sênior de Produto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26204"
+msgstr "English"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26212"
+msgstr "English"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26316"
+msgstr "Aperte ± + ³ para começar"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26502"
+msgstr "Engenheiro de Áudio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26713"
+msgstr "Deseja continuar?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26790"
+msgstr "Diretor de Vídeo, Marketing do Estúdio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26814"
+msgstr "Não há dados salvos de Crash:†Mind†Over†Mutant no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "26989"
+msgstr "Engenheiros do Grupo de Requisitos de Compatibilidade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27062"
+msgstr "Vida"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27212"
+msgstr "Melhorias do Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27281"
+msgstr "Carregado com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27328"
+msgstr "Tem certeza de que deseja substituir este arquivo de save? Todo o progresso salvo será perdido."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27385"
+msgstr "Gerente Sênior de R.P."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27434"
+msgstr "Você não escolheu um dispositivo de armazenamento para salvar o jogo. Sem um dispositivo de armazenamento escolhido, não será possível salvar o seu progresso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27453"
+msgstr "Animador-Chefe"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27510"
+msgstr "Agradecimentos Especiais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27674"
+msgstr "Diretor de Arte, Serviços Criativos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27840"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não toque no botão Power nem no RESET."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27934"
+msgstr "Magmadon"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "27946"
+msgstr "Melhoria do Ratcicle"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28063"
+msgstr "Tela Widescreen"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28088"
+msgstr "O dispositivo de armazenamento foi desconectado."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28269"
+msgstr "Os servos alados da vilania, com uns probleminhas de gases."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28298"
+msgstr "A elite do exército invasor de Cortex tem uns probleminhas de chulé."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28338"
+msgstr "Ratcicle"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28580"
+msgstr "Selecionar ±"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "28918"
+msgstr "A energia de um corte de cabelo dos anos 80 em forma de bicho!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29073"
+msgstr "Russian World Studios"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29109"
+msgstr "Mojo Total"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29137"
+msgstr "Maluco!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29221"
+msgstr "Pacote das Sombras"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29232"
+msgstr "Jogo Completo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29234"
+msgstr "Estatísticas do Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29528"
+msgstr "Já existem dados salvos no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Deseja substituir esses dados?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29722"
+msgstr "Pacote Wumpa"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29785"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29978"
+msgstr "Leve"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "29992"
+msgstr "Grimly"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "30106"
+msgstr "Salvando o conteúdo.  Não desligue o seu console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "30771"
+msgstr "Artista-Chefe de Personagens"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "30855"
+msgstr "Equipe de Localização"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31002"
+msgstr "Melhoria do Snipe"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31177"
+msgstr "Composição"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31579"
+msgstr "Vice-Presidente"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31588"
+msgstr "Pacote do Gelo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31661"
+msgstr "Continuar"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31688"
+msgstr "Surround"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31834"
+msgstr "Coordenadores de Recrutamento e Contratação"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31869"
+msgstr "Coordenador de Recursos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "31976"
+msgstr "Gerente de Publicação na Europa"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32048"
+msgstr "Técnicos de Suporte ao Usuário"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32110"
+msgstr "Editor de Vídeo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32162"
+msgstr "Escolha a missão"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32266"
+msgstr "Produtor Executivo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32326"
+msgstr "Vice-Presidente Executivo, Vendas Globais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32389"
+msgstr "Novo jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "32584"
+msgstr "Especialistas em Capturas de Tela"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33274"
+msgstr "Falha ao formatar! Verifique o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 e tente de novo."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33308"
+msgstr "Aviso: se a sua TV não suporta varredura progressiva, a tela vai escurecer. Espere alguns segundos e o menu voltará."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33405"
+msgstr "Designer Sênior"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33495"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não desligue o console Xbox 360."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33719"
+msgstr "Melhoria do Stench"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "33908"
+msgstr "Servos submissos dos Grimly, os Znu imitam seus mestres com muita bravura."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34228"
+msgstr "Snipe"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34312"
+msgstr "Gerente, Engajamento da Comunidade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34743"
+msgstr "Melhoria do Scorporilla"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34986"
+msgstr "NVasão"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34987"
+msgstr "Pior Contato"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34988"
+msgstr "N Falso Comercial"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34989"
+msgstr "Mensagem N Chegando"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34990"
+msgstr "N Armadilha"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34991"
+msgstr "N de Nefasto"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34992"
+msgstr "Clepto-Cerebral"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34993"
+msgstr "A Grande Reviravolta!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34994"
+msgstr "A Escola do Mal e Você"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "34995"
+msgstr "Amor Proibido"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "35161"
+msgstr "Gerente Associado de Marca"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "35220"
+msgstr "Este arquivo não pode ser usado porque os dados estão corrompidos."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "35312"
+msgstr "Marketing Interativo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "36103"
+msgstr "Rússia"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "36256"
+msgstr "Vice-Presidente Executivo, Diretor Financeiro"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "36507"
+msgstr "RhinoRoller"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "36652"
+msgstr "Estes robôs compartilham as memórias e os problemas pessoais do Cortex."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "36791"
+msgstr "Cortex"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "37087"
+msgstr "Download para DS"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "37613"
+msgstr "Ratcicle"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "37620"
+msgstr "Coordenador de Produção, Departamento de Som"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "37753"
+msgstr "Desenvolvimento Visual"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38149"
+msgstr "Norueguês"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38346"
+msgstr "Com nervuras e saliências para o seu prazer de jogar"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38522"
+msgstr "Carregado com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38630"
+msgstr "Crunch"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38660"
+msgstr "Melhoria de Vida do Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "38716"
+msgstr "Mais poder azul e gelado e selvagem do que mil balas de menta"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "39208"
+msgstr "Snipe"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "39334"
+msgstr "Promoções ao Consumidor"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "39346"
+msgstr "Vídeos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "39834"
+msgstr "Russo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "40496"
+msgstr "Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "40578"
+msgstr "Gerente de Marketing de Canal"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "40622"
+msgstr "Nenhum memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Deseja continuar sem salvar?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "40845"
+msgstr "Sueco"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "40878"
+msgstr "Gerente de Projeto Técnico"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "41026"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "41301"
+msgstr "Desligado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "41574"
+msgstr "Gerente, Serviços Criativos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "41669"
+msgstr "Editor de Vídeo/Artista Gráfico"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "41689"
+msgstr "Pacote Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "42019"
+msgstr "Diretor de Marketing do Estúdio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "42380"
+msgstr "Vice-Presidente, Operações"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "42785"
+msgstr "Mojo do Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "42911"
+msgstr "Grupo de Visual Avançado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "43192"
+msgstr "Carregando os dados. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "43452"
+msgstr "Pós-Produção de Áudio dos Vídeos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "43593"
+msgstr "Especial Ilimitado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "43863"
+msgstr "Gerente de Marca"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "43966"
+msgstr "O memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 não está formatado. Deseja continuar sem salvar?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "44197"
+msgstr "Espaço insuficiente no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Crash:†Mind†Over†Mutant precisa de 114KB livres para salvar dados."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "44791"
+msgstr "Complicado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "44830"
+msgstr "Coala"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "44963"
+msgstr "Coco Malvada"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "45045"
+msgstr "Supervisor de Contas"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "45157"
+msgstr "Itália"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "45438"
+msgstr "A esforçada que está de olho na própria série"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "45726"
+msgstr "Pacote Final"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "45744"
+msgstr "Não há dados salvos de Crash:†Mind†Over†Mutant na memória do sistema Wii."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46528"
+msgstr "Escolha a sala"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46538"
+msgstr "Melhoria do TK"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46687"
+msgstr "Melhoria do Yuktopus"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46692"
+msgstr "Espanhol"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46812"
+msgstr "Vice-Presidente, Grupo Criativo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "46843"
+msgstr "Maluco!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "47079"
+msgstr "Yuktopus"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "47218"
+msgstr "Melhoria do Battler"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "47463"
+msgstr "Os excrementos mutantes, viscosos e gosmentos do ferro-velho do mal."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "47684"
+msgstr "Leve"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "47750"
+msgstr "Testadores do Grupo de Requisitos Técnicos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "48044"
+msgstr "Diretor, Departamento de Som"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "48197"
+msgstr "Stench"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "48458"
+msgstr "Tem certeza de que deseja substituir este arquivo de save?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "48826"
+msgstr "Ligado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "49397"
+msgstr "Verificando o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "49620"
+msgstr "Penas e só um toque de lesões na pele"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "49709"
+msgstr "Engenheiros de Configuração do Laboratório de Masterização"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "49716"
+msgstr "Pesquisa Global com Consumidores"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "49786"
+msgstr "Artista-Chefe de Iluminação"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50073"
+msgstr "Bratgirl"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50189"
+msgstr "Diretor"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50204"
+msgstr "Carregar jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50318"
+msgstr "Idioma"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50514"
+msgstr "Pacote do Meio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50518"
+msgstr "Produções de Mídia"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50535"
+msgstr "VP Sênior, Marketing"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50757"
+msgstr "Formatando o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "50854"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não toque no botão Power nem no RESET."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "51168"
+msgstr "Vice-Presidente Sênior, Operações Mundiais"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "51516"
+msgstr "Escolha a dificuldade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "51653"
+msgstr "Artista de Apresentação"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "51830"
+msgstr "VP de Pesquisa de Mercado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "51891"
+msgstr "Presidente, Radical Entertainment"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "52252"
+msgstr "O perfil de jogador ativo mudou. Você voltará ao Menu Principal."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "52722"
+msgstr "Nenhum memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "52846"
+msgstr "Supervisores do Grupo de Requisitos Técnicos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "52884"
+msgstr "Melhoria do Sludge"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "52945"
+msgstr "Engenheiro Sênior, Grupo VGPC"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "53140"
+msgstr "Salvando os dados. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "53519"
+msgstr "Diretor-Presidente"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "53786"
+msgstr "Vice-Presidente de Tecnologia"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "54130"
+msgstr "Diretor Criativo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "54425"
+msgstr "Arte dos Fãs do Crash"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "54507"
+msgstr "Gerente Sênior de Operações de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "54658"
+msgstr "Líderes de Projeto, Grupo VGPC"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "54733"
+msgstr "Engenheiro de Software"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55176"
+msgstr "Pacote de Arte Infantil"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55424"
+msgstr "Battler"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55438"
+msgstr "Inteligência de Mercado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55763"
+msgstr "Equipe Técnica"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55973"
+msgstr "Grupo de Modelagem de Personagens"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "55990"
+msgstr "Diretor Adjunto de Operações"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56072"
+msgstr "Gerente de Produto da Cadeia de Suprimentos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56144"
+msgstr "Grupo de Tecnologia Avançada"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56253"
+msgstr "Estes servos do N.Brio são as mãos malvadas da reciclagem malvada, malvadamente."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56256"
+msgstr "França"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56448"
+msgstr "Opções"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56474"
+msgstr "Som"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "56551"
+msgstr "Slap-E"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57075"
+msgstr "Abandonados pelo Cortex, estes nerds ficaram selvagens e vegetarianos."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57249"
+msgstr "Dominações"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57295"
+msgstr "Mono"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57412"
+msgstr "O visual clássico do Crash e o sorriso dentuço"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57430"
+msgstr "Gerente-Geral"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57458"
+msgstr "Grupo Criativo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57491"
+msgstr "Deseja manter esta configuração?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57555"
+msgstr "Exposto ao mutagênico, o poderoso intelecto do Cortex vira uma fúria sem calças!"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57582"
+msgstr "Supervisores do Laboratório de Masterização"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57843"
+msgstr "Calibragem"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57921"
+msgstr "Você não escolheu um dispositivo de armazenamento ou o dispositivo foi desconectado."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "57923"
+msgstr "Crash Carbono"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "58371"
+msgstr "Vice-Presidente, Produtor Executivo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "58480"
+msgstr "Formatado com sucesso."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "58555"
+msgstr "Pacote da Escola da Nina"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "58673"
+msgstr "Designers do Jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "59210"
+msgstr "Vibração"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "59394"
+msgstr "Forte, bonito e no comando: quem não gosta do Crunch?"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "59508"
+msgstr "Gerente de QA"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "59810"
+msgstr "Gerente de Contratação e Treinamento"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61024"
+msgstr "Crunch"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61100"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não toque no botão Power nem no RESET."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61289"
+msgstr "Coordenador de Produção"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61591"
+msgstr "Selvagem e indomável, com um amor por arcos góticos."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61624"
+msgstr "Continuar sem salvar"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "61718"
+msgstr "Créditos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "62390"
+msgstr "Desbloquear Tudo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "62482"
+msgstr "Produtor Sênior"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "62713"
+msgstr "VP, Marketing Integrado"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "62762"
+msgstr "Designer-Chefe do Jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "62803"
+msgstr "Vice-Presidente Sênior, Produção"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63019"
+msgstr "Falha ao salvar."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63023"
+msgstr "µ Ir ao Jogador 1"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63024"
+msgstr "Ir ao Jogador 2 µ"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63120"
+msgstr "Tradução de Localização e Gravação de Áudio"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63307"
+msgstr "Pacote do Ferro-Velho"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63387"
+msgstr "Gerente Associado de Relações Públicas"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63616"
+msgstr "Diretor de R.P."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63825"
+msgstr "Líderes do Grupo de Requisitos Técnicos"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "63860"
+msgstr "Aperte o botão START"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64215"
+msgstr "Supervisor do Grupo de Requisitos de Compatibilidade"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64284"
+msgstr "Visual"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64528"
+msgstr "Benelux"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64683"
+msgstr "O auge do poder mental e de umas esquisitices de bico pequeno."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64868"
+msgstr "Francês"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64884"
+msgstr "Melhoria do Spike"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "64949"
+msgstr "Vice-Presidente Sênior, Marketing Global"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65219"
+msgstr "Falha ao salvar! Verifique o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 e tente de novo."
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65241"
+msgstr "Coordenador"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65272"
+msgstr "Produtor Sênior"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65370"
+msgstr "Coco"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65376"
+msgstr "Roteirista, Designer do Jogo"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65416"
+msgstr "L1_E1"
+
+#, fuzzy
+msgctxt "frontend"
+msgid "65488"
+msgstr "MIP"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31"
+msgstr "Sacudir ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "110"
+msgstr "Spike"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "602"
+msgstr "Não"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "687"
+msgstr "Atordoe um inimigo e aperte ² para dominá-lo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "706"
+msgstr ""
+"Não há mais espaço disponível na Memória do Sistema Wii.\n"
+"Consulte o Manual de Operações do Wii para mais informações."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "1151"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "1311"
+msgstr "…O QUÊ?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "1312"
+msgstr "O QUE SERÁ QUE A GENTE COME…"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "1313"
+msgstr "CANSEI DE DANÇAR, POR FAVOR FAÇAM ISSO PARAR!!! POR FAVOR!!!!!!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "2975"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3043"
+msgstr "Velha Guarda"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3044"
+msgstr "Gire o analógico esquerdo e aperte Ataque leve várias vezes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3051"
+msgstr "Diálogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3583"
+msgstr "TK"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3868"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "3889"
+msgstr "Tutorial de Quebra-Defesa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "4578"
+msgstr ""
+"Não há mais espaço disponível na memória do sistema Wii.\n"
+"Consulte o manual de operações do Wii para mais informações."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "4601"
+msgstr "Combo Golpe de Morcego:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "4825"
+msgstr "Mirar:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "4989"
+msgstr "Inverter eixo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5341"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5590"
+msgstr "Bonecos de Wumpa completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5591"
+msgstr "Bonecos de Ratcicle completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5592"
+msgstr "Bonecos da Escola do Mal completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5593"
+msgstr "Bonecos da Terra Devastada completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5594"
+msgstr "Bonecos do Ferro-Velho completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5595"
+msgstr "Bonecos do Monte Grimly completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5596"
+msgstr "Bonecos vodu do Crash completos - arte conceitual desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5597"
+msgstr "Você aprendeu a cavar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5598"
+msgstr "A vida do Crash foi melhorada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5629"
+msgstr "Nenhum memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1.  Deseja continuar sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5653"
+msgstr "Cooperaram para derrotar um inimigo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5654"
+msgstr "Disparou um projétil grande"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5655"
+msgstr "Dois Ratcicles dominados"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5656"
+msgstr "Quebra-cabeça cooperativo de Wumpa resolvido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5657"
+msgstr "Quebra-cabeça cooperativo da Terra Devastada resolvido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5658"
+msgstr "Quebra-cabeça cooperativo do Monte Grimly resolvido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5659"
+msgstr "Multiplicador de 10x alcançado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5660"
+msgstr "Multiplicador de 15x alcançado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5661"
+msgstr "Multiplicador de 20x alcançado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5662"
+msgstr "Guardou um mutante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5717"
+msgstr "Trocou de mutante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5718"
+msgstr "Crash derrotou 5 Ratcicles"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5719"
+msgstr "Crash derrotou 5 Magmadons"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5720"
+msgstr "Crash derrotou 5 TKs"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5721"
+msgstr "Crash derrotou 5 RhinoRollers"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5722"
+msgstr "Crash derrotou 5 Spikes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5723"
+msgstr "Crash derrotou 5 Snipes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5724"
+msgstr "Crash derrotou 5 Sludges"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5725"
+msgstr "Crash derrotou 5 Battlers"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5726"
+msgstr "Crash derrotou 5 Grimlies"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5781"
+msgstr "Crash derrotou 5 Stenchs"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5782"
+msgstr "Você derrotou 75 Ratnicians"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5783"
+msgstr "Você derrotou 75 Brat Girls"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5784"
+msgstr "Você derrotou 75 Doom Monkeys"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5785"
+msgstr "Você derrotou 75 Znu"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5786"
+msgstr "Você derrotou 75 Slap-E"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5787"
+msgstr "Vitória no minigame - visual do Crash desbloqueado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5788"
+msgstr "Vitória no minigame - visual do Crash desbloqueado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5789"
+msgstr "Vitória no minigame - visual do Crash desbloqueado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5790"
+msgstr "Vitória no minigame - visual do Crash desbloqueado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5807"
+msgstr "Cadeia Alimentar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5808"
+msgstr "Use inimigos menores para ir dominando até o topo da cadeia alimentar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5810"
+msgstr "Use o Crash para dominar o Ratcicle e dominar o Scorporilla"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5845"
+msgstr "Vitória no minigame - visual do Crash desbloqueado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5846"
+msgstr "Você salvou a Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5847"
+msgstr "Você salvou o Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5848"
+msgstr "Você derrotou o Cortex - e zerou o jogo!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5849"
+msgstr "Crash totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5850"
+msgstr "Ratcicle totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5851"
+msgstr "Magmadon totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5852"
+msgstr "TK totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5853"
+msgstr "Scorporilla totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5854"
+msgstr "RhinoRoller totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5909"
+msgstr "Spike totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5910"
+msgstr "Snipe totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5911"
+msgstr "Sludge totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5912"
+msgstr "Battler totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5913"
+msgstr "Grimly totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5914"
+msgstr "Yuktopus totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5915"
+msgstr "Stench totalmente melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5916"
+msgstr "Missão Opcional Concluída"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5917"
+msgstr "Missão Opcional Concluída"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5918"
+msgstr "Cooperaram para derrotar 50 inimigos"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5922"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5973"
+msgstr "Você terminou metade do jogo!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5974"
+msgstr "Você terminou um quarto do jogo!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5975"
+msgstr "Você terminou três quartos do jogo!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "5976"
+msgstr "Você completou o jogo inteiro!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6407"
+msgstr "Chicotada de Cauda"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6409"
+msgstr "Pancada no Chão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6461"
+msgstr "Tentar de novo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6586"
+msgstr "01. Encontre as Peças da Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6587"
+msgstr "02. Encontre o N.Gin"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6588"
+msgstr "03. Salve a Coco e o Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6589"
+msgstr "04. Descubra Mais Sobre a Nina"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6590"
+msgstr "05. Vá até a Prisão de Gelo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6591"
+msgstr "06. Descubra Mais Sobre a Escola da Nina"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6592"
+msgstr "07. Volte ao Reino Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6593"
+msgstr "08. Volte à Ilha Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6594"
+msgstr "09. Chegue ao Deserto"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6649"
+msgstr "10. Encontre a Vila dos RhinoRollers"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6650"
+msgstr "11. Derrote os Spikes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6651"
+msgstr "12. Chegue à Escola da Nina"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6652"
+msgstr "13. Proteja o Projeto Escolar da Nina"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6653"
+msgstr "Isto não deveria ser usado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6654"
+msgstr "14. Defenda Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6655"
+msgstr "15. Vá até o Ferro-Velho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6656"
+msgstr "16. Encontre o Crunch e o N.Brio"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6657"
+msgstr "17. Salve o Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6658"
+msgstr "18. Vá até o Monte Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6713"
+msgstr "19. Salve o Uka Uka"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6714"
+msgstr "20. Junte os Ossos do Uka: A Vingança do Uka"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6715"
+msgstr "21. Volte ao Uka Uka"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6716"
+msgstr "22. Volte ao Doominator"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "6717"
+msgstr "23. Derrote o Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7298"
+msgstr "Foguete do Crunch:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7675"
+msgstr "Destrua as Caixas"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7699"
+msgstr "Minigame 1"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7700"
+msgstr "Minigame 2"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7701"
+msgstr "Minigame 3"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7702"
+msgstr "Minigame 4"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7703"
+msgstr "Minigame 5"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7736"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7737"
+msgstr "Louie Gosmento"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7738"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7739"
+msgstr "Vômito Tóxico"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "7882"
+msgstr ""
+"Arremesso:\n"
+"Balance o Wii Remote"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8026"
+msgstr "Combo Supremo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8027"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8028"
+msgstr "Giro do Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8714"
+msgstr "Encontre o Neo Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8765"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8781"
+msgstr "Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8796"
+msgstr "01. Lar, Doce Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8797"
+msgstr "02. Queimadura de Freezer"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8798"
+msgstr "03. N de Nefasto"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8799"
+msgstr "04. Coisa Quente"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8800"
+msgstr "05. Não Recicle!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8801"
+msgstr "06. O Lado Sombrio"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8802"
+msgstr "07. Pega o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8803"
+msgstr "08. Você Cava Essa?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8804"
+msgstr "09. Uma Wumpa por Dia..."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8859"
+msgstr "10. Crash em Dobro"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8860"
+msgstr "12. Atirador de Peso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8861"
+msgstr "13. Proeza Gelada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8862"
+msgstr "14. Vai com Calma"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8863"
+msgstr "15. São Precisos Dois para Dançar Tango"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8864"
+msgstr "16. Ovo Virado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8865"
+msgstr "17. Vai querer batata frita?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8866"
+msgstr "18. Dá a Notícia com Jeitinho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8867"
+msgstr "19. Chuck, é você?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8868"
+msgstr "20. Reciclagem de Mutante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8923"
+msgstr "21. Multitarefa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8924"
+msgstr "22. Crash Frio como Pedra"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8925"
+msgstr "Sopa de Tartaruga"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8926"
+msgstr "QI Alto"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8927"
+msgstr "Rock and Roller"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8928"
+msgstr "23. Spike no Ponche"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8929"
+msgstr "Abaixa e Protege"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8930"
+msgstr "24. Siga o Seu Nariz"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8931"
+msgstr "Cego como um Battler"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8932"
+msgstr "A Velocidade da Noite"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8987"
+msgstr "Alguém Tem que Fazer o Serviço Sujo..."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8988"
+msgstr "25. Acerte o Nerd"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8989"
+msgstr "26. Fúria Fashion"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8990"
+msgstr "27. UH UH AH AH"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8991"
+msgstr "28. Luta com Sombras"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8992"
+msgstr "29. Tapinha na Mão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8993"
+msgstr "30. A Neve Sopra"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8994"
+msgstr "31. Barulho na Selva"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8995"
+msgstr "32. Firme na Areia"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "8996"
+msgstr "33. Chute no Ferro-Velho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9051"
+msgstr "34. Farra no Escuro"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9052"
+msgstr "35. Poder das Garotas"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9053"
+msgstr "36. Esmagado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9054"
+msgstr "37. O Neo Está Ficando Bravo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9055"
+msgstr "38. Rei Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9056"
+msgstr "39. Gelo na Cobertura"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9057"
+msgstr "40. Casco Chocado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9058"
+msgstr "41. T de TK"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9059"
+msgstr "Sobe Gorila"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9060"
+msgstr "42. Pode Enrolar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9115"
+msgstr "43. Espeta Neles"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9116"
+msgstr "44. Atira com Tudo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9117"
+msgstr "45. Gosma ao Quadrado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9118"
+msgstr "Soprado para Longe"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9119"
+msgstr "46. Susto Noturno"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9120"
+msgstr "Patinho Nojento"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9121"
+msgstr "47. P de Podre"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9122"
+msgstr "Liberte o Herói Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9123"
+msgstr "Liberte o Herói Sludge"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9124"
+msgstr "11. Um Combo para Viagem"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9179"
+msgstr "49. O Copo Está Meio Cheio"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9180"
+msgstr "48. Dois Tostões"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9181"
+msgstr "50. E um Corte de Cabelo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9182"
+msgstr "Superestrela"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9230"
+msgstr "RhinoRoller"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9569"
+msgstr "Fale com os Aldeões"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9571"
+msgstr "Combo Golpe de Morcego"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9572"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9573"
+msgstr "Tempestade Ciclone"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9800"
+msgstr "Fale com a Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9950"
+msgstr "USE A DEFESA CONTRA O ATAQUE LEVE DE UM INIMIGO"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9951"
+msgstr "USE UM ATAQUE LEVE PARA INTERROMPER O PESADO DE UM INIMIGO"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9952"
+msgstr "ALGUNS PROJÉTEIS PODEM SER REBATIDOS SE VOCÊ ACERTAR O TEMPO DO ATAQUE"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "9953"
+msgstr "QUANDO ESTIVER DOMINANDO, FIQUE DE OLHO NA BARRA DE MUTANTE PARA SABER QUANDO PODE USAR OS ATAQUES ESPECIAIS"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10301"
+msgstr ""
+"Punks Congelantes:\n"
+"Levante o Wii Remote e abaixe de uma vez"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10385"
+msgstr "³,Espere,³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10386"
+msgstr "Estocada no Chão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10388"
+msgstr "Pisão Infernal"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10528"
+msgstr ""
+"Explosão de Mojo:\n"
+"Sacuda o Wii Remote e guie com o Control Stick"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10633"
+msgstr "Acabe com o N.Brio!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "10749"
+msgstr "Melhorias:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "11106"
+msgstr "[Direcional para baixo]"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "11107"
+msgstr "Segure [Direcional para baixo]"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "11108"
+msgstr "Segure [Direcional para baixo]"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "11327"
+msgstr "Doominator"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "11942"
+msgstr "Scorporilla"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12260"
+msgstr "Chave do Herói Obtida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12327"
+msgstr "Ratnician"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12434"
+msgstr "Destrua os Dentes-de-Leão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12516"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12669"
+msgstr "Gire o Control Stick para um Tiro Potente."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12693"
+msgstr "Aperte «"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "12991"
+msgstr "Nova Missão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13037"
+msgstr "Mapa µ"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13038"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13039"
+msgstr "Pulo duplo ± ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13044"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13045"
+msgstr "Dominar ²"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13100"
+msgstr "Aperte ¸"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13101"
+msgstr "Aperte ¸"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13102"
+msgstr "Aperte ¸"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13104"
+msgstr "Mover ¹"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13105"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13106"
+msgstr "Soltar ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13107"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13109"
+msgstr "Pular ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13144"
+msgstr "Desmontar Girando"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13145"
+msgstr "Gire o analógico esquerdo e aperte Desmontar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13164"
+msgstr "Cavar ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13280"
+msgstr ""
+"Nuvem Fedida:\n"
+"Sacuda o Wii Remote"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13567"
+msgstr "Segure ·, ¹"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13821"
+msgstr "Bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13822"
+msgstr "Domine um inimigo e aperte ¸ para guardá-lo no bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "13824"
+msgstr "Aperte ¸ para tirar do bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "14143"
+msgstr "Voltar ao Menu Wii"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "14962"
+msgstr "Sacudir ¥ + ¾"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15028"
+msgstr "Todo o progresso não salvo será perdido.  Deseja sair sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15234"
+msgstr "Missão Concluída"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15270"
+msgstr "Battler"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15810"
+msgstr "Dragão Triplo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15811"
+msgstr "Aperte Ataque pesado depois do Golpe Duplo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15812"
+msgstr "´,Pouse,´,Pouse,´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15957"
+msgstr "Aponte ¦, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "15989"
+msgstr "Gire o analógico direito para um Tiro Potente."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16159"
+msgstr "Sacudir ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16160"
+msgstr "Chave do Portão Obtida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16463"
+msgstr "Segure ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16752"
+msgstr "Aperte ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16821"
+msgstr "Salvar está desativado nesta demo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16843"
+msgstr "Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16943"
+msgstr "Dominação"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16944"
+msgstr "Atordoe um inimigo e aperte ² para dominá-lo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "16946"
+msgstr "Aperte ² para desmontar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "17129"
+msgstr "Missão opcional parcialmente concluída"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18084"
+msgstr "No modo Máscara Mágica, mire com o analógico esquerdo e aperte ³ para atirar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18261"
+msgstr "Coco Desbloqueada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18335"
+msgstr "Entrar no jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18352"
+msgstr "O memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 não está formatado. Formatar o memory card (8MB) (para†PlayStation®2)?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18725"
+msgstr "O seu progresso não pode ser salvo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "18847"
+msgstr "Aperte Ataque pesado para Quebra-Defesa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "19808"
+msgstr "Não há espaço suficiente na memória do sistema Wii para salvar dados novos. Dados existentes de Crash:†Mind†Over†Mutant podem ser carregados e substituídos. Mova dados para um cartão SD ou apague dados na tela de Gerenciamento de Dados."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20057"
+msgstr "J1 em pausa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20058"
+msgstr "J2 em pausa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20343"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20344"
+msgstr "Bomba de Fedor"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20345"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20346"
+msgstr "Nuvem Fedida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20653"
+msgstr "Segure ·, ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20663"
+msgstr "Pegue o Teletransporte para o Espaço"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20920"
+msgstr "Stench"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "20953"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "21494"
+msgstr "O dispositivo de armazenamento escolhido não tem espaço suficiente para criar um arquivo de save."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "22113"
+msgstr "Gire o analógico esquerdo e aperte Desmontar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "22134"
+msgstr "Ligado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "22271"
+msgstr "APERTE O BOTÃO DIRECIONAL ESQUERDO/DIREITO PARA MAIS INFORMAÇÕES"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "22274"
+msgstr "Aperte ² para voltar ao jogo quando a contagem acabar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "22538"
+msgstr "Solte ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "23320"
+msgstr "Aguarde"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "23354"
+msgstr "VOCÊ TEM UMA CARA ESQUISITA."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "23355"
+msgstr "LARANJA, É? BOM... PELO MENOS É ORIGINAL."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "23356"
+msgstr "ACHOU ALGUMA COISA ENGRAÇADA? VOU TE DAR UM MOTIVO PRA SORRIR, OTÁRIO..."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "23844"
+msgstr "Atordoe um inimigo e aperte para baixo no +Botão de Controle para dominá-lo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "24010"
+msgstr "Agarrão Mental:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "24418"
+msgstr "Melhoria de Vida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "24650"
+msgstr "Sacuda o Nunchuk e desmonte"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "24880"
+msgstr "Ah, Não!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25337"
+msgstr "Salvar jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25378"
+msgstr "Bloquear Ataque"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25380"
+msgstr "Surpresa do Spike"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25431"
+msgstr "Chute Giratório do Norris"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25432"
+msgstr "Aperte Ataque leve várias vezes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25578"
+msgstr "Não há espaço suficiente na memória do sistema Wii. Dados existentes de Crash:†Mind†Over†Mutant podem ser carregados ou substituídos. Libere 1 bloco de espaço movendo dados para um cartão SD ou apagando dados na tela de Gerenciamento de Dados."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25883"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "25976"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26293"
+msgstr "Tutoriais"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26401"
+msgstr "Melhoria do Ataque Giratório"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26402"
+msgstr "A duração do Ataque Giratório aumentou 1 segundo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26403"
+msgstr "Junte mais Mojo para ganhar mais melhorias do Ataque Giratório"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26429"
+msgstr "Espirro Congelante:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26464"
+msgstr "Aperte ² para entrar e sair do modo Máscara Mágica."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26656"
+msgstr "Tapa de Tentáculo:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26728"
+msgstr "Segure · + ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "26887"
+msgstr "Opções"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27152"
+msgstr "Mapa µ"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27153"
+msgstr "Segure ·, ¹"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27154"
+msgstr "Mapa µ"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27328"
+msgstr "Tem certeza de que deseja substituir este arquivo de save? Todo o progresso salvo será perdido."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27434"
+msgstr "O dispositivo de armazenamento escolhido não está disponível.  Sem um dispositivo de armazenamento escolhido, não será possível salvar o seu progresso."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27646"
+msgstr "Melhoria do Ataque Especial"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27647"
+msgstr "O Ataque Especial foi melhorado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27648"
+msgstr "Junte mais Mojo para ganhar mais melhorias do Ataque Especial"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "27710"
+msgstr "Aperte para baixo no +Botão de Controle para entrar e sair do modo Máscara Mágica."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28128"
+msgstr "Sair"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28273"
+msgstr "Teletransporte para o Espaço"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28466"
+msgstr "Pancada de Prancha"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28467"
+msgstr "Aperte Ataque pesado depois da Cócega no Queixo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28580"
+msgstr "Selecionar ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28604"
+msgstr "Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28762"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não toque no botão Power nem no RESET."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28771"
+msgstr "Aperte para cima no +Botão de Controle para tirar do bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28797"
+msgstr "No modo Máscara Mágica, mire na tela e aperte ³ para atirar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "28821"
+msgstr "Aperte «"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29262"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29274"
+msgstr "Slap-E"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29408"
+msgstr "Bomba de Fedor:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29502"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29506"
+msgstr "Estocada no Chão: aperte ao bater no chão"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29528"
+msgstr "Já existem dados salvos no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1.  Deseja substituir esses dados?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29552"
+msgstr ""
+"Pisão Infernal:\n"
+"Levante o Wii Remote e abaixe de uma vez"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29691"
+msgstr "Encontre as peças de que a Coco precisa para consertar o olho do Doominator. As peças estão espalhadas pela Ilha Wumpa."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29692"
+msgstr "Encontre o N.Gin! Ele está em algum lugar da Ilha Wumpa. Parece que anda com os Ratnicians."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29693"
+msgstr "Encontre a Coco e salve-a! Parece que agora dá para subir no Doominator."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29694"
+msgstr "Você precisa encontrar a Nina. Atravesse o Doominator até o Reino Ratcicle."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29695"
+msgstr "Encontre a Prisão de Gelo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29696"
+msgstr "Vasculhe a Prisão de Gelo para descobrir onde fica a Escola Pública do Mal em que a Nina estuda."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29697"
+msgstr "Volte ao Reino Ratcicle... Você vai ter que libertar um novo mutante da prisão de gelo para conseguir voltar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29698"
+msgstr "Volte à Ilha Wumpa. Volte pelo caminho por onde veio do Doominator."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29699"
+msgstr "Derrote o poderoso Scorporilla na Terra Devastada. Você vai precisar do mutante TK que resgatou da prisão de gelo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29731"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29754"
+msgstr "Você precisa encontrar um RhinoRoller para levá-lo de volta ao Reino Ratcicle."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29755"
+msgstr "Derrote os Spikes!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29756"
+msgstr "Encontre a Nina na Escola Pública do Mal, depois do Reino Ratcicle. Não se esqueça de levar um RhinoRoller!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29757"
+msgstr "Proteja o projeto escolar da Nina! Lembre-se: o ataque giratório do Crash é ótimo para rebater projéteis."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29758"
+msgstr "Encontre e liberte o Herói Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29759"
+msgstr "Volte à Ilha Wumpa - ela está sendo invadida!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29760"
+msgstr "Vá até o Ferro-Velho passando pela Terra Devastada. O Ferro-Velho fica logo depois da vila dos RhinoRollers."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29761"
+msgstr "Encontre o Crunch e o N.Brio."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29762"
+msgstr "Salve o Crunch!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29763"
+msgstr "Vá até o Monte Grimly, depois do Ferro-Velho, e encontre o Uka Uka."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29818"
+msgstr "Salve o Uka Uka!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29819"
+msgstr "Use os teletransportes para encontrar os Heróis que guardam os ossos do Uka. Dica: um dos Heróis está perto da vila dos RhinoRollers, na Terra Devastada."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29820"
+msgstr "Volte ao Uka Uka no Monte Grimly."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29821"
+msgstr "Volte ao Doominator na Ilha Wumpa."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "29822"
+msgstr "Derrote o Neo Cortex."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30073"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30231"
+msgstr "Golpe Duplo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30232"
+msgstr "Aperte Ataque pesado depois do Chute Rolante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30233"
+msgstr "´,Pouse,´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30370"
+msgstr "Continuar jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30399"
+msgstr "Salvando os dados.  Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "30995"
+msgstr "Sacuda ½, ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31079"
+msgstr "Coala"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31492"
+msgstr "Fim"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31661"
+msgstr "Continuar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31710"
+msgstr "Pegue o Capacitron"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31933"
+msgstr "Segure ·, ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31934"
+msgstr "Um Salto de Uhu"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31935"
+msgstr "Segure ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "31936"
+msgstr "Mão do Apostador"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "32085"
+msgstr "Máscara ¨"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "32177"
+msgstr "Sacudir ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "32389"
+msgstr "Sacuda ½,´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "32570"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "32969"
+msgstr "Sair da partida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "33274"
+msgstr "Falha ao formatar! Verifique o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 e tente de novo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "33495"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não desligue o console Xbox 360."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "33623"
+msgstr "Osso do Uka Obtido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "33747"
+msgstr "Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35133"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35403"
+msgstr "Falha ao salvar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35531"
+msgstr "Segure · + ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35532"
+msgstr "Agarrão Mental"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35533"
+msgstr "Solte ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35534"
+msgstr "Arremessar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35584"
+msgstr "Yuktopus"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "35614"
+msgstr "Salvando o conteúdo.  Não desligue o seu console."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36490"
+msgstr ""
+"Surpresa do Spike:\n"
+"Levante o Nunchuk e o Wii Remote"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36661"
+msgstr "Chute Rolante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36662"
+msgstr "Aperte Ataque pesado para Quebra-Defesa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36663"
+msgstr "Aperte ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36719"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "36901"
+msgstr "Herói Derrotado!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37091"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37268"
+msgstr "Bloqueado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37349"
+msgstr "Subiu de Nível!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37568"
+msgstr "Falha ao salvar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37814"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37815"
+msgstr "Mirar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37817"
+msgstr "Câmera Lenta"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37909"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37910"
+msgstr "Pule em água rasa para surfar de Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37911"
+msgstr "Acelerar ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37912"
+msgstr "Atacar ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37913"
+msgstr "Parar ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37915"
+msgstr "Segure ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37927"
+msgstr "Vibração"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37972"
+msgstr "Esquivar ¹"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37973"
+msgstr "Aperte ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37974"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37976"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37978"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "37979"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38573"
+msgstr "Encontre o Resto das Peças da Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38578"
+msgstr "Bratgirl"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38587"
+msgstr "Desligado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38658"
+msgstr "Encontre os Baús de Tesouro"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38835"
+msgstr "Gire o analógico esquerdo e aperte Ataque pesado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "38875"
+msgstr "Cooperativo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "40085"
+msgstr "Sludge"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "40138"
+msgstr "Mire + segure ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "40308"
+msgstr "Entre na Cabeça do Doominator"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "41746"
+msgstr "Vá até o Uka Uka"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42008"
+msgstr "Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42345"
+msgstr "APERTE O BOTÃO DIRECIONAL ESQUERDO/DIREITO PARA MAIS INFORMAÇÕES"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42786"
+msgstr "Aperte ¸ para tirar do bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42798"
+msgstr "Sala de Controle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42862"
+msgstr "Falha ao salvar! Verifique o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 e tente de novo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "42891"
+msgstr ""
+"Obrigado por jogar\n"
+"Crash:†Mind†Over†Mutant"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43124"
+msgstr "Tutorial de Contra-Ataque"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43260"
+msgstr "Capacitron Obtido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43523"
+msgstr "Busque a Correspondência"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43933"
+msgstr "Turbo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43934"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43935"
+msgstr "Tigela Trovejante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "43966"
+msgstr "O memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1 não está formatado.  Deseja continuar sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "44088"
+msgstr ""
+"Tigela Trovejante:\n"
+"Gire o Wii Remote e guie com o Control Stick"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "44197"
+msgstr "Espaço insuficiente no memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Crash:†Mind†Over†Mutant precisa de 114KB livres para salvar dados."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "44212"
+msgstr ""
+"Giro do Cortex:\n"
+"Sacuda o Wii Remote"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "44621"
+msgstr "Progresso do Jogo:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "45536"
+msgstr "Mire + ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "45630"
+msgstr "Sacuda ½, ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "45680"
+msgstr "Estocada no Chão:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "45859"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "45977"
+msgstr "Sair do jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46289"
+msgstr "Cócega no Queixo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46290"
+msgstr "Aperte Ataque leve, leve, pesado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46764"
+msgstr "Salvo com sucesso."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46770"
+msgstr "Liberte o Titã"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46910"
+msgstr ""
+"Mão do Apostador:\n"
+"Segure ³ para tiro rápido"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "46976"
+msgstr "Domine um inimigo e aperte ¸ para guardá-lo no bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47030"
+msgstr "Peça da Coco Obtida"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47042"
+msgstr ""
+"Pancada no Chão:\n"
+"Bata no peito com o Nunchuk e o Wii Remote e abaixe-os de uma vez"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47305"
+msgstr "Música"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47374"
+msgstr "Pulo de Chaminé ± Espere ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47555"
+msgstr "Aperte ² para entrar e sair do modo Máscara Mágica."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47556"
+msgstr "Cavar fará o outro jogador entrar automaticamente no modo Máscara Mágica."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47557"
+msgstr "Aperte ² para voltar ao jogo quando a contagem acabar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47558"
+msgstr "AS VIDAS DO COOPERATIVO SÓ SÃO PERDIDAS QUANDO OS DOIS JOGADORES SÃO NOCAUTEADOS"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47559"
+msgstr "No modo Máscara Mágica, mire com o analógico esquerdo e aperte ³ para atirar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47560"
+msgstr "Gire o analógico direito para um Tiro Potente."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47561"
+msgstr "Os dois jogadores dividem um único espaço para guardar mutantes."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47661"
+msgstr "Sair ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "47675"
+msgstr ""
+"Vômito Tóxico:\n"
+"Sacuda o Wii Remote para expelir bile nociva"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "48415"
+msgstr "±, sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "48458"
+msgstr "Tem certeza de que deseja substituir este arquivo de save?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "48517"
+msgstr "GIRE O CONTROL STICK E APERTE ATAQUE PESADO"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "48875"
+msgstr "Doom Monkey"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49392"
+msgstr "Segure ³, sacuda ¾"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49397"
+msgstr "Verificando o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49504"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49505"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49506"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "49804"
+msgstr "Máscara ²"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50648"
+msgstr "Britadeira Giratória"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50649"
+msgstr "Gire o analógico esquerdo e aperte Ataque pesado"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50757"
+msgstr "Formatando o memory card (8MB) (para†PlayStation®2) no slot de MEMORY CARD 1. Não remova o memory card (8MB) (para†PlayStation®2) do slot de MEMORY CARD 1 nem o controle, e não reinicie nem desligue o console."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50786"
+msgstr "Atacar ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50787"
+msgstr "Segure ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50789"
+msgstr "Segure ·"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50790"
+msgstr "Segure ´"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50854"
+msgstr "Acessando os arquivos salvos de Crash:†Mind†Over†Mutant. Não toque no botão Power nem no RESET."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "50974"
+msgstr "Encontre o Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "51068"
+msgstr "Sucesso!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "51261"
+msgstr "Sacuda o Wii Remote para o Ataque Giratório"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "51686"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "51699"
+msgstr "Cabeça Espacial"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "51980"
+msgstr "APERTE O BOTÃO DIRECIONAL ESQUERDO/DIREITO PARA MAIS INFORMAÇÕES"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52252"
+msgstr "O perfil de jogador ativo mudou.  Você voltará ao Menu Principal."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52597"
+msgstr "Sim"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52618"
+msgstr "Bloquear Ataque:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52760"
+msgstr "Melhoria de Força"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52761"
+msgstr "A Força aumentou"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52762"
+msgstr "Junte mais Mojo para ganhar mais melhorias de Força"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "52909"
+msgstr "Efeitos"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53140"
+msgstr "TEMOS 3 TIPOS DIFERENTES DE ÁGUA NO NOSSO MUNDO. INCRÍVEL, NÉ?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53141"
+msgstr "(null)"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53142"
+msgstr "(null)"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53143"
+msgstr "(null)"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53379"
+msgstr "Magmadon"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53853"
+msgstr "Nível 1"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53854"
+msgstr "Nível 2"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53855"
+msgstr "Nível 3"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53856"
+msgstr "Nível 4"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53857"
+msgstr "Nível 5"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53858"
+msgstr "Nível 6"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53859"
+msgstr "Nível 7"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53860"
+msgstr "Nível 8"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53861"
+msgstr "Nível 9"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "53916"
+msgstr "Nível 10"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "54072"
+msgstr ""
+"Tempestade Ciclone:\n"
+"Sacuda o Nunchuk e o Wii Remote"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "54197"
+msgstr "Todo o progresso não salvo será perdido.  Deseja sair sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "54245"
+msgstr "Você precisa entrar sozinho, Crash."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "54296"
+msgstr ""
+"MÃO DO APOSTADOR:\n"
+"SEGURE ³ PARA TIRO RÁPIDO"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55015"
+msgstr "Mire e arremesse o TNT na parede de gelo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55065"
+msgstr "Missão da História"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55172"
+msgstr "Sair ±"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55326"
+msgstr "Dispositivo de armazenamento indisponível.  Deseja continuar sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55333"
+msgstr "Derrote os inimigos antes que o tempo acabe!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55334"
+msgstr "Sobreviva até o tempo acabar!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55335"
+msgstr "Derrote os inimigos antes que o tempo acabe!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55336"
+msgstr "Derrote os inimigos antes que o tempo acabe!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55337"
+msgstr "Sobreviva até o tempo acabar!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55437"
+msgstr "Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "55589"
+msgstr "Pausa ¶"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "56813"
+msgstr "Nenhum perfil de jogador ativo está conectado.  O seu progresso não pode ser salvo."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57150"
+msgstr "Missão Opcional"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57187"
+msgstr "Aperte para baixo no +Botão de Controle para desmontar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57569"
+msgstr "Tapa de Tentáculo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57570"
+msgstr "Segure ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57571"
+msgstr "Explosão de Mojo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "57892"
+msgstr "Em pausa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58231"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58232"
+msgstr "Espirro Congelante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58234"
+msgstr "Punks Congelantes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58450"
+msgstr "Ilha Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58451"
+msgstr "Reino Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58452"
+msgstr "Costa Congelada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58453"
+msgstr "Terra Devastada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58454"
+msgstr "Escola Pública do Mal"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58455"
+msgstr "Ferro-Velho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58456"
+msgstr "Monte Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58457"
+msgstr "Cabeça Espacial"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "58480"
+msgstr "Formatado com sucesso."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "59151"
+msgstr "Missões"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "59439"
+msgstr "Junte Mojo Verde"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "59448"
+msgstr "Znu"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "59872"
+msgstr "Liberte o Herói Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "59962"
+msgstr "Todo o progresso não salvo será perdido.  Deseja sair sem salvar?"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "60003"
+msgstr "Guarde o seu Titã"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "60216"
+msgstr "Turbo:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "60340"
+msgstr "Combo Supremo:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "60830"
+msgstr "Gire o analógico esquerdo e aperte Ataque leve várias vezes"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "61027"
+msgstr "Domine um inimigo e aperte para cima no +Botão de Controle para guardá-lo no bolso"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "61053"
+msgstr "Aperte ¶ para voltar ao jogo quando a contagem acabar."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "61589"
+msgstr "Junte Mojo para Ganhar Melhorias"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "61624"
+msgstr "Continuar sem salvar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "61987"
+msgstr "Sacuda ½"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "62096"
+msgstr "Aperte ² para desmontar"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "62164"
+msgstr "Aperte «"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "62528"
+msgstr "Mojo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "62529"
+msgstr "A essência da própria vida. Junte e ganhe recompensas."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "62531"
+msgstr "Você pode melhorar os mutantes, além do Crash."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63038"
+msgstr "Um Salto de Uhu:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63074"
+msgstr "Dominar ¨"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63169"
+msgstr "Sacudir ¥"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63170"
+msgstr "Chicotada de Cauda:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63557"
+msgstr "HUM... ESTÁ VENDO AQUELA COISA DE GELO ALI? TALVEZ ALGUM MONSTRO DE GELO CONSIGA QUEBRAR... NAH... SERIA ÓBVIO DEMAAAIS."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63558"
+msgstr "TK. PRISÃO DE GELO. MORCEGOS. É TUDO O QUE EU SEI…"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63559"
+msgstr "EU TENTEI PATINAR LÁ EM CIMA, MAS VIVO CAINDO. SE EU PUDESSE ME ENROLAR NUMA BOLA IGUAL À SAMUS!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63731"
+msgstr "O dispositivo de armazenamento escolhido não tem espaço suficiente para criar um arquivo de save."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "63803"
+msgstr "Louie Gosmento:"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64575"
+msgstr "Junte os bonecos vodu de Wumpa na Ilha Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64576"
+msgstr "Junte os bonecos vodu de Ratcicle no Reino Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64577"
+msgstr "Junte os bonecos vodu na Escola do Mal"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64578"
+msgstr "Junte os bonecos vodu de RhinoRoller na Terra Devastada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64579"
+msgstr "Junte os bonecos vodu no Ferro-Velho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64580"
+msgstr "Junte os bonecos vodu de Grimly no Monte Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64581"
+msgstr "Junte os bonecos vodu do Crash Bandicoot"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64582"
+msgstr "Cave para passar pelos espinhos na Ilha Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64583"
+msgstr "Encontre um item de melhoria de vida do Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64638"
+msgstr "Derrote 1 inimigo no modo cooperativo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64639"
+msgstr "Dispare um projétil grande com a máscara no modo cooperativo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64640"
+msgstr "Os dois jogadores dominam um Ratcicle ao mesmo tempo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64641"
+msgstr "Complete o quebra-cabeça cooperativo de equilíbrio na Ilha Wumpa, acima da cachoeira"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64642"
+msgstr "Complete o quebra-cabeça cooperativo de equilíbrio na Terra Devastada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64643"
+msgstr "Complete o quebra-cabeça cooperativo de equilíbrio no Monte Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64644"
+msgstr "Faça um combo com multiplicador de mojo de 10x acertando inimigos sem levar nenhum golpe."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64645"
+msgstr "Faça um combo com multiplicador de mojo de 15x acertando inimigos sem levar nenhum golpe."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64646"
+msgstr "Faça um combo com multiplicador de mojo de 20x acertando inimigos sem levar nenhum golpe."
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64647"
+msgstr "Guarde um Mutante"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64653"
+msgstr "Snipe"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64702"
+msgstr "Guarde um mutante enquanto monta outro"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64703"
+msgstr "Atordoe 5 Ratcicles com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64704"
+msgstr "Atordoe 5 Magmadons com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64705"
+msgstr "Atordoe 5 TKs com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64706"
+msgstr "Atordoe 5 RhinoRollers com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64707"
+msgstr "Atordoe 5 Spikes com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64708"
+msgstr "Atordoe 5 Snipes com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64709"
+msgstr "Atordoe 5 Sludges com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64710"
+msgstr "Atordoe 5 Battlers com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64711"
+msgstr "Atordoe 5 Grimlies com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64766"
+msgstr "Atordoe 5 Stenchs com o Crash"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64767"
+msgstr "Derrote 75 Ratnicians"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64768"
+msgstr "Derrote 75 Brat Girls"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64769"
+msgstr "Derrote 75 Doom Monkeys"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64770"
+msgstr "Derrote 75 Znu"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64771"
+msgstr "Derrote 75 Slap-E"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64772"
+msgstr "Vença os 10 níveis do minigame de arena no Reino Ratcicle"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64773"
+msgstr "Vença os 10 níveis do minigame de arena na Ilha Wumpa"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64774"
+msgstr "Vença os 10 níveis do minigame de arena na Terra Devastada"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64775"
+msgstr "Vença os 10 níveis do minigame de arena no Ferro-Velho"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64830"
+msgstr "Vença os 10 níveis do minigame de arena no Monte Grimly"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64831"
+msgstr "Vença o chefe Coco"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64832"
+msgstr "Vença o chefe Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64833"
+msgstr "Vença o chefe Cortex"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64834"
+msgstr "Melhore o Crash ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64835"
+msgstr "Melhore o Ratcicle ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64836"
+msgstr "Melhore o Magmadon ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64837"
+msgstr "Melhore o TK ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64838"
+msgstr "Melhore o Scorporilla ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64839"
+msgstr "Melhore o RhinoRoller ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64894"
+msgstr "Melhore o Spike ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64895"
+msgstr "Melhore o Snipe ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64896"
+msgstr "Melhore o Sludge ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64897"
+msgstr "Melhore o Battler ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64898"
+msgstr "Melhore o Grimly ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64899"
+msgstr "Melhore o Yuktopus ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64900"
+msgstr "Melhore o Stench ao máximo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64901"
+msgstr "Liberte o Herói Ratcicle da prisão de gelo!"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64902"
+msgstr "Liberte o Herói Sludge"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64903"
+msgstr "Derrote 50 inimigos no modo cooperativo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64958"
+msgstr "Complete 50% do jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64959"
+msgstr "Complete 25% do jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64960"
+msgstr "Complete 75% do jogo"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64980"
+msgstr "Segure ·, ³"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "64981"
+msgstr "Foguete do Crunch"
+
+#, fuzzy
+msgctxt "ingame"
+msgid "65181"
+msgstr "Travar ·"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "273"
+msgstr "Maluco!"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "1114"
+msgstr "Leve"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "1240"
+msgstr "... Tutoriais ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "2176"
+msgstr "Não"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "2904"
+msgstr ""
+"Não foi possível ler o Disco do Jogo.\n"
+"Consulte o Manual de Operações do Wii para mais detalhes."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "3407"
+msgstr "Tentar de novo"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "5270"
+msgstr "Reconecte o controle do Xbox 360 para continuar."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "6610"
+msgstr "Carregando"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "6689"
+msgstr "... Vídeos ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "12146"
+msgstr "Continuar sem salvar"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "12906"
+msgstr "Há um problema com o disco que você está usando. Ele pode estar sujo ou danificado."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "13036"
+msgstr "Pronto"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "14081"
+msgstr "Continuar"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "14704"
+msgstr "Deseja começar a próxima fase?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "14744"
+msgstr "Todos os dados não salvos serão perdidos.  Tem certeza de que deseja sair do jogo?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "15700"
+msgstr "Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "19917"
+msgstr "Arquivo de Save Corrompido"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "20404"
+msgstr "Usar Visual"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "21017"
+msgstr "Deseja usar este visual?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "21097"
+msgstr "Voltar"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "21894"
+msgstr "Insira o Disco do Jogo."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "22508"
+msgstr "Não foi possível ler o Disco do Jogo. Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "23660"
+msgstr "Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "23857"
+msgstr "Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "23930"
+msgstr "Tem certeza de que deseja sair da fase?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "24299"
+msgstr "A bateria do (J1) está fraca."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "24300"
+msgstr "A bateria do (J2) está fraca."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "24465"
+msgstr "Tem certeza de que deseja sair do jogo?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "28064"
+msgstr "Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "28157"
+msgstr "... Escolha a Dificuldade ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "28163"
+msgstr "Há um problema com o disco que você está usando. Ele pode estar sujo ou danificado."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "28580"
+msgstr "Selecionar ±"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "29345"
+msgstr "Deseja jogar esta fase de novo?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "31574"
+msgstr "Deseja manter o modo progressivo?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "33392"
+msgstr "Selecionar"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "34749"
+msgstr "... Estatísticas ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "37275"
+msgstr "Voltar ao Menu Wii"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "37765"
+msgstr "Não foi possível ler o Disco do Jogo. Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "37854"
+msgstr "... Digite o Seu Nome ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "39694"
+msgstr "A comunicação com o Wii Remote (J2) foi interrompida."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "41072"
+msgstr "Conecte o Nunchuk ao Wii Remote (J2)."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "43060"
+msgstr "O controle analógico (DUALSHOCK®2) não foi detectado na porta de controle 2. Insira um controle analógico (DUALSHOCK®2) na porta de controle 2."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "43244"
+msgstr "... Visualizador de Inimigos ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "44597"
+msgstr "Dispositivo de Armazenamento"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "45802"
+msgstr "A comunicação com o Wii Remote (J1) foi interrompida."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "46650"
+msgstr "... Escolha o Espaço de Save ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "47180"
+msgstr "Conecte o Nunchuk ao Wii Remote (J1)."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "49168"
+msgstr "O controle analógico (DUALSHOCK®2) não foi detectado na porta de controle 1. Insira um controle analógico (DUALSHOCK®2) na porta de controle 1."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "49811"
+msgstr "... Menu Principal ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "51711"
+msgstr "... Escolha o Visual ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "52252"
+msgstr "O perfil de jogador ativo mudou.  Você voltará ao Menu Principal."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "52597"
+msgstr "Sim"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "53246"
+msgstr ""
+"Ocorreu um erro.\n"
+"\n"
+"Aperte o botão Eject, retire o Disco do Jogo e desligue o console. Leia o Manual de Operações do Wii para mais instruções."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "55116"
+msgstr "... Opções ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "55963"
+msgstr "Complicado"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "56940"
+msgstr "Vazio"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "57247"
+msgstr "Tocar Som"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "58265"
+msgstr "Há um problema com o disco que você está usando. Ele pode estar sujo ou danificado."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "59703"
+msgstr "Deseja salvar o jogo?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "61238"
+msgstr "Aperte qualquer botão do Wii Remote para continuar."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "61640"
+msgstr "Continuar"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "61807"
+msgstr "Insira o Disco do Jogo Crash:†Mind†Over†Mutant."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "62965"
+msgstr "Tem certeza de que deseja salvar o jogo e sair da fase?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "63550"
+msgstr "A bateria está fraca."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "63998"
+msgstr "Tem certeza de que deseja sair da fase?"
+
+#, fuzzy
+msgctxt "persistent"
+msgid "64539"
+msgstr "... Jogo em Pausa ..."
+
+#, fuzzy
+msgctxt "persistent"
+msgid "64717"
+msgstr "... Arte Conceitual ..."

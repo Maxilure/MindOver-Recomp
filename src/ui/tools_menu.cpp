@@ -16,6 +16,7 @@
 
 #include "../achievements/achievements.h"
 #include "../cheats/cheats.h"
+#include "../language/texts.h"
 #include "../overlay_banner.h"
 
 namespace tools_menu {
@@ -40,71 +41,71 @@ struct Tool {
 
 // In the order shown. Sections: what a player may use, then the developers'.
 constexpr Tool kTools[] = {
-    {"Game", "Cheats...", "bind_cheat_menu", "F5",
-     "Level ups, mojo, god mode, spawns, game speed, free camera.\n"
+    {trsn("Game"), trsn("Cheats..."), "bind_cheat_menu", "F5",
+     trsn("Level ups, mojo, god mode, spawns, game speed, free camera.\n"
      "OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
-     "meanwhile is marked as made with cheats (achievements stay off for it).",
+     "meanwhile is marked as made with cheats (achievements stay off for it)."),
      true},
-    {"Game", "Controls (keys)...", "bind_controls_menu", "F6",
-     "Keyboard and mouse keys, and which device plays as which player.", true},
-    {"Game", "Hide / show the HUD", "bind_hide_hud", "F2",
-     "Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
-     "Not a cheat: achievements are untouched. The message bar keeps showing.",
+    {trsn("Game"), trsn("Controls (keys)..."), "bind_controls_menu", "F6",
+     trsn("Keyboard and mouse keys, and which device plays as which player."), true},
+    {trsn("Game"), trsn("Hide / show the HUD"), "bind_hide_hud", "F2",
+     trsn("Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
+     "Not a cheat: achievements are untouched. The message bar keeps showing."),
      false},
-    {"Game", "Fullscreen on / off", "bind_fullscreen", "F11 (still F11)",
-     "Borderless fullscreen on the monitor picked in Options -> Display.", false},
-    {"Game", "Take a photo", "bind_photo", "F10",
-     "A PNG of the next frame into the photos folder (both renderers' pictures\n"
-     "while the native one is drawn). The menus over the picture aren't in it.",
+    {trsn("Game"), trsn("Fullscreen on / off"), "bind_fullscreen", trsn("F11 (still F11)"),
+     trsn("Borderless fullscreen on the monitor picked in Options -> Display."), false},
+    {trsn("Game"), trsn("Take a photo"), "bind_photo", "F10",
+     trsn("A PNG of the next frame into the photos folder (both renderers' pictures\n"
+     "while the native one is drawn). The menus over the picture aren't in it."),
      true},
 
-    {"Picture", "Switch renderer (emulated / native)", "bind_renderer", "F9",
-     "Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
-     "port's own renderer. Off with Emulated Only or while the second window is open.",
+    {trsn("Picture"), trsn("Switch renderer (emulated / native)"), "bind_renderer", "F9",
+     trsn("Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
+     "port's own renderer. Off with Emulated Only or while the second window is open."),
      true},
-    {"Picture", "Second window (dual mode)", "bind_native_window", "F8",
-     "A second window with the port's picture; the main one shows the emulated one.", true},
+    {trsn("Picture"), trsn("Second window (dual mode)"), "bind_native_window", "F8",
+     trsn("A second window with the port's picture; the main one shows the emulated one."), true},
 
-    {"Saves", "Rename the save under the cursor", "bind_save_rename", "F2 (F2 hides the HUD now)",
-     "On the Load / Save Game screen only (X there opens the game's own name screen).", true},
-    {"Saves", "Delete the save under the cursor", "bind_save_delete", "Delete (still Delete)",
-     "On the Load / Save Game screen only (Y there does the same). The file is moved\n"
-     "to user/saves/Deleted saves, never really deleted.",
+    {trsn("Saves"), trsn("Rename the save under the cursor"), "bind_save_rename", trsn("F2 (F2 hides the HUD now)"),
+     trsn("On the Load / Save Game screen only (X there opens the game's own name screen)."), true},
+    {trsn("Saves"), trsn("Delete the save under the cursor"), "bind_save_delete", trsn("Delete (still Delete)"),
+     trsn("On the Load / Save Game screen only (Y there does the same). The file is moved\n"
+     "to user/saves/Deleted saves, never really deleted."),
      true},
 
-    {"Developer", "Debug overlay", "bind_debug_overlay", "F3",
-     "The SDK's frame times and threads.", false},
-    {"Developer", "Log console", "bind_console", "`",
-     "The SDK's live log.", false},
-    {"Developer", "All settings (flags)", "bind_settings", "F4",
-     "Every setting by name, as in settings.toml. Prefer the in-game Options screen.", false},
-    {"Developer", "SDK achievements list", "bind_achievements", "F7",
-     "The SDK's own list (the port keeps achievements itself: pause -> Achievements).", false},
-    {"Developer", "Highlight a material (cycles)", "bind_highlight", "F11",
-     "Paints one material magenta in the native picture: bump, particles, motion\n"
-     "trails, off.",
+    {trsn("Developer"), trsn("Debug overlay"), "bind_debug_overlay", "F3",
+     trsn("The SDK's frame times and threads."), false},
+    {trsn("Developer"), trsn("Log console"), "bind_console", "`",
+     trsn("The SDK's live log."), false},
+    {trsn("Developer"), trsn("All settings (flags)"), "bind_settings", "F4",
+     trsn("Every setting by name, as in settings.toml. Prefer the in-game Options screen."), false},
+    {trsn("Developer"), trsn("SDK achievements list"), "bind_achievements", "F7",
+     trsn("The SDK's own list (the port keeps achievements itself: pause -> Achievements)."), false},
+    {trsn("Developer"), trsn("Highlight a material (cycles)"), "bind_highlight", "F11",
+     trsn("Paints one material magenta in the native picture: bump, particles, motion\n"
+     "trails, off."),
      false},
-    {"Developer", "Particle experiment (cycles)", "bind_particle_experiment", "F12",
-     "Changes how particles are drawn in the native picture, then erases groups of\n"
-     "them in both pictures, then normal again.",
+    {trsn("Developer"), trsn("Particle experiment (cycles)"), "bind_particle_experiment", "F12",
+     trsn("Changes how particles are drawn in the native picture, then erases groups of\n"
+     "them in both pictures, then normal again."),
      false},
-    {"Developer", "Test: fake achievement card", nullptr, "-",
-     "The achievement card on the game's message bar with a made-up name (in a level).\n"
-     "Nothing is earned or recorded.",
+    {trsn("Developer"), trsn("Test: fake achievement card"), nullptr, "-",
+     trsn("The achievement card on the game's message bar with a made-up name (in a level).\n"
+     "Nothing is earned or recorded."),
      false, [] { achievements::ShowTestCard(false); }},
-    {"Developer", "Test: long fake achievement card", nullptr, "-",
-     "The same with a name too long for the card: it scrolls (ui/marquee.h).", false,
+    {trsn("Developer"), trsn("Test: long fake achievement card"), nullptr, "-",
+     trsn("The same with a name too long for the card: it scrolls (ui/marquee.h)."), false,
      [] { achievements::ShowTestCard(true); }},
-    {"Developer", "Test: game-style message (voodoo doll look)", nullptr, "-",
-     "A message in the message bar's own wide look (title, message, counter), as the\n"
-     "game shows a voodoo doll or an objective. Nothing else happens.",
+    {trsn("Developer"), trsn("Test: game-style message (voodoo doll look)"), nullptr, "-",
+     trsn("A message in the message bar's own wide look (title, message, counter), as the\n"
+     "game shows a voodoo doll or an objective. Nothing else happens."),
      false, [] { achievements::ShowTestGameMessage(); }},
 };
 
 void Section(const char* name) {
   ImGui::Spacing();
   ImGui::Separator();
-  ImGui::TextColored(kSectionColour, "%s", name);
+  ImGui::TextColored(kSectionColour, "%s", trs(name));
 }
 
 class ToolsDialog : public rex::ui::ImGuiDialog {
@@ -132,7 +133,7 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
                                ImGuiCond_Appearing);
       ImGui::SetNextWindowBgAlpha(0.92f);
       bool still_open = true;
-      if (ImGui::Begin("Tools (F1)###crashmom_tools", &still_open,
+      if (ImGui::Begin((std::string(trs("Tools (F1)")) + "###crashmom_tools").c_str(), &still_open,
                        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings |
                            ImGuiWindowFlags_AlwaysAutoResize)) {
         run = DrawContents();
@@ -146,7 +147,7 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
       run->run();
       REXLOG_INFO("Tools: {}", run->label);
     } else if (run && !rex::ui::InvokeBind(run->bind)) {
-      overlay_banner::Show("NOT AVAILABLE", run->label);
+      overlay_banner::Show(trs("NOT AVAILABLE"), trs(run->label));
       REXLOG_INFO("Tools: \"{}\" ({}) isn't available in this run", run->label, run->bind);
     } else if (run && run->bind) {
       REXLOG_INFO("Tools: {}", run->label);
@@ -156,9 +157,9 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
  private:
   // mutex_ held. The tool picked this frame, or null.
   const Tool* DrawContents() {
-    ImGui::TextColored(kTitleColour, "Tools");
+    ImGui::TextColored(kTitleColour, "%s", trs("Tools"));
     ImGui::SameLine();
-    ImGui::TextDisabled("F1 opens / closes   F2 = HUD   F11 = fullscreen");
+    ImGui::TextDisabled("%s", trs("F1 opens / closes   F2 = HUD   F11 = fullscreen"));
     const Tool* picked = nullptr;
     const char* section = nullptr;
     const float width = 300.0f;
@@ -167,17 +168,19 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
         section = tool.section;
         Section(section);
       }
-      if (ImGui::Button(tool.label, ImVec2(width, 0.0f))) picked = &tool;
+      if (ImGui::Button(trs(tool.label), ImVec2(width, 0.0f))) picked = &tool;
       if (tool.bind) {
-        ImGui::SetItemTooltip("%s\n\n(Key, or the key it used to have: %s. Setting name: %s)", tool.hint, tool.was, tool.bind);
+        // TR: Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
+        ImGui::SetItemTooltip(trs("%s\n\n(Key, or the key it used to have: %s. Setting name: %s)"), trs(tool.hint),
+                              trs(tool.was), tool.bind);
       } else {
-        ImGui::SetItemTooltip("%s", tool.hint);
+        ImGui::SetItemTooltip("%s", trs(tool.hint));
       }
       if (tool.bind && std::string(tool.bind) == "bind_cheat_menu") {
         if (cheats::AchievementsBlocked()) {
-          ImGui::TextColored(kWarnColour, "Achievements are off: %s", cheats::BlockReason());
+          ImGui::TextColored(kWarnColour, trs("Achievements are off: %s"), trs(cheats::BlockReason()));
         } else {
-          ImGui::TextDisabled("Opening it turns achievements off until a save is loaded.");
+          ImGui::TextDisabled("%s", trs("Opening it turns achievements off until a save is loaded."));
         }
       }
     }

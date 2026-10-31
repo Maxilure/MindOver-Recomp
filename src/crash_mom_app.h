@@ -46,6 +46,7 @@
 #include <rex/ui/keybinds.h>
 
 #include "audio_trace.h"
+#include "language/texts.h"
 #include "cheats/cheat_menu.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
@@ -54,6 +55,8 @@
 #include "frame_rate.h"
 #include "ui/hud_hide.h"
 #include "ui/tools_menu.h"
+#include "ui/font_letters.h"
+#include "ui/imgui_fonts.h"
 #include "ui/window_mode.h"
 #include "game_folder.h"
 #include "saves/save_files.h"
@@ -76,6 +79,7 @@
 #include "players/dummy_players.h"
 #include "input/prompt_icons.h"
 #include "effects/post_effects.h"
+#include "language/game_text_banks.h"
 #include "language/language.h"
 #include "data/data_patcher.h"
 #include "options/options_menu.h"
@@ -258,6 +262,8 @@ class CrashMomApp : public rex::ReXApp {
     name_typing::Register();
     // No Xbox minimum times on the save screens (saves/save_screen_waits.h).
     save_screen_waits::Install();
+    // The game's own text in a language the disc lacks (Brazilian Portuguese; language/game_text_banks.h).
+    game_text_banks::Install();
     // Pause -> Options: the port's Options screen with tabs (options/options_menu.h):
     // its page replaces the game's in the in-game menus package.
     options_menu::Register();
@@ -300,6 +306,8 @@ class CrashMomApp : public rex::ReXApp {
     spin_colours::Register();  // their spin effects in their colour (players/spin_colours.h)
     // Two more prompt glyphs in the fonts: the menus' own A and B (input/prompt_icons.h).
     prompt_icons::Register();
+    // Ã ã for the font (empty glyphs on the disc; ui/font_letters.h): after the button glyphs.
+    font_letters::Register();
     data_patcher::Install();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();
@@ -388,6 +396,9 @@ class CrashMomApp : public rex::ReXApp {
     frame_capture_.Stop();
   }
 
+  // Letters beyond Latin-1 for the translated tool windows (ui/imgui_fonts.h).
+  void OnConfigureFonts(ImFontAtlas* atlas) override { imgui_fonts::AddExtraLetters(atlas); }
+
   // Our ImGui overlay windows, drawn over the main window's picture.
   void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override {
     // The short message shown when the renderer / second window switch (overlay_banner.h).
@@ -441,7 +452,7 @@ class CrashMomApp : public rex::ReXApp {
   void ToggleNativeWindow() {
     // --emulated_only: our renderer never draws, so no window for it.
     if (native_renderer_->emulated_only()) {
-      overlay_banner::Show("EMULATED ONLY", "No second window with --emulated_only");
+      overlay_banner::Show(trs("EMULATED ONLY"), trs("No second window with --emulated_only"));
       return;
     }
     if (!native_window_) {

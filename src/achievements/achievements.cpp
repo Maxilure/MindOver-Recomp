@@ -33,6 +33,7 @@
 #include "../ui/marquee.h"
 #include "../ui/menu_pictures.h"
 #include "../ui/scrooby.h"
+#include "../language/game_text_banks.h"
 #include "../language/texts.h"
 
 
@@ -187,7 +188,89 @@ void LoadRecordLocked() {
   }
 }
 
-// The list from the title data (the SDK reads it at start-up).
+// --- The list in the player's language ---------------------------------------
+// The title data (XDBF) has the achievements' texts in English, German,
+// French, Spanish and Italian only: the 360 wording. For the disc's other
+// text languages (Dutch, Danish, Finnish, Norwegian, Swedish, Russian) the
+// game's IN-GAME TEXT BANK has the same 48 achievements, as the list the
+// other consoles show in their pause menus (findings/51 s.8): a numbered
+// title ("08. Can U Dig It?"), an earned line ("You learned how to dig") and
+// a to-do line ("Dig to get past the thorns in Wumpa Island"), in every disc
+// language. Their wording is close to the 360's, sometimes plainer. Read
+// from the player's disc (language/game_text_banks.h): no game text ships
+// with the port. Brazilian Portuguese runs the game in English (letter U):
+// its list comes from the port's translation of the game's text (texts.h
+// GameTranslation), when there is one.
+
+// The title data's language for a text letter (kInvalid = it has none).
+rex::system::XLanguage XdbfLanguageOf(char letter) {
+  using L = rex::system::XLanguage;
+  switch (letter) {
+    case 'U': case 'E': return L::kEnglish;
+    case 'G': return L::kGerman;
+    case 'F': case 'Z': return L::kFrench;   // French (Canada) = the French texts
+    case 'S': return L::kSpanish;
+    case 'I': return L::kItalian;
+    default: return L::kInvalid;
+  }
+}
+
+// Achievement id -> its in-game bank keys: title, earned line, to-do line.
+// Paired by meaning (findings/51 s.8; titles by name, the lines by what
+// they ask). The arena minigames have no earned line there: their to-do
+// line stands for both. "Happy To See Me" (32) is "Mutant Recycle" there
+// (the same "stash a mutant" goal, in the same place of the list).
+struct BankKeys { uint32_t title, earned, todo; };
+const std::unordered_map<uint32_t, BankKeys>& BankKeysById() {
+  static const std::unordered_map<uint32_t, BankKeys> keys = {
+      {17, {8924, 5718, 64703}}, {18, {9056, 5850, 64835}}, {21, {8993, 64772, 64772}},
+      {23, {8928, 5722, 64707}}, {25, {8867, 5661, 64646}}, {27, {9052, 5846, 64831}},
+      {28, {8860, 5654, 64639}}, {29, {8803, 5597, 64582}}, {30, {8992, 5786, 64771}},
+      {32, {8868, 5662, 64647}}, {33, {8990, 5784, 64769}}, {35, {9117, 5911, 64896}},
+      {36, {8989, 5783, 64768}}, {38, {9057, 5851, 64836}}, {39, {9051, 64830, 64830}},
+      {40, {8864, 5658, 64643}}, {41, {9116, 5910, 64895}}, {43, {9124, 5918, 64903}},
+      {44, {8802, 5596, 64581}}, {45, {8866, 5660, 64645}}, {46, {8988, 5782, 64767}},
+      {47, {8862, 5656, 64641}}, {48, {8930, 5724, 64709}}, {49, {8799, 5593, 64578}},
+      {50, {8796, 5590, 64575}}, {51, {8923, 5717, 64702}}, {52, {9179, 5973, 64958}},
+      {53, {8995, 64774, 64774}}, {54, {8991, 5785, 64770}}, {59, {9121, 5915, 64900}},
+      {60, {8798, 5592, 64577}}, {61, {8994, 64773, 64773}}, {62, {8861, 5655, 64640}},
+      {63, {8996, 64775, 64775}}, {64, {8797, 5591, 64576}}, {65, {9115, 5909, 64894}},
+      {66, {9119, 5913, 64898}}, {68, {8804, 5598, 64583}}, {69, {9060, 5854, 64839}},
+      {70, {9054, 5848, 64833}}, {71, {8863, 5657, 64642}}, {72, {9055, 5849, 64834}},
+      {73, {8859, 5653, 64638}}, {74, {9058, 5852, 64837}}, {75, {8801, 5595, 64580}},
+      {76, {8865, 5659, 64644}}, {77, {9053, 5847, 64832}}, {78, {8800, 5594, 64579}},
+  };
+  return keys;
+}
+
+std::string Utf8Of(std::u16string_view s) {
+  std::string out;
+  for (size_t i = 0; i < s.size(); ++i) {
+    uint32_t c = s[i];
+    if (c >= 0xD800 && c < 0xDC00 && i + 1 < s.size()) c = 0x10000 + ((c - 0xD800) << 10) + (s[++i] - 0xDC00);
+    if (c < 0x80) out += char(c);
+    else if (c < 0x800) { out += char(0xC0 | c >> 6); out += char(0x80 | (c & 0x3F)); }
+    else if (c < 0x10000) { out += char(0xE0 | c >> 12); out += char(0x80 | (c >> 6 & 0x3F)); out += char(0x80 | (c & 0x3F)); }
+    else { out += char(0xF0 | c >> 18); out += char(0x80 | (c >> 12 & 0x3F)); out += char(0x80 | (c >> 6 & 0x3F)); out += char(0x80 | (c & 0x3F)); }
+  }
+  return out;
+}
+
+// A bank line without the list's "NN. " number and the trailing new line
+// one title has in the title data.
+std::string CleanTitle(std::u16string_view s) {
+  if (s.size() > 4 && s[0] >= u'0' && s[0] <= u'9' && s[1] >= u'0' && s[1] <= u'9' && s[2] == u'.' && s[3] == u' ') {
+    s.remove_prefix(4);
+  }
+  return Utf8Of(s);
+}
+std::string Trimmed(std::string s) {
+  while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ')) s.pop_back();
+  return s;
+}
+
+// The list from the title data (the SDK reads it at start-up), then its
+// texts in the running text language.
 void LoadListLocked() {
   if (!g_list.empty()) return;
   rex::system::KernelState* ks = rex::system::kernel_state();
@@ -195,14 +278,55 @@ void LoadListLocked() {
   for (const rex::system::AchievementInfo& a : ks->achievements().ListAchievements()) {
     Info i;
     i.id = a.id;
-    i.name = a.label;
+    i.name = Trimmed(a.label);
     i.description = a.description;
     i.locked_description = a.unachieved_description;
     i.gamerscore = a.gamerscore;
     i.image_id = a.image_id;
     g_list.push_back(std::move(i));
   }
-  if (!g_list.empty()) {
+  if (g_list.empty()) return;
+  const char letter = game_text_banks::RunningLetter();
+  // A translation of the game's own text (Brazilian Portuguese runs as U)
+  // has the in-game list too: the bank route then, not the title data's English.
+  const rex::system::XLanguage xdbf_language =
+      texts::GameTranslation().empty() ? XdbfLanguageOf(letter) : rex::system::XLanguage::kInvalid;
+  int translated = 0;
+  if (xdbf_language != rex::system::XLanguage::kInvalid) {
+    // The title data's own words (the SDK read English).
+    const auto db = ks->title_xdbf();
+    if (db.is_valid() && db.GetExistingLanguage(xdbf_language) == xdbf_language) {
+      for (const auto& entry : db.GetAchievements()) {
+        for (Info& i : g_list) {
+          if (i.id != uint32_t(entry.id)) continue;
+          const std::string name = Trimmed(db.GetStringTableEntry(xdbf_language, entry.label_id));
+          if (name.empty()) break;
+          i.name = name;
+          i.description = db.GetStringTableEntry(xdbf_language, entry.description_id);
+          i.locked_description = db.GetStringTableEntry(xdbf_language, entry.unachieved_id);
+          ++translated;
+          break;
+        }
+      }
+    }
+  } else {
+    // The in-game bank's list.
+    for (Info& i : g_list) {
+      const auto keys = BankKeysById().find(i.id);
+      if (keys == BankKeysById().end()) continue;
+      const std::u16string title = game_text_banks::InGame(keys->second.title);
+      const std::u16string earned = game_text_banks::InGame(keys->second.earned);
+      const std::u16string todo = game_text_banks::InGame(keys->second.todo);
+      if (title.empty() || earned.empty() || todo.empty()) continue;  // keep English
+      i.name = CleanTitle(title);
+      i.description = Utf8Of(earned);
+      i.locked_description = Utf8Of(todo);
+      ++translated;
+    }
+  }
+  REXLOG_INFO("Achievements: texts in language '{}' for {} of {} ({})", letter, translated, g_list.size(),
+              xdbf_language != rex::system::XLanguage::kInvalid ? "title data" : "the game's in-game list");
+  {
     int score = 0;
     for (const Info& i : g_list) score += int(i.gamerscore);
     REXLOG_INFO("Achievements: {} in the title data, {} gamerscore in all", g_list.size(), score);

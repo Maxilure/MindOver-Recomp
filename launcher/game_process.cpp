@@ -2,6 +2,7 @@
 // game_process.cpp -- see game_process.h
 // =============================================================================
 #include "game_process.h"
+#include "texts.h"
 
 #include <cstring>
 #include <ctime>
@@ -94,7 +95,7 @@ bool Game::Start(const fs::path& exe, const std::vector<std::string>& args,
   {
     std::lock_guard lock(mutex_);
     if (state_ == State::kRunning) {
-      *error = "The game is already running.";
+      *error = trs("The game is already running.");
       return false;
     }
   }

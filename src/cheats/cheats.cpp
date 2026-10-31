@@ -102,10 +102,10 @@ struct UnlockList {
   int count;
 };
 constexpr UnlockList kUnlockLists[] = {
-    {"Outfits", 0x825A72A8, 11},
-    {"Concept art", 0x825982C8, 12},
-    {"Enemy info", 0x825982F8, 20},
-    {"Tutorials", 0x825983D0, 34},
+    {trsn("Outfits"), 0x825A72A8, 11},
+    {trsn("Concept art"), 0x825982C8, 12},
+    {trsn("Enemy info"), 0x825982F8, 20},
+    {trsn("Tutorials"), 0x825983D0, 34},
 };
 static_assert(std::size(kUnlockLists) == size_t(UnlockKind::kCount));
 constexpr int kSkinCoco = 9;
@@ -695,8 +695,8 @@ void SetHudHidden(bool hidden) {
 bool HudHidden() { return g_hud_hidden.load(); }
 bool AchievementsBlocked() { return g_cheated.load() || g_save_marked.load(); }
 const char* BlockReason() {
-  if (g_save_marked.load()) return "this game was saved with cheats on";
-  if (g_cheated.load()) return "cheats were used (until a save is loaded)";
+  if (g_save_marked.load()) return trsn("this game was saved with cheats on");
+  if (g_cheated.load()) return trsn("cheats were used (until a save is loaded)");
   return "";
 }
 bool SaveMarked() { return g_save_marked.load(); }

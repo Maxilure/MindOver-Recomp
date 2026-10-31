@@ -29,6 +29,7 @@
 #include <rex/system/xmemory.h>
 #include <rex/thread/mutex.h>
 
+#include "../ui/font_letters.h"
 #include "../data/data_patcher.h"
 #include "../data/pure3d.h"
 #include "../guest_memory.h"
@@ -1460,7 +1461,8 @@ void CheckFont(uint8_t* base, uint32_t font) {
   // more when our font patch was served (the menu glyphs' pages, at the end).
   for (const DiscFont& disc : g.disc) {
     const bool large = IsLargeFont(disc.page_count);
-    const bool patched = page_count == disc.page_count + AddedPrompts(large);
+    // (+ the page ui/font_letters.cpp may add for the letters Ã ã)
+    const bool patched = page_count == disc.page_count + AddedPrompts(large) + font_letters::AddedPages(large);
     if (page_count != disc.page_count && !patched) continue;
     std::vector<GuestPage> found;
     const std::vector<const Prompt*> prompts = PromptsFor(large);

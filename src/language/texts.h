@@ -25,6 +25,14 @@
 //     trcn("key name", u"Delete")           the same with a context: shown
 //                                           with trc("key name", text)
 //
+//     trs("Fullscreen")                     the same for the ImGui tool windows:
+//                                           UTF-8 in, UTF-8 out (a const char*
+//                                           valid for the session; printf-style
+//                                           %s / %d stay as they are in the
+//                                           translation)
+//     trsn("Fullscreen")                    marks a UTF-8 text in a static table
+//                                           (returns it untouched: trs() it where shown)
+//
 // A comment line "// TR: ..." right above a tr() call is copied into the .po
 // file for translators (where it shows, how much room it has).
 //
@@ -48,7 +56,9 @@
 // =============================================================================
 #pragma once
 
+#include <cstdint>
 #include <initializer_list>
+#include <unordered_map>
 #include <string>
 #include <string_view>
 
@@ -66,6 +76,10 @@ std::u16string trf(std::u16string_view text, std::initializer_list<std::u16strin
 constexpr const char16_t* trn(const char16_t* english) { return english; }
 constexpr const char16_t* trcn(const char* /*context*/, const char16_t* english) { return english; }
 
+// The UTF-8 forms for ImGui (the developer tool windows, launcher-style text).
+const char* trs(const char* english);
+constexpr const char* trsn(const char* english) { return english; }
+
 namespace texts {
 
 // The .po file the session uses ("fr", "pt_BR"; empty = English).
@@ -75,5 +89,23 @@ const std::string& FileCode();
 int CheckedPercent();
 // Share of the texts translated at all, 0-100.
 int TranslatedPercent();
+
+// THE GAME'S OWN TEXT, translated (2026-10-31, findings/49 s.8): for a
+// language the disc doesn't have (Brazilian Portuguese), or a fan's fixes to
+// one it has. languages/game/<code>.po (or <game folder>/user/languages/game/
+// <code>.po first) holds entries keyed by the text bank and the string's key
+// (msgctxt "frontend", msgid "213"): no English game text in the file
+// (tools/game_texts.py makes an editable copy with the English from the
+// player's disc). Map: (bank, key) -> the text; empty = no such file.
+// game_text_banks.cpp swaps them into the running language's bank copies.
+struct GameTextKey {
+  std::string bank;
+  uint32_t key = 0;
+  bool operator==(const GameTextKey& o) const { return key == o.key && bank == o.bank; }
+};
+struct GameTextKeyHash {
+  size_t operator()(const GameTextKey& k) const { return std::hash<std::string>()(k.bank) * 31 + k.key; }
+};
+const std::unordered_map<GameTextKey, std::u16string, GameTextKeyHash>& GameTranslation();
 
 }  // namespace texts

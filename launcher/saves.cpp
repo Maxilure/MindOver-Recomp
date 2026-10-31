@@ -2,6 +2,7 @@
 // saves.cpp -- see saves.h
 // =============================================================================
 #include "saves.h"
+#include "texts.h"
 
 #include <algorithm>
 #include <charconv>
@@ -193,9 +194,9 @@ std::vector<Save> List(const fs::path& user_folder) {
 
 const char* DifficultyName(int difficulty) {
   switch (difficulty) {
-    case 0: return "Easy";
-    case 1: return "Normal";
-    case 2: return "Hard";
+    case 0: return trsc("difficulty", "Easy");
+    case 1: return trsc("difficulty", "Normal");
+    case 2: return trsc("difficulty", "Hard");
     default: return "?";
   }
 }

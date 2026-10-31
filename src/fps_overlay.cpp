@@ -19,6 +19,7 @@
 #include <rex/ui/imgui_drawer.h>
 #include <rex/ui/immediate_drawer.h>
 
+#include "language/texts.h"
 #include "frame_rate.h"
 #include "pddi/intercept.h"
 #include "ui/game_font.h"
@@ -134,10 +135,29 @@ ImU32 ColourFor(double fps) {
 
 // The line in one of the three styles (fps_overlay.h).
 std::u16string Line(const Numbers& n, int style) {
-  std::string s = fmt::format("{:.0f} FPS", n.fps);
-  if (style >= 2) s += fmt::format("   AVG {:.1f}   1% LOW {:.1f}", n.average, n.low);
-  if (style >= 3) s += fmt::format("   {:.1f} MS   GAME {:.1f}   SWAP {:.1f}", n.ms, n.game_ms, n.swap_ms);
-  return std::u16string(s.begin(), s.end());
+  // Numbers in plain ASCII, the words in the player's language (upper case,
+  // like the original line; the game's font: no Ё).
+  auto num = [](const char* f, double v) {
+    const std::string t = fmt::format(fmt::runtime(f), v);
+    return std::u16string(t.begin(), t.end());
+  };
+  // TR: The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
+  std::u16string s = trf(trc("fps counter", u"{0} FPS"), {num("{:.0f}", n.fps)});
+  if (style >= 2) {
+    // TR: Frame-rate counter: the average frame rate. Keep it short, capitals.
+    s += u"   " + trf(trc("fps counter", u"AVG {0}"), {num("{:.1f}", n.average)});
+    // TR: Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
+    s += u"   " + trf(trc("fps counter", u"1% LOW {0}"), {num("{:.1f}", n.low)});
+  }
+  if (style >= 3) {
+    // TR: Frame-rate counter: milliseconds per frame. Capitals.
+    s += u"   " + trf(trc("fps counter", u"{0} MS"), {num("{:.1f}", n.ms)});
+    // TR: Frame-rate counter: how long the game's own work took (ms). Capitals.
+    s += u"   " + trf(trc("fps counter", u"GAME {0}"), {num("{:.1f}", n.game_ms)});
+    // TR: Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
+    s += u"   " + trf(trc("fps counter", u"SWAP {0}"), {num("{:.1f}", n.swap_ms)});
+  }
+  return s;
 }
 
 // ---------------------------------------------------------------------------

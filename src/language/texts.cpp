@@ -264,7 +264,73 @@ std::u16string trf(std::u16string_view text, std::initializer_list<std::u16strin
   return out;
 }
 
+// UTF-16 -> UTF-8 (the ImGui windows' text).
+static std::string ToUtf8(std::u16string_view s) {
+  std::string out;
+  for (size_t i = 0; i < s.size(); ++i) {
+    uint32_t c = s[i];
+    if (c >= 0xD800 && c < 0xDC00 && i + 1 < s.size()) c = 0x10000 + ((c - 0xD800) << 10) + (s[++i] - 0xDC00);
+    if (c < 0x80) {
+      out += char(c);
+    } else if (c < 0x800) {
+      out += char(0xC0 | c >> 6);
+      out += char(0x80 | (c & 0x3F));
+    } else if (c < 0x10000) {
+      out += char(0xE0 | c >> 12);
+      out += char(0x80 | (c >> 6 & 0x3F));
+      out += char(0x80 | (c & 0x3F));
+    } else {
+      out += char(0xF0 | c >> 18);
+      out += char(0x80 | (c >> 12 & 0x3F));
+      out += char(0x80 | (c >> 6 & 0x3F));
+      out += char(0x80 | (c & 0x3F));
+    }
+  }
+  return out;
+}
+
+const char* trs(const char* english) {
+  // Each English text translated once; the map's strings never move.
+  static std::mutex mutex;
+  static std::unordered_map<std::string, std::string> done;
+  std::lock_guard lock(mutex);
+  auto it = done.find(english);
+  if (it == done.end()) it = done.emplace(english, ToUtf8(tr(FromUtf8(english)))).first;
+  return it->second.c_str();
+}
+
 namespace texts {
+
+const std::unordered_map<GameTextKey, std::u16string, GameTextKeyHash>& GameTranslation() {
+  static std::unordered_map<GameTextKey, std::u16string, GameTextKeyHash> out;
+  static std::once_flag once;
+  std::call_once(once, [] {
+    const std::string& code = Loaded().code;
+    if (code.empty()) return;  // English: the disc's own
+    const std::filesystem::path own = game_folder::UserFolder() / "languages" / "game" / (code + ".po");
+    const std::filesystem::path shipped =
+        rex::filesystem::GetExecutableFolder() / "languages" / "game" / (code + ".po");
+    std::error_code ec;
+    const std::filesystem::path& path = std::filesystem::is_regular_file(own, ec) ? own : shipped;
+    Catalogue cat;
+    if (!ReadPo(path, &cat)) return;  // most languages: the disc has them
+    for (const auto& [k, text] : cat.strings) {
+      // Key = context ("frontend") + 0x04 + msgid ("213").
+      const size_t sep = k.find(char16_t(4));
+      if (sep == std::u16string::npos) continue;
+      GameTextKey key;
+      for (size_t i = 0; i < sep; ++i) key.bank += char(k[i]);
+      for (size_t i = sep + 1; i < k.size(); ++i) {
+        if (k[i] < u'0' || k[i] > u'9') { key.key = 0; break; }
+        key.key = key.key * 10 + uint32_t(k[i] - u'0');
+      }
+      if (!key.bank.empty() && key.key) out.emplace(std::move(key), text);
+    }
+    REXLOG_INFO("Texts: the game's own text in {}: {} of {} strings translated ({})", code, out.size(),
+                cat.total, path.string());
+  });
+  return out;
+}
 
 const std::string& FileCode() { return Loaded().code; }
 

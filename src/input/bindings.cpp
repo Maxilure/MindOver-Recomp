@@ -3,6 +3,8 @@
 // =============================================================================
 #include "bindings.h"
 
+#include "../language/texts.h"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -141,86 +143,78 @@ constexpr Context kPlay = Context::kPlay, kMenu = Context::kMenu, kBoth = Contex
 
 constexpr ActionInfo kActions[kActionCount] = {
     // id, label, hint, pad, group, output, button, x, y, defaults, context
-    {"move_up", "Move up", "Also moves through menus.", "Left stick", Group::kMoving,
+    {"move_up", trsn("Move up"), trsn("Also moves through menus."), trsn("Left stick"), Group::kMoving,
      Output::kLeftStick, 0, 0, 1, "W", kBoth},
-    {"move_down", "Move down", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 0, -1, "S",
+    {"move_down", trsn("Move down"), "", trsn("Left stick"), Group::kMoving, Output::kLeftStick, 0, 0, -1, "S",
      kBoth},
-    {"move_left", "Move left", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, -1, 0, "A",
+    {"move_left", trsn("Move left"), "", trsn("Left stick"), Group::kMoving, Output::kLeftStick, 0, -1, 0, "A",
      kBoth},
-    {"move_right", "Move right", "", "Left stick", Group::kMoving, Output::kLeftStick, 0, 1, 0, "D",
+    {"move_right", trsn("Move right"), "", trsn("Left stick"), Group::kMoving, Output::kLeftStick, 0, 1, 0, "D",
      kBoth},
-    {"walk", "Walk (hold)",
-     "Hold with a direction: the stick leans only part of the way, so Crash goes slower.",
-     "Left stick", Group::kMoving, Output::kWalk, 0, 0, 0, "Control", kPlay},
-    {"spin", "Spin",
-     "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep "
+    {"walk", trsn("Walk (hold)"), trsn("Hold with a direction: the stick leans only part of the way, so Crash goes slower."), trsn("Left stick"), Group::kMoving, Output::kWalk, 0, 0, 0, "Control", kPlay},
+    {"spin", trsn("Spin"), trsn("The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep "
      "spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to "
-     "jump off a titan...). Crash still moves with the movement keys while spinning.",
-     "Left stick circles", Group::kMoving, Output::kSpin, 0, 0, 0, "Q, MMB", kPlay},
-    {"jump", "Jump", "Press again in the air for a double jump.", "A", Group::kMoving,
+     "jump off a titan...). Crash still moves with the movement keys while spinning."), trsn("Left stick circles"), Group::kMoving, Output::kSpin, 0, 0, 0, "Q, MMB", kPlay},
+    {"jump", trsn("Jump"), trsn("Press again in the air for a double jump."), "A", Group::kMoving,
      Output::kButton, kA, 0, 0, "Space", kPlay},
 
-    {"light_attack", "Light attack", "", "X", Group::kFighting, Output::kButton, kX, 0, 0,
+    {"light_attack", trsn("Light attack"), "", "X", Group::kFighting, Output::kButton, kX, 0, 0,
      "LMB, J", kPlay},
-    {"heavy_attack", "Heavy attack", "", "Y", Group::kFighting, Output::kButton, kY, 0, 0,
+    {"heavy_attack", trsn("Heavy attack"), "", "Y", Group::kFighting, Output::kButton, kY, 0, 0,
      "RMB, K", kPlay},
-    {"block", "Block (hold)", "Hold to block an enemy's light attack.", "RT",
+    {"block", trsn("Block (hold)"), trsn("Hold to block an enemy's light attack."), "RT",
      Group::kFighting, Output::kRightTrigger, 0, 0, 0, "Shift", kPlay},
 
     // "Use" too: the 360's B also uses save totems (the game draws one shared
     // floating B picture over totems and stunned titans), so this one key does both.
-    {"jack", "Jack / use",
-     "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. "
-     "Also uses save totems.",
-     "B", Group::kTitans, Output::kButton, kB, 0, 0, "E", kPlay},
-    {"titan_special", "Titan special attack",
-     "The special attack of the titan you control (watch its mutant meter).", "LT",
+    {"jack", trsn("Jack / use"), trsn("Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. "
+     "Also uses save totems."), "B", Group::kTitans, Output::kButton, kB, 0, 0, "E", kPlay},
+    {"titan_special", trsn("Titan special attack"), trsn("The special attack of the titan you control (watch its mutant meter)."), "LT",
      Group::kTitans, Output::kLeftTrigger, 0, 0, 0, "F", kPlay},
-    {"pocket", "Pocket / unpocket", "Store the titan you control, and bring it back later.",
-     "RB", Group::kTitans, Output::kButton, X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "R", kPlay},
+    {"pocket", trsn("Pocket / unpocket"), trsn("Store the titan you control, and bring it back later."), "RB", Group::kTitans, Output::kButton, X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "R", kPlay},
 
     // Map = Back: also in menus since 2026-10-30 (the pause menu's Back drops
     // a player out: players/pause_drop_out.h).
-    {"map", "Map", "In the pause menu: drop out (another player stays in).", "Back", Group::kMenus,
+    {"map", trsn("Map"), trsn("In the pause menu: drop out (another player stays in)."), trsn("Back"), Group::kMenus,
      Output::kButton, X_INPUT_GAMEPAD_BACK, 0, 0, "Tab, M", kBoth},
-    {"pause", "Pause", "Opens the pause menu (in menus, Menu: back closes it).", "Start",
+    {"pause", trsn("Pause"), trsn("Opens the pause menu (in menus, Menu: back closes it)."), trsn("Start"),
      Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_START, 0, 0, "Escape", kPlay},
-    {"menu_confirm", "Menu: confirm", "Choose the selected item.", "A", Group::kMenus,
+    {"menu_confirm", trsn("Menu: confirm"), trsn("Choose the selected item."), "A", Group::kMenus,
      Output::kButton, kA, 0, 0, "Return, Space", kMenu},
-    {"menu_back", "Menu: back", "Back to the previous screen; in the pause menu: play on.", "B",
+    {"menu_back", trsn("Menu: back"), trsn("Back to the previous screen; in the pause menu: play on."), "B",
      Group::kMenus, Output::kButton, kB, 0, 0, "Escape", kMenu},
-    {"menu_tab_left", "Menu: previous tab", "The Options screen's tabs.", "LB", Group::kMenus,
+    {"menu_tab_left", trsn("Menu: previous tab"), trsn("The Options screen's tabs."), "LB", Group::kMenus,
      Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, "Q", kMenu},
-    {"menu_tab_right", "Menu: next tab", "", "RB", Group::kMenus, Output::kButton,
+    {"menu_tab_right", trsn("Menu: next tab"), "", "RB", Group::kMenus, Output::kButton,
      X_INPUT_GAMEPAD_RIGHT_SHOULDER, 0, 0, "E", kMenu},
-    {"menu_x", "Menu: X action", "What the menu's X prompt says: rename a save, Dual Mode, "
-     "erase a letter on the name screen.", "X", Group::kMenus, Output::kButton, kX, 0, 0, "X",
+    {"menu_x", trsn("Menu: X action"), trsn("What the menu's X prompt says: rename a save, Dual Mode, "
+     "erase a letter on the name screen."), "X", Group::kMenus, Output::kButton, kX, 0, 0, "X",
      kMenu},
-    {"menu_y", "Menu: Y action", "What the menu's Y prompt says: delete a save, remove a key "
-     "(Options -> Controls).", "Y", Group::kMenus, Output::kButton, kY, 0, 0, "Backspace", kMenu},
-    {"dpad_up", "D-pad up", "", "D-pad", Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_DPAD_UP,
+    {"menu_y", trsn("Menu: Y action"), trsn("What the menu's Y prompt says: delete a save, remove a key "
+     "(Options -> Controls)."), "Y", Group::kMenus, Output::kButton, kY, 0, 0, "Backspace", kMenu},
+    {"dpad_up", trsn("D-pad up"), "", trsn("D-pad"), Group::kMenus, Output::kButton, X_INPUT_GAMEPAD_DPAD_UP,
      0, 0, "Up", kBoth},
-    {"dpad_down", "D-pad down", "", "D-pad", Group::kMenus, Output::kButton,
+    {"dpad_down", trsn("D-pad down"), "", trsn("D-pad"), Group::kMenus, Output::kButton,
      X_INPUT_GAMEPAD_DPAD_DOWN, 0, 0, "Down", kBoth},
-    {"dpad_left", "D-pad left", "", "D-pad", Group::kMenus, Output::kButton,
+    {"dpad_left", trsn("D-pad left"), "", trsn("D-pad"), Group::kMenus, Output::kButton,
      X_INPUT_GAMEPAD_DPAD_LEFT, 0, 0, "Left", kBoth},
-    {"dpad_right", "D-pad right", "", "D-pad", Group::kMenus, Output::kButton,
+    {"dpad_right", trsn("D-pad right"), "", trsn("D-pad"), Group::kMenus, Output::kButton,
      X_INPUT_GAMEPAD_DPAD_RIGHT, 0, 0, "Right", kBoth},
 
-    {"right_stick_up", "Right stick up", "The camera follows Crash by itself; this is for the "
-     "few things that use the right stick.", "Right stick", Group::kOther, Output::kRightStick,
+    {"right_stick_up", trsn("Right stick up"), trsn("The camera follows Crash by itself; this is for the "
+     "few things that use the right stick."), trsn("Right stick"), Group::kOther, Output::kRightStick,
      0, 0, 1, "Numpad8", kPlay},
-    {"right_stick_down", "Right stick down", "", "Right stick", Group::kOther,
+    {"right_stick_down", trsn("Right stick down"), "", trsn("Right stick"), Group::kOther,
      Output::kRightStick, 0, 0, -1, "Numpad2", kPlay},
-    {"right_stick_left", "Right stick left", "", "Right stick", Group::kOther,
+    {"right_stick_left", trsn("Right stick left"), "", trsn("Right stick"), Group::kOther,
      Output::kRightStick, 0, -1, 0, "Numpad4", kPlay},
-    {"right_stick_right", "Right stick right", "", "Right stick", Group::kOther,
+    {"right_stick_right", trsn("Right stick right"), "", trsn("Right stick"), Group::kOther,
      Output::kRightStick, 0, 1, 0, "Numpad6", kPlay},
-    {"left_bumper", "Left bumper", "No use in play found so far.", "LB", Group::kOther,
+    {"left_bumper", trsn("Left bumper"), trsn("No use in play found so far."), "LB", Group::kOther,
      Output::kButton, X_INPUT_GAMEPAD_LEFT_SHOULDER, 0, 0, "", kPlay},
-    {"left_stick_click", "Left stick click", "No use in the game found so far.", "L3",
+    {"left_stick_click", trsn("Left stick click"), trsn("No use in the game found so far."), "L3",
      Group::kOther, Output::kButton, X_INPUT_GAMEPAD_LEFT_THUMB, 0, 0, "", kPlay},
-    {"right_stick_click", "Right stick click", "No use in the game found so far.", "R3",
+    {"right_stick_click", trsn("Right stick click"), trsn("No use in the game found so far."), "R3",
      Group::kOther, Output::kButton, X_INPUT_GAMEPAD_RIGHT_THUMB, 0, 0, "", kPlay},
 };
 
@@ -375,15 +369,15 @@ bool IsReservedInput(Input input) {
 const char* GroupLabel(Group group) {
   switch (group) {
     case Group::kMoving:
-      return "Moving";
+      return trsn("Moving");
     case Group::kFighting:
-      return "Fighting";
+      return trsn("Fighting");
     case Group::kTitans:
-      return "Titans";
+      return trsn("Titans");
     case Group::kMenus:
-      return "Menus and map";
+      return trsn("Menus and map");
     case Group::kOther:
-      return "Rest of the controller";
+      return trsn("Rest of the controller");
   }
   return "";
 }

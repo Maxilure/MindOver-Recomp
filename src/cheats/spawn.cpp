@@ -2,6 +2,8 @@
 // cheats/spawn.cpp -- see spawn.h
 // =============================================================================
 #include "spawn.h"
+
+#include "../language/texts.h"
 #include "../guest_memory.h"
 
 #include <algorithm>
@@ -434,7 +436,7 @@ std::vector<Category> MakeCatalogue() {
     return Entry{label, std::string("Characters:") + name, false};
   };
   return {
-      {"Titans",
+      {trsn("Titans"),
        {titan("Ratcicle"), titan("Spike"), titan("Roller"), titan("Battler"), titan("TK"),
         titan("Shurtle"), titan("Scorporilla"), titan("Phantom"), titan("Stinky"),
         titan("Parafox"), titan("Sludge"), titan("Yuktopus"), titan("RatcicleHero"),
@@ -442,8 +444,8 @@ std::vector<Category> MakeCatalogue() {
         titan("ParafoxHero"),
         // the two boss titans (their upgrade levels are stats 104 / 105, so
         // they're jackable titans like the others; names from default.rcf)
-        titan_as("Crunch (boss)", "CrunchBoss"), titan_as("Cortex (boss)", "CortexBoss")}},
-      {"Enemies",
+        titan_as(trsn("Crunch (boss)"), "CrunchBoss"), titan_as(trsn("Cortex (boss)"), "CortexBoss")}},
+      {trsn("Enemies"),
        {character("Znu", "Znu"), character("Slappy (Slap-E)", "Slappy"),
         character("Bratgirl", "Bratgirl"), character("Monkey", "Monkey"),
         character("Chiratta", "Chiratta")}},

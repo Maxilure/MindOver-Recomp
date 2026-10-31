@@ -1018,7 +1018,7 @@ bool RenameSave(uint8_t* base, uint32_t manager, int number, const std::u16strin
   std::string error;
   if (!save_files::Rename(number, name, &error)) {
     REXLOG_WARN("Saves: renaming save {} failed: {}", number, error);
-    overlay_banner::Show("Rename failed", error);
+    overlay_banner::Show(trs("Rename failed"), error);
     return false;
   }
   REXLOG_INFO("Saves: save {} renamed to \"{}\"", number, ToUtf8(name));
@@ -1063,7 +1063,7 @@ void DeleteSave(int number) {
   std::string error;
   if (!save_files::MoveToDeleted(number, &moved_to, &error)) {
     REXLOG_WARN("Saves: deleting save {} failed: {}", number, error);
-    overlay_banner::Show("Delete failed", error);
+    overlay_banner::Show(trs("Delete failed"), error);
     return;
   }
   REXLOG_INFO("Saves: save {} moved to {}{}", number, moved_to.string(),
@@ -1190,7 +1190,7 @@ class SaveDialog : public rex::ui::ImGuiDialog {
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
                             ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowBgAlpha(0.95f);
-    if (ImGui::Begin("Rename save###crashmom_save_box", nullptr,
+    if (ImGui::Begin((std::string(trs("Rename save")) + "###crashmom_save_box").c_str(), nullptr,
                      ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse |
                          ImGuiWindowFlags_NoSavedSettings)) {
       DrawRename();
@@ -1229,8 +1229,8 @@ class SaveDialog : public rex::ui::ImGuiDialog {
   }
 
   void DrawRename() {
-    ImGui::Text("Rename \"%s\"", ToUtf8(request_.name).c_str());
-    ImGui::TextDisabled("Type up to %zu letters, digits, spaces. Controller: A rename, B cancel",
+    ImGui::Text(trs("Rename \"%s\""), ToUtf8(request_.name).c_str());
+    ImGui::TextDisabled(trs("Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"),
                         save_files::kMaxNameLength);
     if (focus_) {
       ImGui::SetKeyboardFocusHere();
@@ -1242,10 +1242,10 @@ class SaveDialog : public rex::ui::ImGuiDialog {
         NameFilter);
     const bool has_name = buffer_[0] != 0;
     if (!has_name) ImGui::BeginDisabled();
-    const bool rename = ImGui::Button("Rename (Enter)") || (enter && has_name);
+    const bool rename = ImGui::Button(trs("Rename (Enter)")) || (enter && has_name);
     if (!has_name) ImGui::EndDisabled();
     ImGui::SameLine();
-    const bool cancel = ImGui::Button("Cancel (Esc)") || ImGui::IsKeyPressed(ImGuiKey_Escape);
+    const bool cancel = ImGui::Button(trs("Cancel (Esc)")) || ImGui::IsKeyPressed(ImGuiKey_Escape);
     if (rename) {
       Finish(DialogResult{DialogResult::kRename, request_.number, AsciiToUtf16(buffer_)});
     } else if (cancel) {

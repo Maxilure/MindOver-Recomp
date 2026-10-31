@@ -2,6 +2,7 @@
 // setup.cpp -- see setup.h
 // =============================================================================
 #include "setup.h"
+#include "texts.h"
 
 #include <algorithm>
 #include <chrono>
@@ -153,7 +154,7 @@ const std::vector<std::string> kGitOptions = {"-c", "core.autocrlf=false", "-c",
 void AddLinkFix(const fs::path& sdk, std::vector<task_runner::Command>* commands) {
 #if defined(_WIN32)
   task_runner::Command fix;
-  fix.title = "Replacing link files with copies (Git for Windows)";
+  fix.title = trs("Replacing link files with copies (Git for Windows)");
   fix.function = [sdk](std::string* message) {
     bool ok = false;
     std::vector<fs::path> repos = {sdk};
@@ -368,11 +369,11 @@ std::string Stamp() {
 
 const char* StateText(StepState state) {
   switch (state) {
-    case StepState::kChecking: return "checking...";
-    case StepState::kDone: return "done";
-    case StepState::kOutdated: return "out of date";
-    case StepState::kMissing: return "to do";
-    case StepState::kBlocked: return "needs attention";
+    case StepState::kChecking: return trs("checking...");
+    case StepState::kDone: return trs("done");
+    case StepState::kOutdated: return trs("out of date");
+    case StepState::kMissing: return trs("to do");
+    case StepState::kBlocked: return trs("needs attention");
   }
   return "";
 }
@@ -440,29 +441,29 @@ void CheckTools(Status* s) {
     extra_path += llvm_clang.parent_path().string() + ";";
   }
   if (clang.empty()) {
-    add("clang 20 or newer", "LLVM.LLVM", false, "not found");
+    add("clang 20 or newer", "LLVM.LLVM", false, trs("not found"));
   } else {
     const int major = MajorVersion(platform::Capture({clang.string(), "--version"}, &ok), &version);
     add("clang 20 or newer", "LLVM.LLVM", major >= 20,
-        major >= 20 ? version : "too old: " + version + " (20 or newer needed)");
+        major >= 20 ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "20"}));
   }
   // CMake 3.25+.
   if (platform::FindProgram("cmake").empty()) {
-    add("CMake 3.25 or newer", "Kitware.CMake", false, "not found");
+    add("CMake 3.25 or newer", "Kitware.CMake", false, trs("not found"));
   } else {
     const int major = MajorVersion(platform::Capture({"cmake", "--version"}, &ok), &version);
     const bool good = major > 3 || (major == 3 && MinorVersion(version) >= 25);
     add("CMake 3.25 or newer", "Kitware.CMake", good,
-        good ? version : "too old: " + version + " (3.25 or newer needed)");
+        good ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"}));
   }
   const fs::path ninja = platform::FindProgram("ninja");
-  add("Ninja", "Ninja-build.Ninja", !ninja.empty(), ninja.empty() ? "not found" : ninja.string());
+  add("Ninja", "Ninja-build.Ninja", !ninja.empty(), ninja.empty() ? trs("not found") : ninja.string());
   // Python: a real one (Windows has a "python" that only opens the Store).
   const std::string py = platform::Capture({"python", "--version"}, &ok);
   add("Python 3", "Python.Python.3.12", ok && py.find("Python 3") != std::string::npos,
-      ok ? py.substr(0, py.find_first_of("\r\n")) : "not found (or only the Store shortcut)");
+      ok ? py.substr(0, py.find_first_of("\r\n")) : trs("not found (or only the Store shortcut)"));
   const fs::path git = platform::FindProgram("git");
-  add("Git", "Git.Git", !git.empty(), git.empty() ? "not found" : git.string());
+  add("Git", "Git.Git", !git.empty(), git.empty() ? trs("not found") : git.string());
   // glslc: on PATH or in the Vulkan SDK.
   fs::path glslc = platform::FindProgram("glslc");
   if (glslc.empty() && std::getenv("VULKAN_SDK")) {
@@ -473,7 +474,7 @@ void CheckTools(Status* s) {
     }
   }
   add("glslc (shader compiler)", "KhronosGroup.VulkanSDK", !glslc.empty(),
-      glslc.empty() ? "not found" : glslc.string());
+      glslc.empty() ? trs("not found") : glslc.string());
   // Visual Studio's C++ tools (vswhere: Microsoft's own finder).
   const fs::path vswhere =
       fs::path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe";
@@ -493,7 +494,7 @@ void CheckTools(Status* s) {
       Exists(vcvars),
       // vcvars64.bat sits in <install>\VC\Auxiliary\Build: show <install>.
       Exists(vcvars) ? vcvars.parent_path().parent_path().parent_path().parent_path().string()
-                     : "not found");
+                     : trs("not found"));
   // The Windows SDK (Windows' own headers and libraries).
   std::string windows_sdk;
   std::error_code ec;
@@ -504,9 +505,9 @@ void CheckTools(Status* s) {
     }
   }
   add("Windows 10/11 SDK", "Windows 11 SDK (Visual Studio Installer, Individual components)",
-      !windows_sdk.empty(), windows_sdk.empty() ? "not found" : windows_sdk);
+      !windows_sdk.empty(), windows_sdk.empty() ? trs("not found") : windows_sdk);
   const bool vulkan = platform::LibraryAvailable("", "vulkan-1.dll");
-  add("Vulkan loader", "your graphics card's driver", vulkan, vulkan ? "vulkan-1.dll" : "not found");
+  add("Vulkan loader", "your graphics card's driver", vulkan, vulkan ? "vulkan-1.dll" : trs("not found"));
 
   if (Exists(vcvars)) {
     s->build_env = BuildEnvironment(vcvars, extra_path);
@@ -546,40 +547,40 @@ void CheckTools(Status* s) {
     switch (i) {
       case 0: {  // clang + clang++, 20+
         if (platform::FindProgram("clang").empty() || platform::FindProgram("clang++").empty()) {
-          tool.detail = "not found (clang and clang++)";
+          tool.detail = trs("not found (clang and clang++)");
           break;
         }
         const int major = MajorVersion(platform::Capture({"clang", "--version"}, &ok), &version);
         tool.found = major >= 20;
-        tool.detail = tool.found ? version : "too old: " + version + " (20 or newer needed)";
+        tool.detail = tool.found ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "20"});
         break;
       }
       case 1: {  // cmake 3.25+
         if (platform::FindProgram("cmake").empty()) {
-          tool.detail = "not found";
+          tool.detail = trs("not found");
           break;
         }
         const int major = MajorVersion(platform::Capture({"cmake", "--version"}, &ok), &version);
         tool.found = major > 3 || (major == 3 && MinorVersion(version) >= 25);
-        tool.detail = tool.found ? version : "too old: " + version + " (3.25 or newer needed)";
+        tool.detail = tool.found ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"});
         break;
       }
       case 7: {  // GTK 3 headers: pkg-config knows gtk+-3.0
         const std::string text =
             platform::Capture({"pkg-config", "--modversion", "gtk+-3.0"}, &ok);
         tool.found = ok;
-        tool.detail = ok ? text.substr(0, text.find('\n')) : "not found (needs pkg-config too)";
+        tool.detail = ok ? text.substr(0, text.find('\n')) : trs("not found (needs pkg-config too)");
         break;
       }
       case 8:  // the Vulkan loader library
         tool.found = platform::LibraryAvailable("libvulkan.so.1", "");
-        tool.detail = tool.found ? "libvulkan.so.1" : "not found";
+        tool.detail = tool.found ? "libvulkan.so.1" : trs("not found");
         break;
       default: {
         static const char* kPrograms[] = {"", "", "ninja", "python3", "git", "glslc", "pkg-config"};
         const fs::path program = platform::FindProgram(kPrograms[i]);
         tool.found = !program.empty();
-        tool.detail = tool.found ? program.string() : "not found";
+        tool.detail = tool.found ? program.string() : trs("not found");
         break;
       }
     }
@@ -623,22 +624,22 @@ bool Setup::UpdateAvailable(std::string* version) {
 void Setup::DrawUpdates(bool busy) {
   const std::string installed = update::InstalledVersion(folders_);
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(look_->muted, "Version %s", installed.empty() ? "?" : installed.c_str());
+  ImGui::TextColored(look_->muted, trs("Version %s"), installed.empty() ? "?" : installed.c_str());
   ImGui::SameLine();
   if (!updater_) {
-    ImGui::TextColored(look_->muted, " -  a developer copy: update it with git pull");
+    ImGui::TextColored(look_->muted, trs(" -  a developer copy: update it with git pull"));
     ImGui::Separator();
     return;
   }
   if (update_applied_) {
-    ImGui::TextColored(look_->good, " -  updated to %s: restart the launcher to finish",
+    ImGui::TextColored(look_->good, trs(" -  updated to %s: restart the launcher to finish"),
                        pending_.version.c_str());
     ImGui::SameLine();
-    if (ImGui::Button("Restart the launcher")) {
+    if (ImGui::Button(trs("Restart the launcher"))) {
       // The new launcher, in this process's place; it carries on with the
       // rebuild (--after_update). Returns only if that failed.
       platform::Restart(launcher_, {"--after_update"});
-      message_ = "Couldn't restart: start the launcher again by hand.";
+      message_ = trs("Couldn't restart: start the launcher again by hand.");
     }
     ImGui::Separator();
     return;
@@ -648,19 +649,19 @@ void Setup::DrawUpdates(bool busy) {
   std::string error;
   const bool known = updater_->Latest(&latest, &available, &error);
   if (updater_->checking()) {
-    ImGui::TextColored(look_->muted, " -  checking for updates...");
+    ImGui::TextColored(look_->muted, trs(" -  checking for updates..."));
   } else if (known && available) {
-    ImGui::TextColored(look_->accent, " -  %s is available%s%s", latest.version.c_str(),
+    ImGui::TextColored(look_->accent, trs(" -  %s is available%s%s"), latest.version.c_str(),
                        latest.date.empty() ? "" : " (", latest.date.empty() ? "" : (latest.date + ")").c_str());
     ImGui::SameLine();
     // (Not while Setup's checks run: they read the SDK folder the update moves.)
     ImGui::BeginDisabled(busy || checking_);
-    if (ImGui::Button(("Update to " + latest.version).c_str())) {
+    if (ImGui::Button(trf(trs("Update to {0}"), {latest.version}).c_str())) {
       pending_ = latest;
       std::vector<Command> commands = updater_->Job(latest, launcher_);
       message_.clear();
       follow_ = true;
-      runner_.Start("Update to " + latest.version, std::move(commands),
+      runner_.Start(trf(trs("Update to {0}"), {latest.version}), std::move(commands),
                     folders_.user / "logs" / ("update-" + Stamp() + ".log"), [this](bool success) {
                       if (success) {
                         update_applied_ = true;
@@ -670,23 +671,23 @@ void Setup::DrawUpdates(bool busy) {
     }
     ImGui::EndDisabled();
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
-      ImGui::SetTooltip("Downloads the new version and swaps it in: your saves, settings and the "
-                        "game's files stay. Then the launcher restarts and rebuilds what changed.");
+      ImGui::SetTooltip(trs("Downloads the new version and swaps it in: your saves, settings and the "
+                        "game's files stay. Then the launcher restarts and rebuilds what changed."));
     }
     ImGui::SameLine();
-    if (ImGui::SmallButton("Release page")) {
+    if (ImGui::SmallButton(trs("Release page"))) {
       SDL_OpenURL(update::ReleasePage(latest.version).c_str());
     }
 
   } else if (known) {
-    ImGui::TextColored(look_->good, " -  the newest version");
+    ImGui::TextColored(look_->good, trs(" -  the newest version"));
   } else if (!error.empty()) {
     ImGui::TextColored(look_->muted, " -  %s", error.c_str());
   }
   if (!updater_->checking() && !update_applied_) {
     ImGui::SameLine();
     ImGui::BeginDisabled(busy);
-    if (ImGui::SmallButton("Check for updates")) {
+    if (ImGui::SmallButton(trs("Check for updates"))) {
       updater_->Check();
     }
     ImGui::EndDisabled();
@@ -695,7 +696,7 @@ void Setup::DrawUpdates(bool busy) {
     // What the update brings (update.h: WHAT'S NEW).
     if (!latest.notes.empty()) {
       ImGui::PushFont(look_->bold, 0.0f);
-      ImGui::Text("What's new in %s", latest.version.c_str());
+      ImGui::Text(trs("What's new in %s"), latest.version.c_str());
       ImGui::PopFont();
       ImGui::Indent();
       ImGui::TextWrapped("%s", latest.notes.c_str());
@@ -760,9 +761,9 @@ Status Setup::RunChecks() {
     source_ok = ok;
   }
   s.source_state = source_ok ? StepState::kDone : StepState::kMissing;
-  s.source_detail = source_ok ? "the ReXGlue SDK and its libraries are there"
-                              : folders_.release ? "the ReXGlue SDK isn't downloaded yet"
-                                                 : "the ReXGlue SDK submodule isn't downloaded yet";
+  s.source_detail = source_ok ? trs("the ReXGlue SDK and its libraries are there")
+                              : folders_.release ? trs("the ReXGlue SDK isn't downloaded yet")
+                                                 : trs("the ReXGlue SDK submodule isn't downloaded yet");
   // A release names the exact SDK version (source/RELEASE.toml): another
   // one in the folder (an update moved to a newer SDK) = download again.
   if (source_ok && folders_.release && !pin.commit.empty()) {
@@ -772,9 +773,8 @@ Status Setup::RunChecks() {
     if (!ok || head != pin.commit) {
       source_ok = false;
       s.source_state = StepState::kOutdated;
-      s.source_detail = "this version needs another ReXGlue SDK (" +
-                        (pin.tag.empty() ? pin.commit.substr(0, 12) : pin.tag) +
-                        "): download it again";
+      s.source_detail = trf(trs("this version needs another ReXGlue SDK ({0}): download it again"),
+                            {pin.tag.empty() ? pin.commit.substr(0, 12) : pin.tag});
     }
   }
 
@@ -787,11 +787,11 @@ Status Setup::RunChecks() {
   }
   if (folders_.DiscExists()) {
     s.disc_state = StepState::kDone;
-    s.disc_detail = "extracted in " + folders::Pretty(folders_.disc);
+    s.disc_detail = trf(trs("extracted in {0}"), {folders::Pretty(folders_.disc)});
   } else {
     s.disc_state = StepState::kMissing;
-    s.disc_detail = s.isos.empty() ? "no disc image found yet: pick your .iso"
-                                   : "ready to extract " + s.isos.front().filename().string();
+    s.disc_detail = s.isos.empty() ? std::string(trs("no disc image found yet: pick your .iso"))
+                                   : trf(trs("ready to extract {0}"), {s.isos.front().filename().string()});
   }
 
   // 4. SDK: patches, then the install.
@@ -822,43 +822,43 @@ Status Setup::RunChecks() {
   }
   if (!source_ok) {
     s.sdk_state = StepState::kMissing;
-    s.sdk_detail = "needs the source parts first";
+    s.sdk_detail = trs("needs the source parts first");
   } else if (!patches.empty() && !all_applied && !none_applied && folders_.release) {
     // A release's SDK folder is the launcher's own download: patched by an
     // older patch set (an update brought new ones). Back to clean, then the
     // new set (SdkJob).
     s.sdk_state = StepState::kOutdated;
     s.sdk_needs_reset = true;
-    s.sdk_detail = "the patches changed (an update): it will be reset and patched again, then "
-                   "rebuilt";
+    s.sdk_detail = trs("the patches changed (an update): it will be reset and patched again, then "
+                       "rebuilt");
   } else if (!patches.empty() && !all_applied && !none_applied) {
     s.sdk_state = StepState::kBlocked;
-    s.sdk_detail = "our " + std::to_string(s.patches_total) +
-                   " SDK patches are neither all applied nor all missing: the SDK folder was "
-                   "changed by hand (or a patch was updated). Not touched; see "
-                   "docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status).";
+    s.sdk_detail = trf(trs("our {0} SDK patches are neither all applied nor all missing: the SDK folder was "
+                           "changed by hand (or a patch was updated). Not touched; see "
+                           "docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."),
+                       {std::to_string(s.patches_total)});
   } else if (!installed) {
     s.sdk_state = StepState::kMissing;
-    s.sdk_detail = s.patches_applied ? "patched, not built yet" : "not patched or built yet";
+    s.sdk_detail = s.patches_applied ? trs("patched, not built yet") : trs("not patched or built yet");
   } else if (s.patches_applied < s.patches_total ||
              (!built_with.empty() && built_with != PatchFingerprint(patches))) {
     s.sdk_state = StepState::kOutdated;
     s.sdk_detail = s.patches_applied < s.patches_total
-                       ? "built without our patches: rebuild it"
-                       : "the patches changed since the SDK was built: rebuild it";
+                       ? trs("built without our patches: rebuild it")
+                       : trs("the patches changed since the SDK was built: rebuild it");
   } else {
     s.sdk_state = StepState::kDone;
-    s.sdk_detail = "built and installed, " + std::to_string(s.patches_total) + " patches";
+    s.sdk_detail = trf(trs("built and installed, {0} patches"), {std::to_string(s.patches_total)});
   }
 
   // 5. The game (a release then plays a copy in program/).
   const fs::path built = folders_.BuiltExe();
   if (!Exists(built)) {
     s.game_state = StepState::kMissing;
-    s.game_detail = "not built yet";
+    s.game_detail = trs("not built yet");
   } else if (folders_.release && TimeOf(folders_.exe) < TimeOf(built)) {
     s.game_state = StepState::kOutdated;
-    s.game_detail = "built, not copied into program/ yet";
+    s.game_detail = trs("built, not copied into program/ yet");
   } else {
     const auto exe_time = TimeOf(built);
     // Newer sources, or ANY newer SDK library (an SDK patch may change only
@@ -875,10 +875,10 @@ Status Setup::RunChecks() {
                                   TimeOf(root / "CMakeLists.txt"), newest_lib});
     if (newest > exe_time) {
       s.game_state = StepState::kOutdated;
-      s.game_detail = "the sources changed since the last build: rebuild it";
+      s.game_detail = trs("the sources changed since the last build: rebuild it");
     } else {
       s.game_state = StepState::kDone;
-      s.game_detail = "built: " + folders::Pretty(folders_.exe);
+      s.game_detail = trf(trs("built: {0}"), {folders::Pretty(folders_.exe)});
     }
   }
   s.done = true;
@@ -901,7 +901,7 @@ std::vector<Command> Setup::SourceJob() {
     std::vector<std::string> argv = {"git"};
     argv.insert(argv.end(), kGitOptions.begin(), kGitOptions.end());
     argv.insert(argv.end(), {"submodule", "update", "--init", "--recursive", "--progress"});
-    commands.push_back({"Downloading the source parts (git submodules)", argv, folders_.source});
+    commands.push_back({trs("Downloading the source parts (git submodules)"), argv, folders_.source});
     AddLinkFix(sdk, &commands);
     return commands;
   }
@@ -919,12 +919,12 @@ std::vector<Command> Setup::SourceJob() {
     std::vector<std::string> argv = {"git"};
     argv.insert(argv.end(), kGitOptions.begin(), kGitOptions.end());
     argv.insert(argv.end(), {"submodule", "update", "--init", "--recursive", "--depth", "1"});
-    commands.push_back({"Finishing the SDK's libraries (a download was stopped)", argv, sdk});
+    commands.push_back({trs("Finishing the SDK's libraries (a download was stopped)"), argv, sdk});
     AddLinkFix(sdk, &commands);
     return commands;
   }
   Command clear;
-  clear.title = "Removing the old SDK download";
+  clear.title = trs("Removing the old SDK download");
   clear.function = [sdk](std::string* message) {
     std::error_code ec;
     fs::remove_all(sdk, ec);
@@ -937,12 +937,12 @@ std::vector<Command> Setup::SourceJob() {
     argv.insert(argv.end(), kGitOptions.begin(), kGitOptions.end());
     argv.insert(argv.end(), {"clone", "--depth", "1", "--branch", pin.tag, "--recurse-submodules",
                              "--shallow-submodules", pin.url, sdk.string()});
-    commands.push_back({"Downloading the ReXGlue SDK " + pin.tag + " (and its libraries)", argv,
+    commands.push_back({trf(trs("Downloading the ReXGlue SDK {0} (and its libraries)"), {pin.tag}), argv,
                         folders_.source});
   }
   AddLinkFix(sdk, &commands);
   Command verify;
-  verify.title = "Checking the SDK's version";
+  verify.title = trs("Checking the SDK's version");
   verify.function = [sdk, pin](std::string* message) {
     bool ok = false;
     std::string head = task_runner::Capture({"git", "rev-parse", "HEAD"}, &ok, sdk);
@@ -960,14 +960,14 @@ std::vector<Command> Setup::SourceJob() {
 
 bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string* error) {
   if (iso.empty()) {
-    *error = "Pick your disc image (.iso) first.";
+    *error = trs("Pick your disc image (.iso) first.");
     return false;
   }
   const double free_gb = platform::FreeDiskGb(folders_.root);
   if (free_gb >= 0 && free_gb < 7) {
     char text[160];
     std::snprintf(text, sizeof(text),
-                  "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free.",
+                  trs("Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."),
                   free_gb);
     *error = text;
     return false;
@@ -980,14 +980,14 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
   std::smatch match;
   static const std::regex count(R"(\[xiso\] (\d+) files)");
   if (!ok || !std::regex_search(listing, match, count)) {
-    *error = "That file isn't an Xbox 360 disc image the extractor can read.";
+    *error = trs("That file isn't an Xbox 360 disc image the extractor can read.");
     return false;
   }
   if (listing.find(" default.xex") == std::string::npos) {
-    *error = "That disc image has no default.xex: not a game disc?";
+    *error = trs("That disc image has no default.xex: not a game disc?");
     return false;
   }
-  Command extract{"Extracting the disc into game/",
+  Command extract{trs("Extracting the disc into game/"),
                   {kPython, "-u", (folders_.source / "tools" / "xiso_extract.py").string(),
                    iso.string(), folders_.disc.string()},
                   folders_.root,
@@ -999,17 +999,17 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
   const fs::path xex = folders_.disc / "default.xex";
   const fs::path root = folders_.source;
   Command verify;
-  verify.title = "Checking the game's executable";
+  verify.title = trs("Checking the game's executable");
   verify.function = [xex, root](std::string* message) {
     bool ok = false;
     const std::string info = task_runner::Capture(
         {kPython, (root / "tools" / "xex_info.py").string(), xex.string()}, &ok, root);
     if (info.find("565507FA") == std::string::npos) {
-      *message = "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). "
-                 "The files are in game/; this port only runs that game.";
+      *message = trs("default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). "
+                     "The files are in game/; this port only runs that game.");
       return false;
     }
-    *message = "Title id 565507FA: Crash: Mind over Mutant.";
+    *message = trs("Title id 565507FA: Crash: Mind over Mutant.");
     return true;
   };
   out->push_back(std::move(verify));
@@ -1031,11 +1031,11 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
     // A release's own SDK download, patched by an older set (RunChecks):
     // every tracked file back to the downloaded version. Untracked build
     // output (out/, ignored) stays, so the rebuild is incremental.
-    out->push_back({"Undoing the old patches", {"git", "checkout", "--", "."}, sdk});
-    out->push_back({"Removing files the old patches added", {"git", "clean", "-fd"}, sdk});
+    out->push_back({trs("Undoing the old patches"), {"git", "checkout", "--", "."}, sdk});
+    out->push_back({trs("Removing files the old patches added"), {"git", "clean", "-fd"}, sdk});
   }
   if ((status.patches_applied == 0 || status.sdk_needs_reset) && status.patches_total > 0) {
-    Command apply{"Applying our fixes to the SDK (patches/rexglue-sdk)", {"git", "apply"}, sdk};
+    Command apply{trs("Applying our fixes to the SDK (patches/rexglue-sdk)"), {"git", "apply"}, sdk};
     for (const fs::path& patch : Patches(folders_.source)) {
       apply.argv.push_back(patch.string());
     }
@@ -1050,13 +1050,13 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
                                      "-DCMAKE_INSTALL_PREFIX=" +
                                          (folders_.source / "thirdparty" / "rexglue-install").string()};
     argv.insert(argv.end(), kSdkOptions.begin(), kSdkOptions.end());
-    out->push_back({"Configuring the SDK", argv, sdk});
+    out->push_back({trs("Configuring the SDK"), argv, sdk});
   }
-  out->push_back({"Building the SDK (Release: the recompiler)",
+  out->push_back({trs("Building the SDK (Release: the recompiler)"),
                   {"cmake", "--build", std::string("out/build/") + kSdkPreset, "-j", std::to_string(SdkJobs()), "--config", "Release", "--target",
                    "install"},
                   sdk, Progress::kNinja});
-  out->push_back({"Building the SDK (RelWithDebInfo: the runtime the game uses)",
+  out->push_back({trs("Building the SDK (RelWithDebInfo: the runtime the game uses)"),
                   {"cmake", "--build", std::string("out/build/") + kSdkPreset, "-j", std::to_string(SdkJobs()), "--config", "RelWithDebInfo",
                    "--target", "install"},
                   sdk, Progress::kNinja});
@@ -1064,7 +1064,7 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
   const fs::path stamp = folders_.source / "thirdparty" / "rexglue-install" / kFingerprintFile;
   const std::string fingerprint = PatchFingerprint(Patches(folders_.source));
   Command note;
-  note.title = "Noting which patches the SDK was built with";
+  note.title = trs("Noting which patches the SDK was built with");
   note.function = [stamp, fingerprint](std::string* message) {
     std::ofstream out(stamp, std::ios::trunc);
     out << fingerprint << "\n";
@@ -1084,7 +1084,7 @@ std::vector<Command> Setup::GameJob() {
     const fs::path link = root / "game";
     const fs::path target = folders_.disc;
     Command bridge;
-    bridge.title = "Linking source/game to the disc's files";
+    bridge.title = trs("Linking source/game to the disc's files");
     bridge.function = [link, target](std::string* message) {
       std::error_code ec;
       if (fs::exists(link / "default.xex", ec)) {
@@ -1115,7 +1115,7 @@ std::vector<Command> Setup::GameJob() {
   // ignoring the per-user CMake package list: a build must never use another
   // folder's SDK (see SdkJob); a cached choice is corrected too.
   const Command configure{
-      "Configuring the game's build",
+      trs("Configuring the game's build"),
       {"cmake", "--preset", kGamePreset,
        "-Drexglue_DIR=" +
            (root / "thirdparty" / "rexglue-install" / "lib" / "cmake" / "rexglue").string(),
@@ -1125,14 +1125,14 @@ std::vector<Command> Setup::GameJob() {
   // First time: recompile on its own, then configure again so the build picks
   // the generated files up (docs/01-building.md, step 4).
   if (!Exists(root / "generated" / "default" / "sources.cmake")) {
-    commands.push_back({"Recompiling the game's code (default.xex -> C++)",
+    commands.push_back({trs("Recompiling the game's code (default.xex -> C++)"),
                         {"cmake", "--build", "--preset", kGamePreset, "--target",
                          "crash_mom_codegen"},
                         root, Progress::kNinja});
     commands.push_back(configure);
   }
-  commands.push_back({"Compiling the game (" + std::to_string(GameJobs()) +
-                          " at a time; the first build takes a while)",
+  commands.push_back({trf(trs("Compiling the game ({0} at a time; the first build takes a while)"),
+                          {std::to_string(GameJobs())}),
                       {"cmake", "--build", "--preset", kGamePreset, "-j",
                        std::to_string(GameJobs())},
                       root, Progress::kNinja});
@@ -1143,7 +1143,7 @@ std::vector<Command> Setup::GameJob() {
     const fs::path from = folders_.BuiltExe().parent_path();
     const fs::path to = folders_.root / "program";
     Command install;
-    install.title = "Copying the game into program/";
+    install.title = trs("Copying the game into program/");
     install.function = [from, to](std::string* message) {
       std::error_code ec;
       const fs::path fresh = to.string() + ".new";
@@ -1234,7 +1234,7 @@ void Setup::SetUpEverything(const Status& s, const fs::path& iso) {
     // round with nothing to do ends it (commands empty above); a failed
     // step too (StartJob's on_done).
     continue_setup_ = true;
-    StartJob("Setting up", std::move(commands));
+    StartJob(trs("Setting up"), std::move(commands));
   }
 }
 
@@ -1421,11 +1421,11 @@ void Setup::DrawJob() {
   if (running) {
     ImGui::TextColored(look_->accent, "%s", job_.title.c_str());
   } else if (job_.state == task_runner::State::kDone) {
-    ImGui::TextColored(look_->good, "%s: done", job_.title.c_str());
+    ImGui::TextColored(look_->good, trs("%s: done"), job_.title.c_str());
   } else if (job_.state == task_runner::State::kCancelled) {
-    ImGui::TextColored(look_->warn, "%s: cancelled", job_.title.c_str());
+    ImGui::TextColored(look_->warn, trs("%s: cancelled"), job_.title.c_str());
   } else {
-    ImGui::TextColored(look_->bad, "%s: failed", job_.title.c_str());
+    ImGui::TextColored(look_->bad, trs("%s: failed"), job_.title.c_str());
   }
   ImGui::PopFont();
   if (!running && !job_.error.empty() && job_.state == task_runner::State::kFailed) {
@@ -1438,23 +1438,23 @@ void Setup::DrawJob() {
                 job_.detail.empty() ? "" : "  -  ", job_.detail.c_str());
   ImGui::ProgressBar(float(job_.fraction), {-FLT_MIN, 0}, overlay);
   if (running && job_.cancellable) {
-    if (ImGui::Button("Cancel")) {
+    if (ImGui::Button(trs("Cancel"))) {
       runner_.Cancel();
     }
   } else if (running) {
     // (An in-process step, e.g. an update's swap: stopping it halfway would
     // leave a mix of two versions.)
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(look_->muted, "This step can't be stopped: a few seconds.");
+    ImGui::TextColored(look_->muted, trs("This step can't be stopped: a few seconds."));
   } else {
-    if (ImGui::Button("OK")) {
+    if (ImGui::Button(trs("OK"))) {
       runner_.Forget();
     }
   }
   ImGui::SameLine();
-  ImGui::TextColored(look_->muted, "Log: %s", folders::Pretty(job_.log).c_str());
+  ImGui::TextColored(look_->muted, trs("Log: %s"), folders::Pretty(job_.log).c_str());
   ImGui::SameLine();
-  ImGui::Checkbox("Follow", &follow_);
+  ImGui::Checkbox(trs("Follow"), &follow_);
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4{0.07f, 0.07f, 0.09f, 1.0f});
   ImGui::BeginChild("output", {0, 0}, ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
@@ -1528,8 +1528,8 @@ void Setup::Draw(const Look& look, bool game_running) {
   look_ = &look;
   if (!folders_.from_source) {
     ImGui::PushStyleColor(ImGuiCol_Text, look.muted);
-    ImGui::TextWrapped("Setup builds the game from its source code, so it works from the "
-                       "project's folder (a git clone). This copy is an installed one.");
+    ImGui::TextWrapped(trs("Setup builds the game from its source code, so it works from the "
+                       "project's folder (a git clone). This copy is an installed one."));
     ImGui::PopStyleColor();
     return;
   }
@@ -1550,15 +1550,15 @@ void Setup::Draw(const Look& look, bool game_running) {
                         s.source_state == StepState::kDone && s.disc_state == StepState::kDone &&
                         s.sdk_state == StepState::kDone && s.game_state == StepState::kDone;
   if (checking) {
-    ImGui::TextColored(look.muted, "Checking what's there...");
+    ImGui::TextColored(look.muted, trs("Checking what's there..."));
   } else if (all_done) {
-    ImGui::TextColored(look.good, "Everything is set up: the game is ready to play.");
+    ImGui::TextColored(look.good, trs("Everything is set up: the game is ready to play."));
   } else {
-    ImGui::TextColored(look.warn, "Some steps are left.");
+    ImGui::TextColored(look.warn, trs("Some steps are left."));
   }
   ImGui::SameLine();
   ImGui::BeginDisabled(busy || checking);
-  if (ImGui::SmallButton("Check again")) {
+  if (ImGui::SmallButton(trs("Check again"))) {
     Check();
   }
   ImGui::EndDisabled();
@@ -1574,16 +1574,16 @@ void Setup::Draw(const Look& look, bool game_running) {
                      (s.disc_state == StepState::kDone || !iso.empty()) &&
                      s.sdk_state != StepState::kBlocked;
     ImGui::BeginDisabled(!can);
-    if (ImGui::Button("Set up everything")) {
+    if (ImGui::Button(trs("Set up everything"))) {
       SetUpEverything(s, iso);
     }
     ImGui::EndDisabled();
     if (s.tools_state != StepState::kDone && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-      ImGui::SetTooltip("Install the missing build tools first (step 1).");
+      ImGui::SetTooltip(trs("Install the missing build tools first (step 1)."));
     }
   }
   if (game_running) {
-    ImGui::TextColored(look.warn, "The game is running: building waits until it's closed.");
+    ImGui::TextColored(look.warn, trs("The game is running: building waits until it's closed."));
   }
   if (!message_.empty()) {
     ImGui::PushStyleColor(ImGuiCol_Text, look.warn);
@@ -1596,28 +1596,28 @@ void Setup::Draw(const Look& look, bool game_running) {
   ImGui::BeginChild("steps", {steps_width, 0}, ImGuiChildFlags_None);
 
   // 1. Tools: listed only (setup.h).
-  DrawStep(1, "Build tools", checking ? StepState::kChecking : s.tools_state,
-           s.tools_state == StepState::kDone ? "everything needed to build is installed" : "");
+  DrawStep(1, trs("Build tools"), checking ? StepState::kChecking : s.tools_state,
+           s.tools_state == StepState::kDone ? trs("everything needed to build is installed") : "");
   if (!checking) {
     ImGui::Indent(ImGui::GetFontSize() * 1.4f);
     if (ImGui::BeginTable("tools", 3, ImGuiTableFlags_SizingFixedFit)) {
       for (const Tool& tool : s.tools) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        ImGui::TextColored(tool.found ? look.good : look.bad, "%s", tool.found ? "found" : "missing");
+        ImGui::TextColored(tool.found ? look.good : look.bad, "%s", tool.found ? trs("found") : trs("missing"));
         ImGui::TableNextColumn();
         ImGui::TextUnformatted(tool.label.c_str());
         ImGui::TableNextColumn();
         ImGui::TextColored(look.muted, "%s%s%s", tool.detail.c_str(),
-                           !tool.found && !tool.package.empty() ? "  -  package: " : "",
+                           !tool.found && !tool.package.empty() ? trs("  -  package: ") : "",
                            !tool.found ? tool.package.c_str() : "");
       }
       ImGui::EndTable();
     }
     if (s.tools_state != StepState::kDone) {
       ImGui::PushStyleColor(ImGuiCol_Text, look.muted);
-      ImGui::TextWrapped("Install the missing ones with your package manager (the package names "
-                         "above are %s's), then press Check again.",
+      ImGui::TextWrapped(trs("Install the missing ones with your package manager (the package names "
+                         "above are %s's), then press Check again."),
                          s.distro.c_str());
       ImGui::PopStyleColor();
     }
@@ -1625,27 +1625,27 @@ void Setup::Draw(const Look& look, bool game_running) {
   }
 
   // 2. Source parts.
-  DrawStep(2, "Source parts", checking ? StepState::kChecking : s.source_state, s.source_detail);
+  DrawStep(2, trs("Source parts"), checking ? StepState::kChecking : s.source_state, s.source_detail);
   if (!checking && s.source_state != StepState::kDone) {
     ImGui::Indent(ImGui::GetFontSize() * 1.4f);
     ImGui::BeginDisabled(busy || s.tools_state != StepState::kDone);
-    if (ImGui::Button("Download them")) {
-      StartJob("Source parts", SourceJob());
+    if (ImGui::Button(trs("Download them"))) {
+      StartJob(trs("Source parts"), SourceJob());
     }
     ImGui::EndDisabled();
     ImGui::Unindent(ImGui::GetFontSize() * 1.4f);
   }
 
   // 3. Disc.
-  DrawStep(3, "Your disc", checking ? StepState::kChecking : s.disc_state, s.disc_detail);
+  DrawStep(3, trs("Your disc"), checking ? StepState::kChecking : s.disc_state, s.disc_detail);
   if (!checking && s.disc_state != StepState::kDone) {
     ImGui::Indent(ImGui::GetFontSize() * 1.4f);
     if (!iso.empty()) {
-      ImGui::TextColored(look.muted, "Disc image: %s", folders::Pretty(iso).c_str());
+      ImGui::TextColored(look.muted, trs("Disc image: %s"), folders::Pretty(iso).c_str());
     }
     ImGui::BeginDisabled(busy);
-    if (ImGui::Button("Pick the disc image...")) {
-      static const SDL_DialogFileFilter kFilters[] = {{"Xbox 360 disc image", "iso"}};
+    if (ImGui::Button(trs("Pick the disc image..."))) {
+      static const SDL_DialogFileFilter kFilters[] = {{trs("Xbox 360 disc image"), "iso"}};
       static std::string root_text;  // SDL keeps the pointer until the dialog opens
       root_text = folders_.root.string();
       SDL_ShowOpenFileDialog(
@@ -1660,58 +1660,58 @@ void Setup::Draw(const Look& look, bool game_running) {
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(iso.empty() || s.tools_state != StepState::kDone);
-    if (ImGui::Button("Extract it")) {
+    if (ImGui::Button(trs("Extract it"))) {
       std::vector<Command> commands;
       std::string error;
       if (DiscJob(iso, &commands, &error)) {
-        StartJob("Disc", std::move(commands));
+        StartJob(trs("Disc"), std::move(commands));
       } else {
         message_ = error;
       }
     }
     ImGui::EndDisabled();
     ImGui::EndDisabled();
-    ImGui::TextColored(look.muted, "Your own dump of the disc (a full one is 7.8 GB); the game's "
-                                   "files (6 GB) go into game/.");
+    ImGui::TextColored(look.muted, trs("Your own dump of the disc (a full one is 7.8 GB); the game's "
+                                   "files (6 GB) go into game/."));
     ImGui::Unindent(ImGui::GetFontSize() * 1.4f);
   }
 
   // 4. SDK.
-  DrawStep(4, "ReXGlue SDK", checking ? StepState::kChecking : s.sdk_state, s.sdk_detail);
+  DrawStep(4, trs("ReXGlue SDK"), checking ? StepState::kChecking : s.sdk_state, s.sdk_detail);
   if (!checking && s.sdk_state != StepState::kDone && s.sdk_state != StepState::kBlocked) {
     ImGui::Indent(ImGui::GetFontSize() * 1.4f);
     ImGui::BeginDisabled(busy || game_running || s.tools_state != StepState::kDone ||
                          s.source_state != StepState::kDone);
-    if (ImGui::Button(s.sdk_state == StepState::kOutdated ? "Rebuild the SDK" : "Build the SDK")) {
+    if (ImGui::Button(s.sdk_state == StepState::kOutdated ? trs("Rebuild the SDK") : trs("Build the SDK"))) {
       std::vector<Command> commands;
       std::string error;
       if (SdkJob(&commands, &error)) {
-        StartJob("ReXGlue SDK", std::move(commands));
+        StartJob(trs("ReXGlue SDK"), std::move(commands));
       } else {
         message_ = error;
       }
     }
     ImGui::EndDisabled();
-    ImGui::TextColored(look.muted, "A few minutes.");
+    ImGui::TextColored(look.muted, trs("A few minutes."));
     ImGui::Unindent(ImGui::GetFontSize() * 1.4f);
   }
 
   // 5. The game.
-  DrawStep(5, "The game", checking ? StepState::kChecking : s.game_state, s.game_detail);
+  DrawStep(5, trs("The game"), checking ? StepState::kChecking : s.game_state, s.game_detail);
   if (!checking) {
     ImGui::Indent(ImGui::GetFontSize() * 1.4f);
     ImGui::BeginDisabled(busy || game_running || s.sdk_state != StepState::kDone ||
                          s.disc_state != StepState::kDone);
-    const char* label = s.game_state == StepState::kMissing ? "Build the game"
-                        : s.game_state == StepState::kOutdated ? "Rebuild (update)"
-                                                               : "Rebuild";
+    const char* label = s.game_state == StepState::kMissing ? trs("Build the game")
+                        : s.game_state == StepState::kOutdated ? trs("Rebuild (update)")
+                                                               : trs("Rebuild");
     if (ImGui::Button(label)) {
-      StartJob("The game", GameJob());
+      StartJob(trs("The game"), GameJob());
     }
     ImGui::EndDisabled();
-    ImGui::TextColored(look.muted, "%d compile jobs at a time (from the RAM free now: close big "
+    ImGui::TextColored(look.muted, trs("%d compile jobs at a time (from the RAM free now: close big "
                                    "programs first for a faster build). The first build takes a "
-                                   "while; later ones only redo what changed.",
+                                   "while; later ones only redo what changed."),
                        GameJobs());
     ImGui::Unindent(ImGui::GetFontSize() * 1.4f);
   }

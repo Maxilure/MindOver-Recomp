@@ -10,12 +10,14 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
 #include <imgui.h>
 
 #include <rex/logging.h>
 #include <rex/ui/imgui_dialog.h>
 #include <rex/ui/imgui_drawer.h>
 
+#include "../language/texts.h"
 #include "../overlay_banner.h"
 #include "../players/more_players.h"
 #include "bindings.h"
@@ -46,7 +48,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
   void Toggle() {
     kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
     if (!driver) {
-      overlay_banner::Show("NO KEYBOARD CONTROLS", "--keyboard_mouse=false");
+      overlay_banner::Show(trs("NO KEYBOARD CONTROLS"), "--keyboard_mouse=false");
       return;
     }
     std::lock_guard<std::mutex> lock(mutex_);
@@ -74,7 +76,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     ImGui::SetNextWindowSize(size, ImGuiCond_Appearing);
     ImGui::SetNextWindowBgAlpha(0.94f);
     bool still_open = true;
-    if (ImGui::Begin("Controls###crashmom_controls", &still_open,
+    if (ImGui::Begin((std::string(trs("Controls")) + "###crashmom_controls").c_str(), &still_open,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings)) {
       DrawContents(driver);
     }
@@ -104,7 +106,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
   void DrawContents(kbm::KeyboardMouseDriver* driver) {
     const float base = ImGui::GetStyle().FontSizeBase;
     ImGui::PushFont(nullptr, base * 1.5f);
-    ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.25f, 1.0f), "Controls");
+    ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.25f, 1.0f), "%s", trs("Controls"));
     ImGui::PopFont();
 
     // Two tabs: the keys, and who plays as which player. The bottom line
@@ -112,11 +114,11 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     const float bottom = ImGui::GetFrameHeightWithSpacing() + base * 0.5f;
     if (ImGui::BeginChild("##tabs", ImVec2(0.0f, -bottom))) {
       if (ImGui::BeginTabBar("##controls_tabs")) {
-        if (ImGui::BeginTabItem("Keys")) {
+        if (ImGui::BeginTabItem((std::string(trs("Keys")) + "###keys").c_str())) {
           DrawKeysTab(driver);
           ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Players")) {
+        if (ImGui::BeginTabItem((std::string(trs("Players")) + "###players").c_str())) {
           DrawPlayersTab(driver);
           ImGui::EndTabItem();
         }
@@ -125,7 +127,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     }
     ImGui::EndChild();
 
-    if (ImGui::Button("Close")) {
+    if (ImGui::Button(trs("Close"))) {
       SetOpen(driver, false);
       return;
     }
@@ -137,10 +139,10 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
   void DrawKeysTab(kbm::KeyboardMouseDriver* driver) {
     const float base = ImGui::GetStyle().FontSizeBase;
     ImGui::TextWrapped(
-        "Click a key to change it, then press the new key or mouse button (Esc cancels). "
+        "%s", trs("Click a key to change it, then press the new key or mouse button (Esc cancels). "
         "Right-click a key to remove it. The game's button prompts show Xbox buttons: the "
         "middle column says which one each action presses. A controller works at the same "
-        "time.");
+        "time."));
     ImGui::Spacing();
 
     // The list scrolls; the sliders and the reset button stay.
@@ -153,27 +155,27 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     // Tunables: applied while dragging, saved on release.
     ImGui::Separator();
     ImGui::SetNextItemWidth(220.0f);
-    ImGui::SliderFloat("Spin held (spins per second)",
+    ImGui::SliderFloat(trs("Spin held (spins per second)"),
                        &edit_.settings.spin_turns_per_second, 1.5f, 6.0f, "%.1f");
     if (ImGui::IsItemEdited()) driver->SetBindings(edit_);
-    if (ImGui::IsItemDeactivatedAfterEdit()) Save("Spin speed saved.");
+    if (ImGui::IsItemDeactivatedAfterEdit()) Save(trs("Spin speed saved."));
     ImGui::SetItemTooltip(
-        "While Spin is held, how often it counts as one more spin (a press is one at once). "
-        "On a controller each full circle of the left stick is one.");
+        "%s", trs("While Spin is held, how often it counts as one more spin (a press is one at once). "
+        "On a controller each full circle of the left stick is one."));
     ImGui::SetNextItemWidth(220.0f);
-    ImGui::SliderFloat("Walk (how far the stick leans)", &edit_.settings.walk_tilt,
+    ImGui::SliderFloat(trs("Walk (how far the stick leans)"), &edit_.settings.walk_tilt,
                        kbm::kWalkTiltMin, kbm::kWalkTiltMax, "%.2f");
     if (ImGui::IsItemEdited()) driver->SetBindings(edit_);
-    if (ImGui::IsItemDeactivatedAfterEdit()) Save("Walk saved.");
+    if (ImGui::IsItemDeactivatedAfterEdit()) Save(trs("Walk saved."));
 
-    if (ImGui::Button("Reset keys to defaults")) {
+    if (ImGui::Button(trs("Reset keys to defaults"))) {
       capturing_ = false;
       driver->CancelCapture();
       auto players = std::move(edit_.players);  // the Players tab's choices stay
       edit_ = kbm::Bindings::Defaults();
       edit_.players = std::move(players);
       driver->SetBindings(edit_);
-      Save("Back to the default keys.");
+      Save(trs("Back to the default keys."));
     }
   }
 
@@ -181,23 +183,23 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
   void DrawPlayersTab(kbm::KeyboardMouseDriver* driver) {
     kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get();
     if (!players) {
-      ImGui::TextWrapped("Player assignment isn't available in this run.");
+      ImGui::TextWrapped("%s", trs("Player assignment isn't available in this run."));
       return;
     }
     ImGui::TextWrapped(
-        "Which device plays as which player. For two players: keyboard and mouse on "
+        "%s", trs("Which device plays as which player. For two players: keyboard and mouse on "
         "Player 1, a controller on Player 2. In a level, press Start on the second "
         "device to join (the pause menu also offers Join Game and Drop Out). Moving a "
         "device onto a player swaps it with the device that was there. In the title "
-        "and main menus every device works. Changes apply at once and are remembered.");
+        "and main menus every device works. Changes apply at once and are remembered."));
     ImGui::Spacing();
 
     const auto devices = players->Devices();  // refreshed every frame: plug in a pad any time
     const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
                                   ImGuiTableFlags_SizingStretchProp;
     if (ImGui::BeginTable("##players", 2, flags)) {
-      ImGui::TableSetupColumn("Device", ImGuiTableColumnFlags_WidthStretch, 1.6f);
-      ImGui::TableSetupColumn("Plays as", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+      ImGui::TableSetupColumn(trs("Device"), ImGuiTableColumnFlags_WidthStretch, 1.6f);
+      ImGui::TableSetupColumn(trs("Plays as"), ImGuiTableColumnFlags_WidthStretch, 1.0f);
       ImGui::TableHeadersRow();
       for (const auto& dev : devices) {
         ImGui::TableNextRow();
@@ -213,7 +215,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     }
     if (devices.size() <= 1) {
       ImGui::Spacing();
-      ImGui::TextDisabled("No controller connected. Connect one: it shows up here.");
+      ImGui::TextDisabled("%s", trs("No controller connected. Connect one: it shows up here."));
     }
   }
 
@@ -222,12 +224,12 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
                        const kbm::PlayerAssignment::Device& dev) {
     // Choice -> text. Automatic says what it gives right now.
     auto text = [&](int choice) -> std::string {
-      if (choice == kbm::kPlayerOff) return "Off (not used)";
+      if (choice == kbm::kPlayerOff) return trs("Off (not used)");
       if (choice == kbm::kPlayerAuto) {
-        return dev.player >= 0 ? "Automatic (Player " + std::to_string(dev.player + 1) + ")"
-                               : std::string("Automatic (not used)");
+        return dev.player >= 0 ? fmt::format(fmt::runtime(trs("Automatic (Player {})")), dev.player + 1)
+                               : std::string(trs("Automatic (not used)"));
       }
-      return "Player " + std::to_string(choice + 1);
+      return fmt::format(fmt::runtime(trs("Player {}")), choice + 1);
     };
     // The keyboard has no "automatic" (it's player 1 unless moved).
     const int shown = dev.keyboard && dev.choice == kbm::kPlayerAuto ? 0 : dev.choice;
@@ -255,7 +257,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
           }
           message += (message.empty() ? "" : " ") + change.name + ": " +
                      (change.key == dev.key ? text(option)
-                                            : "Player " + std::to_string(change.choice + 1)) +
+                                            : fmt::format(fmt::runtime(trs("Player {}")), change.choice + 1)) +
                      ".";
         }
         driver->SetBindings(edit_);
@@ -272,10 +274,10 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     if (!ImGui::BeginTable("##keys", 4, flags)) {
       return;
     }
-    ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch, 1.6f);
+    ImGui::TableSetupColumn(trs("Action"), ImGuiTableColumnFlags_WidthStretch, 1.6f);
     ImGui::TableSetupColumn("Xbox 360", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableSetupColumn("Key 1", ImGuiTableColumnFlags_WidthStretch, 1.1f);
-    ImGui::TableSetupColumn("Key 2", ImGuiTableColumnFlags_WidthStretch, 1.1f);
+    ImGui::TableSetupColumn(trs("Key 1"), ImGuiTableColumnFlags_WidthStretch, 1.1f);
+    ImGui::TableSetupColumn(trs("Key 2"), ImGuiTableColumnFlags_WidthStretch, 1.1f);
     ImGui::TableHeadersRow();
 
     kbm::Group group = kbm::Group::kOther;
@@ -287,27 +289,27 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         ImGui::Spacing();
-        ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.25f, 1.0f), "%s", kbm::GroupLabel(group));
+        ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.25f, 1.0f), "%s", trs(kbm::GroupLabel(group)));
       }
       ImGui::TableNextRow();
       ImGui::PushID(a);
 
       ImGui::TableSetColumnIndex(0);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(info.label);
+      ImGui::TextUnformatted(trs(info.label));
       // Menu-only actions: marked, since their keys may also have a job in
       // play (bindings.h "PLAY AND MENUS").
       if (info.context == kbm::Context::kMenu) {
         ImGui::SameLine();
-        ImGui::TextDisabled("(menus)");
+        ImGui::TextDisabled("%s", trs("(menus)"));
       }
       if (info.hint[0]) {
-        ImGui::SetItemTooltip("%s", info.hint);
+        ImGui::SetItemTooltip("%s", trs(info.hint));
       }
 
       ImGui::TableSetColumnIndex(1);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextColored(PadColour(info.pad), "%s", info.pad);
+      ImGui::TextColored(PadColour(info.pad), "%s", trs(info.pad));
 
       for (int slot = 0; slot < kbm::kSlots; ++slot) {
         ImGui::TableSetColumnIndex(2 + slot);
@@ -326,7 +328,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     const Input key = edit_.keys[action][slot];
     std::string label;
     if (this_one) {
-      label = "press a key...";
+      label = trs("press a key...");
       // Gentle pulse so it's obvious the menu is waiting.
       const float t = float(ImGui::GetTime());
       const float glow = 0.55f + 0.25f * std::sin(t * 6.0f);
@@ -343,7 +345,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
         capturing_ = true;
         capture_action_ = action;
         capture_slot_ = slot;
-        message_ = std::string("Press the new key for ") + kbm::Info(action).label + ".";
+        message_ = fmt::format(fmt::runtime(trs("Press the new key for {}.")), trs(kbm::Info(action).label));
         // Called on the UI thread from the driver's key / mouse handler,
         // outside OnDraw (so taking mutex_ there is fine).
         driver->Capture([this, action, slot](Input input) { OnCaptured(action, slot, input); });
@@ -354,7 +356,7 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     } else if (ImGui::IsItemClicked(ImGuiMouseButton_Right) && key != kbm::kNoInput) {
       edit_.Assign(action, slot, kbm::kNoInput);
       driver->SetBindings(edit_);
-      Save(kbm::InputLabel(key) + " removed from " + kbm::Info(action).label + ".");
+      Save(fmt::format(fmt::runtime(trs("{0} removed from {1}.")), kbm::InputLabel(key), trs(kbm::Info(action).label)));
     }
   }
 
@@ -367,23 +369,22 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
       return;
     }
     if (input == kbm::kNoInput) {
-      message_ = "Cancelled.";
+      message_ = trs("Cancelled.");
       return;
     }
     const Action previous = edit_.Assign(action, slot, input);
     driver->SetBindings(edit_);
-    std::string text = kbm::InputLabel(input) + " -> " + kbm::Info(action).label;
-    if (previous != kbm::kActionCount) {
-      text += std::string(" (taken from ") + kbm::Info(previous).label + ")";
-    }
-    Save(text + ".");
+    Save(previous != kbm::kActionCount
+             ? fmt::format(fmt::runtime(trs("{0} -> {1} (taken from {2}).")), kbm::InputLabel(input),
+                           trs(kbm::Info(action).label), trs(kbm::Info(previous).label))
+             : fmt::format(fmt::runtime(trs("{0} -> {1}.")), kbm::InputLabel(input), trs(kbm::Info(action).label)));
   }
 
   // mutex_ held.
   void Save(std::string message) {
     message_ = kbm::SaveBindings(edit_, kbm::ControlsFilePath())
                    ? std::move(message)
-                   : std::string("Couldn't save the controls file (see the log).");
+                   : std::string(trs("Couldn't save the controls file (see the log)."));
   }
 
   mutable std::mutex mutex_;  // UI thread mostly; the capture callback too
