@@ -155,7 +155,7 @@ The game's own code already runs natively. What's still emulated is the **Xbox 3
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
-**Xbox services replaced: 17 of 66 (26%)** `▰▰▰▱▱▱▱▱▱▱`
+**Xbox services replaced: 24 of 66 (36%)** `▰▰▰▰▱▱▱▱▱▱`
 
 | Xbox piece | Replaced | Becomes |
 |---|---|---|
@@ -163,8 +163,8 @@ The game's own code already runs natively. What's still emulated is the **Xbox 3
 | Profiles and sign-in | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | no profiles at all: who plays = which controllers play |
 | Saves and storage | `▰▰▰▰▰▰▰▰▰▰` 11 / 11 | plain save files in one folder: no storage devices, no content packages |
 | Controllers | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the input manager fed directly (keyboard and mouse, any SDL controller, rumble) |
-| Sound output | `▱▱▱▱▱▱▱▱▱▱` 0 / 5 | each mixed frame straight to the PC's audio |
-| XMA sound decoder | `▱▱▱▱▱▱▱▱▱▱` 0 / 2 | a software decoder instead of the emulated sound chip |
+| Sound output | `▰▰▰▰▰▰▰▰▰▰` 5 / 5 | each mixed frame straight to the PC's audio |
+| XMA sound decoder | `▰▰▰▰▰▰▰▰▰▰` 2 / 2 | a software decoder instead of the emulated sound chip |
 | System pop-ups and notifications | `▰▰▰▰▱▱▱▱▱▱` 2 / 5 | PC behaviour (the port's own messages); gone once profiles and saves are native |
 | System messages (achievements, ...) | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the port's own handlers |
 | Console settings | `▱▱▱▱▱▱▱▱▱▱` 0 / 8 | the port's settings (language, region, video mode) |

@@ -289,21 +289,90 @@ address = 0x8227B04C
 name = "CrashMomPassDelta"
 registers = ["f31"]
 
-# AUDIO DUMP (src/audio_trace.cpp, --debug_audio_dump). The XDK's audio
-# render thread hands every mixed frame (256 samples x 6 channels, big-endian
-# floats, one whole channel after another) to the kernel here:
-#   0x824819E8  lwz r4,88(r1)       ; the frame
-#   0x824819EC  lwz r3,24(r31)      ; the render driver handle
-#   0x824819F0  bl  0x824BC2BC      ; XAudioSubmitRenderDriverFrame
-# That kernel export is called directly (there is no weak sub_ to override),
-# so this hook sees r4 right before the call and copies the frame into a WAV
-# file. It only reads r4.
-# Found 2026-09-27 (a missing voice line in a cutscene): the one call site of
-# __imp__XAudioSubmitRenderDriverFrame in the generated code.
+# SOUND OUT (src/audio/sound_out.cpp, docs/findings/54) + AUDIO DUMP
+# (src/audio_trace.cpp, --debug_audio_dump). Microsoft's XAudio library
+# (statically linked) mixes every sound into blocks of 256 samples x 6
+# channels (big-endian floats, one whole channel after another) and talks to
+# the console's "render driver" through three kernel calls, each made from
+# ONE instruction (no weak sub_ to override: kernel exports called directly):
+#   0x824817C4  bl 0x824BC29C  XAudioRegisterRenderDriverClient (sub_82481768)
+#               r3 = {callback, argument}, r4 = where the handle goes
+#   0x824819F0  bl 0x824BC2BC  XAudioSubmitRenderDriverFrame (sub_824819A8)
+#               r3 = handle (lwz r3,24(r31)), r4 = the block (lwz r4,88(r1))
+#   0x82481794  bl 0x824BC2AC  XAudioUnregisterRenderDriverClient (re-register
+#               in sub_82481768), r3 = handle; result checked at 0x82481798
+#   0x8248190C  the same call in the destructor sub_82481890; checked at
+#               0x82481910
+# The hooks answer them with OUR output (r3 = 0 = success) and jump over the
+# kernel call; with --sound_out_native=false they return false and the SDK's
+# fake Xbox answers as before. The submit hook also copies the block into
+# the audio dump when it's on (either path).
+# Found 2026-09-27 (dump: a missing voice line) + 2026-10-31 (going native):
+# the one call site of each __imp__XAudio*RenderDriver* in the generated code,
+# checked with xexdis.
+[[entrypoint.midasm_hook]]
+address = 0x824817C4
+name = "CrashMomSoundRegister"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x824817C8
+
 [[entrypoint.midasm_hook]]
 address = 0x824819F0
-name = "CrashMomAudioFrame"
-registers = ["r4"]
+name = "CrashMomSoundSubmit"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x824819F4
+
+[[entrypoint.midasm_hook]]
+address = 0x82481794
+name = "CrashMomSoundUnregister"
+registers = ["r3"]
+jump_address_on_true = 0x82481798
+
+[[entrypoint.midasm_hook]]
+address = 0x8248190C
+name = "CrashMomSoundUnregister"
+registers = ["r3"]
+jump_address_on_true = 0x82481910
+
+# SOUND OUT, the per-block questions (src/audio/sound_out.cpp). XAudio's
+# mixer (sub_8247F088) asks before EVERY block "did a voice category's volume
+# change?" and, for each bit set, "what's category N's volume?":
+#   0x8247F0C0  bl 0x824BC25C  XAudioGetVoiceCategoryVolumeChangeMask
+#               r3 = handle (lwz r3,24(r10)), r4 = the mask out (this+140);
+#               result checked at 0x8247F0C4 onward (cmpwi r3,0)
+#   0x8247F0F0  bl 0x824BC24C  XAudioGetVoiceCategoryVolume
+#               r3 = category (0-1), r4 = float out (this+132+4N)
+# The console's own volume categories (dashboard settings) don't exist on a
+# PC: the answers are "nothing changed" / 1.0, as the SDK gave (it also slept
+# 1 us per block). Only for our handle; the SDK answers its own.
+# Found 2026-10-31 with the Xbox calls meter (11,250 calls a minute).
+[[entrypoint.midasm_hook]]
+address = 0x8247F0C0
+name = "CrashMomSoundVolumeChanges"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x8247F0C4
+
+[[entrypoint.midasm_hook]]
+address = 0x8247F0F0
+name = "CrashMomSoundCategoryVolume"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x8247F0F4
+
+# XMA DECODED BY THE PORT (src/audio/xma_native.cpp, docs/findings/54 s.5).
+# Radical's audio::hal::hw::XmaDecoder (the only user of the Xbox's XMA chip
+# in this game) creates its chip context in its constructor sub_8234BE88:
+#   0x8234C08C  lbz r3,1(r11)      ; stream count (header +1)
+#   0x8234C090  bl  0x8247D4F0     ; XMA context(s) -> object +0x20 (r6 = r29)
+#   0x8234C094  mr  r3,r28         ; (its result isn't used)
+# r31 = the object. The hook registers the object for our decoder and jumps
+# over the call: no context, the object's feed / pull / seek are ours
+# (sub_8234C220 / sub_8234C398 / sub_8234C740 overridden in that file).
+# Found 2026-10-31: a counter on sub_8247D4F0 saw only this caller in play.
+[[entrypoint.midasm_hook]]
+address = 0x8234C090
+name = "CrashMomXmaNoContext"
+registers = ["r31"]
+jump_address_on_true = 0x8234C094
 
 # SAVE NAMES UP TO 16 CHARACTERS IN THE GAME'S NAME SCREEN (src/saves/
 # save_library.cpp, findings/24 section 6). The name entry screen's "type the

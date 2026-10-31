@@ -47,6 +47,9 @@ set(CRASHMOM_SOURCES
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
+    src/audio/sound_out.cpp      # the game's mixed 5.1 sound played by our own SDL output (findings/54)
+    src/audio/xma_native.cpp     # the game's XMA sounds unpacked by our own decoder, no emulated chip (findings/54)
+    src/audio/xma_stream.cpp     # the decoder core: XMA2 blocks -> 16-bit PCM per stream (FFmpeg frame decoder)
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
@@ -276,6 +279,11 @@ target_include_directories(crash_mom PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/shaders
 target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/renderdoc)
 # stb_image (PNG reader) for players 3-4's marker pictures (src/players/more_players_markers.cpp).
 target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/stb)
+# FFmpeg's XMA frame decoder (src/audio/xma_native.cpp): the SDK's own static
+# FFmpeg build (installed as rex::libavcodec / rex::libavutil; its copy inside
+# librexruntime is not exported), headers from the SDK's FFmpeg source tree.
+target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/FFmpeg)
+target_link_libraries(crash_mom PRIVATE rex::libavcodec rex::libavutil)
 
 # Copy ReXGlue's shared libraries next to the executable (Linux and Windows).
 # The SDK already sets the executable's library search path to its own
@@ -329,3 +337,9 @@ add_dependencies(crash_mom_stage_assets crash_mom)  # the exe's folder exists by
 add_executable(xexdis EXCLUDE_FROM_ALL tools/xexdis/xexdis.cpp)
 target_include_directories(xexdis PRIVATE thirdparty/rexglue-sdk/thirdparty/disasm)
 target_link_libraries(xexdis PRIVATE rex::runtime rex::disasm)
+
+# xma_test: the port's XMA decoder core on one .rsd file, outside the game
+# (tools/xma_test/xma_test.cpp, docs/findings/54 s.5).
+add_executable(xma_test tools/xma_test/xma_test.cpp src/audio/xma_stream.cpp)
+target_include_directories(xma_test PRIVATE src thirdparty/rexglue-sdk/thirdparty/FFmpeg)
+target_link_libraries(xma_test PRIVATE rex::libavcodec rex::libavutil)

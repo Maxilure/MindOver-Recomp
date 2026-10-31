@@ -119,6 +119,21 @@ KERNEL_BASICS = [
 # Every entry: why it's done + where (file), checked with the Xbox calls meter.
 # -----------------------------------------------------------------------------
 DONE = {
+    # XMA decoder (2026-10-31, src/audio/xma_native.* + xma_stream.*): the
+    # game's only XMA user, Radical's XmaDecoder stream, decodes with our
+    # software decoder; its context is never created (midasm 0x8234C090).
+    # Meter: 0 calls in 3 minutes of play (was ~170 a minute).
+    "XMACreateContext": "xma_native.cpp: CrashMomXmaNoContext 0x8234C090",
+    "XMAReleaseContext": "xma_native.cpp: sub_8247D6F0 (no context to release)",
+    # Sound output (2026-10-31, src/audio/sound_out.*): the game's XAudio
+    # render driver is answered by our own SDL output (manifest SOUND OUT
+    # midasm hooks at the one call site of each); checked with the meter: 0
+    # calls in a minute of play (was 187 blocks/s).
+    "XAudioRegisterRenderDriverClient": "sound_out.cpp: 0x824817C4",
+    "XAudioSubmitRenderDriverFrame": "sound_out.cpp: 0x824819F0",
+    "XAudioUnregisterRenderDriverClient": "sound_out.cpp: 0x82481794, 0x8248190C",
+    "XAudioGetVoiceCategoryVolumeChangeMask": "sound_out.cpp: 0x8247F0C0",
+    "XAudioGetVoiceCategoryVolume": "sound_out.cpp: 0x8247F0F0",
     # Profiles and sign-in (2026-10-10, src/players/who_plays.*): the game's
     # sign-in functions replaced by PC versions ("who plays" = which
     # controllers play; no profile, name, settings or sign-in pop-up). Their

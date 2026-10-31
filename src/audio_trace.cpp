@@ -335,8 +335,8 @@ extern "C" REX_FUNC(sub_82336430) {
               audio_trace::DumpTime());
 }
 
-// --debug_audio_dump: one mixed frame on its way to the kernel (manifest
-// midasm hook at 0x824819F0, r4 = the frame). Game's audio thread.
+// --debug_audio_dump: one mixed frame on its way out (called by the manifest
+// hook CrashMomSoundSubmit at 0x824819F0, sound_out.cpp; r4 = the frame).
 void CrashMomAudioFrame(PPCRegister& r4) {
   std::FILE* file = audio_trace::g_dump;
   if (!file) {
