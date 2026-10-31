@@ -14,7 +14,6 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
-#include <ctime>
 #include <string>
 
 #include <fmt/format.h>
@@ -987,25 +986,6 @@ std::u16string Utf16(std::string_view s) {
   return out;
 }
 
-// "12 Oct 2026" (the player's own time zone).
-std::u16string DateText(int64_t unix_seconds) {
-  const std::time_t t = std::time_t(unix_seconds);
-  std::tm tm{};
-#if defined(_WIN32)
-  localtime_s(&tm, &t);
-#else
-  localtime_r(&t, &tm);
-#endif
-  // The month's short name in the text language (strftime's %b would be
-  // the system's English one).
-  static const char16_t* const kMonths[] = {
-      trn(u"Jan"), trn(u"Feb"), trn(u"Mar"), trn(u"Apr"), trn(u"May"), trn(u"Jun"),
-      trn(u"Jul"), trn(u"Aug"), trn(u"Sep"), trn(u"Oct"), trn(u"Nov"), trn(u"Dec")};
-  const auto num = [](int n) { const std::string s = std::to_string(n); return std::u16string(s.begin(), s.end()); };
-  // TR: a date: {0} = the day (1-31), {1} = the month's short name, {2} = the year.
-  return trf(tr(u"{0} {1} {2}"), {num(tm.tm_mday), tr(kMonths[std::clamp(tm.tm_mon, 0, 11)]), num(tm.tm_year + 1900)});
-}
-
 // A text's box placed so that, drawn at `scale` around the box's centre,
 // its LEFT (right_edge false) or RIGHT edge lands at x; `y` = the box's
 // bottom as in the data.
@@ -1064,12 +1044,14 @@ void RefreshAchievements(Env& env) {
     const std::u16string name = Utf16(a.name);
     scrooby::SetText(ctx, base, c.name, name);
     scrooby::SetColour(ctx, base, c.name, selected ? kAchYellow : a.unlocked ? kAchGreen : kLockedName);
-    // TR: {0} = the date it was earned ("12 Oct 2026").
-    const std::u16string state = a.unlocked ? trf(tr(u"Earned {0}"), {DateText(a.unlocked_at)}) : tr(u"Locked");
+    // State on the right: "Locked" only. An earned card shows no date (it
+    // told the player nothing useful; the green name + full-colour picture
+    // already say "earned"), so its name gets the whole line.
+    const std::u16string state = a.unlocked ? std::u16string() : tr(u"Locked");
     // The name gets the line up to the state (a gap of 16): smaller when it
-    // doesn't fit ("Would You Like Fries With That?" ran into the date).
+    // doesn't fit ("Would You Like Fries With That?" ran into the state).
     {
-      const float room = kAchTextRight - TextWidth(state, kAchStateScale) - 16 - kAchTextLeft;
+      const float room = kAchTextRight - (state.empty() ? 0.0f : TextWidth(state, kAchStateScale) + 16) - kAchTextLeft;
       const float w = TextWidth(name, 1.0f);
       const float scale = w > room && w > 0 ? std::max(0.6f, room / w) : 1.0f;
       PlaceScaled(ctx, base, c.name, kAchTextLeft, card_top - 38, kAchTextRight - kAchTextLeft, scale, false);

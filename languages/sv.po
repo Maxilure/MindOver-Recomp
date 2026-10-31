@@ -7,12 +7,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/crash_mom_app.h:449 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#: src/crash_mom_app.h:455 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
 #, fuzzy
 msgid "EMULATED ONLY"
 msgstr "BARA EMULERAD"
 
-#: src/crash_mom_app.h:449
+#: src/crash_mom_app.h:455
 #, fuzzy
 msgid "No second window with --emulated_only"
 msgstr "Inget andra fönster med --emulated_only"
@@ -59,7 +59,7 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "VISNING {0}"
 
-#: src/achievements/achievements.cpp:667
+#: src/achievements/achievements.cpp:672
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Prestation upplåst"
@@ -912,19 +912,19 @@ msgid "Couldn't save the controls file (see the log)."
 msgstr "Kunde inte spara kontrollfilen (se loggen)."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
-#: src/input/prompt_icons.cpp:2305
+#: src/input/prompt_icons.cpp:2307
 #, fuzzy
 msgid "Or press {0}"
 msgstr "Eller tryck på {0}"
 
 #. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the Spin key / LB button's picture.
-#: src/input/prompt_icons.cpp:2310
+#: src/input/prompt_icons.cpp:2312
 #, fuzzy
 msgid "OR Hold {0}"
 msgstr "ELLER håll {0}"
 
 #. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the game's own line with the Spin key's picture.
-#: src/input/prompt_icons.cpp:2316
+#: src/input/prompt_icons.cpp:2318
 #, fuzzy
 msgid "OR {0}"
 msgstr "ELLER {0}"
