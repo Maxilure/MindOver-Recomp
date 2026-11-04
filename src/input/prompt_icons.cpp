@@ -1737,6 +1737,11 @@ void OnFrameEnd(void*) {
 
   // Player 1's look: the game's own glyphs (every shared text). Players
   // 2-4's pictures live in the player slots, each with its own look.
+  // The Options screen's slots (Kind::kSlot: KeyGlyph 'K' and ButtonGlyph
+  // 'B') always draw using l.dark and l.pad_style regardless of whether
+  // player 1 is currently using the keyboard (l.keys) or a controller, so
+  // both l.dark and l.pad_style must be part of `look` to trigger a repaint
+  // when Keyboard Icons or Controller Icons is stepped in Options.
   const Look l = LookOf(0);
   // The game's own B: the look of the first icon's owner (the fallback for
   // a coin that WorldButtonSwap can't match to an icon). Each player's copy
@@ -1744,15 +1749,19 @@ void OnFrameEnd(void*) {
   const Look world = LookOf(uint32_t(WorldButtonOwner(base)));
   const uint32_t revision = driver ? driver->bindings_revision() : 0;
   g_keys_shown = l.keys;
-  std::string look = l.Name() + " " + world.Name();
+  const std::string primary = l.Name() + " " + world.Name();
+  std::string look = primary + ":" + (l.dark ? "D" : "L") + ":" + std::to_string(l.pad_style);
   for (uint32_t p = 0; p < 4; ++p) look += " " + LookOf(p).Name();  // the B copies' looks
   if (revision == g.revision && look == g.look && g_slot_drawn == g_slot_revision) return;
   g_slot_drawn = g_slot_revision;
-  if (look != g.look || g.revision == UINT32_MAX) {
+  if (g.look.rfind(primary + ":", 0) != 0 || g.revision == UINT32_MAX) {
     REXLOG_INFO("Prompt pictures: {}", l.keys ? (l.dark ? "keyboard and mouse keys (dark)" : "keyboard and mouse keys")
                                        : l.pad_style == kOriginalStyle ? std::string("controller buttons (the game's own)")
                                        : std::string("controller buttons: ") + kPadSets[l.pad_style].name);
     if (world.Name() != l.Name()) REXLOG_INFO("Prompt pictures: the floating B in another player's look ({})", world.Name());
+  } else if (look != g.look) {
+    REXLOG_INFO("Prompt pictures: slot style updated (keys {}, buttons {})", l.dark ? "dark" : "light",
+                l.pad_style == kOriginalStyle ? "the game's own" : kPadSets[l.pad_style].name);
   }
   g.revision = revision;
   g.look = look;

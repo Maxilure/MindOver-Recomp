@@ -52,14 +52,21 @@ bool PlayerAssignment::HasDeviceFor(int player) const {
 
 std::string PlayerAssignment::PadKeyFor(uint32_t user) const {
   std::lock_guard<std::mutex> lock(mutex_);
-  const bool everyone_is_player_one = user == 0 && in_play_ && !in_play_();
+  std::string first_active_pad;
   for (const Known& d : devices_) {
     // Real controllers ("pad:<guid>") and --debug_fake_pads' ("debug-pad-N":
     // prompt_icons gives those the styles of --debug_fake_pad_styles).
     if (d.keyboard || (d.key.rfind("pad:", 0) != 0 && d.key.rfind("debug-pad-", 0) != 0)) continue;
     const int player = PlayerOf(d);
-    if (player == int(user) || (everyone_is_player_one && player >= 0)) return d.key;
+    if (player == int(user)) return d.key;
+    if (player >= 0 && first_active_pad.empty()) first_active_pad = d.key;
   }
+  // When user == 0 (player 1 / shared prompts / Options -> Controller Icons
+  // preview) has no controller assigned to slot 0 (e.g. player 1 is playing
+  // on keyboard and the controller is assigned to player 2-4, or outside
+  // play), fall back to the first active controller so Automatic still
+  // detects the connected controller's style.
+  if (user == 0) return first_active_pad;
   return {};
 }
 

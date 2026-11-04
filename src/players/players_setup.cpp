@@ -369,10 +369,14 @@ bool MoveController(PPCContext& ctx, uint8_t* base, int from, int to) {
   }
   // The BUTTON PICTURES go with the controller (a PlayStation player moved
   // to player 4 keeps seeing PlayStation buttons): the two players' styles
-  // swap too (they're per player: PadIcons).
+  // swap when swapping two controllers, or the moving controller carries its
+  // style to an empty destination slot without overwriting `from`'s setting
+  // (e.g. moving a controller off Player 1 to an empty Player 2 slot must
+  // not overwrite Player 1's Options -> Controller Icons preference with
+  // Player 2's unused style).
   if (const int moved = PadIcons(from), other = PadIcons(to); moved != other) {
     SetPadIcons(to, moved);
-    SetPadIcons(from, other);
+    if (to_pads > 0) SetPadIcons(from, other);
   }
   Settle(ctx, base);
   REXLOG_INFO("Players: {} moved from player {} to player {}{}", name, from + 1, to + 1,

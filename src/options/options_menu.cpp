@@ -1262,19 +1262,28 @@ struct PlyPrompt {
 };
 enum { kPlyActButtons, kPlyActMove, kPlyActRemove, kPlyActStyle, kPlyActBack };
 
-// Does card k show its BUTTONS LINE (players_setup.h PadIcons)? With a
-// controller only, and not while it shows player 1's keyboard (keys have no
-// button pictures to choose).
+// Does card k show its BUTTONS LINE (players_setup.h PadIcons)?
+// Player 1's card (k == 0) always shows its chosen Controller Icons style
+// (even on keyboard & mouse), because Options -> Controller Icons and
+// Player 1's card share the same preference; players 2-4 show theirs when
+// they have a controller.
 bool StyleLineShown(const players_setup::Box& b, int k) {
-  const players_setup::ShownDevice* d = ShownDevice(b, k);
-  return b.has_pad && !(d && d->keyboard);
+  return k == 0 || b.has_pad;
 }
 
 // The style whose pictures a setting draws for card k: Automatic = the one
-// its controller's maker calls for (the 360's own when unknown).
-int DrawnStyle(const players_setup::Box& b, int setting) {
+// its controller's maker calls for (or for player 1 without a controller on
+// box 0, whatever LookOf(0) detects; the 360's own when unknown).
+int DrawnStyle(const players_setup::Box& b, int k, int setting) {
   if (setting != 0) return setting;
-  return b.detected_style > 0 ? b.detected_style : 1;
+  if (b.detected_style > 0) return b.detected_style;
+  if (k == 0) {
+    if (const auto* a = kbm::PlayerAssignment::Get()) {
+      const int detected = prompt_icons::DetectedPadStyle(a->PadKeyFor(0));
+      if (detected > 0) return detected;
+    }
+  }
+  return 1;
 }
 
 // THE PREVIEW (2026-10-30): a style's four face buttons, A B X Y in the
@@ -1305,8 +1314,10 @@ std::vector<PlyPrompt> PlayersPrompts(const std::array<players_setup::Box, 4>& b
     }
     out.push_back({kGlyphB, tr(u"Cancel"), kPlyActBack});
   } else {
-    if (sel.has_pad) {
+    if (StyleLineShown(sel, g.ply_sel)) {
       out.push_back({kGlyphA, tr(u"Buttons"), kPlyActButtons});
+    }
+    if (sel.has_pad) {
       out.push_back({kGlyphX, tr(u"Move"), kPlyActMove});
       out.push_back({kGlyphY, tr(u"Remove"), kPlyActRemove});
     }
@@ -1345,7 +1356,7 @@ void RefreshPlayers(Env& env) {
   SwapHinge(ctx, base);
   const auto boxes = players_setup::Boxes();
   // A mode whose card lost its controller (unplugged, joined elsewhere) ends.
-  if (g.ply_styling != kPlyNone && !boxes[size_t(g.ply_styling)].has_pad) g.ply_styling = kPlyNone;
+  if (g.ply_styling != kPlyNone && !StyleLineShown(boxes[size_t(g.ply_styling)], g.ply_styling)) g.ply_styling = kPlyNone;
   if (g.ply_moving != kPlyNone && !boxes[size_t(g.ply_moving)].has_pad) g.ply_moving = kPlyNone;
   const std::vector<PlyPrompt> prompts = PlayersPrompts(boxes);
   // The prompt row's texts, in the pictures of the screen's OWNER (who
@@ -1416,7 +1427,7 @@ void RefreshPlayers(Env& env) {
     std::u16string info;
     uint32_t colour = kPlyGreen;
     int picture = d ? d->picture : players_setup::kPicEmpty;
-    const std::u16string faces = styling ? FaceButtons(DrawnStyle(b, g.ply_style)) : std::u16string();
+    const std::u16string faces = styling ? FaceButtons(DrawnStyle(b, k, g.ply_style)) : std::u16string();
     if (styling && !faces.empty()) {
       // BUTTONS MODE: the style's A B X Y where the name was.
       info = faces;
@@ -1461,10 +1472,10 @@ void RefreshPlayers(Env& env) {
       // scrolls inside the card (ui/marquee.h).
       marquee::Fit(c.info, TextWidth(info, 1.0f) / kPageScale * scale, room);
     }
-    // The button pictures line (players_setup.h PadIcons), with a controller
-    // only, and not while the card shows player 1's keyboard (its keys have
-    // no button pictures to choose; in Buttons mode it shows anyway).
-    const bool style_shown = styling ? b.has_pad : StyleLineShown(b, k);
+    // The button pictures line (players_setup.h PadIcons), shown on Player 1's
+    // card (shared with Options -> Controller Icons) and on any card with a
+    // controller.
+    const bool style_shown = StyleLineShown(b, k);
     scrooby::SetVisible(base, c.style, style_shown);
     if (style_shown) {
       // Just the style's NAME ("PlayStation 5"; a "Buttons:" label came
@@ -1533,7 +1544,7 @@ void PlayersAct(PPCContext& ctx, uint8_t* base, int action) {
   const int k = g.ply_sel;
   if (action == kPlyActButtons) {
     if (g.ply_styling == kPlyNone) {
-      if (g.ply_moving != kPlyNone || !boxes[size_t(k)].has_pad) return;
+      if (g.ply_moving != kPlyNone || !StyleLineShown(boxes[size_t(k)], k)) return;
       g.ply_styling = k;
       g.ply_style = players_setup::PadIcons(k);
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
