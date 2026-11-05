@@ -16,6 +16,7 @@
 
 #include "../achievements/achievements.h"
 #include "../cheats/cheats.h"
+#include "../saves/save_screen_waits.h"
 #include "hud_scale.h"
 #include "scrooby.h"
 #include "../language/texts.h"
@@ -102,6 +103,8 @@ extern "C" REX_FUNC(__imp__sub_82371270);
 extern "C" REX_FUNC(sub_82371270) {
   const uint32_t page = ctx.r3.u32;
   if (cheats::HudHidden() && hud_hide::IsHudPage(ctx.r3.u32)) return;
+  // A save screen's message held back a moment (saves/save_screen_waits.h).
+  if (save_screen_waits::HidingPage(page)) return;
   hud_scale::Scope scale(ctx, base, page == 0 ? hud_scale::kNone : hud_hide::WhereOfPage(page));
   __imp__sub_82371270(ctx, base);
 }

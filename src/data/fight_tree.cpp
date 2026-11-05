@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cstring>
 #include <string>
+#include <vector>
 #include <map>
 #include <mutex>
 
@@ -197,6 +198,12 @@ void SetFrontEndDecision(int32_t number, Decision decision) {
   g_decisions[number] = std::move(decision);
 }
 
+// Exit listeners (registered at startup, before the game runs: no lock).
+std::vector<ExitListener> g_exit_listeners;
+void AddFrontEndExitListener(ExitListener listener) {
+  g_exit_listeners.push_back(std::move(listener));
+}
+
 // Written by the dispatcher (game thread), read by the debug console.
 std::atomic<int32_t> g_fe_state{-1}, g_fe_from{-1}, g_fe_exit{-1};
 std::atomic<uint32_t> g_fe_exits{0};
@@ -245,6 +252,9 @@ extern "C" REX_FUNC(sub_8211AF40) {
       g_fe_from = number;
       g_fe_exit = int32_t(ctx.r3.u32);
       ++g_fe_exits;
+      for (const ExitListener& listener : g_exit_listeners) {
+        listener(ctx, base, number, int32_t(ctx.r3.u32));
+      }
     }
     // --debug_frontend_trace: one line per exit taken (-1 = stay, not logged).
     if (REXCVAR_GET(debug_frontend_trace) && int32_t(ctx.r3.u32) >= 0) {

@@ -14,8 +14,10 @@
 // "Load successful." / "Save successful." (each waiting for A) are skipped
 // too: the game goes on as if A had been pressed (--save_success_screens=true
 // shows them again).
-// A quick read or save shows no message at all: the message and its
-// dimmed background wait --save_message_delay_ms (1500) before showing.
+// A quick read or save shows no message at all: the message page (text +
+// dimmed background) isn't drawn until the work has gone on for
+// --save_message_delay_ms (1500); once shown it stays --save_message_min_ms
+// (500) at least.
 // The messages' wording also changes (with the waits on or off): no "Please
 // do not turn off the Xbox 360 console" on a PC: "Reading save files...",
 // "Saving...", "Loading..." (a data patch of the menu packages' text banks,
@@ -45,10 +47,16 @@
 // loading screens.
 #pragma once
 
+#include <cstdint>
+
 namespace save_screen_waits {
 
 // Registers the decisions and the wording patch (once, before
 // data_patcher::Install()).
 void Install();
+
+// True while the storage message page `page` is held back (not drawn): asked
+// by the page draw wrapper (Parent@frontend slot 6, ui/hud_hide.cpp).
+bool HidingPage(uint32_t page);
 
 }  // namespace save_screen_waits

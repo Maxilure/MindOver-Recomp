@@ -134,6 +134,13 @@ void SetNodeCount(std::string path, int count);
 using Decision = std::function<int32_t(PPCContext& ctx, uint8_t* base)>;
 void SetFrontEndDecision(int32_t number, Decision decision);
 
+// Called after the front end's dispatcher returns an exit (>= 0) from state
+// `from` (main thread; ctx.r3 = the exit: a listener that calls guest code
+// must put it back). The NEXT state's screen draws in that same frame, one
+// frame before its own decision is first asked.
+using ExitListener = std::function<void(PPCContext& ctx, uint8_t* base, int32_t from, int32_t exit)>;
+void AddFrontEndExitListener(ExitListener listener);
+
 // Where the front end is (for the debug console, debug_console.h): the
 // state its dispatcher was last asked about (it asks every frame while a
 // screen of the tree is up), and the last exit taken. -1 = none yet.

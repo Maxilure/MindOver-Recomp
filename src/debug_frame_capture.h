@@ -20,6 +20,8 @@
 //   crash_mom --debug_capture_dir=/some/dir --debug_capture_interval_ms=500
 //   -> /some/dir/frame_000123456ms.ppm, named by milliseconds since start.
 //   All-black frames aren't saved, only logged ("black frame (not saved)").
+//   FLASH HUNTS: --debug_capture_interval_ms=5 --debug_capture_shrink=4 =
+//   every frame the game shows, 320x180, repeats skipped, black ones kept.
 //   Convert with e.g. `python3 -c "from PIL import Image; ..."` or any viewer.
 //
 // The captures are pictures of the game: they're game-derived data. Keep
@@ -64,6 +66,7 @@ class DebugFrameCapture {
 
   rex::ui::Presenter* presenter_ = nullptr;
   std::filesystem::path dir_;
+  uint32_t shrink_ = 1;  // --debug_capture_shrink
   std::chrono::milliseconds interval_{1000};
 
   std::thread thread_;

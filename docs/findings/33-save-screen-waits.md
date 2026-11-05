@@ -122,14 +122,45 @@ fast machine), and the message page blinked by: a full-screen black
 id in the tree (WaitChecking: nodes 8, 113, 125, 127, 153, 359, 366, 368,
 384; WaitSaving 289, WaitAutoSaving 326, WaitLoading 278).
 
-In those states' decisions, the two elements are now kept hidden (element
-visibility, +110 bit 0x80) until the storage work has gone on for
-`--save_message_delay_ms` (1500 by default): a quick read or save shows
-nothing, a slow one shows the message after a second and a half, for as long as
-it takes. The "route" (in game 359 -> 366 -> 368 -> 359 -> 384) counts as
-one: it ends after 100 ms without any of those states (checked at every
-frame end), and then both elements are shown again, because the overwrite
-question and the error messages use the same page.
+The message is held back the way PC and console games usually handle a
+loading indicator: nobody knows beforehand how long a read will take, so
+the message page is not drawn until the storage work has gone on for
+`--save_message_delay_ms` (1500 by default). A quick read or save shows
+nothing; a slow one shows the message after a second and a half, for as
+long as it takes, and at least `--save_message_min_ms` (500): the state's
+exit is held back until then, so a read that ends just after the delay
+can't blink the message either. The "route" (in game 359 -> 366 -> 368 ->
+359 -> 384) counts as one: it ends after 100 ms without any of those states
+(checked at every frame end), and then the page draws again, because the
+overwrite question and the error messages use the same page.
+
+### 5.1 Why the first version still flashed
+
+The first version cleared the two elements' visible bit (+110 bit 0x80) in
+the states' decisions. Frame-by-frame captures (every frame the game showed,
+`--debug_capture_interval_ms=5 --debug_capture_shrink=4`) found the dim
+showing in full for the whole read anyway: about 0.43 s when Load Game
+opened (picture brightness 157 -> 35 -> 164), a frame when a save was
+picked, and during New Game's first save. A log of the elements showed why:
+the text stayed hidden (one frame late), but the `Background` polygon's
+visible bit was set again every frame. The page's fade-in track runs after
+the decisions and sets it each frame.
+
+Two changes fixed it:
+
+* **Skip the page's draw instead.** The draw of pages, groups and layers
+  (Parent@frontend slot 6, `sub_82371270`, already wrapped for the HUD hide)
+  returns at once for a held message page. Tracks can't undo that.
+* **Start a frame early.** The new state's screen draws in the frame its
+  entry exit is taken, one frame before the dispatcher first asks that
+  state's decision. So the hold starts when the game takes any exit whose
+  target is a message state (64 of them, read from `Frontend.bfig` at its
+  first load by a read-only data "patch"; the dispatcher wrapper in
+  data/fight_tree.cpp now tells listeners about every exit taken).
+
+After both: Load Game opening, picking a save, New Game's first save and
+saving in a level each show no dark frame at all (the next screen, or the
+game's own fade to black, follows directly).
 
 The game has no by-name lookup for a polygon; the page's typed lookups sit
 together: Menu `0x82371488`, Layer `0x82371588`, **Polygon `0x82371688`**,
@@ -138,6 +169,13 @@ Sprite `0x82371788`, Text `0x82371888` (each a dynamic_cast to its
 `scrooby::FindPolygon` hashes the name and asks `0x82371688`.
 
 ## 6. Tested
+
+2026-11-05 (the draw skip, s.5.1): every frame captured on a copy of the
+saves, through main menu -> Load Game -> a save, New Game -> name ->
+difficulty -> its save -> fade, pause -> Save Game -> Create New Save ->
+name -> save. No dark frame in any of them; no errors.
+
+Earlier:
 
 On a copy of the saves, with the console and photos every 50-150 ms:
 pause -> Save Game -> overwrite Yes (back in play, Crash walks); main menu

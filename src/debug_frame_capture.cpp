@@ -14,7 +14,12 @@ REXCVAR_DEFINE_STRING(debug_capture_dir, "", "CrashMoM",
                       "Debug: save the displayed frame as PPM files into this "
                       "folder (empty = off)");
 REXCVAR_DEFINE_INT32(debug_capture_interval_ms, 1000, "CrashMoM",
-                     "Debug: time between two frame captures, in milliseconds");
+                     "Debug: time between two frame captures, in milliseconds (at least 5: "
+                     "5-10 catches every frame at 30-60 fps)");
+REXCVAR_DEFINE_INT32(debug_capture_shrink, 1, "CrashMoM",
+                     "Debug: save every Nth pixel of every Nth row (4 = 320x180 from 720p); "
+                     "above 1, a capture identical to the previous one is skipped and black "
+                     "frames are saved too (for frame-by-frame flash hunts: small files, no repeats)");
 
 void DebugFrameCapture::Start(rex::ui::Presenter* presenter) {
   const std::string& dir = REXCVAR_GET(debug_capture_dir);
@@ -24,7 +29,8 @@ void DebugFrameCapture::Start(rex::ui::Presenter* presenter) {
   presenter_ = presenter;
   dir_ = dir;
   interval_ = std::chrono::milliseconds(
-      std::max<int32_t>(REXCVAR_GET(debug_capture_interval_ms), 50));
+      std::max<int32_t>(REXCVAR_GET(debug_capture_interval_ms), 5));
+  shrink_ = uint32_t(std::clamp<int32_t>(REXCVAR_GET(debug_capture_shrink), 1, 16));
   std::error_code ec;
   std::filesystem::create_directories(dir_, ec);
   REXLOG_INFO("DebugFrameCapture: saving a frame every {} ms to {}",
@@ -46,6 +52,7 @@ void DebugFrameCapture::Stop() {
 void DebugFrameCapture::ThreadMain() {
   const auto start = std::chrono::steady_clock::now();
   rex::ui::RawImage image;
+  uint64_t last_hash = 0;  // of the previous saved capture (shrink > 1: repeats skipped)
   for (;;) {
     {
       // Sleep one interval, but wake up at once if Stop() is called.
@@ -74,7 +81,20 @@ void DebugFrameCapture::ThreadMain() {
         }
       }
     }
-    if (all_black) {
+    // Shrunk captures: hash what would be written (FNV-1a over the kept
+    // pixels); the same picture as last time isn't written again.
+    if (shrink_ > 1) {
+      uint64_t hash = 1469598103934665603ull;
+      for (uint32_t y = 0; y < image.height; y += shrink_) {
+        const uint8_t* src = image.data.data() + y * image.stride;
+        for (uint32_t x = 0; x < image.width; x += shrink_) {
+          for (int c = 0; c < 3; ++c) hash = (hash ^ src[x * 4 + c]) * 1099511628211ull;
+        }
+      }
+      if (hash == last_hash) continue;
+      last_hash = hash;
+    }
+    if (all_black && shrink_ == 1) {
       REXLOG_INFO("DebugFrameCapture: t={} ms black frame (not saved)", (long long)ms);
       continue;
     }
@@ -87,14 +107,18 @@ void DebugFrameCapture::ThreadMain() {
     // PPM "P6": ASCII header "P6 <width> <height> <maxval>\n", then 3 bytes
     // (R, G, B) per pixel, rows top to bottom. RawImage rows are R8 G8 B8 X8
     // with `stride` bytes per row, so we drop every 4th byte.
-    std::fprintf(f, "P6\n%u %u\n255\n", image.width, image.height);
-    std::vector<uint8_t> row(size_t(image.width) * 3);
-    for (uint32_t y = 0; y < image.height; ++y) {
+    // Shrunk: every shrink_-th pixel of every shrink_-th row (no filtering:
+    // a flash of one frame must stay as bright as it was).
+    const uint32_t out_w = (image.width + shrink_ - 1) / shrink_;
+    const uint32_t out_h = (image.height + shrink_ - 1) / shrink_;
+    std::fprintf(f, "P6\n%u %u\n255\n", out_w, out_h);
+    std::vector<uint8_t> row(size_t(out_w) * 3);
+    for (uint32_t y = 0; y < image.height; y += shrink_) {
       const uint8_t* src = image.data.data() + y * image.stride;
-      for (uint32_t x = 0; x < image.width; ++x) {
-        row[x * 3 + 0] = src[x * 4 + 0];
-        row[x * 3 + 1] = src[x * 4 + 1];
-        row[x * 3 + 2] = src[x * 4 + 2];
+      for (uint32_t x = 0, o = 0; x < image.width; x += shrink_, ++o) {
+        row[o * 3 + 0] = src[x * 4 + 0];
+        row[o * 3 + 1] = src[x * 4 + 1];
+        row[o * 3 + 2] = src[x * 4 + 2];
       }
       std::fwrite(row.data(), 1, row.size(), f);
     }

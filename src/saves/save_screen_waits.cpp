@@ -5,10 +5,12 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <string_view>
+#include <vector>
 
 #include <rex/cvar.h>
 #include <rex/logging.h>
@@ -36,6 +38,10 @@ REXCVAR_DEFINE_INT32(save_message_delay_ms, 1500, "CrashMoM",
                      "How long the save screens' \"Reading save files...\" / \"Saving...\" message and "
                      "its dimmed background wait before showing (a quick read or save then shows "
                      "nothing at all); 0 = right away, like the Xbox");
+
+REXCVAR_DEFINE_INT32(save_message_min_ms, 500, "CrashMoM",
+                     "Once the save screens' message shows (after save_message_delay_ms), it stays "
+                     "at least this long, so it can't blink by; 0 = goes as soon as the work is done");
 
 extern "C" REX_FUNC(__imp__sub_8211AF40);  // the front end's decision dispatcher (data/fight_tree.cpp)
 
@@ -90,18 +96,28 @@ uint32_t TimeInStateAddress(uint8_t* base, uint32_t machine) {
 
 // --- The message, a moment late -------------------------------------------
 // Without the waits, reading the saves takes a few frames: the message page
-// (its full-screen black "Background" polygon fading in to dim the picture,
-// and its "Message" text) blinked by. So both stay hidden (Scrooby element
-// visibility, +110 bit 0x80, scrooby::SetVisible) until the storage work
-// has gone on for --save_message_delay_ms; only a slow read or save shows
-// them. The page is the game's own: FE_TRG_Message_InGame in game,
-// FE_TRG_Message_Frontend / FE_TRG_Message in the menus (findings/30). A
-// "route" = the message states asked one after another (in game 359 -> 366
+// (its full-screen black "Background" polygon dimming the picture, and its
+// "Message" text) blinked by. So the page isn't DRAWN until the storage work
+// has gone on for --save_message_delay_ms; only a slow read or save shows it
+// (the "delayed spinner" of PC and console games: nobody can know beforehand
+// how long a read takes, so wait a moment and show the message only if it's
+// still going). Once shown, it stays at least --save_message_min_ms (the
+// state's exit is held back meanwhile), so a read that ends just after the
+// delay can't blink it either.
+// The page is the game's own: FE_TRG_Message_InGame in game,
+// FE_TRG_Message_Frontend / FE_TRG_Message in the menus (findings/30).
+// HOW IT'S HIDDEN (2026-11-05, findings/33 s.5): the first version cleared
+// the elements' visible bit (+110 bit 0x80) in the decision. That hid the
+// text (one frame late) but NOT the dim: the page's fade-in track sets the
+// Background polygon visible again every frame after the decisions run
+// (traced: its +110 back to 0xBE each frame), so the dim showed in full for
+// the whole read (~0.4 s, frame-by-frame captures). Now the page's draw
+// (Parent@frontend slot 6 sub_82371270, wrapped in ui/hud_hide.cpp) is
+// skipped: tracks can't undo that.
+// A "route" = the message states asked one after another (in game 359 -> 366
 // -> 368 -> 359 -> 384, a few frames each); it ends when none of them has
 // been asked for kRouteGap (checked at every frame end; a single frame
-// between two states mustn't end it, or the restore would flash the page):
-// then the elements are shown again, for the screens that use the same page
-// next (the overwrite question, error messages).
+// between two states mustn't end it, or the page would blink).
 constexpr const char* kMessagePages[] = {"FE_TRG_Message_InGame", "FE_TRG_Message_Frontend",
                                          "FE_TRG_Message"};
 
@@ -109,57 +125,94 @@ constexpr auto kRouteGap = std::chrono::milliseconds(100);
 
 struct MessageHold {
   bool in_route = false;
+  bool shown = false;  // the delay ran out: the page draws
   std::chrono::steady_clock::time_point route_start;
+  std::chrono::steady_clock::time_point shown_at;
   std::chrono::steady_clock::time_point last_ask;
-  uint8_t* base = nullptr;
-  std::array<uint32_t, 6> hidden{};  // elements we hid (0 = none)
+  std::array<std::atomic<uint32_t>, 3> hidden{};  // pages not drawn (0 = none)
 } g_hold;
 
 void ShowHidden() {
-  for (uint32_t& element : g_hold.hidden) {
-    if (element) scrooby::SetVisible(g_hold.base, element, true);
-    element = 0;
-  }
+  for (std::atomic<uint32_t>& page : g_hold.hidden) page.store(0);
 }
 
-// In a message state's decision (every frame while it's up).
+// Exits whose target is a message state (read from Frontend.bfig at its
+// first load, ReadTreeExits): taking one starts the hold a frame early. The
+// new state's screen draws in the frame its entry exit is taken, before the
+// state's own decision is first asked; without this, that one frame showed
+// the dim in full (frame-by-frame captures, 2026-11-05).
+std::vector<int32_t> g_exits_into_message;
+
+// In a message state's decision (every frame while it's up), and when an
+// exit into one is taken.
 void HoldMessage(PPCContext& ctx, uint8_t* base) {
   const auto now = std::chrono::steady_clock::now();
   if (!g_hold.in_route) {
     g_hold.in_route = true;
+    g_hold.shown = false;
     g_hold.route_start = now;
   }
   g_hold.last_ask = now;
-  g_hold.base = base;
+  if (g_hold.shown) return;
   const auto delay = std::chrono::milliseconds(std::max(0, REXCVAR_GET(save_message_delay_ms)));
   if (now - g_hold.route_start >= delay) {
-    ShowHidden();  // still busy: the message shows, as on the Xbox
+    g_hold.shown = true;  // still busy: the message shows, as on the Xbox
+    g_hold.shown_at = now;
+    ShowHidden();
+    REXLOG_INFO("Saves: storage still busy after {} ms: message shown",
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - g_hold.route_start)
+                    .count());
     return;
   }
   size_t slot = 0;
   for (const char* name : kMessagePages) {
     const uint32_t page = scrooby::FindPage(ctx, base, name);
-    if (!page) continue;
-    for (const uint32_t element : {scrooby::FindPolygon(ctx, base, page, "Background"),
-                                   scrooby::FindText(ctx, base, page, "Message")}) {
-      if (element && slot < g_hold.hidden.size()) {
-        scrooby::SetVisible(base, element, false);
-        g_hold.hidden[slot++] = element;
-      }
-    }
+    if (page && slot < g_hold.hidden.size()) g_hold.hidden[slot++].store(page);
   }
+}
+
+// True while the shown message must stay up a little longer.
+bool MessageMustStay() {
+  if (!g_hold.in_route || !g_hold.shown) return false;
+  const auto min = std::chrono::milliseconds(std::max(0, REXCVAR_GET(save_message_min_ms)));
+  return std::chrono::steady_clock::now() - g_hold.shown_at < min;
 }
 
 // Frame end: no message state for kRouteGap = the route is over.
 void OnFrameEnd(void*) {
   if (!g_hold.in_route || std::chrono::steady_clock::now() - g_hold.last_ask < kRouteGap) return;
   g_hold.in_route = false;
+  g_hold.shown = false;
   ShowHidden();
 }
 
 bool IsMessageState(int32_t state) {
   return std::find(std::begin(kMessageStates), std::end(kMessageStates), state) !=
          std::end(kMessageStates);
+}
+
+// Data "patch" that only reads Frontend.bfig: lists the exits into message
+// states. Returns false = the file is left as it is (data_patcher.h).
+bool ReadTreeExits(const data_patcher::Bytes& original, data_patcher::Bytes*) {
+  fight_tree::Tree tree;
+  if (!tree.Load(original)) return false;
+  g_exits_into_message.clear();
+  for (int n = 1; n <= tree.Count(); ++n) {
+    if (IsMessageState(int32_t(tree.TargetOf(n)))) g_exits_into_message.push_back(n);
+  }
+  REXLOG_INFO("Saves: {} front-end exits lead into a storage message", g_exits_into_message.size());
+  return false;
+}
+
+// An exit taken: one into a message state starts the hold now.
+void OnFrontEndExit(PPCContext& ctx, uint8_t* base, int32_t, int32_t exit) {
+  if (std::find(g_exits_into_message.begin(), g_exits_into_message.end(), exit) ==
+      g_exits_into_message.end()) {
+    return;
+  }
+  const uint64_t r3 = ctx.r3.u64;  // the dispatcher's answer (FindPage calls guest code)
+  HoldMessage(ctx, base);
+  ctx.r3.u64 = r3;
 }
 bool IsWaitingState(int32_t state) {
   return std::find(std::begin(kWaitingStates), std::end(kWaitingStates), state) !=
@@ -194,7 +247,11 @@ int32_t AskWithoutTheWait(PPCContext& ctx, uint8_t* base) {
   if (time) {
     Store32(base, time, real);  // the state's clock goes on as before
   }
-  return int32_t(ctx.r3.u32);
+  const int32_t exit = int32_t(ctx.r3.u32);
+  if (exit >= 0 && IsMessageState(state) && MessageMustStay()) {
+    return -1;  // done, but the message only just showed: a moment more (asked again next frame)
+  }
+  return exit;
 }
 
 // --- The "successful" screens ----------------------------------------------
@@ -301,6 +358,14 @@ bool PatchWording(const data_patcher::Bytes& original, data_patcher::Bytes* patc
 
 namespace save_screen_waits {
 
+bool HidingPage(uint32_t page) {
+  if (!page) return false;
+  for (const std::atomic<uint32_t>& hidden : g_hold.hidden) {
+    if (hidden.load(std::memory_order_relaxed) == page) return true;
+  }
+  return false;
+}
+
 void Install() {
   for (const int32_t state : kWaitingStates) {
     fight_tree::SetFrontEndDecision(state, AskWithoutTheWait);
@@ -309,6 +374,9 @@ void Install() {
     fight_tree::SetFrontEndDecision(state, AskWithoutTheWait);  // same one (127 / 368: no timer)
   }
   pddi::AddFrameEndListener(&OnFrameEnd, nullptr);
+  fight_tree::AddFrontEndExitListener(OnFrontEndExit);
+  data_patcher::Register("storage message exits (read only)", data_patcher::kCategoryFightTree,
+                         "Frontend", ReadTreeExits);
   for (const int32_t state : {kLoadComplete, kSaveComplete, kAutoSaveSuccessful}) {
     fight_tree::SetFrontEndDecision(state, SkipSuccessScreen);
   }
