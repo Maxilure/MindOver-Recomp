@@ -9,257 +9,123 @@ Activision or the game's other owners.
 
 **You need your own copy of the game:** an `.iso` dumped from your own
 Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain
-no game files. The launcher builds the game on your computer, from your disc.
+no game files. The game is built on your computer, from your disc (on
+Windows by the installer, on Linux by the launcher).
 
-### What's new in 0.1.1-alpha
 
-**An Options screen** in the game's own look (Pause → Options, and new in
-the main menu): tabs (LB / RB), every change takes effect at once. A card
-beside the list explains the selected setting (a second glass panel, with
-a picture where it helps), showing the keys and controller buttons it talks
-about as pictures. Long tabs slide one row at a time (the mouse wheel too),
-with the row's place shown under the list.
+### What's new in 0.2.0-alpha
 
-- **Display**: frame-rate cap, renderer (Emulated Only, Emulated, Native,
-  Native Only; X on Emulated or Native opens Dual Mode), brightness (the
-  original's calibration grey scale as the guide; it replaces Calibration in
-  the main menu), V-sync (no tearing, the game held to your monitor's
-  refresh rate), fullscreen, and a frame-rate counter in the game's font,
-  on screen everywhere, in any corner.
-- **Audio** and **Controls**: the game's own volumes and Invert Axis, the
-  button prompt pictures (Light or Dark keys; for controllers Automatic,
-  which shows PlayStation, Switch or Xbox buttons to match the controller in
-  your hands, or a set of your choice), and every keyboard / mouse key you
-  play with, shown as key pictures and rebound right there (two keys per
-  move, Backspace removes one, Default Keys puts them all back). The volumes and Invert Axis
-  are now ONE setting for
-  the whole game, no longer stored in save files: on the Xbox 360 each save
-  carried its own volumes, so loading a save or starting a New Game changed
-  them.
-- **Graphics**: **resolution** (720p like the original, 1080p, 1440p, 4K: the
-  Native renderer draws the whole game with that many pixels, menus and HUD
-  included), **anti-aliasing** (Off, 2x like the original, 4x, 8x), **smooth leaves** (soft
-  edges on leaves, fences and other cut-out shapes; Native only, off by default),
-  **texture sharpness** (crisper textures in the distance) and **motion blur** (new, the port's own: Off, Low, Medium, High) for the
-  Native renderer: motion blur smears the scenery when the camera moves
-  while the players stay sharp; the original game had none, so it starts
-  off. Also Native only: **sharpening** (a contrast-adaptive filter over
-  the picture: Off, Low, Medium, High) and **shadow softness** (how wide the
-  characters' shadows fade at their edge: Sharper, Original, Softer,
-  Softest). **Depth of field** (the game's gentle blur of the distance): Off,
-  Original or Strong, in both renderers. Settings that need the Native
-  renderer are greyed out while the emulated picture is shown.
-- **Camera**: the co-op camera's settings.
-- **Gameplay** (changes to the game's own rules; each starts as the original,
-  except that a partner's hit no longer ends your combo):
-  **Friendly Fire** off (co-op partners' attacks pass harmlessly),
-  **Partner Hits** (Keep Combos by default: a partner's hit no longer ends
-  your hit combo; End Combos = the original), **Simple Spinning** (one button spins: LB on a controller, the Spin key
-  on the keyboard; the spin tutorials show it in a second row) and **Keep Spinning: Hold to Spin** (hold LB or Spin, or keep
-  circling the stick, and Crash keeps spinning: the game's Old Skool spin,
-  its "spin again" decision answered directly, so no button is pressed for you).
-- **Native Only** (the port's own renderer alone, the lightest) is now the
-  default picture; the emulated one is a choice away.
-- **Attack trails** in the Native renderer: the pale streaks some titans'
-  attacks sweep behind them (the Phantom's punches, the Roller's rolling
-  charge) were missing; they're drawn now, like the original.
-- **Glows** in the Native renderer: big attack glows (a Stinky's punch, the
-  Phantom's time shift) were a little too dim towards their edge; they now
-  match the original.
+Everything below is new since 0.1.0-alpha (0.1.1 was never released).
 
-**Keyboard and mouse prompts**: while you play on the keyboard and mouse,
-the game's button prompts show YOUR keys and mouse buttons ("Press E to
-Jack", WASD for the stick, the Spin key for spins), in menus too (Enter /
-Backspace on the menu bar); pick up a controller and its buttons come back.
-Rebinding a key (F6) changes the prompts at once. Key pictures: Xelu's Free
-Controller & Key Prompts (https://thoseawesomeguys.com/prompts/), public domain.
+**Windows: a real installer.** *Mind over Recomp.exe* asks for your `.iso`
+and a folder, installs the build tools it needs (through winget, Windows'
+own package manager), builds the game, and adds **Crash Mind over Mutant**
+to the Start menu and to Windows' *Installed apps* list. The same program
+updates the game later, and *Uninstall* in Windows' settings removes it,
+keeping your saves, settings and logs if you tick the box. The installer
+speaks English and Brazilian Portuguese. The game's icon is its own portrait
+of Crash as a mask, taken from your disc during the install.
 
-**Real keyboard controls**: menus have keys of their own: Enter / Space to
-choose, Esc / Backspace to go back, Q / E for the Options tabs, X / Y for the
-save list's rename / delete, while Esc still pauses in play. Spin is a real
-key now (no more stick circles behind the scenes): tap it for one spin, hold
-it to keep spinning, and steer while you spin. Your old key settings carry
-over.
+**An Options screen** in the game's own look (Pause → Options, and in the
+main menu), every change at once, with six tabs:
+- **Display:** window or fullscreen, monitor, V-sync, frame-rate cap, FPS
+  counter, brightness, HUD size.
+- **Graphics:** render resolution, anti-aliasing, motion blur, depth of
+  field, shadow softness, sharpening, texture sharpness.
+- **Audio:** volumes, output device, speakers (stereo, headphones, 5.1, 7.1).
+- **Controls:** change keys, button picture styles (Xbox 360, Xbox Series,
+  PS5, PS4, Switch, keyboard light or dark), mouse aiming.
+- **Gameplay:** friendly fire, partner hits keep combos, simple spinning,
+  keep spinning.
+- **Language:** text and voices, each picked from the disc's languages.
 
-**The mouse in menus**: point at a menu item to select it and click to
-choose it, right click to go back, scroll with the wheel. The save list, the
-button prompts ("Back", "Rename"...), the Options tabs and the game's Yes / No
-questions are clickable too, and on the Audio tab a click on a star sets that
-volume.
+**Keyboard and mouse**
+- Key pictures in every button prompt.
+- The mouse works in every menu, in Crash's house screens, the minigame
+  picker and the credits.
+- Aiming with the mouse, with a Wii-style pointer.
+- Names typed on the keyboard.
+- Any button starts the title screen and skips movie cutscenes.
 
-**Aiming with the mouse, and the Wii pointer**: riding as a mask, the
-aiming reticle follows the mouse (Options → Controls → Mouse Aiming: Off
-keeps the original movement keys). In every menu the pointer is a glowing
-bubble, like the Wii version's. With Mouse Aiming set to **Crosshair** the
-bubble stays the pointer in play too: it stretches as it moves, grows over
-things you can aim at, and switches on the Wii version's own pointer code
-that the Xbox 360 game still carries, which pulls in mojo where it points.
+**Co-op**
+- A **Players** screen: who plays with which controller, and each player's
+  button pictures.
+- Outfits for all four players, Crash in several colours, through a co-op
+  outfit chest.
+- Back drops a player out; an unplugged controller is handled properly,
+  including another player taking over.
+- Controllers keep working while the window isn't focused.
+- A jack symbol over stunned titans, with the jack button only on the one
+  you'd actually jack.
+- Players 3 and 4 in victory scenes; their mojo flies to their own portrait.
 
-**Press any button**: the title screen starts on any controller button, any
-key or a mouse click, and says so ("Press Any Button").
-
-**Skipping movie cutscenes**: during the cartoon cutscenes in a level, any
-button, key or mouse click brings up the "Skip" prompt; A (Enter or Space on
-the keyboard) then skips. Before, only a controller's START brought it up,
-so on the keyboard these cutscenes couldn't be skipped.
-
-**Each player's own button pictures**: in co-op, every player's prompts show
-their own device: the "Join Game" corners, the counter prompts beside each
-HUD, and a paused player's menu buttons and tutorials. Player 2 on a
-PlayStation pad sees Circle and Cross while player 1 keeps keyboard keys.
-The floating button over totems and titans shows each nearby player's own
-button: a keyboard player and a controller player at the same totem get a
-key and a B side by side, three or four on a small arc (players with the
-same kind of controller share one button; Native renderer). Only players
-close enough to use it get one: the game's own list for totems and other
-things to use. Players at different things at the same time (the chest and
-the tiki face in Crash's house) each see their own button, and a dead
-player's corner counts down "Please Wait 5 .. 1" as in the original. Before,
-whoever pressed something last switched everyone's pictures. Shared texts (hints, the message bar) follow player 1.
-
-**Type names on the keyboard**: on the name screen (New Game, renaming a
-save) just type; Backspace erases, Enter is Done, Esc goes back. The mouse
-works on the on-screen keyboard, and its old erase key is now a SPACE key.
-Rename (X) and Delete (Backspace) in the save list work on the keyboard
-again.
-
-**Walk works**: holding Walk (Ctrl) stopped Crash instead of slowing him
-(the stick leaned less than the game notices). In menus, Backspace now
-removes / deletes (a key in Options, a save in the save list) instead of
-going back; Escape goes back.
-
-**Co-op** (the co-op camera is experimental and needs more testing)
-
-- **No more frozen partners**: a player far from the camera used to stop
-  dead, unable to move, until the other player came near. Every player's
-  part of the level now keeps running.
-- **Turn into a mask from anywhere**: a player far from their partner can
-  press B to become a mask and fly back, with 2 to 4 players. Before, B
-  did nothing while the partner was off screen.
-- **Walking into the distance no longer pushes the others off screen**:
-  front to back, the camera stays with the player nearest to it. Setting:
-  *Stay with the nearest player*.
-- The camera returns to its normal distance after cutscenes, holds still
-  while everyone stands still, and keeps some ground around each player in
-  view (setting: *Room around players*). After a cutscene with the other
-  players far away, it goes straight to everyone instead of zooming out
-  to the maximum and slowly back in.
-- **Moving between levels** (e.g. out of Crash's house) no longer zooms the
-  camera far out for a few seconds: it starts on the players right away.
-- **Rooms stay rooms**: where the original camera never moves (Crash's
-  house), the co-op camera keeps the original's spot and widens the view
-  instead of backing out through the wall and showing the outside of the
-  level. Elsewhere it still backs off as before, and never through a wall
-  behind it.
-- With 3 or 4 players, the game's way back for a lost player (off screen,
-  press B = become a mask on a partner) now works whichever players are in
-  the game. Before, it needed players 1 and 2 both in the game.
-- The purple walls that close a fight now light up when players 3 or 4
-  come near them, not only players 1 and 2.
-- Players 3 and 4 now appear in the short victory scenes after a titan
-  fight, next to players 1 and 2, and the camera pulls back so everyone is
-  in the picture.
-- When player 1 drops out and only players 3 or 4 are left, the camera
-  now follows them and they can start story scenes. Before, the camera
-  stood still and the story couldn't go on.
-
-**Saves and profiles, natively** (less pretend Xbox; see the README's
-*Going native* progress)
-
-- **Saves are plain files** now: `user/saves/CrashMOM GameSlot 1.sav`, ...
-  one file per save, no Xbox profile or storage folders. The first start
-  **copies** your saves there from the old folders and leaves the old ones
-  untouched, as a backup.
-- **Saving over a save keeps the old one** in `user/saves/Backups/` (the 10
-  newest per save), and a save is written in one go: a crash while saving
-  leaves the previous save whole.
-- **No more profiles or sign-in** behind the scenes: who plays is simply
-  which controllers play (player 1 always, players 2-4 as soon as a
-  controller plays as them).
-- **Invert Axis stays as you set it**: it used to reset to off at every
-  Press START, quit to the title and co-op join (the Xbox profile's
-  setting).
-- **No more waiting on save screens**: the Xbox held its storage messages
-  for a fixed time, even though saving on a PC takes a few milliseconds.
-  Opening Save Game or Load Game, saving and loading a save now go straight
-  on (about 4 to 7 seconds saved each time), and the "Load successful." /
-  "Save successful." screens no longer wait for A. A quick read or save
-  shows no message at all (no dimmed flash); a slow one shows it after a
-  second and a half. The messages also
-  read "Reading save files...", "Saving..." and "Loading..." instead of
-  asking you not to turn off the Xbox 360. Settings: *save_screen_waits*
-  and *save_success_screens* bring the original timings and screens back.
-
-**Outfits for every player.** The chest in Crash's house now dresses all
-four players: every outfit for everyone (Crash, Carbon Crash, Greeny, Bluey,
-Reddy, Snipe, Ratcicle, Magmadon, Skeleton, Spike, Coco, Old School), Coco
-for player 1 too, and Back pages through each player on foot. Crash also
-comes in Red, Yellow, Green, Blue, Purple and Pink, for anyone, after the
-Crash of the Titans short "Have Another" (fur, chest and tattoos each in
-their own shade, the hair too); player 2 is still the original white Carbon
-Crash by default and players 3-4 start in green and purple (*carbon_colours*
-= false: white only). Carbon Crash's hair now matches his fur, and each coloured Crash spins in
-his own colour. Picks are kept per
-player and per save file (kept in the save file itself, after the game's own
-bytes): a New Game starts with the story's own outfits, and a save from an
-earlier version takes the picks made before.
+**Everything else**
+- Achievements kept by the port, with their own screen and pop-up.
+- The main menu has **Extras** (Players, Credits) and **Quit Game**.
+- The port's own texts in 11 languages; the whole game in Brazilian
+  Portuguese.
+- Sound output and audio decoding are the port's own (no emulated Xbox
+  audio).
+- Saves are plain files with automatic backups; no Xbox profiles.
+- F1 opens the Tools menu, F2 hides the HUD, F11 switches fullscreen.
+- Cheats can unlock outfits, concept art, enemy info and tutorials; a save
+  made with cheats is marked.
 
 **Fixes**
-
-- **Above 30 fps, moving floors no longer stop.** In the space station, a
-  round arena's floor sinks ring by ring while enemies attack; above about
-  120 fps it moved a few centimetres and stopped, leaving no way forward. The game ignored movements smaller than
-  a fixed size per frame, and at a high frame rate every step was smaller.
-  That minimum is now scaled to the frame time, the same as at 30 fps.
-- **No more flickering behind clear ice.** In the ice caves, a frozen figure
-  behind a sheet of ice vanished and came back while explosions were on
-  screen (the original game did this too). The game sorts see-through
-  objects with rules that can contradict each other, so the explosions
-  reshuffled them; the port now sorts them in one steady order.
-- **Players 3 and 4's mojo flies to their own portrait.** A collected mojo
-  flies to its player, then to that player's portrait; players 3 and 4's
-  went to player 2's (top right). Now player 3's goes to the bottom left and
-  player 4's to the bottom right.
-
-**Launcher and logs**
-
-- **Report a problem** in the launcher: one click packs the logs of the
-  sessions you pick, your settings and a short summary (version, system,
-  graphics card) into a `.zip`, optionally with a save near the problem
-  spot, and opens the bug report form with those details filled in.
-- **Better logs**: every session's log now starts with the version, system
-  and changed settings, records what the game does (frame rate, sounds,
-  co-op, menus) and ends with how the session ended. Old logs are cleaned
-  up automatically. The *Event logs* setting turns the extra lines off.
-- **What's new** in the launcher: from this version on, it shows a
-  release's notes before you update and once after.
-- Each session also records your controller presses next to its log (they
-  go into problem reports, so a bug's moves can be replayed).
-- After an update the game now always gets rebuilt, whichever tab is open
-  (0.1.0's launcher could leave the old build in place).
-- **Linux: a crash now closes the game with a crash report** (like on
-  Windows) instead of freezing it. The report in `user/logs/crash-*.txt`
-  names the game code it happened in and goes into *Report a problem*.
+- Players 3 and 4 standing on player 1's shoulders after a desert cutscene
+  ([#2](https://github.com/Maxilure/MindOver-Recomp/issues/2)).
+- Players 3 and 4 losing the camera when they're the only ones left after
+  a level change.
+- Fight barriers light up for players 3 and 4.
+- Masks, respawns and spawn points for players 3 and 4.
+- The co-op camera: a shorter reach, no jitter on bumps, follows the nearest
+  player, no frozen partners far away, behaves after cutscenes and level
+  changes.
+- Things seen through clear ice no longer flicker.
+- Motion trails in the port's own picture; some particle glows were too dim.
+- Moving floors no longer stop above 30 fps (a dead end at high frame rates).
+- The title screen after the intro movie loads in under a second (was 23 s).
+- No more artificial Xbox waits or "do not turn off the Xbox" messages on
+  the save screens.
+- The speed cheat now blocks achievements like the other cheats
+  ([#3](https://github.com/Maxilure/MindOver-Recomp/issues/3)).
 
 ### Updating from 0.1.0-alpha
 
-The launcher shows **Version 0.1.1-alpha is out**: open *Setup* and update.
-Your saves and settings stay. After the restart, let Setup finish
-rebuilding the game before you play (it says so on the Play page). The
-first start copies your saves into the new layout (see above); keep your
-backup until you've checked they're all there.
+**Windows:** the simplest way is a fresh install: download the new `.zip`,
+start **Mind over Recomp.exe** and pick a new folder; tick **Copy saves and
+settings from an older version** and pick the old version's folder. (Pressing
+Update in 0.1.0's launcher works too: it swaps in the installer, which then
+rebuilds the game.)
+
+**Linux:** the launcher shows **Version 0.2.0-alpha is out**: open *Setup*
+and update. After the restart, let it finish rebuilding before you play.
+
+Your saves and settings stay either way. Old saves may not carry over
+perfectly (alpha): keep a backup of the old `user/saves` folder until
+you've checked them.
 
 ### Downloads
 
 | System | File |
 |---|---|
-| Linux (x86-64, glibc 2.39+: Ubuntu 24.04, Fedora 40, Arch… or newer) | `MindOverRecomp-<version>-linux-x86_64.tar.gz` |
 | Windows 10 / 11 (64-bit) | `MindOverRecomp-<version>-windows-x86_64.zip` |
+| Linux (x86-64, glibc 2.39+: Ubuntu 24.04, Fedora 40, Arch… or newer) | `MindOverRecomp-<version>-linux-x86_64.tar.gz` |
 
-`release.toml` is for the launcher's update check. You don't need to download it.
+`release.toml` is for the update check. You don't need to download it.
 
 ### How to start
 
+**Windows**
+1. Unpack the `.zip` anywhere and start **Mind over Recomp.exe** (Windows
+   may warn about an unknown program: **More info → Run anyway**).
+2. Pick your `.iso` and where to install (**~15 GB free**, an NTFS drive,
+   not a OneDrive folder), then press **Next: install**. It installs the build
+   tools it needs and builds the game: the first time takes a while.
+3. Start **Crash Mind over Mutant** from the Start menu. To update or
+   uninstall later, open **Mind over Recomp** from the Start menu.
+
+**Linux**
 1. Unpack the archive somewhere with **~25 GB free**.
 2. Open **READ ME FIRST.txt** in that folder, then start **Mind over Recomp**.
 3. The launcher opens on **Setup**. Install any tools it lists, pick your
@@ -274,6 +140,8 @@ listed under
 common problems and their fixes are in
 [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md).
 
-Found a bug? Press **Report a problem...** in the launcher: it makes the file
-to attach and opens the
-**[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**.
+Found a bug? Fill in the
+**[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
+and attach your logs: the `user\logs` folder in the game's folder. If
+the Windows installer fails, it opens that form and the logs folder for you.
+On Linux, **Report a problem...** in the launcher makes the file to attach.
