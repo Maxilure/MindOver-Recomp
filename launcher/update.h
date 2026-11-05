@@ -81,6 +81,12 @@ std::string InstalledWhatsNew(const folders::Folders& folders);
 // The release's page on GitHub.
 std::string ReleasePage(const std::string& version);
 
+// A NEW install (the Windows installer): downloads `release` (the feed's
+// archive, checked by SHA-256) into <root>/.install, unpacked, and moves its
+// source/ to <root>/source. The installer copies itself in separately.
+std::vector<task_runner::Command> FreshInstallJob(const Release& release,
+                                                  const std::filesystem::path& root);
+
 // a newer than b? (see the header)
 bool Newer(const std::string& a, const std::string& b);
 

@@ -32,6 +32,16 @@
 
 namespace folders {
 
+// The installed game's file name in program/. Windows: "Crash Mind over
+// Mutant.exe" (2026-11-05: the game a player builds from their own disc
+// shows up under the game's own name in the Start menu and the taskbar;
+// the installer / updater keeps the project's name, "Mind over Recomp").
+// The game itself doesn't care what its file is called (src/game_folder.h
+// goes by the "program" folder). Linux: "crash_mom", as before.
+// The BUILD always makes crash_mom(.exe): Setup's last step copies it in
+// under this name.
+std::string InstalledExeName();
+
 struct Folders {
   std::filesystem::path root;      // the game folder (empty = not found)
   std::filesystem::path source;    // the port's source tree (release: root/source,

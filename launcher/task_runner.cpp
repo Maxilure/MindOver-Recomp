@@ -3,6 +3,7 @@
 // =============================================================================
 #include "task_runner.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdio>
@@ -225,7 +226,10 @@ bool Runner::RunOne(const Command& command, size_t index, size_t count, std::ofs
     std::lock_guard lock(child_mutex_);
     child_ = nullptr;
   }
-  const bool ok = !ended.crashed && !ended.killed && ended.exit_code == 0;
+  const bool ok = !ended.crashed && !ended.killed &&
+                  (ended.exit_code == 0 ||
+                   std::find(command.also_ok.begin(), command.also_ok.end(), ended.exit_code) !=
+                       command.also_ok.end());
   if (!ok) {
     std::lock_guard lock(mutex_);
     state_.error = (ended.crashed || ended.killed)

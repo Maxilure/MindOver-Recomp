@@ -5,9 +5,10 @@
 > isn't here, [open an issue](https://github.com/Maxilure/MindOver-Recomp/issues)
 > and attach your log (see [Logs and bug reports](#logs-and-bug-reports)).
 
-Every path below is inside the folder you unpacked (the one with the
-launcher in it). `user/` holds everything that is yours: saves, settings,
-controls, photos and logs.
+Every path below is inside the game's folder: on Windows the folder the
+installer made (`Crash Mind over Mutant`, wherever you chose to install),
+on Linux the folder you unpacked (the one with the launcher in it). `user/`
+holds everything that is yours: saves, settings, controls, photos and logs.
 
 * [Known issues](#known-issues)
 * [Every system](#every-system)
@@ -46,8 +47,11 @@ is welcome).
 **"Not enough free space"**: the disc's files need about 6.5 GB, and the
 whole folder grows to roughly 25 GB after the first build (your `.iso` can
 be deleted afterwards). Free some space, or move the whole folder to a
-bigger drive. Moving it is fine: the launcher finds everything relative to
-itself.
+bigger drive. On Linux, moving the folder is fine: the launcher finds
+everything relative to itself. On Windows the Start menu and *Installed
+apps* entries point at the old place: uninstall (keeping your saves) and
+install again on the other drive, ticking **Copy saves and settings from an
+older version** if you didn't keep them in place.
 
 **"default.xex isn't Crash: Mind over Mutant"**: the `.iso` is another game
 or another region. The port is built for the **USA** release (title ID
@@ -60,15 +64,16 @@ language → Date & time → **Sync now**), then run the step again.
 
 **The build fails or the computer freezes while building**: building the
 game needs a lot of memory (each of the ~140 big generated files takes 1-2
-GB to compile). The launcher picks how many files it builds at once from
-your free memory, so close other programs (browsers, games) before
-pressing **Set up everything**. 16 GB of RAM is recommended. With less,
+GB to compile). The installer (Windows) or launcher (Linux) picks how many
+files it builds at once from your free memory, so close other programs
+(browsers, games) before the build starts. 16 GB of RAM is recommended. With less,
 it still works, only slower.
 
 **A step failed and you don't know why**: the full output of every step
 is in `user/logs/setup-<date>_<time>.log`. The last red lines are usually
-the reason. Press the step's button again after fixing it: Setup continues
-from where it stopped.
+the reason. After fixing it, start **Mind over Recomp** again (Windows: from
+the Start menu, it offers **Build it now**) or press the step's button again
+(Linux): it continues from where it stopped.
 
 ### Starting and playing
 
@@ -76,19 +81,19 @@ from where it stopped.
 ("emulated") picture needs a Vulkan feature called *fragment shader
 interlock*. Most NVIDIA cards have it. Some other cards (likely AMD's)
 don't, and then those screens stay black. The port has only been tested on
-NVIDIA so far. Try the port's own renderer: launcher → Settings →
-Picture → **Native renderer** (or **F1** → Switch renderer in the game). It is still in progress, so a few
+NVIDIA so far. Try the port's own renderer: in the game, **Options →
+Graphics → Renderer** (or **F1** → Switch renderer). It is still in progress, so a few
 effects may be missing in later levels.
 
 **The game is slow or stutters**: the emulated picture is the heavy part.
-**Native only** (the default; Settings → Picture, or Options → Display → Renderer in the game)
+**Native only** (the default; **Options → Graphics → Renderer** in the game)
 draws the game with the port's own renderer and stops the emulated one, which usually runs much
 faster: check it hasn't been switched to Emulated. Also check that
 the frame rate cap isn't set higher than your computer can keep up with.
 
 **Odd movement above 60 fps** (Crash falling for a split second, physics
 glitches, animations too fast or too slow): frame rates above 60 are
-**experimental**. The launcher marks them with a ⚠️. Go back to 60 (or 30,
+**experimental**. Go back to 60 (or 30,
 the original) and the game behaves as on the Xbox 360.
 
 **My controller does nothing**:
@@ -120,14 +125,15 @@ program's keys.
 again.
 
 **The game crashed**: the game closes and writes a crash report to
-`user/logs/crash-<date>_<time>.txt`, next to the session log. The launcher's
-**Report a problem** includes it. On Linux, versions before 0.1.1-alpha froze
+`user/logs/crash-<date>_<time>.txt`, next to the session log. Attach it to
+your bug report (on Linux the launcher's **Report a problem** includes it). On Linux, versions before 0.1.1-alpha froze
 instead of closing (the picture stopped and one CPU core stayed busy): close
 the window in that case.
 
-**I changed a setting and now the game won't start / looks wrong**: in the
-launcher's Settings tab, press **Default** next to it. To reset everything,
-delete `user/settings.toml` (the launcher writes a new one).
+**I changed a setting and now the game won't start / looks wrong**: set it
+back in **Options** (on Linux, the launcher's Settings tab also has a
+**Default** button next to it). To reset everything, delete
+`user/settings.toml`: the game starts with every setting at its default.
 
 **The game hangs while starting (or freezes when a controller is plugged
 in)**: a controller that has stopped answering holds the game up while it
@@ -174,10 +180,16 @@ you're happy with the new ones.
 
 ### Updates
 
-**The update failed or the folder seems broken**: download the newest
-release again, unpack it into a **new** folder, and copy your `user/`
-folder (and `game/`, to skip extracting the disc again) into it. Then
-start the launcher there and run Setup.
+**Updating**: on Windows, open **Mind over Recomp** from the Start menu; it
+shows a new version and updates the game (your `user/` folder stays). On
+Linux, the launcher's Setup tab does the same.
+
+**The update failed or the folder seems broken**: on Windows, download the
+newest release and install it into a **new** folder, ticking **Copy saves
+and settings from an older version** (pick the old folder). On Linux,
+unpack it into a new folder, copy your `user/` folder (and `game/`, to skip
+extracting the disc again) into it, then start the launcher there and run
+Setup.
 
 **Shaders or changed game data look wrong after an update**: delete the
 `cache/` folder. It is rebuilt at the next start.
@@ -225,48 +237,67 @@ with the log.
 
 ## Windows
 
-**"Windows protected your PC" (SmartScreen)**: the launcher isn't signed
+On Windows the game is installed by **Mind over Recomp.exe**, the
+installer: it installs the build tools, builds the game, adds **Crash Mind
+over Mutant** to the Start menu and to *Installed apps*, updates it later
+and uninstalls it. The game's settings are in the game itself (**Options**).
+
+**"Windows protected your PC" (SmartScreen)**: the installer isn't signed
 (signing costs money; this is a free fan project). Click **More info**,
 then **Run anyway**. Windows only asks once.
 
-**Where to put the folder**: a short path on an **NTFS** drive, for example
-`C:\Games\Mind over Recomp` or `D:\Mind over Recomp`. Avoid:
-* **Program Files**: needs administrator rights to write there.
+**The installer won't install into a folder**: it refuses folders the build
+can't work in:
+* **Program Files** and the Windows folder: they need administrator
+  rights to write there. The suggested place is `Games` in your user folder.
 * **OneDrive folders** (Documents, Desktop and Pictures often are): it
-  would try to upload ~25 GB, and syncing can lock files during the build.
-* **exFAT / FAT32 drives** (most USB sticks and SD cards): Setup links
-  folders together, which only NTFS supports.
-* **Very deep paths**: some of the build's files already have long names.
+  would try to upload many GB, and syncing can lock files during the build.
+* **exFAT / FAT32 drives** (most USB sticks and SD cards): only NTFS (or
+  ReFS) drives work.
+* **Very long paths**: some of the build's files already have long names;
+  pick a short place such as `C:\Games` or `D:\`.
+* A folder that isn't empty, or a drive with too little free space (about
+  15 GB: the finished install is about 9 GB).
 
-**Installing the tools**: the Setup tab names each missing tool. Most come
-from **winget**, Windows' own package manager. Open *Terminal* (or
-*PowerShell*) and type, for example:
+**Installing the tools**: the installer lists each tool it needs and
+**Install the missing tools** installs them with **winget**, Windows' own
+package manager (Visual Studio's C++ build tools, LLVM, CMake, Ninja, Git,
+Python, the Vulkan SDK and the Visual C++ runtime). Windows asks for
+permission for some of them. It takes a while (Visual Studio's tools are
+several GB).
+
+**"winget isn't there"**: install **App Installer** from the Microsoft Store,
+then start the installer again.
+
+**A tool keeps failing to install**: install it by hand (the list shows its
+winget name), for example in *Terminal*:
 
 ```
 winget install LLVM.LLVM
 ```
 
-Visual Studio's C++ tools come from the **Visual Studio Installer**:
-install "Build Tools for Visual Studio 2022" (`winget install
-Microsoft.VisualStudio.2022.BuildTools`), open the Visual Studio
-Installer, choose **Modify**, and tick the **Desktop development with
-C++** workload. Make sure a **Windows 11 SDK** is ticked under
-*Individual components*. Then press **Check again** in the launcher.
-
-**A tool is installed but Setup still says "not found"**: close the
-launcher and start it again (a program only sees tools installed before
-it started). If it's still missing, restart Windows.
-
-**"Python 3: not found (or only the Store shortcut)"**: Windows has a fake
-`python` that only opens the Microsoft Store. Install the real one with
-`winget install Python.Python.3.12`, then restart the launcher.
-
-**"glslc: not found"**: glslc comes with the **Vulkan SDK**
-(`winget install KhronosGroup.VulkanSDK`). Restart the launcher after
-installing it.
+Visual Studio's C++ tools come from the **Visual Studio Installer**: install
+"Build Tools for Visual Studio 2022" (`winget install
+Microsoft.VisualStudio.2022.BuildTools`), open the Visual Studio Installer,
+choose **Modify**, and tick the **Desktop development with C++** workload
+(with a **Windows 11 SDK** under *Individual components*). Then press
+**Check again**. If a tool still shows as missing, restart Windows.
 
 **"Vulkan loader: not found"**: update your graphics card's driver from
 NVIDIA, AMD or Intel. The game needs Vulkan.
+
+**The install failed**: the installer shows what failed, opens the
+[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)
+already filled in and the logs folder: attach the newest
+`setup-<date>_<time>.log`. Starting **Mind over Recomp** again continues
+where it stopped.
+
+**Uninstalling**: Windows' *Settings → Apps → Installed apps* → **Mind over
+Recomp (Crash Mind over Mutant)** → Uninstall, or **Uninstall** in Mind
+over Recomp itself. **Keep my saves, settings and logs** (on by default)
+leaves the `user` folder; everything else in the game's folder is removed.
+Your `.iso` and the build tools stay (other programs may use the tools:
+remove them from *Installed apps* if you want).
 
 **The build is very slow**: Windows Defender scans every file the build
 writes. That is normal, just slower. You may choose to add the game's
@@ -274,30 +305,38 @@ folder as an exclusion in Windows Security, but you don't have to.
 
 **Windows is less tested than Linux**: the port has only run on a few
 Windows PCs so far. Gameplay, keyboard and mouse, controllers, co-op, the
-native renderer and 120 fps have been tried; renaming and deleting saves,
-cutscene voices and unplugging a controller mid-game have not been
-confirmed yet. Reports are very welcome.
+native renderer and 120 fps have been tried; the installer's update and
+uninstall, renaming and deleting saves, cutscene voices and unplugging a
+controller mid-game have not been confirmed yet. Reports are very welcome.
 
 ---
 
 ## Logs and bug reports
 
 Every game session writes its own log: `user/logs/play-<date>_<time>.log`.
-The launcher's **Game log** tab shows it live, with errors in red and
-warnings in yellow, and has buttons to open the file. Setup writes
-`user/logs/setup-<date>_<time>.log`.
+On Linux the launcher's **Game log** tab shows it live, with errors in red
+and warnings in yellow. Building writes `user/logs/setup-<date>_<time>.log`.
 
 What a log holds: a header (the port's version, your system, CPU and RAM,
 how the game was started, the settings you changed), the graphics card and
 driver, then the game's events: frame rate every 5 seconds, the sounds it
 plays, co-op joins and players' states, which player a menu answers to,
-and every menu screen change. The launcher adds a last line saying how the
-session ended (closed normally, crashed, ended from outside). That's a few
+and every menu screen change. On Linux the launcher adds a last line saying
+how the session ended (closed normally, crashed, ended from outside). That's a few
 MB per hour of play. Old logs are deleted, oldest first, once the folder
 passes 300 MB (setting `logs_budget_mb`). To log only the basics, set
-`event_logs` to false in the launcher's Settings tab.
+`event_logs = false` in `user/settings.toml` (or in the Linux launcher's
+Settings tab).
 
 ### Reporting a bug
+
+**Windows**: open the
+[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose),
+describe the problem and drag the session's log (`user\logs\play-<date>_<time>.log`,
+plus a `crash-*.txt` if there is one) into its **Log** box. A save near the
+spot where it happens helps too (`user\saves`).
+
+**Linux**:
 
 1. In the launcher, press **Report a problem...** (on the Play page, and
    highlighted after a session that crashed or logged errors).

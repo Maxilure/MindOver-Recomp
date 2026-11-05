@@ -24,6 +24,9 @@
 #include <tlhelp32.h>
 
 #include <algorithm>
+#include <fstream>
+#include <iterator>
+#include <vector>
 #include <cstdlib>
 #include <cwctype>
 
@@ -106,6 +109,88 @@ fs::path HomeDir() { return fs::path(EnvironmentVariable(L"USERPROFILE")); }
 
 std::string ExeName(const std::string& name) { return name + ".exe"; }
 
+std::string GetEnv(const char* name) { return Narrow(EnvironmentVariable(Wide(name).c_str())); }
+
+namespace {
+
+// One value of a registry key's environment list ("" if absent), with
+// %VARIABLES% expanded (PATH entries are often REG_EXPAND_SZ like
+// "%USERPROFILE%\AppData\Local\Microsoft\WindowsApps").
+std::wstring RegistryEnvironmentValue(HKEY root, const wchar_t* key, const wchar_t* name) {
+  DWORD bytes = 0;
+  const DWORD flags = RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_NOEXPAND;
+  if (RegGetValueW(root, key, name, flags, nullptr, nullptr, &bytes) != ERROR_SUCCESS || bytes == 0) {
+    return {};
+  }
+  std::wstring raw(bytes / sizeof(wchar_t) + 1, L'\0');
+  if (RegGetValueW(root, key, name, flags, nullptr, raw.data(), &bytes) != ERROR_SUCCESS) {
+    return {};
+  }
+  raw.resize(wcslen(raw.c_str()));
+  const DWORD n = ExpandEnvironmentStringsW(raw.c_str(), nullptr, 0);
+  if (n == 0) return raw;
+  std::wstring expanded(n, L'\0');
+  ExpandEnvironmentStringsW(raw.c_str(), expanded.data(), n);
+  expanded.resize(wcslen(expanded.c_str()));
+  return expanded;
+}
+
+constexpr const wchar_t* kMachineEnvironment =
+    L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment";
+constexpr const wchar_t* kUserEnvironment = L"Environment";
+
+// "a;b;;c" -> {a, b, c}
+std::vector<std::wstring> SplitPath(const std::wstring& path) {
+  std::vector<std::wstring> parts;
+  size_t start = 0;
+  while (start <= path.size()) {
+    const size_t end = path.find(L';', start);
+    std::wstring part = path.substr(start, end == std::wstring::npos ? end : end - start);
+    if (!part.empty()) parts.push_back(std::move(part));
+    if (end == std::wstring::npos) break;
+    start = end + 1;
+  }
+  return parts;
+}
+
+}  // namespace
+
+void RefreshEnvironment() {
+  // PATH: the system's, then the user's (Windows' own order), then whatever
+  // this process had on top (a folder a caller added on purpose).
+  std::vector<std::wstring> parts =
+      SplitPath(RegistryEnvironmentValue(HKEY_LOCAL_MACHINE, kMachineEnvironment, L"Path"));
+  for (std::wstring& part : SplitPath(RegistryEnvironmentValue(HKEY_CURRENT_USER, kUserEnvironment, L"Path"))) {
+    parts.push_back(std::move(part));
+  }
+  if (parts.empty()) {
+    return;  // the registry couldn't be read: keep what we have
+  }
+  std::vector<std::wstring> seen;
+  for (const std::wstring& part : parts) seen.push_back(LowerW(part));
+  for (const std::wstring& part : SplitPath(EnvironmentVariable(L"PATH"))) {
+    if (std::find(seen.begin(), seen.end(), LowerW(part)) == seen.end()) {
+      parts.push_back(part);
+      seen.push_back(LowerW(part));
+    }
+  }
+  std::wstring joined;
+  for (const std::wstring& part : parts) {
+    if (!joined.empty()) joined += L';';
+    joined += part;
+  }
+  SetEnvironmentVariableW(L"PATH", joined.c_str());
+  // The Vulkan SDK's installer sets VULKAN_SDK (system-wide): where glslc is.
+  for (HKEY root : {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE}) {
+    const std::wstring vulkan = RegistryEnvironmentValue(
+        root, root == HKEY_LOCAL_MACHINE ? kMachineEnvironment : kUserEnvironment, L"VULKAN_SDK");
+    if (!vulkan.empty()) {
+      SetEnvironmentVariableW(L"VULKAN_SDK", vulkan.c_str());
+      break;
+    }
+  }
+}
+
 fs::path FindProgram(const std::string& name) {
   if (name.empty()) return {};
   std::error_code ec;
@@ -144,6 +229,55 @@ double MemAvailableGb() {
 }
 
 int Cores() { return int(std::max<DWORD>(1, GetActiveProcessorCount(ALL_PROCESSOR_GROUPS))); }
+
+// The .ico file's layout (ICONDIR + ICONDIRENTRY) and the resource's
+// (GRPICONDIR + GRPICONDIRENTRY: the same fields, but the picture's resource
+// id instead of its file offset). Each picture becomes one RT_ICON resource
+// (its bytes as they are in the file: PNG-compressed pictures are fine in an
+// exe since Vista), the group RT_GROUP_ICON 1 lists them.
+bool EmbedIcon(const fs::path& exe, const fs::path& ico, std::string* error) {
+  std::ifstream in(ico, std::ios::binary);
+  std::vector<uint8_t> file((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  auto u16 = [&](size_t at) { return uint16_t(file[at] | file[at + 1] << 8); };
+  auto u32 = [&](size_t at) { return uint32_t(u16(at) | uint32_t(u16(at + 2)) << 16); };
+  if (file.size() < 6 || u16(0) != 0 || u16(2) != 1 || u16(4) == 0 || file.size() < 6 + 16 * size_t(u16(4))) {
+    *error = "not an icon file: " + ico.string();
+    return false;
+  }
+  const int count = u16(4);
+  HANDLE update = BeginUpdateResourceW(exe.wstring().c_str(), FALSE);
+  if (!update) {
+    *error = "couldn't open " + exe.string() + " (error " + std::to_string(GetLastError()) + ")";
+    return false;
+  }
+  std::vector<uint8_t> group = {0, 0, 1, 0, uint8_t(count), uint8_t(count >> 8)};
+  bool ok = true;
+  for (int i = 0; i < count && ok; ++i) {
+    const size_t e = 6 + 16 * size_t(i);
+    const uint32_t bytes = u32(e + 8), offset = u32(e + 12);
+    if (size_t(offset) + bytes > file.size()) {
+      ok = false;
+      break;
+    }
+    const WORD id = WORD(i + 1);
+    ok = UpdateResourceW(update, MAKEINTRESOURCEW(3) /* RT_ICON */, MAKEINTRESOURCEW(id), MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+                         file.data() + offset, bytes) != 0;
+    // width, height, colours, reserved, planes, bit count, bytes (12 B as
+    // in the file), then the WORD resource id.
+    group.insert(group.end(), file.begin() + long(e), file.begin() + long(e) + 12);
+    group.push_back(uint8_t(id));
+    group.push_back(uint8_t(id >> 8));
+  }
+  if (ok) {
+    ok = UpdateResourceW(update, MAKEINTRESOURCEW(14) /* RT_GROUP_ICON */, MAKEINTRESOURCEW(1), MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+                         group.data(), DWORD(group.size())) != 0;
+  }
+  if (!EndUpdateResourceW(update, ok ? FALSE : TRUE) || !ok) {
+    *error = "couldn't write the icon into " + exe.string() + " (error " + std::to_string(GetLastError()) + ")";
+    return false;
+  }
+  return true;
+}
 
 double FreeDiskGb(const fs::path& where) {
   ULARGE_INTEGER free{};

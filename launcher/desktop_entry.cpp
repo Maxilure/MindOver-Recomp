@@ -79,7 +79,9 @@ fs::path IconFile(const fs::path& game_folder) {
   std::error_code ec;
   for (const fs::path& candidate :
        {game_folder / "assets" / "icon" / "crash_mom.png",
-        game_folder / "program" / "assets" / "icon" / "crash_mom.png"}) {
+        game_folder / "program" / "assets" / "icon" / "crash_mom.png",
+        // made by the setup from the player's own disc (tools/make_icon.py)
+        game_folder / "program" / "crash_mom.png"}) {
     if (fs::is_regular_file(candidate, ec)) {
       return candidate;
     }

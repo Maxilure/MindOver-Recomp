@@ -74,6 +74,9 @@ double MemAvailableGb() {
 
 int Cores() { return int(std::max(1L, sysconf(_SC_NPROCESSORS_ONLN))); }
 
+// Linux executables have no icon resources (the menu entry names a picture).
+bool EmbedIcon(const fs::path&, const fs::path&, std::string*) { return true; }
+
 double FreeDiskGb(const fs::path& where) {
   struct statvfs info{};
   if (statvfs(where.c_str(), &info) != 0) {
@@ -89,6 +92,13 @@ bool LibraryAvailable(const char* linux_name, const char*) {
   }
   return false;
 }
+
+std::string GetEnv(const char* name) {
+  const char* value = std::getenv(name);
+  return value ? value : "";
+}
+
+void RefreshEnvironment() {}  // Linux: a new terminal / login has it (platform.h)
 
 bool ProcessRunning(const std::string& name) {
   std::error_code ec;

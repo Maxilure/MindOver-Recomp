@@ -1,54 +1,77 @@
-Mind over Recomp -- version @VERSION@ (alpha)
+﻿Mind over Recomp -- version @VERSION@ (alpha)
 =============================================
+
+(Português mais abaixo.)
 
 An unofficial, fan-made native PC port of the Xbox 360 game Crash: Mind
 over Mutant, not affiliated with or endorsed by Activision or the game's
 other owners. It does NOT contain the game: it is built on your computer
 from YOUR OWN copy of the disc.
-THIS IS AN ALPHA: an early test version. The game is playable, but expect
-bugs, crashes and rough edges, and keep a copy of your saves
-(user\saves). Many features are experimental and have been tested on only
-a few computers.
+THIS IS AN ALPHA: an early test version. Expect bugs, crashes and rough
+edges, and keep a copy of your saves.
 
-How to start (Windows 10 / 11)
-------------------------------
+How to install (Windows 10 / 11)
+--------------------------------
 
 1. Have your disc image ready: an .iso dumped from your own Xbox 360 disc
-   of Crash: Mind over Mutant (USA). Putting it in this folder saves a click.
-   Put this folder on a drive with ~25 GB free, in a short path such as
-   C:\Games\ or D:\. Not in Program Files, not in a OneDrive folder (your
-   Documents or Desktop may be one), and not on a drive formatted exFAT or
-   FAT32 (most USB sticks): the drive must be NTFS.
+   of Crash: Mind over Mutant (USA).
 
 2. Double-click "Mind over Recomp.exe" in this folder.
-   (Windows may warn about an unknown program the first time: "More info",
-   then "Run anyway".)
+   (Windows may warn about an unknown program: "More info", then "Run anyway".)
 
-3. The launcher opens on "Setup". It lists any build tools your PC is
-   missing, with their names for winget, Windows' package manager (in a
-   terminal: winget install <name>). Visual Studio's C++ tools and the
-   Windows SDK come from the Visual Studio Installer. Then press
-   "Check again".
-   Then press "Set up everything" and let it work. The first time takes a
-   while (it downloads ~550 MB and builds the game on your computer).
+3. Pick your .iso and where the game goes (a short path on your PC's own
+   drive, e.g. C:\Games; about 15 GB free). Then "Next".
 
-4. Press Play. The launcher also adds itself to the Start menu.
+4. Missing build tools: press "Install the missing tools" (winget, Windows'
+   own installer, does it; Windows may ask for permission). Then "Next".
 
-What's in this folder
----------------------
+5. Let it work: the first install takes a while (often 20-60 minutes).
+   When it's done, "Crash Mind over Mutant" is in your Start menu.
 
-  Mind over Recomp.exe         the launcher: play, settings, setup, updates
-  user\                        YOUR files: saves, settings, controls, photos
-  game\                        the game's files from your disc (made by Setup)
-  program\                     the built game (made by Setup)
-  source\                      the port's code and build files (you can ignore it)
+Updates and uninstalling: "Mind over Recomp" in the Start menu, or Windows'
+"Installed apps". Uninstalling can keep your saves, settings and logs.
 
-Updates: the launcher tells you when a new version is out; updating keeps
-your saves and settings (user\) and only rebuilds what changed.
-
-Something went wrong? See Troubleshooting:
-  https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md
-Found a bug? Report it here (pick "Bug report", attach your log from user\logs):
+It didn't work? The installer shows a "Report it on GitHub" button: it
+opens the bug form and the log's folder; attach the log file.
   https://github.com/Maxilure/MindOver-Recomp/issues/new/choose
+Troubleshooting:
+  https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md
 
-Project page: https://github.com/Maxilure/MindOver-Recomp
+
+Português (Brasil)
+==================
+
+Um port nativo para PC, não oficial e feito por fãs, do jogo de Xbox 360
+Crash: Mind over Mutant, sem ligação com a Activision. Ele NÃO contém o
+jogo: o jogo é compilado no seu computador a partir da SUA cópia do disco.
+ISTO É UMA VERSÃO ALPHA: espere bugs e travamentos, e guarde uma cópia dos
+seus saves.
+
+Como instalar (Windows 10 / 11)
+-------------------------------
+
+1. Tenha a imagem do seu disco pronta: um .iso do seu próprio disco de
+   Xbox 360 de Crash: Mind over Mutant (USA).
+
+2. Clique duas vezes em "Mind over Recomp.exe" nesta pasta.
+   (O Windows pode avisar sobre um programa desconhecido: "Mais informações",
+   depois "Executar assim mesmo".) O instalador abre em português quando o
+   Windows está em português; o idioma também pode ser trocado no canto.
+
+3. Escolha o seu .iso e onde o jogo vai ficar (um caminho curto no disco do
+   PC, por exemplo C:\Games; cerca de 15 GB livres). Depois "Avançar".
+
+4. Faltam ferramentas de compilação: clique em "Instalar as ferramentas que
+   faltam" (o winget, o instalador do Windows, faz isso; o Windows pode pedir
+   permissão). Depois "Avançar".
+
+5. Deixe trabalhar: a primeira instalação demora (geralmente 20 a 60
+   minutos). No fim, "Crash Mind over Mutant" fica no menu Iniciar.
+
+Atualizar e desinstalar: "Mind over Recomp" no menu Iniciar, ou em
+"Aplicativos instalados" do Windows. A desinstalação pode manter seus
+saves, configurações e logs.
+
+Não funcionou? O instalador mostra o botão "Relatar no GitHub": ele abre o
+formulário de bug e a pasta do log; anexe o arquivo de log.
+  https://github.com/Maxilure/MindOver-Recomp/issues/new/choose

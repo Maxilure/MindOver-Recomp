@@ -2,6 +2,7 @@
 // game_process.cpp -- see game_process.h
 // =============================================================================
 #include "game_process.h"
+#include "folders.h"
 #include "texts.h"
 
 #include <cstring>
@@ -294,6 +295,11 @@ void Game::Forget() {
   }
 }
 
-bool AnotherGameRunning() { return platform::ProcessRunning("crash_mom"); }
+bool AnotherGameRunning() {
+  // The build's name, or the installed one ("Crash Mind over Mutant.exe" on
+  // Windows, folders::InstalledExeName).
+  return platform::ProcessRunning("crash_mom") ||
+         platform::ProcessRunning(fs::path(folders::InstalledExeName()).stem().string());
+}
 
 }  // namespace game_process

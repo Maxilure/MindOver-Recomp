@@ -27,7 +27,7 @@
 > **Alpha.** The game boots and plays, but it hasn't been played through to the end yet. Expect bugs, crashes and rough edges, and back up your saves.
 
 > [!IMPORTANT]
-> **No game files are included, and none ever will be.** You need your own Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`. The launcher builds the game on your computer from it.
+> **No game files are included, and none ever will be.** You need your own Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`. The installer (Windows) or the launcher (Linux) builds the game on your computer from it.
 
 ## 📖 About
 
@@ -104,15 +104,21 @@ Pause → **Options**: frame rate, renderer, brightness, V-sync, windowed or ful
 
 Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** recommended, **~25 GB** free disk space, and internet for the first setup.
 
-1. **Unpack** the download into a folder with enough space (on Windows, a short path such as `C:\Games\`).
-2. **Start the launcher**, *Mind over Recomp*. Windows may warn about an unknown program: **More info → Run anyway**.
-3. In the **Setup** tab, install the tools it lists, pick your `.iso`, and press **Set up everything**. The first time downloads ~550 MB and builds the game on your computer.
-4. Press **Play**. Next time, **Continue** jumps straight into your last save.
+**Windows**
+1. **Unpack** the `.zip` anywhere and start **Mind over Recomp.exe**, the installer. Windows may warn about an unknown program: **More info → Run anyway**.
+2. **Pick your `.iso` and a folder** to install into, then **Next: install**. It installs the build tools it needs (through winget), downloads ~550 MB and builds the game on your computer.
+3. **Play** from the Start menu: **Crash Mind over Mutant**. To update or uninstall, open **Mind over Recomp** from the Start menu, or use Windows' *Installed apps* list (you can keep your saves, settings and logs).
 
-The launcher also lists your saves, edits settings, shows a live game log and keeps the port up to date (your saves and settings stay).
+**Linux**
+1. **Unpack** the download into a folder with enough space.
+2. **Start the launcher**, *Mind over Recomp*.
+3. In the **Setup** tab, install the tools it lists, pick your `.iso`, and press **Set up everything**. The first time downloads ~550 MB and builds the game on your computer.
+4. Press **Play**. Next time, **Continue** jumps straight into your last save. The launcher also lists your saves, edits settings, shows a live game log and keeps the port up to date.
+
+Settings are in the game itself: **Options** in the main menu and the pause menu.
 
 > [!TIP]
-> Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)** and the [known issues](docs/06-troubleshooting.md#known-issues). Found a bug? **Report a problem...** in the launcher packs your log and settings and opens the [bug form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) already filled in.
+> Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)** and the [known issues](docs/06-troubleshooting.md#known-issues). Found a bug? Fill in the [bug form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) and attach your logs (the `user/logs` folder in the game's folder). If the Windows installer fails, it opens the form and the logs folder for you; on Linux, **Report a problem...** in the launcher packs them.
 
 ## 🎮 Controls
 
@@ -176,7 +182,7 @@ Not counted: 89 kernel basics (threads, locks, memory, files), already thin tran
 
 ## 🛠️ Building from source
 
-For developers: players don't need this, the launcher does it all. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`; the full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
+For developers: players don't need this, the installer (Windows) or the launcher (Linux) does it all. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`; the full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
 
 <details>
 <summary><b>Build commands</b></summary>
@@ -222,7 +228,7 @@ src/                       the port's own native code
   cheats/                  the Cheats menu
   data/                    changed copies of game data, built at run time from your files
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
-launcher/                  the launcher: setup, play, settings, log, updates (no game code)
+launcher/                  the Windows installer + the Linux launcher: setup, updates (no game code)
 assets/                    pictures the port draws: players 3-4's markers, keyboard and mouse prompts, the jack symbol
 tools/                     disc extraction, disassembler, play/debug and release scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)

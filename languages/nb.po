@@ -64,7 +64,7 @@ msgstr "VISNING {0}"
 msgid "Achievement Unlocked"
 msgstr "Prestasjon låst opp"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1031 src/options/options_menu.cpp:2338 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1062 src/options/options_menu.cpp:2369 src/options/options_settings.cpp:1243
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestasjoner"
@@ -125,13 +125,13 @@ msgid "native renderer idle   F1 Tools switches"
 msgstr "innebygd grafikkmotor i ro   F1 Verktøy bytter"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74 src/ui/hud_hide.cpp:76
+#: src/ui/hud_hide.cpp:75 src/ui/hud_hide.cpp:77
 #, fuzzy
 msgid "HUD Hidden"
 msgstr "HUD skjult"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:74
+#: src/ui/hud_hide.cpp:75
 #, fuzzy
 msgid "Press {0} to show it again"
 msgstr "Trykk på {0} for å vise den igjen"
@@ -254,7 +254,7 @@ msgstr "Andre vindu (dobbeltmodus)"
 msgid "A second window with the port's picture; the main one shows the emulated one."
 msgstr "Et andre vindu med portens bilde; hovedvinduet viser det emulerte."
 
-#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:678
+#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:580
 #, fuzzy
 msgid "Saves"
 msgstr "Lagrede spill"
@@ -486,7 +486,7 @@ msgstr "Gå (hold)"
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr "Hold sammen med en retning: spaken heller bare delvis, så Crash går saktere."
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1325
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Spin"
 msgstr "Spinn"
@@ -501,7 +501,7 @@ msgstr "Spinnangrepet (på en kontroller: \"Drei venstre analogspak\"). Hold for
 msgid "Left stick circles"
 msgstr "Sirkler med venstre spak"
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1325
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Jump"
 msgstr "Hopp"
@@ -561,7 +561,7 @@ msgstr "I lomma / ut av lomma"
 msgid "Store the titan you control, and bring it back later."
 msgstr "Legger titanen du styrer i lomma, så du kan ta den ut igjen senere."
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1326
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Map"
 msgstr "Kart"
@@ -571,12 +571,12 @@ msgstr "Kart"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "I pausemenyen: avslutt samarbeid (en annen spiller blir igjen)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1330 src/options/options_menu.cpp:1344
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1361 src/options/options_menu.cpp:1375 launcher/installer.cpp:480
 #, fuzzy
 msgid "Back"
 msgstr "Tilbake"
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:973 src/options/options_settings.cpp:1326
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:975 src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Pause"
 msgstr "Pause"
@@ -756,7 +756,7 @@ msgstr "Resten av kontrolleren"
 msgid "NO KEYBOARD CONTROLS"
 msgstr "INGEN TASTATURKONTROLLER"
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1256 launcher/settings_page.cpp:539
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1258 launcher/settings_page.cpp:539
 #, fuzzy
 msgid "Controls"
 msgstr "Kontroller"
@@ -766,7 +766,7 @@ msgstr "Kontroller"
 msgid "Keys"
 msgstr "Taster"
 
-#: src/input/controls_menu.cpp:130 launcher/main.cpp:1141
+#: src/input/controls_menu.cpp:130 launcher/installer.cpp:981 launcher/main.cpp:1043
 #, fuzzy
 msgid "Close"
 msgstr "Lukk"
@@ -821,7 +821,7 @@ msgstr "Spillertildeling er ikke tilgjengelig i denne økten."
 msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
 msgstr "Hvilken enhet som spiller som hvilken spiller. For to: tastatur og mus på spiller 1, en kontroller på spiller 2. På et brett trykker du Start på den andre enheten for å bli med (pausemenyen har også Bli med og Avslutt samarbeid). Å flytte en enhet til en spiller bytter den med enheten som var der. På tittelskjermen og i hovedmenyene virker alle enheter. Endringer gjelder med en gang og huskes."
 
-#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:669
+#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:671
 #, fuzzy
 msgid "Device"
 msgstr "Enhet"
@@ -995,19 +995,19 @@ msgid "Backspace"
 msgstr "Slett"
 
 #. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
-#: src/saves/save_screen_waits.cpp:263
+#: src/saves/save_screen_waits.cpp:320
 #, fuzzy
 msgid "Reading save files..."
 msgstr "Leser lagrede spill..."
 
 #. Shown while a save is loaded. Short.
-#: src/saves/save_screen_waits.cpp:265
+#: src/saves/save_screen_waits.cpp:322
 #, fuzzy
 msgid "Loading..."
 msgstr "Laster inn..."
 
 #. Shown while the game saves. Short.
-#: src/saves/save_screen_waits.cpp:267
+#: src/saves/save_screen_waits.cpp:324
 #, fuzzy
 msgid "Saving..."
 msgstr "Lagrer..."
@@ -1862,122 +1862,122 @@ msgstr "{0}-{1}"
 msgid "Drop Out"
 msgstr "Avslutt samarbeid"
 
-#: src/options/options_menu.cpp:811 src/options/options_menu.cpp:857
+#: src/options/options_menu.cpp:838 src/options/options_menu.cpp:888
 #, fuzzy
 msgid "Press a Key"
 msgstr "Trykk på en tast"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:867
+#: src/options/options_menu.cpp:898
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye andre tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:868
+#: src/options/options_menu.cpp:899
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:885
+#: src/options/options_menu.cpp:916
 #, fuzzy
 msgid "Second Key"
 msgstr "Andre tast"
 
-#: src/options/options_menu.cpp:891
+#: src/options/options_menu.cpp:922
 #, fuzzy
 msgid "Remove Key"
 msgstr "Fjern tast"
 
-#: src/options/options_menu.cpp:1064
+#: src/options/options_menu.cpp:1095
 #, fuzzy
 msgid "Locked"
 msgstr "Låst"
 
-#: src/options/options_menu.cpp:1329
+#: src/options/options_menu.cpp:1360
 #, fuzzy
 msgid "Confirm"
 msgstr "Bekreft"
 
-#: src/options/options_menu.cpp:1333
+#: src/options/options_menu.cpp:1364
 #, fuzzy
 msgid "Swap"
 msgstr "Bytt"
 
-#: src/options/options_menu.cpp:1333
+#: src/options/options_menu.cpp:1364
 #, fuzzy
 msgid "Move Here"
 msgstr "Flytt hit"
 
-#: src/options/options_menu.cpp:1335 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1366 launcher/installer.cpp:963 launcher/setup.cpp:1640
 #, fuzzy
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: src/options/options_menu.cpp:1338
+#: src/options/options_menu.cpp:1369
 #, fuzzy
 msgid "Buttons"
 msgstr "Knapper"
 
-#: src/options/options_menu.cpp:1341
+#: src/options/options_menu.cpp:1372
 #, fuzzy
 msgid "Move"
 msgstr "Flytt"
 
-#: src/options/options_menu.cpp:1342
+#: src/options/options_menu.cpp:1373
 #, fuzzy
 msgid "Remove"
 msgstr "Fjern"
 
-#: src/options/options_menu.cpp:1467
+#: src/options/options_menu.cpp:1498
 #, fuzzy
 msgid "No room for this player"
 msgstr "Ikke plass til denne spilleren"
 
-#: src/options/options_menu.cpp:1471 src/options/options_menu.cpp:1479
+#: src/options/options_menu.cpp:1502 src/options/options_menu.cpp:1510
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tastatur og mus"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1476
+#: src/options/options_menu.cpp:1507
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Til spiller {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1476
+#: src/options/options_menu.cpp:1507
 #, fuzzy
 msgid "Pick a player"
 msgstr "Velg en spiller"
 
-#: src/options/options_menu.cpp:1481
+#: src/options/options_menu.cpp:1512
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Trykk på en knapp for å bli med"
 
-#: src/options/options_menu.cpp:1925
+#: src/options/options_menu.cpp:1956
 #, fuzzy
 msgid "Not changed."
 msgstr "Ikke endret."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1932
+#: src/options/options_menu.cpp:1963
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} brukes av menyene ({1}): velg en annen tast."
 
-#: src/options/options_menu.cpp:1944
+#: src/options/options_menu.cpp:1975
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} var tasten for {1}: nå hører den til {2}."
 
-#: src/options/options_menu.cpp:1965
+#: src/options/options_menu.cpp:1996
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ingen tast å fjerne."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1973
+#: src/options/options_menu.cpp:2004
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} fjernet."
@@ -2093,12 +2093,12 @@ msgstr "Øk til du så vidt kan skille de mørkeste rutene ovenfor fra hverandre
 msgid "V-sync"
 msgstr "V-sync"
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:405 src/options/options_settings.cpp:554 src/options/options_settings.cpp:781 src/options/options_settings.cpp:1044 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1215 src/options/options_settings.cpp:1220
+#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:405 src/options/options_settings.cpp:554 src/options/options_settings.cpp:783 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
 #, fuzzy
 msgid "On"
 msgstr "På"
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:340 src/options/options_settings.cpp:405 src/options/options_settings.cpp:533 src/options/options_settings.cpp:601 src/options/options_settings.cpp:781 src/options/options_settings.cpp:960 src/options/options_settings.cpp:1044 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1215 src/options/options_settings.cpp:1220
+#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:340 src/options/options_settings.cpp:405 src/options/options_settings.cpp:533 src/options/options_settings.cpp:601 src/options/options_settings.cpp:783 src/options/options_settings.cpp:962 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
 #, fuzzy
 msgid "Off"
 msgstr "Av"
@@ -2248,7 +2248,7 @@ msgstr "Fyller hele skjermen (den som er valgt under Skjerm)."
 msgid "Monitor"
 msgstr "Skjerm"
 
-#: src/options/options_settings.cpp:449 src/options/options_settings.cpp:745 src/options/options_settings.cpp:915 launcher/settings_page.cpp:471
+#: src/options/options_settings.cpp:449 src/options/options_settings.cpp:747 src/options/options_settings.cpp:917 launcher/settings_page.cpp:471
 #, fuzzy
 msgid "Automatic"
 msgstr "Automatisk"
@@ -2429,7 +2429,7 @@ msgstr "Glatter kantene på blader, gjerder og andre utskårne former. Krever ka
 msgid "Texture Sharpness"
 msgstr "Teksturskarphet"
 
-#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577 src/options/options_settings.cpp:601 src/options/options_settings.cpp:1073 src/options/options_settings.cpp:1095
+#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577 src/options/options_settings.cpp:601 src/options/options_settings.cpp:1075 src/options/options_settings.cpp:1097
 #, fuzzy
 msgid "Original"
 msgstr "Original"
@@ -2544,1618 +2544,1976 @@ msgstr "Det fjerne er litt uskarpt, som i originalspillet."
 msgid "The distance is blurred twice as much."
 msgstr "Det fjerne er dobbelt så uskarpt."
 
-#: src/options/options_settings.cpp:694
+#: src/options/options_settings.cpp:696
 #, fuzzy
 msgid "Output Device"
 msgstr "Utenhet"
 
-#: src/options/options_settings.cpp:700
+#: src/options/options_settings.cpp:702
 #, fuzzy
 msgid "System Default"
 msgstr "Systemstandard"
 
-#: src/options/options_settings.cpp:702
+#: src/options/options_settings.cpp:704
 #, fuzzy
 msgid "Not Connected"
 msgstr "Ikke tilkoblet"
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:725
+#: src/options/options_settings.cpp:727
 #, fuzzy
 msgid "Plays on the system's sound output, and follows it when you switch."
 msgstr "Spiller på systemets lydutgang og følger den når du bytter."
 
-#: src/options/options_settings.cpp:726
+#: src/options/options_settings.cpp:728
 #, fuzzy
 msgid "Plays on the system's sound output (now: {0}), and follows it when you switch."
 msgstr "Spiller på systemets lydutgang (nå: {0}) og følger den når du bytter."
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:732
+#: src/options/options_settings.cpp:734
 #, fuzzy
 msgid "{0} isn't connected: the system's sound output plays instead."
 msgstr "{0} er ikke tilkoblet: systemets lydutgang spiller i stedet."
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:735
+#: src/options/options_settings.cpp:737
 #, fuzzy
 msgid "Plays on {0} only."
 msgstr "Spiller bare på {0}."
 
-#: src/options/options_settings.cpp:743
+#: src/options/options_settings.cpp:745
 #, fuzzy
 msgid "Speakers"
 msgstr "Høyttalere"
 
-#: src/options/options_settings.cpp:745
+#: src/options/options_settings.cpp:747
 #, fuzzy
 msgid "Stereo"
 msgstr "Stereo"
 
-#: src/options/options_settings.cpp:745
+#: src/options/options_settings.cpp:747
 #, fuzzy
 msgid "Headphones"
 msgstr "Hodetelefoner"
 
-#: src/options/options_settings.cpp:746
+#: src/options/options_settings.cpp:748
 #, fuzzy
 msgid "5.1 Surround"
 msgstr "5.1 surround"
 
-#: src/options/options_settings.cpp:746
+#: src/options/options_settings.cpp:748
 #, fuzzy
 msgid "7.1 Surround"
 msgstr "7.1 surround"
 
-#: src/options/options_settings.cpp:755
+#: src/options/options_settings.cpp:757
 #, fuzzy
 msgid "Two speakers: the game's surround sound folded into left and right."
 msgstr "To høyttalere: spillets surroundlyd legges sammen til venstre og høyre."
 
-#: src/options/options_settings.cpp:756
+#: src/options/options_settings.cpp:758
 #, fuzzy
 msgid "Stereo for headphones: a little of each side reaches the other ear, like speakers in a room, so nothing sits inside one ear."
 msgstr "Stereo for hodetelefoner: litt av hver side når det andre øret, som høyttalere i et rom, så ingenting sitter inne i ett øre."
 
-#: src/options/options_settings.cpp:757
+#: src/options/options_settings.cpp:759
 #, fuzzy
 msgid "Six speakers: front, centre, bass and the two behind you, as the game mixes them."
 msgstr "Seks høyttalere: front, senter, bass og de to bak deg, slik spillet mikser dem."
 
-#: src/options/options_settings.cpp:758
+#: src/options/options_settings.cpp:760
 #, fuzzy
 msgid "Eight speakers: the surround pair plays on both the side and the back speakers."
 msgstr "Åtte høyttalere: surroundparet spiller på både side- og bakhøyttalerne."
 
-#: src/options/options_settings.cpp:759
+#: src/options/options_settings.cpp:761
 #, fuzzy
 msgid "The game's surround sound goes to the device as it is, and your system fits it to your speakers."
 msgstr "Spillets surroundlyd går uendret til enheten, og systemet ditt tilpasser den til høyttalerne dine."
 
-#: src/options/options_settings.cpp:780
+#: src/options/options_settings.cpp:782
 #, fuzzy
 msgid "Invert Axis"
 msgstr "Inverter akse"
 
-#: src/options/options_settings.cpp:793
+#: src/options/options_settings.cpp:795
 #, fuzzy
 msgid "Up and down are flipped when you aim the reticle."
 msgstr "Opp og ned er byttet om når du sikter med siktet."
 
-#: src/options/options_settings.cpp:794
+#: src/options/options_settings.cpp:796
 #, fuzzy
 msgid "Aiming the reticle: up is up."
 msgstr "Sikte med siktet: opp er opp."
 
-#: src/options/options_settings.cpp:821
+#: src/options/options_settings.cpp:823
 #, fuzzy
 msgid "Move up."
 msgstr "Gå opp."
 
-#: src/options/options_settings.cpp:821
+#: src/options/options_settings.cpp:823
 #, fuzzy
 msgid "{0} up."
 msgstr "{0} opp."
 
-#: src/options/options_settings.cpp:822
+#: src/options/options_settings.cpp:824
 #, fuzzy
 msgid "Move down."
 msgstr "Gå ned."
 
-#: src/options/options_settings.cpp:822
+#: src/options/options_settings.cpp:824
 #, fuzzy
 msgid "{0} down."
 msgstr "{0} ned."
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:825
 #, fuzzy
 msgid "Move left."
 msgstr "Gå til venstre."
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:825
 #, fuzzy
 msgid "{0} left."
 msgstr "{0} til venstre."
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:826
 #, fuzzy
 msgid "Move right."
 msgstr "Gå til høyre."
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:826
 #, fuzzy
 msgid "{0} right."
 msgstr "{0} til høyre."
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:827
 #, fuzzy
 msgid "Hold while moving to walk instead of run."
 msgstr "Hold mens du beveger deg for å gå i stedet for å løpe."
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:827
 #, fuzzy
 msgid "lean {0} part of the way."
 msgstr "vipp {0} bare et stykke."
 
-#: src/options/options_settings.cpp:826
+#: src/options/options_settings.cpp:828
 #, fuzzy
 msgid "The spin attack."
 msgstr "Spinnangrepet."
 
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:829
 #, fuzzy
 msgid "Jump. Press again in the air to double jump."
 msgstr "Hopp. Trykk igjen i luften for et dobbelthopp."
 
-#: src/options/options_settings.cpp:830
+#: src/options/options_settings.cpp:832
 #, fuzzy
 msgid "Use a save totem, or jump on a stunned titan. Again to get off."
 msgstr "Bruk en lagretotem, eller hopp opp på en bedøvet titan. Igjen for å gå av."
 
-#: src/options/options_settings.cpp:831
+#: src/options/options_settings.cpp:833
 #, fuzzy
 msgid "A quick attack."
 msgstr "Et raskt angrep."
 
-#: src/options/options_settings.cpp:832
+#: src/options/options_settings.cpp:834
 #, fuzzy
 msgid "A strong attack."
 msgstr "Et kraftig angrep."
 
-#: src/options/options_settings.cpp:833
+#: src/options/options_settings.cpp:835
 #, fuzzy
 msgid "Hold to block attacks."
 msgstr "Hold for å blokkere angrep."
 
-#: src/options/options_settings.cpp:834
+#: src/options/options_settings.cpp:836
 #, fuzzy
 msgid "Your titan's special attack."
 msgstr "Spesialangrepet til titanen din."
 
-#: src/options/options_settings.cpp:835
+#: src/options/options_settings.cpp:837
 #, fuzzy
 msgid "Store your titan, and bring it back later."
 msgstr "Legg titanen i lomma, og ta den fram senere."
 
-#: src/options/options_settings.cpp:836
+#: src/options/options_settings.cpp:838
 #, fuzzy
 msgid "Open the map. In the pause menu: drop out (someone else stays in)."
 msgstr "Åpner kartet. I pausemenyen: avslutt samarbeid (en annen spiller blir værende)."
 
-#: src/options/options_settings.cpp:859
+#: src/options/options_settings.cpp:861
 #, fuzzy
 msgctxt "key name"
 msgid "Left Mouse"
 msgstr "Venstre museknapp"
 
-#: src/options/options_settings.cpp:859
+#: src/options/options_settings.cpp:861
 #, fuzzy
 msgctxt "key name"
 msgid "Right Mouse"
 msgstr "Høyre museknapp"
 
-#: src/options/options_settings.cpp:860
+#: src/options/options_settings.cpp:862
 #, fuzzy
 msgctxt "key name"
 msgid "Middle Mouse"
 msgstr "Midtre museknapp"
 
-#: src/options/options_settings.cpp:860
+#: src/options/options_settings.cpp:862
 #, fuzzy
 msgctxt "key name"
 msgid "Mouse 4 (Back)"
 msgstr "Mus 4 (tilbake)"
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:863
 #, fuzzy
 msgctxt "key name"
 msgid "Mouse 5 (Forward)"
 msgstr "Mus 5 (fram)"
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:863
 #, fuzzy
 msgctxt "key name"
 msgid "Wheel Up"
 msgstr "Hjul opp"
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:864
 #, fuzzy
 msgctxt "key name"
 msgid "Wheel Down"
 msgstr "Hjul ned"
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:864
 #, fuzzy
 msgctxt "key name"
 msgid "Space"
 msgstr "Mellomrom"
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:865
 #, fuzzy
 msgctxt "key name"
 msgid "Enter"
 msgstr "Enter"
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:865
 #, fuzzy
 msgctxt "key name"
 msgid "Backspace"
 msgstr "Tilbaketast"
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:866
 #, fuzzy
 msgctxt "key name"
 msgid "Caps Lock"
 msgstr "Caps Lock"
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:866
 #, fuzzy
 msgctxt "key name"
 msgid "Up Arrow"
 msgstr "Pil opp"
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:867
 #, fuzzy
 msgctxt "key name"
 msgid "Down Arrow"
 msgstr "Pil ned"
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:867
 #, fuzzy
 msgctxt "key name"
 msgid "Left Arrow"
 msgstr "Pil venstre"
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:868
 #, fuzzy
 msgctxt "key name"
 msgid "Right Arrow"
 msgstr "Pil høyre"
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:868
 #, fuzzy
 msgctxt "key name"
 msgid "Insert"
 msgstr "Insert"
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:869
 #, fuzzy
 msgctxt "key name"
 msgid "Delete"
 msgstr "Delete"
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:869
 #, fuzzy
 msgctxt "key name"
 msgid "Home"
 msgstr "Home"
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:870
 #, fuzzy
 msgctxt "key name"
 msgid "End"
 msgstr "End"
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:870
 #, fuzzy
 msgctxt "key name"
 msgid "Page Up"
 msgstr "Page Up"
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:871
 #, fuzzy
 msgctxt "key name"
 msgid "Page Down"
 msgstr "Page Down"
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:871
 #, fuzzy
 msgctxt "key name"
 msgid "Pause"
 msgstr "Pause"
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:872
 #, fuzzy
 msgctxt "key name"
 msgid "Scroll Lock"
 msgstr "Scroll Lock"
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:872
 #, fuzzy
 msgctxt "key name"
 msgid "Num Lock"
 msgstr "Num Lock"
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:873
 #, fuzzy
 msgctxt "key name"
 msgid "Print Screen"
 msgstr "Print Screen"
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:873
 #, fuzzy
 msgctxt "key name"
 msgid "Menu Key"
 msgstr "Menytast"
 
-#: src/options/options_settings.cpp:884
+#: src/options/options_settings.cpp:886
 #, fuzzy
 msgid "The keyboard and mouse are turned off."
 msgstr "Tastaturet og musen er slått av."
 
-#: src/options/options_settings.cpp:892
+#: src/options/options_settings.cpp:894
 #, fuzzy
 msgid "Keyboard Icons"
 msgstr "Tastaturikoner"
 
-#: src/options/options_settings.cpp:893
+#: src/options/options_settings.cpp:895
 #, fuzzy
 msgid "Light"
 msgstr "Lyse"
 
-#: src/options/options_settings.cpp:893
+#: src/options/options_settings.cpp:895
 #, fuzzy
 msgid "Dark"
 msgstr "Mørke"
 
-#: src/options/options_settings.cpp:900
+#: src/options/options_settings.cpp:902
 #, fuzzy
 msgid "Dark keys in the button prompts."
 msgstr "Mørke taster i knappehintene."
 
-#: src/options/options_settings.cpp:900
+#: src/options/options_settings.cpp:902
 #, fuzzy
 msgid "Light keys in the button prompts."
 msgstr "Lyse taster i knappehintene."
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:904
+#: src/options/options_settings.cpp:906
 #, fuzzy
 msgid "Dark keys in the button prompts, like {0}"
 msgstr "Mørke taster i knappehintene, som {0}"
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:904
+#: src/options/options_settings.cpp:906
 #, fuzzy
 msgid "Light keys in the button prompts, like {0}"
 msgstr "Lyse taster i knappehintene, som {0}"
 
-#: src/options/options_settings.cpp:912
+#: src/options/options_settings.cpp:914
 #, fuzzy
 msgid "Controller Icons"
 msgstr "Kontrollerikoner"
 
-#: src/options/options_settings.cpp:926
+#: src/options/options_settings.cpp:928
 #, fuzzy
 msgid "Matches player 1's controller."
 msgstr "Følger kontrolleren til spiller 1."
 
-#: src/options/options_settings.cpp:927
+#: src/options/options_settings.cpp:929
 #, fuzzy
 msgid "The game's own buttons."
 msgstr "Spillets egne knapper."
 
-#: src/options/options_settings.cpp:928
+#: src/options/options_settings.cpp:930
 #, fuzzy
 msgid "Always these buttons."
 msgstr "Alltid disse knappene."
 
-#: src/options/options_settings.cpp:936
+#: src/options/options_settings.cpp:938
 #, fuzzy
 msgid "Default Keys"
 msgstr "Standardtaster"
 
-#: src/options/options_settings.cpp:939
+#: src/options/options_settings.cpp:941
 #, fuzzy
 msgid "Every keyboard and mouse key back as it came."
 msgstr "Alle taster og museknapper tilbake som fra start."
 
-#: src/options/options_settings.cpp:942
+#: src/options/options_settings.cpp:944
 #, fuzzy
 msgid "Revert Keybinds to Defaults?"
 msgstr "Tilbakestille tastene til standard?"
 
-#: src/options/options_settings.cpp:960
+#: src/options/options_settings.cpp:962
 #, fuzzy
 msgid "Mouse Aiming"
 msgstr "Sikte med mus"
 
-#: src/options/options_settings.cpp:960
+#: src/options/options_settings.cpp:962
 #, fuzzy
 msgid "Reticle"
 msgstr "Sikte"
 
-#: src/options/options_settings.cpp:960
+#: src/options/options_settings.cpp:962
 #, fuzzy
 msgid "Crosshair"
 msgstr "Peker"
 
-#: src/options/options_settings.cpp:961
+#: src/options/options_settings.cpp:963
 #, fuzzy
 msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
 msgstr "Som maske beveger siktet seg med bevegelsestastene, som i originalspillet."
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:964
 #, fuzzy
 msgid "As a mask, the aiming reticle follows the mouse."
 msgstr "Som maske følger siktet musen."
 
-#: src/options/options_settings.cpp:963
+#: src/options/options_settings.cpp:965
 #, fuzzy
 msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
 msgstr "Siktet følger musen, og i spillet er pekeren en lysende boble som vokser over mål og trekker til seg mojo, som pekeren i Wii-versjonen."
 
-#: src/options/options_settings.cpp:973
+#: src/options/options_settings.cpp:975
 #, fuzzy
 msgid "Window Not Focused"
 msgstr "Vindu i bakgrunnen"
 
-#: src/options/options_settings.cpp:973
+#: src/options/options_settings.cpp:975
 #, fuzzy
 msgid "Keep Playing"
 msgstr "Fortsett å spille"
 
-#: src/options/options_settings.cpp:974
+#: src/options/options_settings.cpp:976
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr "Håndkontrollere spiller videre mens et annet vindu er foran. Tastaturet og musen stopper til du klikker i spillet igjen."
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:978
 #, fuzzy
 msgid "The game pauses by itself when its window loses the focus in a level."
 msgstr "Spillet tar pause av seg selv når vinduet havner i bakgrunnen på et nivå."
 
-#: src/options/options_settings.cpp:987
+#: src/options/options_settings.cpp:989
 #, fuzzy
 msgid "Button Pictures"
 msgstr "Knappebilder"
 
-#: src/options/options_settings.cpp:990
+#: src/options/options_settings.cpp:992
 #, fuzzy
 msgid "Keyboard and Mouse Keys"
 msgstr "Tastatur- og musetaster"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1003
+#: src/options/options_settings.cpp:1005
 #, fuzzy
 msgid "{0}, or circle {1}"
 msgstr "{0}, eller drei {1} rundt"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1005
+#: src/options/options_settings.cpp:1007
 #, fuzzy
 msgid "circle {0}"
 msgstr "drei {0} rundt"
 
 #. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
-#: src/options/options_settings.cpp:1011
+#: src/options/options_settings.cpp:1013
 #, fuzzy
 msgid "{0} Controller: {1}"
 msgstr "{0} Håndkontroller: {1}"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1024
+#: src/options/options_settings.cpp:1026
 #, fuzzy
 msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
 msgstr "For å spinne, drei {0} på en håndkontroller rundt, eller slå på Enkel spinning (fanen Spilling) for å spinne med denne tasten."
 
-#: src/options/options_settings.cpp:1044
+#: src/options/options_settings.cpp:1046
 #, fuzzy
 msgid "Friendly Fire"
 msgstr "Vennskapelig ild"
 
-#: src/options/options_settings.cpp:1045
+#: src/options/options_settings.cpp:1047
 #, fuzzy
 msgid "Players' attacks hurt each other, as in the original game."
 msgstr "Spillernes angrep skader hverandre, som i originalspillet."
 
-#: src/options/options_settings.cpp:1046
+#: src/options/options_settings.cpp:1048
 #, fuzzy
 msgid "A partner's hits pass harmlessly: no damage, combos untouched."
 msgstr "En makkers slag er ufarlige: ingen skade, komboer urørt."
 
-#: src/options/options_settings.cpp:1047
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "Partner Hits"
 msgstr "Makkerslag"
 
-#: src/options/options_settings.cpp:1047
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "End Combos"
 msgstr "Bryter komboer"
 
-#: src/options/options_settings.cpp:1047
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "Keep Combos"
 msgstr "Beholder komboer"
 
-#: src/options/options_settings.cpp:1048
+#: src/options/options_settings.cpp:1050
 #, fuzzy
 msgid "Getting hit by a partner ends your hit combo, as in the original game."
 msgstr "Blir du truffet av en makker, brytes komboen din, som i originalspillet."
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1051
 #, fuzzy
 msgid "A partner's hit doesn't end your combo."
 msgstr "En makkers slag bryter ikke komboen din."
 
-#: src/options/options_settings.cpp:1053
+#: src/options/options_settings.cpp:1055
 #, fuzzy
 msgid "Friendly Fire is off: partners can't hit you."
 msgstr "Vennskapelig ild er av: makkere kan ikke treffe deg."
 
-#: src/options/options_settings.cpp:1055
+#: src/options/options_settings.cpp:1057
 #, fuzzy
 msgid "Simple Spinning"
 msgstr "Enkel spinning"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1062
+#: src/options/options_settings.cpp:1064
 #, fuzzy
 msgid "One button spins: {0} on a controller. Circling {1} still works."
 msgstr "Én knapp spinner: {0} på en håndkontroller. Å dreie {1} rundt virker fortsatt."
 
 #. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
-#: src/options/options_settings.cpp:1065
+#: src/options/options_settings.cpp:1067
 #, fuzzy
 msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
 msgstr "Én knapp spinner: {0} på en håndkontroller, {1} på tastaturet. Å dreie {2} rundt virker fortsatt."
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1071
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game."
 msgstr "Drei {0} rundt for å spinne, som i originalspillet."
 
 #. {0} = the left stick's picture, {1} = the Spin key's picture.
-#: src/options/options_settings.cpp:1071
+#: src/options/options_settings.cpp:1073
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game. {1} does nothing."
 msgstr "Drei {0} rundt for å spinne, som i originalspillet. {1} gjør ingenting."
 
-#: src/options/options_settings.cpp:1073
+#: src/options/options_settings.cpp:1075
 #, fuzzy
 msgid "Keep Spinning"
 msgstr "Fortsett å spinne"
 
-#: src/options/options_settings.cpp:1073
+#: src/options/options_settings.cpp:1075
 #, fuzzy
 msgid "Hold to Spin"
 msgstr "Hold for å spinne"
 
 #. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1078
+#: src/options/options_settings.cpp:1080
 #, fuzzy
 msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
 msgstr "Hold {0} (eller fortsett å dreie {1} rundt), så spinner Crash videre til han blir svimmel."
 
 #. {0} = the light attack's button / key pictures ("[X] or [LMB]").
-#: src/options/options_settings.cpp:1082
+#: src/options/options_settings.cpp:1084
 #, fuzzy
 msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
 msgstr "Spinn, og trykk så på {0} igjen og igjen for å fortsette, som i originalspillet."
 
-#: src/options/options_settings.cpp:1088
+#: src/options/options_settings.cpp:1090
 #, fuzzy
 msgid "Turn on Simple Spinning first."
 msgstr "Slå på Enkel spinning først."
 
-#: src/options/options_settings.cpp:1092 launcher/settings_page.cpp:497
+#: src/options/options_settings.cpp:1094 launcher/settings_page.cpp:497
 #, fuzzy
 msgid "Co-op"
 msgstr "Samarbeid"
 
-#: src/options/options_settings.cpp:1095
+#: src/options/options_settings.cpp:1097
 #, fuzzy
 msgid "Co-op Camera"
 msgstr "Samarbeidskamera"
 
-#: src/options/options_settings.cpp:1095
+#: src/options/options_settings.cpp:1097
 #, fuzzy
 msgid "Frame Everyone"
 msgstr "Alle i bildet"
 
-#: src/options/options_settings.cpp:1096
+#: src/options/options_settings.cpp:1098
 #, fuzzy
 msgid "The camera pulls back to keep every player on screen."
 msgstr "Kameraet trekker seg tilbake for å holde alle spillerne i bildet."
 
-#: src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:1099
 #, fuzzy
 msgid "The camera of the original game."
 msgstr "Kameraet fra originalspillet."
 
-#: src/options/options_settings.cpp:1098
+#: src/options/options_settings.cpp:1100
 #, fuzzy
 msgid "Camera Follows"
 msgstr "Kameraet følger"
 
-#: src/options/options_settings.cpp:1098
+#: src/options/options_settings.cpp:1100
 #, fuzzy
 msgid "Nearest Player"
 msgstr "Nærmeste spiller"
 
-#: src/options/options_settings.cpp:1098
+#: src/options/options_settings.cpp:1100
 #, fuzzy
 msgid "Middle"
 msgstr "Midten"
 
-#: src/options/options_settings.cpp:1099
+#: src/options/options_settings.cpp:1101
 #, fuzzy
 msgid "Front to back, the camera stays with the player nearest to it."
 msgstr "Forfra og bakover holder kameraet seg hos spilleren som er nærmest det."
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1102
 #, fuzzy
 msgid "The camera aims at the middle of the group."
 msgstr "Kameraet sikter mot midten av gruppen."
 
-#: src/options/options_settings.cpp:1101
+#: src/options/options_settings.cpp:1103
 #, fuzzy
 msgid "Spinning"
 msgstr "Spinning"
 
-#: src/options/options_settings.cpp:1126
+#: src/options/options_settings.cpp:1128
 #, fuzzy
 msgid "Takes effect when the game starts again: Restart Now, or next time you play."
 msgstr "Gjelder når spillet starter igjen: Start på nytt nå, eller neste gang du spiller."
 
-#: src/options/options_settings.cpp:1129
+#: src/options/options_settings.cpp:1131
 #, fuzzy
 msgid "Restart Now"
 msgstr "Start på nytt nå"
 
-#: src/options/options_settings.cpp:1133
+#: src/options/options_settings.cpp:1135
 #, fuzzy
 msgid "Restart now? Anything since your last save will be lost."
 msgstr "Starte på nytt nå? Alt siden du sist lagret, går tapt."
 
-#: src/options/options_settings.cpp:1146
+#: src/options/options_settings.cpp:1148
 #, fuzzy
 msgid "Text"
 msgstr "Tekst"
 
-#: src/options/options_settings.cpp:1156
+#: src/options/options_settings.cpp:1158
 #, fuzzy
 msgid "Menus, tutorials and messages in this language. The voices are chosen below."
 msgstr "Menyer, opplæringer og meldinger på dette språket. Stemmene velges nedenfor."
 
-#: src/options/options_settings.cpp:1160
+#: src/options/options_settings.cpp:1162
 #, fuzzy
 msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
 msgstr "Portens egne menyer på dette språket. Spillets egne tekster forblir på engelsk: platen har ikke portugisisk."
 
-#: src/options/options_settings.cpp:1166
+#: src/options/options_settings.cpp:1168
 #, fuzzy
 msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
 msgstr "Portens egne tekster er en maskinoversettelse, ennå ikke sjekket av noen med språket som morsmål."
 
-#: src/options/options_settings.cpp:1176
+#: src/options/options_settings.cpp:1178
 #, fuzzy
 msgid "Voices"
 msgstr "Stemmer"
 
-#: src/options/options_settings.cpp:1179
+#: src/options/options_settings.cpp:1181
 #, fuzzy
 msgid "Same as Text"
 msgstr "Som teksten"
 
-#: src/options/options_settings.cpp:1201
+#: src/options/options_settings.cpp:1203
 #, fuzzy
 msgid "The disc has no voices in the text's language: the characters speak English."
 msgstr "Platen har ingen stemmer på tekstens språk: figurene snakker engelsk."
 
 #. {0} = the language's name in its own language ("Deutsch").
-#: src/options/options_settings.cpp:1204
+#: src/options/options_settings.cpp:1206
 #, fuzzy
 msgid "The characters speak the text's language: {0}."
 msgstr "Figurene snakker tekstens språk: {0}."
 
-#: src/options/options_settings.cpp:1206
+#: src/options/options_settings.cpp:1208
 #, fuzzy
 msgid "The characters speak this language, whatever the text is."
 msgstr "Figurene snakker dette språket, uansett tekst."
 
-#: src/options/options_settings.cpp:1215
+#: src/options/options_settings.cpp:1217
 #, fuzzy
 msgid "Notifications"
 msgstr "Varsler"
 
-#: src/options/options_settings.cpp:1216
+#: src/options/options_settings.cpp:1218
 #, fuzzy
 msgid "A card slides up at the bottom of the screen when you earn an achievement."
 msgstr "Et kort glir opp nederst på skjermen når du oppnår en prestasjon."
 
-#: src/options/options_settings.cpp:1217
+#: src/options/options_settings.cpp:1219
 #, fuzzy
 msgid "No card: achievements are still earned and kept."
 msgstr "Ingen kort: prestasjoner oppnås og beholdes likevel."
 
-#: src/options/options_settings.cpp:1220
+#: src/options/options_settings.cpp:1222
 #, fuzzy
 msgid "Jingle"
 msgstr "Jingle"
 
-#: src/options/options_settings.cpp:1221
+#: src/options/options_settings.cpp:1223
 #, fuzzy
 msgid "One of the game's own jingles plays with the card."
 msgstr "En av spillets egne jingler spilles med kortet."
 
-#: src/options/options_settings.cpp:1221
+#: src/options/options_settings.cpp:1223
 #, fuzzy
 msgid "The card shows without a sound."
 msgstr "Kortet vises uten lyd."
 
-#: src/options/options_settings.cpp:1224
+#: src/options/options_settings.cpp:1226
 #, fuzzy
 msgid "Notifications are off."
 msgstr "Varsler er slått av."
 
-#: src/options/options_settings.cpp:1236
+#: src/options/options_settings.cpp:1238
 #, fuzzy
 msgid "Display"
 msgstr "Skjerm"
 
-#: src/options/options_settings.cpp:1238
+#: src/options/options_settings.cpp:1240
 #, fuzzy
 msgid "HUD"
 msgstr "HUD"
 
-#: src/options/options_settings.cpp:1239
+#: src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Bildeteller"
 
-#: src/options/options_settings.cpp:1243
+#: src/options/options_settings.cpp:1245
 #, fuzzy
 msgid "Graphics"
 msgstr "Grafikk"
 
-#: src/options/options_settings.cpp:1244
+#: src/options/options_settings.cpp:1246
 #, fuzzy
 msgid "Quality"
 msgstr "Kvalitet"
 
-#: src/options/options_settings.cpp:1245
+#: src/options/options_settings.cpp:1247
 #, fuzzy
 msgid "Effects"
 msgstr "Effekter"
 
-#: src/options/options_settings.cpp:1248
+#: src/options/options_settings.cpp:1250
 #, fuzzy
 msgid "Audio"
 msgstr "Lyd"
 
-#: src/options/options_settings.cpp:1249
+#: src/options/options_settings.cpp:1251
 #, fuzzy
 msgid "Music"
 msgstr "Musikk"
 
-#: src/options/options_settings.cpp:1250
+#: src/options/options_settings.cpp:1252
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Hvor høyt musikken spiller."
 
-#: src/options/options_settings.cpp:1251
+#: src/options/options_settings.cpp:1253
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialog"
 
-#: src/options/options_settings.cpp:1252
+#: src/options/options_settings.cpp:1254
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Hvor høyt figurene snakker."
 
-#: src/options/options_settings.cpp:1253
+#: src/options/options_settings.cpp:1255
 #, fuzzy
 msgid "SFX"
 msgstr "SFX"
 
-#: src/options/options_settings.cpp:1254
+#: src/options/options_settings.cpp:1256
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Hvor høye slag, kasser, fottrinn og resten er."
 
-#: src/options/options_settings.cpp:1255
+#: src/options/options_settings.cpp:1257
 #, fuzzy
 msgid "Output"
 msgstr "Utgang"
 
-#: src/options/options_settings.cpp:1257
+#: src/options/options_settings.cpp:1259
 #, fuzzy
 msgid "Gameplay"
 msgstr "Spilling"
 
-#: src/options/options_settings.cpp:1258
+#: src/options/options_settings.cpp:1260
 #, fuzzy
 msgid "Language"
 msgstr "Språk"
 
-#: src/options/options_settings.cpp:1302 launcher/main.cpp:1051
+#: src/options/options_settings.cpp:1304 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Ingen"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Move Up"
 msgstr "Opp"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Move Down"
 msgstr "Ned"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Move Left"
 msgstr "Venstre"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Move Right"
 msgstr "Høyre"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Gå (hold)"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Light Attack"
 msgstr "Lett angrep"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Tungt angrep"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Blokker (hold)"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Jacke / Bruk"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Titanens spesialangrep"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "I lomma / Fram"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Meny: bekreft"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Meny: tilbake"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Meny: forrige fane"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Meny: neste fane"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Meny: X-handling"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Meny: Y-handling"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Retningsknapp opp"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Retningsknapp ned"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Retningsknapp venstre"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Retningsknapp høyre"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Høyre styrespak opp"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Høyre styrespak ned"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Høyre styrespak venstre"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1332
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Høyre styrespak høyre"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1332
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Venstre skulderknapp"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1332
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Trykk venstre styrespak"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1332
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Trykk høyre styrespak"
 
-#: launcher/desktop_entry.cpp:138 launcher/report.cpp:518 launcher/settings.cpp:284
+#: launcher/desktop_entry.cpp:140 launcher/report.cpp:518 launcher/settings.cpp:284
 #, fuzzy
 msgid "Couldn't write {0}"
 msgstr "Kunne ikke skrive {0}"
 
-#: launcher/desktop_entry.cpp:144
+#: launcher/desktop_entry.cpp:146
 #, fuzzy
 msgid "Couldn't write {0}: {1}"
 msgstr "Kunne ikke skrive {0}: {1}"
 
-#: launcher/desktop_entry.cpp:292
+#: launcher/desktop_entry.cpp:294
 #, fuzzy
 msgid "Couldn't write the Start menu shortcut."
 msgstr "Kunne ikke skrive snarveien i Start-menyen."
 
-#: launcher/desktop_entry.cpp:315
+#: launcher/desktop_entry.cpp:317
 #, fuzzy
 msgid "Couldn't remove the Start menu shortcut: {0}"
 msgstr "Kunne ikke fjerne snarveien i Start-menyen: {0}"
 
-#: launcher/desktop_entry.cpp:346
+#: launcher/desktop_entry.cpp:348
 #, fuzzy
 msgid "Couldn't remove {0}: {1}"
 msgstr "Kunne ikke fjerne {0}: {1}"
 
-#: launcher/game_process.cpp:98
+#: launcher/game_process.cpp:99
 #, fuzzy
 msgid "The game is already running."
 msgstr "Spillet kjører allerede."
 
+#: launcher/install.cpp:219
+msgid "That path is too long: the build's files nest deep, and Windows stops at 260 characters. Pick a folder closer to the drive, like C:\\Games."
+msgstr ""
+
+#: launcher/install.cpp:225
+msgid "The game keeps its saves and settings in its own folder, so it can't live in Program Files or Windows. Pick a folder of your own, like C:\\Games."
+msgstr ""
+
+#: launcher/install.cpp:231
+msgid "The game is already installed there. Start its \"Mind over Recomp\" from the Start menu to update or uninstall it."
+msgstr ""
+
+#: launcher/install.cpp:235
+msgid "{0} already exists and isn't empty: pick another place."
+msgstr ""
+
+#: launcher/install.cpp:248
+msgid "Not enough free space there: the game needs about %.0f GB, the drive has %.1f GB free."
+msgstr ""
+
+#: launcher/install.cpp:258
+msgid "That folder is inside OneDrive, which syncs every file the build writes. Pick a folder outside it, like C:\\Games."
+msgstr ""
+
+#: launcher/install.cpp:272
+msgid "That drive isn't formatted NTFS (it's exFAT or FAT32, like most USB sticks), and the build needs NTFS. Pick a folder on your PC's own drive."
+msgstr ""
+
+#: launcher/install.cpp:281
+msgid "Windows doesn't let us write there: pick a folder of your own, like C:\\Games."
+msgstr ""
+
+#: launcher/install.cpp:292
+msgid "Couldn't add the game to Windows' list of apps."
+msgstr ""
+
+#: launcher/install.cpp:359
+msgid "Couldn't write the shortcuts."
+msgstr ""
+
+#: launcher/install.cpp:390
+msgid "{0} doesn't look like a Mind over Recomp install: nothing removed."
+msgstr ""
+
+#: launcher/install.cpp:409
+msgid "Some files couldn't be removed (is the game still running?), e.g. {0}"
+msgstr ""
+
+#: launcher/installer.cpp:158
+msgid "Still not working? Report it on GitHub and attach the log file: that's how installs get fixed. The button opens the report form and the log's folder; drag the log file into the form."
+msgstr ""
+
+#: launcher/installer.cpp:162
+msgid "Report it on GitHub"
+msgstr ""
+
+#: launcher/installer.cpp:173
+msgid "Open the log's folder"
+msgstr ""
+
+#: launcher/installer.cpp:204
+msgid "Show details"
+msgstr ""
+
+#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1654
+#, fuzzy
+msgid "Log: %s"
+msgstr "Logg: %s"
+
+#: launcher/installer.cpp:356
+msgid "An unofficial PC port of Crash: Mind over Mutant, built from your own disc"
+msgstr ""
+
+#: launcher/installer.cpp:375
+msgid "1. Your disc and where the game goes"
+msgstr ""
+
+#: launcher/installer.cpp:377
+msgid "The game is built on this PC from your own copy of the disc: no game files come with this program. The first build takes a while (often 20-60 minutes) and needs about 15 GB of free space."
+msgstr ""
+
+#: launcher/installer.cpp:383 launcher/installer.cpp:395
+msgid "Browse..."
+msgstr ""
+
+#: launcher/installer.cpp:407
+msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360"
+msgstr ""
+
+#: launcher/installer.cpp:409
+msgid "Install into this folder"
+msgstr ""
+
+#: launcher/installer.cpp:411
+msgid "The game goes into %s"
+msgstr ""
+
+#: launcher/installer.cpp:413
+msgid "A shortcut on the desktop"
+msgstr ""
+
+#: launcher/installer.cpp:414
+msgid "Copy saves and settings from an older version"
+msgstr ""
+
+#: launcher/installer.cpp:417
+msgid "Pick the older version's folder (the one with \"Mind over Recomp\" and the user folder in it). Its files are copied, never moved."
+msgstr ""
+
+#: launcher/installer.cpp:419
+msgid "Older version"
+msgstr ""
+
+#: launcher/installer.cpp:428
+msgid "Next"
+msgstr ""
+
+#: launcher/installer.cpp:431 launcher/setup.cpp:1102
+#, fuzzy
+msgid "Pick your disc image (.iso) first."
+msgstr "Velg platebildet ditt (.iso) først."
+
+#: launcher/installer.cpp:433
+msgid "That older version has no user folder: pick the folder the old \"Mind over Recomp\" is in, or untick the copy."
+msgstr ""
+
+#: launcher/installer.cpp:459
+msgid "2. Build tools"
+msgstr ""
+
+#: launcher/installer.cpp:461
+msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
+msgstr ""
+
+#: launcher/installer.cpp:473 launcher/installer.cpp:848
+msgid "Checking..."
+msgstr ""
+
+#: launcher/installer.cpp:483
+msgid "Next: install"
+msgstr ""
+
+#: launcher/installer.cpp:485 launcher/installer.cpp:856
+msgid "Install the missing tools"
+msgstr ""
+
+#: launcher/installer.cpp:488
+msgid "winget, Windows' own app installer, isn't there. Install \"App Installer\" from the Microsoft Store, then press Check again."
+msgstr ""
+
+#: launcher/installer.cpp:491
+msgid "What's missing can't be installed from here (see the list)."
+msgstr ""
+
+#: launcher/installer.cpp:497 launcher/setup.cpp:1815
+msgid "Installing the build tools"
+msgstr ""
+
+#: launcher/installer.cpp:503 launcher/setup.cpp:1893
+#, fuzzy
+msgid "Check again"
+msgstr "Sjekk igjen"
+
+#: launcher/installer.cpp:515
+msgid "If one keeps failing, install it by hand (its name is in the list), then press Check again."
+msgstr ""
+
+#: launcher/installer.cpp:533
+msgid "Couldn't make {0}: {1}"
+msgstr ""
+
+#: launcher/installer.cpp:558
+msgid "Copying the port's files"
+msgstr ""
+
+#: launcher/installer.cpp:570
+msgid "Copying Mind over Recomp into the game's folder"
+msgstr ""
+
+#: launcher/installer.cpp:584
+msgid "Copying the older version's saves and settings"
+msgstr ""
+
+#: launcher/installer.cpp:597
+msgid "Getting the port's files"
+msgstr ""
+
+#: launcher/installer.cpp:632
+msgid "3. Installing"
+msgstr ""
+
+#: launcher/installer.cpp:646
+msgid "Couldn't reach the release list to download the port's files: {0}"
+msgstr ""
+
+#: launcher/installer.cpp:655 launcher/installer.cpp:676
+msgid "Stopped."
+msgstr ""
+
+#: launcher/installer.cpp:679
+msgid "A build tool went missing: go Back and check the tools again."
+msgstr ""
+
+#: launcher/installer.cpp:683
+msgid "Setting up stopped before the game was built."
+msgstr ""
+
+#: launcher/installer.cpp:695
+msgid "Looking for the newest version..."
+msgstr ""
+
+#: launcher/installer.cpp:701 launcher/setup.cpp:1885
+#, fuzzy
+msgid "Checking what's there..."
+msgstr "Sjekker hva som finnes..."
+
+#: launcher/installer.cpp:706 launcher/installer.cpp:851
+msgid "Stop"
+msgstr ""
+
+#: launcher/installer.cpp:710
+msgid "Adding the Start menu entries and the Apps list entry..."
+msgstr ""
+
+#: launcher/installer.cpp:716
+msgid "Nothing is lost: the next try carries on where this one stopped. The full output is in the log below and in the game folder's user\\logs."
+msgstr ""
+
+#: launcher/installer.cpp:719
+msgid "Try again"
+msgstr ""
+
+#: launcher/installer.cpp:731 launcher/installer.cpp:765 launcher/installer.cpp:909
+msgid "Open the game folder"
+msgstr ""
+
+#: launcher/installer.cpp:749
+msgid "Done: Crash Mind over Mutant is installed"
+msgstr ""
+
+#: launcher/installer.cpp:752
+msgid "Start it from the Start menu (\"Crash Mind over Mutant\")"
+msgstr ""
+
+#: launcher/installer.cpp:753
+msgid "Updates and uninstalling: \"Mind over Recomp\" in the Start menu, or Windows' Installed apps."
+msgstr ""
+
+#: launcher/installer.cpp:761 launcher/installer.cpp:905 launcher/main.cpp:438 launcher/main.cpp:565 launcher/main.cpp:1109
+#, fuzzy
+msgid "Play"
+msgstr "Spill"
+
+#: launcher/installer.cpp:778
+msgid "Installed: version %s"
+msgstr ""
+
+#: launcher/installer.cpp:792
+msgid "Ready to play."
+msgstr ""
+
+#: launcher/installer.cpp:798
+msgid "The new version is in place. Mind over Recomp restarts now to build it."
+msgstr ""
+
+#: launcher/installer.cpp:811
+msgid "Checking for updates..."
+msgstr ""
+
+#: launcher/installer.cpp:814
+msgid "Version %s is available"
+msgstr ""
+
+#: launcher/installer.cpp:822 launcher/setup.cpp:798 launcher/setup.cpp:803 launcher/setup.cpp:1839
+#, fuzzy
+msgid "Update to {0}"
+msgstr "Oppdater til {0}"
+
+#: launcher/installer.cpp:829 launcher/main.cpp:664 launcher/setup.cpp:817
+#, fuzzy
+msgid "Release page"
+msgstr "Utgivelsesside"
+
+#: launcher/installer.cpp:831
+msgid "This is the newest version."
+msgstr ""
+
+#: launcher/installer.cpp:838 launcher/setup.cpp:829
+#, fuzzy
+msgid "Check for updates"
+msgstr "Se etter oppdateringer"
+
+#: launcher/installer.cpp:854
+msgid "Some build tools are missing:"
+msgstr ""
+
+#: launcher/installer.cpp:864
+msgid "The game is built and ready."
+msgstr ""
+
+#: launcher/installer.cpp:866
+msgid "The game needs building (an update, or an install that stopped)."
+msgstr ""
+
+#: launcher/installer.cpp:868
+msgid "Build it now"
+msgstr ""
+
+#: launcher/installer.cpp:879 launcher/setup.cpp:1979
+#, fuzzy
+msgid "Pick the disc image..."
+msgstr "Velg platebildet..."
+
+#: launcher/installer.cpp:884
+msgid "(the disc's files aren't extracted yet)"
+msgstr ""
+
+#: launcher/installer.cpp:893
+msgid "The game is running: close it to update or build."
+msgstr ""
+
+#: launcher/installer.cpp:911
+msgid "Uninstall..."
+msgstr ""
+
+#: launcher/installer.cpp:917
+msgid "Couldn't start the uninstaller."
+msgstr ""
+
+#: launcher/installer.cpp:942
+msgid "Uninstall Crash Mind over Mutant"
+msgstr ""
+
+#: launcher/installer.cpp:948
+msgid "This removes the game, its build, the disc's extracted files and the shortcuts. Your disc image (.iso) and the build tools (Visual Studio, LLVM and the rest) stay."
+msgstr ""
+
+#: launcher/installer.cpp:952
+msgid "Keep my saves, settings and logs"
+msgstr ""
+
+#: launcher/installer.cpp:953
+msgid "They stay in %s"
+msgstr ""
+
+#: launcher/installer.cpp:953
+msgid "%s goes too"
+msgstr ""
+
+#: launcher/installer.cpp:957
+msgid "The game is running: close it first."
+msgstr ""
+
+#: launcher/installer.cpp:960
+msgid "Uninstall"
+msgstr ""
+
+#: launcher/installer.cpp:969
+msgid "Removing... %llu files"
+msgstr ""
+
+#: launcher/installer.cpp:973
+msgid "Uninstalled."
+msgstr ""
+
+#: launcher/installer.cpp:973
+msgid "Uninstalled, with problems:"
+msgstr ""
+
+#: launcher/installer.cpp:976
+msgid "Your saves, settings and logs are still in {0}. Installing into the same place again picks them up."
+msgstr ""
+
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "Jan"
 msgstr "jan."
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "Feb"
 msgstr "feb."
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "Mar"
 msgstr "mar."
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "Apr"
 msgstr "apr."
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "May"
 msgstr "mai"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
-#: launcher/main.cpp:204
+#: launcher/main.cpp:106
 #, fuzzy
 msgid "Jun"
 msgstr "jun."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Jul"
 msgstr "jul."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Aug"
 msgstr "aug."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Sep"
 msgstr "sep."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Oct"
 msgstr "okt."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Nov"
 msgstr "nov."
 
-#: launcher/main.cpp:205
+#: launcher/main.cpp:107
 #, fuzzy
 msgid "Dec"
 msgstr "des."
 
-#: launcher/main.cpp:212
+#: launcher/main.cpp:114
 #, fuzzy
 msgid "%ld h %02ld min"
 msgstr "%ld t %02ld min"
 
-#: launcher/main.cpp:214
+#: launcher/main.cpp:116
 #, fuzzy
 msgid "%ld min"
 msgstr "%ld min"
 
-#: launcher/main.cpp:216
+#: launcher/main.cpp:118
 #, fuzzy
 msgid "%ld s"
 msgstr "%ld s"
 
 #. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
-#: launcher/main.cpp:228
+#: launcher/main.cpp:130
 #, fuzzy
 msgid "%s %d, %02d:%02d"
 msgstr "%s %d, %02d:%02d"
 
-#: launcher/main.cpp:249
+#: launcher/main.cpp:151
 #, fuzzy
 msgid "today %02d:%02d"
 msgstr "i dag %02d:%02d"
 
-#: launcher/main.cpp:251
+#: launcher/main.cpp:153
 #, fuzzy
 msgid "yesterday %02d:%02d"
 msgstr "i går %02d:%02d"
 
-#: launcher/main.cpp:253
+#: launcher/main.cpp:155
 #, fuzzy
 msgid "%ld days ago"
 msgstr "for %ld dager siden"
 
-#: launcher/main.cpp:255
+#: launcher/main.cpp:157
 #, fuzzy
 msgid "%s %d"
 msgstr "%s %d"
 
-#: launcher/main.cpp:378
+#: launcher/main.cpp:280
 #, fuzzy
 msgid "Mind over Recomp"
 msgstr "Mind over Recomp"
 
-#: launcher/main.cpp:384
+#: launcher/main.cpp:286
 #, fuzzy
 msgid "(alpha)"
 msgstr "(alfa)"
 
-#: launcher/main.cpp:388
+#: launcher/main.cpp:290
 #, fuzzy
 msgid "An unofficial PC port of Crash: Mind over Mutant"
 msgstr "En uoffisiell PC-port av Crash: Mind over Mutant"
 
-#: launcher/main.cpp:403
+#: launcher/main.cpp:305
 #, fuzzy
 msgid "Couldn't find the game."
 msgstr "Fant ikke spillet."
 
-#: launcher/main.cpp:404
+#: launcher/main.cpp:306
 #, fuzzy
 msgid "Put the launcher in the game's folder (next to program/), or start it with --game_folder=<path to the game folder>."
 msgstr "Legg startprogrammet i spillets mappe (ved siden av program/), eller start det med --game_folder=<sti til spillmappen>."
 
-#: launcher/main.cpp:410
+#: launcher/main.cpp:312
 #, fuzzy
 msgid "The game isn't ready to play yet."
 msgstr "Spillet er ikke klart til å spilles ennå."
 
-#: launcher/main.cpp:411
+#: launcher/main.cpp:313
 #, fuzzy
 msgid "Open Setup"
 msgstr "Åpne Oppsett"
 
-#: launcher/main.cpp:417
+#: launcher/main.cpp:319
 #, fuzzy
 msgid "The game isn't built yet."
 msgstr "Spillet er ikke bygget ennå."
 
-#: launcher/main.cpp:418
+#: launcher/main.cpp:320
 #, fuzzy
 msgid "Expected at {0}. Build it first (docs/01-building.md, steps 2 to 4)."
 msgstr "Ventet i {0}. Bygg det først (docs/01-building.md, trinn 2 til 4)."
 
-#: launcher/main.cpp:423
+#: launcher/main.cpp:325
 #, fuzzy
 msgid "The disc's files aren't there."
 msgstr "Platens filer er ikke der."
 
-#: launcher/main.cpp:424
+#: launcher/main.cpp:326
 #, fuzzy
 msgid "Expected in {0} (default.xex and the rest). Extract your disc image first (docs/01-building.md, step 1)."
 msgstr "Ventet i {0} (default.xex og resten). Pakk ut platebildet ditt først (docs/01-building.md, trinn 1)."
 
-#: launcher/main.cpp:436
+#: launcher/main.cpp:338
 #, fuzzy
 msgid "Playing"
 msgstr "Spiller"
 
-#: launcher/main.cpp:440
+#: launcher/main.cpp:342
 #, fuzzy
 msgid "for %s"
 msgstr "i %s"
 
-#: launcher/main.cpp:441
+#: launcher/main.cpp:343
 #, fuzzy
 msgid "The game is running in its own window. This window can stay open: it shows how the session ended when the game closes."
 msgstr "Spillet kjører i sitt eget vindu. Dette vinduet kan stå åpent: det viser hvordan økten endte når spillet lukkes."
 
-#: launcher/main.cpp:443
+#: launcher/main.cpp:345
 #, fuzzy
 msgid "Watch the game log"
 msgstr "Se spillets logg"
 
-#: launcher/main.cpp:447
+#: launcher/main.cpp:349
 #, fuzzy
 msgid "Stop the game..."
 msgstr "Stopp spillet..."
 
-#: launcher/main.cpp:449 launcher/main.cpp:451
+#: launcher/main.cpp:351 launcher/main.cpp:353
 #, fuzzy
 msgid "Stop the game?"
 msgstr "Stoppe spillet?"
 
-#: launcher/main.cpp:452
+#: launcher/main.cpp:354
 #, fuzzy
 msgid "Progress since your last save is lost."
 msgstr "Fremgangen siden du sist lagret går tapt."
 
-#: launcher/main.cpp:454
+#: launcher/main.cpp:356
 #, fuzzy
 msgid "Stop it"
 msgstr "Stopp det"
 
-#: launcher/main.cpp:459
+#: launcher/main.cpp:361
 #, fuzzy
 msgid "Keep playing"
 msgstr "Spill videre"
 
-#: launcher/main.cpp:473
+#: launcher/main.cpp:375
 #, fuzzy
 msgid "The game crashed after %s"
 msgstr "Spillet krasjet etter %s"
 
-#: launcher/main.cpp:475
+#: launcher/main.cpp:377
 #, fuzzy
 msgid "The game was ended from outside after %s"
 msgstr "Spillet ble avsluttet utenfra etter %s"
 
-#: launcher/main.cpp:477
+#: launcher/main.cpp:379
 #, fuzzy
 msgid "The game was stopped after %s"
 msgstr "Spillet ble stoppet etter %s"
 
-#: launcher/main.cpp:479
+#: launcher/main.cpp:381
 #, fuzzy
 msgid "The game quit with an error (code %d) after %s"
 msgstr "Spillet avsluttet med en feil (kode %d) etter %s"
 
-#: launcher/main.cpp:482
+#: launcher/main.cpp:384
 #, fuzzy
 msgid "The game closed normally after %s"
 msgstr "Spillet lukket normalt etter %s"
 
-#: launcher/main.cpp:487
+#: launcher/main.cpp:389
 #, fuzzy
 msgid "Ended by %s.%s"
 msgstr "Avsluttet av %s.%s"
 
-#: launcher/main.cpp:489
+#: launcher/main.cpp:391
 #, fuzzy
 msgid " (Also what the system does when memory runs out.)"
 msgstr " (Det er også det systemet gjør når minnet går tomt.)"
 
-#: launcher/main.cpp:493 launcher/setup.cpp:1455
-#, fuzzy
-msgid "Log: %s"
-msgstr "Logg: %s"
-
-#: launcher/main.cpp:497
+#: launcher/main.cpp:399
 #, fuzzy
 msgid " Errors: %d (%d different), warnings: %d (%d different)"
 msgstr " Feil: %d (%d forskjellige), advarsler: %d (%d forskjellige)"
 
-#: launcher/main.cpp:502
+#: launcher/main.cpp:404
 #, fuzzy
 msgid "Frame rate: %s"
 msgstr "Bildefrekvens: %s"
 
-#: launcher/main.cpp:505
+#: launcher/main.cpp:407
 #, fuzzy
 msgid "Open the log"
 msgstr "Åpne loggen"
 
-#: launcher/main.cpp:509 launcher/main.cpp:816 launcher/main.cpp:846
+#: launcher/main.cpp:411 launcher/main.cpp:718 launcher/main.cpp:748
 #, fuzzy
 msgid "Logs folder"
 msgstr "Loggmappe"
 
-#: launcher/main.cpp:513
+#: launcher/main.cpp:415
 #, fuzzy
 msgid "Show the game log"
 msgstr "Vis spillets logg"
 
-#: launcher/main.cpp:519 launcher/main.cpp:520 launcher/main.cpp:694
+#: launcher/main.cpp:421 launcher/main.cpp:422 launcher/main.cpp:596
 #, fuzzy
 msgid "Report a problem..."
 msgstr "Rapporter et problem..."
 
-#: launcher/main.cpp:524 launcher/main.cpp:758 launcher/setup.cpp:1450
+#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1649
 #, fuzzy
 msgid "OK"
 msgstr "OK"
 
-#: launcher/main.cpp:536 launcher/main.cpp:663 launcher/main.cpp:1207
-#, fuzzy
-msgid "Play"
-msgstr "Spill"
-
-#: launcher/main.cpp:542
+#: launcher/main.cpp:444
 #, fuzzy
 msgid "From the start"
 msgstr "Fra begynnelsen"
 
-#: launcher/main.cpp:544
+#: launcher/main.cpp:446
 #, fuzzy
 msgid "Intro movies (Esc or Start skips them), the title screen and the menus."
 msgstr "Introfilmer (Esc eller Start hopper over dem), tittelskjermen og menyene."
 
-#: launcher/main.cpp:553
+#: launcher/main.cpp:455
 #, fuzzy
 msgid "Continue"
 msgstr "Fortsett"
 
 #. Under Continue: %d%% = the save's percent, %s = play time, %s = when last played.
-#: launcher/main.cpp:564
+#: launcher/main.cpp:466
 #, fuzzy
 msgid "%d%%  ·  %s  ·  played %s. Straight in: no movies or menus."
 msgstr "%d%%  ·  %s  ·  spilt %s. Rett inn: ingen filmer eller menyer."
 
-#: launcher/main.cpp:581
+#: launcher/main.cpp:483
 #, fuzzy
 msgid "Your saves"
 msgstr "Dine lagrede spill"
 
-#: launcher/main.cpp:584
+#: launcher/main.cpp:486
 #, fuzzy
 msgid "(%zu)"
 msgstr "(%zu)"
 
-#: launcher/main.cpp:586
+#: launcher/main.cpp:488
 #, fuzzy
 msgid "No saves yet. Start a New Game from the main menu: it makes its own save."
 msgstr "Ingen lagrede spill ennå. Start et Nytt spill fra hovedmenyen: det lager sitt eget lagrede spill."
 
-#: launcher/main.cpp:593
+#: launcher/main.cpp:495
 #, fuzzy
 msgid "Find a save..."
 msgstr "Finn et lagret spill..."
 
-#: launcher/main.cpp:604
+#: launcher/main.cpp:506
 #, fuzzy
 msgid "Name"
 msgstr "Navn"
 
-#: launcher/main.cpp:605
+#: launcher/main.cpp:507
 #, fuzzy
 msgid "Progress"
 msgstr "Fremgang"
 
-#: launcher/main.cpp:606
+#: launcher/main.cpp:508
 #, fuzzy
 msgid "Play time"
 msgstr "Spilletid"
 
-#: launcher/main.cpp:607
+#: launcher/main.cpp:509
 #, fuzzy
 msgid "Difficulty"
 msgstr "Vanskelighetsgrad"
 
-#: launcher/main.cpp:608
+#: launcher/main.cpp:510
 #, fuzzy
 msgid "Last played"
 msgstr "Sist spilt"
 
-#: launcher/main.cpp:635
+#: launcher/main.cpp:537
 #, fuzzy
 msgid "(no name)"
 msgstr "(uten navn)"
 
-#: launcher/main.cpp:648
+#: launcher/main.cpp:550
 #, fuzzy
 msgid "Save file %d, saved %s"
 msgstr "Lagringsfil %d, lagret %s"
 
-#: launcher/main.cpp:676
+#: launcher/main.cpp:578
 #, fuzzy
 msgid "Open:"
 msgstr "Åpne:"
 
-#: launcher/main.cpp:682
+#: launcher/main.cpp:584
 #, fuzzy
 msgid "Photos (F10)"
 msgstr "Bilder (F10)"
 
-#: launcher/main.cpp:686
+#: launcher/main.cpp:588
 #, fuzzy
 msgid "Logs"
 msgstr "Logger"
 
-#: launcher/main.cpp:690
+#: launcher/main.cpp:592
 #, fuzzy
 msgid "Settings file"
 msgstr "Innstillingsfil"
 
-#: launcher/main.cpp:699
+#: launcher/main.cpp:601
 #, fuzzy
 msgid "Add to the applications menu"
 msgstr "Legg til i programmenyen"
 
-#: launcher/main.cpp:700
+#: launcher/main.cpp:602
 #, fuzzy
 msgid "Update the menu entry"
 msgstr "Oppdater menyoppføringen"
 
-#: launcher/main.cpp:701
+#: launcher/main.cpp:603
 #, fuzzy
 msgid "Remove from the menu"
 msgstr "Fjern fra menyen"
 
-#: launcher/main.cpp:723
+#: launcher/main.cpp:625
 #, fuzzy
 msgid "The launcher is in your applications menu (right-click it there for \"Continue last save\")."
 msgstr "Startprogrammet er i programmenyen din (høyreklikk det der for \"Fortsett siste lagrede spill\")."
 
-#: launcher/main.cpp:725
+#: launcher/main.cpp:627
 #, fuzzy
 msgid "Puts the launcher in your desktop's applications menu, with a \"Continue last save\" shortcut on right-click."
 msgstr "Legger startprogrammet i skrivebordets programmeny, med en snarvei \"Fortsett siste lagrede spill\" ved høyreklikk."
 
-#: launcher/main.cpp:738
+#: launcher/main.cpp:640
 #, fuzzy
 msgid "Version %s is out."
 msgstr "Versjon %s er ute."
 
-#: launcher/main.cpp:740
+#: launcher/main.cpp:642
 #, fuzzy
 msgid "See the update"
 msgstr "Se oppdateringen"
 
-#: launcher/main.cpp:752
+#: launcher/main.cpp:654
 #, fuzzy
 msgid "Updated to %s"
 msgstr "Oppdatert til %s"
 
-#: launcher/main.cpp:754
+#: launcher/main.cpp:656
 #, fuzzy
 msgid "What's new:"
 msgstr "Nytt:"
 
-#: launcher/main.cpp:762 launcher/setup.cpp:678
-#, fuzzy
-msgid "Release page"
-msgstr "Utgivelsesside"
-
-#: launcher/main.cpp:771
+#: launcher/main.cpp:673
 #, fuzzy
 msgid "Building the game for this version..."
 msgstr "Bygger spillet for denne versjonen..."
 
-#: launcher/main.cpp:773
+#: launcher/main.cpp:675
 #, fuzzy
 msgid "Watch it in Setup"
 msgstr "Følg med i Oppsett"
 
-#: launcher/main.cpp:778
+#: launcher/main.cpp:680
 #, fuzzy
 msgid "The game isn't rebuilt for this version yet: Play starts the old build."
 msgstr "Spillet er ikke bygget på nytt for denne versjonen ennå: Spill starter den gamle byggingen."
 
-#: launcher/main.cpp:780
+#: launcher/main.cpp:682
 #, fuzzy
 msgid "Rebuild it in Setup"
 msgstr "Bygg det på nytt i Oppsett"
 
-#: launcher/main.cpp:793
+#: launcher/main.cpp:695
 #, fuzzy
 msgid "The game is already running (started some other way)."
 msgstr "Spillet kjører allerede (startet på en annen måte)."
 
-#: launcher/main.cpp:794
+#: launcher/main.cpp:696
 #, fuzzy
 msgid "Close it first: two copies at once would fight over the saves."
 msgstr "Lukk det først: to kopier samtidig ville sloss om de lagrede spillene."
 
-#: launcher/main.cpp:814
+#: launcher/main.cpp:716
 #, fuzzy
 msgid "Nothing yet: once the game starts from here, its log shows up in this tab as it is written. Earlier sessions' logs are in the logs folder."
 msgstr "Ingenting ennå: når spillet startes herfra, dukker loggen opp i denne fanen mens den skrives. Logger fra tidligere økter ligger i loggmappen."
 
-#: launcher/main.cpp:825
+#: launcher/main.cpp:727
 #, fuzzy
 msgid "Live"
 msgstr "Direkte"
 
-#: launcher/main.cpp:825
+#: launcher/main.cpp:727
 #, fuzzy
 msgid "Last session"
 msgstr "Siste økt"
 
-#: launcher/main.cpp:827
+#: launcher/main.cpp:729
 #, fuzzy
 msgid " Errors: %d"
 msgstr " Feil: %d"
 
-#: launcher/main.cpp:829
+#: launcher/main.cpp:731
 #, fuzzy
 msgid "Warnings: %d (%d different)"
 msgstr "Advarsler: %d (%d forskjellige)"
 
-#: launcher/main.cpp:835
+#: launcher/main.cpp:737
 #, fuzzy
 msgid "Show only lines containing..."
 msgstr "Vis bare linjer som inneholder..."
 
-#: launcher/main.cpp:838
+#: launcher/main.cpp:740
 #, fuzzy
 msgid "Errors and warnings only"
 msgstr "Bare feil og advarsler"
 
-#: launcher/main.cpp:840
+#: launcher/main.cpp:742
 #, fuzzy
 msgid "Follow new lines"
 msgstr "Følg nye linjer"
 
-#: launcher/main.cpp:842
+#: launcher/main.cpp:744
 #, fuzzy
 msgid "Open in an editor"
 msgstr "Åpne i et redigeringsprogram"
 
-#: launcher/main.cpp:877
+#: launcher/main.cpp:779
 #, fuzzy
 msgid "(the first %zu lines are only in the file)"
 msgstr "(de første %zu linjene er bare i filen)"
 
-#: launcher/main.cpp:954 launcher/main.cpp:961
+#: launcher/main.cpp:856 launcher/main.cpp:863
 #, fuzzy
 msgid "Report a problem"
 msgstr "Rapporter et problem"
 
-#: launcher/main.cpp:964
+#: launcher/main.cpp:866
 #, fuzzy
 msgid "Makes one .zip file with what's needed to look into a problem: the logs of the sessions you pick, your settings and a short summary (version, system, graphics card), plus a save if you pick one. Nothing is sent anywhere: you attach the file to a bug report yourself. Your home folder's name is taken out of the files."
 msgstr "Lager én .zip-fil med det som trengs for å undersøke et problem: loggene fra øktene du velger, innstillingene dine og et kort sammendrag (versjon, system, skjermkort), pluss et lagret spill hvis du velger ett. Ingenting sendes noe sted: du legger selv ved filen i en feilrapport. Navnet på hjemmemappen din fjernes fra filene."
 
-#: launcher/main.cpp:971
+#: launcher/main.cpp:873
 #, fuzzy
 msgid "What happened?"
 msgstr "Hva skjedde?"
 
-#: launcher/main.cpp:974
+#: launcher/main.cpp:876
 #, fuzzy
 msgid "(optional: where in the game, what you did, what you saw)"
 msgstr "(valgfritt: hvor i spillet, hva du gjorde, hva du så)"
 
-#: launcher/main.cpp:980
+#: launcher/main.cpp:882
 #, fuzzy
 msgid "Sessions to include"
 msgstr "Økter som skal med"
 
-#: launcher/main.cpp:983
+#: launcher/main.cpp:885
 #, fuzzy
 msgid "(newest first)"
 msgstr "(nyeste først)"
 
-#: launcher/main.cpp:985
+#: launcher/main.cpp:887
 #, fuzzy
 msgid "No game sessions logged yet."
 msgstr "Ingen spilløkter logget ennå."
 
-#: launcher/main.cpp:996
+#: launcher/main.cpp:898
 #, fuzzy
 msgid "When"
 msgstr "Når"
 
-#: launcher/main.cpp:997
+#: launcher/main.cpp:899
 #, fuzzy
 msgid "Played"
 msgstr "Spilt"
 
-#: launcher/main.cpp:998
+#: launcher/main.cpp:900
 #, fuzzy
 msgid "How it ended"
 msgstr "Hvordan det endte"
 
-#: launcher/main.cpp:1025
+#: launcher/main.cpp:927
 #, fuzzy
 msgid "(not recorded)"
 msgstr "(ikke registrert)"
 
-#: launcher/main.cpp:1032
+#: launcher/main.cpp:934
 #, fuzzy
 msgid "Settings and controls (settings.toml, controls.toml)"
 msgstr "Innstillinger og kontroller (settings.toml, controls.toml)"
 
-#: launcher/main.cpp:1034
+#: launcher/main.cpp:936
 #, fuzzy
 msgid "The newest Setup log (for problems while setting up or building)"
 msgstr "Den nyeste oppsettloggen (for problemer under oppsett eller bygging)"
 
-#: launcher/main.cpp:1047
+#: launcher/main.cpp:949
 #, fuzzy
 msgid "Include a save:"
 msgstr "Ta med et lagret spill:"
 
 #. A save in the report's list: {0} = number, {1} = name, {2} = percent, {3} = date.
-#: launcher/main.cpp:1055
+#: launcher/main.cpp:957
 #, fuzzy
 msgid "{0}  {1}  ({2}%, saved {3})"
 msgstr "{0}  {1}  ({2} %, lagret {3})"
 
-#: launcher/main.cpp:1068
+#: launcher/main.cpp:970
 #, fuzzy
 msgid ""
 "A save near the spot where it happens lets the problem be seen first-hand.\n"
@@ -4164,82 +4522,82 @@ msgstr ""
 "Et lagret spill nær stedet der det skjer, lar problemet sees med egne øyne.\n"
 "Det inneholder navnet på det lagrede spillet og fremgangen, ikke noe mer."
 
-#: launcher/main.cpp:1074
+#: launcher/main.cpp:976
 #, fuzzy
 msgid "F10 photos taken in those sessions (%d files, %.1f MB)"
 msgstr "F10-bilder tatt i de øktene (%d filer, %.1f MB)"
 
-#: launcher/main.cpp:1091
+#: launcher/main.cpp:993
 #, fuzzy
 msgid "Save the report in:"
 msgstr "Lagre rapporten i:"
 
-#: launcher/main.cpp:1093
+#: launcher/main.cpp:995
 #, fuzzy
 msgid "Change..."
 msgstr "Endre..."
 
-#: launcher/main.cpp:1099
+#: launcher/main.cpp:1001
 #, fuzzy
 msgid "Back to the default"
 msgstr "Tilbake til standard"
 
-#: launcher/main.cpp:1116
+#: launcher/main.cpp:1018
 #, fuzzy
 msgid "Make the report"
 msgstr "Lag rapporten"
 
-#: launcher/main.cpp:1152
+#: launcher/main.cpp:1054
 #, fuzzy
 msgid "Report saved:"
 msgstr "Rapport lagret:"
 
-#: launcher/main.cpp:1154
+#: launcher/main.cpp:1056
 #, fuzzy
 msgid "%s (%.1f MB)"
 msgstr "%s (%.1f MB)"
 
-#: launcher/main.cpp:1161
+#: launcher/main.cpp:1063
 #, fuzzy
 msgid "Inside: %s"
 msgstr "Innhold: %s"
 
-#: launcher/main.cpp:1163
+#: launcher/main.cpp:1065
 #, fuzzy
 msgid "Show the file"
 msgstr "Vis filen"
 
-#: launcher/main.cpp:1167
+#: launcher/main.cpp:1069
 #, fuzzy
 msgid "Open the bug report form on GitHub"
 msgstr "Åpne feilrapportskjemaet på GitHub"
 
-#: launcher/main.cpp:1171
+#: launcher/main.cpp:1073
 #, fuzzy
 msgid "Copy the summary"
 msgstr "Kopier sammendraget"
 
-#: launcher/main.cpp:1174
+#: launcher/main.cpp:1076
 #, fuzzy
 msgid "The form opens with the version, system, graphics card and settings filled in. Describe the problem there and drag the .zip into its \"Log\" box. (A GitHub account is needed to post. No account? Send the .zip to whoever asked for it.)"
 msgstr "Skjemaet åpnes med versjon, system, skjermkort og innstillinger allerede fylt ut. Beskriv problemet der og dra .zip-filen inn i feltet \"Log\". (Du trenger en GitHub-konto for å poste. Ingen konto? Send .zip-filen til den som ba om den.)"
 
-#: launcher/main.cpp:1212
+#: launcher/main.cpp:1114
 #, fuzzy
 msgid "Settings"
 msgstr "Innstillinger"
 
-#: launcher/main.cpp:1220
+#: launcher/main.cpp:1122
 #, fuzzy
 msgid "Setup"
 msgstr "Oppsett"
 
-#: launcher/main.cpp:1228
+#: launcher/main.cpp:1130
 #, fuzzy
 msgid "Game log (live)"
 msgstr "Spillets logg (direkte)"
 
-#: launcher/main.cpp:1228
+#: launcher/main.cpp:1130
 #, fuzzy
 msgid "Game log"
 msgstr "Spillets logg"
@@ -4637,542 +4995,560 @@ msgstr "Lagres med en gang; de gjelder neste gang spillet starter. Hold over et 
 msgid "All settings (advanced)"
 msgstr "Alle innstillinger (avansert)"
 
-#: launcher/setup.cpp:157
+#: launcher/setup.cpp:155
 #, fuzzy
 msgid "Replacing link files with copies (Git for Windows)"
 msgstr "Erstatter lenkefiler med kopier (Git for Windows)"
 
-#: launcher/setup.cpp:372
+#: launcher/setup.cpp:370
 #, fuzzy
 msgid "checking..."
 msgstr "sjekker..."
 
-#: launcher/setup.cpp:373
+#: launcher/setup.cpp:371
 #, fuzzy
 msgid "done"
 msgstr "ferdig"
 
-#: launcher/setup.cpp:374
+#: launcher/setup.cpp:372
 #, fuzzy
 msgid "out of date"
 msgstr "utdatert"
 
-#: launcher/setup.cpp:375
+#: launcher/setup.cpp:373
 #, fuzzy
 msgid "to do"
 msgstr "gjenstår"
 
-#: launcher/setup.cpp:376
+#: launcher/setup.cpp:374
 #, fuzzy
 msgid "needs attention"
 msgstr "trenger oppmerksomhet"
 
-#: launcher/setup.cpp:444 launcher/setup.cpp:452 launcher/setup.cpp:460 launcher/setup.cpp:466 launcher/setup.cpp:477 launcher/setup.cpp:497 launcher/setup.cpp:508 launcher/setup.cpp:510 launcher/setup.cpp:560 launcher/setup.cpp:577 launcher/setup.cpp:583
+#: launcher/setup.cpp:544 launcher/setup.cpp:558 launcher/setup.cpp:572 launcher/setup.cpp:586 launcher/setup.cpp:597 launcher/setup.cpp:613 launcher/setup.cpp:643 launcher/setup.cpp:699 launcher/setup.cpp:716 launcher/setup.cpp:722
 #, fuzzy
 msgid "not found"
 msgstr "ikke funnet"
 
-#: launcher/setup.cpp:448 launcher/setup.cpp:457 launcher/setup.cpp:555 launcher/setup.cpp:565
+#: launcher/setup.cpp:548 launcher/setup.cpp:563 launcher/setup.cpp:694 launcher/setup.cpp:704
 #, fuzzy
 msgid "too old: {0} ({1} or newer needed)"
 msgstr "for gammel: {0} ({1} eller nyere trengs)"
 
-#: launcher/setup.cpp:464
+#: launcher/setup.cpp:583
 #, fuzzy
 msgid "not found (or only the Store shortcut)"
 msgstr "ikke funnet (eller bare Store-snarveien)"
 
-#: launcher/setup.cpp:550
+#: launcher/setup.cpp:614
+msgid "the Windows SDK is missing"
+msgstr ""
+
+#: launcher/setup.cpp:647
+msgid "not found: update your graphics card's driver"
+msgstr ""
+
+#: launcher/setup.cpp:689
 #, fuzzy
 msgid "not found (clang and clang++)"
 msgstr "ikke funnet (clang og clang++)"
 
-#: launcher/setup.cpp:572
+#: launcher/setup.cpp:711
 #, fuzzy
 msgid "not found (needs pkg-config too)"
 msgstr "ikke funnet (trenger også pkg-config)"
 
-#: launcher/setup.cpp:627
+#: launcher/setup.cpp:766
 #, fuzzy
 msgid "Version %s"
 msgstr "Versjon %s"
 
-#: launcher/setup.cpp:630
+#: launcher/setup.cpp:769
 #, fuzzy
 msgid " -  a developer copy: update it with git pull"
 msgstr " -  en utviklerkopi: oppdater den med git pull"
 
-#: launcher/setup.cpp:635
+#: launcher/setup.cpp:774
 #, fuzzy
 msgid " -  updated to %s: restart the launcher to finish"
 msgstr " -  oppdatert til %s: start startprogrammet på nytt for å fullføre"
 
-#: launcher/setup.cpp:638
+#: launcher/setup.cpp:777
 #, fuzzy
 msgid "Restart the launcher"
 msgstr "Start startprogrammet på nytt"
 
-#: launcher/setup.cpp:642
+#: launcher/setup.cpp:781
 #, fuzzy
 msgid "Couldn't restart: start the launcher again by hand."
 msgstr "Kunne ikke starte på nytt: start startprogrammet igjen selv."
 
-#: launcher/setup.cpp:652
+#: launcher/setup.cpp:791
 #, fuzzy
 msgid " -  checking for updates..."
 msgstr " -  ser etter oppdateringer..."
 
-#: launcher/setup.cpp:654
+#: launcher/setup.cpp:793
 #, fuzzy
 msgid " -  %s is available%s%s"
 msgstr " -  %s er tilgjengelig%s%s"
 
-#: launcher/setup.cpp:659 launcher/setup.cpp:664
-#, fuzzy
-msgid "Update to {0}"
-msgstr "Oppdater til {0}"
-
-#: launcher/setup.cpp:674
+#: launcher/setup.cpp:813
 #, fuzzy
 msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
 msgstr "Laster ned den nye versjonen og setter den på plass: lagrede spill, innstillinger og spillets filer blir. Så starter startprogrammet på nytt og bygger det som er endret."
 
-#: launcher/setup.cpp:683
+#: launcher/setup.cpp:822
 #, fuzzy
 msgid " -  the newest version"
 msgstr " -  den nyeste versjonen"
 
-#: launcher/setup.cpp:690
-#, fuzzy
-msgid "Check for updates"
-msgstr "Se etter oppdateringer"
-
-#: launcher/setup.cpp:699
+#: launcher/setup.cpp:838
 #, fuzzy
 msgid "What's new in %s"
 msgstr "Nytt i %s"
 
-#: launcher/setup.cpp:764
+#: launcher/setup.cpp:903
 #, fuzzy
 msgid "the ReXGlue SDK and its libraries are there"
 msgstr "ReXGlue-SDK-en og bibliotekene er der"
 
-#: launcher/setup.cpp:765
+#: launcher/setup.cpp:904
 #, fuzzy
 msgid "the ReXGlue SDK isn't downloaded yet"
 msgstr "ReXGlue-SDK-en er ikke lastet ned ennå"
 
-#: launcher/setup.cpp:766
+#: launcher/setup.cpp:905
 #, fuzzy
 msgid "the ReXGlue SDK submodule isn't downloaded yet"
 msgstr "ReXGlue-SDK-ens undermodul er ikke lastet ned ennå"
 
-#: launcher/setup.cpp:776
+#: launcher/setup.cpp:915
 #, fuzzy
 msgid "this version needs another ReXGlue SDK ({0}): download it again"
 msgstr "denne versjonen trenger en annen ReXGlue-SDK ({0}): last den ned på nytt"
 
-#: launcher/setup.cpp:790
+#: launcher/setup.cpp:929
 #, fuzzy
 msgid "extracted in {0}"
 msgstr "pakket ut i {0}"
 
-#: launcher/setup.cpp:793
+#: launcher/setup.cpp:932
 #, fuzzy
 msgid "no disc image found yet: pick your .iso"
 msgstr "ikke noe platebilde funnet ennå: velg .iso-filen din"
 
-#: launcher/setup.cpp:794
+#: launcher/setup.cpp:933
 #, fuzzy
 msgid "ready to extract {0}"
 msgstr "klar til å pakke ut {0}"
 
-#: launcher/setup.cpp:825
+#: launcher/setup.cpp:964
 #, fuzzy
 msgid "needs the source parts first"
 msgstr "trenger kildedelene først"
 
-#: launcher/setup.cpp:832
+#: launcher/setup.cpp:971
 #, fuzzy
 msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
 msgstr "rettelsene er endret (en oppdatering): den tilbakestilles, rettes på nytt og bygges så på nytt"
 
-#: launcher/setup.cpp:836
+#: launcher/setup.cpp:975
 #, fuzzy
 msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
 msgstr "våre {0} SDK-rettelser er verken alle brukt eller alle borte: SDK-mappen ble endret for hånd (eller en rettelse ble oppdatert). Ikke rørt; se docs/01-building.md, trinn 2 (git -C thirdparty/rexglue-sdk status)."
 
-#: launcher/setup.cpp:842
+#: launcher/setup.cpp:981
 #, fuzzy
 msgid "patched, not built yet"
 msgstr "rettet, ikke bygget ennå"
 
-#: launcher/setup.cpp:842
+#: launcher/setup.cpp:981
 #, fuzzy
 msgid "not patched or built yet"
 msgstr "verken rettet eller bygget"
 
-#: launcher/setup.cpp:847
+#: launcher/setup.cpp:986
 #, fuzzy
 msgid "built without our patches: rebuild it"
 msgstr "bygget uten rettelsene våre: bygg den på nytt"
 
-#: launcher/setup.cpp:848
+#: launcher/setup.cpp:987
 #, fuzzy
 msgid "the patches changed since the SDK was built: rebuild it"
 msgstr "rettelsene er endret siden SDK-en ble bygget: bygg den på nytt"
 
-#: launcher/setup.cpp:851
+#: launcher/setup.cpp:990
 #, fuzzy
 msgid "built and installed, {0} patches"
 msgstr "bygget og installert, {0} rettelser"
 
-#: launcher/setup.cpp:858
+#: launcher/setup.cpp:997
 #, fuzzy
 msgid "not built yet"
 msgstr "ikke bygget ennå"
 
-#: launcher/setup.cpp:861
+#: launcher/setup.cpp:1000
 #, fuzzy
 msgid "built, not copied into program/ yet"
 msgstr "bygget, ikke kopiert til program/ ennå"
 
-#: launcher/setup.cpp:878
+#: launcher/setup.cpp:1017
 #, fuzzy
 msgid "the sources changed since the last build: rebuild it"
 msgstr "kildekoden er endret siden forrige bygging: bygg på nytt"
 
-#: launcher/setup.cpp:881
+#: launcher/setup.cpp:1020
 #, fuzzy
 msgid "built: {0}"
 msgstr "bygget: {0}"
 
-#: launcher/setup.cpp:904
+#: launcher/setup.cpp:1043
 #, fuzzy
 msgid "Downloading the source parts (git submodules)"
 msgstr "Laster ned kildedelene (git-undermoduler)"
 
-#: launcher/setup.cpp:922
+#: launcher/setup.cpp:1061
 #, fuzzy
 msgid "Finishing the SDK's libraries (a download was stopped)"
 msgstr "Gjør ferdig SDK-ens biblioteker (en nedlasting ble stoppet)"
 
-#: launcher/setup.cpp:927
+#: launcher/setup.cpp:1066
 #, fuzzy
 msgid "Removing the old SDK download"
 msgstr "Fjerner den gamle SDK-nedlastingen"
 
-#: launcher/setup.cpp:940
+#: launcher/setup.cpp:1079
 #, fuzzy
 msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
 msgstr "Laster ned ReXGlue-SDK {0} (med bibliotekene)"
 
-#: launcher/setup.cpp:945
+#: launcher/setup.cpp:1084
 #, fuzzy
 msgid "Checking the SDK's version"
 msgstr "Sjekker SDK-ens versjon"
 
-#: launcher/setup.cpp:963
-#, fuzzy
-msgid "Pick your disc image (.iso) first."
-msgstr "Velg platebildet ditt (.iso) først."
-
-#: launcher/setup.cpp:970
+#: launcher/setup.cpp:1109
 #, fuzzy
 msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
 msgstr "Ikke nok ledig plass: spillets filer trenger omtrent 6,5 GB, %.1f GB er ledig."
 
-#: launcher/setup.cpp:983
+#: launcher/setup.cpp:1122
 #, fuzzy
 msgid "That file isn't an Xbox 360 disc image the extractor can read."
 msgstr "Den filen er ikke et Xbox 360-platebilde utpakkeren kan lese."
 
-#: launcher/setup.cpp:987
+#: launcher/setup.cpp:1126
 #, fuzzy
 msgid "That disc image has no default.xex: not a game disc?"
 msgstr "Det platebildet har ingen default.xex: ikke en spillplate?"
 
-#: launcher/setup.cpp:990
+#: launcher/setup.cpp:1129
 #, fuzzy
 msgid "Extracting the disc into game/"
 msgstr "Pakker ut platen til game/"
 
-#: launcher/setup.cpp:1002
+#: launcher/setup.cpp:1141
 #, fuzzy
 msgid "Checking the game's executable"
 msgstr "Sjekker spillets programfil"
 
-#: launcher/setup.cpp:1008
+#: launcher/setup.cpp:1147
 #, fuzzy
 msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
 msgstr "default.xex er ikke Crash: Mind over Mutant (tittel-ID 565507FA ikke funnet). Filene er i game/; denne porten kjører bare det spillet."
 
-#: launcher/setup.cpp:1012
+#: launcher/setup.cpp:1151
 #, fuzzy
 msgid "Title id 565507FA: Crash: Mind over Mutant."
 msgstr "Tittel-ID 565507FA: Crash: Mind over Mutant."
 
-#: launcher/setup.cpp:1034
+#: launcher/setup.cpp:1173
 #, fuzzy
 msgid "Undoing the old patches"
 msgstr "Angrer de gamle rettelsene"
 
-#: launcher/setup.cpp:1035
+#: launcher/setup.cpp:1174
 #, fuzzy
 msgid "Removing files the old patches added"
 msgstr "Fjerner filer de gamle rettelsene la til"
 
-#: launcher/setup.cpp:1038
+#: launcher/setup.cpp:1177
 #, fuzzy
 msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
 msgstr "Bruker rettelsene våre på SDK-en (patches/rexglue-sdk)"
 
-#: launcher/setup.cpp:1053
+#: launcher/setup.cpp:1192
 #, fuzzy
 msgid "Configuring the SDK"
 msgstr "Konfigurerer SDK-en"
 
-#: launcher/setup.cpp:1055
+#: launcher/setup.cpp:1194
 #, fuzzy
 msgid "Building the SDK (Release: the recompiler)"
 msgstr "Bygger SDK-en (Release: omkompilatoren)"
 
-#: launcher/setup.cpp:1059
+#: launcher/setup.cpp:1198
 #, fuzzy
 msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
 msgstr "Bygger SDK-en (RelWithDebInfo: kjøretiden spillet bruker)"
 
-#: launcher/setup.cpp:1067
+#: launcher/setup.cpp:1206
 #, fuzzy
 msgid "Noting which patches the SDK was built with"
 msgstr "Noterer hvilke rettelser SDK-en ble bygget med"
 
-#: launcher/setup.cpp:1087
+#: launcher/setup.cpp:1233
+msgid "Copying default.xex for the build"
+msgstr ""
+
+#: launcher/setup.cpp:1260
 #, fuzzy
 msgid "Linking source/game to the disc's files"
 msgstr "Lenker source/game til platens filer"
 
-#: launcher/setup.cpp:1118
+#: launcher/setup.cpp:1281
 #, fuzzy
 msgid "Configuring the game's build"
 msgstr "Konfigurerer spillets bygging"
 
-#: launcher/setup.cpp:1128
+#: launcher/setup.cpp:1291
 #, fuzzy
 msgid "Recompiling the game's code (default.xex -> C++)"
 msgstr "Omkompilerer spillets kode (default.xex -> C++)"
 
-#: launcher/setup.cpp:1134
+#: launcher/setup.cpp:1297
 #, fuzzy
 msgid "Compiling the game ({0} at a time; the first build takes a while)"
 msgstr "Kompilerer spillet ({0} om gangen; den første byggingen tar en stund)"
 
-#: launcher/setup.cpp:1146
+#: launcher/setup.cpp:1310
 #, fuzzy
 msgid "Copying the game into program/"
 msgstr "Kopierer spillet til program/"
 
-#: launcher/setup.cpp:1237
+#: launcher/setup.cpp:1360
+msgid "Making the game's icon from your disc"
+msgstr ""
+
+#: launcher/setup.cpp:1370
+msgid "Putting the icon on the game"
+msgstr ""
+
+#: launcher/setup.cpp:1436
 #, fuzzy
 msgid "Setting up"
 msgstr "Setter opp"
 
-#: launcher/setup.cpp:1424
+#: launcher/setup.cpp:1623
 #, fuzzy
 msgid "%s: done"
 msgstr "%s: ferdig"
 
-#: launcher/setup.cpp:1426
+#: launcher/setup.cpp:1625
 #, fuzzy
 msgid "%s: cancelled"
 msgstr "%s: avbrutt"
 
-#: launcher/setup.cpp:1428
+#: launcher/setup.cpp:1627
 #, fuzzy
 msgid "%s: failed"
 msgstr "%s: mislyktes"
 
-#: launcher/setup.cpp:1448
+#: launcher/setup.cpp:1647
 #, fuzzy
 msgid "This step can't be stopped: a few seconds."
 msgstr "Dette trinnet kan ikke stoppes: noen få sekunder."
 
-#: launcher/setup.cpp:1457
+#: launcher/setup.cpp:1656
 #, fuzzy
 msgid "Follow"
 msgstr "Følg"
 
-#: launcher/setup.cpp:1531
+#: launcher/setup.cpp:1725 launcher/setup.cpp:1795 launcher/setup.cpp:1833
+msgid "Still busy: wait a moment."
+msgstr ""
+
+#: launcher/setup.cpp:1730
+msgid "Still checking: wait a moment."
+msgstr ""
+
+#: launcher/setup.cpp:1761
+msgid "Adding {0} (Windows asks for permission)"
+msgstr ""
+
+#: launcher/setup.cpp:1771
+msgid "Installing {0} (winget)"
+msgstr ""
+
+#: launcher/setup.cpp:1800
+msgid "winget, Windows' own app installer, isn't there. Install \"App Installer\" from the Microsoft Store, then try again."
+msgstr ""
+
+#: launcher/setup.cpp:1807
+msgid "Nothing here can be installed automatically."
+msgstr ""
+
+#: launcher/setup.cpp:1863
 #, fuzzy
 msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
 msgstr "Oppsett bygger spillet fra kildekoden, så det virker fra prosjektmappen (en git-klone). Denne kopien er en installert kopi."
 
-#: launcher/setup.cpp:1553
-#, fuzzy
-msgid "Checking what's there..."
-msgstr "Sjekker hva som finnes..."
-
-#: launcher/setup.cpp:1555
+#: launcher/setup.cpp:1887
 #, fuzzy
 msgid "Everything is set up: the game is ready to play."
 msgstr "Alt er satt opp: spillet er klart til å spilles."
 
-#: launcher/setup.cpp:1557
+#: launcher/setup.cpp:1889
 #, fuzzy
 msgid "Some steps are left."
 msgstr "Noen trinn gjenstår."
 
-#: launcher/setup.cpp:1561
-#, fuzzy
-msgid "Check again"
-msgstr "Sjekk igjen"
-
-#: launcher/setup.cpp:1577
+#: launcher/setup.cpp:1909
 #, fuzzy
 msgid "Set up everything"
 msgstr "Sett opp alt"
 
-#: launcher/setup.cpp:1582
+#: launcher/setup.cpp:1914
 #, fuzzy
 msgid "Install the missing build tools first (step 1)."
 msgstr "Installer de manglende byggeverktøyene først (trinn 1)."
 
-#: launcher/setup.cpp:1586
+#: launcher/setup.cpp:1918
 #, fuzzy
 msgid "The game is running: building waits until it's closed."
 msgstr "Spillet kjører: byggingen venter til det er lukket."
 
-#: launcher/setup.cpp:1599
+#: launcher/setup.cpp:1931
 #, fuzzy
 msgid "Build tools"
 msgstr "Byggeverktøy"
 
-#: launcher/setup.cpp:1600
+#: launcher/setup.cpp:1932
 #, fuzzy
 msgid "everything needed to build is installed"
 msgstr "alt som trengs for å bygge, er installert"
 
-#: launcher/setup.cpp:1607
+#: launcher/setup.cpp:1939
 #, fuzzy
 msgid "found"
 msgstr "funnet"
 
-#: launcher/setup.cpp:1607
+#: launcher/setup.cpp:1939
 #, fuzzy
 msgid "missing"
 msgstr "mangler"
 
-#: launcher/setup.cpp:1612
+#: launcher/setup.cpp:1944
 #, fuzzy
 msgid "  -  package: "
 msgstr "  -  pakke: "
 
-#: launcher/setup.cpp:1619
+#: launcher/setup.cpp:1951
 #, fuzzy
 msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
 msgstr "Installer de manglende med pakkebehandleren din (pakkenavnene over er %s sine), og trykk så Sjekk igjen."
 
-#: launcher/setup.cpp:1628 launcher/setup.cpp:1633
+#: launcher/setup.cpp:1960 launcher/setup.cpp:1965
 #, fuzzy
 msgid "Source parts"
 msgstr "Kildedeler"
 
-#: launcher/setup.cpp:1632
+#: launcher/setup.cpp:1964
 #, fuzzy
 msgid "Download them"
 msgstr "Last dem ned"
 
-#: launcher/setup.cpp:1640
+#: launcher/setup.cpp:1972
 #, fuzzy
 msgid "Your disc"
 msgstr "Platen din"
 
-#: launcher/setup.cpp:1644
+#: launcher/setup.cpp:1976
 #, fuzzy
 msgid "Disc image: %s"
 msgstr "Platebilde: %s"
 
-#: launcher/setup.cpp:1647
-#, fuzzy
-msgid "Pick the disc image..."
-msgstr "Velg platebildet..."
-
-#: launcher/setup.cpp:1648
+#: launcher/setup.cpp:1980
 #, fuzzy
 msgid "Xbox 360 disc image"
 msgstr "Xbox 360-platebilde"
 
-#: launcher/setup.cpp:1663
+#: launcher/setup.cpp:1995
 #, fuzzy
 msgid "Extract it"
 msgstr "Pakk det ut"
 
-#: launcher/setup.cpp:1667
+#: launcher/setup.cpp:1999
 #, fuzzy
 msgid "Disc"
 msgstr "Plate"
 
-#: launcher/setup.cpp:1674
+#: launcher/setup.cpp:2006
 #, fuzzy
 msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
 msgstr "Din egen kopi av platen (en hel er 7,8 GB); spillets filer (6 GB) havner i game/."
 
-#: launcher/setup.cpp:1680 launcher/setup.cpp:1689
+#: launcher/setup.cpp:2012 launcher/setup.cpp:2021
 #, fuzzy
 msgid "ReXGlue SDK"
 msgstr "ReXGlue-SDK"
 
-#: launcher/setup.cpp:1685
+#: launcher/setup.cpp:2017
 #, fuzzy
 msgid "Rebuild the SDK"
 msgstr "Bygg SDK-en på nytt"
 
-#: launcher/setup.cpp:1685
+#: launcher/setup.cpp:2017
 #, fuzzy
 msgid "Build the SDK"
 msgstr "Bygg SDK-en"
 
-#: launcher/setup.cpp:1695
+#: launcher/setup.cpp:2027
 #, fuzzy
 msgid "A few minutes."
 msgstr "Noen få minutter."
 
-#: launcher/setup.cpp:1700 launcher/setup.cpp:1709
+#: launcher/setup.cpp:2032 launcher/setup.cpp:2041
 #, fuzzy
 msgid "The game"
 msgstr "Spillet"
 
-#: launcher/setup.cpp:1705
+#: launcher/setup.cpp:2037
 #, fuzzy
 msgid "Build the game"
 msgstr "Bygg spillet"
 
-#: launcher/setup.cpp:1706
+#: launcher/setup.cpp:2038
 #, fuzzy
 msgid "Rebuild (update)"
 msgstr "Bygg på nytt (oppdatering)"
 
-#: launcher/setup.cpp:1707
+#: launcher/setup.cpp:2039
 #, fuzzy
 msgid "Rebuild"
 msgstr "Bygg på nytt"
 
-#: launcher/setup.cpp:1712
+#: launcher/setup.cpp:2044
 #, fuzzy
 msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
 msgstr "%d kompileringsjobber om gangen (etter ledig RAM nå: lukk store programmer først for raskere bygging). Den første byggingen tar en stund; senere gjør bare om det som er endret."
 
-#: launcher/update.cpp:270
+#: launcher/update.cpp:269
 #, fuzzy
 msgid "Preparing"
 msgstr "Forbereder"
 
-#: launcher/update.cpp:285
+#: launcher/update.cpp:284
 #, fuzzy
 msgid "Checking the download"
 msgstr "Sjekker nedlastingen"
 
-#: launcher/update.cpp:303
+#: launcher/update.cpp:318
+msgid "Putting the port's files in place"
+msgstr ""
+
+#: launcher/update.cpp:346
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Setter den nye versjonen på plass"

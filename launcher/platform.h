@@ -49,6 +49,31 @@ std::filesystem::path FindProgram(const std::string& name);
 // A program's file name: "crash_mom" -> "crash_mom.exe" on Windows.
 std::string ExeName(const std::string& name);
 
+// An environment variable of THIS process ("" when unset). On Windows read
+// through the wide API, so it sees what RefreshEnvironment set (the C
+// runtime's getenv keeps its own copy from the start).
+std::string GetEnv(const char* name);
+
+// WINDOWS: re-reads PATH (and VULKAN_SDK) from the registry, where installers
+// write them, into this process. A program keeps the PATH it was started
+// with, so tools installed while the installer is open (winget, the Visual
+// Studio Installer) stayed "not found" until it was restarted, sometimes
+// until the player logged out: the most likely reason testers reported
+// that the setup "never works" (found reading setup.cpp, 2026-11-05). The
+// new PATH = the system's + the user's (as Windows builds it at log-on),
+// then any folders this process had that neither lists (kept, not lost).
+// Linux: nothing to do.
+void RefreshEnvironment();
+
+// THE GAME'S ICON (2026-11-05): writes an .ico file (tools/make_icon.py: the
+// game's own portrait of Crash as a mask, from the player's disc) into an exe
+// as its icon resource (RT_ICON per picture + RT_GROUP_ICON 1). Windows shows
+// an exe's first icon group in Explorer, the Start menu and the Apps list,
+// and SDL gives it to the game's window (the taskbar). Windows: UpdateResource;
+// Linux: nothing (true). False + `error` when the exe couldn't be changed
+// (e.g. another program has it open): the game just has no icon then.
+bool EmbedIcon(const std::filesystem::path& exe, const std::filesystem::path& ico, std::string* error);
+
 // --- facts ---------------------------------------------------------------------
 
 double MemAvailableGb();

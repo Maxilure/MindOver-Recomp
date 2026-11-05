@@ -123,7 +123,6 @@ int SdkJobs() { return JobsFor(1.0); }
 #if defined(_WIN32)
 constexpr const char* kSdkPreset = "win-amd64";
 constexpr const char* kGamePreset = "win-amd64-relwithdebinfo";
-constexpr const char* kPython = "python";
 constexpr const char* kLibFolder = "bin";      // where the SDK installs its libraries
 constexpr const char* kLibSuffix = ".dll";
 // The SDK defaults to Direct3D 12 on Windows; our native renderer is Vulkan,
@@ -132,7 +131,6 @@ const std::vector<std::string> kSdkOptions = {"-DREXGLUE_USE_VULKAN=ON", "-DREXG
 #else
 constexpr const char* kSdkPreset = "linux-amd64";
 constexpr const char* kGamePreset = "linux-amd64-relwithdebinfo";
-constexpr const char* kPython = "python3";
 constexpr const char* kLibFolder = "lib";
 constexpr const char* kLibSuffix = ".so";
 const std::vector<std::string> kSdkOptions = {};
@@ -419,19 +417,121 @@ std::shared_ptr<const platform::Environment> BuildEnvironment(const fs::path& vc
   return env;
 }
 
-// Step 1 on Windows: each tool with its winget package name (`winget install
-// <name>`; Visual Studio's parts through the Visual Studio Installer).
+// Step 1 on Windows: each tool, how it was found, and how the installer gets
+// it when it's missing (Tool::winget / install_argv; Setup::ToolsJob).
+//
+// Fixes of 2026-11-05 (players reported the setup "never works" on Windows;
+// found by reading this code, then tested on a Windows 11 PC):
+//   - PATH is re-read from the registry first (platform::RefreshEnvironment):
+//     tools installed while the installer was open used to stay "not found";
+//   - Python: Windows' "python" is often only the Microsoft Store shortcut,
+//     and a python.org install doesn't always put itself on PATH: the "py"
+//     launcher and Python's default folders are tried too;
+//   - CMake and Ninja: Visual Studio's C++ tools carry both; when they aren't
+//     on PATH, Visual Studio's copies count (its build environment, which
+//     every build step runs in, has them on PATH);
+//   - the Visual C++ runtime (msvcp140.dll ...), which the BUILT GAME needs
+//     to start, is checked too.
+// Package ids are winget's (the same ones a community script used, PR #4 on
+// GitHub: Visual Studio's override and winget's "already installed" code).
+
+// The Python found by the checks (setup.cpp runs the disc tools with it).
+std::mutex g_python_mutex;
+std::string g_python = "python";
+
+std::string PythonProgram() {
+  std::lock_guard lock(g_python_mutex);
+  return g_python;
+}
+
+// A real Python 3 (see above): its full path, or "" if none.
+fs::path FindPython(std::string* version) {
+  bool ok = false;
+  auto try_exe = [&](const fs::path& exe) {
+    if (exe.empty()) return false;
+    const std::string out = platform::Capture({exe.string(), "--version"}, &ok);
+    if (ok && out.find("Python 3") != std::string::npos) {
+      *version = out.substr(0, out.find_first_of("\r\n"));
+      return true;
+    }
+    return false;
+  };
+  // 1. "python" on PATH (fails quietly when it's the Store shortcut: that
+  //    one prints nothing to us and exits 9009).
+  if (const fs::path exe = platform::FindProgram("python"); try_exe(exe)) return exe;
+  // 2. The "py" launcher python.org installs into Windows' own folder.
+  if (!platform::FindProgram("py").empty()) {
+    std::string where = platform::Capture({"py", "-3", "-c", "import sys; print(sys.executable)"}, &ok);
+    where = where.substr(0, where.find_first_of("\r\n"));
+    if (ok && try_exe(fs::path(where))) return fs::path(where);
+  }
+  // 3. Python's default folders (newest first by name: Python313 > Python312).
+  std::vector<fs::path> roots;
+  if (const std::string local = platform::GetEnv("LOCALAPPDATA"); !local.empty()) {
+    roots.push_back(fs::path(local) / "Programs" / "Python");
+  }
+  if (const std::string pf = platform::GetEnv("ProgramFiles"); !pf.empty()) roots.push_back(pf);
+  std::vector<fs::path> found;
+  std::error_code ec;
+  for (const fs::path& root : roots) {
+    for (const auto& entry : fs::directory_iterator(root, ec)) {
+      const std::string name = entry.path().filename().string();
+      if (name.starts_with("Python3") && Exists(entry.path() / "python.exe")) {
+        found.push_back(entry.path() / "python.exe");
+      }
+    }
+  }
+  std::sort(found.rbegin(), found.rend());
+  for (const fs::path& exe : found) {
+    if (try_exe(exe)) return exe;
+  }
+  return {};
+}
+
 void CheckTools(Status* s) {
   s->distro = "Windows";
-  const std::string program_files = std::getenv("ProgramFiles") ? std::getenv("ProgramFiles") : "C:\\Program Files";
-  const std::string program_files_x86 =
-      std::getenv("ProgramFiles(x86)") ? std::getenv("ProgramFiles(x86)") : "C:\\Program Files (x86)";
+  // What Windows has NOW (see above), before any lookup.
+  platform::RefreshEnvironment();
+  const std::string pf_env = platform::GetEnv("ProgramFiles");
+  const std::string pf86_env = platform::GetEnv("ProgramFiles(x86)");
+  const std::string program_files = pf_env.empty() ? "C:\\Program Files" : pf_env;
+  const std::string program_files_x86 = pf86_env.empty() ? "C:\\Program Files (x86)" : pf86_env;
   std::string extra_path;  // folders of tools found off PATH
-  auto add = [&](const char* label, const char* package, bool found, std::string detail) {
-    s->tools.push_back({label, found, std::move(detail), package});
+  auto add = [&](const char* label, const char* package, bool found, std::string detail,
+                 const char* winget = "", const char* override_args = "") {
+    Tool tool;
+    tool.label = label;
+    tool.found = found;
+    tool.detail = std::move(detail);
+    tool.package = package;
+    tool.winget = winget;
+    tool.winget_override = override_args;
+    s->tools.push_back(std::move(tool));
   };
   bool ok = false;
   std::string version;
+
+  // Visual Studio first: its C++ tools also carry CMake and Ninja (below).
+  // vswhere = Microsoft's own finder, installed with every Visual Studio.
+  const fs::path vs_installer = fs::path(program_files_x86) / "Microsoft Visual Studio" / "Installer";
+  const fs::path vswhere = vs_installer / "vswhere.exe";
+  fs::path vs_cpp, vs_any;  // with the C++ tools / any Visual Studio at all
+  if (Exists(vswhere)) {
+    auto where = [&](std::vector<std::string> extra) {
+      std::vector<std::string> argv = {vswhere.string(), "-latest", "-products", "*"};
+      argv.insert(argv.end(), extra.begin(), extra.end());
+      argv.insert(argv.end(), {"-property", "installationPath"});
+      std::string text = platform::Capture(argv, &ok);
+      text = text.substr(0, text.find_first_of("\r\n"));
+      return ok ? fs::path(text) : fs::path();
+    };
+    vs_cpp = where({"-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"});
+    vs_any = where({});
+  }
+  const fs::path vcvars = vs_cpp.empty() ? fs::path()
+                                         : vs_cpp / "VC" / "Auxiliary" / "Build" / "vcvars64.bat";
+  const fs::path vs_cmake_dir = vs_cpp.empty() ? fs::path()
+      : vs_cpp / "Common7" / "IDE" / "CommonExtensions" / "Microsoft" / "CMake";
 
   // clang: on PATH, or LLVM's default folder (its installer doesn't add it).
   fs::path clang = platform::FindProgram("clang");
@@ -441,61 +541,61 @@ void CheckTools(Status* s) {
     extra_path += llvm_clang.parent_path().string() + ";";
   }
   if (clang.empty()) {
-    add("clang 20 or newer", "LLVM.LLVM", false, trs("not found"));
+    add("clang 20 or newer", "LLVM", false, trs("not found"), "LLVM.LLVM");
   } else {
     const int major = MajorVersion(platform::Capture({clang.string(), "--version"}, &ok), &version);
-    add("clang 20 or newer", "LLVM.LLVM", major >= 20,
-        major >= 20 ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "20"}));
+    add("clang 20 or newer", "LLVM", major >= 20,
+        major >= 20 ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "20"}),
+        "LLVM.LLVM");
   }
-  // CMake 3.25+.
-  if (platform::FindProgram("cmake").empty()) {
-    add("CMake 3.25 or newer", "Kitware.CMake", false, trs("not found"));
+  // CMake 3.25+: on PATH, else Visual Studio's own copy.
+  fs::path cmake = platform::FindProgram("cmake");
+  if (cmake.empty() && Exists(vs_cmake_dir / "CMake" / "bin" / "cmake.exe")) {
+    cmake = vs_cmake_dir / "CMake" / "bin" / "cmake.exe";
+    extra_path += cmake.parent_path().string() + ";";
+  }
+  if (cmake.empty()) {
+    add("CMake 3.25 or newer", "CMake", false, trs("not found"), "Kitware.CMake");
   } else {
-    const int major = MajorVersion(platform::Capture({"cmake", "--version"}, &ok), &version);
+    const int major = MajorVersion(platform::Capture({cmake.string(), "--version"}, &ok), &version);
     const bool good = major > 3 || (major == 3 && MinorVersion(version) >= 25);
-    add("CMake 3.25 or newer", "Kitware.CMake", good,
-        good ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"}));
+    add("CMake 3.25 or newer", "CMake", good,
+        good ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"}),
+        "Kitware.CMake");
   }
-  const fs::path ninja = platform::FindProgram("ninja");
-  add("Ninja", "Ninja-build.Ninja", !ninja.empty(), ninja.empty() ? trs("not found") : ninja.string());
-  // Python: a real one (Windows has a "python" that only opens the Store).
-  const std::string py = platform::Capture({"python", "--version"}, &ok);
-  add("Python 3", "Python.Python.3.12", ok && py.find("Python 3") != std::string::npos,
-      ok ? py.substr(0, py.find_first_of("\r\n")) : trs("not found (or only the Store shortcut)"));
+  // Ninja: on PATH (winget puts it in its "Links" folder), else Visual Studio's.
+  fs::path ninja = platform::FindProgram("ninja");
+  if (ninja.empty() && Exists(vs_cmake_dir / "Ninja" / "ninja.exe")) {
+    ninja = vs_cmake_dir / "Ninja" / "ninja.exe";
+    extra_path += ninja.parent_path().string() + ";";
+  }
+  add("Ninja", "Ninja", !ninja.empty(), ninja.empty() ? trs("not found") : ninja.string(),
+      "Ninja-build.Ninja");
+  // Python 3 (see above). Installed with "add to PATH" on, so the build's own
+  // tools find it too.
+  const fs::path python = FindPython(&version);
+  if (!python.empty()) {
+    std::lock_guard lock(g_python_mutex);
+    g_python = python.string();
+    extra_path += python.parent_path().string() + ";";
+  }
+  add("Python 3", "Python 3.12", !python.empty(),
+      python.empty() ? trs("not found (or only the Store shortcut)") : version + "  " + python.string(),
+      "Python.Python.3.12", "/quiet InstallAllUsers=0 PrependPath=1 Include_launcher=1");
   const fs::path git = platform::FindProgram("git");
-  add("Git", "Git.Git", !git.empty(), git.empty() ? trs("not found") : git.string());
-  // glslc: on PATH or in the Vulkan SDK.
+  add("Git", "Git", !git.empty(), git.empty() ? trs("not found") : git.string(), "Git.Git");
+  // glslc: on PATH or in the Vulkan SDK (VULKAN_SDK, re-read from the registry).
   fs::path glslc = platform::FindProgram("glslc");
-  if (glslc.empty() && std::getenv("VULKAN_SDK")) {
-    const fs::path in_sdk = fs::path(std::getenv("VULKAN_SDK")) / "Bin" / "glslc.exe";
+  if (const std::string sdk = platform::GetEnv("VULKAN_SDK"); glslc.empty() && !sdk.empty()) {
+    const fs::path in_sdk = fs::path(sdk) / "Bin" / "glslc.exe";
     if (Exists(in_sdk)) {
       glslc = in_sdk;
       extra_path += in_sdk.parent_path().string() + ";";
     }
   }
-  add("glslc (shader compiler)", "KhronosGroup.VulkanSDK", !glslc.empty(),
-      glslc.empty() ? trs("not found") : glslc.string());
-  // Visual Studio's C++ tools (vswhere: Microsoft's own finder).
-  const fs::path vswhere =
-      fs::path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe";
-  fs::path vcvars;
-  if (Exists(vswhere)) {
-    std::string where = platform::Capture(
-        {vswhere.string(), "-latest", "-products", "*", "-requires",
-         "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"},
-        &ok);
-    where = where.substr(0, where.find_first_of("\r\n"));
-    if (!where.empty()) {
-      vcvars = fs::path(where) / "VC" / "Auxiliary" / "Build" / "vcvars64.bat";
-    }
-  }
-  add("Visual Studio C++ tools (x64)",
-      "Microsoft.VisualStudio.2022.BuildTools + the \"Desktop development with C++\" workload",
-      Exists(vcvars),
-      // vcvars64.bat sits in <install>\VC\Auxiliary\Build: show <install>.
-      Exists(vcvars) ? vcvars.parent_path().parent_path().parent_path().parent_path().string()
-                     : trs("not found"));
-  // The Windows SDK (Windows' own headers and libraries).
+  add("glslc (shader compiler)", "Vulkan SDK", !glslc.empty(),
+      glslc.empty() ? trs("not found") : glslc.string(), "KhronosGroup.VulkanSDK");
+  // Visual Studio's C++ tools + the Windows SDK (Windows' own headers).
   std::string windows_sdk;
   std::error_code ec;
   for (const auto& entry :
@@ -504,10 +604,47 @@ void CheckTools(Status* s) {
       windows_sdk = entry.path().filename().string();
     }
   }
-  add("Windows 10/11 SDK", "Windows 11 SDK (Visual Studio Installer, Individual components)",
-      !windows_sdk.empty(), windows_sdk.empty() ? trs("not found") : windows_sdk);
+  {
+    Tool tool;
+    tool.label = "Visual Studio C++ tools + Windows SDK";
+    tool.package = "Visual Studio Build Tools 2022";
+    tool.found = Exists(vcvars) && !windows_sdk.empty();
+    tool.detail = tool.found ? vs_cpp.string() + "  (Windows SDK " + windows_sdk + ")"
+                  : !Exists(vcvars) ? std::string(trs("not found"))
+                                    : std::string(trs("the Windows SDK is missing"));
+    if (!tool.found && !vs_any.empty() && Exists(vs_installer / "setup.exe")) {
+      // A Visual Studio is there, just without these parts: its own installer
+      // adds them (it needs administrator rights: asked through Windows' usual
+      // prompt, which CreateProcess can't show, hence PowerShell's RunAs).
+      const std::string args = "modify --installPath \"" + vs_any.string() +
+                               "\" --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+                               " --add Microsoft.VisualStudio.Component.Windows11SDK.26100"
+                               " --passive --norestart";
+      tool.install_argv = {"powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                           "$p = Start-Process -FilePath '" + (vs_installer / "setup.exe").string() +
+                               "' -ArgumentList '" + args +
+                               "' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"};
+    } else {
+      // Microsoft's free Build Tools with the C++ workload; "recommended" brings
+      // the Windows SDK. --passive: Visual Studio's own progress window shows.
+      tool.winget = "Microsoft.VisualStudio.2022.BuildTools";
+      tool.winget_override =
+          "--passive --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools "
+          "--includeRecommended";
+    }
+    s->tools.push_back(std::move(tool));
+  }
+  // The Visual C++ runtime: what the BUILT GAME loads at start (the launcher
+  // has it built in; the game, built with Visual Studio's libraries, doesn't).
+  {
+    const fs::path system32 = fs::path(platform::GetEnv("SystemRoot")) / "System32";
+    const bool runtime = Exists(system32 / "msvcp140.dll") && Exists(system32 / "vcruntime140_1.dll");
+    add("Visual C++ runtime (x64)", "Visual C++ Redistributable", runtime,
+        runtime ? "msvcp140.dll" : trs("not found"), "Microsoft.VCRedist.2015+.x64");
+  }
   const bool vulkan = platform::LibraryAvailable("", "vulkan-1.dll");
-  add("Vulkan loader", "your graphics card's driver", vulkan, vulkan ? "vulkan-1.dll" : trs("not found"));
+  add("Vulkan loader", "your graphics card's driver", vulkan,
+      vulkan ? "vulkan-1.dll" : trs("not found: update your graphics card's driver"));
 
   if (Exists(vcvars)) {
     s->build_env = BuildEnvironment(vcvars, extra_path);
@@ -533,6 +670,8 @@ constexpr ToolSpec kTools[] = {
     {"GTK 3 headers", {"gtk3", "libgtk-3-dev", "gtk3-devel", "gtk3-devel"}},
     {"Vulkan loader", {"vulkan-icd-loader", "libvulkan-dev", "vulkan-loader-devel", "vulkan-devel"}},
 };
+
+std::string PythonProgram() { return "python3"; }
 
 // Step 1 on Linux: each tool with its package on this distribution.
 void CheckTools(Status* s) {
@@ -975,7 +1114,7 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
   // The extractor's --list: is it a 360 disc with the game, and how many files.
   bool ok = false;
   const std::string listing = task_runner::Capture(
-      {kPython, (folders_.source / "tools" / "xiso_extract.py").string(), "--list", iso.string()},
+      {PythonProgram(), (folders_.source / "tools" / "xiso_extract.py").string(), "--list", iso.string()},
       &ok, folders_.root, 60000);
   std::smatch match;
   static const std::regex count(R"(\[xiso\] (\d+) files)");
@@ -988,7 +1127,7 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
     return false;
   }
   Command extract{trs("Extracting the disc into game/"),
-                  {kPython, "-u", (folders_.source / "tools" / "xiso_extract.py").string(),
+                  {PythonProgram(), "-u", (folders_.source / "tools" / "xiso_extract.py").string(),
                    iso.string(), folders_.disc.string()},
                   folders_.root,
                   Progress::kCountLines};
@@ -1003,7 +1142,7 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
   verify.function = [xex, root](std::string* message) {
     bool ok = false;
     const std::string info = task_runner::Capture(
-        {kPython, (root / "tools" / "xex_info.py").string(), xex.string()}, &ok, root);
+        {PythonProgram(), (root / "tools" / "xex_info.py").string(), xex.string()}, &ok, root);
     if (info.find("565507FA") == std::string::npos) {
       *message = trs("default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). "
                      "The files are in game/; this port only runs that game.");
@@ -1084,6 +1223,40 @@ std::vector<Command> Setup::GameJob() {
     const fs::path link = root / "game";
     const fs::path target = folders_.disc;
     Command bridge;
+#if defined(_WIN32)
+    // WINDOWS: a COPY of default.xex in a real source\game folder, no link.
+    // The build only reads that one file (the recompiler's input; 6 MB). A
+    // directory junction worked at first, but Windows' "redirection guard"
+    // refuses to follow junctions a normal user made for some programs:
+    // ninja failed with "The path cannot be traversed because it contains
+    // an untrusted mount point" (seen 2026-11-05 on Windows 11 26200).
+    bridge.title = trs("Copying default.xex for the build");
+    bridge.function = [link, target](std::string* message) {
+      std::error_code ec;
+      const fs::path from = target / "default.xex";
+      const fs::path to = link / "default.xex";
+      // An old junction (an earlier version made one): remove the LINK, never
+      // what it points at (MSVC's std::filesystem knows junctions as their own
+      // file type; removing one removes only the link).
+      const fs::file_type type = fs::symlink_status(link, ec).type();
+      if (type == fs::file_type::symlink || type == fs::file_type::junction) {
+        fs::remove(link, ec);
+      } else if (fs::exists(to, ec) && fs::file_size(to, ec) != fs::file_size(from, ec)) {
+        fs::remove(to, ec);  // another disc's xex: copy again
+      }
+      ec.clear();
+      fs::create_directories(link, ec);
+      if (!fs::exists(to, ec)) {
+        fs::copy_file(from, to, fs::copy_options::overwrite_existing, ec);
+      }
+      if (ec || !fs::exists(to)) {
+        *message = "couldn't copy " + from.string() + " to " + to.string() + ": " + ec.message();
+        return false;
+      }
+      fs::last_write_time(to, fs::last_write_time(from, ec), ec);  // same date: no needless recompile
+      return true;
+    };
+#else
     bridge.title = trs("Linking source/game to the disc's files");
     bridge.function = [link, target](std::string* message) {
       std::error_code ec;
@@ -1091,24 +1264,14 @@ std::vector<Command> Setup::GameJob() {
         return true;  // already there
       }
       fs::remove(link, ec);
-#if defined(_WIN32)
-      // A directory JUNCTION (needs no admin rights, unlike a symbolic link).
-      bool ok = false;
-      const std::string out = platform::Capture(
-          {"cmd", "/d", "/c", "mklink", "/J", link.string(), target.string()}, &ok);
-      if (!ok) {
-        *message = "couldn't link " + link.string() + ": " + out;
-        return false;
-      }
-#else
       fs::create_directory_symlink(target, link, ec);
       if (ec) {
         *message = "couldn't link " + link.string() + ": " + ec.message();
         return false;
       }
-#endif
       return true;
     };
+#endif
     commands.push_back(std::move(bridge));
   }
   // Always configured (seconds), naming THIS folder's SDK explicitly and
@@ -1142,9 +1305,10 @@ std::vector<Command> Setup::GameJob() {
     // fresh folder, then swapped in, so a failed copy never leaves half a game.
     const fs::path from = folders_.BuiltExe().parent_path();
     const fs::path to = folders_.root / "program";
+    const std::string installed_name = folders::InstalledExeName();
     Command install;
     install.title = trs("Copying the game into program/");
-    install.function = [from, to](std::string* message) {
+    install.function = [from, to, installed_name](std::string* message) {
       std::error_code ec;
       const fs::path fresh = to.string() + ".new";
       fs::remove_all(fresh, ec);
@@ -1155,9 +1319,13 @@ std::vector<Command> Setup::GameJob() {
         // The exe, the SDK's libraries (.so / .dll) and, on Windows, the debug
         // symbols (.pdb: crash reports name the functions, src/crash_report.h).
         const std::string ext = entry.path().extension().string();
-        if (name == platform::ExeName("crash_mom") || name.find(".so") != std::string::npos ||
-            ext == ".dll" || ext == ".pdb") {
-          fs::copy_file(entry.path(), fresh / name, fs::copy_options::overwrite_existing, ec);
+        // The exe goes in under its installed name (folders::InstalledExeName:
+        // "Crash Mind over Mutant.exe" on Windows); its .pdb keeps the build's
+        // name (the exe records that name for crash reports' function names).
+        const bool is_exe = name == platform::ExeName("crash_mom");
+        if (is_exe || name.find(".so") != std::string::npos || ext == ".dll" || ext == ".pdb") {
+          fs::copy_file(entry.path(), fresh / (is_exe ? installed_name : name),
+                        fs::copy_options::overwrite_existing, ec);
           ++files;
         }
         if (ec) break;
@@ -1183,6 +1351,37 @@ std::vector<Command> Setup::GameJob() {
       return true;
     };
     commands.push_back(std::move(install));
+
+    // THE ICON (2026-11-05): the game's own HUD portrait of Crash as a mask,
+    // taken from THIS player's disc (tools/make_icon.py: the port ships no
+    // game art) -> program/crash_mom.ico + .png. A missing picture never
+    // fails the setup (exit 1 = "not on this disc": the game just has no icon).
+    Command icon;
+    icon.title = trs("Making the game's icon from your disc");
+    icon.argv = {PythonProgram(), (folders_.source / "tools" / "make_icon.py").string(),
+                 (folders_.disc / "default.rcf").string(), to.string()};
+    icon.work_folder = folders_.source;
+    icon.also_ok = {1};
+    commands.push_back(std::move(icon));
+    // Windows: the icon INTO the exe (Explorer, Start menu, Apps list, and the
+    // game window's taskbar button: SDL uses the exe's first icon group).
+    if (platform::ExeName("x") != "x") {
+      Command embed;
+      embed.title = trs("Putting the icon on the game");
+      const fs::path exe = to / installed_name;
+      embed.function = [exe, to](std::string* message) {
+        std::error_code ec;
+        if (!fs::is_regular_file(to / "crash_mom.ico", ec)) {
+          *message = "no icon made (the game has the plain one)";
+          return true;
+        }
+        std::string error;
+        *message = platform::EmbedIcon(exe, to / "crash_mom.ico", &error) ? "icon added to " + exe.filename().string()
+                                                                         : error + " (the game has the plain icon)";
+        return true;  // never fails the setup
+      };
+      commands.push_back(std::move(embed));
+    }
   }
   return commands;
 }
@@ -1512,6 +1711,139 @@ void Setup::Tick(bool game_running) {
     runner_.Forget();
     SetUpEverything(s, pick);
   }
+}
+
+// --- the installer's API (setup.h) -------------------------------------------
+
+Status Setup::CurrentStatus() {
+  std::lock_guard lock(mutex_);
+  return status_;
+}
+
+bool Setup::StartSetUp(const fs::path& iso, std::string* error) {
+  if (runner_.Running() || checking_) {
+    *error = trs("Still busy: wait a moment.");
+    return false;
+  }
+  Status s = CurrentStatus();
+  if (!s.done) {
+    *error = trs("Still checking: wait a moment.");
+    return false;
+  }
+  {
+    std::lock_guard lock(mutex_);
+    iso_ = iso;
+  }
+  runner_.Forget();
+  message_.clear();
+  SetUpEverything(s, iso);
+  if (!message_.empty() && !runner_.Running()) {
+    *error = message_;
+    return false;
+  }
+  return true;
+}
+
+// winget's answers that mean "fine" (winget's own error list,
+// AppInstallerErrors.h): no newer version to install / already installed /
+// installed, a restart finishes it. 3010 = an installer's "done, restart
+// to finish" (Visual Studio's, through PowerShell).
+static const std::vector<int> kWingetFine = {int(0x8A15002Bu), int(0x8A150061u), int(0x8A150109u),
+                                             3010};
+
+std::vector<Command> Setup::ToolsJob(const Status& status) {
+  std::vector<Command> commands;
+  for (const Tool& tool : status.tools) {
+    if (tool.found) {
+      continue;
+    }
+    if (!tool.install_argv.empty()) {
+      Command command{trf(trs("Adding {0} (Windows asks for permission)"), {tool.label}),
+                      tool.install_argv};
+      command.also_ok = kWingetFine;
+      commands.push_back(std::move(command));
+      continue;
+    }
+    if (tool.winget.empty()) {
+      continue;  // the graphics driver's Vulkan: nothing we can install
+    }
+    Command command;
+    command.title = trf(trs("Installing {0} (winget)"), {tool.package});
+    command.argv = {"winget", "install", "--id", tool.winget, "--exact", "--source", "winget",
+                    "--accept-package-agreements", "--accept-source-agreements",
+                    "--disable-interactivity"};
+    if (!tool.winget_override.empty()) {
+      command.argv.insert(command.argv.end(), {"--override", tool.winget_override});
+    }
+    command.also_ok = kWingetFine;
+    commands.push_back(std::move(command));
+  }
+  return commands;
+}
+
+Status Setup::CheckToolsOnly() {
+  Status s;
+  CheckTools(&s);
+  const bool ok = std::all_of(s.tools.begin(), s.tools.end(), [](const Tool& t) { return t.found; });
+  s.tools_state = ok ? StepState::kDone : StepState::kMissing;
+  s.done = true;
+  return s;
+}
+
+bool Setup::StartToolsInstall(std::string* error) {
+  if (runner_.Running() || checking_) {
+    *error = trs("Still busy: wait a moment.");
+    return false;
+  }
+#if defined(_WIN32)
+  if (platform::FindProgram("winget").empty()) {
+    *error = trs("winget, Windows' own app installer, isn't there. Install \"App Installer\" from "
+                 "the Microsoft Store, then try again.");
+    return false;
+  }
+#endif
+  std::vector<Command> commands = ToolsJob(CurrentStatus());
+  if (commands.empty()) {
+    *error = trs("Nothing here can be installed automatically.");
+    return false;
+  }
+  runner_.Forget();
+  message_.clear();
+  follow_ = true;
+  // The tools' own environment (not Visual Studio's: it may not exist yet);
+  // the checks afterwards read PATH again (platform::RefreshEnvironment).
+  runner_.Start(trs("Installing the build tools"), std::move(commands),
+                folders_.user / "logs" / ("tools-" + Stamp() + ".log"),
+                [this](bool) { Check(); });
+  return true;
+}
+
+const task_runner::Snapshot& Setup::JobSnapshot() {
+  runner_.Copy(job_);
+  return job_;
+}
+
+void Setup::CancelJob() {
+  continue_setup_ = false;
+  runner_.Cancel();
+}
+
+bool Setup::StartUpdate(const update::Release& release, std::string* error) {
+  if (!updater_ || runner_.Running() || checking_) {
+    *error = trs("Still busy: wait a moment.");
+    return false;
+  }
+  pending_ = release;
+  runner_.Forget();
+  message_.clear();
+  runner_.Start(trf(trs("Update to {0}"), {release.version}), updater_->Job(release, launcher_),
+                folders_.user / "logs" / ("update-" + Stamp() + ".log"), [this](bool success) {
+                  if (success) {
+                    update_applied_ = true;
+                  }
+                  Check();
+                });
+  return true;
 }
 
 bool Setup::GameNeedsBuild() {

@@ -50,6 +50,9 @@ struct Command {
   // commands, e.g. counting the disc's files). Returns false + message on
   // failure. When set, argv is ignored.
   std::function<bool(std::string* message)> function;
+  // Optional: exit codes that count as success too (winget answers
+  // "already installed" with 0x8A15002B instead of 0).
+  std::vector<int> also_ok;
 };
 
 enum class State { kIdle, kRunning, kDone, kFailed, kCancelled };

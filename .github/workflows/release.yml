@@ -66,18 +66,21 @@ jobs:
         with:
           arch: x64
 
-      - name: Build the launcher
+      # Windows gets the INSTALLER (launcher/installer.cpp): it installs,
+      # updates and uninstalls the game; the game starts from its own
+      # Start menu entry.
+      - name: Build the installer
         shell: cmd
         run: |
           clang --version
           cmake -S launcher -B out/build/launcher-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ || exit /b 1
-          cmake --build out/build/launcher-release || exit /b 1
+          cmake --build out/build/launcher-release --target mind_over_recomp || exit /b 1
 
-      - name: Keep the launcher for the release job
+      - name: Keep the installer for the release job
         uses: actions/upload-artifact@v4
         with:
           name: windows-launcher
-          path: out/build/launcher-release/crash_mom_launcher.exe
+          path: out/build/launcher-release/mind_over_recomp.exe
 
   release:
     needs: windows-launcher
@@ -119,8 +122,8 @@ jobs:
           name: windows-launcher
           path: ${{ runner.temp }}/windows-launcher
 
-      - name: Make the Windows release (same source, that launcher)
-        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/crash_mom_launcher.exe"
+      - name: Make the Windows release (same source, that installer)
+        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/mind_over_recomp.exe"
 
       - name: The launcher's needs (for the log)
         run: |

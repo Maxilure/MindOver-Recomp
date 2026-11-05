@@ -260,12 +260,11 @@ bool Updater::Latest(Release* out, bool* available, std::string* error) {
   return true;
 }
 
-std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
-  const fs::path root = folders_.root;
-  const fs::path work = root / ".update";
+// Download, check and unpack `release` into <work>/new (Job and
+// FreshInstallJob share these steps).
+static void AddDownload(const Release& release, const fs::path& root, const fs::path& work,
+                 std::vector<Command>* commands) {
   const fs::path archive = work / release.archive;
-  std::vector<Command> commands;
-
   Command prepare;
   prepare.title = trs("Preparing");
   prepare.function = [work](std::string* message) {
@@ -275,11 +274,11 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     *message = ec ? "couldn't make " + work.string() + ": " + ec.message() : "";
     return !ec;
   };
-  commands.push_back(std::move(prepare));
+  commands->push_back(std::move(prepare));
 
-  commands.push_back({"Downloading " + release.version,
-                      {"curl", "-fL", "--retry", "2", "-o", archive.string(), release.archive_url},
-                      root});
+  commands->push_back({"Downloading " + release.version,
+                       {"curl", "-fL", "--retry", "2", "-o", archive.string(), release.archive_url},
+                       root});
 
   Command verify;
   verify.title = trs("Checking the download");
@@ -292,24 +291,62 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     *message = "SHA-256 matches.";
     return true;
   };
-  commands.push_back(std::move(verify));
+  commands->push_back(std::move(verify));
 
   // tar unpacks both formats: .tar.gz (Linux) and .zip (Windows' own tar.exe
   // is bsdtar, which reads zip files too).
-  commands.push_back({"Unpacking", {"tar", "-xf", archive.string(), "-C", (work / "new").string()},
-                      root});
+  commands->push_back({"Unpacking", {"tar", "-xf", archive.string(), "-C", (work / "new").string()},
+                       root});
+}
+
+// The unpacked release's top folder (whatever it's called), or "".
+static fs::path UnpackedRelease(const fs::path& work) {
+  std::error_code ec;
+  for (const auto& entry : fs::directory_iterator(work / "new", ec)) {
+    if (entry.is_directory(ec) && fs::exists(entry.path() / "source" / "RELEASE.toml", ec)) {
+      return entry.path();
+    }
+  }
+  return {};
+}
+
+std::vector<Command> FreshInstallJob(const Release& release, const fs::path& root) {
+  const fs::path work = root / ".install";
+  std::vector<Command> commands;
+  AddDownload(release, root, work, &commands);
+  Command place;
+  place.title = trs("Putting the port's files in place");
+  place.function = [root, work](std::string* message) {
+    const fs::path fresh = UnpackedRelease(work);
+    if (fresh.empty()) {
+      *message = "The download isn't a release of this port (no source/RELEASE.toml).";
+      return false;
+    }
+    std::error_code ec;
+    fs::rename(fresh / "source", root / "source", ec);
+    if (ec) {
+      *message = "couldn't move source/ into " + root.string() + ": " + ec.message();
+      return false;
+    }
+    fs::remove_all(work, ec);
+    *message = "source/ in place.";
+    return true;
+  };
+  commands.push_back(std::move(place));
+  return commands;
+}
+
+std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
+  const fs::path root = folders_.root;
+  const fs::path work = root / ".update";
+  std::vector<Command> commands;
+  AddDownload(release, root, work, &commands);
 
   Command swap;
   swap.title = trs("Swapping in the new version");
   swap.function = [root, work, launcher](std::string* message) {
-    // The unpacked release's top folder (whatever it's called).
-    fs::path fresh;
+    const fs::path fresh = UnpackedRelease(work);
     std::error_code ec;
-    for (const auto& entry : fs::directory_iterator(work / "new", ec)) {
-      if (entry.is_directory(ec) && fs::exists(entry.path() / "source" / "RELEASE.toml", ec)) {
-        fresh = entry.path();
-      }
-    }
     if (fresh.empty()) {
       *message = "The download isn't a release of this port (no source/RELEASE.toml).";
       return false;

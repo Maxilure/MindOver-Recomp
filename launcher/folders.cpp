@@ -31,10 +31,11 @@ constexpr const char* kBuildPreset = "linux-amd64-relwithdebinfo";
 bool Fill(const fs::path& root, Folders& out) {
   std::error_code ec;
   const std::string exe = platform::ExeName("crash_mom");
+  const std::string installed = InstalledExeName();
   if (fs::is_regular_file(root / "source" / "crash_mom_manifest.toml", ec)) {
     // A release: built in source/, played from program/ (Setup copies it).
     out.source = root / "source";
-    out.exe = root / "program" / exe;
+    out.exe = root / "program" / installed;
     out.from_source = true;
     out.release = true;
   } else if (fs::is_regular_file(root / "crash_mom_manifest.toml", ec)) {
@@ -44,9 +45,11 @@ bool Fill(const fs::path& root, Folders& out) {
     out.exe = root / "out" / "build" / kBuildPreset / exe;
     out.from_source = true;
     out.release = false;
-  } else if (fs::is_regular_file(root / "program" / exe, ec)) {
+  } else if (fs::is_regular_file(root / "program" / installed, ec) ||
+             fs::is_regular_file(root / "program" / exe, ec)) {
     out.source.clear();
-    out.exe = root / "program" / exe;
+    out.exe = root / "program" /
+              (fs::is_regular_file(root / "program" / installed, ec) ? installed : exe);
     out.from_source = false;
     out.release = false;
   } else {
@@ -59,6 +62,14 @@ bool Fill(const fs::path& root, Folders& out) {
 }
 
 }  // namespace
+
+std::string InstalledExeName() {
+#if defined(_WIN32)
+  return "Crash Mind over Mutant.exe";
+#else
+  return "crash_mom";
+#endif
+}
 
 fs::path Folders::BuiltExe() const {
   return source.empty() ? fs::path()

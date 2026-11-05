@@ -73,6 +73,14 @@ struct Tool {
   bool found = false;
   std::string detail;      // "22.1.8" / "not found" / "too old: 18.1"
   std::string package;     // the package that provides it on this distro
+  // WINDOWS: how the installer gets it (Setup::ToolsJob): a winget package id
+  // ("LLVM.LLVM") plus optional installer arguments (winget --override), or a
+  // whole command of its own (Visual Studio's C++ parts added to an existing
+  // Visual Studio through its own installer). Empty = can't be installed for
+  // the player (the graphics driver's Vulkan loader).
+  std::string winget;
+  std::string winget_override;
+  std::vector<std::string> install_argv;
 };
 
 // What the checks found (copied as a whole between threads).
@@ -126,6 +134,34 @@ class Setup {
   // A job from the command line (--setup_run=<step>, for tests): runs it
   // without a window, printing its output; returns the exit code.
   int RunHeadless(const std::string& step, const std::filesystem::path& iso);
+
+  // --- for the Windows installer (installer.cpp), which draws its own pages
+  // instead of Draw() ----------------------------------------------------------
+  Status CurrentStatus();                      // the latest checks (done = false: none yet)
+  bool IsChecking() const { return checking_; }
+  void Recheck() { Check(); }
+  // "Set up everything" with this disc image, carried on by Tick() until
+  // nothing is left or a step fails. False + why when it can't start.
+  bool StartSetUp(const std::filesystem::path& iso, std::string* error);
+  bool SettingUp() const { return continue_setup_; }
+  // Installs every missing build tool it can (ToolsJob), then checks again.
+  bool StartToolsInstall(std::string* error);
+  // The commands of that: winget per missing tool (Tool::winget), or the
+  // tool's own install command (Tool::install_argv). Empty on Linux.
+  static std::vector<task_runner::Command> ToolsJob(const Status& status);
+  // Step 1 alone (no game folder needed: the installer's first page). Slow
+  // (a few tool calls): run it off the UI thread.
+  static Status CheckToolsOnly();
+  // The running / last job, refreshed.
+  const task_runner::Snapshot& JobSnapshot();
+  void CancelJob();
+  void ForgetJob() { runner_.Forget(); }
+  // Updates (release layout only; null otherwise).
+  update::Updater* updater() { return updater_.get(); }
+  bool StartUpdate(const update::Release& release, std::string* error);
+  bool UpdateApplied() const { return update_applied_; }
+  const std::filesystem::path& launcher() const { return launcher_; }
+  const std::string& message() const { return message_; }
 
  private:
   void Check();                             // starts the checks (thread)

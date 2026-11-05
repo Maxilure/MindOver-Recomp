@@ -41,6 +41,16 @@ void Init(const std::filesystem::path& user_folder, const std::filesystem::path&
 // The text_language in use ("de"; empty = English).
 const std::string& Code();
 
+// THE WINDOWS INSTALLER (installer.cpp) runs before any .po file is on the
+// PC, so its translations come BUILT IN (CMake embeds languages/pt_BR.po:
+// most of the game's fans speak Portuguese). AddBuiltIn registers one
+// such file's text under its code; SetLanguage switches to a code ("" =
+// English) at any time (the installer's language picker). Texts of an
+// earlier language stay valid (they're kept), so a switch between frames is
+// safe. Built-in files win over files on disk for the installer.
+void AddBuiltIn(const std::string& code, const char* po_text);
+void SetLanguage(const std::string& code);
+
 }  // namespace texts
 
 // The English text in the launcher's language; valid for the whole run.

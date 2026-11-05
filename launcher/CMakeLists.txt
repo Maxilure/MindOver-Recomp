@@ -74,6 +74,7 @@ target_link_libraries(launcher_imgui PUBLIC SDL3::SDL3-static)
 # --- the launcher ------------------------------------------------------------
 add_executable(crash_mom_launcher WIN32   # WIN32: a window, no console (Windows)
     main.cpp          # the window and the Play page
+    ui_look.cpp       # colours, fonts, style (shared with the installer)
     platform_posix.cpp  # Linux: processes, places, facts (platform.h)
     platform_win.cpp    # Windows: the same
     sha256.cpp        # SHA-256 of a download (updates), no outside tool needed
@@ -96,4 +97,40 @@ target_link_libraries(crash_mom_launcher PRIVATE launcher_imgui)
 if(WIN32)
     # ole32 / shell32 / uuid: Start menu shortcuts (desktop_entry.cpp).
     target_link_libraries(crash_mom_launcher PRIVATE ole32 shell32 uuid)
+endif()
+
+# --- the Windows installer: "Mind over Recomp.exe" -----------------------------
+# Installs, updates and uninstalls the game (installer.cpp). It reuses the
+# launcher's building blocks (setup, update, the task runner) but none of its
+# pages. Windows is its target; it also compiles on Linux (install.cpp has
+# stubs there) only so its window can be looked at while working on it.
+add_executable(mind_over_recomp WIN32
+    installer.cpp     # the window: install / manage / uninstall, + headless switches
+    install.cpp       # Windows: the Apps list, shortcuts, removing an install
+    ui_look.cpp
+    platform_posix.cpp
+    platform_win.cpp
+    sha256.cpp
+    folders.cpp
+    task_runner.cpp
+    setup.cpp
+    update.cpp
+    texts.cpp
+)
+target_include_directories(mind_over_recomp SYSTEM PRIVATE ${SDK_THIRDPARTY}/tomlplusplus/include)
+# Brazilian Portuguese built in (texts.h, AddBuiltIn): the installer runs
+# before any of the port's files are on the PC. The .po becomes a byte array
+# at configure time (re-done when the .po changes).
+set(PT_BR_PO ${CMAKE_CURRENT_SOURCE_DIR}/../languages/pt_BR.po)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${PT_BR_PO})
+file(READ ${PT_BR_PO} PT_BR_HEX HEX)
+string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," PT_BR_BYTES "${PT_BR_HEX}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/builtin/pt_BR_po.inc
+     "// Generated from languages/pt_BR.po by launcher/CMakeLists.txt\nstatic const unsigned char kPtBrPo[] = {${PT_BR_BYTES}0};\n")
+target_include_directories(mind_over_recomp PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/builtin)
+target_link_libraries(mind_over_recomp PRIVATE launcher_imgui)
+if(WIN32)
+    # ole32 / shell32 / uuid: shortcuts (COM's IShellLink), known folders;
+    # advapi32: the registry (the Apps list, PATH).
+    target_link_libraries(mind_over_recomp PRIVATE ole32 shell32 uuid advapi32)
 endif()

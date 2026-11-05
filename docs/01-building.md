@@ -368,10 +368,35 @@ out/release/<version>/
       READ ME FIRST.txt           tools/release/READ_ME_FIRST.txt
       source/                     the repo's files, no .git, no SDK;
         RELEASE.toml              the version + the exact ReXGlue SDK (tag + commit)
+  MindOverRecomp-<version>-windows-x86_64.zip    the same, with the INSTALLER:
+    Mind over Recomp/
+      Mind over Recomp.exe        the installer (launcher/ target mind_over_recomp)
+      READ ME FIRST.txt           tools/release/READ_ME_FIRST_windows.txt
+      source/                     as above
   release.toml                    the update feed: version, archive, SHA-256
 ```
 
-After Setup the folder also has `game/` (the disc's files), `program/` (the
+**Windows: the installer** ([`launcher/installer.cpp`](../launcher/installer.cpp),
+[`launcher/install.h`](../launcher/install.h)). It installs, updates and
+uninstalls, nothing else (the game's settings are in its own Options).
+Install: the player picks the `.iso` and a parent folder; the installer
+makes `<parent>\Crash Mind over Mutant\`, installs the missing build tools
+through winget, copies `source/` and itself in, runs the same setup steps
+as the Linux launcher (disc, SDK, game), names the built game
+`program\Crash Mind over Mutant.exe`, and registers an *Installed apps*
+entry (`HKCU\...\Uninstall\MindOverRecomp`) plus Start menu shortcuts.
+Started from inside an installed folder it manages it (update, build again,
+uninstall); `--uninstall` runs from a copy in `%TEMP%` and can keep `user\`.
+Headless runs for tests: `--check_tools`, `--install_tools`,
+`--install_to=<parent> --iso=<file>`, `--update`, `--uninstall --quiet`.
+
+**The icon** is made during the setup from the player's disc
+([`tools/make_icon.py`](../tools/make_icon.py): the game's own HUD portrait
+of Crash as a mask, `MugshotCrashMask.tga`) into `program/crash_mom.ico` +
+`.png`; on Windows it's written into the exe as its icon resource. No game
+art is in the repository or the release.
+
+After Setup the folder (Linux) also has `game/` (the disc's files), `program/` (the
 built game, copied there from `source/out/`) and `user/` (saves, settings).
 In a release, Setup's step 2 downloads the SDK version named in
 `RELEASE.toml` (a shallow clone with its libraries, ~550 MB) instead of the
@@ -403,8 +428,8 @@ have to be built on an older system.
 
 ## Building on Windows
 
-The launcher's Setup does this on Windows too (and lists each missing tool
-with its `winget` name). By hand, the differences from the Linux steps:
+The installer does this on Windows (and installs each missing tool with
+winget). By hand, the differences from the Linux steps:
 
 * **Tools**: LLVM (clang 20+), CMake, Ninja, Python 3, Git, the Vulkan SDK
   (for `glslc`), and Visual Studio 2022 (or its Build Tools) with the
@@ -424,8 +449,10 @@ with its `winget` name). By hand, the differences from the Linux steps:
   -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF`: the SDK's install registers
   itself in CMake's per-user package list, and without these a build can
   pick up another folder's SDK.
-* `game/` must be on an NTFS drive (Setup links `source/game` to it with
-  a directory junction in releases).
+* `game/` must be on an NTFS drive. In releases the build needs the disc's
+  `default.xex` inside `source/game`: Windows gets a COPY of that one file
+  (a directory junction there made Ninja stop with "untrusted mount point",
+  Windows' redirection guard), Linux a symbolic link.
 
 ## Developer tools
 

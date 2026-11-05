@@ -10,6 +10,7 @@
 #include "texts.h"
 
 #include <fstream>
+#include <sstream>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -60,10 +61,13 @@ void AddQuoted(const std::string& line, std::string* out) {
   }
 }
 
-// Adds a .po file's translations (context-less entries) to `out`.
+// Adds a .po file's translations to `out` (from a file, or built-in text).
+bool ReadPoStream(std::istream& in, std::unordered_map<std::string, std::string>* out);
 bool ReadPo(const std::filesystem::path& path, std::unordered_map<std::string, std::string>* out) {
   std::ifstream in(path, std::ios::binary);
-  if (!in) return false;
+  return in && ReadPoStream(in, out);
+}
+bool ReadPoStream(std::istream& in, std::unordered_map<std::string, std::string>* out) {
   std::string ctx, id, str, *field = nullptr;
   bool seen_str = false;
   auto finish = [&] {
@@ -94,23 +98,36 @@ bool ReadPo(const std::filesystem::path& path, std::unordered_map<std::string, s
   return true;
 }
 
+// Built-in files (AddBuiltIn) by code.
+std::unordered_map<std::string, const char*> g_built_in;
+
+// The loaded texts per language; a language once loaded stays (SetLanguage:
+// pointers trs() handed out stay valid).
+std::mutex g_mutex;
+std::unordered_map<std::string, std::unordered_map<std::string, std::string>> g_loaded;
+
 const std::unordered_map<std::string, std::string>& Strings() {
-  static std::unordered_map<std::string, std::string> strings;
-  static std::once_flag once;
-  std::call_once(once, [] {
-    if (!g_init || g_code.empty()) return;
-    // A regional file reads its base language's first ("fr_CA" over "fr").
-    std::vector<std::string> codes;
-    if (const size_t us = g_code.find('_'); us != std::string::npos && g_code != "pt_BR") {
-      codes.push_back(g_code.substr(0, us));
+  static const std::unordered_map<std::string, std::string> kNone;
+  std::lock_guard lock(g_mutex);
+  if (!g_init || g_code.empty()) return kNone;
+  if (auto it = g_loaded.find(g_code); it != g_loaded.end()) return it->second;
+  auto& strings = g_loaded[g_code];
+  if (auto built = g_built_in.find(g_code); built != g_built_in.end()) {
+    std::istringstream in(built->second);
+    ReadPoStream(in, &strings);
+    return strings;
+  }
+  // A regional file reads its base language's first ("fr_CA" over "fr").
+  std::vector<std::string> codes;
+  if (const size_t us = g_code.find('_'); us != std::string::npos && g_code != "pt_BR") {
+    codes.push_back(g_code.substr(0, us));
+  }
+  codes.push_back(g_code);
+  for (const std::string& code : codes) {
+    for (const auto& folder : {g_user / "languages", g_game / "languages", g_source / "languages"}) {
+      if (!folder.empty() && ReadPo(folder / (code + ".po"), &strings)) break;
     }
-    codes.push_back(g_code);
-    for (const std::string& code : codes) {
-      for (const auto& folder : {g_user / "languages", g_game / "languages", g_source / "languages"}) {
-        if (!folder.empty() && ReadPo(folder / (code + ".po"), &strings)) break;
-      }
-    }
-  });
+  }
   return strings;
 }
 
@@ -126,6 +143,17 @@ void Init(const std::filesystem::path& user_folder, const std::filesystem::path&
 }
 
 const std::string& Code() { return g_code; }
+
+void AddBuiltIn(const std::string& code, const char* po_text) {
+  std::lock_guard lock(g_mutex);
+  g_built_in[code] = po_text;
+}
+
+void SetLanguage(const std::string& code) {
+  std::lock_guard lock(g_mutex);
+  g_code = code;
+  g_init = true;
+}
 
 }  // namespace texts
 
