@@ -426,15 +426,15 @@ Row WindowModeRow() {
   return r;
 }
 
-// A monitor's name as the game font can write it: plain letters only, short
-// enough for the value box.
+// A monitor's name as the game font can write it: plain letters only (a long
+// one scrolls in its row: options_menu.cpp FitRowTexts).
 std::u16string MonitorName(const std::string& name) {
   std::u16string out;
   for (const char c : name) {
     if (c >= 0x20 && c < 0x7F) out += char16_t(c);
   }
   while (!out.empty() && out.back() == u' ') out.pop_back();
-  if (out.size() > 16) out = out.substr(0, 15) + u".";
+  // (No cut at 16 letters any more: a long value scrolls in its row, FitRowTexts.)
   return out.empty() ? std::u16string(tr(u"Monitor")) : out;
 }
 
@@ -651,7 +651,8 @@ Row VolumeRow(std::u16string label, Volume v, std::u16string text, bool music) {
 // OUTPUT DEVICE (audio/sound_out.h): "System Default" (follows the system's
 // own choice when it changes) or one device by name, read again each time the
 // row is shown; a device picked earlier that's unplugged keeps its place.
-// The value box gets a short name; the card under the rows the full one.
+// The value box gets a short name (filler words dropped; a long one scrolls);
+// the card beside the rows the full one.
 std::u16string DeviceName(std::string name) {
   // Filler that makes names too long for the box ("HD Audio Controller").
   for (const char* filler : {"High Definition Audio Controller ", "HD Audio Controller ",
@@ -665,7 +666,8 @@ std::u16string DeviceName(std::string name) {
     if (c >= 0x20 && c < 0x7F) out += char16_t(c);   // the game font: plain letters
   }
   while (!out.empty() && out.back() == u' ') out.pop_back();
-  if (out.size() > 16) out = out.substr(0, 15) + u".";   // as Monitor: the box's room
+  // (Was cut at 16 letters + "." for the value box. Since 2026-11-05 a long
+  // value scrolls in its row instead: options_menu.cpp FitRowTexts.)
   return out.empty() ? std::u16string(tr(u"Device")) : out;
 }
 

@@ -726,6 +726,33 @@ void CentrePulse(uint8_t* base, uint32_t text, const std::u16string& s) {
   Write16(base, text + kElementSize, uint16_t(std::lround(w)));
 }
 
+// LONG NAMES AND VALUES SCROLL (2026-11-05): a row is one line from the
+// name's left edge to the value's right edge (kRowWidth units). Some values
+// are far longer than that: the sound output devices' names ("Family 17h/19h
+// HD Audio Controller Analog Stereo") ran over the row's name and out of the
+// glass. The two texts share the line, a gap between them:
+//   * fits together            -> both drawn as the game draws them
+//   * one long, the other short -> the short one keeps its width, the long one
+//     gets the rest and scrolls in it (ui/marquee.h: the same scroller as the
+//     Achievements cards)
+//   * both long                 -> the name keeps kNameShare of the line, the
+//     value the rest; each scrolls in its part
+// Widths in page units (the page's 0.85x scale doesn't matter: the scroller
+// only uses proportions).
+void FitRowTexts(const std::u16string& name, const std::u16string& value, uint32_t name_text,
+                 uint32_t value_text) {
+  constexpr float kRowWidth = float(options_page::kRowValueRight - (100 + options_page::kGlassShift));
+  constexpr float kGap = 30.0f;  // (20 nearly touched: the selected value grows when it pulses)
+  constexpr float kNameShare = 0.45f;
+  const float line = kRowWidth - (value.empty() ? 0.0f : kGap);
+  const float name_w = TextWidth(name, 1.0f);
+  const float value_w = value.empty() ? 0.0f : TextWidth(value, 1.0f);
+  const float name_room = std::max(line - value_w, line * kNameShare);
+  const float value_room = line - std::min(name_w, name_room);
+  if (name_text) marquee::Fit(name_text, name_w, name_room);
+  if (value_text) marquee::Fit(value_text, value_w, std::max(1.0f, value_room));
+}
+
 // Row::unavailable's reason, empty = usable.
 std::u16string Unavailable(Env& env, const Row& row) {
   return row.unavailable ? row.unavailable(env) : std::u16string();
@@ -816,6 +843,10 @@ void Refresh(Env& env) {
       }
       scrooby::SetText(ctx, base, g.value[r], value);
       CentrePulse(base, g.value[r], value);
+      FitRowTexts(row->label, value, g.label[r], g.value[r]);
+    } else {
+      marquee::Stop(g.label[r]);
+      marquee::Stop(g.value[r]);
     }
   }
   // The list's markers: only for a tab longer than the screen; "row / rows"
