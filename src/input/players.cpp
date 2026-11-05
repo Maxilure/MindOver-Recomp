@@ -122,6 +122,8 @@ void PlayerAssignment::OnDevicesChanged(const std::vector<DeviceInfo>& devices) 
 
 void PlayerAssignment::UpdateDevices(const std::vector<DeviceInfo>& devices) {
   std::lock_guard<std::mutex> lock(mutex_);
+  std::vector<std::string> previous;  // who was connected before this change
+  for (const Known& d : devices_) previous.push_back(d.key);
   devices_.clear();
   std::map<std::string, int> seen_guids;  // for ":2" on a second identical pad
   for (const DeviceInfo& info : devices) {
@@ -136,6 +138,34 @@ void PlayerAssignment::UpdateDevices(const std::vector<DeviceInfo>& devices) {
       if (d.name.empty()) d.name = "Controller";
     }
     devices_.push_back(std::move(d));
+  }
+  // SAFETY NET, one controller per player (2026-11-05): two connected
+  // controllers on one player (a controls.toml from before the SetChoice
+  // rule, or a choice meeting the automatic "Nth connected = player N") ->
+  // the one connected before keeps it, the newcomer plays as nobody (in
+  // memory: a button press then joins it, which writes the file). The
+  // keyboard doesn't count (player 1 = the keyboard plus one controller).
+  for (size_t i = 0; i < devices_.size(); ++i) {
+    Known& d = devices_[i];
+    if (d.key.empty() || d.keyboard) continue;
+    const int player = PlayerOf(d);
+    if (player < 0) continue;
+    for (size_t j = 0; j < devices_.size(); ++j) {
+      const Known& e = devices_[j];
+      if (j == i || e.key.empty() || e.keyboard || PlayerOf(e) != player) continue;
+      // Who was here first: connected before this change (then the lower ordinal).
+      bool d_before = false, e_before = false;
+      for (const std::string& k : previous) {
+        d_before |= k == d.key;
+        e_before |= k == e.key;
+      }
+      const bool d_loses = (e_before && !d_before) || (e_before == d_before && j < i);
+      if (!d_loses) continue;
+      choices_[d.key] = kPlayerOff;
+      REXLOG_INFO("Players: {} and {} were both {}: {} keeps it, {} = nobody (press a button to join)",
+                  e.name, d.name, PlayerText(player), e.name, d.name);
+      break;
+    }
   }
   // The log says who plays as whom, every time a device comes or goes.
   for (const Known& d : devices_) {
@@ -242,6 +272,24 @@ std::vector<PlayerAssignment::Change> PlayerAssignment::SetChoice(const std::str
     for (const Known* d : displaced) {
       choices_[d->key] = old_player;
       changes.push_back({d->key, d->name, old_player});
+    }
+    // ONE CONTROLLER PER PLAYER, unplugged ones included (2026-11-05,
+    // playtest): a controller remembered for this player but not connected
+    // now kept that choice, so when it came back the player had TWO (the
+    // new one given the player meanwhile, and the old one). It plays as
+    // nobody now: back, a button press joins it like any new controller.
+    // (Not the keyboard: player 1 = the keyboard plus one controller.)
+    const bool moved_keyboard = key == "keyboard";
+    if (choice >= 0 && !moved_keyboard) {
+      for (auto& [other, other_choice] : choices_) {
+        if (other == key || other == "keyboard" || other_choice != choice) continue;
+        bool connected = false;
+        for (const Known& d : devices_) connected |= d.key == other;
+        if (connected) continue;
+        other_choice = kPlayerOff;
+        changes.push_back({other, other, kPlayerOff});
+        REXLOG_INFO("Players: {} (not connected) no longer = {}: {} took it", other, PlayerText(choice), name);
+      }
     }
     for (const Known& d : devices_) {
       for (const Change& c : changes) {

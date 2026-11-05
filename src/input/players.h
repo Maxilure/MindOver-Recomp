@@ -39,6 +39,12 @@
 //     also answers as player 1, so any device can start the game and use the
 //     main menu, which listens to player 1 only.
 //
+// ONE CONTROLLER PER PLAYER (2026-11-05): giving a player a controller
+// clears that player from controllers remembered but unplugged (they play as
+// nobody when back: a button press joins them); and if two connected
+// controllers still land on one player, the one connected first keeps it.
+// The keyboard doesn't count (player 1 = the keyboard plus one controller).
+//
 // Controllers are remembered by their SDL GUID (the model; it's the same
 // for two identical pads, so the 2nd one connected gets ":2"), keyboard and
 // mouse as "keyboard". A choice for a pad that isn't connected stays in the

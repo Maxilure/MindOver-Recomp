@@ -2510,3 +2510,34 @@ Not reached: the boss titans (Crunch, Cortex) and the Hero variants; a
 real controller unplugged.
 
 
+
+## 61. One controller per player, also across unplugging
+
+A controller's player choice is remembered in `controls.toml` even while it
+is unplugged, so it comes back as the same player. But when that player was
+given another controller meanwhile (the Players screen's "press a button to
+join" takes the first free player), the move only swapped with controllers
+that were connected: the unplugged one kept its choice, and once plugged back
+in the player had TWO controllers.
+
+`input/players.cpp` now:
+
+* **SetChoice:** giving a player a controller sets every controller
+  remembered for that player but not connected to "nobody", and reports it
+  with the other changes, so `controls.toml` is written too. Back, it plays as
+  nobody until a button press joins it to the first free player, like any new
+  controller.
+* **Safety net (every device change):** two connected controllers on one
+  player (a `controls.toml` written before this rule, or a choice meeting the
+  automatic "Nth controller = player N") -> the one that was connected before
+  keeps it (then: the lower connection order), the other plays as nobody (in
+  memory; its button press then joins it and writes the file).
+
+The keyboard doesn't count in either: player 1 is the keyboard plus one
+controller. Checked with fake controllers (`p<N>.unplug` / `p<N>.plug` remove
+them from the device list): controller 2 = player 2, unplugged, controller 3
+pressed a button = player 2 (controller 2 cleared in the file), controller 2
+plugged back = nobody, its press = player 3; a file with controllers 2 and 3
+both on player 2 = controller 2 keeps it, controller 3 nobody, joins as
+player 3, then an unplug / replug of controller 2 keeps everyone apart. 0
+errors.

@@ -89,7 +89,11 @@ void Save(const std::vector<PlayerAssignment::Change>& changes) {
     if (c.choice == kbm::kPlayerAuto) {
       b.players.erase(c.key);
     } else {
-      b.players[c.key] = kbm::PlayerChoice{c.choice, c.name};
+      // (An unplugged controller's change carries its key as the name: the
+      // file's own name for it is kept.)
+      const auto old = b.players.find(c.key);
+      const std::string name = c.name == c.key && old != b.players.end() ? old->second.name : c.name;
+      b.players[c.key] = kbm::PlayerChoice{c.choice, name};
     }
   }
   driver->SetBindings(b);

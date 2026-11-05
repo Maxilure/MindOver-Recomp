@@ -253,7 +253,10 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
           if (change.choice == kbm::kPlayerAuto) {
             edit_.players.erase(change.key);
           } else {
-            edit_.players[change.key] = kbm::PlayerChoice{change.choice, change.name};
+            // (An unplugged controller's change carries its key as the name: keep the file's.)
+            const auto old = edit_.players.find(change.key);
+            edit_.players[change.key] = kbm::PlayerChoice{
+                change.choice, change.name == change.key && old != edit_.players.end() ? old->second.name : change.name};
           }
           message += (message.empty() ? "" : " ") + change.name + ": " +
                      (change.key == dev.key ? text(option)
