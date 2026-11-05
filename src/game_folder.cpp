@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <string>
 #include <system_error>
@@ -140,6 +141,28 @@ void Configure(rex::PathConfig& paths) {
     std::exit(1);
   }
 
+  // The disc files: <game folder>/game, unless --game_data_root chose one.
+  // WHY: the launcher always passed the flag, but the installer's Start menu
+  // shortcut (and a double-click on the exe) start the game with NO
+  // arguments -> the SDK refused with "--game_data_root was not provided"
+  // (first Windows installer test, 2026-11-05). The installer and the setup
+  // both extract the disc into <game folder>/game, so that's the default.
+  if (paths.game_data_root.empty()) {
+    const fs::path disc = g_root / "game";
+    std::error_code ec;
+    if (!fs::is_regular_file(disc / "default.xex", ec)) {
+      const std::string message = fmt::format(
+          "Mind over Recomp can't find the game's disc files in:\n\n{}\n\n"
+          "Open Mind over Recomp (the installer) to set the game up again.",
+          disc.string());
+      std::fprintf(stderr, "[ERROR] %s\n", message.c_str());
+      SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Mind over Recomp", message.c_str(),
+                               nullptr);
+      std::exit(1);
+    }
+    paths.game_data_root = disc;
+  }
+
   // Saves: the SDK's user data folder, unless --user_data_root chose one
   // (test runs point it at a COPY of the saves on purpose).
   if (REXCVAR_GET(user_data_root).empty()) {
@@ -181,7 +204,30 @@ void Configure(rex::PathConfig& paths) {
 }
 
 void ConfigureLogging(rex::LogConfig& config) {
-  if (!g_user.empty()) config.log_dir = g_user / "logs";
+  if (g_user.empty()) return;
+  config.log_dir = g_user / "logs";
+  // THE SESSION LOG'S NAME (2026-11-05): the launcher always passed
+  // --log_file=user/logs/play-<date>_<time>.log (launcher/game_process.cpp).
+  // Started without it (the Windows installer's Start menu shortcut, a
+  // double-click), the SDK numbered the logs "crash_mom_006.log" instead: no
+  // date, and not what the docs and the bug form ask for. Now the game picks
+  // the launcher's name itself; a --log_file on the command line still wins
+  // (the SDK applies it right after this hook).
+  const std::time_t now = std::time(nullptr);
+  std::tm local{};
+#if defined(_WIN32)
+  localtime_s(&local, &now);
+#else
+  localtime_r(&now, &local);
+#endif
+  char name[64];
+  std::strftime(name, sizeof(name), "play-%Y-%m-%d_%H%M.log", &local);
+  std::error_code ec;
+  if (fs::exists(config.log_dir / name, ec)) {  // two starts in one minute
+    std::strftime(name, sizeof(name), "play-%Y-%m-%d_%H%M%S.log", &local);
+  }
+  fs::create_directories(config.log_dir, ec);
+  config.log_file = config.log_dir / name;
 }
 
 void LogWhatHappened() {

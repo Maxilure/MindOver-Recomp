@@ -10,6 +10,8 @@
 // Layout (the "game folder" is the folder the player installed into):
 //
 //   <game folder>/
+//     game/           the disc's files (the default --game_data_root: the
+//                     Start menu shortcut starts the exe with no arguments)
 //     program/        crash_mom(.exe), libraries, shaders, assets/
 //                     (replaced by every update)
 //     user/           THE PLAYER'S FILES: updates never touch this folder
@@ -35,7 +37,8 @@
 //      wiped build folder (out/) never takes the saves with it);
 //   3. anything else                            -> the exe's own folder.
 //
-// Command-line flags still win (tests use them on purpose): --user_data_root
+// Command-line flags still win (tests use them on purpose): --game_data_root
+// (disc files), --user_data_root
 // (saves), --cache_root, --controls_file, --photo_dir, --log_file.
 //
 // FIRST START (one time): when user/saves/ doesn't exist yet, the saves from
@@ -61,7 +64,8 @@ namespace game_folder {
 // program with a message box if the game folder can't be written to.
 void Configure(rex::PathConfig& paths);
 
-// Points the per-run log files (no --log_file given) into user/logs.
+// Points the per-run log files into user/logs, named play-<date>_<time>.log
+// like the launcher names them (a --log_file on the command line still wins).
 void ConfigureLogging(rex::LogConfig& config);
 
 // Logs the chosen folders and any first-start copies (after logging is up).
