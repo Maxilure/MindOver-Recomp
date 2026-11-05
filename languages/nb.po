@@ -64,7 +64,7 @@ msgstr "VISNING {0}"
 msgid "Achievement Unlocked"
 msgstr "Prestasjon låst opp"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2274 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestasjoner"
@@ -571,7 +571,7 @@ msgstr "Kart"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "I pausemenyen: avslutt samarbeid (en annen spiller blir igjen)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1310 src/options/options_menu.cpp:1324
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Back"
 msgstr "Tilbake"
@@ -1651,98 +1651,98 @@ msgstr ""
 "Håndkontrolleren til spiller {0} er koblet fra.\n"
 "Koble den til igjen, eller trykk på {1} så går spiller {0} ut av spillet."
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Normal"
 msgstr "Vanlig"
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Greeny"
 msgstr "Grønn"
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Bluey"
 msgstr "Blå"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Reddy"
 msgstr "Rød"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Snipe"
 msgstr "Snipa"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Ratcicle"
 msgstr "Rottetapp"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Magmadon"
 msgstr "Magmadon"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Skeleton"
 msgstr "Skjelett"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Spike"
 msgstr "Spiker'n"
 
 #. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: src/players/outfit_picker.cpp:517 src/players/outfit_picker.cpp:531
 #, fuzzy
 msgid "Coco"
 msgstr "Coco"
 
-#: src/players/outfit_picker.cpp:509
+#: src/players/outfit_picker.cpp:517
 #, fuzzy
 msgid "Old School"
 msgstr "Gammeldags"
 
-#: src/players/outfit_picker.cpp:520
+#: src/players/outfit_picker.cpp:528
 #, fuzzy
 msgid "Orange"
 msgstr "Oransje"
 
 #. the heroes' names, as the game writes them in this language.
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: src/players/outfit_picker.cpp:531 src/players/outfit_picker.cpp:553 src/players/outfits.cpp:855
 #, fuzzy
 msgid "Crash"
 msgstr "Crash"
 
-#: src/players/outfit_picker.cpp:1091
+#: src/players/outfit_picker.cpp:1104
 #, fuzzy
 msgid "Wear"
 msgstr "Ta på"
 
 #. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: src/players/outfit_picker.cpp:1371 src/players/outfit_picker.cpp:1479
 #, fuzzy
 msgid "Ready!"
 msgstr "Klar!"
 
 #. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: src/players/outfit_picker.cpp:1373 src/players/outfit_picker.cpp:1481
 #, fuzzy
 msgid "{0} Change"
 msgstr "{0} Endre"
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: src/players/outfit_picker.cpp:1412 src/players/outfit_picker.cpp:1507
 #, fuzzy
 msgid "Loading"
 msgstr "Laster inn"
 
 #. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: src/players/outfit_picker.cpp:1420 src/players/outfit_picker.cpp:1510
 #, fuzzy
 msgid "{0} Wear"
 msgstr "{0} Ta på"
@@ -1813,7 +1813,7 @@ msgid "Carbon"
 msgstr "Karbon"
 
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: src/players/outfits.cpp:855
 #, fuzzy
 msgctxt "outfit name"
 msgid "{0} {1}"
@@ -1824,122 +1824,122 @@ msgstr "{0}-{1}"
 msgid "Drop Out"
 msgstr "Avslutt samarbeid"
 
-#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
+#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
 #, fuzzy
 msgid "Press a Key"
 msgstr "Trykk på en tast"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:853
+#: src/options/options_menu.cpp:862
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye andre tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:863
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:871
+#: src/options/options_menu.cpp:880
 #, fuzzy
 msgid "Second Key"
 msgstr "Andre tast"
 
-#: src/options/options_menu.cpp:877
+#: src/options/options_menu.cpp:886
 #, fuzzy
 msgid "Remove Key"
 msgstr "Fjern tast"
 
-#: src/options/options_menu.cpp:1050
+#: src/options/options_menu.cpp:1059
 #, fuzzy
 msgid "Locked"
 msgstr "Låst"
 
-#: src/options/options_menu.cpp:1309
+#: src/options/options_menu.cpp:1318
 #, fuzzy
 msgid "Confirm"
 msgstr "Bekreft"
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 #, fuzzy
 msgid "Swap"
 msgstr "Bytt"
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 #, fuzzy
 msgid "Move Here"
 msgstr "Flytt hit"
 
-#: src/options/options_menu.cpp:1315 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1327
 #, fuzzy
 msgid "Buttons"
 msgstr "Knapper"
 
-#: src/options/options_menu.cpp:1321
+#: src/options/options_menu.cpp:1330
 #, fuzzy
 msgid "Move"
 msgstr "Flytt"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1331
 #, fuzzy
 msgid "Remove"
 msgstr "Fjern"
 
-#: src/options/options_menu.cpp:1445
+#: src/options/options_menu.cpp:1454
 #, fuzzy
 msgid "No room for this player"
 msgstr "Ikke plass til denne spilleren"
 
-#: src/options/options_menu.cpp:1449 src/options/options_menu.cpp:1457
+#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tastatur og mus"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Til spiller {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 #, fuzzy
 msgid "Pick a player"
 msgstr "Velg en spiller"
 
-#: src/options/options_menu.cpp:1459
+#: src/options/options_menu.cpp:1468
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Trykk på en knapp for å bli med"
 
-#: src/options/options_menu.cpp:1861
+#: src/options/options_menu.cpp:1870
 #, fuzzy
 msgid "Not changed."
 msgstr "Ikke endret."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1877
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} brukes av menyene ({1}): velg en annen tast."
 
-#: src/options/options_menu.cpp:1880
+#: src/options/options_menu.cpp:1889
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} var tasten for {1}: nå hører den til {2}."
 
-#: src/options/options_menu.cpp:1901
+#: src/options/options_menu.cpp:1910
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ingen tast å fjerne."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1909
+#: src/options/options_menu.cpp:1918
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} fjernet."
@@ -2907,26 +2907,20 @@ msgstr "Lyse taster i knappehintene, som {0}"
 msgid "Controller Icons"
 msgstr "Kontrollerikoner"
 
-#. {0}-{3} = the A, B, X and Y buttons' pictures in this style.
-#: src/options/options_settings.cpp:923
+#: src/options/options_settings.cpp:926
 #, fuzzy
-msgid "Now: {0} {1} {2} {3}"
-msgstr "Nå: {0} {1} {2} {3}"
+msgid "Matches player 1's controller."
+msgstr "Følger kontrolleren til spiller 1."
 
-#: src/options/options_settings.cpp:925
+#: src/options/options_settings.cpp:927
 #, fuzzy
-msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
-msgstr "Knappene på håndkontrolleren du spiller med: PlayStation, Switch eller Xbox. Alle andre håndkontrollere: spillets egne Xbox 360-knapper."
+msgid "The game's own buttons."
+msgstr "Spillets egne knapper."
 
 #: src/options/options_settings.cpp:928
 #, fuzzy
-msgid "The game's own Xbox 360 buttons, whatever controller you use."
-msgstr "Spillets egne Xbox 360-knapper, uansett hvilken håndkontroller du bruker."
-
-#: src/options/options_settings.cpp:929
-#, fuzzy
-msgid "These buttons in the prompts, whatever controller you use."
-msgstr "Disse knappene i hintene, uansett hvilken håndkontroller du bruker."
+msgid "Always these buttons."
+msgstr "Alltid disse knappene."
 
 #: src/options/options_settings.cpp:936
 #, fuzzy
@@ -5144,6 +5138,22 @@ msgstr "Sjekker nedlastingen"
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Setter den nye versjonen på plass"
+
+#, fuzzy
+#~ msgid "Now: {0} {1} {2} {3}"
+#~ msgstr "Nå: {0} {1} {2} {3}"
+
+#, fuzzy
+#~ msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
+#~ msgstr "Knappene på håndkontrolleren du spiller med: PlayStation, Switch eller Xbox. Alle andre håndkontrollere: spillets egne Xbox 360-knapper."
+
+#, fuzzy
+#~ msgid "The game's own Xbox 360 buttons, whatever controller you use."
+#~ msgstr "Spillets egne Xbox 360-knapper, uansett hvilken håndkontroller du bruker."
+
+#, fuzzy
+#~ msgid "These buttons in the prompts, whatever controller you use."
+#~ msgstr "Disse knappene i hintene, uansett hvilken håndkontroller du bruker."
 
 #, fuzzy
 #~ msgid "{0} {1} {2}"

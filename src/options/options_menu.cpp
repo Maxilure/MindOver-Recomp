@@ -430,10 +430,19 @@ float LineHeight(float scale) {
 // none is wider than `width` units at `scale` (measured letter by letter
 // with the game's font: wide letters like W and M take more room than a
 // count of letters would give them). A word wider than the line stays whole.
+// A '\n' in `text` is kept as a line break of its own (a row describe() wants
+// on a line by itself, e.g. Controller Icons' four button pictures).
 std::u16string Wrap(const std::u16string& text, float width, float scale, int* lines) {
-  std::u16string out, line;
   *lines = 0;
-  if (text.empty()) return out;
+  if (text.empty()) return {};
+  if (const size_t br = text.find(u'\n'); br != std::u16string::npos) {
+    int first = 0, rest = 0;
+    std::u16string out = Wrap(text.substr(0, br), width, scale, &first) + u'\n' +
+                         Wrap(text.substr(br + 1), width, scale, &rest);
+    *lines = first + rest;
+    return out;
+  }
+  std::u16string out, line;
   size_t start = 0;
   while (start <= text.size()) {
     size_t end = text.find(u' ', start);

@@ -918,15 +918,15 @@ Row ControllerIconsRow() {
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(controller_icons)), 0, 5); };
   r.set = [](Env&, int i) { SetFlag("controller_icons", std::to_string(i)); };
   r.describe = [](Env&, int i) {
-    // An example in the style now on: the A button (the bottom one).
-    // TR: {0}-{3} = the A, B, X and Y buttons' pictures in this style.
-    const std::u16string example = u" " + trf(tr(u"Now: {0} {1} {2} {3}"), {Pad("A"), Pad("B"), Pad("X"), Pad("Y")});
-    if (i == 0) {
-      return tr(u"The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other "
-             u"controller: the game's own Xbox 360 buttons.") + example;
-    }
-    return std::u16string(i == 1 ? tr(u"The game's own Xbox 360 buttons, whatever controller you use.")
-                                 : tr(u"These buttons in the prompts, whatever controller you use.")) + example;
+    // A short sentence, then the style's A B X Y pictures on a LINE OF THEIR
+    // OWN under it (the card centres each line: the four sit in a row at the
+    // bottom, not wrapped into the sentence). Playtest 2026-11-05: the old
+    // two-sentence text was too long and the pictures broke across lines.
+    const std::u16string buttons = Pad("A") + u"  " + Pad("B") + u"  " + Pad("X") + u"  " + Pad("Y");
+    const std::u16string text = i == 0   ? tr(u"Matches player 1's controller.")
+                                : i == 1 ? tr(u"The game's own buttons.")
+                                         : tr(u"Always these buttons.");
+    return text + u"\n" + buttons;
   };
   return r;
 }

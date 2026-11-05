@@ -54,7 +54,7 @@ msgstr ""
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2274 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
 msgid "Achievements"
 msgstr ""
 
@@ -447,7 +447,7 @@ msgstr ""
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr ""
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1310 src/options/options_menu.cpp:1324
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
 msgid "Back"
 msgstr ""
 
@@ -1287,81 +1287,81 @@ msgid ""
 "Reconnect it, or press {1} to drop out Player {0}."
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 msgid "Normal"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 msgid "Greeny"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 msgid "Bluey"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 msgid "Reddy"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 msgid "Snipe"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 msgid "Ratcicle"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 msgid "Magmadon"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 msgid "Skeleton"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 msgid "Spike"
 msgstr ""
 
 #. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: src/players/outfit_picker.cpp:517 src/players/outfit_picker.cpp:531
 msgid "Coco"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:509
+#: src/players/outfit_picker.cpp:517
 msgid "Old School"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:520
+#: src/players/outfit_picker.cpp:528
 msgid "Orange"
 msgstr ""
 
 #. the heroes' names, as the game writes them in this language.
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: src/players/outfit_picker.cpp:531 src/players/outfit_picker.cpp:553 src/players/outfits.cpp:855
 msgid "Crash"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1091
+#: src/players/outfit_picker.cpp:1104
 msgid "Wear"
 msgstr ""
 
 #. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: src/players/outfit_picker.cpp:1371 src/players/outfit_picker.cpp:1479
 msgid "Ready!"
 msgstr ""
 
 #. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: src/players/outfit_picker.cpp:1373 src/players/outfit_picker.cpp:1481
 msgid "{0} Change"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: src/players/outfit_picker.cpp:1412 src/players/outfit_picker.cpp:1507
 msgid "Loading"
 msgstr ""
 
 #. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: src/players/outfit_picker.cpp:1420 src/players/outfit_picker.cpp:1510
 msgid "{0} Wear"
 msgstr ""
 
@@ -1418,7 +1418,7 @@ msgid "Carbon"
 msgstr ""
 
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: src/players/outfits.cpp:855
 msgctxt "outfit name"
 msgid "{0} {1}"
 msgstr ""
@@ -1427,100 +1427,100 @@ msgstr ""
 msgid "Drop Out"
 msgstr ""
 
-#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
+#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:853
+#: src/options/options_menu.cpp:862
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:863
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:871
+#: src/options/options_menu.cpp:880
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:877
+#: src/options/options_menu.cpp:886
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1050
+#: src/options/options_menu.cpp:1059
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1309
+#: src/options/options_menu.cpp:1318
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1315 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1327
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1321
+#: src/options/options_menu.cpp:1330
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1331
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1445
+#: src/options/options_menu.cpp:1454
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1449 src/options/options_menu.cpp:1457
+#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1459
+#: src/options/options_menu.cpp:1468
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:1861
+#: src/options/options_menu.cpp:1870
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1877
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:1880
+#: src/options/options_menu.cpp:1889
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:1901
+#: src/options/options_menu.cpp:1910
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1909
+#: src/options/options_menu.cpp:1918
 msgid "{0} removed."
 msgstr ""
 
@@ -2301,21 +2301,16 @@ msgstr ""
 msgid "Controller Icons"
 msgstr ""
 
-#. {0}-{3} = the A, B, X and Y buttons' pictures in this style.
-#: src/options/options_settings.cpp:923
-msgid "Now: {0} {1} {2} {3}"
+#: src/options/options_settings.cpp:926
+msgid "Matches player 1's controller."
 msgstr ""
 
-#: src/options/options_settings.cpp:925
-msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
+#: src/options/options_settings.cpp:927
+msgid "The game's own buttons."
 msgstr ""
 
 #: src/options/options_settings.cpp:928
-msgid "The game's own Xbox 360 buttons, whatever controller you use."
-msgstr ""
-
-#: src/options/options_settings.cpp:929
-msgid "These buttons in the prompts, whatever controller you use."
+msgid "Always these buttons."
 msgstr ""
 
 #: src/options/options_settings.cpp:936

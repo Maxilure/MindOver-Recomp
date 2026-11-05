@@ -52,21 +52,22 @@ bool PlayerAssignment::HasDeviceFor(int player) const {
 
 std::string PlayerAssignment::PadKeyFor(uint32_t user) const {
   std::lock_guard<std::mutex> lock(mutex_);
-  std::string first_active_pad;
+  // Same rule as DevicesForUser: outside play every controller answers as
+  // player 1 (any of them works the menus), so the first one counts as
+  // player 1's there. IN PLAY only player 1's own controller counts: with
+  // player 1 on the keyboard and a PlayStation pad on player 2, player 1's
+  // "Automatic" must not borrow player 2's PlayStation buttons (a 2026-11-04
+  // change did, and the Options -> Controller Icons preview then showed
+  // another player's controller). No controller of their own = "" = the
+  // game's own 360 buttons.
+  const bool everyone_is_player_one = user == 0 && in_play_ && !in_play_();
   for (const Known& d : devices_) {
     // Real controllers ("pad:<guid>") and --debug_fake_pads' ("debug-pad-N":
     // prompt_icons gives those the styles of --debug_fake_pad_styles).
     if (d.keyboard || (d.key.rfind("pad:", 0) != 0 && d.key.rfind("debug-pad-", 0) != 0)) continue;
     const int player = PlayerOf(d);
-    if (player == int(user)) return d.key;
-    if (player >= 0 && first_active_pad.empty()) first_active_pad = d.key;
+    if (player == int(user) || (everyone_is_player_one && player >= 0)) return d.key;
   }
-  // When user == 0 (player 1 / shared prompts / Options -> Controller Icons
-  // preview) has no controller assigned to slot 0 (e.g. player 1 is playing
-  // on keyboard and the controller is assigned to player 2-4, or outside
-  // play), fall back to the first active controller so Automatic still
-  // detects the connected controller's style.
-  if (user == 0) return first_active_pad;
   return {};
 }
 

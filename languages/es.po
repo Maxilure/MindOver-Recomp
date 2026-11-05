@@ -64,7 +64,7 @@ msgstr "PANTALLA {0}"
 msgid "Achievement Unlocked"
 msgstr "Logro desbloqueado"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1017 src/options/options_menu.cpp:2274 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Achievements"
 msgstr "Logros"
@@ -571,7 +571,7 @@ msgstr "Mapa"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "En el menú de pausa: abandonar (otro jugador sigue)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1090 src/options/options_menu.cpp:1310 src/options/options_menu.cpp:1324
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Back"
 msgstr "Atrás"
@@ -1651,98 +1651,98 @@ msgstr ""
 "El mando del jugador {0} se ha desconectado.\n"
 "Vuelve a conectarlo, o pulsa {1} para que el jugador {0} abandone."
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Normal"
 msgstr "Normal"
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Greeny"
 msgstr "Verdoso"
 
-#: src/players/outfit_picker.cpp:506
+#: src/players/outfit_picker.cpp:514
 #, fuzzy
 msgid "Bluey"
 msgstr "Azulado"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Reddy"
 msgstr "Rojizo"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Snipe"
 msgstr "Tirador"
 
-#: src/players/outfit_picker.cpp:507
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Ratcicle"
 msgstr "Ratarámbano"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Magmadon"
 msgstr "Magmadón"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Skeleton"
 msgstr "Esqueleto"
 
-#: src/players/outfit_picker.cpp:508
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Spike"
 msgstr "Púas"
 
 #. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:509 src/players/outfit_picker.cpp:523
+#: src/players/outfit_picker.cpp:517 src/players/outfit_picker.cpp:531
 #, fuzzy
 msgid "Coco"
 msgstr "Coco"
 
-#: src/players/outfit_picker.cpp:509
+#: src/players/outfit_picker.cpp:517
 #, fuzzy
 msgid "Old School"
 msgstr "Vieja escuela"
 
-#: src/players/outfit_picker.cpp:520
+#: src/players/outfit_picker.cpp:528
 #, fuzzy
 msgid "Orange"
 msgstr "Naranja"
 
 #. the heroes' names, as the game writes them in this language.
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:523 src/players/outfit_picker.cpp:545 src/players/outfits.cpp:852
+#: src/players/outfit_picker.cpp:531 src/players/outfit_picker.cpp:553 src/players/outfits.cpp:855
 #, fuzzy
 msgid "Crash"
 msgstr "Crash"
 
-#: src/players/outfit_picker.cpp:1091
+#: src/players/outfit_picker.cpp:1104
 #, fuzzy
 msgid "Wear"
 msgstr "Ponerse"
 
 #. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1358 src/players/outfit_picker.cpp:1466
+#: src/players/outfit_picker.cpp:1371 src/players/outfit_picker.cpp:1479
 #, fuzzy
 msgid "Ready!"
 msgstr "¡Listo!"
 
 #. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1360 src/players/outfit_picker.cpp:1468
+#: src/players/outfit_picker.cpp:1373 src/players/outfit_picker.cpp:1481
 #, fuzzy
 msgid "{0} Change"
 msgstr "{0} Cambiar"
 
-#: src/players/outfit_picker.cpp:1399 src/players/outfit_picker.cpp:1494
+#: src/players/outfit_picker.cpp:1412 src/players/outfit_picker.cpp:1507
 #, fuzzy
 msgid "Loading"
 msgstr "Cargando"
 
 #. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1407 src/players/outfit_picker.cpp:1497
+#: src/players/outfit_picker.cpp:1420 src/players/outfit_picker.cpp:1510
 #, fuzzy
 msgid "{0} Wear"
 msgstr "{0} Ponerse"
@@ -1813,7 +1813,7 @@ msgid "Carbon"
 msgstr "Carbono"
 
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:852
+#: src/players/outfits.cpp:855
 #, fuzzy
 msgctxt "outfit name"
 msgid "{0} {1}"
@@ -1824,122 +1824,122 @@ msgstr "{1} {0}"
 msgid "Drop Out"
 msgstr "Abandonar"
 
-#: src/options/options_menu.cpp:797 src/options/options_menu.cpp:843
+#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
 #, fuzzy
 msgid "Press a Key"
 msgstr "Pulsa una tecla"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:853
+#: src/options/options_menu.cpp:862
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Pulsa la nueva segunda tecla o botón del ratón para {0}. {1} o {2}: cancelar."
 
-#: src/options/options_menu.cpp:854
+#: src/options/options_menu.cpp:863
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Pulsa la nueva tecla o botón del ratón para {0}. {1} o {2}: cancelar."
 
-#: src/options/options_menu.cpp:871
+#: src/options/options_menu.cpp:880
 #, fuzzy
 msgid "Second Key"
 msgstr "Segunda tecla"
 
-#: src/options/options_menu.cpp:877
+#: src/options/options_menu.cpp:886
 #, fuzzy
 msgid "Remove Key"
 msgstr "Quitar tecla"
 
-#: src/options/options_menu.cpp:1050
+#: src/options/options_menu.cpp:1059
 #, fuzzy
 msgid "Locked"
 msgstr "Bloqueado"
 
-#: src/options/options_menu.cpp:1309
+#: src/options/options_menu.cpp:1318
 #, fuzzy
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 #, fuzzy
 msgid "Swap"
 msgstr "Cambiar"
 
-#: src/options/options_menu.cpp:1313
+#: src/options/options_menu.cpp:1322
 #, fuzzy
 msgid "Move Here"
 msgstr "Mover aquí"
 
-#: src/options/options_menu.cpp:1315 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1327
 #, fuzzy
 msgid "Buttons"
 msgstr "Botones"
 
-#: src/options/options_menu.cpp:1321
+#: src/options/options_menu.cpp:1330
 #, fuzzy
 msgid "Move"
 msgstr "Mover"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1331
 #, fuzzy
 msgid "Remove"
 msgstr "Quitar"
 
-#: src/options/options_menu.cpp:1445
+#: src/options/options_menu.cpp:1454
 #, fuzzy
 msgid "No room for this player"
 msgstr "No hay sitio para este jugador"
 
-#: src/options/options_menu.cpp:1449 src/options/options_menu.cpp:1457
+#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Teclado y ratón"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Al jugador {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1463
 #, fuzzy
 msgid "Pick a player"
 msgstr "Elige un jugador"
 
-#: src/options/options_menu.cpp:1459
+#: src/options/options_menu.cpp:1468
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Pulsa un botón para unirte"
 
-#: src/options/options_menu.cpp:1861
+#: src/options/options_menu.cpp:1870
 #, fuzzy
 msgid "Not changed."
 msgstr "Sin cambios."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1868
+#: src/options/options_menu.cpp:1877
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} es de los menús ({1}): elige otra tecla."
 
-#: src/options/options_menu.cpp:1880
+#: src/options/options_menu.cpp:1889
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} era la tecla de {1}: ahora es de {2}."
 
-#: src/options/options_menu.cpp:1901
+#: src/options/options_menu.cpp:1910
 #, fuzzy
 msgid "No key to remove."
 msgstr "No hay tecla que quitar."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1909
+#: src/options/options_menu.cpp:1918
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} quitada."
@@ -2907,26 +2907,20 @@ msgstr "Teclas claras en las indicaciones de botones, como {0}"
 msgid "Controller Icons"
 msgstr "Iconos del mando"
 
-#. {0}-{3} = the A, B, X and Y buttons' pictures in this style.
-#: src/options/options_settings.cpp:923
+#: src/options/options_settings.cpp:926
 #, fuzzy
-msgid "Now: {0} {1} {2} {3}"
-msgstr "Ahora: {0} {1} {2} {3}"
+msgid "Matches player 1's controller."
+msgstr "Igual que el mando del jugador 1."
 
-#: src/options/options_settings.cpp:925
+#: src/options/options_settings.cpp:927
 #, fuzzy
-msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
-msgstr "Los botones del mando con el que juegas: PlayStation, Switch o Xbox. Cualquier otro mando: los botones de Xbox 360 del juego."
+msgid "The game's own buttons."
+msgstr "Los botones originales del juego."
 
 #: src/options/options_settings.cpp:928
 #, fuzzy
-msgid "The game's own Xbox 360 buttons, whatever controller you use."
-msgstr "Los botones de Xbox 360 del juego, uses el mando que uses."
-
-#: src/options/options_settings.cpp:929
-#, fuzzy
-msgid "These buttons in the prompts, whatever controller you use."
-msgstr "Estos botones en las indicaciones, uses el mando que uses."
+msgid "Always these buttons."
+msgstr "Siempre estos botones."
 
 #: src/options/options_settings.cpp:936
 #, fuzzy
@@ -5144,6 +5138,22 @@ msgstr "Comprobando la descarga"
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Poniendo la nueva versión en su sitio"
+
+#, fuzzy
+#~ msgid "Now: {0} {1} {2} {3}"
+#~ msgstr "Ahora: {0} {1} {2} {3}"
+
+#, fuzzy
+#~ msgid "The buttons of the controller you play with: PlayStation, Switch or Xbox. Any other controller: the game's own Xbox 360 buttons."
+#~ msgstr "Los botones del mando con el que juegas: PlayStation, Switch o Xbox. Cualquier otro mando: los botones de Xbox 360 del juego."
+
+#, fuzzy
+#~ msgid "The game's own Xbox 360 buttons, whatever controller you use."
+#~ msgstr "Los botones de Xbox 360 del juego, uses el mando que uses."
+
+#, fuzzy
+#~ msgid "These buttons in the prompts, whatever controller you use."
+#~ msgstr "Estos botones en las indicaciones, uses el mando que uses."
 
 #, fuzzy
 #~ msgid "{0} {1} {2}"
