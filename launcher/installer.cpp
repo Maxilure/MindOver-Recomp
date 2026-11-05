@@ -279,6 +279,17 @@ struct App {
   bool existing = false;
   fs::path existing_root;
   std::string existing_for;
+  // ALREADY INSTALLED (2026-11-05): a downloaded installer started while
+  // Windows' Installed apps lists an install (install::RegisteredRoot) opened
+  // on "new install" like any other, next to the installed one's own Mind
+  // over Recomp (Start menu) that manages it: two programs of the same name
+  // doing different things. Page 1 now says where the game is installed and
+  // opens that one (play, update, uninstall); a second install stays possible
+  // below. Looked up once.
+  bool registered_checked = false;
+  fs::path registered_root;
+  std::string registered_version;
+  bool quit = false;           // the window closes after this frame
 
   // --- step 1, the tools (before any folder exists) ---------------------------
   std::mutex tools_mutex;
@@ -377,6 +388,38 @@ void App::TakePicks() {
 // --- INSTALL, page 1 -----------------------------------------------------------
 
 void App::DrawChoose() {
+  if (!registered_checked) {
+    registered_checked = true;
+    const fs::path at = install::RegisteredRoot();
+    std::error_code ec;
+    if (!at.empty() && install::LooksInstalled(at) && !fs::equivalent(at, platform::SelfPath().parent_path(), ec)) {
+      registered_root = at;
+      registered_version = update::InstalledVersion(folders::Find(at));
+    }
+  }
+  if (!registered_root.empty()) {
+    ImGui::PushFont(fonts.bold, 0.0f);
+    ImGui::PushStyleColor(ImGuiCol_Text, kGood);
+    ImGui::TextWrapped("%s", trs("The game is already installed on this PC."));
+    ImGui::PopStyleColor();
+    ImGui::PopFont();
+    ImGui::TextDisabled("%s%s%s", registered_root.string().c_str(), registered_version.empty() ? "" : "  -  ",
+                        registered_version.c_str());
+    MutedText(trs("To play it, update it or uninstall it, open its own Mind over Recomp (also in the "
+                  "Start menu). Updates come from there; this download isn't needed for them."));
+    if (AccentButton(trs("Open the installed Mind over Recomp"))) {
+      if (install::StartDetached(registered_root / install::kInstallerName, registered_root)) {
+        quit = true;
+      } else {
+        choose_error = trs("Couldn't open it: start Mind over Recomp from the Start menu.");
+      }
+    }
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+    MutedText(trs("Or install another copy:"));
+    ImGui::Spacing();
+  }
   ImGui::PushFont(fonts.bold, 0.0f);
   ImGui::TextUnformatted(trs("1. Your disc and where the game goes"));
   ImGui::PopFont();
@@ -1402,6 +1445,7 @@ int main(int argc, char** argv) {
       running = false;
     }
     SDL_RenderPresent(renderer);
+    if (app->quit) running = false;  // e.g. the installed copy was opened instead
   }
 
   // Closing during a build stops it (its processes end with this program).

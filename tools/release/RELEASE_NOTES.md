@@ -22,9 +22,14 @@ and a folder, installs the build tools it needs (through winget, Windows'
 own package manager), builds the game, and adds **Crash Mind over Mutant**
 to the Start menu and to Windows' *Installed apps* list. The same program
 updates the game later, and *Uninstall* in Windows' settings removes it,
-keeping your saves, settings and logs if you tick the box. The installer
+keeping your saves, settings and logs if you tick the box. Pointed at a
+folder with a game that was already set up, it uses that game as it is,
+without building it again. The installer
 speaks English and Brazilian Portuguese. The game's icon is its own portrait
-of Crash as a mask, taken from your disc during the install.
+of Crash as a mask, taken from your disc during the install. Installing the
+build tools with winget is based on the Windows setup script contributed by
+**[YWZsaXRv](https://github.com/YWZsaXRv)** in
+[#4](https://github.com/Maxilure/MindOver-Recomp/pull/4).
 
 **An Options screen** in the game's own look (Pause → Options, and in the
 main menu), every change at once, with six tabs:
@@ -72,7 +77,8 @@ main menu), every change at once, with six tabs:
   made with cheats is marked.
 
 **Fixes**
-- Players 3 and 4 standing on player 1's shoulders after a desert cutscene
+- Players 3 and 4 showing up on player 1's shoulders after a desert
+  cutscene, even when nobody was playing them
   ([#2](https://github.com/Maxilure/MindOver-Recomp/issues/2)).
 - Players 3 and 4 losing the camera when they're the only ones left after
   a level change.
@@ -89,6 +95,12 @@ main menu), every change at once, with six tabs:
   the save screens.
 - The speed cheat now blocks achievements like the other cheats
   ([#3](https://github.com/Maxilure/MindOver-Recomp/issues/3)).
+
+**Thanks** to **[YWZsaXRv](https://github.com/YWZsaXRv)** for the Windows
+setup script ([#4](https://github.com/Maxilure/MindOver-Recomp/pull/4)) the
+installer builds on, and to **[hesyourgamer](https://github.com/hesyourgamer)**
+for reporting [#2](https://github.com/Maxilure/MindOver-Recomp/issues/2) and
+[#3](https://github.com/Maxilure/MindOver-Recomp/issues/3).
 
 ### Updating from 0.1.0-alpha
 

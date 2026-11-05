@@ -32,6 +32,20 @@ engineering, testing, bug reports, corrections, art. See
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
 
+### YWZsaXRv: Windows setup script
+
+- Contributed a script that installs the Windows build tools with winget
+  ([#4](https://github.com/Maxilure/MindOver-Recomp/pull/4)); the Windows
+  installer's tool installation (0.2.0) is based on it.
+
+### Bug reports
+
+- **hesyourgamer** reported players 3 and 4 appearing on player 1's
+  shoulders after a cutscene
+  ([#2](https://github.com/Maxilure/MindOver-Recomp/issues/2)) and the speed
+  cheat not blocking achievements
+  ([#3](https://github.com/Maxilure/MindOver-Recomp/issues/3)).
+
 ## Art by others
 
 ### Nicolae "Xelu" Berbece (Those Awesome Guys): button prompt pictures
