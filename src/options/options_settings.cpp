@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -22,6 +23,7 @@
 #include <rex/ppc/func.h>
 
 #include "../app_restart.h"
+#include "../audio/sound_out.h"
 #include "../frame_rate.h"
 #include "../game_folder.h"
 #include "../guest_memory.h"
@@ -646,6 +648,120 @@ Row VolumeRow(std::u16string label, Volume v, std::u16string text, bool music) {
   return r;
 }
 
+// OUTPUT DEVICE (audio/sound_out.h): "System Default" (follows the system's
+// own choice when it changes) or one device by name, read again each time the
+// row is shown; a device picked earlier that's unplugged keeps its place.
+// The value box gets a short name; the card under the rows the full one.
+std::u16string DeviceName(std::string name) {
+  // Filler that makes names too long for the box ("HD Audio Controller").
+  for (const char* filler : {"High Definition Audio Controller ", "HD Audio Controller ",
+                             "Audio Controller ", "Controller "}) {
+    if (const size_t at = name.find(filler); at != std::string::npos) name.erase(at, std::strlen(filler));
+  }
+  // "Vendor/Chip rest" -> "Chip rest".
+  if (const size_t slash = name.rfind('/'); slash != std::string::npos) name = name.substr(slash + 1);
+  std::u16string out;
+  for (const char c : name) {
+    if (c >= 0x20 && c < 0x7F) out += char16_t(c);   // the game font: plain letters
+  }
+  while (!out.empty() && out.back() == u' ') out.pop_back();
+  if (out.size() > 16) out = out.substr(0, 15) + u".";   // as Monitor: the box's room
+  return out.empty() ? std::u16string(tr(u"Device")) : out;
+}
+
+std::u16string FullName(const std::string& name) {
+  std::u16string out;
+  for (const char c : name) {
+    if (c >= 0x20 && c < 0x7F) out += char16_t(c);
+  }
+  return out;
+}
+
+// The list as the row shows it: "" first (System Default), then the
+// connected devices, then the chosen one if it isn't connected.
+std::vector<std::string> DeviceChoices() {
+  std::vector<std::string> list{""};
+  for (const std::string& name : sound_out::PlaybackDevices()) list.push_back(name);
+  const std::string chosen = rex::cvar::Query<std::string>("sound_device");
+  if (!chosen.empty() && std::find(list.begin(), list.end(), chosen) == list.end()) {
+    list.push_back(chosen);
+  }
+  return list;
+}
+
+Row OutputDeviceRow() {
+  Row r;
+  r.label = tr(u"Output Device");
+  r.values = [](Env&) {
+    const auto connected = sound_out::PlaybackDevices();
+    std::vector<std::u16string> values;
+    for (const std::string& name : DeviceChoices()) {
+      if (name.empty()) {
+        values.push_back(tr(u"System Default"));
+      } else if (std::find(connected.begin(), connected.end(), name) == connected.end()) {
+        values.push_back(tr(u"Not Connected"));
+      } else {
+        values.push_back(DeviceName(name));
+      }
+    }
+    return values;
+  };
+  r.get = [](Env&) {
+    const auto list = DeviceChoices();
+    const std::string chosen = rex::cvar::Query<std::string>("sound_device");
+    const auto it = std::find(list.begin(), list.end(), chosen);
+    return it == list.end() ? 0 : int(it - list.begin());
+  };
+  r.set = [](Env&, int i) {
+    const auto list = DeviceChoices();
+    SetFlag("sound_device", i > 0 && i < int(list.size()) ? list[size_t(i)] : std::string());
+    sound_out::Reopen();
+  };
+  r.describe = [](Env&, int i) -> std::u16string {
+    const auto list = DeviceChoices();
+    if (i <= 0 || i >= int(list.size())) {
+      const std::string now = sound_out::CurrentDevice();
+      // TR: {0} = the sound device's full name.
+      return now.empty() ? tr(u"Plays on the system's sound output, and follows it when you switch.")
+                         : trf(tr(u"Plays on the system's sound output (now: {0}), and follows it when you switch."),
+                               {FullName(now)});
+    }
+    const auto connected = sound_out::PlaybackDevices();
+    if (std::find(connected.begin(), connected.end(), list[size_t(i)]) == connected.end()) {
+      // TR: {0} = the sound device's full name.
+      return trf(tr(u"{0} isn't connected: the system's sound output plays instead."), {FullName(list[size_t(i)])});
+    }
+    // TR: {0} = the sound device's full name.
+    return trf(tr(u"Plays on {0} only."), {FullName(list[size_t(i)])});
+  };
+  return r;
+}
+
+// SPEAKERS (audio/sound_out.h Speakers): how the game's 5.1 mix is laid out.
+Row SpeakersRow() {
+  Row r;
+  r.label = tr(u"Speakers");
+  r.values = [](Env&) {
+    return std::vector<std::u16string>{tr(u"Automatic"), tr(u"Stereo"), tr(u"Headphones"),
+                                       tr(u"5.1 Surround"), tr(u"7.1 Surround")};
+  };
+  r.get = [](Env&) { return std::clamp(int(rex::cvar::Query<int32_t>("sound_speakers")), 0, 4); };
+  r.set = [](Env&, int i) {
+    SetFlag("sound_speakers", std::to_string(std::clamp(i, 0, 4)));
+    sound_out::Reopen();
+  };
+  r.describe = [](Env&, int i) -> std::u16string {
+    switch (i) {
+      case 1: return tr(u"Two speakers: the game's surround sound folded into left and right.");
+      case 2: return tr(u"Stereo for headphones: a little of each side reaches the other ear, like speakers in a room, so nothing sits inside one ear.");
+      case 3: return tr(u"Six speakers: front, centre, bass and the two behind you, as the game mixes them.");
+      case 4: return tr(u"Eight speakers: the surround pair plays on both the side and the back speakers.");
+      default: return tr(u"The game's surround sound goes to the device as it is, and your system fits it to your speakers.");
+    }
+  };
+  return r;
+}
+
 // ---------------------------------------------------------------------------
 // Controls
 // ---------------------------------------------------------------------------
@@ -1135,7 +1251,8 @@ std::vector<Tab> Build() {
         VolumeRow(tr(u"Dialogue"), {global_options::Volume::kDialogue, kSoundDialogueBank, kSoundDialogue},
                   tr(u"How loud the characters talk."), false),
         VolumeRow(tr(u"SFX"), {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
-                  tr(u"How loud hits, crates, footsteps and the rest are."), false)}});
+                  tr(u"How loud hits, crates, footsteps and the rest are."), false),
+        Heading(tr(u"Output")), OutputDeviceRow(), SpeakersRow()}});
   tabs.push_back({tr(u"Controls"), ControlsRows()});
   tabs.push_back({tr(u"Gameplay"), GameplayRows()});
   tabs.push_back({tr(u"Language"), {TextLanguageRow(), VoiceLanguageRow()}});

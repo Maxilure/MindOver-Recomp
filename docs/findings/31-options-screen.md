@@ -165,6 +165,8 @@ width and height don't scale it): drawn at 0.6 x by code.
 | | Motion Blur | Off (original), Low, Medium, High | `motion_blur` (`src/effects/post_effects.*`) | the port's own effect, native renderer only (greyed out while the emulated picture shows: findings/35 s.4), read by the recorder every frame (findings/34) |
 | | Depth of Field | Off, Original, Strong | `depth_of_field` | the game's MaxRadius x 0 / 1 / 2 on the way into its renderer, both pictures (findings/34 s.3) |
 | Audio | Dialogue, Music, SFX | 0-5 stars | `volume_dialogue`, `volume_music`, `volume_sfx` (`src/options/global_options.*`) | the game's own volumes, kept in `user/settings.toml` instead of each save (section 6) |
+| Audio | Output Device | System Default / each connected device | `sound_device` (`src/audio/sound_out.*`) | where the sound plays, switched live (findings/54 s.7) |
+| Audio | Speakers | Automatic / Stereo / Headphones / 5.1 / 7.1 | `sound_speakers` | how the game's 5.1 mix is laid out (findings/54 s.7) |
 | Controls | Invert Axis | Off, On | `invert_axis_player1`-`4` | the game's own, per controller slot, kept in `user/settings.toml` (section 6) |
 | | Rebind Keys | (action) | | opens F6 |
 | Camera | Co-op Camera | Frame Everyone, Original | `coop_camera` | read every frame (findings/28) |
@@ -489,7 +491,7 @@ that can't be selected) inside the long ones:
 |---|---|
 | Display (the screen and the window) | Window Mode, Monitor, V-Sync, Frame-rate Cap, Brightness; *Frame Counter*: FPS Counter, FPS Position |
 | Graphics (how the picture is drawn) | Renderer; *Quality*: Resolution, Anti-aliasing, Smooth Leaves, Texture Sharpness, Sharpening; *Effects*: Shadow Softness, Motion Blur, Depth of Field |
-| Audio | Music, Dialogue, SFX |
+| Audio | Music, Dialogue, SFX; *Output*: Output Device, Speakers |
 | Controls | Invert Axis, Mouse Aiming; *Button Pictures*: Keyboard Icons, Controller Icons; *Keyboard and Mouse Keys*: the keys, Default Keys |
 | Gameplay | *Co-op*: Friendly Fire, Partner Hits, Co-op Camera, Camera Follows; *Spinning*: Simple Spinning, Keep Spinning |
 | Language | Text, Voices |

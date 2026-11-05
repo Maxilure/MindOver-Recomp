@@ -62,8 +62,11 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
+#include <cmath>
 #include <deque>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include <SDL3/SDL.h>
 
@@ -80,6 +83,13 @@ REXCVAR_DEFINE_BOOL(sound_out_native, true, "CrashMoM",
 REXCVAR_DEFINE_INT32(sound_out_buffer_blocks, 8, "CrashMoM",
                      "Sound blocks (5.33 ms each) allowed on their way to the speakers at once: "
                      "fewer = less delay, too few = crackles (3-32)");
+REXCVAR_DEFINE_INT32(sound_speakers, 0, "CrashMoM",
+                     "Speakers: 0 Automatic (the device's own layout; the system fits 5.1 to it), "
+                     "1 Stereo, 2 Headphones (stereo with crossfeed), 3 5.1 Surround, 4 7.1 Surround "
+                     "(Options -> Audio)");
+REXCVAR_DEFINE_STRING(sound_device, "", "CrashMoM",
+                      "Sound output device by name; empty = the system's default output, followed "
+                      "when it changes (Options -> Audio)");
 
 namespace sound_out {
 namespace {
@@ -103,7 +113,10 @@ struct Output {
 
   rex::system::object_ref<rex::system::XHostThread> thread;
   SDL_AudioStream* stream = nullptr;
-  int device_channels = 0;   // what we give SDL: 2 (our fold) or 6
+  int device_channels = 0;   // what we give SDL: 2 (our stereo mix), 6 or 8
+  Speakers mode = Speakers::kAuto;   // as opened (sound_speakers)
+  bool crossfeed = false;            // Headphones
+  std::string device_name;           // the device playing now (for the log / Options)
 
   std::mutex mutex;
   std::condition_variable wake;      // credits came back / stop
@@ -120,6 +133,9 @@ struct Output {
 
 Output g_out;
 std::atomic<bool> g_muted{false};
+// Opening / closing the device: Options (game thread), the watchdog (Sound
+// Out thread) and the game's register / unregister can all do it.
+std::recursive_mutex g_device_mutex;
 
 uint32_t Be32(const uint8_t* p) {
   return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) | p[3];
@@ -134,29 +150,88 @@ void RefreshMute() {
   }
 }
 
+// STEREO MIX (Stereo, Headphones, and Automatic on a device that says it has
+// only 1-2 channels). The usual 5.1 -> stereo fold (ITU-R BS.775): front left
+// / right at full level, centre and back at -3 dB (0.707) into both / their
+// side, LFE left out (it only repeats the low end of the other channels).
+// Kept at full level, so it is as loud as a system's own fold of the same
+// block; the rare peak above full scale goes through a soft knee instead of
+// being cut flat (a cut sounds like a crackle).
+float SoftLimit(float x) {
+  constexpr float kKnee = 0.8f;   // untouched below this
+  const float a = std::fabs(x);
+  if (a <= kKnee) return x;
+  const float over = (a - kKnee) / (1.0f - kKnee);
+  return std::copysign(kKnee + (1.0f - kKnee) * std::tanh(over), x);
+}
+
+// HEADPHONES = the stereo mix + CROSSFEED: on speakers each ear also hears
+// the other speaker, a little later and duller; headphones don't, so sounds
+// panned hard to one side sit inside one ear. A little of each side, low-
+// passed at 700 Hz, 6 dB down and 0.3 ms late, goes to the other ear (the
+// classic Bauer / bs2b recipe), then the level is brought back a bit so the
+// added low end doesn't make it louder.
+struct Crossfeed {
+  static constexpr int kDelay = 14;   // 0.3 ms at 48 kHz
+  float lp_l = 0, lp_r = 0;           // one-pole low-pass state
+  std::array<float, kDelay> dl{}, dr{};
+  int at = 0;
+  void Reset() { *this = Crossfeed{}; }
+  void Run(float& l, float& r) {
+    // one-pole low-pass at 700 Hz: a = 1 - exp(-2 pi fc / fs)
+    constexpr float kA = 0.0875f;
+    lp_l += kA * (l - lp_l);
+    lp_r += kA * (r - lp_r);
+    const float from_l = dl[size_t(at)], from_r = dr[size_t(at)];
+    dl[size_t(at)] = lp_l;
+    dr[size_t(at)] = lp_r;
+    at = (at + 1) % kDelay;
+    constexpr float kFeed = 0.5f;     // -6 dB
+    constexpr float kLevel = 0.8f;    // bring the level back
+    const float nl = (l + kFeed * from_r) * kLevel;
+    const float nr = (r + kFeed * from_l) * kLevel;
+    l = nl;
+    r = nr;
+  }
+};
+Crossfeed g_crossfeed;   // only the SDL device thread touches it (reset on open)
+
 // One planar 5.1 block -> what the device gets, interleaved.
-// Stereo fold = the SDK's numbers (ITU-R BS.775 / Dolby Lo/Ro): centre and back
-// at -3 dB, LFE dropped, scaled by 1/(1+0.707) so a full-scale front + centre
-// doesn't clip, then clamped to -1..1.
-void Convert(const Block& in, float* out, int channels) {
+void Convert(const Block& in, float* out, int channels, bool crossfeed) {
   const float* fl = &in[0 * kBlockSamples];
   const float* fr = &in[1 * kBlockSamples];
   const float* fc = &in[2 * kBlockSamples];
   const float* lf = &in[3 * kBlockSamples];
   const float* bl = &in[4 * kBlockSamples];
   const float* br = &in[5 * kBlockSamples];
+  constexpr float k3dB = 0.70710678f;
   if (channels == 2) {
-    constexpr float kCentre = 0.70710678f, kBack = 0.70710678f, kLfe = 0.0f;
-    constexpr float kScale = 0.58578644f;
     for (uint32_t i = 0; i < kBlockSamples; ++i) {
-      const float mid = fc[i] * kCentre + lf[i] * kLfe;
-      out[i * 2 + 0] = std::clamp((fl[i] + mid + bl[i] * kBack) * kScale, -1.0f, 1.0f);
-      out[i * 2 + 1] = std::clamp((fr[i] + mid + br[i] * kBack) * kScale, -1.0f, 1.0f);
+      float l = fl[i] + k3dB * fc[i] + k3dB * bl[i];
+      float r = fr[i] + k3dB * fc[i] + k3dB * br[i];
+      if (crossfeed) g_crossfeed.Run(l, r);
+      out[i * 2 + 0] = SoftLimit(l);
+      out[i * 2 + 1] = SoftLimit(r);
     }
     return;
   }
-  // 6 channels: SDL's 5.1 order is the same as XAudio's (SDL converts it on
-  // to 7.1 or anything else the device has).
+  if (channels == 8) {
+    // 7.1 (SDL's order: FL FR FC LFE BL BR SL SR): the game's surround pair
+    // goes to the side AND back speakers at -3 dB each (same total power), so
+    // the sound around you fills both instead of leaving a pair silent.
+    for (uint32_t i = 0; i < kBlockSamples; ++i) {
+      float* o = &out[i * 8];
+      o[0] = std::clamp(fl[i], -1.0f, 1.0f);
+      o[1] = std::clamp(fr[i], -1.0f, 1.0f);
+      o[2] = std::clamp(fc[i], -1.0f, 1.0f);
+      o[3] = std::clamp(lf[i], -1.0f, 1.0f);
+      o[4] = o[6] = std::clamp(bl[i] * k3dB, -1.0f, 1.0f);
+      o[5] = o[7] = std::clamp(br[i] * k3dB, -1.0f, 1.0f);
+    }
+    return;
+  }
+  // 6 channels: SDL's 5.1 order is the same as XAudio's (SDL / the system
+  // fits it to whatever the device has).
   for (uint32_t i = 0; i < kBlockSamples; ++i) {
     out[i * 6 + 0] = std::clamp(fl[i], -1.0f, 1.0f);
     out[i * 6 + 1] = std::clamp(fr[i], -1.0f, 1.0f);
@@ -171,8 +246,9 @@ void Convert(const Block& in, float* out, int channels) {
 // over whole blocks (or a block of silence when the game is behind).
 void SDLCALL DeviceWants(void*, SDL_AudioStream* stream, int additional, int) {
   const int channels = g_out.device_channels;
+  const bool crossfeed = g_out.crossfeed;
   const int bytes = int(kBlockSamples) * channels * int(sizeof(float));
-  float data[kBlockSamples * kChannels];
+  float data[kBlockSamples * 8];
   RefreshMute();
   while (additional > 0) {
     bool have = false;
@@ -182,7 +258,7 @@ void SDLCALL DeviceWants(void*, SDL_AudioStream* stream, int additional, int) {
         if (g_muted.load(std::memory_order_relaxed)) {
           std::memset(data, 0, size_t(bytes));
         } else {
-          Convert(g_out.queue.front(), data, channels);
+          Convert(g_out.queue.front(), data, channels, crossfeed);
         }
         g_out.queue.pop_front();
         ++g_out.credits;   // room for one more: the game may mix the next
@@ -207,42 +283,94 @@ void SDLCALL DeviceWants(void*, SDL_AudioStream* stream, int additional, int) {
   }
 }
 
+// The playback devices SDL sees now: id + name.
+std::vector<std::pair<SDL_AudioDeviceID, std::string>> ListDevices() {
+  std::vector<std::pair<SDL_AudioDeviceID, std::string>> out;
+  int count = 0;
+  SDL_AudioDeviceID* ids = SDL_GetAudioPlaybackDevices(&count);
+  for (int i = 0; ids && i < count; ++i) {
+    const char* name = SDL_GetAudioDeviceName(ids[i]);
+    out.emplace_back(ids[i], name ? name : "");
+  }
+  SDL_free(ids);
+  return out;
+}
+
+void CloseDevice() {
+  std::lock_guard<std::recursive_mutex> lock(g_device_mutex);
+  if (g_out.stream) {
+    SDL_DestroyAudioStream(g_out.stream);   // waits for DeviceWants to finish
+    g_out.stream = nullptr;
+  }
+}
+
+// Opens the device (sound_device) in the layout sound_speakers asks for.
+//   Automatic: like the SDK's driver did, so the default changes nothing you
+//     hear: ask for 5.1, then look at what the opened device reports. Only one
+//     that says 1-2 channels gets our stereo mix; otherwise the 5.1 block goes
+//     as is and the system (SDL / PipeWire / Windows) fits it to the speakers.
+//     (2026-10-31: a plain "Analog Stereo" PipeWire output reports 6 when
+//     opened, so there the SYSTEM's fold is what's heard.)
+//   Stereo / Headphones: 2 channels, our stereo mix (+ crossfeed).
+//   5.1 / 7.1: 6 / 8 channels; a device with fewer gets SDL's own fold.
 bool OpenDevice() {
+  std::lock_guard<std::recursive_mutex> lock(g_device_mutex);
   if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
     REXLOG_ERROR("Sound out: SDL audio didn't start: {}", SDL_GetError());
     return false;
   }
-  // Opened like the SDK's driver did, so this step changes nothing you hear:
-  // ask for 5.1 first, then look at what the opened device reports. Only a
-  // device that says 1-2 channels gets our stereo fold; otherwise the 5.1
-  // block goes as is and the system (SDL / PipeWire) makes it fit the
-  // speakers. (2026-10-31: on a plain "Analog Stereo" PipeWire output the
-  // opened device reports 6 channels, so the SYSTEM's downmix is what players
-  // hear, not the fold below: asking the default device BEFORE opening says 2
-  // and would have switched to our fold, ~6 dB louder fronts.)
-  SDL_AudioSpec spec = {SDL_AUDIO_F32, int(kChannels), kRate};
+  CloseDevice();
+  // Which device: by name, else the system default (SDL follows the
+  // default when the system switches it, e.g. headphones plugged in).
+  const std::string wanted = std::string(REXCVAR_GET(sound_device));
+  SDL_AudioDeviceID target = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
+  if (!wanted.empty()) {
+    bool found = false;
+    for (const auto& [id, name] : ListDevices()) {
+      if (name == wanted) {
+        target = id;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      REXLOG_WARN("Sound out: the chosen device '{}' isn't connected; using the system default",
+                  wanted);
+    }
+  }
+  const int mode = std::clamp(int(REXCVAR_GET(sound_speakers)), 0, 4);
+  g_out.mode = Speakers(mode);
+  g_out.crossfeed = g_out.mode == Speakers::kHeadphones;
+  g_crossfeed.Reset();
+  int channels = 6;
+  if (g_out.mode == Speakers::kStereo || g_out.mode == Speakers::kHeadphones) channels = 2;
+  if (g_out.mode == Speakers::k71) channels = 8;
+  SDL_AudioSpec spec = {SDL_AUDIO_F32, channels, kRate};
   SDL_AudioSpec device = {};
-  g_out.device_channels = int(kChannels);
-  g_out.stream =
-      SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, DeviceWants, nullptr);
-  if (g_out.stream &&
+  g_out.device_channels = channels;
+  g_out.stream = SDL_OpenAudioDeviceStream(target, &spec, DeviceWants, nullptr);
+  if (g_out.stream && g_out.mode == Speakers::kAuto &&
       SDL_GetAudioDeviceFormat(SDL_GetAudioStreamDevice(g_out.stream), &device, nullptr) &&
       device.channels <= 2) {
     SDL_DestroyAudioStream(g_out.stream);
     spec.channels = 2;
     g_out.device_channels = 2;
-    g_out.stream =
-        SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, DeviceWants, nullptr);
+    g_out.stream = SDL_OpenAudioDeviceStream(target, &spec, DeviceWants, nullptr);
   }
   if (!g_out.stream) {
     REXLOG_ERROR("Sound out: no audio device: {}", SDL_GetError());
+    g_out.device_name.clear();
     return false;
   }
   const SDL_AudioDeviceID id = SDL_GetAudioStreamDevice(g_out.stream);
+  SDL_GetAudioDeviceFormat(id, &device, nullptr);
   const char* name = SDL_GetAudioDeviceName(id);
-  REXLOG_INFO("Sound out: playing on '{}' ({} channels at {} Hz; we send {}), {} blocks of 5.33 ms "
-              "on their way at once",
-              name ? name : "?", device.channels, device.freq, g_out.device_channels, g_out.credits);
+  g_out.device_name = name ? name : "";
+  static const char* const kModes[] = {"automatic", "stereo", "headphones", "5.1", "7.1"};
+  REXLOG_INFO("Sound out: playing on '{}' ({} channels at {} Hz; we send {}, speakers {}), {} "
+              "blocks of 5.33 ms on their way at once",
+              g_out.device_name.empty() ? "?" : g_out.device_name, device.channels, device.freq,
+              g_out.device_channels, kModes[mode], REXCVAR_GET(sound_out_buffer_blocks));
   SDL_ResumeAudioDevice(id);
   return true;
 }
@@ -254,6 +382,8 @@ int ThreadMain(uint32_t generation) {
   auto last_report = std::chrono::steady_clock::now();
   uint64_t last_underruns = 0;
   uint64_t last_played = 0;
+  uint64_t stalled_at_played = ~0ull;
+  auto stalled_since = std::chrono::steady_clock::now();
   while (true) {
     {
       std::unique_lock<std::mutex> lock(g_out.mutex);
@@ -263,6 +393,25 @@ int ThreadMain(uint32_t generation) {
         break;
       }
       if (g_out.credits <= 0) {
+        // WATCHDOG: no block taken for 2 s while every credit is out = the
+        // device stopped asking (a chosen device unplugged: SDL doesn't move
+        // it to another). Open it again: by name if it's back, else the
+        // system default. (The game's mixer keeps waiting meanwhile.)
+        const uint64_t p = g_out.played.load(std::memory_order_relaxed);
+        const auto now = std::chrono::steady_clock::now();
+        if (p != stalled_at_played) {
+          stalled_at_played = p;
+          stalled_since = now;
+        } else if (now - stalled_since > std::chrono::seconds(g_out.stream ? 2 : 10)) {
+          // (No device at all: try again every 10 s, quietly after the first.)
+          const bool had_stream = g_out.stream != nullptr;
+          lock.unlock();
+          if (had_stream) {
+            REXLOG_WARN("Sound out: the device stopped taking sound; opening it again");
+          }
+          OpenDevice();
+          stalled_since = now;
+        }
         continue;
       }
       --g_out.credits;
@@ -327,10 +476,7 @@ void Unregister() {
     g_out.running = false;
   }
   g_out.wake.notify_all();
-  if (g_out.stream) {
-    SDL_DestroyAudioStream(g_out.stream);   // waits for DeviceWants to finish
-    g_out.stream = nullptr;
-  }
+  CloseDevice();
   // The thread ends on its own at its next wake-up (<= 100 ms); it's never
   // waited for here because this runs on a game thread that may hold locks
   // the callback needs.
@@ -352,6 +498,24 @@ void Submit(uint32_t frame) {
 }
 
 }  // namespace
+
+std::vector<std::string> PlaybackDevices() {
+  std::vector<std::string> names;
+  if (!SDL_WasInit(SDL_INIT_AUDIO)) return names;
+  for (const auto& d : ListDevices()) names.push_back(d.second);
+  return names;
+}
+
+std::string CurrentDevice() {
+  std::lock_guard<std::recursive_mutex> lock(g_device_mutex);
+  return g_out.device_name;
+}
+
+void Reopen() {
+  std::lock_guard<std::recursive_mutex> lock(g_device_mutex);
+  if (!g_out.running) return;   // not playing yet: the settings apply at the start
+  OpenDevice();
+}
 
 Stats GetStats() {
   Stats s;

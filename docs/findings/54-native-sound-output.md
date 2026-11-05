@@ -194,3 +194,58 @@ It is a candidate for the audio-heap damage seen once in a playtest (a crash
 freeing a sound object's buffers right after a music change: the next heap
 chunk's header overwritten), not a proven cause. The port's pull counts the
 free space up to the ring's end, so the overwrite can't happen any more.
+
+## 7. Output device and speakers (Options -> Audio)
+
+With the output stage the port's own, two rows under an **Output** heading
+in Options -> Audio choose where and how the sound plays. Both switch live:
+the device is closed and opened again (well under a second; the game's
+mixer just waits) and kept in `user/settings.toml`.
+
+| Row | Setting | Values |
+|---|---|---|
+| Output Device | `sound_device` (a device name, empty = default) | **System Default** (SDL's default device, which follows the system when it switches, e.g. headphones plugged in) or any connected playback device, by name |
+| Speakers | `sound_speakers` 0-4 | **Automatic**, Stereo, Headphones, 5.1 Surround, 7.1 Surround |
+
+What each speaker layout sends:
+
+* **Automatic** (the default): unchanged from s.2. 5.1 is asked for and
+  handed over as is; the system (SDL, PipeWire, Windows) fits it to the
+  speakers. Only a device that reports 1-2 channels once opened gets the
+  port's stereo mix.
+* **Stereo**: 2 channels, the port's own fold (ITU-R BS.775): front left /
+  right at full level, centre and surround at -3 dB, LFE left out (it only
+  repeats the low end of the other channels). Full level, so it is as loud
+  as a system's own fold; a peak over full scale goes through a soft knee
+  (untouched below 0.8, `tanh` above) instead of a flat cut.
+* **Headphones**: the stereo mix + crossfeed. On speakers each ear also
+  hears the other speaker, a little later and duller; on headphones a sound
+  panned hard to one side sits inside one ear. Each side, low-passed at
+  700 Hz (one-pole), 6 dB down and 0.3 ms (14 samples) late, is added to
+  the other side, then the level is brought down to 0.8 so the added low end
+  doesn't make it louder (the Bauer / bs2b recipe, simplified).
+* **5.1 Surround**: 6 channels in SDL's 5.1 order (the same as XAudio's). A
+  device with fewer channels gets SDL's own fold.
+* **7.1 Surround**: 8 channels (SDL's order FL FR FC LFE BL BR SL SR). The
+  game's surround pair plays on both the side and the back pair, each at
+  -3 dB (same total power), so no pair is silent.
+
+The device list is read each time the row is shown (`SDL_GetAudioPlaybackDevices`);
+the value box gets a short name (controller filler and the vendor before a
+`/` dropped, 16 letters), the card under the rows the full one. A chosen
+device that isn't connected keeps its place as "Not Connected", and the
+sound plays on the system default meanwhile (a warning in the log).
+
+**Watchdog**: a device opened by name that's unplugged stops asking for
+sound, and SDL doesn't move it to another device. When no block has been
+taken for 2 s with every credit out, the Sound Out thread opens the device
+again: by name if it's back, else the system default. With no device at all
+it tries every 10 s, quietly.
+
+Checks (test copy, console-driven Options): each layout switched live in a
+running level (the log's `Sound out: playing on ...` line shows 2 / 6 / 8
+channels sent), another device chosen and back, a launch with a device
+name that doesn't exist (warning, then the default; Headphones for a minute:
+11,256 blocks, 0 gaps). The layouts' sound itself still needs ears: on
+headphones, Headphones should keep hard-panned sounds from sitting inside
+one ear.
