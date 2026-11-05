@@ -275,6 +275,9 @@ uint32_t g_held_sets = 0;             // PlayerSetsMade() when it began
 uint32_t g_held_old_character = 0;    // the respawning player's character then
 int g_held_player = -1;
 int64_t g_held_since = 0;
+// (Section 5: the picker's held Crash <-> Coco picks, outfits.h HoldRespawns.)
+bool g_hold_respawns = false;         // Wear Skin: store, don't respawn
+int g_respawn_wanted_by = -1;         // the last player whose held pick wants one (-1 none)
 int64_t NowMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::steady_clock::now().time_since_epoch())
@@ -1652,7 +1655,13 @@ extern "C" REX_FUNC(sub_82123880) {
       const uint32_t key = CarbonKey(ctx, base, outfit);
       rebind = key && std::memcmp(Guest(g_render_of[p] + kRenderCarbonName), Guest(key), 8) != 0;
     }
-    if (IsCoco(old_skin) != IsCoco(new_skin)) {
+    if (IsCoco(old_skin) != IsCoco(new_skin) && g_hold_respawns) {
+      // Held by the co-op picker (outfits.h HoldRespawns): only the store
+      // below; ONE respawn for everyone's picks comes right before the
+      // chest closes (RespawnHeldPicks). Nothing is swapped on the actor:
+      // the respawn makes this player the other character.
+      g_respawn_wanted_by = p;
+    } else if (IsCoco(old_skin) != IsCoco(new_skin)) {
       // Crash <-> Coco: a different character; the game respawns the players,
       // each from their outfit (as it does for player 2).
       PreviewAwayForRespawn(ctx, base, p);  // (section 5b)
@@ -1685,6 +1694,30 @@ extern "C" REX_FUNC(sub_82123880) {
   }
   CallGame(__imp__sub_822E7880, ctx, base, Read32(game + kInventoryOf));
 }
+
+namespace outfits {
+bool ChangesCharacter(int p, int outfit) {
+  return ValidOutfit(outfit) && IsCoco(GameSkin(OutfitOf(p))) != IsCoco(GameSkin(outfit));
+}
+void HoldRespawns(bool hold) {
+  if (hold && !g_hold_respawns) g_respawn_wanted_by = -1;  // (a fresh round)
+  g_hold_respawns = hold;
+}
+bool RespawnHeldPicks(PPCContext& ctx, uint8_t* base) {
+  const int p = g_respawn_wanted_by;
+  g_respawn_wanted_by = -1;
+  const uint32_t game = Read32(kGameGlobal);
+  if (p < 0 || !game) return false;
+  // As an unheld pick does (section 5 above), once for all of them: the
+  // preview away (5b), the players back where the last picker stands (5c),
+  // the game's respawn (every player rebuilt from their stored outfit).
+  PreviewAwayForRespawn(ctx, base, p);
+  RespawnWhereTheyStand(p);
+  CallGame(__imp__sub_8227C5A0, ctx, base, game, uint32_t(p));
+  REXLOG_INFO("Outfits: one respawn for the chest's Crash <-> Coco picks (last: player {})", p + 1);
+  return true;
+}
+}  // namespace outfits
 
 // --- 6. The front end's outfit packages: give back what was taken --------------
 //

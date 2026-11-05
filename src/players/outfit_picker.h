@@ -46,4 +46,13 @@ void FilterPad(uint32_t user, uint8_t* pad);
 // mask). Asked by players/more_players.cpp (sub_82235CB8).
 bool JustClosed();
 
+// The picker is open right now (from its first frame until it closes; any
+// thread). A menu for the keyboard (menu_input::MenuOnScreen): a Crash <->
+// Coco pick respawns the players while the picker stays open, and the
+// respawn clears the front end's "a menu is on screen" bit (+8594 0x80), so
+// the keys went back to their play jobs and a keyboard player could no
+// longer Wear (Enter) or keep (Escape): a soft lock (2026-11-01: player 1 on
+// keys browsing Coco, player 4 picked Old Skool Coco).
+bool IsOpen();
+
 }  // namespace outfit_picker

@@ -71,6 +71,14 @@
 //     own Wear Skin for that player (outfits.cpp section 5). The player is
 //     then READY. B = ready -> not ready; not ready -> leave as they are
 //     (ready, nothing changed). Locked looks can be looked at, not worn.
+//   * A CRASH <-> COCO PICK (2026-11-05) is only HELD (the player is
+//     ready): wearing it respawns the players, and a respawn with the chest
+//     still open for the others kept breaking the open screen (the preview
+//     freed, the screen and the "menu on screen" bit cleared: one fix after
+//     another, the last a keyboard soft lock). Once everyone is ready the
+//     held picks are worn one by one WITHOUT a respawn (outfits.h
+//     HoldRespawns), then ONE respawn rebuilds everyone and the chest closes
+//     in that frame, as the original's Wear Skin does (exit 850).
 //   * A player whose controller goes (unplugged, or taken on the Players
 //     screen) while choosing is READY at once with the outfit they wear
 //     (2026-10-30): the screen never waits for someone who can't answer;
@@ -596,6 +604,7 @@ struct Player {
   int row = kRowOutfit;
   bool ready = false;
   bool waiting = false;      // in the wear queue
+  bool held_pick = false;    // ready with a Crash <-> Coco pick, worn at the close (Wear)
   uint16_t held = 0;         // buttons held at the last update (edges)
   int stick_dir = 0;         // -1 / 0 / 1 per axis direction held (vertical*3 + horizontal)
   Clock::time_point repeat_at{};
@@ -625,6 +634,7 @@ struct State {
   Clock::time_point queue_since{};
   Clock::time_point opened_at{};
   bool close = false;        // the decision takes ExitBack at its next ask
+  bool applying = false;     // everyone ready: the held picks are being worn (no input)
   std::vector<std::pair<uint32_t, std::u16string>> shown;  // texts set (only changes are written)
   std::map<uint32_t, std::u16string> desc_shown;             // descriptions set (by key or ours)
   // THE MOUSE (the keyboard's player only, on their own card): what can be
@@ -802,8 +812,11 @@ void RunQueue(PPCContext& ctx, uint8_t* base) {
   }
   if (!PackageReady(ctx, base)) {
     if (Clock::now() - g.queue_since > std::chrono::seconds(15)) {
-      pl.ready = false;
-      done("timed out loading");
+      // (At the close the player can't choose again: the others' held
+      // picks are already stored and their respawn must come. They keep
+      // what they wear.)
+      if (!g.applying) pl.ready = false;
+      done(g.applying ? "timed out loading (keeps their outfit), not" : "timed out loading");
     }
     return;
   }
@@ -1607,6 +1620,13 @@ void Wear(PPCContext& ctx, uint8_t* base, int p) {
   Player& pl = g.players[p];
   if (!Available(pl.pick)) return;
   pl.ready = true;
+  if (outfits::ChangesCharacter(p, OutfitOfPick(pl.pick))) {  // Crash <-> Coco: worn at the close
+    pl.held_pick = true;
+    scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    REXLOG_INFO("Outfit picker: player {} picked outfit {}: held until everyone is ready (a respawn)", p + 1,
+                OutfitOfPick(pl.pick));
+    return;
+  }
   pl.waiting = true;
   if (g.queue.empty()) g.queue_since = Clock::now();
   g.queue.push_back(p);
@@ -1617,6 +1637,7 @@ void Keep(PPCContext& ctx, uint8_t* base, int p) {
   Player& pl = g.players[p];
   pl.pick = PickOfOutfit(outfits::OutfitOf(p));
   pl.ready = true;
+  pl.held_pick = false;
   scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
 }
 // Does player p have a device (a controller, or the keyboard) right now?
@@ -1626,6 +1647,7 @@ bool HasController(int p) {
 }
 void Unready(PPCContext& ctx, uint8_t* base, int p) {
   g.players[p].ready = false;
+  g.players[p].held_pick = false;  // (choosing again: a held pick is dropped)
   scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
 }
 
@@ -1733,6 +1755,7 @@ void Slide() {
 
 void Open(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   g = State{};
+  outfits::HoldRespawns(false);  // (a picker closed while wearing: never left holding)
   g.open = true;
   g.screen = screen;
   g.opened_at = Clock::now();
@@ -1846,7 +1869,9 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
     return;
   }
   Slide();
-  const bool input = g.settled && g.exit_step < 0;  // (not while sliding in / out)
+  // (Not while sliding in / out, nor while the held picks are worn at the
+  // close: a B then would reopen the chest with a respawn under way.)
+  const bool input = g.settled && g.exit_step < 0 && !g.applying;
   if (input) Mouse(ctx, base);
   for (int p = 0; p < kMaxPlayers; ++p) {
     Player& pl = g.players[p];
@@ -1902,6 +1927,31 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   for (const Player& pl : g.players) {
     if (pl.joined && (!pl.ready || pl.waiting)) all = false;
   }
+  // EVERYONE READY WITH HELD PICKS: they're worn now (queued, as A does;
+  // Wear Skin stores them without a respawn), and once the last is worn ONE
+  // respawn rebuilds every player; outfits::PreviewHeld() is then true and
+  // the branch below closes the chest in this same frame.
+  if (all && g.queue.empty() && g.frames > 10 && g.exit_step < 0 && !g.applying) {
+    for (int p = 0; p < kMaxPlayers; ++p) {
+      Player& pl = g.players[p];
+      if (!pl.joined || !pl.held_pick) continue;
+      pl.held_pick = false;
+      pl.waiting = true;
+      if (g.queue.empty()) g.queue_since = Clock::now();
+      g.queue.push_back(p);
+    }
+    if (!g.queue.empty()) {
+      g.applying = true;
+      outfits::HoldRespawns(true);
+      all = false;
+      REXLOG_INFO("Outfit picker: everyone is ready: wearing {} held pick(s)", g.queue.size());
+    }
+  }
+  if (g.applying && g.queue.empty()) {
+    outfits::HoldRespawns(false);
+    g.applying = false;
+    outfits::RespawnHeldPicks(ctx, base);
+  }
   // Everyone ready: the models go, the panels slide out (the opening played
   // backwards), then the screen closes (the decision's ExitBack).
   if (all && g.queue.empty() && g.frames > 10 && g.exit_step < 0 && outfits::PreviewHeld()) {
@@ -1927,4 +1977,5 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
 
 namespace outfit_picker {
 bool Enabled() { return REXCVAR_GET(outfit_picker); }
+bool IsOpen() { return g_mute.load(std::memory_order_relaxed); }  // (g_mute: set at Open, cleared at the close)
 }  // namespace outfit_picker

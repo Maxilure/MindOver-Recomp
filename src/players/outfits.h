@@ -42,6 +42,7 @@
 #include <string>
 
 #include <rex/cvar.h>
+#include <rex/ppc/context.h>
 
 REXCVAR_DECLARE(int32_t, outfit_player1);
 REXCVAR_DECLARE(int32_t, outfit_player2);
@@ -153,5 +154,23 @@ std::array<int8_t, 4> CurrentPickBytes();
 // (the screen's own and outfit_previews') may not be built yet (section 5b of
 // outfits.cpp). Turns false once the players are made again.
 bool PreviewHeld();
+
+// ONE RESPAWN, AT THE CHEST'S CLOSE (2026-11-05). In the original a Crash <->
+// Coco pick respawns the players and closes the chest in the same frame. The
+// co-op picker used to respawn at each such pick with the chest still open
+// for the others, and the respawn kept resetting things the open screen
+// needed (the preview freed, the shown screen and the "menu on screen" bit
+// cleared, the spawn spot: sections 5b-5c, players/outfit_picker.h IsOpen).
+// Now the picker holds those picks until everyone is ready:
+//   * ChangesCharacter(p, outfit): would wearing it make player p another
+//     character (Crash <-> Coco) = a respawn?
+//   * HoldRespawns(true) while it wears the held picks: Wear Skin stores the
+//     outfit (packages too) but doesn't respawn, and remembers who asked;
+//   * RespawnHeldPicks(): then the ONE respawn (every player is rebuilt from
+//     their stored outfit), right before the chest closes. False = no held
+//     pick asked for one.
+bool ChangesCharacter(int p, int outfit);
+void HoldRespawns(bool hold);
+bool RespawnHeldPicks(PPCContext& ctx, uint8_t* base);
 
 }  // namespace outfits

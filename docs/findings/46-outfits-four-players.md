@@ -553,6 +553,52 @@ unplugged = "player 2 has no controller: ready (keeps their outfit)";
 player 1's B = chest closed, the box came up for player 2; plugged back in,
 player 2's press resumed the game.
 
+## 3k. Keyboard players stuck after another player's Coco pick
+
+With a player on keyboard and mouse still choosing, another player's
+Crash <-> Coco pick (the respawn of s.3f) left the keyboard player unable
+to Wear (Enter) or keep their outfit (Escape): the chest stayed open for
+good. Controllers kept working. The keys pick their menu or play jobs from
+the game's "a menu is on screen" bit (front end +8594 0x80, `menu_input.cpp`
+`MenuOnScreen`); the respawn clears it, and the picker puts its screen back
+(s.3f) but not the bit. So the keys went back to their play jobs. Now the
+open picker counts as a menu by itself (`outfit_picker::IsOpen`).
+
+Checked with player 1 on keys and a fake controller as player 4: player 1
+on Coco, player 4 wears Old Skool Coco (respawn), then player 1's Enter =
+wears Coco and the chest closes; a second run with Escape = keeps their
+outfit, the chest closes, and the next Escape opens the pause menu.
+
+## 3l. One respawn, at the close
+
+Sections 3f, 3g and 3k share one cause. In the original a Crash <-> Coco
+pick respawns the players (sub_8227C5A0) and closes the chest in the same
+frame (Wear Skin's exit 850), so nothing on the screen had to survive the
+respawn. The co-op picker kept the chest open for the others, and each
+respawn reset something the open screen relied on: the preview character
+(freed: a crash, 3f), the front end's shown screen, the spawn spot (3g), the
+"menu on screen" bit (3k).
+
+Now the picker HOLDS such picks: the player is ready, their card shows
+"Ready!" and the pick's model, but nothing is worn. Once every joined player
+is ready, the held picks go through the usual wear queue (the screen's shown
+entry, its package, Wear Skin) with respawns held back
+(`outfits::HoldRespawns`: Wear Skin stores the outfit and its package but
+skips the respawn). After the last one, ONE respawn runs
+(`outfits::RespawnHeldPicks`: preview away, spawn spot, sub_8227C5A0), and
+the chest closes in that frame, as in the original. One respawn is enough:
+it rebuilds every player from their stored outfit. Input is off while the
+held picks are worn, so nobody can reopen the chest with a respawn under
+way. Picks within one character (Crash looks, colours, Coco <-> Old School)
+are still worn at once, on the spot. The fixes of 3f, 3g and 3k stay as
+safety nets.
+
+Checked with fake controllers: players 1 (keys) + 4 holding Coco / Old
+School = both worn at the close, one respawn, both back as Coco; four players
+(two Coco picks held, two Crash looks worn at once, one held Coco dropped by
+B and changed to a Crash look) = portraits Coco, Crash, Crash, Coco; one
+player Crash -> Coco and back.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a

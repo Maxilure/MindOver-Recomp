@@ -59,6 +59,7 @@
 // and answered for, owner, caller), START presses, owner changes, interactions.
 // =============================================================================
 #include "more_players.h"
+#include "outfit_picker.h"
 #include "../data/fight_tree.h"
 
 #include "../input/players.h"
@@ -245,6 +246,10 @@ bool MenuOnScreen() {
   const uint32_t game = Read32(kGameGlobal);
   const uint32_t fe = game ? Read32(game + 52) : 0;
   if (!fe) return false;
+  // THE CHEST'S PICKER COUNTS AS A MENU even when the game's bit says no:
+  // a Crash <-> Coco pick respawns the players with the picker still open,
+  // and the respawn clears +8594 0x80 (players/outfit_picker.h IsOpen).
+  if (outfit_picker::IsOpen()) return true;
   return (*Guest(fe + kFrontEndFlags2) & (kMenuOnScreen | kInMainMenus)) != 0 ||
          (*Guest(fe + kConfirmBox) & kConfirmShowing) != 0 || g_upgrade_screen.load();
 }
