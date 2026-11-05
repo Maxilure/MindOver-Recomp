@@ -16,7 +16,7 @@ you, Xelu! Not game data.
 | `ps4/` | PS4 (Xelu's "Others") | Controller Icons: PlayStation 4 (Automatic: other Sony pads) |
 | `switch/` | Switch | Controller Icons: Switch (Automatic: Nintendo pads) |
 | `controllers/` | the whole-controller outlines (Xbox, PS5, PS4, Switch; `switch-apart.png` = the pack's Switch_Controllers_Separate, the two Joy-Cons apart, used for the Switch cards) and the keyboard + mouse picture | the Players screen's device pictures |
-| `controllers/players/` | made from `controllers/` by `tools/make_player_pictures.py`: each controller filled in a player's colour with a navy edge, a faint "empty" one; plus the selection rings and the cards' backing (simple rounded rectangles drawn by that script, not from the pack) | the Players screen (`src/players/players_setup.h`) |
+| `controllers/players/` | made from `controllers/` by `tools/make_player_pictures.py`: each controller filled in a player's colour with a navy edge, a faint "empty" one of no brand (the Xbox silhouette with the port's own D-pad, plain round buttons and sticks drawn on it); plus the selection rings and the cards' backing (simple rounded rectangles drawn by that script, not from the pack) | the Players screen (`src/players/players_setup.h`) |
 
 Only the pictures the game's prompts need are here (one 100 x 100 PNG per
 key or button, unchanged). The port draws them into the game's own prompt

@@ -218,6 +218,9 @@ struct Screen {
     uint32_t back = 0, glass = 0, aura = 0, ring = 0, pic = 0, title = 0, info = 0, style = 0, left = 0, right = 0;
   };
   std::vector<PlyCard> ply_cards;
+  // Player 1's card: keys + controller side by side (options_page.cpp
+  // PlyPairKeys / PlyPairPad), instead of PlyPic0 while they have a controller.
+  uint32_t ply_pair_keys = 0, ply_pair_pad = 0;
   // Our copy of the panel's hinge, drawn over the cards (options_page.cpp
   // PlyHinge), and whether the game's own one (under player 1's card) is
   // hidden yet this visit (it goes on ply_hidden: back at Exit).
@@ -560,6 +563,8 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     c.right = FindPicture(ctx, base, g.page, fmt::format("PlyRight{}", k));
     g.ply_cards.push_back(c);
   }
+  g.ply_pair_keys = FindPicture(ctx, base, g.page, "PlyPairKeys");
+  g.ply_pair_pad = FindPicture(ctx, base, g.page, "PlyPairPad");
   g.ply_hinge = FindPicture(ctx, base, g.page, "PlyHinge");
   for (int i = 0; i < options_page::kPlyPrompts; ++i) {
     g.ply_prompt[size_t(i)] = FindText(ctx, base, g.page, fmt::format("PlyPrompt{}", i));
@@ -1206,6 +1211,12 @@ void ShowPlayersElements(uint8_t* base, bool shown) {
   }
   for (const uint32_t e : g.ply_prompt) scrooby::SetVisible(base, e, shown);
   scrooby::SetVisible(base, g.ply_hinge, shown);
+  // Player 1's pair: hidden with the rest, shown only by RefreshPlayers (and
+  // only while player 1 has a controller).
+  if (!shown) {
+    scrooby::SetVisible(base, g.ply_pair_keys, false);
+    scrooby::SetVisible(base, g.ply_pair_pad, false);
+  }
 }
 
 // While the screen is up the game's own prompts (FE_Buttons: Back...) and
@@ -1391,6 +1402,8 @@ void RefreshPlayers(Env& env) {
     const players_setup::ShownDevice* d = ShownDevice(boxes[size_t(k)], k);
     drawn += fmt::format("{}:{}:{}:{}:{};", d ? d->key : "", d ? d->picture : -1, boxes[size_t(k)].has_pad,
                          players_setup::PadIcons(k), boxes[size_t(k)].detected_style);
+    // Every device (player 1's card names its controller even on keys).
+    for (const players_setup::ShownDevice& m : boxes[size_t(k)].devices) drawn += m.key + ",";
   }
   if (drawn == g.ply_drawn) return;
   g.ply_drawn = drawn;
@@ -1467,6 +1480,48 @@ void RefreshPlayers(Env& env) {
     } else {
       info = tr(u"Press any button to join");
       colour = kPlyCyan;
+    }
+    // PLAYER 1 WITH A CONTROLLER (2026-11-05): the card showed only the device
+    // used last, so on keys a controller of player 1's was nowhere to be seen
+    // (nor that X moves it). Now both pictures, side by side: keys left, the
+    // controller right, the one in use bright and the other dimmed; the name
+    // line names the CONTROLLER (the keyboard tells itself). The same while a
+    // controller is pointed at player 1's card in a move: the one it would
+    // become, bright.
+    if (k == 0 && g.ply_pair_keys && g.ply_pair_pad) {
+      const players_setup::ShownDevice* pad = nullptr;
+      bool preview = false;  // a moved controller shown where it would go
+      if (dropping && selected && players_setup::CanMoveTo(0)) {
+        for (const players_setup::ShownDevice& m : boxes[size_t(mover)].devices) {
+          if (!m.keyboard) {
+            pad = &m;
+            preview = true;
+            break;
+          }
+        }
+      }
+      if (!pad && !(dropping && selected)) {
+        for (const players_setup::ShownDevice& m : b.devices) {
+          if (!m.keyboard) {
+            pad = &m;
+            break;
+          }
+        }
+      }
+      const bool pair = pad != nullptr && !(styling && !faces.empty());
+      scrooby::SetVisible(base, g.ply_pair_keys, pair);
+      scrooby::SetVisible(base, g.ply_pair_pad, pair);
+      if (pair) {
+        picture = players_setup::kPicEmpty;  // (PlyPic0 hidden below)
+        scrooby::SetFrame(ctx, base, g.ply_pair_keys, uint32_t(players_setup::kPicKeyboard));
+        scrooby::SetFrame(ctx, base, g.ply_pair_pad, uint32_t(pad->picture));
+        constexpr uint8_t kDim = 0x70;
+        const bool keys_in_use = !preview && prompt_icons::KeysLookFor(0);
+        scrooby::SetAlpha(ctx, base, g.ply_pair_keys, keys_in_use ? 0xFF : kDim);
+        scrooby::SetAlpha(ctx, base, g.ply_pair_pad, keys_in_use ? kDim : 0xFF);
+        if (!preview && k != mover) info = Utf16(pad->name);
+      }
+      scrooby::SetVisible(base, c.pic, !pair);
     }
     scrooby::SetFrame(ctx, base, c.pic, uint32_t(picture));
     scrooby::SetText(ctx, base, c.info, info);

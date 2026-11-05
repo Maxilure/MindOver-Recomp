@@ -146,6 +146,15 @@ constexpr int kPlyInfoTop[2] = {100, 6};    // the name line's box top
 constexpr int kPlyStyleTop[2] = {122, 28};  // the button pictures line (PlyStyle)
 constexpr int kPlyNumberCentreY[2] = {30, 124};  // the number's centre
 constexpr int kPlyNumberInset = 30;         // its centre, from the card's outer side
+// PLAYER 1'S PAIR (2026-11-05): player 1 always has the keyboard and mouse,
+// and may have a controller too; with one, the card shows BOTH pictures side
+// by side (keys left, controller right; the one in use bright, the other
+// dimmed) instead of the single centred one, so a controller on player 1
+// can be seen while playing on keys. Smaller boxes, centred a little right
+// of the card's middle: the big "1" sits in the card's top left corner.
+constexpr int kPlyPairSide = 66;     // each picture's box (square)
+constexpr int kPlyPairGap = 6;       // between the two boxes
+constexpr int kPlyPairCentreX = 124; // the pair's centre, from the card's left
 constexpr int kPlyArrowSide = 28;    // the chooser's arrows, beside the picture
 constexpr int kPlyArrowInset = 26;   // from the card's left / right edge
 constexpr int kPlyPrompts = 4;       // the prompt row: up to four

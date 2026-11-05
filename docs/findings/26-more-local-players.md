@@ -2380,3 +2380,30 @@ Tested with a fake controller for player 2 and the scripted one for player
 unplugged (`p2.unplug`), the box offers the take-over, player 1's START
 gives states `1 2` (player 1 the mask) and then `2 0` within 0.1 s; player
 1 walks; no errors.
+
+## 59. Player 1's card shows the keyboard AND the controller
+
+Player 1 always has the keyboard and mouse, and may have a controller as
+well. The card used to show one device: the one used last. Playing on keys,
+a controller assigned to player 1 was nowhere on the screen, so there was no
+way to tell it was there, or that X (Move) could hand it to someone else.
+
+Now, while player 1 has a controller, the card shows both pictures side by
+side: the keyboard on the left, the controller on the right (two smaller
+picture elements, `PlyPairKeys` / `PlyPairPad`, built only on player 1's card
+by `options_page.cpp`, centred a little right of the middle because the big
+"1" sits in the top left corner). The device in use is drawn at full
+strength, the other dimmed (alpha 0x70), and they swap as soon as the other
+one is used. The name line names the controller (the keyboard picture
+speaks for itself). Without a controller the card is as before: one centred
+keyboard picture, "Keyboard and Mouse". During a move onto player 1, the
+pair shows the incoming controller at full strength. Code:
+`options_menu.cpp` `RefreshPlayers` (the pair block before the card's
+picture frame is set).
+
+Checked by the debug console with a fake PlayStation controller set to
+player 1 in a copy of the controls file (pause menu, in a level): on keys
+the keyboard was bright and the controller dim, with the controller's name;
+a trigger press on the controller swapped them; X, right showed "Moving to
+Player 2" with the controller on player 2's card; A moved it, and player 1's
+card went back to the single keyboard picture. 0 errors.

@@ -288,6 +288,9 @@ std::vector<Bytes> PlayersSprites(Parts* parts) {
 //   PlyRing<k>      the selection ring round it (frames: yellow = selected,
 //                   players 1-4's colours = the controller being moved)
 //   PlyPic<k>       the device picture (frames: players_setup.h Picture)
+//   PlyPairKeys / PlyPairPad  player 1's card only: the keyboard and the
+//                   controller side by side (options_page.h kPlyPair*),
+//                   shown instead of PlyPic0 while player 1 has a controller
 //   PlyAura<k>      the glow of the player's colour from the card's outer
 //                   corner (over the glass; players_setup.h AuraName)
 //   PlyTitle<k>     the player's number, big, in that corner
@@ -329,6 +332,16 @@ void AddPlayersCards(const Parts& p, std::vector<Node>& elements) {
         !picture(fmt::format("PlyPic{}", k), players_setup::PictureFrames(k), x + (kPlyCardW - kPlyPicSide) / 2,
                  top - kPlyPicCentre[k / 2] - kPlyPicSide / 2, kPlyPicSide, kPlyPicSide, 0xFFFFFFFF)) {
       return;
+    }
+    if (k == 0) {  // player 1's pair (keys left, controller right)
+      const int cx = x + kPlyPairCentreX, cy = top - kPlyPicCentre[0];
+      const int y0 = cy - kPlyPairSide / 2;
+      if (!picture("PlyPairKeys", players_setup::PictureFrames(0), cx - kPlyPairGap / 2 - kPlyPairSide, y0,
+                   kPlyPairSide, kPlyPairSide, 0xFFFFFFFF) ||
+          !picture("PlyPairPad", players_setup::PictureFrames(0), cx + kPlyPairGap / 2, y0, kPlyPairSide,
+                   kPlyPairSide, 0xFFFFFFFF)) {
+        return;
+      }
     }
     for (int side = 0; side < 2; ++side) {
       Node a = p.arrow;

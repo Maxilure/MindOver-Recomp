@@ -5,7 +5,8 @@
 #
 # WHAT: the Players screen (src/players/players_setup.h) shows each player's
 # controller FILLED in that player's colour with a navy edge, a faint
-# controller on an empty card, a selection ring round a card and an opaque
+# controller of no brand on an empty card (the port's own drawing on the Xbox
+# silhouette, generic()), a selection ring round a card and an opaque
 # teal backing under each card's glass (the screen's design, 2026-10-29).
 # This script makes those PNGs from Xelu's controller outlines (CC0,
 # assets/prompts/controllers/*.png) into assets/prompts/controllers/players/.
@@ -89,6 +90,63 @@ def filled(name, colour, opacity=1.0, light_inside=False):
     return out.resize((w, h), Image.BOX)
 
 
+def generic(colour, opacity=1.0):
+    """A controller of NO brand (the empty cards' picture: a free player has
+    no controller yet, and the Xbox pad shown there read as "an Xbox
+    controller is waiting"). Only the SILHOUETTE comes from Xelu's Xbox
+    outline; the details are the port's own simple drawing: a D-pad cross,
+    four plain round buttons (no letters, no symbols) and two round sticks
+    placed side by side, like most generic gamepad icons; no triggers (the shoulder
+    buttons stay).
+
+    HOW: the body is found like in filled() (flood fill from the edge), then
+    blurred and cut at half (rounds off the bumpers' inner lines, which left
+    ragged bits on the shoulders), and its rim drawn as an even navy stroke
+    (the body minus itself eroded by ~1.5 px)."""
+    im = Image.open(SRC / "xbox.png").convert("RGBA")
+    w, h = im.size
+    big = im.resize((w * SCALE, h * SCALE), Image.LANCZOS)
+    a = np.asarray(big.getchannel("A").filter(ImageFilter.MaxFilter(3))).astype(float) / 255
+    barrier = Image.fromarray(((a > 0.5) * 255).astype(np.uint8))
+    pad = Image.new("L", (w * SCALE + 2, h * SCALE + 2), 0)
+    pad.paste(barrier, (1, 1))
+    ImageDraw.floodfill(pad, (0, 0), 128)
+    outside = np.asarray(pad)[1:-1, 1:-1] == 128
+    # No triggers: the two tips pointing up (rows 26-29 of the 128-pixel
+    # picture) are cut off; the shoulder buttons below them stay. (Cutting
+    # down to the body's top line, row 35, took the shoulders too: too bare.)
+    outside[: 30 * SCALE] = True
+    # The smoothed silhouette and its rim.
+    sil = Image.fromarray(((~outside) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(5))
+    sil = sil.point(lambda v: 255 if v > 127 else 0)
+    rim = np.asarray(sil).astype(float) - np.asarray(sil.filter(ImageFilter.MinFilter(13))).astype(float)
+    rim = np.asarray(Image.fromarray(rim.astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0))).astype(float) / 255
+    # The details, in 1x coordinates of the 128-pixel picture.
+    det = Image.new("L", (w * SCALE, h * SCALE), 0)
+    g = ImageDraw.Draw(det)
+    width = 7  # line weight at 4x (about the outlines' own)
+
+    def circle(cx, cy, r):
+        g.ellipse(((cx - r) * SCALE, (cy - r) * SCALE, (cx + r) * SCALE, (cy + r) * SCALE), outline=255, width=width)
+
+    cx, cy, arm, half = 34, 61, 9, 3.2  # D-pad: centre, arm length, half the arm's width
+    cross = [(cx - half, cy - arm), (cx + half, cy - arm), (cx + half, cy - half), (cx + arm, cy - half),
+             (cx + arm, cy + half), (cx + half, cy + half), (cx + half, cy + arm), (cx - half, cy + arm),
+             (cx - half, cy + half), (cx - arm, cy + half), (cx - arm, cy - half), (cx - half, cy - half)]
+    g.polygon([(x * SCALE, y * SCALE) for x, y in cross], outline=255, width=width)
+    for dx, dy in ((0, -7), (7, 0), (0, 7), (-7, 0)):  # the four buttons, a diamond
+        circle(94 + dx, 61 + dy, 3.4)
+    circle(50, 80, 7.5)  # the sticks
+    circle(78, 80, 7.5)
+    det = np.asarray(det.filter(ImageFilter.GaussianBlur(1.0))).astype(float) / 255
+    lines = np.maximum(rim, det)
+    body = np.asarray(sil.filter(ImageFilter.GaussianBlur(1.2))).astype(float) / 255
+    rgb = np.array(colour, float) * (1 - lines[..., None]) + NAVY * lines[..., None]
+    alpha = np.maximum(lines, body) * opacity
+    out = Image.fromarray(np.dstack([rgb, alpha * 255]).round().astype(np.uint8), "RGBA")
+    return out.resize((w, h), Image.BOX)
+
+
 def rounded(w, h, radius, fill=None, bands=()):
     """A rounded rectangle at 4x, averaged down: `fill` = a function of the
     row (0..1) giving RGBA, or `bands` = (inset, thickness, RGBA) outside-in."""
@@ -149,7 +207,7 @@ def main():
         for pad in PADS:
             filled(SOURCES.get(pad, pad), colour, light_inside=pad in LIGHT_INSIDE).save(
                 OUT / f"{pad}_p{p + 1}.png", optimize=True)
-    filled("xbox", (255, 255, 255), 0.5).save(OUT / "empty.png", optimize=True)
+    generic((255, 255, 255), 0.5).save(OUT / "empty.png", optimize=True)  # no brand: nobody has a controller yet
     navy = (0x14, 0x2F, 0x5E, 255)
     ring_colours = [(0xFD, 0xED, 0x06, 255)] + [c + (255,) for c in COLOURS]
     for i, c in enumerate(ring_colours):
