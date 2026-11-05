@@ -269,6 +269,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static recompiler and runtime that make this possible
 - **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator ReXGlue's runtime and GPU emulation build on
 - **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece (Those Awesome Guys): the keyboard, mouse and controller pictures in the button prompts (Light and Dark keys; Xbox Series, PlayStation 5 / 4 and Switch buttons)
+- **[Icons8](https://icons8.com)**: the Windows installer's wrench icon ("Support", CC BY-ND 3.0)
 - **Claude** (Anthropic): AI assistant that wrote most of the code and documentation
 - **You?** Every contribution gets listed in [CREDITS.md](CREDITS.md)
 
@@ -280,5 +281,6 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 - The marker pictures in `assets/markers/` were drawn for this port, after the save-slot numbers of *Crash of the Titans* (Radical Entertainment, 2007), to match the game's own markers.
 - The jack symbol in `assets/icons/` is a silhouette of Aku Aku's mask made for this port, traced from a render of *Crash of the Titans*' mask model.
 - The keyboard, mouse and controller pictures in `assets/prompts/` are from [Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/) by Nicolae "Xelu" Berbece, released into the public domain (**CC0**).
+- The Windows installer's icon, `launcher/icon/installer.ico`, is the "Support" icon by [Icons8](https://icons8.com), licensed **[CC BY-ND 3.0](https://creativecommons.org/licenses/by-nd/3.0/)** and used unchanged. The game's own icon is made on the player's computer from their disc (`tools/make_icon.py`); it is not in this repository.
 
 <sub>This is an unofficial fan project for game preservation. It is not affiliated with, endorsed by, or sponsored by Activision, Sierra Entertainment, Radical Entertainment, or Microsoft. *Crash Bandicoot* and *Crash: Mind over Mutant* are trademarks of their respective owners. This repository contains no game code, assets or data: you need your own legally obtained copy of the game.</sub>

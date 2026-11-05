@@ -133,4 +133,7 @@ if(WIN32)
     # ole32 / shell32 / uuid: shortcuts (COM's IShellLink), known folders;
     # advapi32: the registry (the Apps list, PATH).
     target_link_libraries(mind_over_recomp PRIVATE ole32 shell32 uuid advapi32)
+    # The exe's icon: Icons8's wrench, CC BY-ND 3.0, unchanged (icon/README.md).
+    enable_language(RC)
+    target_sources(mind_over_recomp PRIVATE installer.rc)
 endif()

@@ -47,6 +47,16 @@ engineering, testing, bug reports, corrections, art. See
 - In `assets/prompts/` (one folder per set, unchanged PNGs; see its
   [README](assets/prompts/README.md)).
 
+### Icons8: the installer's icon
+
+- The **Support** icon (a violet wrench) by **[Icons8](https://icons8.com)**,
+  from [iconsdb.com](https://www.iconsdb.com/violet-icons/support-icon.html):
+  the icon of the Windows installer, *Mind over Recomp.exe*
+  (`launcher/icon/installer.ico`, unchanged).
+- Licence: **Creative Commons Attribution-NoDerivs 3.0** (CC BY-ND 3.0):
+  used as it is, with this link to [icons8.com](https://icons8.com). See its
+  [README](launcher/icon/README.md).
+
 ## Projects this port is built on
 
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static

@@ -1,0 +1,6 @@
+// launcher/installer.rc -- the Windows installer's icon ("Mind over Recomp.exe")
+//
+// Resource id 1 = the exe's first icon group: Explorer shows it, and SDL
+// gives it to the installer's window (taskbar). The picture is Icons8's
+// "Support" wrench, CC BY-ND 3.0, used unchanged (icon/README.md).
+1 ICON "icon/installer.ico"
