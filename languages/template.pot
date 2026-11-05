@@ -671,51 +671,51 @@ msgstr ""
 msgid "Automatic (not used)"
 msgstr ""
 
-#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:263 src/cheats/cheat_menu.cpp:148
 msgid "Player {}"
 msgstr ""
 
-#: src/input/controls_menu.cpp:277
+#: src/input/controls_menu.cpp:280
 msgid "Action"
 msgstr ""
 
-#: src/input/controls_menu.cpp:279
+#: src/input/controls_menu.cpp:282
 msgid "Key 1"
 msgstr ""
 
-#: src/input/controls_menu.cpp:280
+#: src/input/controls_menu.cpp:283
 msgid "Key 2"
 msgstr ""
 
-#: src/input/controls_menu.cpp:304
+#: src/input/controls_menu.cpp:307
 msgid "(menus)"
 msgstr ""
 
-#: src/input/controls_menu.cpp:331
+#: src/input/controls_menu.cpp:334
 msgid "press a key..."
 msgstr ""
 
-#: src/input/controls_menu.cpp:348
+#: src/input/controls_menu.cpp:351
 msgid "Press the new key for {}."
 msgstr ""
 
-#: src/input/controls_menu.cpp:359
+#: src/input/controls_menu.cpp:362
 msgid "{0} removed from {1}."
 msgstr ""
 
-#: src/input/controls_menu.cpp:372
+#: src/input/controls_menu.cpp:375
 msgid "Cancelled."
 msgstr ""
 
-#: src/input/controls_menu.cpp:378
+#: src/input/controls_menu.cpp:381
 msgid "{0} -> {1} (taken from {2})."
 msgstr ""
 
-#: src/input/controls_menu.cpp:380
+#: src/input/controls_menu.cpp:383
 msgid "{0} -> {1}."
 msgstr ""
 
-#: src/input/controls_menu.cpp:387
+#: src/input/controls_menu.cpp:390
 msgid "Couldn't save the controls file (see the log)."
 msgstr ""
 
@@ -1254,41 +1254,58 @@ msgstr ""
 msgid "Another maker (8BitDo)"
 msgstr ""
 
+#: src/players/lost_controller.cpp:269
+msgid ""
+"Player 1's controller\n"
+"disconnected.\n"
+"Reconnect it, or press any\n"
+"key to use the keyboard.\n"
+"Or {0} to drop out Player 1."
+msgstr ""
+
+#: src/players/lost_controller.cpp:276
+msgid ""
+"Player 1's controller\n"
+"disconnected.\n"
+"Reconnect it, or press any\n"
+"key to use the keyboard."
+msgstr ""
+
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:213
+#: src/players/lost_controller.cpp:284
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it to continue."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:219
+#: src/players/lost_controller.cpp:290
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or Player {1}: press {2} to take over."
 msgstr ""
 
-#: src/players/lost_controller.cpp:223
+#: src/players/lost_controller.cpp:294
 msgid ""
 "Controller reconnected.\n"
 "Press any button to resume."
 msgstr ""
 
-#: src/players/lost_controller.cpp:224
+#: src/players/lost_controller.cpp:295
 msgid ""
 "Controller disconnected.\n"
 "Reconnect your controller to continue."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:228
+#: src/players/lost_controller.cpp:299
 msgid ""
 "Player {0}'s controller is back.\n"
 "Player {0}: press any button to resume."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:235
+#: src/players/lost_controller.cpp:306
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or press {1} to drop out Player {0}."

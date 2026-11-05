@@ -138,6 +138,9 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // (prompt_icons.h: the controller's maker and model are in its GUID). Any
   // thread.
   std::string PadKeyFor(uint32_t user) const;
+  // Is the device with this key ("pad:<guid>[:n]", "debug-pad-N",
+  // "keyboard") connected now? Any thread.
+  bool IsConnected(const std::string& key) const;
 
  private:
   struct Known {

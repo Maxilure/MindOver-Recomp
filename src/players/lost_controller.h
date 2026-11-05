@@ -23,6 +23,10 @@
 //         Reconnect it, or press (Y) to drop out Player 2.
 //     "drop out" is offered only if someone else is in game (the last player
 //     in game can't drop out, like the pause menu's Drop Out);
+//   * player 1's controller unplugged (player 1 still has the keyboard):
+//     "... or press any key to use the keyboard", and with others in game
+//     "Or (Y) to drop out Player 1." (s.62);
+//   * every box listens only 1 s after it opens (no accidental drop out);
 //   * the last player ON FOOT with masks riding them: a mask's Y makes THAT
 //     player come out of the mask first, then the player without a controller
 //     drops out (STEPPING IN, lost_controller.cpp; findings/26 s.60);

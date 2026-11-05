@@ -71,6 +71,14 @@ std::string PlayerAssignment::PadKeyFor(uint32_t user) const {
   return {};
 }
 
+bool PlayerAssignment::IsConnected(const std::string& key) const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  for (const Known& d : devices_) {
+    if (d.key == key) return true;
+  }
+  return false;
+}
+
 bool PlayerAssignment::KeyboardAnswersFor(uint32_t user) const {
   std::lock_guard<std::mutex> lock(mutex_);
   const bool everyone_is_player_one = user == 0 && in_play_ && !in_play_();

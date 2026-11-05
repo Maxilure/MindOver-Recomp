@@ -2541,3 +2541,63 @@ plugged back = nobody, its press = player 3; a file with controllers 2 and 3
 both on player 2 = controller 2 keeps it, controller 3 nobody, joins as
 player 3, then an unplug / replug of controller 2 keeps everyone apart. 0
 errors.
+
+
+## 62. Player 1's controller unplugged: the box, with the keyboard as a way on
+
+Player 1 is the keyboard and mouse plus, optionally, one controller
+(section 53). The disconnect box (section 33) opens for a player with no
+device left, so unplugging player 1's controller went unnoticed: the game ran
+on while a couch player sat away from the keyboard.
+
+Now (`lost_controller.cpp`, PLAYER 1'S CONTROLLER): every frame in a level
+the controller player 1 plays with is remembered
+(`PlayerAssignment::PadKeyFor(0)`). When player 1 has no controller any more
+and that one is no longer CONNECTED (`IsConnected`; moved to another player
+on the Players screen doesn't count), while player 1 is in the game and the
+keyboard is theirs, the box pauses the game:
+
+    Player 1's controller
+    disconnected.
+    Reconnect it, or press any
+    key to use the keyboard.
+
+(lines broken by hand: the box holds about 26 letters a line, and a longer
+first wording wrapped into five ragged lines).
+
+Any key or mouse button (the keyboard driver's `last_key_down` moves past its
+value when the box opened) closes it and play goes on with the keyboard. The
+controller back = the usual "Player 1's controller is back. Player 1: press
+any button to resume." The box waits behind an open pause menu, like for any
+player.
+
+With someone else in the game, the other players may also drop player 1
+out (or a mask steps in, as above), and a fifth line says so:
+
+    Or (Y) to drop out Player 1.
+
+That Y is drawn in the look of the first other player's controller
+(`prompt_icons::TextForPlayer`): in player 1's look it was the keyboard's
+menu Y, Backspace, which in this box means "any key". A Y from player 1's own
+socket (the keyboard) never drops them. The step-in's last check ("still
+without a device?") first missed this case: player 1 always has the keyboard,
+so the mask came out but player 1 stayed; it now checks for the controller.
+
+**Every disconnect box listens only after a second** (`kListenDelay`, 1 s from
+the moment it opens or moves on to another player): presses before that are
+ignored (keys included), so a button someone was mashing in a fight doesn't
+drop a player out the instant the box appears.
+
+Checked with fake controllers (Wumpa Island, keyboard on player 1): the debug
+script's controller and a fake controller given to player 1 in the controls
+file, each unplugged = the box; a key = resumed; plugged back + a button =
+resumed; with player 2 a mask, player 2's Y in this box does nothing;
+player 1 dropping out from the pause menu (player 2 on foot) unchanged;
+player 2 on foot: the five lines with a PlayStation triangle (player 2's
+fake controller style), player 2's Y 0.3 s after the box appeared = ignored,
+the next one = player 1 out; player 2 a mask: Y = player 2 on foot, player 1
+out; player 1 alone = the four lines, no Y; player 2's box: player 1's Y
+0.3 s in = ignored, later = player 2 out;
+unplugged while player 2's pause menu was open = the box after it closed;
+player 1's controller moved to player 2 on the Players screen = no box. 0
+errors.

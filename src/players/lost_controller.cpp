@@ -17,6 +17,7 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
 #include "more_players.h"
@@ -143,7 +144,16 @@ constexpr auto kStepInWindow = std::chrono::seconds(3);
 constexpr uint32_t kSubState = 0x824F3C38;  // co-op sub-state per player (4 entries, more_players)
 constexpr uint32_t kSubForcedOutOfMask = 4;
 std::atomic<int> g_drop_presser{-1};
+// A MOMENT BEFORE THE BOX LISTENS (2026-11-05, playtest): presses in the first
+// kListenDelay after the box opens (or moves on to another player) are
+// ignored, so a button someone was mashing in the fight doesn't drop a player
+// out the instant it pops up. (Steady-clock nanoseconds; FilterPad's thread
+// reads it.)
+constexpr auto kListenDelay = std::chrono::milliseconds(1000);
+std::atomic<int64_t> g_listen_from{0};
+bool Listening() { return std::chrono::steady_clock::now().time_since_epoch().count() >= g_listen_from.load(); }
 int g_stepin_player = -1, g_stepin_lost = -1;
+bool g_stepin_keyboard = false;  // ... about player 1's controller (they still have the keyboard)
 std::chrono::steady_clock::time_point g_stepin_until;
 // The buttons each socket held at its last read: only a NEW press counts.
 std::array<uint16_t, kMaxPlayers> g_held{};
@@ -173,6 +183,46 @@ bool InGame(int p) { return Read32(kCoOpState + 4 * p) != 0; }
 bool HasDevice(int p) {
   const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   return !assignment || assignment->HasDeviceFor(p);  // no assignment: never "lost"
+}
+
+// PLAYER 1'S CONTROLLER (2026-11-05, for couch play): player 1 is the
+// keyboard and mouse plus, optionally, one controller (players/players_setup.h),
+// so player 1 never "has no device" and unplugging their controller went
+// unnoticed: the game ran on while they sat away from the keyboard. Now, when
+// the controller player 1 played with is UNPLUGGED (gone from the device list;
+// moving it to another player on the Players screen is not this) while player
+// 1 is in a level and the keyboard is theirs, the box pauses the game like for
+// any player: "Player 1's controller disconnected. Reconnect it, or press any
+// key to continue on the keyboard." Any key / mouse button (the keyboard
+// driver's last_key_down moves) resumes on the keyboard; the controller back
+// = the usual "press any button to resume". No drop out offered (player 1
+// still has the keyboard). Game main thread.
+std::string g_p1_pad;            // the controller player 1 played with (last frame), "" = none
+bool g_p1_pad_lost = false;      // ... was unplugged: the box is (or will be) about it
+int64_t g_p1_key_seen = 0;       // the keyboard's last_key_down() when the box opened
+bool KeyboardCase(int p) { return p == 0 && g_p1_pad_lost; }
+// Does player p have what the box waits for: their device (player 1 in the
+// keyboard case: a controller again)?
+bool DeviceBack(int p) {
+  if (!KeyboardCase(p)) return HasDevice(p);
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  return assignment && !assignment->PadKeyFor(0).empty();
+}
+// Once per frame in a level: notices player 1's controller going away.
+void WatchPlayerOnePad() {
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  if (!assignment) return;
+  const std::string pad = assignment->PadKeyFor(0);
+  if (!pad.empty()) {
+    g_p1_pad = pad;
+    return;
+  }
+  if (g_p1_pad.empty()) return;
+  if (!assignment->IsConnected(g_p1_pad) && Read32(kCoOpState) != 0 && assignment->KeyboardAnswersFor(0)) {
+    REXLOG_INFO("Lost controller: player 1's controller ({}) was unplugged: the keyboard can carry on", g_p1_pad);
+    g_p1_pad_lost = true;
+  }
+  g_p1_pad.clear();  // (moved to another player / off: simply forgotten)
 }
 
 // Calls a game function with r3/r4 (and f1); the caller's registers are put back.
@@ -205,6 +255,27 @@ uint32_t UseHeap(PPCContext& ctx, uint8_t* base, uint32_t heap) {
 std::u16string Message(int phase, int p, bool solo, int joiner = -1, bool others = false,
                        bool step_in = false) {
   const std::u16string n(1, char16_t(u'1' + p));
+  if (KeyboardCase(p) && phase == kLost && (!solo || step_in)) {
+    // ... and the others may drop player 1 out (or step in, as masks).
+    // TR: the question box, 5 lines broken by hand (keep each about as short as the English): player 1's controller was unplugged; any key = they play on with the keyboard and mouse; {0} = the Y button's picture, pressed by another player.
+    // The Y in the look of the OTHER players' controllers (they press it):
+    // player 1's own look would be the keyboard's (Backspace), which here
+    // means "any key". The first other player in game with a device.
+    int presser = -1;
+    for (int q = 1; q < more_players::LocalPlayerCount() && presser < 0; ++q) {
+      if (InGame(q) && HasDevice(q)) presser = q;
+    }
+    const std::u16string y(1, prompt_icons::MenuGlyph(kGlyphY));
+    return trf(tr(u"Player 1's controller\ndisconnected.\nReconnect it, or press any\nkey to use the keyboard.\nOr {0} to drop out Player 1."),
+               {presser > 0 ? prompt_icons::TextForPlayer(y, presser) : y});
+  }
+  if (KeyboardCase(p) && phase == kLost) {
+    // TR: the question box, 4 lines broken by hand (keep each about as short as the English): player 1's controller was unplugged; they can play on with the keyboard and mouse.
+    // Four even lines, broken by hand to fit the box (about 26 letters a
+    // line): the first wording wrapped into five ragged lines.
+    return tr(u"Player 1's controller\ndisconnected.\nReconnect it, or press any\nkey to use the keyboard.");
+  }
+  if (KeyboardCase(p)) solo = false;  // back: the numbered "press any button" lines
   // STEPPING IN: a mask's Y drops p out (that mask comes out on foot): the
   // usual drop-out line, said further down.
   if (solo && others && phase == kLost && step_in) solo = false;
@@ -278,7 +349,8 @@ std::array<bool, kMaxPlayers> g_dropping{};
 
 // A player in game without a device, not being dropped out: needs the box.
 bool Waiting(int p) {
-  return InGame(p) && !HasDevice(p) && !g_dropping[p] && p != g_handover_lost && p != g_stepin_lost;
+  return InGame(p) && (!HasDevice(p) || KeyboardCase(p)) && !g_dropping[p] && p != g_handover_lost &&
+         p != g_stepin_lost;
 }
 // Is anyone else in game?
 bool SomeoneElse(int p) {
@@ -407,17 +479,21 @@ int FirstWaiting() {
 void ShowFor(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
   for (uint16_t& held : g_held) held = 0xFFFF;  // wait for every button to be let go first
   g_want_drop = g_want_resume = false;
+  g_listen_from = (std::chrono::steady_clock::now() + kListenDelay).time_since_epoch().count();
   g_can_drop = MayLeave(p);
   g_lost = p;
   g_phase = kLost;
+  if (const auto* driver = kbm::KeyboardMouseDriver::Get()) g_p1_key_seen = driver->last_key_down();
   g_want_takeover = false;
   // Taking over only when nobody else is in game (masks need their Crash).
-  g_offered_joiner = g_can_drop.load() || SomeoneElse(p) ? -1 : Joiner(p);
+  g_offered_joiner = g_can_drop.load() || SomeoneElse(p) || KeyboardCase(p) ? -1 : Joiner(p);
   g_drop_presser = -1;
   g_shown_text = Message(kLost, p, !g_can_drop.load(), g_offered_joiner.load(), SomeoneElse(p), AnyoneCanStepIn(p));
   SetText(ctx, base, fe, g_shown_text);
   REXLOG_INFO("Lost controller: player {} has no controller: game paused{}", p + 1,
-              g_can_drop.load() ? " (reconnect / drop out)"
+              KeyboardCase(p)   ? (g_can_drop.load() || AnyoneCanStepIn(p) ? " (reconnect / any key = the keyboard / Y = drop out)"
+                                                                         : " (reconnect / any key = the keyboard)")
+              : g_can_drop.load() ? " (reconnect / drop out)"
               : SomeoneElse(p) ? " (reconnect; the last player on foot)"
                                : " (reconnect; the only player in game)");
 }
@@ -438,6 +514,7 @@ void Open(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
 // Else the box closes and the game goes on.
 void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
   REXLOG_INFO("Lost controller: player {} {}", g_lost.load() + 1, why);
+  if (g_lost.load() == 0) g_p1_pad_lost = false;  // (player 1's keyboard case: dealt with)
   const int next = FirstWaiting();
   if (next >= 0) return ShowFor(ctx, base, fe, next);
   REXLOG_INFO("Lost controller: nobody else waiting: game goes on");
@@ -463,6 +540,8 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     if (!InGame(p) || HasDevice(p)) g_dropping[p] = false;  // dropped out (or back after all)
   }
   TickUnjacking(ctx, base, fe);
+  WatchPlayerOnePad();
+  if (g_p1_pad_lost && (!InGame(0) || g_dropping[0])) g_p1_pad_lost = false;
   // A take-over under way: the joiner is in -> the lost player drops out;
   // the lost player's controller came back, or no join in time -> over (the
   // box asks again if it's still needed).
@@ -482,9 +561,14 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   if (g_stepin_lost >= 0) {
     const int q = g_stepin_player, gone = g_stepin_lost;
     const bool on_foot = Read32(kCoOpState + 4 * q) == 2;
-    if (on_foot || !InGame(gone) || HasDevice(gone) || std::chrono::steady_clock::now() > g_stepin_until) {
+    // Still without it: no device / (player 1's controller case) no controller.
+    // (HasDevice alone said "has one" for player 1's keyboard: the step-in
+    // happened but player 1 never dropped out, first test.)
+    const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+    const bool still_without = g_stepin_keyboard ? assignment && assignment->PadKeyFor(0).empty() : !HasDevice(gone);
+    if (on_foot || !InGame(gone) || !still_without || std::chrono::steady_clock::now() > g_stepin_until) {
       g_stepin_player = g_stepin_lost = -1;
-      if (on_foot && InGame(gone) && !HasDevice(gone)) {
+      if (on_foot && InGame(gone) && still_without) {
         // The other masks follow the player who stepped in (they'd all be
         // forced on foot by the Drop Out otherwise).
         more_players::MoveMasks(ctx, base, gone, q);
@@ -507,7 +591,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   }
   if (!InGame(lost)) return Finish(ctx, base, fe, "is out of the game");
   // Phase: lost <-> back, as the device comes and goes.
-  const int phase = HasDevice(lost) ? kBack : kLost;
+  const int phase = DeviceBack(lost) ? kBack : kLost;
   if (phase != g_phase.load()) {
     if (phase == kBack) {
       for (uint16_t& held : g_held) held = 0xFFFF;  // a fresh press, after reconnecting
@@ -516,6 +600,14 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     g_phase = phase;
   }
   g_can_drop = MayLeave(lost);
+  // Player 1 on the keyboard: any key / mouse button resumes (KeyboardCase).
+  if (phase == kLost && KeyboardCase(lost)) {
+    const auto* driver = kbm::KeyboardMouseDriver::Get();
+    if (driver && !Listening()) g_p1_key_seen = driver->last_key_down();  // (the first second: ignored)
+    if (driver && driver->last_key_down() != g_p1_key_seen) {
+      return Finish(ctx, base, fe, "pressed a key: carries on with the keyboard and mouse");
+    }
+  }
   // Taking over: the box closes and the game runs, for the join (TAKING OVER).
   if (phase == kLost && g_want_takeover.exchange(false)) {
     const int joiner = g_offered_joiner.load();
@@ -535,12 +627,13 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
       Write32(kSubState + 4 * q, kSubForcedOutOfMask);
       g_stepin_player = q;
       g_stepin_lost = lost;
+      g_stepin_keyboard = KeyboardCase(lost);
       g_stepin_until = std::chrono::steady_clock::now() + kStepInWindow;
       return Finish(ctx, base, fe,
                     ("will drop out: player " + std::to_string(q + 1) + " comes out of the mask first").c_str());
     }
   }
-  if (phase == kLost && g_want_drop.exchange(false) && g_can_drop.load()) {
+  if (phase == kLost && g_want_drop.exchange(false) && g_can_drop.load() && g_drop_presser.exchange(-1) != lost) {
     // The pause menu's Drop Out, for this player: it acts on the menu owner,
     // so the owner is this player for the call. It completes once the game
     // runs again: until then the player counts as being dropped.
@@ -552,7 +645,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     return Finish(ctx, base, fe, "pressed a button on its controller");
   }
   const bool solo = !g_can_drop.load(), others = SomeoneElse(lost);
-  const int offered = solo && !others && phase == kLost ? Joiner(lost) : -1;
+  const int offered = solo && !others && phase == kLost && !KeyboardCase(lost) ? Joiner(lost) : -1;
   g_offered_joiner = offered;
   std::u16string text = Message(phase, lost, solo, offered, others, AnyoneCanStepIn(lost));
   if (text != g_shown_text) {  // (setting a text allocates in the menus' heap: only on a change)
@@ -584,7 +677,7 @@ void FilterPad(int user, uint8_t* gamepad, bool connected) {
   const int phase = g_phase.load();
   if (phase == kNone || user < 0 || user >= kMaxPlayers || !gamepad) return;
   const uint16_t buttons = connected ? uint16_t(gamepad[0] << 8 | gamepad[1]) : 0;
-  const uint16_t pressed = buttons & ~g_held[user];
+  const uint16_t pressed = Listening() ? uint16_t(buttons & ~g_held[user]) : 0;  // (the first second: ignored)
   g_held[user] = buttons;
   if (phase == kLost && (pressed & kButtonY)) {  // anyone (stepping in: who pressed counts)
     g_drop_presser = user;

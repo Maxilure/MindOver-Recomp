@@ -851,62 +851,62 @@ msgstr "Automático (jugador {})"
 msgid "Automatic (not used)"
 msgstr "Automático (sin usar)"
 
-#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:260 src/cheats/cheat_menu.cpp:148
+#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:263 src/cheats/cheat_menu.cpp:148
 #, fuzzy
 msgid "Player {}"
 msgstr "Jugador {}"
 
-#: src/input/controls_menu.cpp:277
+#: src/input/controls_menu.cpp:280
 #, fuzzy
 msgid "Action"
 msgstr "Acción"
 
-#: src/input/controls_menu.cpp:279
+#: src/input/controls_menu.cpp:282
 #, fuzzy
 msgid "Key 1"
 msgstr "Tecla 1"
 
-#: src/input/controls_menu.cpp:280
+#: src/input/controls_menu.cpp:283
 #, fuzzy
 msgid "Key 2"
 msgstr "Tecla 2"
 
-#: src/input/controls_menu.cpp:304
+#: src/input/controls_menu.cpp:307
 #, fuzzy
 msgid "(menus)"
 msgstr "(menús)"
 
-#: src/input/controls_menu.cpp:331
+#: src/input/controls_menu.cpp:334
 #, fuzzy
 msgid "press a key..."
 msgstr "pulsa una tecla..."
 
-#: src/input/controls_menu.cpp:348
+#: src/input/controls_menu.cpp:351
 #, fuzzy
 msgid "Press the new key for {}."
 msgstr "Pulsa la nueva tecla para {}."
 
-#: src/input/controls_menu.cpp:359
+#: src/input/controls_menu.cpp:362
 #, fuzzy
 msgid "{0} removed from {1}."
 msgstr "{0} quitada de {1}."
 
-#: src/input/controls_menu.cpp:372
+#: src/input/controls_menu.cpp:375
 #, fuzzy
 msgid "Cancelled."
 msgstr "Cancelado."
 
-#: src/input/controls_menu.cpp:378
+#: src/input/controls_menu.cpp:381
 #, fuzzy
 msgid "{0} -> {1} (taken from {2})."
 msgstr "{0} -> {1} (quitada de {2})."
 
-#: src/input/controls_menu.cpp:380
+#: src/input/controls_menu.cpp:383
 #, fuzzy
 msgid "{0} -> {1}."
 msgstr "{0} -> {1}."
 
-#: src/input/controls_menu.cpp:387
+#: src/input/controls_menu.cpp:390
 #, fuzzy
 msgid "Couldn't save the controls file (see the log)."
 msgstr "No se pudo guardar el archivo de controles (mira el registro)."
@@ -1603,8 +1603,36 @@ msgstr "Mando Switch Pro"
 msgid "Another maker (8BitDo)"
 msgstr "Otro fabricante (8BitDo)"
 
+#: src/players/lost_controller.cpp:269
+#, fuzzy
+msgid ""
+"Player 1's controller\n"
+"disconnected.\n"
+"Reconnect it, or press any\n"
+"key to use the keyboard.\n"
+"Or {0} to drop out Player 1."
+msgstr ""
+"El mando del jugador 1\n"
+"se ha desconectado.\n"
+"Vuelve a conectarlo o pulsa\n"
+"una tecla para usar el teclado.\n"
+"O {0} para sacar al jugador 1."
+
+#: src/players/lost_controller.cpp:276
+#, fuzzy
+msgid ""
+"Player 1's controller\n"
+"disconnected.\n"
+"Reconnect it, or press any\n"
+"key to use the keyboard."
+msgstr ""
+"El mando del jugador 1\n"
+"se ha desconectado.\n"
+"Vuelve a conectarlo o pulsa\n"
+"una tecla para usar el teclado."
+
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:213
+#: src/players/lost_controller.cpp:284
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1614,7 +1642,7 @@ msgstr ""
 "Vuelve a conectar el mando para continuar."
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:219
+#: src/players/lost_controller.cpp:290
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1623,7 +1651,7 @@ msgstr ""
 "El mando del jugador {0} se ha desconectado.\n"
 "Vuelve a conectarlo, o jugador {1}: pulsa {2} para tomar el relevo."
 
-#: src/players/lost_controller.cpp:223
+#: src/players/lost_controller.cpp:294
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -1632,7 +1660,7 @@ msgstr ""
 "Mando reconectado.\n"
 "Pulsa cualquier botón para seguir."
 
-#: src/players/lost_controller.cpp:224
+#: src/players/lost_controller.cpp:295
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -1642,7 +1670,7 @@ msgstr ""
 "Vuelve a conectar el mando para continuar."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:228
+#: src/players/lost_controller.cpp:299
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -1652,7 +1680,7 @@ msgstr ""
 "Jugador {0}: pulsa cualquier botón para seguir."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:235
+#: src/players/lost_controller.cpp:306
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
