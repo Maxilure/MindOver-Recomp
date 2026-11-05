@@ -257,7 +257,16 @@ can't work in:
 * **Very long paths**: some of the build's files already have long names;
   pick a short place such as `C:\Games` or `D:\`.
 * A folder that isn't empty, or a drive with too little free space (about
-  15 GB: the finished install is about 9 GB).
+  15 GB: the finished install is about 9 GB). A folder that holds a game
+  set up before is fine: see the next point.
+
+**Installing again over a game folder you kept** (after uninstalling with
+your saves kept, a lost Start menu entry, or a 0.1.0 folder): pick that
+folder, or the folder it's in. The installer finds the game that was set
+up there and uses it as it is: nothing is built again, and the disc image
+is only needed if the disc's files (`game\`) are gone. It adds the Start
+menu and *Installed apps* entries back. If that game is older, **Mind over
+Recomp** offers the update afterwards.
 
 **Installing the tools**: the installer lists each tool it needs and
 **Install the missing tools** installs them with **winget**, Windows' own

@@ -273,6 +273,12 @@ struct App {
   std::string old_version;     // an older install's folder (its user\ is copied)
   std::string choose_error;
   fs::path root;               // <parent>\Crash Mind over Mutant
+  // A game set up and built before, found where the player points
+  // (install::ExistingGameAt): taken over as it is, nothing built again
+  // (2026-11-05). Looked up again only when `parent` changes.
+  bool existing = false;
+  fs::path existing_root;
+  std::string existing_for;
 
   // --- step 1, the tools (before any folder exists) ---------------------------
   std::mutex tools_mutex;
@@ -407,8 +413,24 @@ void App::DrawChoose() {
   path_row(trs("Disc image (.iso) of Crash: Mind over Mutant, Xbox 360"), &iso, kPickIso, false);
   ImGui::Spacing();
   path_row(trs("Install into this folder"), &parent, kPickParent, true);
-  root = fs::path(parent) / install::kFolderName;
-  ImGui::TextDisabled(trs("The game goes into %s"), root.string().c_str());
+  if (parent != existing_for) {
+    existing_for = parent;
+    existing_root = install::ExistingGameAt(fs::path(parent));
+  }
+  existing = !existing_root.empty();
+  root = existing ? existing_root : fs::path(parent) / install::kFolderName;
+  std::error_code disc_ec;
+  const bool disc_there = existing && fs::is_regular_file(root / "game" / "default.xex", disc_ec);
+  if (existing) {
+    ImGui::PushStyleColor(ImGuiCol_Text, kGood);
+    ImGui::TextWrapped(trs("A game that was set up before is in %s: it is used as it is, nothing is "
+                           "built again."),
+                       root.string().c_str());
+    ImGui::PopStyleColor();
+    if (disc_there) MutedText(trs("Its disc files are there too: no disc image needed."));
+  } else {
+    ImGui::TextDisabled(trs("The game goes into %s"), root.string().c_str());
+  }
   ImGui::Spacing();
   ImGui::Checkbox(trs("A shortcut on the desktop"), &desktop);
   ImGui::Checkbox(trs("Copy saves and settings from an older version"), &import_saves);
@@ -427,12 +449,12 @@ void App::DrawChoose() {
   }
   if (AccentButton(trs("Next"), ImVec2(160 * ImGui::GetStyle().FontScaleDpi, 0))) {
     std::error_code ec;
-    if (iso.empty() || !fs::is_regular_file(fs::path(iso), ec)) {
+    if (!disc_there && (iso.empty() || !fs::is_regular_file(fs::path(iso), ec))) {
       choose_error = trs("Pick your disc image (.iso) first.");
     } else if (import_saves && !fs::is_directory(fs::path(old_version) / "user", ec)) {
       choose_error = trs("That older version has no user folder: pick the folder the old "
                          "\"Mind over Recomp\" is in, or untick the copy.");
-    } else if (const std::string why = install::WhyNotHere(root, kNeededGb); !why.empty()) {
+    } else if (const std::string why = install::WhyNotHere(root, kNeededGb, existing); !why.empty()) {
       choose_error = why;
     } else {
       page = Page::kTools;
@@ -521,6 +543,8 @@ void App::DrawToolsPage() {
 
 // --- INSTALL, page 3 -------------------------------------------------------------
 
+bool RenameOldGameExe(const fs::path& root);  // (below, by HeadlessInstall)
+
 void App::BeginInstall() {
   page = Page::kInstalling;
   fail_text.clear();
@@ -533,8 +557,10 @@ void App::BeginInstall() {
     fail_text = trf(trs("Couldn't make {0}: {1}"), {root.string(), ec.message()});
     return;
   }
-  // The port's files: here already (the release .zip), or the newest release.
-  if (!SourceNextToMe().empty()) {
+  // The port's files: an existing game keeps its own (it's taken over as it
+  // is; Mind over Recomp offers an update afterwards when it's older), else
+  // here already (the release .zip), or the newest release.
+  if (existing || !SourceNextToMe().empty()) {
     StartFiles(nullptr);
   } else {
     phase = Phase::kFeed;
@@ -549,7 +575,11 @@ void App::BeginInstall() {
 void App::StartFiles(const update::Release* release) {
   phase = Phase::kFiles;
   std::vector<Command> commands;
-  if (release) {
+  if (existing) {
+    // Nothing: its source\ (and build) stay as they are; only an old
+    // launcher's exe name is brought up to date.
+    RenameOldGameExe(root);
+  } else if (release) {
     commands = update::FreshInstallJob(*release, root);
   } else {
     const fs::path from = SourceNextToMe();
@@ -592,6 +622,18 @@ void App::StartFiles(const update::Release* release) {
       return !ec;
     };
     commands.push_back(std::move(saves));
+  }
+  // An existing game built before the icon existed: the icon from its disc
+  // files now (a game that still needs building gets it from the build).
+  if (existing) {
+    const folders::Folders here = folders::Find(root);
+    std::error_code ec;
+    if (here.ExeExists() && here.DiscExists() && !here.source.empty() &&
+        fs::is_regular_file(here.source / "tools" / "make_icon.py", ec) &&
+        !fs::is_regular_file(root / "program" / "crash_mom.ico", ec)) {
+      auto icon = setup::Setup::IconJob(here);
+      commands.insert(commands.end(), icon.begin(), icon.end());
+    }
   }
   files_runner.Forget();
   files_runner.Start(trs("Getting the port's files"), std::move(commands),
@@ -1057,9 +1099,26 @@ int Finish(const folders::Folders& folders, bool desktop) {
   return ok ? 0 : 1;
 }
 
+// An existing game set up by 0.1.0's launcher plays program\crash_mom.exe;
+// since 0.2.0 it is "Crash Mind over Mutant.exe" (folders::InstalledExeName).
+// Taken over, the old exe is renamed to the new name, so the setup sees the
+// game as built instead of copying it out of the build again (2026-11-05).
+// True when it renamed one.
+bool RenameOldGameExe(const fs::path& root) {
+  std::error_code ec;
+  const fs::path old_exe = root / "program" / platform::ExeName("crash_mom");
+  const fs::path new_exe = root / "program" / folders::InstalledExeName();
+  if (old_exe == new_exe || !fs::is_regular_file(old_exe, ec) || fs::exists(new_exe, ec)) return false;
+  fs::rename(old_exe, new_exe, ec);
+  return !ec;
+}
+
 int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::string& feed, bool desktop) {
-  const fs::path root = parent / install::kFolderName;
-  if (const std::string why = install::WhyNotHere(root, kNeededGb); !why.empty()) {
+  // A game set up before, there: taken over as it is (as the window does).
+  const fs::path existing_root = install::ExistingGameAt(parent);
+  const bool existing = !existing_root.empty();
+  const fs::path root = existing ? existing_root : parent / install::kFolderName;
+  if (const std::string why = install::WhyNotHere(root, kNeededGb, existing); !why.empty()) {
     std::printf("refused: %s\n", why.c_str());
     return 1;
   }
@@ -1073,7 +1132,10 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
   fs::create_directories(root / "user" / "logs", ec);
   install::MarkInstalled(root);
   std::vector<Command> commands;
-  if (const fs::path here = SourceNextToMe(); !here.empty()) {
+  if (existing) {
+    std::printf("== a game set up before is in %s: used as it is\n", root.string().c_str());
+    if (RenameOldGameExe(root)) std::printf("== its game renamed to %s\n", folders::InstalledExeName().c_str());
+  } else if (const fs::path here = SourceNextToMe(); !here.empty()) {
     std::printf("== the port's files from %s\n", here.string().c_str());
     fs::copy(here, root / "source", fs::copy_options::recursive, ec);
     if (ec) {
@@ -1106,6 +1168,9 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
   const int code = setup.RunHeadless("all", iso);
   std::fflush(stdout);
   if (code != 0) return code;
+  if (existing && folders.ExeExists() && folders.DiscExists() && !fs::is_regular_file(root / "program" / "crash_mom.ico", ec)) {
+    RunPrinted("icon", setup::Setup::IconJob(folders), root / "user" / "logs" / ("install-" + Stamp() + ".log"));
+  }
   return Finish(folders, desktop);
 }
 
@@ -1114,7 +1179,7 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
 // =============================================================================
 
 int main(int argc, char** argv) {
-  std::string feed, iso, install_to, screenshot;
+  std::string feed, iso, install_to, check_install_to, screenshot;
   fs::path override_root, embed_icon_exe, embed_icon_ico;
   bool uninstall = false, quiet = false, remove_user = false, after_update = false;
   bool check_tools = false, install_tools = false, do_update = false, desktop = false;
@@ -1125,6 +1190,7 @@ int main(int argc, char** argv) {
     if (arg.starts_with("--update_feed=")) feed = value("--update_feed=");
     else if (arg.starts_with("--iso=")) iso = value("--iso=");
     else if (arg.starts_with("--install_to=")) install_to = value("--install_to=");
+    else if (arg.starts_with("--check_install_to=")) check_install_to = value("--check_install_to=");
     else if (arg.starts_with("--game_folder=")) override_root = value("--game_folder=");
     else if (arg.starts_with("--screenshot=")) screenshot = value("--screenshot=");
     else if (arg.starts_with("--screenshot_after=")) screenshot_after = std::atof(value("--screenshot_after=").c_str());
@@ -1175,6 +1241,25 @@ int main(int argc, char** argv) {
     }
     std::fflush(stdout);
     std::_Exit(AllToolsFound(status) ? 0 : 1);
+  }
+  // A dry run of --install_to: what an install into that folder would do
+  // (take over a game set up before? the folder check, each setup step's
+  // state). Changes nothing.
+  if (!check_install_to.empty()) {
+    const fs::path existing_root = install::ExistingGameAt(check_install_to);
+    const bool existing = !existing_root.empty();
+    const fs::path root = existing ? existing_root : fs::path(check_install_to) / install::kFolderName;
+    std::printf("folder: %s\nexisting game: %s\n", root.string().c_str(), existing ? "yes (used as it is)" : "no");
+    const std::string why = install::WhyNotHere(root, kNeededGb, existing);
+    std::printf("folder check: %s\n", why.empty() ? "fine" : why.c_str());
+    if (existing) {
+      const folders::Folders here = folders::Find(root);
+      std::printf("disc files: %s\n", here.DiscExists() ? "there (no .iso needed)" : "missing (needs the .iso)");
+      setup::Setup check(here, feed, root / install::kInstallerName);
+      check.RunHeadless("check", {});
+    }
+    std::fflush(stdout);
+    std::_Exit(why.empty() ? 0 : 1);
   }
   if (!install_to.empty()) {
     const int code = HeadlessInstall(install_to, iso, feed, desktop);

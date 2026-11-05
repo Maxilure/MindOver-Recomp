@@ -3,6 +3,7 @@
 // =============================================================================
 #include "install.h"
 
+#include "folders.h"
 #include "platform.h"
 #include "texts.h"
 
@@ -212,7 +213,7 @@ fs::path DefaultParent() {
   return games;
 }
 
-std::string WhyNotHere(const fs::path& root, double needed_gb) {
+std::string WhyNotHere(const fs::path& root, double needed_gb, bool existing_game) {
   std::error_code ec;
   const fs::path absolute = fs::absolute(root, ec);
   if (absolute.wstring().size() > 90) {
@@ -226,7 +227,7 @@ std::string WhyNotHere(const fs::path& root, double needed_gb) {
                  "Program Files or Windows. Pick a folder of your own, like C:\\Games.");
     }
   }
-  if (fs::exists(absolute, ec)) {
+  if (fs::exists(absolute, ec) && !existing_game) {
     if (LooksInstalled(absolute)) {
       return trs("The game is already installed there. Start its \"Mind over Recomp\" from the "
                  "Start menu to update or uninstall it.");
@@ -242,7 +243,7 @@ std::string WhyNotHere(const fs::path& root, double needed_gb) {
     existing = existing.parent_path();
   }
   const double free_gb = platform::FreeDiskGb(existing);
-  if (free_gb >= 0 && free_gb < needed_gb) {
+  if (!existing_game && free_gb >= 0 && free_gb < needed_gb) {
     char text[200];
     std::snprintf(text, sizeof(text),
                   trs("Not enough free space there: the game needs about %.0f GB, the drive has "
@@ -497,7 +498,7 @@ bool StartDetached(const fs::path& exe, const fs::path& work_folder) {
 namespace install {
 
 fs::path DefaultParent() { return fs::path(platform::GetEnv("HOME")) / "Games"; }
-std::string WhyNotHere(const fs::path& root, double) {
+std::string WhyNotHere(const fs::path& root, double, bool) {
   std::error_code ec;
   return fs::exists(root, ec) && !fs::is_empty(root, ec) ? "already exists" : "";
 }
@@ -524,3 +525,28 @@ bool StartDetached(const fs::path&, const fs::path&) { return false; }
 }  // namespace install
 
 #endif
+
+// --- both systems ----------------------------------------------------------------
+
+namespace install {
+
+// TAKING OVER A FOLDER THAT HAS A GAME (2026-11-05): the player picks a folder
+// that already holds a set-up, built game (reinstalling over a kept folder, an
+// install whose Apps entry is gone, an old launcher's folder): the install
+// uses it as it is instead of refusing it (installer.cpp). Either the picked
+// folder itself or the game's folder inside it ("Crash Mind over Mutant").
+// A build = the release layout (source\ with its built exe, or program\ with
+// the installed exe): folders::Find decides, as the setup does.
+std::filesystem::path ExistingGameAt(const std::filesystem::path& picked) {
+  if (picked.empty()) return {};
+  std::error_code ec;
+  for (const std::filesystem::path& dir : {picked, picked / kFolderName}) {
+    if (!std::filesystem::is_directory(dir, ec)) continue;
+    const folders::Folders found = folders::Find(dir);
+    if (found.root.empty() || !found.release) continue;
+    if (std::filesystem::is_regular_file(found.BuiltExe(), ec) || found.ExeExists()) return found.root;
+  }
+  return {};
+}
+
+}  // namespace install

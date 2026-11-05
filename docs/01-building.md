@@ -385,10 +385,14 @@ through winget, copies `source/` and itself in, runs the same setup steps
 as the Linux launcher (disc, SDK, game), names the built game
 `program\Crash Mind over Mutant.exe`, and registers an *Installed apps*
 entry (`HKCU\...\Uninstall\MindOverRecomp`) plus Start menu shortcuts.
-Started from inside an installed folder it manages it (update, build again,
-uninstall); `--uninstall` runs from a copy in `%TEMP%` and can keep `user\`.
+A picked folder that already holds a set-up, built game (an earlier
+install, a 0.1.0 launcher folder) is taken over as it is: no new files, no
+build, the `.iso` only if `game/` is missing (`install::ExistingGameAt`; a
+0.1.0 `program/crash_mom.exe` is renamed). Started from inside an installed
+folder it manages it (update, build again, uninstall); `--uninstall` runs from a copy in `%TEMP%` and can keep `user\`.
 Headless runs for tests: `--check_tools`, `--install_tools`,
-`--install_to=<parent> --iso=<file>`, `--update`, `--uninstall --quiet`.
+`--install_to=<parent> --iso=<file>`, `--check_install_to=<parent>` (a dry
+run: what an install there would do), `--update`, `--uninstall --quiet`.
 
 **The icon** is made during the setup from the player's disc
 ([`tools/make_icon.py`](../tools/make_icon.py): the game's own HUD portrait

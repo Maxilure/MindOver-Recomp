@@ -152,6 +152,10 @@ class Setup {
   // Step 1 alone (no game folder needed: the installer's first page). Slow
   // (a few tool calls): run it off the UI thread.
   static Status CheckToolsOnly();
+  // The game's icon from the player's disc into program/ (+ into the exe on
+  // Windows): part of GameJob, and run by the installer for a folder whose
+  // game was built before the icon existed. Never fails.
+  static std::vector<task_runner::Command> IconJob(const folders::Folders& folders);
   // The running / last job, refreshed.
   const task_runner::Snapshot& JobSnapshot();
   void CancelJob();

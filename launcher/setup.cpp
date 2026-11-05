@@ -1352,36 +1352,47 @@ std::vector<Command> Setup::GameJob() {
     };
     commands.push_back(std::move(install));
 
-    // THE ICON (2026-11-05): the game's own HUD portrait of Crash as a mask,
-    // taken from THIS player's disc (tools/make_icon.py: the port ships no
-    // game art) -> program/crash_mom.ico + .png. A missing picture never
-    // fails the setup (exit 1 = "not on this disc": the game just has no icon).
-    Command icon;
-    icon.title = trs("Making the game's icon from your disc");
-    icon.argv = {PythonProgram(), (folders_.source / "tools" / "make_icon.py").string(),
-                 (folders_.disc / "default.rcf").string(), to.string()};
-    icon.work_folder = folders_.source;
-    icon.also_ok = {1};
-    commands.push_back(std::move(icon));
-    // Windows: the icon INTO the exe (Explorer, Start menu, Apps list, and the
-    // game window's taskbar button: SDL uses the exe's first icon group).
-    if (platform::ExeName("x") != "x") {
-      Command embed;
-      embed.title = trs("Putting the icon on the game");
-      const fs::path exe = to / installed_name;
-      embed.function = [exe, to](std::string* message) {
-        std::error_code ec;
-        if (!fs::is_regular_file(to / "crash_mom.ico", ec)) {
-          *message = "no icon made (the game has the plain one)";
-          return true;
-        }
-        std::string error;
-        *message = platform::EmbedIcon(exe, to / "crash_mom.ico", &error) ? "icon added to " + exe.filename().string()
-                                                                         : error + " (the game has the plain icon)";
-        return true;  // never fails the setup
-      };
-      commands.push_back(std::move(embed));
-    }
+    // The icon, made from this player's disc (IconJob).
+    auto icon = IconJob(folders_);
+    commands.insert(commands.end(), icon.begin(), icon.end());
+  }
+  return commands;
+}
+
+// THE ICON (2026-11-05): the game's own HUD portrait of Crash as a mask,
+// taken from THIS player's disc (tools/make_icon.py: the port ships no game
+// art) -> program/crash_mom.ico + .png. A missing picture never fails the
+// setup (exit 1 = "not on this disc": the game just has no icon). After the
+// game's copy into program/ (GameJob), and by the installer for a game
+// folder that was built before the icon existed.
+std::vector<Command> Setup::IconJob(const folders::Folders& folders) {
+  std::vector<Command> commands;
+  const fs::path to = folders.root / "program";
+  Command icon;
+  icon.title = trs("Making the game's icon from your disc");
+  icon.argv = {PythonProgram(), (folders.source / "tools" / "make_icon.py").string(),
+               (folders.disc / "default.rcf").string(), to.string()};
+  icon.work_folder = folders.source;
+  icon.also_ok = {1};
+  commands.push_back(std::move(icon));
+  // Windows: the icon INTO the exe (Explorer, Start menu, Apps list, and the
+  // game window's taskbar button: SDL uses the exe's first icon group).
+  if (platform::ExeName("x") != "x") {
+    Command embed;
+    embed.title = trs("Putting the icon on the game");
+    const fs::path exe = to / folders::InstalledExeName();
+    embed.function = [exe, to](std::string* message) {
+      std::error_code ec;
+      if (!fs::is_regular_file(to / "crash_mom.ico", ec)) {
+        *message = "no icon made (the game has the plain one)";
+        return true;
+      }
+      std::string error;
+      *message = platform::EmbedIcon(exe, to / "crash_mom.ico", &error) ? "icon added to " + exe.filename().string()
+                                                                       : error + " (the game has the plain icon)";
+      return true;  // never fails the setup
+    };
+    commands.push_back(std::move(embed));
   }
   return commands;
 }

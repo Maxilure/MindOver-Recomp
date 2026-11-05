@@ -64,7 +64,15 @@ std::filesystem::path DefaultParent();
 // Why a folder can't be installed into ("" = fine): not writable (Program
 // Files, a CD), too long a path (the SDK's files nest deep: Windows' 260-
 // character limit), not enough free space, already holds something.
-std::string WhyNotHere(const std::filesystem::path& root, double needed_gb);
+// `existing_game` (2026-11-05): the folder holds a game that was set up and
+// built before (an earlier install, or a 0.1.0 launcher folder): it's taken
+// over as it is, so "already holds something" and the free space don't count.
+std::string WhyNotHere(const std::filesystem::path& root, double needed_gb, bool existing_game = false);
+
+// A game folder with a build in it at `picked` or `picked`\Crash Mind over
+// Mutant (an earlier install, or a 0.1.0 launcher's folder: a release layout,
+// source\ with the built game, or program\ with it): its root, else empty.
+std::filesystem::path ExistingGameAt(const std::filesystem::path& picked);
 
 // --- the Apps list -----------------------------------------------------------
 
