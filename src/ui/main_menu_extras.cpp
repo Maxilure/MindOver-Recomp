@@ -198,7 +198,7 @@ void AfterScreenUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen, uint32_t
   } else if (g_extras && after == kStateBack) {
     // B in the Extras set: the first set again, on Extras (its closing sound
     // was dropped: DropSound; the menu's move sound instead).
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
     Swap(ctx, base, screen, menu, false, options_page::kMainMenuExtrasItem);
   }
 }

@@ -131,7 +131,7 @@ void WritePlayed(const std::map<int, int64_t>& played) {
     text += fmt::format("{} {}\n", number, ticks);
   }
   std::string ignored;
-  ReplaceFile(folder / kPlayedFile, std::vector<uint8_t>(text.begin(), text.end()), &ignored);
+  WriteWholeFile(folder / kPlayedFile, std::vector<uint8_t>(text.begin(), text.end()), &ignored);
 }
 
 // Copies one file (temp + rename), keeping its modification date: the save
@@ -142,7 +142,7 @@ bool CopyKeepingDate(const fs::path& from, const fs::path& to, std::string* erro
     *error = "can't read " + from.string();
     return false;
   }
-  if (!ReplaceFile(to, data, error)) {
+  if (!WriteWholeFile(to, data, error)) {
     return false;
   }
   std::error_code ec;
@@ -274,7 +274,7 @@ bool ReadBlockStart(int number, uint8_t* out, size_t size) {
   return size_t(in.gcount()) == size;
 }
 
-bool ReplaceFile(const fs::path& path, const std::vector<uint8_t>& data, std::string* error) {
+bool WriteWholeFile(const fs::path& path, const std::vector<uint8_t>& data, std::string* error) {
   fs::path temp = path;
   temp += ".writing";
   {
@@ -354,7 +354,7 @@ bool Rename(int number, std::u16string_view name, std::string* error) {
   // rename keeps it.
   std::error_code time_error;
   const auto saved_at = fs::last_write_time(save, time_error);
-  if (!ReplaceFile(save, data, error)) {
+  if (!WriteWholeFile(save, data, error)) {
     return false;
   }
   if (!time_error) {
@@ -514,7 +514,7 @@ std::vector<std::string> CopyFromXboxLayout() {
   // worked are skipped then: same bytes).
   if (failed == 0) {
     std::string error;
-    if (!ReplaceFile(note, std::vector<uint8_t>(note_text.begin(), note_text.end()), &error)) {
+    if (!WriteWholeFile(note, std::vector<uint8_t>(note_text.begin(), note_text.end()), &error)) {
       log.push_back("COULD NOT write " + note.string() + ": " + error);
     }
   }

@@ -133,7 +133,7 @@ uint16_t FilterPad(uint32_t user, uint8_t* gamepad, uint8_t* base) {
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (fight_tree::CurrentFrontEnd().state != kTitleState) return;
   const uint32_t page = scrooby::FindPage(ctx, base, "GameStart_Title");
-  const uint32_t text = page ? scrooby::FindText(ctx, base, page, "PressStart") : 0;
+  const uint32_t text = page ? scrooby::FindTextElement(ctx, base, page, "PressStart") : 0;
   if (!text) return;
   const uint32_t string = Read32(base, text + kTextString);
   if (!string) return;

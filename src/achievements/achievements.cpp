@@ -648,7 +648,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (page != g_icon_page) {
     g_icon_page = page;
     auto pic = [&](const char* n) { return page ? scrooby::FindPicture(ctx, base, page, n) : 0u; };
-    auto text = [&](const char* n) { return page ? scrooby::FindText(ctx, base, page, n) : 0u; };
+    auto text = [&](const char* n) { return page ? scrooby::FindTextElement(ctx, base, page, n) : 0u; };
     g_card = {pic("AchPopGlass"), pic("AchBarIcon"), pic("AchBarRing"), text("AchPopTitle"), text("AchPopName")};
     g_bar_glass = pic("Glass");
   }

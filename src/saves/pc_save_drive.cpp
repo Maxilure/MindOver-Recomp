@@ -137,7 +137,7 @@ bool Flush(OpenFile& f) {
                                           cheated ? save_files::kTrailerMadeWithCheats : 0)
                 : f.trailer;
   out.insert(out.end(), trailer.begin(), trailer.end());
-  if (!save_files::ReplaceFile(f.path, out, &error)) {
+  if (!save_files::WriteWholeFile(f.path, out, &error)) {
     REXLOG_ERROR("PC save drive: COULD NOT WRITE {}: {}", f.path.string(), error);
     return false;
   }

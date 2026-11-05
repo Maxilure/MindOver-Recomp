@@ -60,7 +60,7 @@ uint32_t GuestUtf16(std::u16string_view text);
 uint32_t FindPage(PPCContext& ctx, uint8_t* base, std::string_view name);
 
 // Elements of a page by name (0 if missing).
-uint32_t FindText(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
+uint32_t FindTextElement(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 uint32_t FindPicture(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 uint32_t FindMenu(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name);
 // A polygon (a flat-coloured shape, e.g. a message page's full-screen dim):
@@ -107,7 +107,7 @@ void SetSelectable(uint8_t* base, uint32_t item, bool selectable);
 
 // The front end's menu sounds (the "FE_SFX" bank).
 enum class Sound { kMove, kChange };
-void PlaySound(PPCContext& ctx, uint8_t* base, Sound sound);
+void PlayMenuSound(PPCContext& ctx, uint8_t* base, Sound sound);
 // Any cue of the menus' sound bank FE_SFX by name ("objective5" = the
 // "unlocked" jingle, stinger_unlock: achievements/achievements.cpp). The
 // bank's cues are listed in default.rcf (findings/51).

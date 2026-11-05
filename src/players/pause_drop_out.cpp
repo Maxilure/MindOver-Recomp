@@ -97,8 +97,8 @@ std::u16string TextOf(const uint8_t* base, uint32_t text) {
 void ShowPrompt(PPCContext& ctx, uint8_t* base, bool show) {
   const uint32_t page = scrooby::FindPage(ctx, base, kButtonsPage);
   if (!page) return;
-  const uint32_t text = scrooby::FindText(ctx, base, page, kPromptText);
-  const uint32_t button = scrooby::FindText(ctx, base, page, kPromptButton);
+  const uint32_t text = scrooby::FindTextElement(ctx, base, page, kPromptText);
+  const uint32_t button = scrooby::FindTextElement(ctx, base, page, kPromptButton);
   if (!text || !button) return;
   const bool ours = Says(base, text, tr(kWords));
   if (show) {
@@ -162,7 +162,7 @@ int32_t AfterPauseDecision(PPCContext& ctx, uint8_t* base, int32_t exit, int32_t
       continue;
     }
     if (lost_controller::DropOut(ctx, base, p, "pressed Back in the pause menu")) {
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
       anyone = lost_controller::CanDropOut(owner);  // (the owner may be the last on foot now)
     }
   }

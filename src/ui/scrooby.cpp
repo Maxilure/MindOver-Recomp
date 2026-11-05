@@ -135,7 +135,7 @@ uint32_t FindPolygon(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_
   return result;
 }
 
-uint32_t FindText(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name) {
+uint32_t FindTextElement(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name) {
   return page ? Call(__imp__sub_82371AD0, ctx, base, page, GuestAscii(name)) : 0;
 }
 uint32_t FindPicture(PPCContext& ctx, uint8_t* base, uint32_t page, std::string_view name) {
@@ -248,7 +248,7 @@ void SetSelectable(uint8_t* base, uint32_t item, bool selectable) {
   *flags = selectable ? (*flags | 0x80) : (*flags & ~0x80);
 }
 
-void PlaySound(PPCContext& ctx, uint8_t* base, Sound sound) {
+void PlayMenuSound(PPCContext& ctx, uint8_t* base, Sound sound) {
   const uint32_t game = Read32(base, kGameGlobal);
   const uint32_t front_end = game ? Read32(base, game + 52) : 0;
   if (!front_end) return;

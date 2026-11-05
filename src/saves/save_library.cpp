@@ -1546,7 +1546,7 @@ extern "C" REX_FUNC(sub_820CCA38) {
         g.top = top;
         g.wheel_select = std::clamp(item - g.top, 0, VisiblePanels() - 1);
         g.scroll_pending = true;
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
         REXLOG_INFO("Saves: the wheel slid the list to save {} of {}", g.top + 1, ItemCount());
       }
     }

@@ -139,7 +139,7 @@ void FindKeys(PPCContext& ctx, uint8_t* base, uint32_t self) {
   if (!g_keys.page) return;
   for (int r = 0; r < kRows; ++r) {
     for (int c = 0; c < kColumns; ++c) {
-      g_keys.text[r][c] = scrooby::FindText(ctx, base, g_keys.page, fmt::format("Key_{}_{}", r, c));
+      g_keys.text[r][c] = scrooby::FindTextElement(ctx, base, g_keys.page, fmt::format("Key_{}_{}", r, c));
       g_keys.cell[r][c] = g_keys.text[r][c];
       g_keys.half[r][c] = kCellHalfW;
     }
@@ -269,7 +269,7 @@ void SetPrompt(PPCContext& ctx, uint8_t* base, const char* element, std::u16stri
   static uint32_t buttons_page = 0;
   buttons_page = scrooby::FindPage(ctx, base, "FE_Buttons");
   if (!buttons_page) return;
-  scrooby::SetText(ctx, base, scrooby::FindText(ctx, base, buttons_page, element), text);
+  scrooby::SetText(ctx, base, scrooby::FindTextElement(ctx, base, buttons_page, element), text);
 }
 
 void Prompts(PPCContext& ctx, uint8_t* base) {

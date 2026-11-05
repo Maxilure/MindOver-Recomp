@@ -505,10 +505,10 @@ void Unfocus(Env& env) {
 
 void FindElements(PPCContext& ctx, uint8_t* base) {
   using scrooby::FindPicture;
-  using scrooby::FindText;
-  g.tab_prev = FindText(ctx, base, g.page, "OptTabPrev");
-  g.tab_text = FindText(ctx, base, g.page, "OptTab");
-  g.tab_next = FindText(ctx, base, g.page, "OptTabNext");
+  using scrooby::FindTextElement;
+  g.tab_prev = FindTextElement(ctx, base, g.page, "OptTabPrev");
+  g.tab_text = FindTextElement(ctx, base, g.page, "OptTab");
+  g.tab_next = FindTextElement(ctx, base, g.page, "OptTabNext");
   for (int r = 0; r < kRows; ++r) {
     // A menu item's texts aren't found by name in the page: the item holds
     // them (+140 what is drawn, +144 its value; both Text objects, read
@@ -521,18 +521,18 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
       g.star[r][k] = FindPicture(ctx, base, g.page, fmt::format("OptStar{}_{}", r, k));
     }
   }
-  g.desc = FindText(ctx, base, g.page, "OptDesc");
-  g.card_value = FindText(ctx, base, g.page, "OptCardValue");
+  g.desc = FindTextElement(ctx, base, g.page, "OptDesc");
+  g.card_value = FindTextElement(ctx, base, g.page, "OptCardValue");
   g.card_glass = {FindPicture(ctx, base, g.page, "OptCardSmall"),
                   FindPicture(ctx, base, g.page, "OptCardLarge"),
                   FindPicture(ctx, base, g.page, "OptCardSquare")};
   g.guide = FindPicture(ctx, base, g.page, "OptGuide");
-  g.warn = FindText(ctx, base, g.page, "OptWarn");
-  g.lb = FindText(ctx, base, g.page, "OptTabLB");
-  g.rb = FindText(ctx, base, g.page, "OptTabRB");
+  g.warn = FindTextElement(ctx, base, g.page, "OptWarn");
+  g.lb = FindTextElement(ctx, base, g.page, "OptTabLB");
+  g.rb = FindTextElement(ctx, base, g.page, "OptTabRB");
   g.page_up = FindPicture(ctx, base, g.page, "OptPageUp");
   g.page_down = FindPicture(ctx, base, g.page, "OptPageDown");
-  g.page_text = FindText(ctx, base, g.page, "OptPage");
+  g.page_text = FindTextElement(ctx, base, g.page, "OptPage");
   // The Achievements list's cards (as many as the page has).
   g.ach_cards.clear();
   for (int k = 0;; ++k) {
@@ -541,9 +541,9 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     if (!c.glass) break;
     c.ring = FindPicture(ctx, base, g.page, fmt::format("AchCardRing{}", k));
     c.icon = FindPicture(ctx, base, g.page, fmt::format("AchCardIcon{}", k));
-    c.name = FindText(ctx, base, g.page, fmt::format("AchCardName{}", k));
-    c.state = FindText(ctx, base, g.page, fmt::format("AchCardState{}", k));
-    c.desc = FindText(ctx, base, g.page, fmt::format("AchCardDesc{}", k));
+    c.name = FindTextElement(ctx, base, g.page, fmt::format("AchCardName{}", k));
+    c.state = FindTextElement(ctx, base, g.page, fmt::format("AchCardState{}", k));
+    c.desc = FindTextElement(ctx, base, g.page, fmt::format("AchCardDesc{}", k));
     g.ach_cards.push_back(c);
   }
   // The Players screen's cards and prompt row.
@@ -556,9 +556,9 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     c.aura = FindPicture(ctx, base, g.page, fmt::format("PlyAura{}", k));
     c.ring = FindPicture(ctx, base, g.page, fmt::format("PlyRing{}", k));
     c.pic = FindPicture(ctx, base, g.page, fmt::format("PlyPic{}", k));
-    c.title = FindText(ctx, base, g.page, fmt::format("PlyTitle{}", k));
-    c.info = FindText(ctx, base, g.page, fmt::format("PlyInfo{}", k));
-    c.style = FindText(ctx, base, g.page, fmt::format("PlyStyle{}", k));
+    c.title = FindTextElement(ctx, base, g.page, fmt::format("PlyTitle{}", k));
+    c.info = FindTextElement(ctx, base, g.page, fmt::format("PlyInfo{}", k));
+    c.style = FindTextElement(ctx, base, g.page, fmt::format("PlyStyle{}", k));
     c.left = FindPicture(ctx, base, g.page, fmt::format("PlyLeft{}", k));
     c.right = FindPicture(ctx, base, g.page, fmt::format("PlyRight{}", k));
     g.ply_cards.push_back(c);
@@ -567,24 +567,24 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
   g.ply_pair_pad = FindPicture(ctx, base, g.page, "PlyPairPad");
   g.ply_hinge = FindPicture(ctx, base, g.page, "PlyHinge");
   for (int i = 0; i < options_page::kPlyPrompts; ++i) {
-    g.ply_prompt[size_t(i)] = FindText(ctx, base, g.page, fmt::format("PlyPrompt{}", i));
+    g.ply_prompt[size_t(i)] = FindTextElement(ctx, base, g.page, fmt::format("PlyPrompt{}", i));
   }
-  g.ach_heading = FindText(ctx, base, g.page, "AchHeading");
+  g.ach_heading = FindTextElement(ctx, base, g.page, "AchHeading");
   g.ach_up = FindPicture(ctx, base, g.page, "AchUp");
   g.ach_down = FindPicture(ctx, base, g.page, "AchDown");
   // FE_Buttons, found as the game's GetMenuIndex does (layer 4, then 0).
   uint32_t buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 4, scrooby::GuestAscii("FE_Buttons"));
   if (!buttons) buttons = scrooby::Call(__imp__sub_821241E8, ctx, base, 0, scrooby::GuestAscii("FE_Buttons"));
-  g.select_button = FindText(ctx, base, buttons, "LowerRightButton");
-  g.select_text = FindText(ctx, base, buttons, "LowerRightText");
-  g.x_button = FindText(ctx, base, buttons, "UpperRightButton");
-  g.x_text = FindText(ctx, base, buttons, "UpperRightText");
-  g.y_button = FindText(ctx, base, buttons, "UpperLeftButton");
-  g.y_text = FindText(ctx, base, buttons, "UpperLeftText");
+  g.select_button = FindTextElement(ctx, base, buttons, "LowerRightButton");
+  g.select_text = FindTextElement(ctx, base, buttons, "LowerRightText");
+  g.x_button = FindTextElement(ctx, base, buttons, "UpperRightButton");
+  g.x_text = FindTextElement(ctx, base, buttons, "UpperRightText");
+  g.y_button = FindTextElement(ctx, base, buttons, "UpperLeftButton");
+  g.y_text = FindTextElement(ctx, base, buttons, "UpperLeftText");
   constexpr const char* kPrompts[8] = {"LowerLeftButton",  "LowerLeftText",  "LowerRightButton",
                                        "LowerRightText",   "UpperLeftButton", "UpperLeftText",
                                        "UpperRightButton", "UpperRightText"};
-  for (size_t i = 0; i < g.prompts.size(); ++i) g.prompts[i] = FindText(ctx, base, buttons, kPrompts[i]);
+  for (size_t i = 0; i < g.prompts.size(); ++i) g.prompts[i] = FindTextElement(ctx, base, buttons, kPrompts[i]);
   REXLOG_INFO("Options: page {:08X} menu {:08X} ({} items), label0 {:08X} value0 {:08X} star0 {:08X} "
               "item0 {:08X} desc {:08X}",
               g.page, g.menu, scrooby::ItemCount(base, g.menu), g.label[0], g.value[0], g.star[0][0],
@@ -1157,7 +1157,7 @@ void UpdateAchievements(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) 
   }
   if (cell != g.cell || top != g.ach_top) {
     if (cell != g.cell) {
-      scrooby::PlaySound(ctx, base, cell < g.cell ? scrooby::Sound::kChange : scrooby::Sound::kMove);
+      scrooby::PlayMenuSound(ctx, base, cell < g.cell ? scrooby::Sound::kChange : scrooby::Sound::kMove);
     }
     g.cell = cell;
     g.ach_top = top;
@@ -1592,7 +1592,7 @@ void RefreshPlayers(Env& env) {
 void PlayersCancel(PPCContext& ctx, uint8_t* base) {
   g.ply_styling = kPlyNone;
   g.ply_moving = kPlyNone;
-  scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+  scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
 }
 
 // What a button / click does on the selected card.
@@ -1611,39 +1611,39 @@ void PlayersAct(PPCContext& ctx, uint8_t* base, int action) {
       if (g.ply_moving != kPlyNone || !StyleLineShown(boxes[size_t(k)], k)) return;
       g.ply_styling = k;
       g.ply_style = players_setup::PadIcons(k);
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
     } else {
       const int p = g.ply_styling;
       g.ply_styling = kPlyNone;
       if (g.ply_style != players_setup::PadIcons(p)) players_setup::SetPadIcons(p, g.ply_style);
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
     }
   } else if (action == kPlyActStyle || action == -kPlyActStyle) {
     if (g.ply_styling == kPlyNone) return;
     const int step = action > 0 ? 1 : -1;
     g.ply_style = (g.ply_style + step + 6) % 6;
-    scrooby::PlaySound(ctx, base, step < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
+    scrooby::PlayMenuSound(ctx, base, step < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
   } else if (action == kPlyActMove) {
     if (g.ply_styling != kPlyNone) return;
     if (g.ply_moving == kPlyNone) {
       if (!boxes[size_t(k)].has_pad) return;
       g.ply_moving = k;
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
     } else if (k == g.ply_moving) {
       PlayersCancel(ctx, base);  // dropped where it was: nothing moves
     } else {
       const int from = g.ply_moving;
       g.ply_moving = kPlyNone;
       if (players_setup::MoveController(ctx, base, from, k)) {
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
       } else {
         g.ply_moving = from;  // refused (no room / the last player in the game): still held
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
       }
     }
   } else if (action == kPlyActRemove && g.ply_styling == kPlyNone && g.ply_moving == kPlyNone) {
     if (players_setup::RemoveControllers(ctx, base, k)) {
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
     }
   }
 }
@@ -1663,7 +1663,7 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
     HideHeld(joined, joined_buttons);
     g.seen |= joined_buttons;
     if (g.ply_styling == kPlyNone && g.ply_moving == kPlyNone) g.ply_sel = joined;
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
   }
   // The pulse of the selected name (1.08 <-> 1.02 over 0.9 s) and the blink
   // of the empty cards' line (1 <-> 0.35 over 1.2 s), every frame.
@@ -1795,7 +1795,7 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   }
   if (auto* driver = kbm::KeyboardMouseDriver::Get()) driver->TakeListWheel();  // (no use here)
   if (sel != g.ply_sel) {
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
     g.ply_sel = sel;
   }
   // (Minus a joining controller's press, still hidden: HideHeld.)
@@ -1836,7 +1836,7 @@ void SwitchTab(Env& env, int delta) {
   g.key_message_row = -1;
   g.top = 0;
   scrooby::Select(env.ctx, env.base, g.menu, FirstSelectableOnScreen());
-  scrooby::PlaySound(env.ctx, env.base,
+  scrooby::PlayMenuSound(env.ctx, env.base,
                      delta < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
   Refresh(env);
 }
@@ -1857,7 +1857,7 @@ bool ChangeValue(Env& env, int delta, bool wrap = false) {
   // Volume rows play their own sound (options_settings.cpp); the others the
   // menu's, as a value list in the game does.
   if (row.kind == Kind::kChoice) {
-    scrooby::PlaySound(env.ctx, env.base,
+    scrooby::PlayMenuSound(env.ctx, env.base,
                        delta < 0 ? scrooby::Sound::kMove : scrooby::Sound::kChange);
   }
   return true;
@@ -1886,7 +1886,7 @@ void StartCapture(Env& env, int action, int slot) {
   driver->Capture([](kbm::Input input) {
     g_capture_result = input == kbm::kNoInput ? kCaptureCancelled : int(input);
   });
-  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kChange);
+  scrooby::PlayMenuSound(env.ctx, env.base, scrooby::Sound::kChange);
   REXLOG_INFO("Options: asking for {}'s {} key", kbm::Info(kbm::Action(action)).id, slot ? "second" : "first");
   Refresh(env);
 }
@@ -1948,7 +1948,7 @@ void EndCapture(Env& env, int result) {
                 kbm::InputName(key),
                 lost < kbm::kActionCount ? std::string(" (taken from ") + kbm::Info(lost).id + ")" : "");
   }
-  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kChange);
+  scrooby::PlayMenuSound(env.ctx, env.base, scrooby::Sound::kChange);
   Refresh(env);
 }
 
@@ -1973,7 +1973,7 @@ void RemoveKey(Env& env, int action) {
     g.key_message = trf(tr(u"{0} removed."), {options_settings::KeyLabel(int(key))});
     REXLOG_INFO("Options: {} key {} removed", kbm::Info(kbm::Action(action)).id, kbm::InputName(key));
   }
-  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kMove);
+  scrooby::PlayMenuSound(env.ctx, env.base, scrooby::Sound::kMove);
   Refresh(env);
 }
 
@@ -2161,7 +2161,7 @@ void SlideBy(Env& env, int delta) {
     while (keep > g.top && !Selectable(keep)) --keep;
   }
   g.pending_select = keep - g.top;
-  scrooby::PlaySound(env.ctx, env.base, scrooby::Sound::kMove);
+  scrooby::PlayMenuSound(env.ctx, env.base, scrooby::Sound::kMove);
 }
 
 // The Options states' decisions (in game 956, main menu 96): held while a
@@ -2332,8 +2332,8 @@ extern "C" REX_FUNC(sub_820D2828) {
   scrooby::SetVisible(base, g.tab_text, true);
   if (!g.achievements) ShowAchievementElements(base, false);  // (shown by RefreshAchievements)
   if (!g.players) ShowPlayersElements(base, false);            // (shown by RefreshPlayers)
-  g.title = main_menu ? scrooby::FindText(ctx, base, g.page, "OptTitle") : 0;
-  g.paused_title = main_menu ? 0 : scrooby::FindText(ctx, base, g.page, "Paused");
+  g.title = main_menu ? scrooby::FindTextElement(ctx, base, g.page, "OptTitle") : 0;
+  g.paused_title = main_menu ? 0 : scrooby::FindTextElement(ctx, base, g.page, "Paused");
   if (g.title && g.achievements) {
     scrooby::SetText(ctx, base, g.title, tr(u"Achievements"));
   } else if (g.title) {  // the game's own translated "Options" (options_page.cpp: the PS2 item's string)
@@ -2415,7 +2415,7 @@ void StarMouse(PPCContext& ctx, uint8_t* base, int owner) {
     Refresh(env);
   } else if (moved && scrooby::Selection(base, g.menu) != star_row) {
     scrooby::Select(ctx, base, g.menu, star_row);
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
   }
 }
 }  // namespace
@@ -2582,7 +2582,7 @@ extern "C" REX_FUNC(sub_820D2A00) {
     const Row* row = RowOnScreen(scrooby::Selection(base, g.menu));
     if (row && row->x_action && row->x_shown && row->x_shown(env, row->get ? row->get(env) : 0)) {
       const std::u16string question = row->x_confirm ? row->x_confirm(env) : std::u16string();
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
       if (!question.empty()) {
         Ask(env, First() + scrooby::Selection(base, g.menu), question);
         g.asking_x = true;
@@ -2613,7 +2613,7 @@ extern "C" REX_FUNC(sub_820D2A00) {
           row->activate(env);
           refresh = true;
         }
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
       }
     } else if (row) {
       refresh |= ChangeValue(env, +1, /*wrap=*/true);

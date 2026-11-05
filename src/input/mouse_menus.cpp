@@ -433,7 +433,7 @@ int HoverAndClickImpl(PPCContext& ctx, uint8_t* base, uint32_t menu, const uint3
     g_seen_moves = moves;
     if (moved_here && hovered >= 0 && hovered != scrooby::Selection(base, menu)) {
       scrooby::Select(ctx, base, menu, hovered);
-      scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+      scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
     }
     if (clicked >= 0 && driver->TakeMenuClick()) {
       if (clicked != scrooby::Selection(base, menu)) scrooby::Select(ctx, base, menu, clicked);
@@ -445,7 +445,7 @@ int HoverAndClickImpl(PPCContext& ctx, uint8_t* base, uint32_t menu, const uint3
   g_seen_moves = moves;
   if (moved && hovered >= 0 && hovered != scrooby::Selection(base, menu)) {
     scrooby::Select(ctx, base, menu, hovered);
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
   }
   // A left click chooses the item it was MADE on (selected first, then A).
   if (clicked >= 0 && driver->TakeMenuClick()) {
@@ -496,8 +496,8 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   if (!page) return;
   static constexpr const char* kCorners[4] = {"LowerLeft", "LowerRight", "UpperLeft", "UpperRight"};
   for (const char* corner : kCorners) {
-    const uint32_t button = scrooby::FindText(ctx, base, page, std::string(corner) + "Button");
-    const uint32_t label = scrooby::FindText(ctx, base, page, std::string(corner) + "Text");
+    const uint32_t button = scrooby::FindTextElement(ctx, base, page, std::string(corner) + "Button");
+    const uint32_t label = scrooby::FindTextElement(ctx, base, page, std::string(corner) + "Text");
     if (!button || !scrooby::Visible(base, button)) continue;
     const uint32_t string = Read32(base, button + kTextString);
     if (!string) continue;

@@ -1054,7 +1054,7 @@ bool FindElements(PPCContext& ctx, uint8_t* base, uint32_t page) {
   g.shown.clear();
   g.desc_shown.clear();
   auto pic = [&](const std::string& n) { return scrooby::FindPicture(ctx, base, page, n); };
-  auto txt = [&](const std::string& n) { return scrooby::FindText(ctx, base, page, n); };
+  auto txt = [&](const std::string& n) { return scrooby::FindTextElement(ctx, base, page, n); };
   bool ok = true;
   for (int side = 0; side < kSides; ++side) {
     State::Side& d = g.sides[side];
@@ -1105,12 +1105,12 @@ void PromptBar(PPCContext& ctx, uint8_t* base, bool one, bool wear, bool hover_b
                        {"UpperLeftText", u""},  {"UpperLeftButton", u""},
                        {"UpperRightText", u""}, {"UpperRightButton", u""}};
   for (const P& q : prompts) {
-    if (uint32_t e = scrooby::FindText(ctx, base, buttons, q.name)) Put(ctx, base, e, one ? q.one : u"");
+    if (uint32_t e = scrooby::FindTextElement(ctx, base, buttons, q.name)) Put(ctx, base, e, one ? q.one : u"");
   }
   const char* words[2] = {"LowerLeftText", "LowerRightText"};
   const bool hovered[2] = {hover_back, hover_wear};
   for (int i = 0; i < 2; ++i) {
-    const uint32_t e = scrooby::FindText(ctx, base, buttons, words[i]);
+    const uint32_t e = scrooby::FindTextElement(ctx, base, buttons, words[i]);
     if (!e) continue;
     if (!g.bar_colour[i]) g.bar_colour[i] = Read32(e + 80);  // (its own, before any hover)
     scrooby::SetColour(ctx, base, e, hovered[i] ? kYellow : g.bar_colour[i]);
@@ -1121,7 +1121,7 @@ void RestoreBar(PPCContext& ctx, uint8_t* base) {
   const uint32_t buttons = scrooby::FindPage(ctx, base, "FE_Buttons");
   const char* words[2] = {"LowerLeftText", "LowerRightText"};
   for (int i = 0; i < 2 && buttons; ++i) {
-    const uint32_t e = scrooby::FindText(ctx, base, buttons, words[i]);
+    const uint32_t e = scrooby::FindTextElement(ctx, base, buttons, words[i]);
     if (e && g.bar_colour[i]) scrooby::SetColour(ctx, base, e, g.bar_colour[i]);
   }
 }
@@ -1520,7 +1520,7 @@ void Draw(PPCContext& ctx, uint8_t* base) {
   const uint32_t page = scrooby::FindPage(ctx, base, kPage);
   if (!page || !FindElements(ctx, base, page)) return;
   for (const char* name : kGameElements) {
-    if (uint32_t e = scrooby::FindText(ctx, base, page, name)) Hide(base, e);
+    if (uint32_t e = scrooby::FindTextElement(ctx, base, page, name)) Hide(base, e);
     if (uint32_t e = scrooby::FindPicture(ctx, base, page, name)) Hide(base, e);
   }
   std::vector<int> joined;
@@ -1612,7 +1612,7 @@ void StepRow(PPCContext& ctx, uint8_t* base, int p, int row, int d) {
   // a null read in sub_820E0C98's idle pick (crash, 2026-10-23, 1 player,
   // Character row -> Coco in a save without her).
   if (Available(pl.pick)) ShowInPreview(ctx, base, OutfitOfPick(pl.pick));
-  scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+  scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
   if (pl.row == kRowColour && !HasColour(pl.pick)) pl.row = kRowOutfit;
 }
 // A = wear the pick (queued; a locked look can be looked at, not worn).
@@ -1622,7 +1622,7 @@ void Wear(PPCContext& ctx, uint8_t* base, int p) {
   pl.ready = true;
   if (outfits::ChangesCharacter(p, OutfitOfPick(pl.pick))) {  // Crash <-> Coco: worn at the close
     pl.held_pick = true;
-    scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+    scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
     REXLOG_INFO("Outfit picker: player {} picked outfit {}: held until everyone is ready (a respawn)", p + 1,
                 OutfitOfPick(pl.pick));
     return;
@@ -1630,7 +1630,7 @@ void Wear(PPCContext& ctx, uint8_t* base, int p) {
   pl.waiting = true;
   if (g.queue.empty()) g.queue_since = Clock::now();
   g.queue.push_back(p);
-  scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
+  scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kChange);
 }
 // B while choosing = stay as they are (ready); B when ready = choose again.
 void Keep(PPCContext& ctx, uint8_t* base, int p) {
@@ -1638,7 +1638,7 @@ void Keep(PPCContext& ctx, uint8_t* base, int p) {
   pl.pick = PickOfOutfit(outfits::OutfitOf(p));
   pl.ready = true;
   pl.held_pick = false;
-  scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+  scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
 }
 // Does player p have a device (a controller, or the keyboard) right now?
 bool HasController(int p) {
@@ -1648,7 +1648,7 @@ bool HasController(int p) {
 void Unready(PPCContext& ctx, uint8_t* base, int p) {
   g.players[p].ready = false;
   g.players[p].held_pick = false;  // (choosing again: a held pick is dropped)
-  scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+  scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
 }
 
 // THE MOUSE (2026-10-23): it belongs to the player the
@@ -1713,7 +1713,7 @@ void Mouse(PPCContext& ctx, uint8_t* base) {
     case kHitName:  // a row's name: that row is selected (its arrows change it)
       if (pl.row != h.index) {
         pl.row = h.index;
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
       }
       break;
     case kHitArrowL:
@@ -1908,7 +1908,7 @@ void AfterUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen) {
       const int row = std::clamp(pl.row + dy, kRowCharacter, last);
       if (row != pl.row) {
         pl.row = row;
-        scrooby::PlaySound(ctx, base, scrooby::Sound::kMove);
+        scrooby::PlayMenuSound(ctx, base, scrooby::Sound::kMove);
       }
     }
     if (dx) StepRow(ctx, base, p, pl.row, dx);

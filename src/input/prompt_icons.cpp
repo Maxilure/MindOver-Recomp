@@ -2353,17 +2353,17 @@ void SpinRows(PPCContext& ctx, uint8_t* base, int owner) {
   // The Tutorials pages: opened from a pause menu, they belong to its owner.
   if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame_Tutorial")) {
     for (const char* name : {"Text0", "Text1", "Text2", "Text3"}) {
-      SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name), owner);
+      SpinRow(ctx, base, scrooby::FindTextElement(ctx, base, page, name), owner);
     }
   }
   if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame")) {
-    SpinRow(ctx, base, scrooby::FindText(ctx, base, page, "HintMessage"));
+    SpinRow(ctx, base, scrooby::FindTextElement(ctx, base, page, "HintMessage"));
   }
   // The prompt beside the HUD (dig spots and the like: "¹¼" under the mojo
   // count) = the announcement page's one text, placed at run time (found at a
   // dig spot: "¹¼", shown; the co-op pages' Button text never held a spin).
   if (const uint32_t page = scrooby::FindPage(ctx, base, "InGame_Announcement")) {
-    SpinRow(ctx, base, scrooby::FindText(ctx, base, page, "AnnouncementText"));
+    SpinRow(ctx, base, scrooby::FindTextElement(ctx, base, page, "AnnouncementText"));
   }
 }
 
@@ -2382,9 +2382,9 @@ void PlayerTexts(PPCContext& ctx, uint8_t* base) {
   for (int p = 0; p < 4; ++p) {
     const std::string digit = std::to_string(p + 1);
     if (const uint32_t page = scrooby::FindPage(ctx, base, ("InGame_CoOp_Player" + digit).c_str())) {
-      for (const char* name : {"Message", "Button"}) SpinRow(ctx, base, scrooby::FindText(ctx, base, page, name), p);
+      for (const char* name : {"Message", "Button"}) SpinRow(ctx, base, scrooby::FindTextElement(ctx, base, page, name), p);
     }
-    if (ingame) SpinRow(ctx, base, scrooby::FindText(ctx, base, ingame, ("CounterButtonPlayer" + digit).c_str()), p);
+    if (ingame) SpinRow(ctx, base, scrooby::FindTextElement(ctx, base, ingame, ("CounterButtonPlayer" + digit).c_str()), p);
   }
 }
 
@@ -2440,7 +2440,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   static constexpr const char* kButtons[] = {"LowerLeftButton", "LowerRightButton",
                                              "UpperLeftButton", "UpperRightButton"};
   for (const char* name : kButtons) {
-    const uint32_t text = scrooby::FindText(ctx, base, page, name);
+    const uint32_t text = scrooby::FindTextElement(ctx, base, page, name);
     const uint32_t string = text ? Load32(base, text + kTextString) : 0;
     if (!string) continue;
     std::u16string now, value;
@@ -2941,22 +2941,23 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
   uint32_t players_near = 0;  // bit p: player p may use it (for the log)
   for (int p = 0; p < 4 && count < 4; ++p) {
     float body[3];
-    bool near = false;
+    // (not "near": Windows' headers define near and far as empty macros)
+    bool can_use = false;
     if (!menu_input::PlayerPlays(p)) {
     } else if (interactable) {
-      near = InInteractableList(base, interactable, p);
+      can_use = InInteractableList(base, interactable, p);
     } else if (jackable || jackers) {
-      near = (jackers >> p) & 1;  // only where B would jack THIS titan
+      can_use = (jackers >> p) & 1;  // only where B would jack THIS titan
     } else {
       // No list: within the range the game showed it at (its owner's
       // distance then, 15% to spare for steps and turns).
       const float range = icon_range > 0 ? icon_range * 1.15f : kCoinRange;
-      near = BodyAt(base, p, body) &&
+      can_use = BodyAt(base, p, body) &&
              (body[0] - centre[0]) * (body[0] - centre[0]) + (body[1] - centre[1]) * (body[1] - centre[1]) +
                      (body[2] - centre[2]) * (body[2] - centre[2]) <=
                  range * range;
     }
-    if (!near) continue;  // the owner too: they may have walked off while another stays
+    if (!can_use) continue;  // the owner too: they may have walked off while another stays
     players_near |= 1u << p;
     const std::string look = LookOf(uint32_t(p)).Name();
     bool known = false;

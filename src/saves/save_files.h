@@ -152,7 +152,7 @@ bool MoveToBackups(const std::filesystem::path& file, std::filesystem::path* mov
 
 // Writes `data` next to `path` and renames it over it: a crash mid-write
 // leaves the old file whole. False + `error` on failure.
-bool ReplaceFile(const std::filesystem::path& path, const std::vector<uint8_t>& data,
+bool WriteWholeFile(const std::filesystem::path& path, const std::vector<uint8_t>& data,
                  std::string* error);
 
 // The one-time copy from the old Xbox-style layout (see above), at startup
