@@ -2110,3 +2110,45 @@ void MorePlayersOffScreenGate(PPCRegister& r11) {
   }
   r11.u64 = in_game >= 2 ? 1 : 0;
 }
+
+// MASKS CHANGE HOSTS (2026-11-05, findings/26 s.60): the disconnect box's
+// "stepping in" (lost_controller.cpp): player `from` (the last player on
+// foot, no controller) drops out, player `to` came out of its mask to carry
+// on. The game's Drop Out would force every other mask off `from` (sub-state
+// 4: all on foot). Instead each one moves to `to`, as masks:
+//   * DETACH: the mask message kind 5 (sub_820B44D0: host = from's Crash,
+//     rider = the mask) sent to from's Crash only: its handler lets its holder
+//     go of that rider (sub_82239418 above, which also forgets "rides player
+//     `from`", g_host_player). Not sent to the rider: that would be the mask
+//     leaving on its own (on foot).
+//   * ATTACH: kind 4 (host = to's Crash) to the rider and to `to`, as the
+//     game's own "hide and attach to the other player" and the hidden-Crash
+//     re-parking above do; it reaches to's holder through sub_822392A0 (up to
+//     three masks per Crash).
+// Then `from` carries nobody and its Drop Out takes the plain path (path A).
+// Returns the number of masks moved. Game main thread.
+int more_players::MoveMasks(PPCContext& ctx, uint8_t* base, int from, int to) {
+  const uint32_t old_host = CharacterOf(from), new_host = CharacterOf(to);
+  if (!old_host || !new_host || !HolderOf(new_host)) return 0;
+  static uint32_t scratch = 0;  // one message (80 B), guest memory
+  if (!scratch) scratch = rex::system::kernel_memory()->SystemHeapAlloc(128);
+  if (!scratch) return 0;
+  int moved = 0;
+  for (int r : RidersOf(old_host)) {
+    if (r == to) continue;
+    const uint32_t rider = CharacterOf(r);
+    std::memset(Guest(scratch), 0, 128);
+    CallGame(__imp__sub_820B44D0, ctx, base, scratch, 5, old_host, rider);
+    CallGame(__imp__sub_820B0B70, ctx, base, old_host, scratch);
+    CallGame(__imp__sub_820B45C8, ctx, base, scratch);
+    std::memset(Guest(scratch), 0, 128);
+    CallGame(__imp__sub_820B44D0, ctx, base, scratch, 4, new_host, rider);  // (the rider then flies over, as any new mask)
+    CallGame(__imp__sub_820B0B70, ctx, base, rider, scratch);
+    CallGame(__imp__sub_820B0B70, ctx, base, new_host, scratch);
+    CallGame(__imp__sub_820B45C8, ctx, base, scratch);
+    if (g_host_of.count(rider) && Read32(g_host_of[rider] + kHolderOwner) == new_host) ++moved;
+    REXLOG_INFO("Co-op: player {}'s mask moves from player {} to player {}{}", r + 1, from + 1, to + 1,
+                g_host_of.count(rider) && Read32(g_host_of[rider] + kHolderOwner) == new_host ? "" : " (NOT attached)");
+  }
+  return moved;
+}

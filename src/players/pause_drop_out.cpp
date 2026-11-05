@@ -141,8 +141,11 @@ int32_t AfterPauseDecision(PPCContext& ctx, uint8_t* base, int32_t exit, int32_t
     return drop_out_exit;
   }
 
-  bool anyone = false;  // someone may drop out: the prompt shows
-  for (int p = 0; p < kPlayers; ++p) anyone |= lost_controller::CanDropOut(p);
+  // The prompt shows when the menu's OWNER may drop out (its picture is the
+  // owner's Back). The last player on foot (the others ride them as masks)
+  // can't: no prompt for them (2026-11-05, from a playtest; it showed whenever
+  // ANYONE could). The other players' Back still drops them out.
+  bool anyone = lost_controller::CanDropOut(owner);
 
   // The menu is being left this frame (the game decided): prompt away.
   if (exit >= 0) {
@@ -160,8 +163,7 @@ int32_t AfterPauseDecision(PPCContext& ctx, uint8_t* base, int32_t exit, int32_t
     }
     if (lost_controller::DropOut(ctx, base, p, "pressed Back in the pause menu")) {
       scrooby::PlaySound(ctx, base, scrooby::Sound::kChange);
-      anyone = false;  // (the one left may be the last now)
-      for (int q = 0; q < kPlayers; ++q) anyone |= lost_controller::CanDropOut(q);
+      anyone = lost_controller::CanDropOut(owner);  // (the owner may be the last on foot now)
     }
   }
   // Set every frame while up (the prompts' own action may wipe the corner).

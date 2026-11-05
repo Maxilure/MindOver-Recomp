@@ -94,6 +94,12 @@ bool FourPlayerLayout();
 // nearest player on foot again (findings/26 s.45). 3-4 local players only.
 void ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base);
 
+// Moves every mask riding player `from` (except `to` itself) onto player
+// `to`, who must be on foot: detach from `from` + attach to `to`, the game's
+// own mask messages (the disconnect box's stepping in, lost_controller.cpp;
+// findings/26 s.60). Returns how many moved. Game main thread.
+int MoveMasks(PPCContext& ctx, uint8_t* base, int from, int to);
+
 // Is a level being played (game state 5, its pause and menus included)?
 // Safe from any thread.
 bool InPlay();

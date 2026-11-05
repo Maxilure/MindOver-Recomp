@@ -64,7 +64,7 @@ msgstr "WISSEL {0}"
 msgid "Achievement Unlocked"
 msgstr "Prestatie ontgrendeld"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1031 src/options/options_menu.cpp:2338 src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestaties"
@@ -571,7 +571,7 @@ msgstr "Kaart"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "In het pauzemenu: het spel verlaten (een andere speler blijft)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1330 src/options/options_menu.cpp:1344
 #, fuzzy
 msgid "Back"
 msgstr "Terug"
@@ -1603,8 +1603,18 @@ msgstr "Switch Pro-controller"
 msgid "Another maker (8BitDo)"
 msgstr "Ander merk (8BitDo)"
 
+#. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
+#: src/players/lost_controller.cpp:213
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it to continue."
+msgstr ""
+"De controller van speler {0} is losgekoppeld.\n"
+"Sluit je controller weer aan om door te gaan."
+
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: src/players/lost_controller.cpp:219
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1613,7 +1623,7 @@ msgstr ""
 "De controller van speler {0} is losgekoppeld.\n"
 "Sluit hem weer aan, of speler {1}: druk op {2} om over te nemen."
 
-#: src/players/lost_controller.cpp:193
+#: src/players/lost_controller.cpp:223
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -1622,7 +1632,7 @@ msgstr ""
 "Controller weer aangesloten.\n"
 "Druk op een knop om verder te gaan."
 
-#: src/players/lost_controller.cpp:194
+#: src/players/lost_controller.cpp:224
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -1632,7 +1642,7 @@ msgstr ""
 "Sluit je controller weer aan om door te gaan."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: src/players/lost_controller.cpp:228
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -1642,7 +1652,7 @@ msgstr ""
 "Speler {0}: druk op een knop om verder te gaan."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: src/players/lost_controller.cpp:235
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1824,122 +1834,122 @@ msgstr "{0}-{1}"
 msgid "Drop Out"
 msgstr "Spel verlaten"
 
-#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
+#: src/options/options_menu.cpp:811 src/options/options_menu.cpp:857
 #, fuzzy
 msgid "Press a Key"
 msgstr "Druk op een toets"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:862
+#: src/options/options_menu.cpp:867
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Druk op de nieuwe tweede toets of muisknop voor {0}. {1} of {2}: annuleren."
 
-#: src/options/options_menu.cpp:863
+#: src/options/options_menu.cpp:868
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Druk op de nieuwe toets of muisknop voor {0}. {1} of {2}: annuleren."
 
-#: src/options/options_menu.cpp:880
+#: src/options/options_menu.cpp:885
 #, fuzzy
 msgid "Second Key"
 msgstr "Tweede toets"
 
-#: src/options/options_menu.cpp:886
+#: src/options/options_menu.cpp:891
 #, fuzzy
 msgid "Remove Key"
 msgstr "Toets wissen"
 
-#: src/options/options_menu.cpp:1059
+#: src/options/options_menu.cpp:1064
 #, fuzzy
 msgid "Locked"
 msgstr "Niet beschikbaar"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1329
 #, fuzzy
 msgid "Confirm"
 msgstr "Bevestigen"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Swap"
 msgstr "Wisselen"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Move Here"
 msgstr "Hierheen"
 
-#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1335 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Annuleren"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1338
 #, fuzzy
 msgid "Buttons"
 msgstr "Knoppen"
 
-#: src/options/options_menu.cpp:1330
+#: src/options/options_menu.cpp:1341
 #, fuzzy
 msgid "Move"
 msgstr "Verplaatsen"
 
-#: src/options/options_menu.cpp:1331
+#: src/options/options_menu.cpp:1342
 #, fuzzy
 msgid "Remove"
 msgstr "Verwijderen"
 
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1467
 #, fuzzy
 msgid "No room for this player"
 msgstr "Geen plek voor deze speler"
 
-#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1471 src/options/options_menu.cpp:1479
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Toetsenbord en muis"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Naar speler {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Pick a player"
 msgstr "Kies een speler"
 
-#: src/options/options_menu.cpp:1468
+#: src/options/options_menu.cpp:1481
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Druk op een knop om mee te doen"
 
-#: src/options/options_menu.cpp:1870
+#: src/options/options_menu.cpp:1925
 #, fuzzy
 msgid "Not changed."
 msgstr "Niet veranderd."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1877
+#: src/options/options_menu.cpp:1932
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} is voor de menu's ({1}): kies een andere toets."
 
-#: src/options/options_menu.cpp:1889
+#: src/options/options_menu.cpp:1944
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} was de toets van {1}: nu is hij van {2}."
 
-#: src/options/options_menu.cpp:1910
+#: src/options/options_menu.cpp:1965
 #, fuzzy
 msgid "No key to remove."
 msgstr "Geen toets om te wissen."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1918
+#: src/options/options_menu.cpp:1973
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} gewist."

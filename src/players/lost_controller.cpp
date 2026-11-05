@@ -4,6 +4,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -29,6 +30,8 @@ REXCVAR_DEFINE_BOOL(lost_controller, true, "CrashMoM",
 
 extern "C" REX_FUNC(__imp__sub_82262D78);  // the front end's "controller missing" check (r3 = front end)
 extern "C" REX_FUNC(__imp__sub_82266040);  // the pause menu's Drop Out (drops the menu owner, +8536)
+extern "C" REX_FUNC(sub_82266040);         // ... through the port's wrapper below (the rules + unjacking)
+extern "C" REX_FUNC(__imp__sub_8221F1E8);  // CheckInputEvent (r3 = behaviour controller, r4 map, r5 event)
 extern "C" REX_FUNC(__imp__sub_8225F758);  // ShowConfirmMessage (r3 = front end, r4 = text name, f1 = timer)
 extern "C" REX_FUNC(__imp__sub_8225E1D8);  // the question box: close (done, hidden)
 extern "C" REX_FUNC(__imp__sub_82373360);  // text element: set its string (UTF-16, copied)
@@ -125,6 +128,23 @@ std::atomic<bool> g_want_takeover{false};
 // who joins, who drops out once they're in, and until when.
 int g_handover_joiner = -1, g_handover_lost = -1;
 std::chrono::steady_clock::time_point g_handover_until;
+// STEPPING IN (2026-11-05, playtest idea): the box is about the LAST PLAYER ON
+// FOOT and the others ride them as masks (MayLeave says no: a mask needs a
+// Crash). Any of those masks with a device presses Y: that player comes OUT
+// of the mask (the game's own "forced out of the mask", sub-state 4 = what
+// its Drop Out does to a leaving player's riders, sub_822357B0 path B), the
+// box closes and the game runs; once they're on foot (co-op state 2) the
+// lost player drops out (now allowed: someone else is on foot). Their other
+// masks move onto the player who stepped in (more_players::MoveMasks). Not on foot
+// within kStepInWindow (the game kept the mask): the box asks again.
+// Who pressed: FilterPad (input poll) -> Update. The lost player is left out
+// of the box meanwhile (Waiting).
+constexpr auto kStepInWindow = std::chrono::seconds(3);
+constexpr uint32_t kSubState = 0x824F3C38;  // co-op sub-state per player (4 entries, more_players)
+constexpr uint32_t kSubForcedOutOfMask = 4;
+std::atomic<int> g_drop_presser{-1};
+int g_stepin_player = -1, g_stepin_lost = -1;
+std::chrono::steady_clock::time_point g_stepin_until;
 // The buttons each socket held at its last read: only a NEW press counts.
 std::array<uint16_t, kMaxPlayers> g_held{};
 
@@ -132,8 +152,7 @@ std::array<uint16_t, kMaxPlayers> g_held{};
 uint32_t g_text = 0;          // our UTF-16 text in guest memory
 bool g_we_paused = false;     // the game was running when the box opened: unpause at the end
 bool g_menu_was_hidden = false;
-int g_shown_phase = kNone;    // what the box currently says
-bool g_shown_solo = false;
+std::u16string g_shown_text;  // what the box currently says
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
 uint32_t Read32(uint32_t a) {
@@ -181,8 +200,19 @@ uint32_t UseHeap(PPCContext& ctx, uint8_t* base, uint32_t heap) {
 // The box's text (the game's own font, wrapped by the text element; "´" is
 // drawn as the Y button). `solo` = nobody else is in game: no player number,
 // no drop out (the last player in game can't drop out).
-std::u16string Message(int phase, int p, bool solo, int joiner = -1) {
+// `others` = someone else is in game, but p can't drop out (the last player
+// on foot, the others are masks): numbered, no drop out.
+std::u16string Message(int phase, int p, bool solo, int joiner = -1, bool others = false,
+                       bool step_in = false) {
   const std::u16string n(1, char16_t(u'1' + p));
+  // STEPPING IN: a mask's Y drops p out (that mask comes out on foot): the
+  // usual drop-out line, said further down.
+  if (solo && others && phase == kLost && step_in) solo = false;
+  if (solo && others && phase == kLost) {
+    // TR: the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
+    return trf(tr(u"Player {0}'s controller disconnected.\nReconnect it to continue."), {n});
+  }
+  if (solo && others) solo = false;  // back: the numbered "press any button" lines
   if (solo && phase == kLost && joiner >= 0) {
     // Someone out of the game can take over (TAKING OVER above).
     // TR: the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
@@ -247,13 +277,115 @@ void HideMenu(uint32_t fe, bool hide) {
 std::array<bool, kMaxPlayers> g_dropping{};
 
 // A player in game without a device, not being dropped out: needs the box.
-bool Waiting(int p) { return InGame(p) && !HasDevice(p) && !g_dropping[p] && p != g_handover_lost; }
-// Is anyone else in game (so p may be dropped out)?
+bool Waiting(int p) {
+  return InGame(p) && !HasDevice(p) && !g_dropping[p] && p != g_handover_lost && p != g_stepin_lost;
+}
+// Is anyone else in game?
 bool SomeoneElse(int p) {
   for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
     if (q != p && InGame(q) && !g_dropping[q]) return true;
   }
   return false;
+}
+// Is player p a mask (co-op state 1) or turning into one (3)?
+bool IsMask(int p) {
+  const uint32_t s = Read32(kCoOpState + 4 * p);
+  return s == 1 || s == 3;
+}
+// Does anyone else stay ON FOOT (co-op state 2: a Crash of their own, walking
+// or riding a titan)?
+bool SomeoneElseOnFoot(int p) {
+  for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
+    if (q != p && Read32(kCoOpState + 4 * q) == 2 && !g_dropping[q]) return true;
+  }
+  return false;
+}
+// May player p leave the game? THE RULE (2026-11-05, from a playtest): someone
+// else stays in game, and a player ON FOOT needs another player on foot to
+// stay: the masks ride a Crash, so the last Crash can't go. Before, player 1
+// dropping out while everyone else rode them as masks left the masks with no
+// body: the game's Drop Out forced them out of their masks (sub-state 4, the
+// original's two-player path B too) and they stood frozen where they were.
+// A mask can always leave while someone else stays.
+bool MayLeave(int p) { return SomeoneElse(p) && (IsMask(p) || SomeoneElseOnFoot(p)); }
+
+// May player q step in for `lost` (STEPPING IN above)? q rides as a mask
+// (state 1: settled, not turning into one), plays with a device, and `lost`
+// can't leave only because nobody else is on foot.
+bool CanStepIn(int lost, int q) {
+  return q >= 0 && q < more_players::LocalPlayerCount() && q != lost && !g_dropping[q] &&
+         Read32(kCoOpState + 4 * q) == 1 && HasDevice(q) && !MayLeave(lost) && SomeoneElse(lost);
+}
+bool AnyoneCanStepIn(int lost) {
+  for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
+    if (CanStepIn(lost, q)) return true;
+  }
+  return false;
+}
+
+// UNJACK FIRST (2026-11-05, from a playtest): a player riding a titan who
+// dropped out took the TITAN with them (the mutant vanished). The game's own
+// drop out ejects the rider with sub_82235678 (messages 5 + 1; the fight tree
+// step sub_820C0EF0 does it for players 1-2's titans): tried first, the titan
+// then vanished ~1 s later (photos) even with the drop out held back. The
+// player's own dismount (B on a titan) leaves it standing, knocked down, free
+// to be jacked again. So now Drop Out on a titan rider DISMOUNTS first, the
+// way B does: the titan's compiled fight tree asks CheckInputEvent
+// (sub_8221F1E8), through the titan's AI controller, about the rider's B: (4, 2) in the decision at 0x821FC1D8 (next to its
+// "FORCE_DISMOUNT" check) and (6, 23) at 0x821FB998 / 0x821FBC38 (found by
+// logging every "yes" of sub_8221F1E8 around one B press on the Ratcicle).
+// Those questions, for THAT titan only, hear "yes" (the wrapper at the end):
+// no button is faked, the tree goes its own dismount way (a script,
+// CJackingBehaviour sub_8214D778, clears the titan slot). The player drops
+// out once on foot (TitanOfPlayer = 0) plus kOffTime for the jump off. While
+// waiting the player counts as dropping (not "someone else on foot"). The
+// tree runs only while the game runs (the pause menu's Back for a player who
+// isn't its owner asks while paused): kUnjackTime counts running time only;
+// past it the drop out is given up (logged; the player stays in).
+constexpr auto kUnjackTime = std::chrono::seconds(3);
+constexpr auto kOffTime = std::chrono::milliseconds(1000);
+std::array<bool, kMaxPlayers> g_unjacking{};
+std::array<std::chrono::steady_clock::duration, kMaxPlayers> g_unjack_waited{}, g_unjack_off{};
+std::chrono::steady_clock::time_point g_unjack_last_tick{};
+
+// The game's Drop Out for player p (the menu owner is p for the call).
+void CallDropOut(PPCContext& ctx, uint8_t* base, uint32_t fe, int p, bool rules) {
+  const uint32_t owner = Read32(fe + kOwner);
+  Write32(fe + kOwner, uint32_t(p));
+  CallGame(rules ? sub_82266040 : __imp__sub_82266040, ctx, base, fe);
+  Write32(fe + kOwner, owner);
+}
+
+// Once per frame: an unjacked player is on foot -> the drop out goes on.
+void TickUnjacking(PPCContext& ctx, uint8_t* base, uint32_t fe) {
+  const auto now = std::chrono::steady_clock::now();
+  const auto dt = now - g_unjack_last_tick;
+  g_unjack_last_tick = now;
+  const uint32_t manager = Read32(kGameGlobal);
+  const bool paused = manager && (*Guest(manager + kPauseBits) & kGamePaused);
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    if (!g_unjacking[p]) continue;
+    if (!InGame(p)) {
+      g_unjacking[p] = false;
+      continue;
+    }
+    const bool running = !paused && dt < std::chrono::milliseconds(250);
+    if (!more_players::TitanOfPlayer(p)) {
+      // Off the titan: the jump off plays first (kOffTime of running game).
+      if (running) g_unjack_off[p] += dt;
+      if (g_unjack_off[p] < kOffTime) continue;
+      g_unjacking[p] = false;
+      REXLOG_INFO("Lost controller: player {} is off the titan: drops out", p + 1);
+      CallDropOut(ctx, base, fe, p, false);
+      g_dropping[p] = true;
+      continue;
+    }
+    if (running) g_unjack_waited[p] += dt;
+    if (g_unjack_waited[p] > kUnjackTime) {
+      g_unjacking[p] = g_dropping[p] = false;
+      REXLOG_WARN("Lost controller: player {}'s titan didn't let go: drop out given up", p + 1);
+    }
+  }
 }
 // A player out of the game who has a device and could join (the box offers
 // them to take over), -1 = none. The first one in player order.
@@ -275,16 +407,19 @@ int FirstWaiting() {
 void ShowFor(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
   for (uint16_t& held : g_held) held = 0xFFFF;  // wait for every button to be let go first
   g_want_drop = g_want_resume = false;
-  g_can_drop = SomeoneElse(p);
+  g_can_drop = MayLeave(p);
   g_lost = p;
   g_phase = kLost;
   g_want_takeover = false;
-  g_offered_joiner = g_can_drop.load() ? -1 : Joiner(p);
-  SetText(ctx, base, fe, Message(kLost, p, !g_can_drop.load(), g_offered_joiner.load()));
-  g_shown_phase = kLost;
-  g_shown_solo = !g_can_drop.load();
+  // Taking over only when nobody else is in game (masks need their Crash).
+  g_offered_joiner = g_can_drop.load() || SomeoneElse(p) ? -1 : Joiner(p);
+  g_drop_presser = -1;
+  g_shown_text = Message(kLost, p, !g_can_drop.load(), g_offered_joiner.load(), SomeoneElse(p), AnyoneCanStepIn(p));
+  SetText(ctx, base, fe, g_shown_text);
   REXLOG_INFO("Lost controller: player {} has no controller: game paused{}", p + 1,
-              g_can_drop.load() ? " (reconnect / drop out)" : " (reconnect; the only player in game)");
+              g_can_drop.load() ? " (reconnect / drop out)"
+              : SomeoneElse(p) ? " (reconnect; the last player on foot)"
+                               : " (reconnect; the only player in game)");
 }
 
 void Open(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
@@ -312,7 +447,7 @@ void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
   HideMenu(fe, false);
   g_phase = kNone;
   g_lost = -1;
-  g_shown_phase = kNone;
+  g_shown_text.clear();
   g_want_drop = g_want_resume = false;
   g_offered_joiner = -1;
   g_want_takeover = false;
@@ -324,8 +459,10 @@ void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
 // own check, replaced below). `fe` = the front end.
 void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   for (int p = 0; p < kMaxPlayers; ++p) {
+    if (g_unjacking[p]) continue;  // (counts as dropping until it's off the titan)
     if (!InGame(p) || HasDevice(p)) g_dropping[p] = false;  // dropped out (or back after all)
   }
+  TickUnjacking(ctx, base, fe);
   // A take-over under way: the joiner is in -> the lost player drops out;
   // the lost player's controller came back, or no join in time -> over (the
   // box asks again if it's still needed).
@@ -337,6 +474,23 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
         DropOut(ctx, base, lost, ("player " + std::to_string(joiner + 1) + " took over").c_str());
       } else if (!InGame(joiner)) {
         REXLOG_INFO("Lost controller: player {} didn't join in time: asking again", joiner + 1);
+      }
+    }
+  }
+  // Stepping in under way: the mask is on foot -> the lost player drops out;
+  // the controller came back / the lost player is out / too long -> over.
+  if (g_stepin_lost >= 0) {
+    const int q = g_stepin_player, gone = g_stepin_lost;
+    const bool on_foot = Read32(kCoOpState + 4 * q) == 2;
+    if (on_foot || !InGame(gone) || HasDevice(gone) || std::chrono::steady_clock::now() > g_stepin_until) {
+      g_stepin_player = g_stepin_lost = -1;
+      if (on_foot && InGame(gone) && !HasDevice(gone)) {
+        // The other masks follow the player who stepped in (they'd all be
+        // forced on foot by the Drop Out otherwise).
+        more_players::MoveMasks(ctx, base, gone, q);
+        DropOut(ctx, base, gone, ("player " + std::to_string(q + 1) + " stepped in on foot").c_str());
+      } else if (!on_foot) {
+        REXLOG_INFO("Lost controller: player {} didn't come out of the mask in time: asking again", q + 1);
       }
     }
   }
@@ -361,7 +515,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     }
     g_phase = phase;
   }
-  g_can_drop = SomeoneElse(lost);
+  g_can_drop = MayLeave(lost);
   // Taking over: the box closes and the game runs, for the join (TAKING OVER).
   if (phase == kLost && g_want_takeover.exchange(false)) {
     const int joiner = g_offered_joiner.load();
@@ -373,27 +527,37 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
                     ("is taken over by player " + std::to_string(joiner + 1) + ": game runs for the join").c_str());
     }
   }
+  // Stepping in: a mask's Y (STEPPING IN above).
+  if (phase == kLost && !g_can_drop.load() && g_want_drop.load()) {
+    g_want_drop = false;
+    const int q = g_drop_presser.exchange(-1);
+    if (CanStepIn(lost, q)) {
+      Write32(kSubState + 4 * q, kSubForcedOutOfMask);
+      g_stepin_player = q;
+      g_stepin_lost = lost;
+      g_stepin_until = std::chrono::steady_clock::now() + kStepInWindow;
+      return Finish(ctx, base, fe,
+                    ("will drop out: player " + std::to_string(q + 1) + " comes out of the mask first").c_str());
+    }
+  }
   if (phase == kLost && g_want_drop.exchange(false) && g_can_drop.load()) {
     // The pause menu's Drop Out, for this player: it acts on the menu owner,
     // so the owner is this player for the call. It completes once the game
     // runs again: until then the player counts as being dropped.
-    const uint32_t owner = Read32(fe + kOwner);
-    Write32(fe + kOwner, uint32_t(lost));
-    CallGame(__imp__sub_82266040, ctx, base, fe);
-    Write32(fe + kOwner, owner);
+    CallDropOut(ctx, base, fe, lost, true);
     g_dropping[lost] = true;
     return Finish(ctx, base, fe, "was dropped out");
   }
   if (phase == kBack && g_want_resume.exchange(false)) {
     return Finish(ctx, base, fe, "pressed a button on its controller");
   }
-  const bool solo = !g_can_drop.load();
-  const int offered = solo && phase == kLost ? Joiner(lost) : -1;
-  if (g_shown_phase != phase || g_shown_solo != solo || g_offered_joiner.load() != offered) {
-    g_offered_joiner = offered;
-    SetText(ctx, base, fe, Message(phase, lost, solo, offered));
-    g_shown_phase = phase;
-    g_shown_solo = solo;
+  const bool solo = !g_can_drop.load(), others = SomeoneElse(lost);
+  const int offered = solo && !others && phase == kLost ? Joiner(lost) : -1;
+  g_offered_joiner = offered;
+  std::u16string text = Message(phase, lost, solo, offered, others, AnyoneCanStepIn(lost));
+  if (text != g_shown_text) {  // (setting a text allocates in the menus' heap: only on a change)
+    SetText(ctx, base, fe, text);
+    g_shown_text = std::move(text);
   }
   // Shown at full strength while it's ours (it fades in with the frame time).
   WriteFloat(fe + kBox + kBoxFade, 1.0f);
@@ -403,17 +567,14 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
 
 bool Active() { return g_phase.load() != kNone; }
 
-bool CanDropOut(int p) { return p >= 0 && p < kMaxPlayers && InGame(p) && !g_dropping[p] && SomeoneElse(p); }
+bool CanDropOut(int p) { return p >= 0 && p < kMaxPlayers && InGame(p) && !g_dropping[p] && MayLeave(p); }
 
 bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why) {
   if (!CanDropOut(p)) return false;
   const uint32_t game = Read32(kGameGlobal);
   const uint32_t fe = game ? Read32(game + 52) : 0;
   if (!fe) return false;
-  const uint32_t owner = Read32(fe + kOwner);
-  Write32(fe + kOwner, uint32_t(p));
-  CallGame(__imp__sub_82266040, ctx, base, fe);
-  Write32(fe + kOwner, owner);
+  CallDropOut(ctx, base, fe, p, true);
   g_dropping[p] = true;
   REXLOG_INFO("Lost controller: player {} dropped out ({})", p + 1, why);
   return true;
@@ -425,7 +586,10 @@ void FilterPad(int user, uint8_t* gamepad, bool connected) {
   const uint16_t buttons = connected ? uint16_t(gamepad[0] << 8 | gamepad[1]) : 0;
   const uint16_t pressed = buttons & ~g_held[user];
   g_held[user] = buttons;
-  if (phase == kLost && (pressed & kButtonY)) g_want_drop = true;              // anyone
+  if (phase == kLost && (pressed & kButtonY)) {  // anyone (stepping in: who pressed counts)
+    g_drop_presser = user;
+    g_want_drop = true;
+  }
   if (phase == kBack && pressed && user == g_lost.load()) g_want_resume = true;  // that player
   // Taking over: the offered player's START (TAKING OVER above).
   if (phase == kLost && user == g_offered_joiner.load() && (pressed & kButtonStart)) g_want_takeover = true;
@@ -449,3 +613,64 @@ extern "C" REX_FUNC(sub_82262D78) {
   Update(ctx, base, ctx.r3.u32);
 }
 
+
+// The game's Drop Out (r3 = front end; drops the menu owner, +8536: it sends
+// the owner's Crash message 48/7, CCoOpBehaviour sub_822357B0). Every way in
+// goes through here: the pause menu's own Drop Out pick (Back, exits 882 /
+// 914: pause_drop_out.h), the box's Y and the Players screen (DropOut above).
+// In a level the port's RULES first (MayLeave: the last player on foot stays),
+// and a titan rider is unjacked first (UNJACK FIRST above).
+extern "C" REX_FUNC(sub_82266040) {
+  using namespace lost_controller;
+  const uint32_t fe = ctx.r3.u32;
+  const int p = int(int32_t(Read32(fe + kOwner)));
+  if (!more_players::InPlay() || p < 0 || p >= kMaxPlayers || !InGame(p)) {
+    __imp__sub_82266040(ctx, base);
+    return;
+  }
+  if (!MayLeave(p)) {
+    REXLOG_INFO("Lost controller: player {} can't drop out (the last player on foot / in game)", p + 1);
+    return;
+  }
+  if (more_players::TitanOfPlayer(p)) {
+    if (!g_unjacking[p]) {
+      REXLOG_INFO("Lost controller: player {} rides a titan: off it first, then drops out", p + 1);
+      g_unjacking[p] = g_dropping[p] = true;
+      g_unjack_waited[p] = g_unjack_off[p] = {};
+    }
+    return;
+  }
+  __imp__sub_82266040(ctx, base);
+}
+
+
+// CheckInputEvent (sub_8221F1E8; r3 = a behaviour controller, r4 = the input
+// map, r5 = the event; returns a bool). A rider being dropped out (UNJACK
+// FIRST above): the dismount questions of the titan they ride are answered
+// "yes", nothing else. WHO ASKS: the titan's own AI behaviour controller (an
+// NPCBaseJackable, e.g. class Strong for the Ratcicle, vtable 0x82035B1C),
+// which keeps its titan at +148 (and +156). Two earlier matches were each
+// right for one Ratcicle only (2026-11-05 playtests): "the asker is titan +
+// 0x40" (the save's own Ratcicle: its controller sits there) and "the asker's
+// input controller is titan + 0x40" (the first spawned one); a second spawned
+// Ratcicle had neither, and players stayed on their titan. +148 held for all
+// three (console reads of the asker). Checked since on every jackable titan
+// of the spawn list (Ratcicle, Spike, Scorporilla, Sludge, Yuktopus, TK,
+// Shurtle, Roller, Battler, Phantom, Stinky, Parafox) with players 1-4, the
+// stick held through the drop out; another player's titan stays ridden.
+constexpr uint32_t kNpcTitan = 148;
+extern "C" REX_FUNC(sub_8221F1E8) {
+  using namespace lost_controller;
+  const uint32_t controller = ctx.r3.u32, map = ctx.r4.u32, event = ctx.r5.u32;
+  __imp__sub_8221F1E8(ctx, base);
+  if (ctx.r3.u32 & 0xFF) return;
+  const bool dismount = (map == 4 && event == 2) || (map == 6 && event == 23);
+  if (!dismount) return;
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    const uint32_t titan = g_unjacking[p] ? more_players::TitanOfPlayer(p) : 0;
+    if (titan && Read32(controller + kNpcTitan) == titan) {
+      ctx.r3.u64 = 1;
+      return;
+    }
+  }
+}

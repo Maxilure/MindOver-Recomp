@@ -2260,7 +2260,7 @@ player out**, for any player in the game:
   * Another player: `lost_controller::DropOut` (the same game call,
     `sub_82266040`, with the owner set to them); the menu stays up and the
     player leaves once play goes on.
-  * The last player in the game can't drop out (`lost_controller::CanDropOut`).
+  * The last player in the game can't drop out (`lost_controller::CanDropOut`; since section 60 also the last player on foot).
 * **The prompt:** "Drop Out" with the Back picture in FE_Buttons' upper-left
   corner while someone may drop out (the owner's look, like the other
   prompts), cleared when the menu is left. The label says whether the corner
@@ -2407,3 +2407,106 @@ the keyboard was bright and the controller dim, with the controller's name;
 a trigger press on the controller swapped them; X, right showed "Moving to
 Player 2" with the controller on player 2's card; A moved it, and player 1's
 card went back to the single keyboard picture. 0 errors.
+
+
+## 60. Drop Out: the last Crash stays, titan riders get off first
+
+Two problems with Drop Out (section 56, also the lost-controller box's Y and
+the Players screen, which share `lost_controller::DropOut`):
+
+* **Everyone else a mask:** player 1 (or whoever was the last player on
+  foot) could still drop out. The masks had no Crash left to ride: the
+  game's Drop Out (`sub_822357B0`, also the original's two-player path B)
+  forces the riders out of their masks, and with no Crash in game they
+  stood frozen where they were.
+* **Riding a titan:** the titan went away with the player.
+
+**The rule now** (`lost_controller.cpp` MayLeave): a player may leave when
+someone else stays in game AND, for a player on foot (co-op state 2: a Crash
+of their own, walking or riding a titan), someone else is on foot too. A
+mask (state 1, or 3 = turning into one) may always leave while someone else
+stays. It applies to every way out: `CanDropOut` (the pause menu's Back, the
+box), and a wrapper on the game's Drop Out itself (`sub_82266040`, which the
+pause menu's own exits 882 / 914 call) refuses it for the last player on
+foot. The pause menu's "Drop Out" prompt now shows only when the menu's
+OWNER may drop out (the other players' Back still works). The lost-controller
+box, for the last player on foot with masks riding them, says "Player N's
+controller disconnected. Reconnect it to continue." (no drop out, no take
+over).
+
+**Titan riders dismount first.** The game has its own way to throw a rider
+off for a drop out: `sub_82235678(Crash, titan)` (messages 5 and 1; the drop
+out's fight tree step `sub_820C0EF0` uses it for players 1-2's titans).
+Tried first: the titan vanished about a second later even with the drop out
+held back until then (photos). The player's own dismount (B on a titan)
+leaves it standing, knocked down, jackable again. That dismount is a
+decision of the titan's compiled fight tree: CheckInputEvent (`sub_8221F1E8`,
+r3 = the titan's behaviour controller = titan actor + 0x40) with map 4 /
+event 2 (decision at `0x821FC1D8`, beside its `FORCE_DISMOUNT` check) and map
+6 / event 23 (`0x821FB998`, `0x821FBC38`), found by logging every "yes" of
+`sub_8221F1E8` around one B press; a script then clears the titan slot
+(CJackingBehaviour `sub_8214D778`, seen with the console's `who` on the game
+object's +24). So Drop Out on a rider marks them "getting off" and those two
+questions, for that titan's controller only, answer "yes": no button is
+faked. Once the titan slot is empty, one second for the jump off, then the
+game's Drop Out. Paused time doesn't count; after 3 s of play still on the
+titan, the drop out is given up (logged).
+
+Which questions count: they are asked through the titan's own AI behaviour
+controller (an NPCBaseJackable; class Strong for the Ratcicle, vtable
+`0x82035B1C`), which keeps its titan at +148 (and +156). Two earlier matches
+each fit one Ratcicle only: "the asker is titan + 0x40" (the save's own
+Ratcicle, whose controller sits there) and "the asker's input controller is
+titan + 0x40" (one spawned Ratcicle). A second spawned Ratcicle had neither,
+and its rider stayed on, played on, and vanished at their own dismount (the
+drop out went ahead then). +148 holds for all of them. Found by logging every
+question asked while a drop out waited, with the stick held.
+
+**Stepping in from the disconnect box.** When the last player on foot loses
+their controller while others ride them as masks, the box offers the usual "Player N's
+controller disconnected. Reconnect it, or press Y to drop out Player N."
+Any of those masks (with a device) may press Y:
+
+1. That player gets the game's own "forced out of the mask" sub-state (4,
+   what Drop Out does to a leaving player's riders); the box closes and the
+   game runs.
+2. Once they are on foot (co-op state 2), every OTHER mask riding the
+   disconnected player moves onto them (`more_players::MoveMasks`): the mask
+   message kind 5 (detach, `sub_820B44D0` with host + rider) to the old host
+   only, so its holder lets go (`sub_82239418`, which also forgets the "rides
+   player N" memory), then kind 4 (attach) to the mask and the new host, as
+   the game's own "hide and attach to the other player" does. Sending the
+   detach to the mask too changed nothing. A moved mask flies over and trails
+   its new host while it walks, exactly like a mask the game attached itself
+   (measured: about 4 units behind after 2.5 s of walking, both cases).
+3. The disconnected player drops out with nobody riding them (the plain path,
+   path A; a titan rider dismounts first, as above).
+
+Without step 2 the game's Drop Out forced every mask off (all on foot). Not
+on foot within 3 s = the box asks again. With no mask that has a device, the
+box keeps "Reconnect it to continue."
+
+Checked with fake controllers, Ratcicle Kingdom courtyard (player 1 starts
+on a Ratcicle): player 1 on the titan with player 2 a mask = no prompt, Back
+does nothing; player 2 (the mask) drops out with Back; player 1 on the titan
+with player 2 on foot = player 1 jumps off, the Ratcicle stays (stars, then
+up and free), player 1 drops out; players 2 and 3 masks on player 1 = no
+prompt, Back does nothing, unplugging player 1 = "Reconnect it to continue",
+Y ignored, reconnect + press resumes; player 1 dropping out with player 3 a
+mask on them and player 2 on foot elsewhere = player 3 comes out on foot and
+walks. Titans: players 1-4 each on spawned titans (Wumpa Island, F5 spawn,
+knocked out, then jacked), Back pressed and the stick held through the drop
+out: every jackable titan of the spawn list (Ratcicle twice, Spike,
+Scorporilla, Sludge, Yuktopus, TK, Shurtle, Roller, Battler, Phantom,
+Stinky, Parafox) = off the titan, then out; player 3 stays on their own
+titan while player 2 drops out. Stepping in: players 2-4 masks on player 1,
+player 1 unplugged, player 3's Y = player 3 on foot, players 2 and 4 now
+masks on player 3 (they follow it), player 1 out; afterwards players 2 and 4
+leave and re-enter masks normally. Player 1 on the Ratcicle with masks 2 and
+3: player 2's Y = player 2 on foot, player 3's mask moves to player 2, player
+1 off the titan (it stays) and out. Two local players: player 2 steps in,
+player 1 out, rejoins later as a mask. 0 errors.
+Not reached: the boss titans (Crunch, Cortex) and the Hero variants; a
+real controller unplugged.
+
+

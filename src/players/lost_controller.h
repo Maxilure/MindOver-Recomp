@@ -23,6 +23,9 @@
 //         Reconnect it, or press (Y) to drop out Player 2.
 //     "drop out" is offered only if someone else is in game (the last player
 //     in game can't drop out, like the pause menu's Drop Out);
+//   * the last player ON FOOT with masks riding them: a mask's Y makes THAT
+//     player come out of the mask first, then the player without a controller
+//     drops out (STEPPING IN, lost_controller.cpp; findings/26 s.60);
 //   * ANY player's Y drops that player out (the pause menu's own Drop Out:
 //     sub_82266040 with the front end's menu owner set to them); the game
 //     hears none of the presses (its pads read idle while the box is up);
@@ -76,8 +79,11 @@ void FilterPad(int user, uint8_t* gamepad, bool connected);
 // for a player who isn't the menu's owner.
 bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why);
 
-// May player p drop out now? In game, not already dropping, and someone
-// else stays in game (the last player can't). Game main thread.
+// May player p drop out now? In game, not already dropping, someone else
+// stays in game (the last player can't), and a player on foot leaves only if
+// someone else is on foot too (masks need a Crash to ride; findings/26 s.60).
+// A player riding a titan gets off it first (DropOut waits for that).
+// Game main thread.
 bool CanDropOut(int p);
 
 }  // namespace lost_controller

@@ -64,7 +64,7 @@ msgstr "VISNING {0}"
 msgid "Achievement Unlocked"
 msgstr "Prestation upplåst"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1031 src/options/options_menu.cpp:2338 src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestationer"
@@ -571,7 +571,7 @@ msgstr "Karta"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "I pausmenyn: hoppa av (en annan spelare blir kvar)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1330 src/options/options_menu.cpp:1344
 #, fuzzy
 msgid "Back"
 msgstr "Tillbaka"
@@ -1603,8 +1603,18 @@ msgstr "Switch Pro-handkontroll"
 msgid "Another maker (8BitDo)"
 msgstr "Annat märke (8BitDo)"
 
+#. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
+#: src/players/lost_controller.cpp:213
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it to continue."
+msgstr ""
+"Spelare {0}s handkontroll är frånkopplad.\n"
+"Anslut handkontrollen igen för att fortsätta."
+
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: src/players/lost_controller.cpp:219
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1613,7 +1623,7 @@ msgstr ""
 "Spelare {0}s handkontroll är frånkopplad.\n"
 "Anslut den igen, eller spelare {1}: tryck på {2} för att ta över."
 
-#: src/players/lost_controller.cpp:193
+#: src/players/lost_controller.cpp:223
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -1622,7 +1632,7 @@ msgstr ""
 "Handkontrollen är ansluten igen.\n"
 "Tryck på en knapp för att fortsätta."
 
-#: src/players/lost_controller.cpp:194
+#: src/players/lost_controller.cpp:224
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -1632,7 +1642,7 @@ msgstr ""
 "Anslut handkontrollen igen för att fortsätta."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: src/players/lost_controller.cpp:228
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -1642,7 +1652,7 @@ msgstr ""
 "Spelare {0}: tryck på en knapp för att fortsätta."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: src/players/lost_controller.cpp:235
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1824,122 +1834,122 @@ msgstr "{0}-{1}"
 msgid "Drop Out"
 msgstr "Hoppa av"
 
-#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
+#: src/options/options_menu.cpp:811 src/options/options_menu.cpp:857
 #, fuzzy
 msgid "Press a Key"
 msgstr "Tryck på en tangent"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:862
+#: src/options/options_menu.cpp:867
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Tryck på den nya andra tangenten eller musknappen för {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:863
+#: src/options/options_menu.cpp:868
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Tryck på den nya tangenten eller musknappen för {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:880
+#: src/options/options_menu.cpp:885
 #, fuzzy
 msgid "Second Key"
 msgstr "Andra tangent"
 
-#: src/options/options_menu.cpp:886
+#: src/options/options_menu.cpp:891
 #, fuzzy
 msgid "Remove Key"
 msgstr "Ta bort tangent"
 
-#: src/options/options_menu.cpp:1059
+#: src/options/options_menu.cpp:1064
 #, fuzzy
 msgid "Locked"
 msgstr "Låst"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1329
 #, fuzzy
 msgid "Confirm"
 msgstr "Bekräfta"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Swap"
 msgstr "Byt"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Move Here"
 msgstr "Flytta hit"
 
-#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1335 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1338
 #, fuzzy
 msgid "Buttons"
 msgstr "Knappar"
 
-#: src/options/options_menu.cpp:1330
+#: src/options/options_menu.cpp:1341
 #, fuzzy
 msgid "Move"
 msgstr "Flytta"
 
-#: src/options/options_menu.cpp:1331
+#: src/options/options_menu.cpp:1342
 #, fuzzy
 msgid "Remove"
 msgstr "Ta bort"
 
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1467
 #, fuzzy
 msgid "No room for this player"
 msgstr "Ingen plats för den här spelaren"
 
-#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1471 src/options/options_menu.cpp:1479
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tangentbord och mus"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Till spelare {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Pick a player"
 msgstr "Välj en spelare"
 
-#: src/options/options_menu.cpp:1468
+#: src/options/options_menu.cpp:1481
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Tryck på en knapp för att ansluta"
 
-#: src/options/options_menu.cpp:1870
+#: src/options/options_menu.cpp:1925
 #, fuzzy
 msgid "Not changed."
 msgstr "Inte ändrat."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1877
+#: src/options/options_menu.cpp:1932
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} används av menyerna ({1}): välj en annan tangent."
 
-#: src/options/options_menu.cpp:1889
+#: src/options/options_menu.cpp:1944
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} var tangenten för {1}: nu hör den till {2}."
 
-#: src/options/options_menu.cpp:1910
+#: src/options/options_menu.cpp:1965
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ingen tangent att ta bort."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1918
+#: src/options/options_menu.cpp:1973
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} borttagen."

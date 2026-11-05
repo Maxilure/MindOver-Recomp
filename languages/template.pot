@@ -54,7 +54,7 @@ msgstr ""
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1031 src/options/options_menu.cpp:2338 src/options/options_settings.cpp:1241
 msgid "Achievements"
 msgstr ""
 
@@ -447,7 +447,7 @@ msgstr ""
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr ""
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1330 src/options/options_menu.cpp:1344
 msgid "Back"
 msgstr ""
 
@@ -1254,34 +1254,41 @@ msgstr ""
 msgid "Another maker (8BitDo)"
 msgstr ""
 
+#. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
+#: src/players/lost_controller.cpp:213
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it to continue."
+msgstr ""
+
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: src/players/lost_controller.cpp:219
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or Player {1}: press {2} to take over."
 msgstr ""
 
-#: src/players/lost_controller.cpp:193
+#: src/players/lost_controller.cpp:223
 msgid ""
 "Controller reconnected.\n"
 "Press any button to resume."
 msgstr ""
 
-#: src/players/lost_controller.cpp:194
+#: src/players/lost_controller.cpp:224
 msgid ""
 "Controller disconnected.\n"
 "Reconnect your controller to continue."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: src/players/lost_controller.cpp:228
 msgid ""
 "Player {0}'s controller is back.\n"
 "Player {0}: press any button to resume."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: src/players/lost_controller.cpp:235
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or press {1} to drop out Player {0}."
@@ -1427,100 +1434,100 @@ msgstr ""
 msgid "Drop Out"
 msgstr ""
 
-#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
+#: src/options/options_menu.cpp:811 src/options/options_menu.cpp:857
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:862
+#: src/options/options_menu.cpp:867
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:863
+#: src/options/options_menu.cpp:868
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:880
+#: src/options/options_menu.cpp:885
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:886
+#: src/options/options_menu.cpp:891
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1059
+#: src/options/options_menu.cpp:1064
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1329
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1335 launcher/setup.cpp:1441
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1338
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1330
+#: src/options/options_menu.cpp:1341
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1331
+#: src/options/options_menu.cpp:1342
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1467
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1471 src/options/options_menu.cpp:1479
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1468
+#: src/options/options_menu.cpp:1481
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:1870
+#: src/options/options_menu.cpp:1925
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1877
+#: src/options/options_menu.cpp:1932
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:1889
+#: src/options/options_menu.cpp:1944
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:1910
+#: src/options/options_menu.cpp:1965
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1918
+#: src/options/options_menu.cpp:1973
 msgid "{0} removed."
 msgstr ""
 

@@ -64,7 +64,7 @@ msgstr "AFFICHAGE {0}"
 msgid "Achievement Unlocked"
 msgstr "Succès débloqué"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1026 src/options/options_menu.cpp:2283 src/options/options_settings.cpp:1241
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1031 src/options/options_menu.cpp:2338 src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "Achievements"
 msgstr "Succès"
@@ -571,7 +571,7 @@ msgstr "Carte"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "Dans le menu pause : abandonner (un autre joueur reste)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1319 src/options/options_menu.cpp:1333
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1330 src/options/options_menu.cpp:1344
 #, fuzzy
 msgid "Back"
 msgstr "Retour"
@@ -1603,8 +1603,18 @@ msgstr "Manette Switch Pro"
 msgid "Another maker (8BitDo)"
 msgstr "Autre marque (8BitDo)"
 
+#. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
+#: src/players/lost_controller.cpp:213
+#, fuzzy
+msgid ""
+"Player {0}'s controller disconnected.\n"
+"Reconnect it to continue."
+msgstr ""
+"La manette du joueur {0} est débranchée.\n"
+"Rebranche ta manette pour continuer."
+
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:189
+#: src/players/lost_controller.cpp:219
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1613,7 +1623,7 @@ msgstr ""
 "La manette du joueur {0} est débranchée.\n"
 "Rebranche-la, ou joueur {1} : appuie sur {2} pour prendre le relais."
 
-#: src/players/lost_controller.cpp:193
+#: src/players/lost_controller.cpp:223
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -1622,7 +1632,7 @@ msgstr ""
 "Manette rebranchée.\n"
 "Appuie sur un bouton pour reprendre."
 
-#: src/players/lost_controller.cpp:194
+#: src/players/lost_controller.cpp:224
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -1632,7 +1642,7 @@ msgstr ""
 "Rebranche ta manette pour continuer."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:198
+#: src/players/lost_controller.cpp:228
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -1642,7 +1652,7 @@ msgstr ""
 "Joueur {0} : appuie sur un bouton pour reprendre."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:205
+#: src/players/lost_controller.cpp:235
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1824,122 +1834,122 @@ msgstr "{1} {0}"
 msgid "Drop Out"
 msgstr "Abandonner"
 
-#: src/options/options_menu.cpp:806 src/options/options_menu.cpp:852
+#: src/options/options_menu.cpp:811 src/options/options_menu.cpp:857
 #, fuzzy
 msgid "Press a Key"
 msgstr "Appuie sur une touche"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:862
+#: src/options/options_menu.cpp:867
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Appuie sur la nouvelle deuxième touche ou le bouton de souris pour {0}. {1} ou {2} : annuler."
 
-#: src/options/options_menu.cpp:863
+#: src/options/options_menu.cpp:868
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Appuie sur la nouvelle touche ou le bouton de souris pour {0}. {1} ou {2} : annuler."
 
-#: src/options/options_menu.cpp:880
+#: src/options/options_menu.cpp:885
 #, fuzzy
 msgid "Second Key"
 msgstr "2e touche"
 
-#: src/options/options_menu.cpp:886
+#: src/options/options_menu.cpp:891
 #, fuzzy
 msgid "Remove Key"
 msgstr "Retirer la touche"
 
-#: src/options/options_menu.cpp:1059
+#: src/options/options_menu.cpp:1064
 #, fuzzy
 msgid "Locked"
 msgstr "Verrouillé"
 
-#: src/options/options_menu.cpp:1318
+#: src/options/options_menu.cpp:1329
 #, fuzzy
 msgid "Confirm"
 msgstr "Confirmer"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Swap"
 msgstr "Échanger"
 
-#: src/options/options_menu.cpp:1322
+#: src/options/options_menu.cpp:1333
 #, fuzzy
 msgid "Move Here"
 msgstr "Placer ici"
 
-#: src/options/options_menu.cpp:1324 launcher/setup.cpp:1441
+#: src/options/options_menu.cpp:1335 launcher/setup.cpp:1441
 #, fuzzy
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src/options/options_menu.cpp:1327
+#: src/options/options_menu.cpp:1338
 #, fuzzy
 msgid "Buttons"
 msgstr "Boutons"
 
-#: src/options/options_menu.cpp:1330
+#: src/options/options_menu.cpp:1341
 #, fuzzy
 msgid "Move"
 msgstr "Déplacer"
 
-#: src/options/options_menu.cpp:1331
+#: src/options/options_menu.cpp:1342
 #, fuzzy
 msgid "Remove"
 msgstr "Retirer"
 
-#: src/options/options_menu.cpp:1454
+#: src/options/options_menu.cpp:1467
 #, fuzzy
 msgid "No room for this player"
 msgstr "Pas de place pour ce joueur"
 
-#: src/options/options_menu.cpp:1458 src/options/options_menu.cpp:1466
+#: src/options/options_menu.cpp:1471 src/options/options_menu.cpp:1479
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Clavier et souris"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Vers le joueur {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1463
+#: src/options/options_menu.cpp:1476
 #, fuzzy
 msgid "Pick a player"
 msgstr "Choisis un joueur"
 
-#: src/options/options_menu.cpp:1468
+#: src/options/options_menu.cpp:1481
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Appuie sur un bouton pour rejoindre"
 
-#: src/options/options_menu.cpp:1870
+#: src/options/options_menu.cpp:1925
 #, fuzzy
 msgid "Not changed."
 msgstr "Pas de changement."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1877
+#: src/options/options_menu.cpp:1932
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} sert aux menus ({1}) : choisis une autre touche."
 
-#: src/options/options_menu.cpp:1889
+#: src/options/options_menu.cpp:1944
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} était la touche de {1} : elle est à {2} maintenant."
 
-#: src/options/options_menu.cpp:1910
+#: src/options/options_menu.cpp:1965
 #, fuzzy
 msgid "No key to remove."
 msgstr "Aucune touche à retirer."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:1918
+#: src/options/options_menu.cpp:1973
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} retirée."
