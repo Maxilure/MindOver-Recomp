@@ -59,6 +59,13 @@
 
 namespace setup {
 
+// WINDOWS: where to get "App Installer" (winget), when it's missing.
+// Microsoft's own short link (its winget docs use it); it downloads the App
+// Installer package from Microsoft's winget releases on GitHub. Not a Store
+// link on purpose: some Windows versions hide App Installer in the Store,
+// and searching the Store for it turns up fake look-alike apps.
+inline constexpr const char* kAppInstallerUrl = "https://aka.ms/getwinget";
+
 struct Look {
   ImFont* bold = nullptr;
   ImFont* mono = nullptr;

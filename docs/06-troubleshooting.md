@@ -275,8 +275,19 @@ Python, the Vulkan SDK and the Visual C++ runtime). Windows asks for
 permission for some of them. It takes a while (Visual Studio's tools are
 several GB).
 
-**"winget isn't there"**: install **App Installer** from the Microsoft Store,
-then start the installer again.
+**"winget isn't there"**: winget comes with Microsoft's **App Installer**.
+Get it with the installer's **Download App Installer (from Microsoft)**
+button, or from Microsoft's own link <https://aka.ms/getwinget> (it
+downloads `Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle`; open it
+to install). Don't search the Microsoft Store or the web for "App
+Installer": some Windows versions hide the real one in the Store, and
+searches turn up look-alike apps that aren't Microsoft's. Then press
+**Check again**.
+
+The 0.2.0-alpha installer could say winget was missing even when App Installer
+*was* installed (winget is a special kind of link in Windows' `WindowsApps`
+folder that its check couldn't read). The next release fixes that; with
+0.2.0-alpha, the tools can still be installed by hand (next entry).
 
 **A tool keeps failing to install**: install it by hand (the list shows its
 winget name), for example in *Terminal*:

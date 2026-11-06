@@ -1808,8 +1808,10 @@ bool Setup::StartToolsInstall(std::string* error) {
   }
 #if defined(_WIN32)
   if (platform::FindProgram("winget").empty()) {
-    *error = trs("winget, Windows' own app installer, isn't there. Install \"App Installer\" from "
-                 "the Microsoft Store, then try again.");
+    *error = trf(trs("winget, Windows' own app installer, isn't there. Get \"App Installer\" "
+                     "from Microsoft ({0}; searching the Store for it can find fake apps), "
+                     "install it, then try again."),
+                 {kAppInstallerUrl});
     return false;
   }
 #endif

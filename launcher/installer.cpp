@@ -272,6 +272,9 @@ struct App {
   bool import_saves = false;
   std::string old_version;     // an older install's folder (its user\ is copied)
   std::string choose_error;
+  // winget (App Installer) wasn't found: the tools page offers Microsoft's
+  // official download (setup::kAppInstallerUrl) under the error.
+  bool winget_missing = false;
   fs::path root;               // <parent>\Crash Mind over Mutant
   // A game set up and built before, found where the player points
   // (install::ExistingGameAt): taken over as it is, nothing built again
@@ -550,12 +553,16 @@ void App::DrawToolsPage() {
     if (AccentButton(trs("Install the missing tools"))) {
       std::vector<Command> commands = setup::Setup::ToolsJob(status);
       if (platform::FindProgram("winget").empty()) {
-        choose_error = trs("winget, Windows' own app installer, isn't there. Install \"App "
-                           "Installer\" from the Microsoft Store, then press Check again.");
+        choose_error = trs("winget, Windows' own app installer, isn't there. Get \"App "
+                           "Installer\" from Microsoft with the button below (some Windows "
+                           "versions hide it in the Store, and searching for it finds fake "
+                           "apps), install it, then press Check again.");
+        winget_missing = true;
       } else if (commands.empty()) {
         choose_error = trs("What's missing can't be installed from here (see the list).");
       } else {
         choose_error.clear();
+        winget_missing = false;
         show_log = true;
         tools_runner.Forget();
         std::error_code ec;
@@ -572,6 +579,13 @@ void App::DrawToolsPage() {
     ImGui::PushStyleColor(ImGuiCol_Text, kBad);
     ImGui::TextWrapped("%s", choose_error.c_str());
     ImGui::PopStyleColor();
+    if (winget_missing) {
+      // Microsoft's own link: it downloads App Installer's package from
+      // Microsoft's winget releases on GitHub (opened in the browser).
+      if (ImGui::Button(trs("Download App Installer (from Microsoft)"))) {
+        SDL_OpenURL(setup::kAppInstallerUrl);
+      }
+    }
   }
   if (tools_job.state != State::kIdle) {
     ImGui::Spacing();
@@ -1272,6 +1286,11 @@ int main(int argc, char** argv) {
   if (check_tools || install_tools) {
     setup::Status status = setup::Setup::CheckToolsOnly();
     PrintTools(status);
+    // What installs the missing tools (winget = App Installer): its path, or
+    // "not found". Helps when a player says it's installed but the page says
+    // it isn't (the app execution alias case, platform_win.cpp FindProgram).
+    const fs::path winget = platform::FindProgram("winget");
+    std::printf("  winget: %s\n", winget.empty() ? "not found" : winget.string().c_str());
     if (install_tools && !AllToolsFound(status)) {
       std::error_code ec;
       const bool ok = RunPrinted("tools", setup::Setup::ToolsJob(status),

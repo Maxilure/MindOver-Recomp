@@ -191,23 +191,46 @@ void RefreshEnvironment() {
   }
 }
 
+// Is there a program file here? A plain file, OR an "app execution alias":
+// how Store / MSIX apps put a command on PATH (winget.exe = App Installer's,
+// in %LOCALAPPDATA%\Microsoft\WindowsApps). An alias is a reparse point that
+// only CreateProcess knows how to follow: std::filesystem's is_regular_file
+// fails on it with error 1920 "The file cannot be accessed by the system".
+// That made the installer say winget was missing on PCs that HAD it, even
+// after the player installed App Installer by hand (a tester's report,
+// 2026-11-06; reproduced on the Windows test PC: winget there works, but
+// is_regular_file said no). The file's own attributes answer either way.
+static bool IsProgramFile(const fs::path& file) {
+  const DWORD attributes = GetFileAttributesW(file.c_str());
+  return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
 fs::path FindProgram(const std::string& name) {
   if (name.empty()) return {};
-  std::error_code ec;
   const fs::path given(Wide(name));
   const bool has_ext = given.has_extension();
   auto try_file = [&](const fs::path& base) -> fs::path {
-    if (has_ext && fs::is_regular_file(base, ec)) return base;
+    if (has_ext && IsProgramFile(base)) return base;
     for (const wchar_t* ext : {L".exe", L".cmd", L".bat"}) {
       fs::path candidate = base;
       candidate += ext;
-      if (fs::is_regular_file(candidate, ec)) return candidate;
+      if (IsProgramFile(candidate)) return candidate;
     }
     return {};
   };
   if (name.find_first_of("/\\:") != std::string::npos) {
     return try_file(given);
   }
+  // Windows' aliases folder, looked at last even when PATH lacks it (the
+  // player's PATH was edited, or App Installer arrived after log-on and
+  // Windows hasn't added the folder yet). Only aliases live there; the
+  // Store's fake "python" is one too, but FindPython runs what it finds and
+  // refuses anything that doesn't answer "Python 3".
+  auto try_aliases = [&]() -> fs::path {
+    const std::wstring local = EnvironmentVariable(L"LOCALAPPDATA");
+    if (local.empty()) return {};
+    return try_file(fs::path(local) / L"Microsoft" / L"WindowsApps" / given);
+  };
   const std::wstring path = EnvironmentVariable(L"PATH");
   size_t start = 0;
   while (start <= path.size()) {
@@ -219,7 +242,7 @@ fs::path FindProgram(const std::string& name) {
     if (end == std::wstring::npos) break;
     start = end + 1;
   }
-  return {};
+  return try_aliases();
 }
 
 double MemAvailableGb() {
