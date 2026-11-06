@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/Maxilure/MindOver-Recomp?color=green)](LICENSE)
 [![Built with ReXGlue](https://img.shields.io/badge/built%20with-ReXGlue-8A2BE2)](https://github.com/rexglue/rexglue-sdk)
 
-**[Download](#-download-and-play)** · **[Features](#-features)** · **[Going native](#-going-native)** · **[Building](#%EF%B8%8F-building-from-source)** · **[Docs](#-documentation)**
+**[Features](#-features)** · **[Download](#-download-and-play)** · **[Controls](#-controls)** · **[Going native](#-going-native)** · **[Building](#%EF%B8%8F-building-from-source)** · **[Docs](#-documentation)**
 
 <br>
 
@@ -24,16 +24,16 @@
 <br>
 
 > [!WARNING]
-> **Alpha.** The game boots and plays, but it hasn't been played through to the end yet. Expect bugs, crashes and rough edges, and back up your saves.
+> **Alpha.** The game is playable but hasn't been played through to the end yet. Expect bugs and crashes, and keep a backup of your saves.
 
 > [!IMPORTANT]
-> **No game files are included, and none ever will be.** You need your own Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`. The installer (Windows) or the launcher (Linux) builds the game on your computer from it.
+> **No game files are included.** You need your own Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`. The game is built on your computer from it.
 
 ## 📖 About
 
-*Crash: Mind over Mutant* divided fans, but it's part of Crash's history, and it only ever came out on consoles. **Mind over Recomp** aims to preserve it as a real PC game and give it the upgrades it deserves.
+*Crash: Mind over Mutant* only ever came out on consoles. **Mind over Recomp** aims to preserve it as a real PC game and give it the upgrades it deserves.
 
-It isn't an emulator. The game's original Xbox 360 program is **translated into C++ ahead of time** ([static recompilation](docs/02-how-the-port-works.md) with [ReXGlue](https://github.com/rexglue/rexglue-sdk)) and compiled into a native Linux or Windows program. From there, the parts that still pretend to be an Xbox are replaced one by one with the port's own code: its own Vulkan renderer, plain save files, PC controls, and more.
+It isn't an emulator: the game's Xbox 360 program is [translated into C++ ahead of time](docs/02-how-the-port-works.md) with [ReXGlue](https://github.com/rexglue/rexglue-sdk) and built as a native Linux or Windows program. The parts that still pretend to be an Xbox are then replaced, one by one, with the port's own code.
 
 ## ✨ Features
 
@@ -42,13 +42,13 @@ It isn't an emulator. The game's original Xbox 360 program is **translated into 
 <td width="50%" valign="top">
 
 ### 🎨 Its own renderer
-A native Vulkan renderer draws the game itself, effect by effect: lighting, water, reflections, depth of field, anti-aliasing. It matches the original's look and runs far lighter than emulating the Xbox's GPU.
+A native Vulkan renderer that matches the original's look, runs much lighter than emulating the Xbox's GPU, and goes up to 4K.
 
 </td>
 <td width="50%" valign="top">
 
 ### ⚡ 60 fps and beyond
-Runs at **60 fps** with the original game speed. 120, 144 and uncapped work too *(experimental)*, plus V-sync and a frame-rate counter.
+**60 fps** at the original game speed. 120, 144 and uncapped work too *(experimental)*.
 
 </td>
 </tr>
@@ -56,27 +56,41 @@ Runs at **60 fps** with the original game speed. 120, 144 and uncapped work too 
 <td valign="top">
 
 ### 👥 Up to four players
-Co-op for **four** instead of two: HUDs, markers and loading screens for players 3 and 4, every outfit for every player (Coco for player 1 too, Crash in six colours), and a co-op camera that keeps everyone in view *(experimental)*.
+Co-op for **four** instead of two, with a Players screen, outfits for everyone and a camera that keeps you all in view *(experimental)*.
 
 </td>
 <td valign="top">
 
-### 💾 Unlimited, named saves
-One scrolling list in the game's own save screen: as many saves as you like, renamed with the game's own keyboard, deleted safely. Every save is a plain `.sav` file.
+### ⌨️ Keyboard, mouse and any controller
+Rebindable keys, the mouse in every menu, mouse aiming, and button prompts that show your keys or your controller's buttons.
 
 </td>
 </tr>
 <tr>
 <td valign="top">
 
-### ⌨️ Keyboard, mouse and any controller
-Every key rebindable (Tools menu, **F1**, or Options → Controls), menus with keys of their own, any controller SDL knows, both at once or one per player. The game's button prompts show your keys and mouse buttons whenever you play on the keyboard.
+### ⚙️ Options in the game's own look
+Display, graphics, audio, controls, gameplay and language settings, changed live from the main menu or the pause menu.
 
 </td>
 <td valign="top">
 
-### ⚙️ Options in the game's own look
-Pause → **Options**: frame rate, renderer, brightness, V-sync, windowed or fullscreen on the monitor of your choice, resolution (up to 4K), HUD size (smaller automatically with 3-4 players), anti-aliasing, texture sharpness, sharpening, shadow softness, motion blur and depth of field, audio (volumes, output device, stereo / headphones / 5.1 / 7.1 speakers), controls, camera and gameplay (friendly fire, combos, one-button and hold-to-keep spinning), all live, built from the game's own menu pieces. **Language**: the disc's 13 text languages and 10 voice languages, mixed freely (say, English voices with German text), with a Restart Now button. **Achievements**: the game's own 48, kept for the whole game (every save counts), with a notification in the game's look and their own screen (pause menu); **Quit Game** in the main menu.
+### 💾 Unlimited, named saves
+As many saves as you like in the game's own save screen, renamed and deleted there. Each one is a plain file, with backups.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🌍 Every language on the disc
+Text and voices picked separately from the disc's languages, plus the whole game in Brazilian Portuguese.
+
+</td>
+<td valign="top">
+
+### 🏆 Achievements
+The game's 48 achievements, kept by the port, with their own screen and pop-up.
 
 </td>
 </tr>
@@ -86,7 +100,7 @@ Pause → **Options**: frame rate, renderer, brightness, V-sync, windowed or ful
 <img src="docs/images/readme-four-players-action.jpg" alt="Four-player co-op on Wumpa Island" width="100%">
 </div>
 
-<sub>Screenshots are from the port's own renderer, captured from the maintainer's copy of the game. The game's imagery belongs to its owners (see [License and disclaimer](#%EF%B8%8F-license-and-disclaimer)).</sub>
+<sub>Screenshots are from the port's own renderer. The game's imagery belongs to its owners (see [License and disclaimer](#%EF%B8%8F-license-and-disclaimer)).</sub>
 
 ## 📥 Download and play
 
@@ -98,66 +112,58 @@ Pause → **Options**: frame rate, renderer, brightness, V-sync, windowed or ful
 
 | | Windows | Linux |
 |---|---|---|
-| **System** | Windows 10 / 11, 64-bit | x86-64 with glibc 2.39+ (Ubuntu 24.04, Fedora 40, Mint 22, Arch, or newer) |
+| **System** | Windows 10 / 11, 64-bit | x86-64, glibc 2.39+ (Ubuntu 24.04, Fedora 40, Arch or newer) |
 | **Download** | `MindOverRecomp-…-windows-x86_64.zip` | `MindOverRecomp-…-linux-x86_64.tar.gz` |
-| **Note** | an NTFS drive, not a OneDrive folder | |
+| **Free space** | ~15 GB, on an NTFS drive (not OneDrive) | ~25 GB |
 
-Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** recommended, **~25 GB** free disk space, and internet for the first setup.
+Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** recommended, and internet for the first setup.
 
 **Windows**
-1. **Unpack** the `.zip` anywhere and start **Mind over Recomp.exe**, the installer. Windows may warn about an unknown program: **More info → Run anyway**.
-2. **Pick your `.iso` and a folder** to install into, then **Next: install**. It installs the build tools it needs (through winget), downloads ~550 MB and builds the game on your computer.
-3. **Play** from the Start menu: **Crash Mind over Mutant**. To update or uninstall, open **Mind over Recomp** from the Start menu, or use Windows' *Installed apps* list (you can keep your saves, settings and logs).
+1. Unpack the `.zip` and start **Mind over Recomp.exe**, the installer. If Windows warns about an unknown program: **More info → Run anyway**.
+2. Pick your `.iso` and a folder, then **Next: install**. It gets the build tools it needs and builds the game; the first time takes a while.
+3. Play **Crash Mind over Mutant** from the Start menu. To update or uninstall, open **Mind over Recomp** from the Start menu.
 
 **Linux**
-1. **Unpack** the download into a folder with enough space.
-2. **Start the launcher**, *Mind over Recomp*.
-3. In the **Setup** tab, install the tools it lists, pick your `.iso`, and press **Set up everything**. The first time downloads ~550 MB and builds the game on your computer.
-4. Press **Play**. Next time, **Continue** jumps straight into your last save. The launcher also lists your saves, edits settings, shows a live game log and keeps the port up to date.
-
-Settings are in the game itself: **Options** in the main menu and the pause menu.
+1. Unpack the archive and start the launcher, **Mind over Recomp**.
+2. In **Setup**, install the tools it lists, pick your `.iso` and press **Set up everything**; the first build takes a while.
+3. Press **Play**. Next time, **Continue** goes straight into your last save.
 
 > [!TIP]
-> Something not working? See **[Troubleshooting](docs/06-troubleshooting.md)** and the [known issues](docs/06-troubleshooting.md#known-issues). Found a bug? Fill in the [bug form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) and attach your logs (the `user/logs` folder in the game's folder). If the Windows installer fails, it opens the form and the logs folder for you; on Linux, **Report a problem...** in the launcher packs them.
+> Problems? See **[Troubleshooting](docs/06-troubleshooting.md)** and the [known issues](docs/06-troubleshooting.md#known-issues). Found a bug? Fill in the [bug form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) and attach the `user/logs` folder from the game's folder.
 
 ## 🎮 Controls
 
 | Action | Keyboard and mouse | Controller |
 |---|---|---|
 | Move / walk | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / hold <kbd>Ctrl</kbd> | left stick |
-| Jump (twice: double jump) | <kbd>Space</kbd> | <kbd>A</kbd> |
+| Jump | <kbd>Space</kbd> | <kbd>A</kbd> |
 | Light / heavy attack | left / right mouse button | <kbd>X</kbd> / <kbd>Y</kbd> |
 | Spin | <kbd>Q</kbd> or middle mouse button | rotate the left stick |
 | Block | <kbd>Shift</kbd> | <kbd>RT</kbd> |
-| Jack / unjack a titan, use a save totem | <kbd>E</kbd> | <kbd>B</kbd> |
+| Jack a titan / use a save totem | <kbd>E</kbd> | <kbd>B</kbd> |
 | Titan special / pocket a titan | <kbd>F</kbd> / <kbd>R</kbd> | <kbd>LT</kbd> / <kbd>RB</kbd> |
 | Map / pause | <kbd>Tab</kbd> / <kbd>Esc</kbd> | <kbd>Back</kbd> / <kbd>Start</kbd> |
-| **Menus:** select / back | <kbd>Enter</kbd> or <kbd>Space</kbd> / <kbd>Esc</kbd> or <kbd>Backspace</kbd> | <kbd>A</kbd> / <kbd>B</kbd> |
-| **Menus:** move / tabs | arrow keys or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / <kbd>Q</kbd> <kbd>E</kbd> | D-pad or left stick / <kbd>LB</kbd> <kbd>RB</kbd> |
-| **Menus:** the X / Y prompts (rename, delete a save) | <kbd>X</kbd> / <kbd>Y</kbd> | <kbd>X</kbd> / <kbd>Y</kbd> |
-| **Menus with the mouse** | point to select, left click to choose (also the prompts, tabs, and the arrows and pictures of the TV, comic and tiki face in Crash's house), right click to go back, wheel to scroll lists and the credits | |
+| Menus: choose / back | <kbd>Enter</kbd> / <kbd>Esc</kbd>, or the mouse | <kbd>A</kbd> / <kbd>B</kbd> |
 
-Menus have keys of their own, so <kbd>Esc</kbd> pauses in play and goes back in menus. The game's button prompts show your keys while you play on the keyboard.
+Keys can be changed in **Options → Controls**. Friends join by pressing a button on their controller; the **Players** screen (pause menu, or **Extras** in the main menu) shows who plays with what.
 
 <details>
-<summary><b>Port keys</b> (F1, F2 and F11)</summary>
+<summary><b>Port keys</b></summary>
 <br>
 
 | Key | What it does |
 |---|---|
-| <kbd>F1</kbd> | The Tools menu: Cheats (level ups, god mode, free camera, spawning, unlock everything), Controls (change keys, pick which device plays as which player), switch between the emulated picture and the port's renderer, save a photo into `user/photos/`, and the developer windows |
-| <kbd>F2</kbd> | Hide / show the whole HUD (not a cheat) |
+| <kbd>F1</kbd> | Tools menu: cheats, photos, developer tools |
+| <kbd>F2</kbd> | Hide / show the HUD |
 | <kbd>F11</kbd> | Fullscreen on / off |
 
-The other function keys do nothing, so a stray press can't open a window mid-game. Opening the Cheats menu turns achievements off until a save is loaded, and a save made meanwhile is marked as made with cheats.
+Using cheats turns achievements off until a save is loaded.
 
 </details>
 
-Friends join from the pause menu (**Join Game**), as in the original's co-op.
-
 ## 🧩 Going native
 
-The game's own code already runs natively. What's still emulated is the **Xbox 360 around it**: the system services the game asks for, answered today by the ReXGlue runtime. Each one the port answers itself is one less piece of pretend Xbox.
+The game's code already runs natively. What's still emulated is the **Xbox 360 around it**: the system services the game asks for. Each one the port answers itself is one less piece of pretend Xbox.
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
@@ -182,7 +188,7 @@ Not counted: 89 kernel basics (threads, locks, memory, files), already thin tran
 
 ## 🛠️ Building from source
 
-For developers: players don't need this, the installer (Windows) or the launcher (Linux) does it all. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`; the full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
+Players don't need this: the installer (Windows) and the launcher (Linux) do it for them. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`. The full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
 
 <details>
 <summary><b>Build commands</b></summary>
@@ -192,7 +198,7 @@ For developers: players don't need this, the installer (Windows) or the launcher
 git clone --recursive https://github.com/Maxilure/MindOver-Recomp.git
 cd MindOver-Recomp
 
-# the launcher (its Setup tab does everything below, with progress bars)
+# the launcher (its Setup tab does everything below)
 cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 cmake --build out/build/launcher && out/build/launcher/crash_mom_launcher
@@ -220,16 +226,22 @@ tools/play.sh                               # one log per session in logs/
 crash_mom_manifest.toml    recompiler config: every analysis fix and hook, commented
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       the port's own native code
-  input/                   keyboard + mouse, the Controls menu
-  players/                 up to four players, the co-op camera, who plays
-  saves/                   the PC save drive, the save list
-  options/                 the Options screen
-  language/                text and voice language (the disc's own languages)
-  cheats/                  the Cheats menu
-  data/                    changed copies of game data, built at run time from your files
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
-launcher/                  the Windows installer + the Linux launcher: setup, updates (no game code)
-assets/                    pictures the port draws: players 3-4's markers, keyboard and mouse prompts, the jack symbol
+  effects/                 graphics settings (motion blur, depth of field...)
+  input/                   keyboard, mouse, controllers, button prompts
+  players/                 up to four players, the Players screen, the co-op camera
+  saves/                   the save files and the save list
+  options/                 the Options screen
+  audio/                   sound output and the XMA decoder
+  language/                text and voice languages, the port's translations
+  achievements/            achievements, their pop-up and screen
+  ui/                      the port's menus and HUD pieces in the game's look
+  gameplay/, cheats/       gameplay options, the Cheats menu
+  data/                    changed copies of game data, built at run time from your disc
+  debug/                   developer tools (console, crash reports...)
+launcher/                  the Windows installer and the Linux launcher (no game code)
+languages/                 translations of the port's own texts
+assets/                    the port's own pictures (markers, jack symbol) and button prompts
 tools/                     disc extraction, disassembler, play/debug and release scripts
 patches/rexglue-sdk/       our fixes to the ReXGlue SDK (applied to the submodule)
 docs/                      guides, and findings about the game's internals
@@ -251,27 +263,28 @@ user/                      YOUR files: saves, settings, controls, photos, logs
 | 🧠 [How the port works](docs/02-how-the-port-works.md) | static recompilation, explained |
 | 🔧 [Building](docs/01-building.md) | every build step, the launcher, releases |
 | 🩺 [Troubleshooting](docs/06-troubleshooting.md) | common problems on Linux and Windows |
-| ✨ [Enhancements](docs/05-enhancements.md) | what only this port adds, with pictures |
+| ✨ [Enhancements](docs/05-enhancements.md) | what only this port adds |
 | 🗺️ [Roadmap](docs/03-roadmap.md) | where the project is going |
 | 🎨 [Native renderer](docs/04-native-renderer.md) | the port's own Vulkan renderer |
 | 🔬 [Findings](docs/findings/) | everything learned about the game's internals |
 
 ## 🤝 Contributing
 
-Contributions of any kind are welcome: code, reverse engineering, testing, bug reports, corrections. **Speak another language?** The port's own menus are machine-translated into 11 languages and need people to check them: see [languages/](languages/README.md), no programming needed. Every human contribution is credited by name in [CREDITS.md](CREDITS.md). Reviews from people who know Xbox 360 internals, Radical's engine, ReXGlue / Xenia or Vulkan are especially valuable.
+Contributions of any kind are welcome: code, reverse engineering, testing, bug reports, corrections. **Speak another language?** The port's own texts are machine-translated into 11 languages and need checking: see [languages/](languages/README.md), no programming needed. Every human contribution is credited in [CREDITS.md](CREDITS.md).
 
 > [!NOTE]
-> **Developed with extensive AI assistance** (Claude, via Claude Code). The code, the reverse-engineering notes and the documentation were largely written by the AI. The maintainer sets direction, tests every change on the real game and reviews the results, but isn't a specialist in recompilation or reverse engineering. Findings are checked against the running game, not reviewed by experts: treat them as working notes, and please report errors.
+> **Developed with extensive AI assistance** (Claude, via Claude Code). The code, reverse-engineering notes and documentation were largely written by the AI; the maintainer sets the direction, tests every change on the real game and reviews the results. Findings are checked against the running game, not by experts: treat them as working notes, and please report errors.
 
 ## 💛 Credits
 
-- **Maxilure**: project lead, direction, ideas, playtesting, art
-- **[ReXGlue](https://github.com/rexglue/rexglue-sdk)**: the static recompiler and runtime that make this possible
-- **[Xenia](https://github.com/xenia-project/xenia)**: the Xbox 360 emulator ReXGlue's runtime and GPU emulation build on
-- **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece (Those Awesome Guys): the keyboard, mouse and controller pictures in the button prompts (Light and Dark keys; Xbox Series, PlayStation 5 / 4 and Switch buttons)
-- **[Icons8](https://icons8.com)**: the Windows installer's wrench icon ("Support", CC BY-ND 3.0)
+- **Maxilure**: project lead, direction, playtesting, art
+- **[YWZsaXRv](https://github.com/YWZsaXRv)**: the Windows setup script the installer builds on
+- **[ReXGlue](https://github.com/rexglue/rexglue-sdk)** and **[Xenia](https://github.com/xenia-project/xenia)**: the recompiler and runtime this port is built on
+- **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece: the button prompt pictures
+- **[Icons8](https://icons8.com)**: the Windows installer's icon
 - **Claude** (Anthropic): AI assistant that wrote most of the code and documentation
-- **You?** Every contribution gets listed in [CREDITS.md](CREDITS.md)
+
+The full list, bug reporters and libraries included, is in [CREDITS.md](CREDITS.md).
 
 ## ⚖️ License and disclaimer
 
