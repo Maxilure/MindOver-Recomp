@@ -9,8 +9,12 @@ Activision or the game's other owners.
 
 **You need your own copy of the game:** an `.iso` dumped from your own
 Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain
-no game files. The game is built on your computer, from your disc (on
-Windows by the installer, on Linux by the launcher).
+no game files. The game is built on your computer, from your disc, by the
+installer.
+
+> 🐧 **Linux:** this release is **Windows only**. The Linux version of
+> 0.2.0 comes later, as a separate download. Until then, Linux players stay
+> on 0.1.0-alpha.
 
 > ⚠️ **Coming from 0.1.0-alpha on Windows?** Use the new **installer**
 > (*Mind over Recomp.exe* in the `.zip`), not the old launcher's **Update**
@@ -132,10 +136,6 @@ tested way:
    (and any shortcut you made to the old launcher). From now on, start the
    game from the Start menu, and update it with **Mind over Recomp** there.
 
-**Linux:** the launcher stays (the installer is Windows only). It shows
-**Version 0.2.0-alpha is out**: open *Setup* and update. After the restart,
-let it finish rebuilding before you play.
-
 **What happens to your old files**
 - **Saves** are now plain files in `user/saves` (`CrashMOM GameSlot 1.sav`,
   ...). The first start copies your old saves into them once. The old
@@ -160,7 +160,6 @@ let it finish rebuilding before you play.
 | System | File |
 |---|---|
 | Windows 10 / 11 (64-bit) | `MindOverRecomp-<version>-windows-x86_64.zip` |
-| Linux (x86-64, glibc 2.39+: Ubuntu 24.04, Fedora 40, Arch… or newer) | `MindOverRecomp-<version>-linux-x86_64.tar.gz` |
 
 `release.toml` is for the update check. You don't need to download it.
 
@@ -175,13 +174,6 @@ let it finish rebuilding before you play.
 3. Start **Crash Mind over Mutant** from the Start menu. To update or
    uninstall later, open **Mind over Recomp** from the Start menu.
 
-**Linux**
-1. Unpack the archive somewhere with **~25 GB free**.
-2. Open **READ ME FIRST.txt** in that folder, then start **Mind over Recomp**.
-3. The launcher opens on **Setup**. Install any tools it lists, pick your
-   `.iso`, then press **Set up everything**. The first build takes a while.
-4. Press **Play**.
-
 ### Known issues and bug reports
 
 What's already known (experimental features, untested graphics cards...) is
@@ -193,5 +185,4 @@ common problems and their fixes are in
 Found a bug? Fill in the
 **[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
 and attach your logs: the `user\logs` folder in the game's folder. If
-the Windows installer fails, it opens that form and the logs folder for you.
-On Linux, **Report a problem...** in the launcher makes the file to attach.
+the installer fails, it opens that form and the logs folder for you.
