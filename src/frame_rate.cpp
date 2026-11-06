@@ -112,7 +112,9 @@
 
 #include "pddi/intercept.h"
 
-REXCVAR_DEFINE_INT32(fps_cap, 30, "CrashMoM",
+// DEFAULT 60 (2026-11-06, the port's chosen out-of-the-box setting; 30 = the
+// Xbox 360's rate stays one Options pick away).
+REXCVAR_DEFINE_INT32(fps_cap, 60, "CrashMoM",
                      "Frame-rate cap: 30 = original, any other rate (60, 144, 165, ...) = a frame "
                      "every 1/rate s by the clock (above 60 EXPERIMENTAL), 0 = as fast as possible")
     .range(0, 1000);

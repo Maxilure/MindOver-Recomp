@@ -3002,8 +3002,8 @@ msgstr "Naamiona tähtäin seuraa hiirtä."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "Tähtäin seuraa hiirtä, ja pelissä osoitin on hehkuva kupla, joka kasvaa kohteiden päällä ja vetää mojoa puoleensa, kuten Wii-version osoitin."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Kuten Wii-versiossa: hiiren osoittimesta tulee Wii-kursori, hehkuva kupla, joka kasvaa kohteiden päällä ja vetää mojoa puoleensa, ja naamiona tähtäin seuraa sitä."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Vaihdetaan uusi versio paikalleen"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "Tähtäin seuraa hiirtä, ja pelissä osoitin on hehkuva kupla, joka kasvaa kohteiden päällä ja vetää mojoa puoleensa, kuten Wii-version osoitin."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"

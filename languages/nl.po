@@ -3002,8 +3002,8 @@ msgstr "Als masker volgt het vizier de muis."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "Het vizier volgt de muis, en tijdens het spelen is de aanwijzer een gloeiende bel die groeit boven doelen en mojo aantrekt, zoals de aanwijzer van de Wii-versie."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Zoals in de Wii-versie: je muisaanwijzer wordt de Wii-cursor, een gloeiende bel die groter wordt boven doelen en mojo aantrekt, en als masker volgt het vizier hem."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "De nieuwe versie op zijn plek zetten"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "Het vizier volgt de muis, en tijdens het spelen is de aanwijzer een gloeiende bel die groeit boven doelen en mojo aantrekt, zoals de aanwijzer van de Wii-versie."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"

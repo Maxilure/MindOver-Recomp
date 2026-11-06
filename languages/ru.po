@@ -3002,8 +3002,8 @@ msgstr "В роли маски прицел следует за мышью."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "Прицел следует за мышью, а в игре указатель становится светящимся пузырем, который растет над целями и притягивает моджо, как указатель версии для Wii."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Как в версии для Wii: указатель мыши становится курсором Wii - светящимся пузырем, который растет над целями и притягивает моджо, а маской прицел следует за ним."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Установка новой версии на место"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "Прицел следует за мышью, а в игре указатель становится светящимся пузырем, который растет над целями и притягивает моджо, как указатель версии для Wii."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"

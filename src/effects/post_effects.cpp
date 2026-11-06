@@ -23,7 +23,9 @@ REXCVAR_DEFINE_INT32(smooth_cutouts, 0, "CrashMoM",
                      "Smooth edges on leaves, fences and other cut-out shapes (their alpha test becomes "
                      "alpha-to-coverage) where anti-aliasing is on, native renderer only: 0 off, 1 on")
     .range(0, 1);
-REXCVAR_DEFINE_INT32(render_resolution, 0, "CrashMoM",
+// DEFAULT 1 = 1080p (2026-11-06, the port's out-of-the-box setting; with the
+// emulated picture it does nothing).
+REXCVAR_DEFINE_INT32(render_resolution, 1, "CrashMoM",
                      "Render resolution of the 3D scene and menus, native renderer only: 0 720p "
                      "(original), 1 1080p, 2 1440p, 3 4K (2160p)")
     .range(0, 3);

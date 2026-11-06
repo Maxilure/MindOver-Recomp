@@ -3002,8 +3002,8 @@ msgstr "En masque, le réticule suit la souris."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "Le réticule suit la souris, et en jeu le pointeur est une bulle lumineuse qui grossit sur les cibles et attire le mojo, comme le pointeur de la version Wii."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Comme sur Wii : le pointeur de la souris devient le curseur Wii, une bulle lumineuse qui grossit sur les cibles et attire le mojo, et en masque le réticule le suit."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Mise en place de la nouvelle version"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "Le réticule suit la souris, et en jeu le pointeur est une bulle lumineuse qui grossit sur les cibles et attire le mojo, comme le pointeur de la version Wii."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"

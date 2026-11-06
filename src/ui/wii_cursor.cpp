@@ -64,7 +64,7 @@ constexpr uint32_t kChunkTexture = 0x19000, kChunkImage = 0x19001, kChunkImageDa
 // and a soft cyan halo. Drawn in three layers: the GLOW (glow01, kGlowScale x
 // the bubble's size, faint cyan), the BUBBLE in cyan, and the bubble again in
 // near-white, fainter (its bright rim = the whiter edge).
-constexpr float kSize = 28.0f;                            // pixels across (34 first: a bit big)
+constexpr float kSize = 22.0f;                            // pixels across (34, then 28: still a bit big)
 constexpr ImU32 kColour = IM_COL32(120, 235, 255, 255);   // the Wii cursor's cyan
 constexpr float kGlowScale = 2.6f;
 constexpr ImU32 kGlowColour = IM_COL32(90, 220, 255, 120);
@@ -84,8 +84,9 @@ constexpr float kTrailAlpha = 60.0f;    // the newest copy's alpha (fainter: the
 constexpr float kStretchSpeed = 2500.0f;  // 720p pixels per second for +100% length
 constexpr float kMaxStretch = 1.8f;
 constexpr float kSmoothSeconds = 0.05f;
-// Over something to break the bubble grows by kGrow, eased in and out.
-constexpr float kGrow = 1.5f;
+// Over something to break the bubble grows by kGrow, eased in and out
+// (1.5 first: the jump looked too big next to the smaller bubble).
+constexpr float kGrow = 1.3f;
 constexpr float kGrowSeconds = 0.06f;
 
 constexpr int kMaxPlayers = 4;

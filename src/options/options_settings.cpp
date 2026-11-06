@@ -962,8 +962,8 @@ Row MouseAimingRow() {
   Row r = LevelRow(tr(u"Mouse Aiming"), "mouse_reticle", {tr(u"Off"), tr(u"Reticle"), tr(u"Crosshair")},
                    {tr(u"As a mask, the aiming reticle moves with the movement keys, like the original game."),
                     tr(u"As a mask, the aiming reticle follows the mouse."),
-                    tr(u"The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that "
-                    u"grows over targets and pulls in mojo, like the Wii version's pointer.")});
+                    tr(u"Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that "
+                    u"grows over targets and pulls in mojo, and as a mask the reticle follows it.")});
   r.unavailable = NoKeyboard;
   return r;
 }

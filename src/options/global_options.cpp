@@ -9,13 +9,16 @@
 
 #include "../guest_memory.h"
 
-REXCVAR_DEFINE_INT32(volume_music, 5, "CrashMoM",
+// DEFAULTS 3 of 5 stars = 60 % (2026-11-06: the port starts at about half
+// volume; the original's own default is full, 5. A star = 0.2, so exactly half
+// (2.5) can't be shown: 3 is the nearest step.)
+REXCVAR_DEFINE_INT32(volume_music, 3, "CrashMoM",
                      "Music volume in stars, 0-5 (Options -> Audio; the same for every save)")
     .range(0, 5);
-REXCVAR_DEFINE_INT32(volume_dialogue, 5, "CrashMoM",
+REXCVAR_DEFINE_INT32(volume_dialogue, 3, "CrashMoM",
                      "Dialogue volume in stars, 0-5 (Options -> Audio; the same for every save)")
     .range(0, 5);
-REXCVAR_DEFINE_INT32(volume_sfx, 5, "CrashMoM",
+REXCVAR_DEFINE_INT32(volume_sfx, 3, "CrashMoM",
                      "Sound effects volume in stars, 0-5 (Options -> Audio; the same for every save)")
     .range(0, 5);
 REXCVAR_DEFINE_BOOL(invert_axis_player1, false, "CrashMoM",

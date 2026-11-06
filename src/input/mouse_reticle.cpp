@@ -20,7 +20,8 @@
 #include "../players/reticle_idle.h"
 #include "../ui/wii_cursor.h"
 
-REXCVAR_DEFINE_INT32(mouse_reticle, 1, "CrashMoM",
+// DEFAULT 2 = Crosshair (2026-11-06, the port's out-of-the-box setting).
+REXCVAR_DEFINE_INT32(mouse_reticle, 2, "CrashMoM",
                      "Aiming reticle on keyboard and mouse (a masked player aiming): 0 = moves with "
                      "WASD (original), 1 = follows the mouse, 2 = follows the mouse + the gameplay "
                      "cursor (the Wii version's pointer: a bubble that follows the mouse in play, ui/wii_cursor.h)")

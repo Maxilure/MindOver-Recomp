@@ -3002,8 +3002,8 @@ msgstr "Como máscara, la mira sigue al ratón."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "La mira sigue al ratón, y en el juego el puntero es una burbuja brillante que crece sobre los objetivos y atrae el mojo, como el puntero de la versión de Wii."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Como en la versión de Wii: el puntero del ratón se convierte en el cursor de Wii, una burbuja brillante que crece sobre los objetivos y atrae el mojo, y como máscara la mira lo sigue."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Poniendo la nueva versión en su sitio"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "La mira sigue al ratón, y en el juego el puntero es una burbuja brillante que crece sobre los objetivos y atrae el mojo, como el puntero de la versión de Wii."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"

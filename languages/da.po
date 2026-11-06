@@ -3002,8 +3002,8 @@ msgstr "Som maske følger sigtekornet musen."
 
 #: src/options/options_settings.cpp:965
 #, fuzzy
-msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
-msgstr "Sigtekornet følger musen, og i spillet er markøren en lysende boble, der vokser over mål og trækker mojo til sig, som markøren i Wii-versionen."
+msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
+msgstr "Som i Wii-versionen: musemarkøren bliver til Wii-markøren, en lysende boble, der vokser over mål og trækker mojo til sig, og som maske følger sigtekornet den."
 
 #: src/options/options_settings.cpp:975
 #, fuzzy
@@ -5580,6 +5580,10 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Sætter den nye version på plads"
+
+#, fuzzy
+#~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."
+#~ msgstr "Sigtekornet følger musen, og i spillet er markøren en lysende boble, der vokser over mål og trækker mojo til sig, som markøren i Wii-versionen."
 
 #, fuzzy
 #~ msgid "Now: {0} {1} {2} {3}"
