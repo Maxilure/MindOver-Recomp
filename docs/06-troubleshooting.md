@@ -284,10 +284,11 @@ Installer": some Windows versions hide the real one in the Store, and
 searches turn up look-alike apps that aren't Microsoft's. Then press
 **Check again**.
 
-The 0.2.0-alpha installer could say winget was missing even when App Installer
-*was* installed (winget is a special kind of link in Windows' `WindowsApps`
-folder that its check couldn't read). The next release fixes that; with
-0.2.0-alpha, the tools can still be installed by hand (next entry).
+The first 0.2.0-alpha download (replaced on 2026-11-06) could say winget was
+missing even when App Installer *was* installed (winget is a special kind of
+link in Windows' `WindowsApps` folder that its check couldn't read). Download
+the installer again from the release page; with the old one, the tools can
+still be installed by hand (next entry).
 
 **A tool keeps failing to install**: install it by hand (the list shows its
 winget name), for example in *Terminal*:
