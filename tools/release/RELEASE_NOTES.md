@@ -12,8 +12,20 @@ Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain
 no game files. The game is built on your computer, from your disc (on
 Windows by the installer, on Linux by the launcher).
 
+> ⚠️ **Coming from 0.1.0-alpha on Windows?** Use the new **installer**
+> (*Mind over Recomp.exe* in the `.zip`), not the old launcher's **Update**
+> button, and back up your old `user` folder first. Your saves, settings
+> and achievements are copied over, but some things work differently now:
+> see [Updating from 0.1.0-alpha](#updating-from-010-alpha) before you play.
+
 
 ### What's new in 0.2.0-alpha
+
+**Updating from 0.1.0 on Windows: don't use this launcher's Update
+button.** Download the new installer from the release page instead, back up
+your `user` folder, and install into a new folder with **Copy saves and
+settings from an older version** ticked (details under *Updating from
+0.1.0-alpha* on the release page).
 
 Everything below is new since 0.1.0-alpha (0.1.1 was never released).
 
@@ -104,18 +116,44 @@ for reporting [#2](https://github.com/Maxilure/MindOver-Recomp/issues/2) and
 
 ### Updating from 0.1.0-alpha
 
-**Windows:** the simplest way is a fresh install: download the new `.zip`,
-start **Mind over Recomp.exe** and pick a new folder; tick **Copy saves and
-settings from an older version** and pick the old version's folder. (Pressing
-Update in 0.1.0's launcher works too: it swaps in the installer, which then
-rebuilds the game.)
+**First, back up.** Copy the old version's whole `user` folder (saves,
+settings, achievements, logs) somewhere safe. This is an alpha: keep that
+copy until you've checked your saves in 0.2.0.
 
-**Linux:** the launcher shows **Version 0.2.0-alpha is out**: open *Setup*
-and update. After the restart, let it finish rebuilding before you play.
+**Windows: use the new installer, not the old launcher.** 0.1.0's launcher
+will say a new version is out; **don't press its Update button**. The
+launcher is replaced by the installer in 0.2.0, and a fresh install is the
+tested way:
+1. Download the new `.zip`, unpack it and start **Mind over Recomp.exe**.
+2. Pick your `.iso` and a **new** folder (not the old version's).
+3. Tick **Copy saves and settings from an older version** and pick the old
+   version's folder (the one with the `user` folder in it).
+4. Once your saves work in the new install, you can delete the old folder
+   (and any shortcut you made to the old launcher). From now on, start the
+   game from the Start menu, and update it with **Mind over Recomp** there.
 
-Your saves and settings stay either way. Old saves may not carry over
-perfectly (alpha): keep a backup of the old `user/saves` folder until
-you've checked them.
+**Linux:** the launcher stays (the installer is Windows only). It shows
+**Version 0.2.0-alpha is out**: open *Setup* and update. After the restart,
+let it finish rebuilding before you play.
+
+**What happens to your old files**
+- **Saves** are now plain files in `user/saves` (`CrashMOM GameSlot 1.sav`,
+  ...). The first start copies your old saves into them once. The old
+  Xbox-style folders next to them are left exactly as they were, as a
+  backup. **0.1.0 can't see saves made in 0.2.0**: going back to 0.1.0 means
+  going back to your progress from before the update.
+- **Settings** you changed yourself are kept. Settings you never changed
+  pick up 0.2.0's new defaults: **60 fps** (was 30), **1080p** render
+  resolution, music, voices and effects at **3 of 5 stars**, and
+  **Crosshair** mouse aiming. Change them back in **Options** if you like.
+- **Volumes and Invert Axis** are no longer stored in each save. They're
+  set once for the whole game in **Options**, so the values your old saves
+  had are not used.
+- **Achievements** you earned in 0.1.0 are copied once into
+  `user/saves/achievements.toml`. The old record is kept but no longer
+  updated.
+- **Cheats:** a save written while cheats were on is now marked, and
+  playing it blocks achievements.
 
 ### Downloads
 
