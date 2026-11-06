@@ -169,14 +169,26 @@ if [ $system = linux ]; then
   tar -C "$out/stage" -czf "$out/$archive" "$name"
 elif [ $host = linux ]; then
   # A Windows zip made on Linux (python's zipfile: no extra tool needed).
+  # DATES: a zip entry's date has NO time zone, and Windows reads it as local
+  # time. Dated "now" in UTC (GitHub's machines), the files of 0.2.0 looked up
+  # to ~10 hours in the FUTURE west of UTC on release day, and the build gave
+  # up ("build.ninja still dirty after 100 tries", GitHub issue #7). Every
+  # entry is dated ONE DAY AGO instead: in the past in every time zone (they
+  # span UTC-12..UTC+14). Fresh installs don't need real dates, and updates
+  # re-date what changed themselves (launcher/update.cpp, the swap).
   python3 - "$out/stage" "$name" "$out/$archive" <<'PY'
-import os, sys, zipfile
+import os, sys, time, zipfile
 root, name, target = sys.argv[1], sys.argv[2], sys.argv[3]
+day_ago = time.gmtime(time.time() - 24 * 3600)[:6]
 with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
     for folder, _, files in os.walk(os.path.join(root, name)):
         for f in files:
             full = os.path.join(folder, f)
-            z.write(full, os.path.relpath(full, root))
+            info = zipfile.ZipInfo.from_file(full, os.path.relpath(full, root))
+            info.date_time = day_ago
+            info.compress_type = zipfile.ZIP_DEFLATED
+            with open(full, "rb") as data:
+                z.writestr(info, data.read())
 PY
 else
   powershell -NoProfile -Command "Compress-Archive -Force -Path '$(cygpath -w "$out/stage/$name")' -DestinationPath '$(cygpath -w "$out/$archive")'"

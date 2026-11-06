@@ -13,18 +13,20 @@
 #   windows-launcher  builds ONLY the launcher .exe (Windows runner, Visual
 #                     Studio's x64 environment + LLVM's clang, like the test
 #                     PC), kept as an artifact of the run
-#   release           (Linux) packs the Linux release, then the Windows one
-#                     with that .exe (make_release.sh --system windows
-#                     --launcher), so both archives carry the SAME source
-#                     files (packed once, on Linux: no CRLF line ends or
-#                     symlinks-as-text from a Windows checkout) and ONE
-#                     release.toml lists both
+#   release           (Linux) packs the Windows release with that .exe
+#                     (make_release.sh --system windows --launcher): packed
+#                     on Linux, so the source has no CRLF line ends or
+#                     symlinks-as-text from a Windows checkout
+#
+# WINDOWS ONLY since 0.2.0: Linux releases come back later as a terminal
+# tool. The Linux launcher still builds from the source (launcher/), it's
+# just not packed here; release.toml then lists no linux_ archive, and an
+# old 0.1.0 Linux launcher says "No download for this system".
 #
 # WHEN:
 #   - a version tag is pushed (git tag v0.1.0-alpha && git push origin v0.1.0-alpha):
 #     tools/make_release.sh runs and a DRAFT GitHub release is created with
-#     all three files (the .tar.gz, the .zip and release.toml, the update
-#     feed). Nothing is
+#     the .zip and release.toml (the update feed). Nothing is
 #     public until someone presses Publish on GitHub's Releases page. The tag
 #     must match the VERSION.txt file.
 #   - by hand ("Run workflow" on the Actions tab): the same build, files kept
@@ -86,19 +88,11 @@ jobs:
     needs: windows-launcher
     runs-on: ubuntu-24.04
     steps:
-      - name: "Check out (with the SDK submodule: the launcher builds SDL3 and ImGui from it)"
+      # The submodule: make_release.sh reads the SDK's commit and tag.
+      - name: Check out (with the SDK submodule)
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install build tools and SDL3's window-system headers
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            clang ninja-build cmake pkg-config \
-            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
-            libxfixes-dev libxtst-dev libxkbcommon-dev libwayland-dev wayland-protocols \
-            libegl-dev libgl-dev libdecor-0-dev libdbus-1-dev libudev-dev libdrm-dev libgbm-dev
 
       - name: The tag matches VERSION.txt
         if: startsWith(github.ref, 'refs/tags/')
@@ -109,12 +103,6 @@ jobs:
             exit 1
           fi
 
-      - name: Make the Linux release
-        env:
-          CC: clang
-          CXX: clang++
-        run: tools/make_release.sh
-
       # Outside the checkout: an untracked file would make the tree "dirty".
       - name: Fetch the Windows launcher
         uses: actions/download-artifact@v4
@@ -124,14 +112,6 @@ jobs:
 
       - name: Make the Windows release (same source, that installer)
         run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/mind_over_recomp.exe"
-
-      - name: The launcher's needs (for the log)
-        run: |
-          version=$(tr -d '[:space:]' < VERSION.txt)
-          tar -xzf "out/release/${version}/MindOverRecomp-${version}-linux-x86_64.tar.gz" -C /tmp
-          ldd "/tmp/Mind over Recomp/Mind over Recomp"
-          objdump -T "/tmp/Mind over Recomp/Mind over Recomp" \
-            | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
 
       - name: Keep the files (test runs)
         if: "!startsWith(github.ref, 'refs/tags/')"
@@ -151,6 +131,5 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" --draft \
             --title "Mind over Recomp ${version}" \
             --notes-file tools/release/RELEASE_NOTES.md \
-            "out/release/${version}/MindOverRecomp-${version}-linux-x86_64.tar.gz" \
             "out/release/${version}/MindOverRecomp-${version}-windows-x86_64.zip" \
             "out/release/${version}/release.toml"

@@ -12,9 +12,9 @@ Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain
 no game files. The game is built on your computer, from your disc, by the
 installer.
 
-> 🐧 **Linux:** this release is **Windows only**. The Linux version of
-> 0.2.0 comes later, as a separate download. Until then, Linux players stay
-> on 0.1.0-alpha.
+> 🐧 **Linux:** this release is **Windows only**. The Linux version comes
+> later, as a separate download. Until then, Linux players stay on
+> 0.1.0-alpha.
 
 > ⚠️ **Coming from 0.1.0-alpha on Windows?** Use the new **installer**
 > (*Mind over Recomp.exe* in the `.zip`), not the old launcher's **Update**
@@ -22,6 +22,36 @@ installer.
 > and achievements are copied over, but some things work differently now:
 > see [Updating from 0.1.0-alpha](#updating-from-010-alpha) before you play.
 
+
+### What's new in 0.2.1-alpha
+
+A small fix-up release for the Windows installer. Already on 0.2.0? Open
+**Mind over Recomp** from the Start menu and it offers the update.
+
+**The install no longer stops with "the computer's clock looks wrong"
+when the clock is right.** On release day, the 0.2.0 download's files
+could look a few hours *newer than now* to computers in time zones behind
+UTC (most of the Americas). The build then saw "files from the future" and
+gave up after 100 tries, with a message blaming the clock. Now the release's
+files are dated safely in the past for every time zone, and before every
+build the installer also sets any file dated in the future back to the
+present. So even a clock that was wrong earlier can't block the build any
+more. Thanks to **[MatiGitHB](https://github.com/MatiGitHB)** for the clear
+report in [#7](https://github.com/Maxilure/MindOver-Recomp/issues/7): their
+"but my clock *is* synced" was what led to the real cause.
+
+**"winget isn't there" when App Installer *is* installed: fixed.** The
+installer installs its build tools with winget (part of Microsoft's App
+Installer). Windows keeps winget as a special kind of shortcut in its
+`WindowsApps` folder, which the first 0.2.0 download couldn't read, so it
+asked for App Installer even when it was already there. It now finds winget
+properly. (The 0.2.0 download was replaced with this fix on 2026-11-06;
+0.2.1 includes it for everyone.)
+
+**Clearer troubleshooting.** The
+[Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md)
+page was rewritten: a "find your problem" list at the top and numbered steps
+for each fix, including a step-by-step clock check for Windows.
 
 ### What's new in 0.2.0-alpha
 

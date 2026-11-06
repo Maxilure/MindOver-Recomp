@@ -729,6 +729,49 @@ void CheckTools(Status* s) {
 
 #endif
 
+// NO FILE FROM THE FUTURE (2026-11-06, GitHub issue #7). Ninja rebuilds
+// whatever is older than its inputs, and re-writes its build plan
+// (build.ninja) whenever one of CMake's inputs is newer than it. A file
+// dated later than "now" is newer forever: Ninja re-writes the plan 100
+// times and gives up ("manifest 'build.ninja' still dirty after 100 tries").
+// Two ways to get such a file:
+//   - a wrong clock / time zone when the files were written;
+//   - the release .zip: zip dates carry NO time zone, ours were written in
+//     UTC on GitHub's machines and Windows reads them as LOCAL time, so in
+//     time zones behind UTC (the Americas) the 0.2.0 files were up to ~10
+//     hours "ahead" on release day (found from #7: clock synced, still failing).
+// So before each build step, every file under `folder` dated later than now
+// is set to now. Only dates change, never contents; a file that's merely
+// "now" is still rebuilt as usual. Links / junctions aren't followed.
+Command NoFutureDates(const fs::path& folder) {
+  Command command;
+  command.title = trs("Checking file dates");
+  command.function = [folder](std::string* message) {
+    std::error_code ec;
+    const auto now = fs::file_time_type::clock::now();
+    int fixed = 0, failed = 0;
+    for (auto it = fs::recursive_directory_iterator(
+             folder, fs::directory_options::skip_permission_denied, ec);
+         !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+      std::error_code file_ec;
+      if (!it->is_regular_file(file_ec) || it->is_symlink(file_ec)) {
+        continue;
+      }
+      if (it->last_write_time(file_ec) > now && !file_ec) {
+        fs::last_write_time(it->path(), now, file_ec);
+        ++(file_ec ? failed : fixed);
+      }
+    }
+    // Never fails the job: a date it can't fix shows up as Ninja's own error.
+    *message = fixed || failed
+                   ? std::to_string(fixed) + " files were dated in the future: set to now" +
+                         (failed ? " (" + std::to_string(failed) + " couldn't be changed)" : "") + ".\n"
+                   : "No file dated in the future.\n";
+    return true;
+  };
+  return command;
+}
+
 }  // namespace
 
 // -----------------------------------------------------------------------------
@@ -1166,6 +1209,7 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
     return false;
   }
   const fs::path sdk = folders_.source / "thirdparty" / "rexglue-sdk";
+  out->push_back(NoFutureDates(sdk));  // issue #7: see NoFutureDates
   if (status.sdk_needs_reset) {
     // A release's own SDK download, patched by an older set (RunChecks):
     // every tracked file back to the downloaded version. Untracked build
@@ -1274,6 +1318,9 @@ std::vector<Command> Setup::GameJob() {
 #endif
     commands.push_back(std::move(bridge));
   }
+  // After the copy above (it keeps default.xex's date): nothing in the
+  // source tree may be dated in the future (issue #7, NoFutureDates).
+  commands.push_back(NoFutureDates(root));
   // Always configured (seconds), naming THIS folder's SDK explicitly and
   // ignoring the per-user CMake package list: a build must never use another
   // folder's SDK (see SdkJob); a cached choice is corrected too.
