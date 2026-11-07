@@ -1,52 +1,81 @@
 <!--
-  Release notes for the GitHub release page (release.yml) AND the installer's
-  "What's new" panel (launcher/update.cpp). The panel shows only the
-  "### What's new in <version>" section, as plain text, and stops at the next
-  line starting with "#". So keep that heading as it is, use **bold** labels
-  (not #### headings) inside it, and write each bullet on a single line.
-  tools/release/notes/ keeps the text of each published release page.
+  RELEASE NOTES: this file is the text of the GitHub release page (the
+  release workflow passes it to `gh release create --notes-file`).
+
+  Layout, one release at a time:
+  - "What's new in <version>": ONLY this version's changes. Older versions'
+    changes are not repeated here: they stay on their own release pages,
+    linked from "Changelog" at the bottom (add the previous version there).
+    The Changelog lists only releases of the SAME line (0.2.x lists 0.2.0,
+    0.2.1, ...): older lines aren't mentioned.
+  - The heading must stay exactly "### What's new in <version>" with no
+    other heading inside it: the launcher/installer shows that section as
+    "What's new" and stops at the next line starting with "#"
+    (launcher/update.cpp WhatsNew).
+  - HTML comments like this one are hidden on GitHub and outside that section.
+  - tools/release/notes/v<version>.md = the text of each PUBLISHED release
+    page, as it is on GitHub (copy it there after publishing or editing one;
+    `gh release edit v<version> --notes-file tools/release/notes/v<version>.md`).
 -->
 
-> [!WARNING]
-> **Alpha.** Playable, but expect bugs and crashes. Keep a copy of your `user/saves` folder.
+**Mind over Recomp** is an unofficial, fan-made native PC port of the Xbox 360
+game *Crash: Mind over Mutant*. It is not affiliated with or endorsed by
+Activision or the game's other owners.
 
-> [!IMPORTANT]
-> **You need your own game.** An `.iso` dumped from your own Xbox 360 disc of *Crash: Mind over Mutant* (USA). These downloads contain no game files: the installer builds the game on your computer, from your disc.
-
-> [!NOTE]
-> **Windows only.** Linux comes later as a separate download; until then, Linux players stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
+> ⚠️ **Alpha:** playable, but expect bugs, crashes and rough edges. Keep a
+> copy of your `user\saves` folder.
+>
+> **You need your own disc.** The installer builds the game on your PC from
+> an `.iso` of your own Xbox 360 disc of *Crash: Mind over Mutant* (USA).
+> No game files are included.
+>
+> **Windows only** for now. Linux comes later; until then, Linux players
+> stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
 
 ### What's new in 0.2.1-alpha
 
-A small bug-fix release for the Windows installer.
+A small fix-up release for the Windows installer.
 
-**Fixed**
-- Fixed the install stopping with "the computer's clock looks wrong" when the clock was right, in time zones behind UTC ([#7](https://github.com/Maxilure/MindOver-Recomp/issues/7)).
-- Fixed the installer asking for App Installer when winget was already installed.
+- **No more "the computer's clock looks wrong" when the clock is right.**
+  In time zones behind UTC (most of the Americas), the release's files
+  could look newer than "now", and the build gave up. The files are now
+  dated safely in the past, and the installer also fixes any file dated in
+  the future before building. Thanks to
+  **[MatiGitHB](https://github.com/MatiGitHB)** for the report in
+  [#7](https://github.com/Maxilure/MindOver-Recomp/issues/7).
+- **winget is found when App Installer is installed.** The installer used
+  to ask for App Installer even when it was already there.
+- **Clearer [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md) page**,
+  with a "find your problem" list and numbered steps for each fix.
 
-**Changed**
-- Rewrote the [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md) page: a "find your problem" list and numbered steps for each fix.
+### Install or update
 
-**Thanks** to [MatiGitHB](https://github.com/MatiGitHB) for reporting [#7](https://github.com/Maxilure/MindOver-Recomp/issues/7).
+- **New install:** unpack the `.zip` anywhere and start
+  **Mind over Recomp.exe** (if Windows warns about an unknown program:
+  **More info → Run anyway**). Pick your `.iso` and a folder (**~15 GB
+  free**, an NTFS drive, not OneDrive), then **Next: install**. The first
+  build takes a while. Then start **Crash Mind over Mutant** from the Start
+  menu.
+- **Already on 0.2.0:** open **Mind over Recomp** from the Start menu. It
+  offers the update.
+- **Coming from 0.1.0:** don't use the old launcher's **Update** button.
+  Follow [Updating from 0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha)
+  on the 0.2.0 page.
 
-Previous release: [0.2.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha)
-
-**Full Changelog:** [v0.2.0-alpha...v0.2.1-alpha](https://github.com/Maxilure/MindOver-Recomp/compare/v0.2.0-alpha...v0.2.1-alpha)
-
-### How to install
-
-1. Download the `.zip` below, unpack it and start **Mind over Recomp.exe** (if Windows warns: **More info → Run anyway**).
-2. Pick your `.iso` and an install folder (**~15 GB free**, NTFS drive, not OneDrive), then **Next: install**. The first build takes a while.
-3. Start **Crash Mind over Mutant** from the Start menu.
-
-### How to update
-
-- **From 0.2.0:** open **Mind over Recomp** from the Start menu and accept the update.
-- **From 0.1.0:** don't use the old launcher's **Update** button. Back up your `user` folder, then do a fresh install with **Copy saves and settings from an older version** ticked. [Full steps](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha).
+**Download:** `MindOverRecomp-0.2.1-alpha-windows-x86_64.zip` (Windows 10 / 11,
+64-bit). `release.toml` is only for the update check; you don't need it.
 
 ### Help and bug reports
 
-- [Known issues](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#known-issues) · [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md)
-- Found a bug? Use the [bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) and attach the `user\logs` folder.
+- Already known: [Known issues](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#known-issues).
+- Common problems and fixes: [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md).
+- Found a bug? Fill in the
+  **[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
+  and attach the `user\logs` folder from the game's folder. If the
+  installer fails, it opens the form and that folder for you.
 
-<sub>`release.toml` is for the update check; you don't need it. Mind over Recomp is an unofficial fan project, not affiliated with or endorsed by Activision.</sub>
+### Changelog
+
+- [0.2.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha):
+  Windows installer, Options screen, keyboard and mouse everywhere, Players
+  screen and outfits for co-op, achievements, many co-op fixes.
