@@ -2152,3 +2152,154 @@ int more_players::MoveMasks(PPCContext& ctx, uint8_t* base, int from, int to) {
   }
   return moved;
 }
+
+// =============================================================================
+// DIG SPOTS: THE OTHERS BECOME MASKS (findings/26 s.63). A dig spot's level
+// data holds a CActionForceEnterBackpack event (CObjectiveEvent, vtable
+// 0x8203F8E8; built by sub_82295A68, +8 = the player to force, +12 bit 0x80 =
+// the "may leave the mask" byte it passes on to sub_82235CA8). It fires twice:
+// when a Crash digs in (the dig worked: his tree enters node 827, "Success")
+// and when he digs out (node 832, "DigExit"). Its run (slot 2, sub_82295B08):
+// if players 1 AND 2 are both in game (state 2), the named player gets
+// sub-state 5 (BEING_FORCED_INTO_MASK) -> its tree takes CoOpBecomeMask and it
+// rides the Crash that stayed. The data names player 2 (index 1). So with two
+// players: player 1 digs in -> player 2 on foot becomes his mask; both dig (a
+// mask let go of a digging host: ExitDigging) and one digs out -> the one
+// left underground becomes a mask. Players 3-4 were never named: left
+// underground they came up still in the dig pose, stuck in the Digging state.
+// Ours, for more than two players: the player whose tree entered 827 / 832 in
+// that same moment STAYS, every other player in game who isn't already being
+// forced in / dropped out (sub-state 5 / 6) gets 5, like player 2 did. With
+// no such player seen, the original runs (= player 2, as before).
+// Found 2026-11-07: a fight-tree trace (sub_820C1578 below) of a two-player
+// dig on Wumpa Island, then the console's `who` on player 2's sub-state.
+// =============================================================================
+namespace more_players {
+namespace {
+constexpr int16_t kNodeDigSuccess = 827, kNodeDigExit = 832;  // Crash.bfig
+int g_dig_trigger = -1;                                       // player who just dug in / out
+std::chrono::steady_clock::time_point g_dig_trigger_at;
+}  // namespace
+}  // namespace more_players
+
+// Fight tree node change (r3 = tree, +16 its actor; r4 = the node, +30 its
+// number): remember a player's Crash reaching the dig's in / out nodes.
+extern "C" REX_FUNC(__imp__sub_820C1578);
+extern "C" REX_FUNC(sub_820C1578) {
+  const uint32_t node = ctx.r4.u32;
+  if (node && LocalPlayers() > 2) {
+    const int16_t number = int16_t(Read32(node + 28) & 0xFFFF);
+    if (number == kNodeDigSuccess || number == kNodeDigExit) {
+      const int p = PlayerOf(Read32(ctx.r3.u32 + 16));
+      if (p >= 0) {
+        g_dig_trigger = p;
+        g_dig_trigger_at = std::chrono::steady_clock::now();
+      }
+    }
+  }
+  __imp__sub_820C1578(ctx, base);
+}
+
+extern "C" REX_FUNC(__imp__sub_82295B08);
+extern "C" REX_FUNC(sub_82295B08) {
+  const uint32_t event = ctx.r3.u32;
+  const int32_t named = int32_t(Read32(event + 8));
+  int keeper = g_dig_trigger;
+  // the trigger is the same frame as the event (same game thread moment)
+  if (std::chrono::steady_clock::now() - g_dig_trigger_at > std::chrono::milliseconds(100)) keeper = -1;
+  g_dig_trigger = -1;
+  if (LocalPlayers() <= 2 || named < 0 || keeper < 0 || Read32(kState + 4 * keeper) != 2) {
+    __imp__sub_82295B08(ctx, base);
+    return;
+  }
+  for (int q = 0; q < LocalPlayers(); ++q) {
+    const uint32_t sub = Read32(kSubState + 4 * q);
+    if (q == keeper || Read32(kState + 4 * q) != 2 || sub == kSubForcedIntoMask || sub == kSubDroppedOut) continue;
+    Write32(kSubState + 4 * q, kSubForcedIntoMask);
+    if (REXCVAR_GET(debug_coop_trace)) {
+      REXLOG_INFO("Co-op: player {} dug {}: player {} becomes a mask", keeper + 1,
+                  (*Guest(event + 12) & 0x80) ? "out" : "in", q + 1);
+    }
+  }
+  // the original's tail (the "may leave the mask" byte), without its own write
+  Write32(event + 8, uint32_t(-1));
+  __imp__sub_82295B08(ctx, base);
+  Write32(event + 8, uint32_t(named));
+}
+
+// =============================================================================
+// THREE OR MORE CRASHES UNDERGROUND (findings/26 s.64). Every Crash has a
+// CUndergroundViewerBehaviour (vtable 0x82033C74, +52 = its slot, -1 = none):
+// while he digs, the underground renderer (*(CRenderManager +76), sub_822B4EA0)
+// gets his position each frame, for the see-through ground around him. That
+// renderer keeps room for TWO viewers, as fixed arrays with end pointers:
+//   +0  u8  [2] in use    (end +4)
+//   +8  u32 [2] texture   (end +16)
+//   +20 vec3[2] position  (end +44)
+//   +48.. its draw passes (shader wrappers; the 4th pass at +48)
+// Its slot finder sub_822BD5A8 reuses a free slot or appends while there are
+// fewer than two, but when both are taken it still returns 2. The third
+// digger's texture (sub_822BD598, +8 + 4 x slot) then overwrote the texture
+// list's end pointer and its position (sub_822BD738, +20 + 12 x slot) the
+// position list's end and the 4th pass pointer: the next frame's zone pass
+// (sub_822BCFD8 -> sub_822F3378 -> sub_8237B238) read address 0 and the game
+// crashed. Ours: no slot (-1) when both are taken; slot writes outside 0-1
+// are dropped; a viewer without a slot asks again each frame, so the third
+// digger takes over the see-through ground when one of the first two leaves.
+// Found 2026-11-07 (players 1-3 at a Wumpa Island dig spot): crash report ->
+// the pass at +48 held junk -> the console's `who` on it -> sub_822BD738 with
+// slot 2. Only CUndergroundViewerBehaviour calls these four functions.
+// =============================================================================
+namespace more_players {
+namespace {
+constexpr uint32_t kViewerSlot = 52;  // CUndergroundViewerBehaviour: its slot in the renderer
+constexpr int kViewerSlots = 2;       // the renderer's room
+// A slot the finder can give without running past the arrays?
+bool ViewerSlotFree(uint32_t renderer) {
+  const uint32_t used = Read32(renderer + 4) - renderer;
+  if (used < uint32_t(kViewerSlots)) return true;
+  for (uint32_t i = 0; i < used && i < uint32_t(kViewerSlots); ++i) {
+    if (*Guest(renderer + i) == 0) return true;
+  }
+  return false;
+}
+}  // namespace
+}  // namespace more_players
+
+extern "C" REX_FUNC(__imp__sub_822BD5A8);
+extern "C" REX_FUNC(sub_822BD5A8) {  // r3 = renderer -> slot
+  if (!ViewerSlotFree(ctx.r3.u32)) {
+    ctx.r3.u64 = uint32_t(-1);
+    return;
+  }
+  __imp__sub_822BD5A8(ctx, base);
+}
+extern "C" REX_FUNC(__imp__sub_822BD598);
+extern "C" REX_FUNC(sub_822BD598) {  // r3 = renderer, r4 = slot, r5 = texture
+  if (ctx.r4.u32 >= uint32_t(kViewerSlots)) return;
+  __imp__sub_822BD598(ctx, base);
+}
+extern "C" REX_FUNC(__imp__sub_822BD738);
+extern "C" REX_FUNC(sub_822BD738) {  // r3 = renderer, r4 = slot, r5 = position
+  if (ctx.r4.u32 >= uint32_t(kViewerSlots)) return;
+  __imp__sub_822BD738(ctx, base);
+}
+// The viewer's per-frame update (r3 = behaviour): without a slot, try to get
+// one first (the original's own enable, sub_8218E978: slot + texture).
+extern "C" REX_FUNC(__imp__sub_8218E938);
+extern "C" REX_FUNC(__imp__sub_8218E978);
+extern "C" REX_FUNC(__imp__sub_822B4EA0);
+extern "C" REX_FUNC(sub_8218E938) {
+  const uint32_t viewer = ctx.r3.u32;
+  if (int32_t(Read32(viewer + kViewerSlot)) < 0) {
+    const uint32_t render_manager = Read32(Read32(kGameGlobal) + 76);
+    const uint32_t renderer = render_manager ? CallGame(__imp__sub_822B4EA0, ctx, base, render_manager) : 0;
+    if (renderer && ViewerSlotFree(renderer)) {
+      CallGame(__imp__sub_8218E978, ctx, base, viewer);
+      if (REXCVAR_GET(debug_coop_trace))
+        REXLOG_INFO("Co-op: underground viewer {:08X} gets slot {}", viewer, int32_t(Read32(viewer + kViewerSlot)));
+    }
+    ctx.r3.u64 = viewer;
+  }
+  __imp__sub_8218E938(ctx, base);
+}
