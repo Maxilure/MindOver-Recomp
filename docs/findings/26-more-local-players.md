@@ -2601,3 +2601,86 @@ out; player 1 alone = the four lines, no Y; player 2's box: player 1's Y
 unplugged while player 2's pause menu was open = the box after it closed;
 player 1's controller moved to player 2 on the Players screen = no box. 0
 errors.
+
+## 63. Dig spots: the players left behind become masks
+
+**What goes wrong.** Two players at a dig spot: player 1 digs in and player 2
+on foot becomes his mask. If that mask lets go while its host is underground
+(B; the mask state's `ExitDigging` exit), it digs too. When one of the two
+digs out, the one left underground becomes a mask again. With players 3-4
+that last step never happened: player 3, left underground, came up in the
+digging pose and stayed in the `Digging` state, stuck.
+
+**The game's rule.** It isn't in Crash's fight tree but in the dig spot's
+level data: a `CActionForceEnterBackpack` event (a `CObjectiveEvent`, vtable
+`0x8203F8E8`, built by `sub_82295A68`: `+8` the player to force, `+12` bit
+`0x80` = the byte it then hands to `sub_82235CA8`). It fires twice, in the
+same frame as the Crash that triggers it: when the dig works (his tree enters
+node 827, `Success` under `EnterDig`) and when he digs out (node 832,
+`DigExit`). Its run (`sub_82295B08`): if players 1 AND 2 are both in game
+(state 2), the named player gets sub-state 5 (`BEING_FORCED_INTO_MASK`); a
+fight tree whose player has sub-state 5 takes `CoOpBecomeMask` (`sub_820C0EF0`)
+and rides the Crash that stayed. The data names player 2. Players 3-4 are
+never named, and with player 2 out of the game the event does nothing at all.
+
+**Ours** (`more_players.cpp`): the fight-tree step `sub_820C1578` is wrapped
+and remembers the player whose Crash reached node 827 or 832; the event's run
+is wrapped: that player stays, and every other player in game who isn't
+already being forced in or dropped out (sub-states 5 / 6) gets sub-state 5.
+The original's tail then runs with no player named. If no such player was
+seen in the same moment (within 100 ms), the original runs unchanged.
+
+Found by logging every node change of the players' trees during a
+two-player dig (player 1 enters 149 after `DigExit`, and player 2's
+sub-state reads 5 in that same frame), then the console's `who` on player
+2's sub-state: the one writer is `sub_82295B08`, called from the objective
+list (`sub_82281CC8` <- `sub_82291BB8`).
+
+Tested with fake controllers at a Wumpa Island dig spot (`goto 1 373.7 3.1
+-379.4`, Spin to dig in and out): players 1 and 3 both underground, player 1
+digs out -> player 3 becomes his mask; player 4 on foot while player 1 digs
+in -> player 4 becomes a mask (as player 2 always did); two players unchanged
+(player 2 becomes the mask).
+
+**Three or more Crashes underground** crashed the game: that is section 64.
+
+## 64. Three or more Crashes underground: the underground renderer's two slots
+
+**What went wrong.** Player 1 digging and two masks letting go of him (both
+dig too): a moment after the third Crash went under, the game crashed (a
+read of address 0 in the render manager's zone pass, `sub_822BCFD8` ->
+`sub_822F3378` -> `sub_8237B238`).
+
+**Why.** Every Crash has a `CUndergroundViewerBehaviour` (vtable
+`0x82033C74`, its slot at `+52`, -1 = none). While he digs, the underground
+renderer (`*(CRenderManager +76) + 492`, `sub_822B4EA0`) gets his position
+every frame, for the see-through ground around him. That renderer has room
+for two viewers, kept as fixed arrays with end pointers:
+
+| Offset | What | End pointer |
+|---|---|---|
+| `+0` | 2 bytes: slot in use | `+4` |
+| `+8` | 2 words: texture | `+16` |
+| `+20` | 2 positions (x, y, z) | `+44` |
+| `+48`.. | its draw passes (the 4th at `+48`) | |
+
+Its slot finder (`sub_822BD5A8`) reuses a free slot or appends while there
+are fewer than two, but with both taken it still returns 2. The third
+viewer's texture (`sub_822BD598`: `+8 + 4 x slot`) then landed on the texture
+list's end pointer, and its position (`sub_822BD738`: `+20 + 12 x slot`, every
+frame) on the position list's end and the 4th pass pointer. The next frame's
+pass read through that junk pointer.
+
+**Ours** (`more_players.cpp`): no slot (-1) once both are taken; slot writes
+outside 0-1 are dropped; a viewer without a slot asks again in its update
+(`sub_8218E938`, through the original's own enable `sub_8218E978`), so a
+third digger takes over the see-through ground when one of the first two
+leaves. Only `CUndergroundViewerBehaviour` calls these four functions.
+
+Found from the crash report (the pass object held junk, `vt 0`), a probe on
+`sub_822F3378` (the 4th pass pointer changed the moment the third Crash went
+under), then the console's `who` on that word: `sub_822BD738` with slot 2,
+from `sub_8218E938`. Tested at the same dig spot: players 1-4 all
+underground, no crash, the hole drawn; player 1 digs out, players 2-4
+become his masks. Not seen: a waiting third digger taking over a freed slot
+(it needs two diggers to leave while one stays).
