@@ -88,6 +88,7 @@
 #include "saves/save_library.h"
 #include "saves/save_screen_waits.h"
 #include "native/native_window.h"
+#include "native/widescreen.h"
 #include "players/lost_controller.h"
 #include "players/more_players.h"
 #include "players/outfits.h"
@@ -319,6 +320,7 @@ class CrashMomApp : public rex::ReXApp {
     prompt_icons::Install();
     // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).
     post_effects::Install();
+    widescreen::Install();  // the world's projection as wide as the picture (native/widescreen.h)
     language::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
@@ -349,6 +351,8 @@ class CrashMomApp : public rex::ReXApp {
     // socket that answers questions (memory, players, front end) mid-run.
     debug_console::Start(
         [this](std::function<void()> f) { app_context().CallInUIThread(std::move(f)); }, window());
+    // Widescreen (native/widescreen.h): the main window's shape = the picture's.
+    widescreen::AttachWindow(window());
     // Keyboard + mouse as a virtual controller (input/keyboard_mouse.h), on
     // unless --keyboard_mouse=false. Merged with a real pad into player 1.
     if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {

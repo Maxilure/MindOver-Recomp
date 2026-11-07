@@ -30,6 +30,8 @@
 #include "../players/players_setup.h"
 #include "../ui/quit_game.h"
 #include "../ui/marquee.h"
+#include "../native/render_targets.h"
+#include "../native/widescreen.h"
 #include "../ui/scrooby.h"
 #include "options_page.h"
 #include "options_settings.h"
@@ -159,6 +161,12 @@ struct Screen {
   // Elements, found once per visit.
   uint32_t tab_prev = 0, tab_text = 0, tab_next = 0;  // the three tab names (options_page.h)
   std::array<uint32_t, kRows> label{}, value{};
+  std::array<bool, kRows> value_scrolls{};  // the value is longer than its room (FitRowTexts)
+  // The picture's shape and window height the size texts were made for
+  // (Resolution's "Match Window (1920 x 1080)", the sizes at the aspect
+  // ratio): new ones while the screen is up = the texts made again.
+  int sizes_height = 0;
+  float sizes_aspect = 0.0f;
   std::array<std::array<uint32_t, kStars>, kRows> star{};
   uint32_t desc = 0, warn = 0, lb = 0, rb = 0, guide = 0;
   uint32_t card_value = 0;                // the card (options_page.h)
@@ -515,7 +523,16 @@ void FindElements(PPCContext& ctx, uint8_t* base) {
     // 2026-10-10 with the debug console).
     const uint32_t item = scrooby::Item(base, g.menu, r);
     g.label[r] = item ? Read32(base, item + kItemLook) : 0;
-    if (r == kRows - 1 && g.label[r]) g.row_colour = Read32(base, g.label[r] + kElementColour);
+    // The rows' own colour, learnt ONCE (the page outlives the screen: its
+    // slots keep the colours of the last visit, and a slot closed while it
+    // showed a heading would teach the heading's cyan; then the repair in
+    // ApplyGreying kept cyan rows cyan: "Texture Sharpness" / "Aspect
+    // Ratio", playtest 2026-11-07). Never from a heading-coloured slot or the
+    // selected (yellow) one.
+    if (g.label[r] && !g.row_colour && r != scrooby::Selection(base, g.menu)) {  // (not the yellow one)
+      const uint32_t colour = Read32(base, g.label[r] + kElementColour);
+      if ((colour & 0xFFFFFF) != (kHeadingColour & 0xFFFFFF)) g.row_colour = colour;
+    }
     g.value[r] = item ? Read32(base, item + kItemValue) : 0;
     for (int k = 0; k < kStars; ++k) {
       g.star[r][k] = FindPicture(ctx, base, g.page, fmt::format("OptStar{}_{}", r, k));
@@ -739,7 +756,8 @@ void CentrePulse(uint8_t* base, uint32_t text, const std::u16string& s) {
 //     value the rest; each scrolls in its part
 // Widths in page units (the page's 0.85x scale doesn't matter: the scroller
 // only uses proportions).
-void FitRowTexts(const std::u16string& name, const std::u16string& value, uint32_t name_text,
+// Returns whether the value scrolls (its pulse is then undone: Update).
+bool FitRowTexts(const std::u16string& name, const std::u16string& value, uint32_t name_text,
                  uint32_t value_text) {
   constexpr float kRowWidth = float(options_page::kRowValueRight - (100 + options_page::kGlassShift));
   constexpr float kGap = 30.0f;  // (20 nearly touched: the selected value grows when it pulses)
@@ -751,6 +769,7 @@ void FitRowTexts(const std::u16string& name, const std::u16string& value, uint32
   const float value_room = line - std::min(name_w, name_room);
   if (name_text) marquee::Fit(name_text, name_w, name_room);
   if (value_text) marquee::Fit(value_text, value_w, std::max(1.0f, value_room));
+  return value_text && value_w > std::max(1.0f, value_room);
 }
 
 // Row::unavailable's reason, empty = usable.
@@ -843,8 +862,9 @@ void Refresh(Env& env) {
       }
       scrooby::SetText(ctx, base, g.value[r], value);
       CentrePulse(base, g.value[r], value);
-      FitRowTexts(row->label, value, g.label[r], g.value[r]);
+      g.value_scrolls[size_t(r)] = FitRowTexts(row->label, value, g.label[r], g.value[r]);
     } else {
+      g.value_scrolls[size_t(r)] = false;
       marquee::Stop(g.label[r]);
       marquee::Stop(g.value[r]);
     }
@@ -2520,11 +2540,16 @@ extern "C" REX_FUNC(sub_820D2A00) {
     scrooby::Select(ctx, base, g.menu, g.asking_selection);
   }
   // The selected row's name: yellow, not pulsing (the menu's pulse, run
-  // just now, undone: CentrePulse).
+  // just now, undone: CentrePulse). Its VALUE too while it scrolls
+  // (2026-11-07): a long text growing and shrinking while it slides ran out
+  // of its room; it just scrolls at its own size.
   {
     const int sel = scrooby::Selection(base, g.menu);
     if (sel >= 0 && sel < kRows && g.label[size_t(sel)]) {
       scrooby::Call(__imp__sub_82370A58, ctx, base, g.label[size_t(sel)]);
+      if (g.value_scrolls[size_t(sel)] && g.value[size_t(sel)]) {
+        scrooby::Call(__imp__sub_82370A58, ctx, base, g.value[size_t(sel)]);
+      }
     }
   }
   if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) return;
@@ -2648,6 +2673,18 @@ extern "C" REX_FUNC(sub_820D2A00) {
       }
     } else if (row) {
       refresh |= ChangeValue(env, +1, /*wrap=*/true);
+    }
+  }
+  // The window changed size or the picture its shape (a window being
+  // dragged, Aspect Ratio): the size texts made again ("Match Window
+  // (W x H)"). Only on the options' own tabs.
+  if (!g.achievements && !g.players) {
+    const int height = native::RenderHeightSettingFor(-1);
+    const float aspect = widescreen::CurrentAspect();
+    if (height != g.sizes_height || aspect != g.sizes_aspect) {
+      refresh |= g.sizes_height != 0;  // (the first look only remembers)
+      g.sizes_height = height;
+      g.sizes_aspect = aspect;
     }
   }
   if (refresh || scrooby::Selection(base, g.menu) != g.selection) {

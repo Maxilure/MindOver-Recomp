@@ -2,6 +2,7 @@
 // ui/wii_cursor.cpp -- see wii_cursor.h (findings/47 s.4)
 // =============================================================================
 #include "wii_cursor.h"
+#include "../native/widescreen.h"
 
 #include <algorithm>
 #include <atomic>
@@ -304,16 +305,13 @@ class CursorDialog : public rex::ui::ImGuiDialog {
     uint32_t moves = 0;
     if (!driver || !driver->Pointer(&px, &py, &moves)) return;
 
-    // The picture's rectangle in the window (the game's 16:9, fitted like the
-    // presenter does), and one pixel of its 720p.
+    // The game's 16:9 screen in the window (the presenter's fit; in a
+    // WIDESCREEN picture its middle part, native/widescreen.h), and one pixel
+    // of its 720p.
     const float window_w = io.DisplaySize.x, window_h = io.DisplaySize.y;
     if (window_w <= 0 || window_h <= 0) return;
-    float pic_w = window_w, pic_h = window_w * 9.0f / 16.0f;
-    if (pic_h > window_h) {
-      pic_h = window_h;
-      pic_w = window_h * 16.0f / 9.0f;
-    }
-    const float pic_x = (window_w - pic_w) * 0.5f, pic_y = (window_h - pic_h) * 0.5f;
+    const widescreen::Rect game = widescreen::Game(window_w, window_h);
+    const float pic_x = game.x, pic_y = game.y, pic_w = game.w, pic_h = game.h;
     const float unit = pic_h / 720.0f;
     const ImVec2 at(pic_x + px * pic_w, pic_y + py * pic_h);
 

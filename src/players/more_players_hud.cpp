@@ -44,6 +44,7 @@
 #include "more_players_hud.h"
 #include "../ui/hud_hide.h"
 #include "more_players.h"
+#include "../ui/hud_scale.h"
 #include "players_setup.h"
 #include "../input/prompt_icons.h"
 
@@ -843,4 +844,47 @@ void MorePlayersMojoFlightSide(PPCRegister& r25, PPCRegister& f13) {
 void MorePlayersMojoFlightHeight(PPCRegister& r25, PPCRegister& f0) {
   const int32_t p = int32_t(r25.u32);
   if (p >= 2 && p < 4) f0.f64 = -std::fabs(f0.f64);
+}
+// THE AIM MOVED WITH ITS PORTRAIT (2026-11-07): the offset (f11 f12 f13,
+// world units, before x 4) points from the camera at where the ORIGINAL
+// draws this player's portrait. Its screen position in the 2D stack's output
+// space (hud_scale.h CornerMove): side share b over forward share times
+// tan(fov / 2) (the camera's own 16:9 view, +16) = x across the game's 16:9
+// half width; up share a likewise with the vertical tan. The portrait is
+// moved x' = sx x + dx, y' = s y + dy; the aim's side and up shares are
+// scaled by the same ratio (x' / x, y' / y), so no handedness of the side
+// vector is assumed. Forward = +228, up = +240, side = forward x up.
+void MorePlayersMojoFlightToHud(PPCRegister& r25, PPCRegister& r27, PPCRegister& f11,
+                                PPCRegister& f12, PPCRegister& f13) {
+  const int32_t p = int32_t(r25.u32);
+  if (p < 0 || p >= 4 || r27.u32 < 0x40000000u) return;
+  float s, sx, dx, dy;
+  if (!hud_scale::CornerMove(p, &s, &sx, &dx, &dy)) return;
+  const uint32_t camera = r27.u32;
+  auto rd = [&](uint32_t off) {
+    const uint8_t* q = rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(camera + off);
+    const uint32_t w = uint32_t(q[0]) << 24 | uint32_t(q[1]) << 16 | uint32_t(q[2]) << 8 | q[3];
+    float f;
+    std::memcpy(&f, &w, 4);
+    return f;
+  };
+  const float fov = rd(16);
+  if (!(fov > 0.05f && fov < 3.0f)) return;
+  const float F[3] = {rd(228), rd(232), rd(236)}, U[3] = {rd(240), rd(244), rd(248)};
+  const float R[3] = {F[1] * U[2] - F[2] * U[1], F[2] * U[0] - F[0] * U[2], F[0] * U[1] - F[1] * U[0]};
+  const float d[3] = {float(f11.f64), float(f12.f64), float(f13.f64)};
+  const float fwd = d[0] * F[0] + d[1] * F[1] + d[2] * F[2];
+  const float up = d[0] * U[0] + d[1] * U[1] + d[2] * U[2];
+  const float side = d[0] * R[0] + d[1] * R[1] + d[2] * R[2];
+  if (fwd < 0.1f) return;
+  const float tan_x = std::tan(0.5f * fov), tan_y = tan_x / (16.0f / 9.0f);
+  // On screen (output space): which side by the player's corner (even = left).
+  const float x = ((p & 1) ? 1.0f : -1.0f) * std::fabs(side) / (fwd * tan_x) * hud_scale::ViewHalfWidth();
+  const float y = up / (fwd * tan_y) * hud_scale::ViewHalfHeight();
+  const float kx = std::fabs(x) > 1e-4f ? (sx * x + dx) / x : 1.0f;
+  const float ky = std::fabs(y) > 1e-4f ? (s * y + dy) / y : 1.0f;
+  const float add_side = side * (kx - 1.0f), add_up = up * (ky - 1.0f);
+  f11.f64 = d[0] + add_side * R[0] + add_up * U[0];
+  f12.f64 = d[1] + add_side * R[1] + add_up * U[1];
+  f13.f64 = d[2] + add_side * R[2] + add_up * U[2];
 }

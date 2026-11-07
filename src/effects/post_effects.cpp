@@ -23,12 +23,16 @@ REXCVAR_DEFINE_INT32(smooth_cutouts, 0, "CrashMoM",
                      "Smooth edges on leaves, fences and other cut-out shapes (their alpha test becomes "
                      "alpha-to-coverage) where anti-aliasing is on, native renderer only: 0 off, 1 on")
     .range(0, 1);
-// DEFAULT 1 = 1080p (2026-11-06, the port's out-of-the-box setting; with the
-// emulated picture it does nothing).
-REXCVAR_DEFINE_INT32(render_resolution, 1, "CrashMoM",
-                     "Render resolution of the 3D scene and menus, native renderer only: 0 720p "
-                     "(original), 1 1080p, 2 1440p, 3 4K (2160p)")
-    .range(0, 3);
+// DEFAULT 1080 (2026-11-06 the port's out-of-the-box 1080p; with the emulated
+// picture it does nothing). 2026-11-07: a PIXEL HEIGHT (any, 360-4320), -1 =
+// the window's own; the old step numbers 0-3 (720p, 1080p, 1440p, 4K) still
+// read the same, so settings files from before need nothing.
+REXCVAR_DEFINE_INT32(render_resolution, 1080, "CrashMoM",
+                     "Render resolution of the 3D scene and menus, native renderer only: the "
+                     "picture's HEIGHT in pixels (720 = the original, 1080, 1440, 2160 = 4K, ...; "
+                     "the width follows the aspect ratio), or -1 = match the window. Old values "
+                     "0-3 = 720p, 1080p, 1440p, 4K")
+    .range(-1, 4320);
 REXCVAR_DEFINE_INT32(motion_blur, 0, "CrashMoM",
                      "Motion blur, the port's own (the original has none), native renderer only: "
                      "0 off, 1 low, 2 medium, 3 high")

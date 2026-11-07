@@ -127,6 +127,7 @@ set(CRASHMOM_SOURCES
     src/native/texture_cache.cpp    # the game's textures -> Vulkan images (untile, byte swap)
     src/native/write_watch.cpp      # page write tracking: textures re-hashed only when written
     src/native/buffer_cache.cpp     # the game's vertex/index buffers -> Vulkan buffers (uploaded once)
+    src/native/widescreen.cpp       # widescreen: a picture as wide as the window (more to see at the sides)
     src/native/render_targets.cpp   # the game's render targets (surfaces) + resolves -> Vulkan images
     src/native/ab_capture.cpp       # F10 photos + debug: the same frame from both renderers
     src/native/translucent_sort.cpp # see-through objects: a draw order that does not flicker

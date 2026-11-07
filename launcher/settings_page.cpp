@@ -66,7 +66,9 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "renderer draws it: with the emulated picture it does nothing.")};
     }
   } else if (name == "render_resolution") {
-    if (AsNumber(value) > 0) {
+    // A picture height (720 = the original), -1 = the window's; old 1-3 = above 720p.
+    const double v = AsNumber(value);
+    if (v < 0 || (v >= 1 && v <= 3) || v > 720) {
       return {trsn("Native renderer only"),
               trsn("Only the native renderer draws at a higher resolution: the emulated picture stays "
               "720p. 4K is heavy: it needs a strong graphics card.")};

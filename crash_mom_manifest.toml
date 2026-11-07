@@ -1610,6 +1610,21 @@ registers = ["r25", "f13"]
 address = 0x82198E88
 name = "MorePlayersMojoFlightHeight"
 registers = ["r25", "f0"]
+# 0x82198ED8 / 0x82198F6C (2026-11-07): the two HUD aims' last step (branch to 0x82198F7C, where
+# the offset f11 f12 f13 = forward + up share + side share gets x 4 + the camera's position;
+# r27 = the camera, +16 fov, +228 forward, +240 up). The portrait the game aims at is where
+# the ORIGINAL draws it; the HUD Size setting (shrink toward the corner) and the widescreen
+# "screen edges" HUD move it: the aim is moved the same way (hud_scale::CornerMove). Why +
+# how found: playtest (mojo landing beside a shrunk / moved portrait); xexdis of 0x82198E50-F7C.
+# The third path (0x82198F70, a point from the stack) isn't an aim at the HUD: untouched.
+[[entrypoint.midasm_hook]]
+address = 0x82198ED8
+name = "MorePlayersMojoFlightToHud"
+registers = ["r25", "r27", "f11", "f12", "f13"]
+[[entrypoint.midasm_hook]]
+address = 0x82198F6C
+name = "MorePlayersMojoFlightToHud"
+registers = ["r25", "r27", "f11", "f12", "f13"]
 
 # =============================================================================
 # THE FRONT END'S PER-PLAYER OBJECTS FOR PLAYERS 3-4 (src/players/more_players_frontend.cpp,

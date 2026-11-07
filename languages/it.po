@@ -7,53 +7,53 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/crash_mom_app.h:455 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#: src/crash_mom_app.h:459 src/native/native_renderer.cpp:718 src/native/native_renderer.cpp:1446
 #, fuzzy
 msgid "EMULATED ONLY"
 msgstr "SOLO EMULATO"
 
-#: src/crash_mom_app.h:455
+#: src/crash_mom_app.h:459
 #, fuzzy
 msgid "No second window with --emulated_only"
 msgstr "Niente seconda finestra con --emulated_only"
 
 #. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
-#: src/fps_overlay.cpp:145
+#: src/fps_overlay.cpp:147
 #, fuzzy
 msgctxt "fps counter"
 msgid "{0} FPS"
 msgstr "{0} FPS"
 
 #. Frame-rate counter: the average frame rate. Keep it short, capitals.
-#: src/fps_overlay.cpp:148
+#: src/fps_overlay.cpp:150
 #, fuzzy
 msgctxt "fps counter"
 msgid "AVG {0}"
 msgstr "MEDIA {0}"
 
 #. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
-#: src/fps_overlay.cpp:150
+#: src/fps_overlay.cpp:152
 #, fuzzy
 msgctxt "fps counter"
 msgid "1% LOW {0}"
 msgstr "1% MIN {0}"
 
 #. Frame-rate counter: milliseconds per frame. Capitals.
-#: src/fps_overlay.cpp:154
+#: src/fps_overlay.cpp:156
 #, fuzzy
 msgctxt "fps counter"
 msgid "{0} MS"
 msgstr "{0} MS"
 
 #. Frame-rate counter: how long the game's own work took (ms). Capitals.
-#: src/fps_overlay.cpp:156
+#: src/fps_overlay.cpp:158
 #, fuzzy
 msgctxt "fps counter"
 msgid "GAME {0}"
 msgstr "GIOCO {0}"
 
 #. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
-#: src/fps_overlay.cpp:158
+#: src/fps_overlay.cpp:160
 #, fuzzy
 msgctxt "fps counter"
 msgid "SWAP {0}"
@@ -64,74 +64,74 @@ msgstr "SCAMBIO {0}"
 msgid "Achievement Unlocked"
 msgstr "Obiettivo sbloccato"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1062 src/options/options_menu.cpp:2369 src/options/options_settings.cpp:1243
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2389 src/options/options_settings.cpp:1317
 #, fuzzy
 msgid "Achievements"
 msgstr "Obiettivi"
 
-#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Giocatori"
 
-#: src/native/native_renderer.cpp:718
+#: src/native/native_renderer.cpp:719
 #, fuzzy
 msgid "No switching with --emulated_only"
 msgstr "Nessun cambio con --emulated_only"
 
-#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
+#: src/native/native_renderer.cpp:724 src/native/native_renderer.cpp:1443
 #, fuzzy
 msgid "DUAL MODE"
 msgstr "MODALITÀ DOPPIA"
 
-#: src/native/native_renderer.cpp:724
+#: src/native/native_renderer.cpp:725
 #, fuzzy
 msgid "No switching while the second window is open (Tools closes it)"
 msgstr "Nessun cambio mentre la seconda finestra è aperta (Strumenti la chiude)"
 
-#: src/native/native_renderer.cpp:1442
+#: src/native/native_renderer.cpp:1443
 #, fuzzy
 msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
 msgstr "questa finestra: emulato (GPU Xbox 360)   seconda finestra: nativo (Vulkan)   F1 Strumenti la chiude"
 
-#: src/native/native_renderer.cpp:1445
+#: src/native/native_renderer.cpp:1446
 #, fuzzy
 msgid "Xbox 360 GPU emulation; native renderer off"
 msgstr "Emulazione della GPU Xbox 360; rendering nativo spento"
 
-#: src/native/native_renderer.cpp:1447
+#: src/native/native_renderer.cpp:1448
 #, fuzzy
 msgid "NATIVE (Vulkan)"
 msgstr "NATIVO (Vulkan)"
 
-#: src/native/native_renderer.cpp:1449
+#: src/native/native_renderer.cpp:1450
 #, fuzzy
 msgid "native only: the emulated GPU is off   F1 Tools switches"
 msgstr "solo nativo: la GPU emulata è spenta   F1 Strumenti cambia"
 
-#: src/native/native_renderer.cpp:1450
+#: src/native/native_renderer.cpp:1451
 #, fuzzy
 msgid "the emulated GPU still draws in the background   F1 Tools switches"
 msgstr "la GPU emulata disegna ancora in sottofondo   F1 Strumenti cambia"
 
-#: src/native/native_renderer.cpp:1452
+#: src/native/native_renderer.cpp:1453
 #, fuzzy
 msgid "EMULATED (Xbox 360 GPU)"
 msgstr "EMULATO (GPU Xbox 360)"
 
-#: src/native/native_renderer.cpp:1452
+#: src/native/native_renderer.cpp:1453
 #, fuzzy
 msgid "native renderer idle   F1 Tools switches"
 msgstr "rendering nativo inattivo   F1 Strumenti cambia"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:75 src/ui/hud_hide.cpp:77
+#: src/ui/hud_hide.cpp:80 src/ui/hud_hide.cpp:82
 #, fuzzy
 msgid "HUD Hidden"
 msgstr "HUD nascosto"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:75
+#: src/ui/hud_hide.cpp:80
 #, fuzzy
 msgid "Press {0} to show it again"
 msgstr "Premi {0} per mostrarlo di nuovo"
@@ -225,7 +225,7 @@ msgstr ""
 "Un PNG del fotogramma successivo nella cartella foto (le immagini di entrambi i rendering\n"
 "quando quello nativo disegna). I menu sopra l'immagine non ci sono."
 
-#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:390
 #, fuzzy
 msgid "Picture"
 msgstr "Immagine"
@@ -486,7 +486,7 @@ msgstr "Cammina (tieni premuto)"
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr "Tieni premuto con una direzione: la levetta si inclina solo in parte, così Crash va più piano."
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1327
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Spin"
 msgstr "Rotazione"
@@ -501,7 +501,7 @@ msgstr "L'attacco rotante (sul controller: \"Ruota la levetta analogica sinistra
 msgid "Left stick circles"
 msgstr "Cerchi con la levetta sinistra"
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1327
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Jump"
 msgstr "Salto"
@@ -561,7 +561,7 @@ msgstr "Metti in tasca / tira fuori"
 msgid "Store the titan you control, and bring it back later."
 msgstr "Mette in tasca il titano che controlli, per tirarlo fuori più tardi."
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1328
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Map"
 msgstr "Mappa"
@@ -571,12 +571,12 @@ msgstr "Mappa"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "Nel menu di pausa: abbandona (un altro giocatore resta)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1361 src/options/options_menu.cpp:1375 launcher/installer.cpp:548
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:548
 #, fuzzy
 msgid "Back"
 msgstr "Indietro"
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:975 src/options/options_settings.cpp:1328
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1048 src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Pause"
 msgstr "Pausa"
@@ -736,7 +736,7 @@ msgstr "Movimento"
 msgid "Fighting"
 msgstr "Combattimento"
 
-#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:442
 #, fuzzy
 msgid "Titans"
 msgstr "Titani"
@@ -756,7 +756,7 @@ msgstr "Resto del controller"
 msgid "NO KEYBOARD CONTROLS"
 msgstr "NESSUN COMANDO DA TASTIERA"
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1258 launcher/settings_page.cpp:539
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1332 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Comandi"
@@ -821,7 +821,7 @@ msgstr "La scelta dei giocatori non è disponibile in questa sessione."
 msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
 msgstr "Quale dispositivo gioca come quale giocatore. In due: tastiera e mouse al giocatore 1, un controller al giocatore 2. In un livello premi Start sul secondo dispositivo per entrare (il menu di pausa offre anche Unisciti e Abbandona). Spostare un dispositivo su un giocatore lo scambia con quello che c'era. Nella schermata del titolo e nei menu principali funziona ogni dispositivo. Le modifiche valgono subito e vengono ricordate."
 
-#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:671
+#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:744
 #, fuzzy
 msgid "Device"
 msgstr "Dispositivo"
@@ -1553,20 +1553,44 @@ msgstr "Salvataggio fatto con i trucchi"
 msgid "No achievements while playing this save"
 msgstr "Niente obiettivi giocando questo salvataggio"
 
-#: src/cheats/spawn.cpp:447
+#: src/cheats/spawn.cpp:450
 #, fuzzy
 msgid "Crunch (boss)"
 msgstr "Crunch (boss)"
 
-#: src/cheats/spawn.cpp:447
+#: src/cheats/spawn.cpp:450
 #, fuzzy
 msgid "Cortex (boss)"
 msgstr "Cortex (boss)"
 
-#: src/cheats/spawn.cpp:448
+#: src/cheats/spawn.cpp:451
 #, fuzzy
 msgid "Enemies"
 msgstr "Nemici"
+
+#: src/cheats/spawn.cpp:458
+msgid "Pickups"
+msgstr ""
+
+#: src/cheats/spawn.cpp:459
+msgid "Mojo (small)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:459
+msgid "Mojo (medium)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:460
+msgid "Mojo (large)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:460
+msgid "Mojo multiplier"
+msgstr ""
+
+#: src/cheats/spawn.cpp:461
+msgid "Health"
+msgstr ""
 
 #: src/players/dummy_players.cpp:232
 #, fuzzy
@@ -1862,1676 +1886,1724 @@ msgstr "{1} {0}"
 msgid "Drop Out"
 msgstr "Abbandona"
 
-#: src/options/options_menu.cpp:838 src/options/options_menu.cpp:888
+#: src/options/options_menu.cpp:857 src/options/options_menu.cpp:908
 #, fuzzy
 msgid "Press a Key"
 msgstr "Premi un tasto"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:898
+#: src/options/options_menu.cpp:918
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Premi il nuovo secondo tasto o pulsante del mouse per {0}. {1} o {2}: annulla."
 
-#: src/options/options_menu.cpp:899
+#: src/options/options_menu.cpp:919
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Premi il nuovo tasto o pulsante del mouse per {0}. {1} o {2}: annulla."
 
-#: src/options/options_menu.cpp:916
+#: src/options/options_menu.cpp:936
 #, fuzzy
 msgid "Second Key"
 msgstr "Secondo tasto"
 
-#: src/options/options_menu.cpp:922
+#: src/options/options_menu.cpp:942
 #, fuzzy
 msgid "Remove Key"
 msgstr "Rimuovi tasto"
 
-#: src/options/options_menu.cpp:1095
+#: src/options/options_menu.cpp:1115
 #, fuzzy
 msgid "Locked"
 msgstr "Bloccato"
 
-#: src/options/options_menu.cpp:1360
+#: src/options/options_menu.cpp:1380
 #, fuzzy
 msgid "Confirm"
 msgstr "Conferma"
 
-#: src/options/options_menu.cpp:1364
+#: src/options/options_menu.cpp:1384
 #, fuzzy
 msgid "Swap"
 msgstr "Scambia"
 
-#: src/options/options_menu.cpp:1364
+#: src/options/options_menu.cpp:1384
 #, fuzzy
 msgid "Move Here"
 msgstr "Sposta qui"
 
-#: src/options/options_menu.cpp:1366 launcher/installer.cpp:1062 launcher/setup.cpp:1651
+#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1062 launcher/setup.cpp:1698
 #, fuzzy
 msgid "Cancel"
 msgstr "Annulla"
 
-#: src/options/options_menu.cpp:1369
+#: src/options/options_menu.cpp:1389
 #, fuzzy
 msgid "Buttons"
 msgstr "Tasti"
 
-#: src/options/options_menu.cpp:1372
+#: src/options/options_menu.cpp:1392
 #, fuzzy
 msgid "Move"
 msgstr "Sposta"
 
-#: src/options/options_menu.cpp:1373
+#: src/options/options_menu.cpp:1393
 #, fuzzy
 msgid "Remove"
 msgstr "Rimuovi"
 
-#: src/options/options_menu.cpp:1498
+#: src/options/options_menu.cpp:1518
 #, fuzzy
 msgid "No room for this player"
 msgstr "Nessun posto per questo giocatore"
 
-#: src/options/options_menu.cpp:1502 src/options/options_menu.cpp:1510
+#: src/options/options_menu.cpp:1522 src/options/options_menu.cpp:1530
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tastiera e mouse"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1507
+#: src/options/options_menu.cpp:1527
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Verso il giocatore {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1507
+#: src/options/options_menu.cpp:1527
 #, fuzzy
 msgid "Pick a player"
 msgstr "Scegli un giocatore"
 
-#: src/options/options_menu.cpp:1512
+#: src/options/options_menu.cpp:1532
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Premi un tasto per partecipare"
 
-#: src/options/options_menu.cpp:1956
+#: src/options/options_menu.cpp:1976
 #, fuzzy
 msgid "Not changed."
 msgstr "Nessuna modifica."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1963
+#: src/options/options_menu.cpp:1983
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} serve ai menu ({1}): scegli un altro tasto."
 
-#: src/options/options_menu.cpp:1975
+#: src/options/options_menu.cpp:1995
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} era il tasto di {1}: ora è di {2}."
 
-#: src/options/options_menu.cpp:1996
+#: src/options/options_menu.cpp:2016
 #, fuzzy
 msgid "No key to remove."
 msgstr "Nessun tasto da rimuovere."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2004
+#: src/options/options_menu.cpp:2024
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} rimosso."
 
 #. {0} = a controller button's picture, {1} = a key's picture ("[LB] or [Q]").
-#: src/options/options_settings.cpp:175
+#: src/options/options_settings.cpp:177
 #, fuzzy
 msgid "{0} or {1}"
 msgstr "{0} o {1}"
 
-#: src/options/options_settings.cpp:180
+#: src/options/options_settings.cpp:182
 #, fuzzy
 msgid "Frame-rate Cap"
 msgstr "Limite fotogrammi"
 
-#: src/options/options_settings.cpp:184
+#: src/options/options_settings.cpp:186
 #, fuzzy
 msgid "30 (original)"
 msgstr "30 (originale)"
 
-#: src/options/options_settings.cpp:184 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
+#: src/options/options_settings.cpp:186 launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 #, fuzzy
 msgid "Unlimited"
 msgstr "Illimitato"
 
-#: src/options/options_settings.cpp:197
+#: src/options/options_settings.cpp:199
 #, fuzzy
 msgid "The most frames a second the game draws. The original runs at 30."
 msgstr "Il massimo di fotogrammi al secondo che il gioco disegna. L'originale va a 30."
 
-#: src/options/options_settings.cpp:202
+#: src/options/options_settings.cpp:204
 #, fuzzy
 msgid "Above 60, jumps and timings may feel different."
 msgstr "Sopra 60, salti e tempi possono sembrare diversi."
 
-#: src/options/options_settings.cpp:215 launcher/settings_page.cpp:390
+#: src/options/options_settings.cpp:217 launcher/settings_page.cpp:392
 #, fuzzy
 msgid "Renderer"
 msgstr "Rendering"
 
-#: src/options/options_settings.cpp:219 src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:221 src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Emulated"
 msgstr "Emulato"
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Emulated Only"
 msgstr "Solo emulato"
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Native"
 msgstr "Nativo"
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Native Only"
 msgstr "Solo nativo"
 
-#: src/options/options_settings.cpp:242
+#: src/options/options_settings.cpp:244
 #, fuzzy
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original."
 msgstr "Il chip grafico della Xbox 360, imitato passo passo: uguale all'originale."
 
-#: src/options/options_settings.cpp:246
+#: src/options/options_settings.cpp:248
 #, fuzzy
 msgid "Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the {0} Tools menu doesn't switch."
 msgstr "Solo il chip grafico Xbox 360 imitato: il rendering del port resta spento e il menu Strumenti {0} non cambia."
 
-#: src/options/options_settings.cpp:250
+#: src/options/options_settings.cpp:252
 #, fuzzy
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original. The {0} Tools menu switches to the port's renderer."
 msgstr "Il chip grafico della Xbox 360, imitato passo passo: uguale all'originale. Il menu Strumenti {0} passa al rendering del port."
 
-#: src/options/options_settings.cpp:254
+#: src/options/options_settings.cpp:256
 #, fuzzy
 msgid "The port's own renderer, made for PC. The imitation keeps drawing behind it: the {0} Tools menu switches back at once."
 msgstr "Il rendering del port, fatto per PC. L'imitazione continua a disegnare dietro: il menu Strumenti {0} torna indietro subito."
 
-#: src/options/options_settings.cpp:256
+#: src/options/options_settings.cpp:258
 #, fuzzy
 msgid "The port's own renderer alone: the lightest on your PC."
 msgstr "Solo il rendering del port: il più leggero per il tuo PC."
 
-#: src/options/options_settings.cpp:261
+#: src/options/options_settings.cpp:263
 #, fuzzy
 msgid "Still being finished: an effect may look wrong."
 msgstr "Ancora in lavorazione: un effetto potrebbe apparire sbagliato."
 
-#: src/options/options_settings.cpp:272
+#: src/options/options_settings.cpp:274
 #, fuzzy
 msgid "Dual Mode"
 msgstr "Modalità doppia"
 
-#: src/options/options_settings.cpp:294
+#: src/options/options_settings.cpp:296
 #, fuzzy
 msgid "Brightness"
 msgstr "Luminosità"
 
-#: src/options/options_settings.cpp:299
+#: src/options/options_settings.cpp:301
 #, fuzzy
 msgid "0 (original)"
 msgstr "0 (originale)"
 
-#: src/options/options_settings.cpp:311
+#: src/options/options_settings.cpp:313
 #, fuzzy
 msgid "Raise it until the darkest squares above can just be told apart."
 msgstr "Aumentala finché i quadrati più scuri qui sopra si distinguono appena."
 
-#: src/options/options_settings.cpp:320
+#: src/options/options_settings.cpp:322
 #, fuzzy
 msgid "V-sync"
 msgstr "V-Sync"
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:405 src/options/options_settings.cpp:554 src/options/options_settings.cpp:783 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:407 src/options/options_settings.cpp:627 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
 #, fuzzy
 msgid "On"
 msgstr "On"
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:340 src/options/options_settings.cpp:405 src/options/options_settings.cpp:533 src/options/options_settings.cpp:601 src/options/options_settings.cpp:783 src/options/options_settings.cpp:962 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:342 src/options/options_settings.cpp:407 src/options/options_settings.cpp:606 src/options/options_settings.cpp:674 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1035 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
 #, fuzzy
 msgid "Off"
 msgstr "Off"
 
-#: src/options/options_settings.cpp:321
+#: src/options/options_settings.cpp:323
 #, fuzzy
 msgid "Matches your monitor: whole pictures only, no tearing, and the game runs at most at its refresh rate."
 msgstr "Segue il tuo monitor: solo immagini intere, niente tearing, e il gioco va al massimo alla sua frequenza."
 
-#: src/options/options_settings.cpp:323
+#: src/options/options_settings.cpp:325
 #, fuzzy
 msgid "Pictures show the moment they're ready: the least delay, but the picture can tear."
 msgstr "Le immagini appaiono appena pronte: il minimo ritardo, ma l'immagine può strapparsi."
 
-#: src/options/options_settings.cpp:338
+#: src/options/options_settings.cpp:340
 #, fuzzy
 msgid "FPS Counter"
 msgstr "Contatore FPS"
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 #, fuzzy
 msgid "Simple"
 msgstr "Semplice"
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 #, fuzzy
 msgid "Average"
 msgstr "Media"
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 #, fuzzy
 msgid "Detailed"
 msgstr "Dettagliato"
 
-#: src/options/options_settings.cpp:346
+#: src/options/options_settings.cpp:348
 #, fuzzy
 msgid "No frame-rate counter."
 msgstr "Nessun contatore di fotogrammi."
 
-#: src/options/options_settings.cpp:347
+#: src/options/options_settings.cpp:349
 #, fuzzy
 msgid "The frame rate, in a corner of the screen (FPS Position)."
 msgstr "I fotogrammi al secondo, in un angolo dello schermo (Posizione FPS)."
 
-#: src/options/options_settings.cpp:348
+#: src/options/options_settings.cpp:350
 #, fuzzy
 msgid "The frame rate, its average and its slowest 1 % (the 1% low)."
 msgstr "I fotogrammi al secondo, la media e l'1 % più lento (1% low)."
 
-#: src/options/options_settings.cpp:349
+#: src/options/options_settings.cpp:351
 #, fuzzy
 msgid "Also how long a frame takes, and how much of it the game works or waits."
 msgstr "Anche quanto dura un fotogramma, e quanto il gioco lavora o aspetta."
 
-#: src/options/options_settings.cpp:357
+#: src/options/options_settings.cpp:359
 #, fuzzy
 msgid "FPS Position"
 msgstr "Posizione FPS"
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 #, fuzzy
 msgid "Top Left"
 msgstr "In alto a sinistra"
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 #, fuzzy
 msgid "Top Centre"
 msgstr "In alto al centro"
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 #, fuzzy
 msgid "Top Right"
 msgstr "In alto a destra"
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 #, fuzzy
 msgid "Bottom Left"
 msgstr "In basso a sinistra"
 
-#: src/options/options_settings.cpp:360
+#: src/options/options_settings.cpp:362
 #, fuzzy
 msgid "Bottom Right"
 msgstr "In basso a destra"
 
-#: src/options/options_settings.cpp:367
+#: src/options/options_settings.cpp:369
 #, fuzzy
 msgid "Where the frame-rate counter sits on the screen."
 msgstr "Dove si trova il contatore di fotogrammi sullo schermo."
 
-#: src/options/options_settings.cpp:378
+#: src/options/options_settings.cpp:380
 #, fuzzy
 msgid "HUD Size"
 msgstr "Dimensione HUD"
 
-#: src/options/options_settings.cpp:398
+#: src/options/options_settings.cpp:400
 #, fuzzy
 msgid "The original size."
 msgstr "La dimensione originale."
 
-#: src/options/options_settings.cpp:399
+#: src/options/options_settings.cpp:401
 #, fuzzy
 msgid "The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen."
 msgstr "Ritratti, barre, contatori e indicatori delle combo più piccoli, ognuno verso il suo angolo dello schermo."
 
-#: src/options/options_settings.cpp:405
+#: src/options/options_settings.cpp:407
 #, fuzzy
 msgid "Smaller for 3-4 Players"
 msgstr "Più piccolo con 3-4 giocatori"
 
-#: src/options/options_settings.cpp:406
+#: src/options/options_settings.cpp:408
 #, fuzzy
 msgid "With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is."
 msgstr "Con un terzo o quarto giocatore, l'HUD è al massimo all'80 % perché ci stiano quattro angoli. Una dimensione dell'80 % o meno resta com'è."
 
-#: src/options/options_settings.cpp:407
+#: src/options/options_settings.cpp:409
 #, fuzzy
 msgid "The HUD keeps the HUD Size above with any number of players."
 msgstr "L'HUD mantiene la dimensione qui sopra con qualsiasi numero di giocatori."
 
-#: src/options/options_settings.cpp:415
+#: src/options/options_settings.cpp:417
 #, fuzzy
 msgid "Window Mode"
 msgstr "Modalità finestra"
 
-#: src/options/options_settings.cpp:416 launcher/settings_page.cpp:453
+#: src/options/options_settings.cpp:418 launcher/settings_page.cpp:455
 #, fuzzy
 msgid "Windowed"
 msgstr "In finestra"
 
-#: src/options/options_settings.cpp:416 launcher/settings_page.cpp:453
+#: src/options/options_settings.cpp:418 launcher/settings_page.cpp:455
 #, fuzzy
 msgid "Fullscreen"
 msgstr "Schermo intero"
 
-#: src/options/options_settings.cpp:423
+#: src/options/options_settings.cpp:425
 #, fuzzy
 msgid "Plays in a window you can move and resize."
 msgstr "Si gioca in una finestra che puoi spostare e ridimensionare."
 
-#: src/options/options_settings.cpp:424
+#: src/options/options_settings.cpp:426
 #, fuzzy
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr "Riempie tutto il monitor (quello scelto in Monitor)."
 
-#: src/options/options_settings.cpp:438 src/options/options_settings.cpp:445 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
+#: src/options/options_settings.cpp:440 src/options/options_settings.cpp:447 launcher/settings_page.cpp:471 launcher/settings_page.cpp:478
 #, fuzzy
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/options/options_settings.cpp:449 src/options/options_settings.cpp:747 src/options/options_settings.cpp:917 launcher/settings_page.cpp:471
+#: src/options/options_settings.cpp:451 src/options/options_settings.cpp:820 src/options/options_settings.cpp:990 launcher/settings_page.cpp:473
 #, fuzzy
 msgid "Automatic"
 msgstr "Automatico"
 
 #. {0} = the monitor's number.
-#: src/options/options_settings.cpp:457
+#: src/options/options_settings.cpp:459
 #, fuzzy
 msgid "{0}: Not Connected"
 msgstr "{0}: non collegato"
 
-#: src/options/options_settings.cpp:467
+#: src/options/options_settings.cpp:469
 #, fuzzy
 msgid "Fullscreen fills the monitor the game is on."
 msgstr "Lo schermo intero riempie il monitor dove si trova il gioco."
 
-#: src/options/options_settings.cpp:469
+#: src/options/options_settings.cpp:471
 #, fuzzy
 msgid "This monitor isn't connected: fullscreen fills the one the game is on."
 msgstr "Questo monitor non è collegato: lo schermo intero riempie quello dove si trova il gioco."
 
-#: src/options/options_settings.cpp:471
+#: src/options/options_settings.cpp:473
 #, fuzzy
 msgid "Fullscreen fills this monitor."
 msgstr "Lo schermo intero riempie questo monitor."
 
-#: src/options/options_settings.cpp:501
+#: src/options/options_settings.cpp:503
 #, fuzzy
 msgid "Needs the port's renderer: set Renderer to Native on the Graphics tab."
 msgstr "Serve il rendering del port: imposta Rendering su Nativo nella scheda Grafica."
 
-#: src/options/options_settings.cpp:507
+#: src/options/options_settings.cpp:515
+msgid "Needs Renderer: Native Only on the Graphics tab."
+msgstr ""
+
+#: src/options/options_settings.cpp:522
+msgid "Aspect Ratio"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "Match Window"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "16:9 (original)"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "21:9"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "32:9"
+msgstr ""
+
+#: src/options/options_settings.cpp:524
+msgid "The picture takes the window's shape: a wider window shows more of the world at the sides. Nothing is stretched."
+msgstr ""
+
+#: src/options/options_settings.cpp:525
+msgid "The game's own picture shape. A wider window gets black bars at the sides."
+msgstr ""
+
+#: src/options/options_settings.cpp:526
+msgid "Ultrawide: more of the world at the sides. Nothing is stretched."
+msgstr ""
+
+#: src/options/options_settings.cpp:527
+msgid "Super ultrawide, like two screens side by side: much more of the world at the sides."
+msgstr ""
+
+#: src/options/options_settings.cpp:533
+msgid "Widescreen HUD"
+msgstr ""
+
+#: src/options/options_settings.cpp:533
+msgid "In Place"
+msgstr ""
+
+#: src/options/options_settings.cpp:533
+msgid "Screen Edges"
+msgstr ""
+
+#: src/options/options_settings.cpp:534
+msgid "In a wide picture, the HUD stays where the 16:9 game has it."
+msgstr ""
+
+#: src/options/options_settings.cpp:535
+msgid "In a wide picture, the HUD's corner pieces move out to the corners of the screen."
+msgstr ""
+
+#: src/options/options_settings.cpp:542
 #, fuzzy
 msgid "Motion Blur"
 msgstr "Sfocatura di movimento"
 
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:554 src/options/options_settings.cpp:589
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:627 src/options/options_settings.cpp:662
 #, fuzzy
 msgid "Off (original)"
 msgstr "Off (originale)"
 
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
 #, fuzzy
 msgid "Low"
 msgstr "Bassa"
 
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
 #, fuzzy
 msgid "Medium"
 msgstr "Media"
 
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
 #, fuzzy
 msgid "High"
 msgstr "Alta"
 
-#: src/options/options_settings.cpp:508
+#: src/options/options_settings.cpp:543
 #, fuzzy
 msgid "No motion blur, like the original game."
 msgstr "Niente sfocatura di movimento, come nel gioco originale."
 
-#: src/options/options_settings.cpp:509
+#: src/options/options_settings.cpp:544
 #, fuzzy
 msgid "A light smear of the scenery when the camera moves. The players stay sharp."
 msgstr "Lo scenario si sfoca un po' quando la telecamera si muove. I giocatori restano nitidi."
 
-#: src/options/options_settings.cpp:510
+#: src/options/options_settings.cpp:545
 #, fuzzy
 msgid "The scenery smears more when the camera moves. The players stay sharp."
 msgstr "Lo scenario si sfoca di più quando la telecamera si muove. I giocatori restano nitidi."
 
-#: src/options/options_settings.cpp:511
+#: src/options/options_settings.cpp:546
 #, fuzzy
 msgid "A strong smear, as long as one frame of the original game's movement."
 msgstr "Una sfocatura forte, lunga quanto un fotogramma del movimento del gioco originale."
 
-#: src/options/options_settings.cpp:519
+#: src/options/options_settings.cpp:565
 #, fuzzy
 msgid "Resolution"
 msgstr "Risoluzione"
 
-#: src/options/options_settings.cpp:520
-#, fuzzy
-msgid "720p (original)"
-msgstr "720p (originale)"
+#: src/options/options_settings.cpp:570
+msgid "Match Window ({0})"
+msgstr ""
 
-#: src/options/options_settings.cpp:520
-#, fuzzy
-msgid "1080p"
-msgstr "1080p"
+#: src/options/options_settings.cpp:572
+msgid "{0} (original)"
+msgstr ""
 
-#: src/options/options_settings.cpp:520
-#, fuzzy
-msgid "1440p"
-msgstr "1440p"
+#: src/options/options_settings.cpp:592
+msgid "Drawn at the window's own size: the sharpest it can look on this screen. A big screen is heavy on your graphics card."
+msgstr ""
 
-#: src/options/options_settings.cpp:520
-#, fuzzy
-msgid "4K"
-msgstr "4K"
+#: src/options/options_settings.cpp:593
+msgid "Drawn at the Xbox 360's size."
+msgstr ""
 
-#: src/options/options_settings.cpp:521
-#, fuzzy
-msgid "Drawn at 1280 x 720, like the Xbox 360."
-msgstr "Disegnato a 1280 x 720, come su Xbox 360."
+#: src/options/options_settings.cpp:594
+msgid "Sharper than the original. Light on your graphics card."
+msgstr ""
 
-#: src/options/options_settings.cpp:522
-#, fuzzy
-msgid "Drawn at 1920 x 1080: sharper on a Full HD screen."
-msgstr "Disegnato a 1920 x 1080: più nitido su uno schermo Full HD."
+#: src/options/options_settings.cpp:595
+msgid "Sharper still, heavier on your graphics card."
+msgstr ""
 
-#: src/options/options_settings.cpp:523
-#, fuzzy
-msgid "Drawn at 2560 x 1440: sharper still, heavier on your graphics card."
-msgstr "Disegnato a 2560 x 1440: ancora più nitido, più pesante per la scheda video."
+#: src/options/options_settings.cpp:596
+msgid "The sharpest picture, the heaviest on your graphics card."
+msgstr ""
 
-#: src/options/options_settings.cpp:524
-#, fuzzy
-msgid "Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."
-msgstr "Disegnato a 3840 x 2160: l'immagine più nitida, la più pesante per la scheda video."
-
-#: src/options/options_settings.cpp:533
+#: src/options/options_settings.cpp:606
 #, fuzzy
 msgid "Anti-aliasing"
 msgstr "Anti-aliasing"
 
-#: src/options/options_settings.cpp:533
+#: src/options/options_settings.cpp:606
 #, fuzzy
 msgid "2x (original)"
 msgstr "2x (originale)"
 
-#: src/options/options_settings.cpp:533
+#: src/options/options_settings.cpp:606
 #, fuzzy
 msgid "4x"
 msgstr "4x"
 
-#: src/options/options_settings.cpp:533
+#: src/options/options_settings.cpp:606
 #, fuzzy
 msgid "8x"
 msgstr "8x"
 
-#: src/options/options_settings.cpp:534
+#: src/options/options_settings.cpp:607
 #, fuzzy
 msgid "No smoothing: jagged, shimmering edges, the lightest on your graphics card."
 msgstr "Nessuna smussatura: bordi seghettati e tremolanti, il più leggero per la scheda video."
 
-#: src/options/options_settings.cpp:535
+#: src/options/options_settings.cpp:608
 #, fuzzy
 msgid "Edges smoothed with 2 samples per pixel, like the Xbox 360."
 msgstr "Bordi smussati con 2 campioni per pixel, come su Xbox 360."
 
-#: src/options/options_settings.cpp:536
+#: src/options/options_settings.cpp:609
 #, fuzzy
 msgid "Smoother edges, 4 samples per pixel."
 msgstr "Bordi più lisci, 4 campioni per pixel."
 
-#: src/options/options_settings.cpp:537
+#: src/options/options_settings.cpp:610
 #, fuzzy
 msgid "The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."
 msgstr "I bordi più lisci, 8 campioni per pixel: il più pesante per la scheda video."
 
-#: src/options/options_settings.cpp:554
+#: src/options/options_settings.cpp:627
 #, fuzzy
 msgid "Smooth Leaves"
 msgstr "Foglie smussate"
 
-#: src/options/options_settings.cpp:555
+#: src/options/options_settings.cpp:628
 #, fuzzy
 msgid "Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the original game."
 msgstr "Foglie, recinti e altre forme ritagliate tengono i loro bordi duri e tremolanti, come nel gioco originale."
 
-#: src/options/options_settings.cpp:557
+#: src/options/options_settings.cpp:630
 #, fuzzy
 msgid "Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing on."
 msgstr "Smussa i bordi di foglie, recinti e altre forme ritagliate. Serve l'anti-aliasing attivo."
 
-#: src/options/options_settings.cpp:566
+#: src/options/options_settings.cpp:639
 #, fuzzy
 msgid "Texture Sharpness"
 msgstr "Nitidezza texture"
 
-#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577 src/options/options_settings.cpp:601 src/options/options_settings.cpp:1075 src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1148 src/options/options_settings.cpp:1170
 #, fuzzy
 msgid "Original"
 msgstr "Originale"
 
-#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650
 #, fuzzy
 msgid "Sharper"
 msgstr "Più nitide"
 
-#: src/options/options_settings.cpp:566
+#: src/options/options_settings.cpp:639
 #, fuzzy
 msgid "Sharpest"
 msgstr "Nitidissime"
 
-#: src/options/options_settings.cpp:567
+#: src/options/options_settings.cpp:640
 #, fuzzy
 msgid "Textures soften in the distance like the Xbox 360's."
 msgstr "Le texture si ammorbidiscono in lontananza come su Xbox 360."
 
-#: src/options/options_settings.cpp:568
+#: src/options/options_settings.cpp:641
 #, fuzzy
 msgid "Textures stay crisper in the distance and on slanted ground."
 msgstr "Le texture restano più nitide in lontananza e sul terreno inclinato."
 
-#: src/options/options_settings.cpp:569
+#: src/options/options_settings.cpp:642
 #, fuzzy
 msgid "The crispest distance, with a little more shimmer when moving."
 msgstr "La lontananza più nitida, con un po' più di tremolio in movimento."
 
-#: src/options/options_settings.cpp:577
+#: src/options/options_settings.cpp:650
 #, fuzzy
 msgid "Shadow Softness"
 msgstr "Morbidezza ombre"
 
-#: src/options/options_settings.cpp:577
+#: src/options/options_settings.cpp:650
 #, fuzzy
 msgid "Softer"
 msgstr "Più morbide"
 
-#: src/options/options_settings.cpp:577
+#: src/options/options_settings.cpp:650
 #, fuzzy
 msgid "Softest"
 msgstr "Morbidissime"
 
-#: src/options/options_settings.cpp:578
+#: src/options/options_settings.cpp:651
 #, fuzzy
 msgid "Shadows under the characters get a crisper edge."
 msgstr "Le ombre dei personaggi hanno un bordo più netto."
 
-#: src/options/options_settings.cpp:579
+#: src/options/options_settings.cpp:652
 #, fuzzy
 msgid "Shadows fade at their edge like the Xbox 360's."
 msgstr "Le ombre sfumano sul bordo come su Xbox 360."
 
-#: src/options/options_settings.cpp:580
+#: src/options/options_settings.cpp:653
 #, fuzzy
 msgid "Shadows fade over a wider edge."
 msgstr "Le ombre sfumano su un bordo più largo."
 
-#: src/options/options_settings.cpp:581
+#: src/options/options_settings.cpp:654
 #, fuzzy
 msgid "The softest shadows, fading the widest."
 msgstr "Le ombre più morbide, con il bordo più largo."
 
-#: src/options/options_settings.cpp:589
+#: src/options/options_settings.cpp:662
 #, fuzzy
 msgid "Sharpening"
 msgstr "Nitidezza"
 
-#: src/options/options_settings.cpp:590
+#: src/options/options_settings.cpp:663
 #, fuzzy
 msgid "No sharpening, like the original game."
 msgstr "Nessun aumento di nitidezza, come nel gioco originale."
 
-#: src/options/options_settings.cpp:591
+#: src/options/options_settings.cpp:664
 #, fuzzy
 msgid "Fine detail a little crisper. Hard edges stay clean."
 msgstr "Dettagli fini un po' più nitidi. I bordi netti restano puliti."
 
-#: src/options/options_settings.cpp:592
+#: src/options/options_settings.cpp:665
 #, fuzzy
 msgid "Crisper detail across the picture."
 msgstr "Dettagli più nitidi in tutta l'immagine."
 
-#: src/options/options_settings.cpp:593
+#: src/options/options_settings.cpp:666
 #, fuzzy
 msgid "The crispest picture: may look grainy in places."
 msgstr "L'immagine più nitida: può sembrare granulosa in alcuni punti."
 
-#: src/options/options_settings.cpp:601
+#: src/options/options_settings.cpp:674
 #, fuzzy
 msgid "Depth of Field"
 msgstr "Profondità di campo"
 
-#: src/options/options_settings.cpp:601
+#: src/options/options_settings.cpp:674
 #, fuzzy
 msgid "Strong"
 msgstr "Forte"
 
-#: src/options/options_settings.cpp:602
+#: src/options/options_settings.cpp:675
 #, fuzzy
 msgid "The distance stays sharp."
 msgstr "La lontananza resta nitida."
 
-#: src/options/options_settings.cpp:603
+#: src/options/options_settings.cpp:676
 #, fuzzy
 msgid "The distance is gently blurred, like the original game."
 msgstr "La lontananza è leggermente sfocata, come nel gioco originale."
 
-#: src/options/options_settings.cpp:604
+#: src/options/options_settings.cpp:677
 #, fuzzy
 msgid "The distance is blurred twice as much."
 msgstr "La lontananza è sfocata il doppio."
 
-#: src/options/options_settings.cpp:696
+#: src/options/options_settings.cpp:769
 #, fuzzy
 msgid "Output Device"
 msgstr "Dispositivo di uscita"
 
-#: src/options/options_settings.cpp:702
+#: src/options/options_settings.cpp:775
 #, fuzzy
 msgid "System Default"
 msgstr "Predefinito di sistema"
 
-#: src/options/options_settings.cpp:704
+#: src/options/options_settings.cpp:777
 #, fuzzy
 msgid "Not Connected"
 msgstr "Non collegato"
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:727
+#: src/options/options_settings.cpp:800
 #, fuzzy
 msgid "Plays on the system's sound output, and follows it when you switch."
 msgstr "Suona sull'uscita audio del sistema e la segue quando la cambi."
 
-#: src/options/options_settings.cpp:728
+#: src/options/options_settings.cpp:801
 #, fuzzy
 msgid "Plays on the system's sound output (now: {0}), and follows it when you switch."
 msgstr "Suona sull'uscita audio del sistema (ora: {0}) e la segue quando la cambi."
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:734
+#: src/options/options_settings.cpp:807
 #, fuzzy
 msgid "{0} isn't connected: the system's sound output plays instead."
 msgstr "{0} non è collegato: suona invece l'uscita audio del sistema."
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:737
+#: src/options/options_settings.cpp:810
 #, fuzzy
 msgid "Plays on {0} only."
 msgstr "Suona solo su {0}."
 
-#: src/options/options_settings.cpp:745
+#: src/options/options_settings.cpp:818
 #, fuzzy
 msgid "Speakers"
 msgstr "Altoparlanti"
 
-#: src/options/options_settings.cpp:747
+#: src/options/options_settings.cpp:820
 #, fuzzy
 msgid "Stereo"
 msgstr "Stereo"
 
-#: src/options/options_settings.cpp:747
+#: src/options/options_settings.cpp:820
 #, fuzzy
 msgid "Headphones"
 msgstr "Cuffie"
 
-#: src/options/options_settings.cpp:748
+#: src/options/options_settings.cpp:821
 #, fuzzy
 msgid "5.1 Surround"
 msgstr "Surround 5.1"
 
-#: src/options/options_settings.cpp:748
+#: src/options/options_settings.cpp:821
 #, fuzzy
 msgid "7.1 Surround"
 msgstr "Surround 7.1"
 
-#: src/options/options_settings.cpp:757
+#: src/options/options_settings.cpp:830
 #, fuzzy
 msgid "Two speakers: the game's surround sound folded into left and right."
 msgstr "Due altoparlanti: il suono surround del gioco è riunito a sinistra e a destra."
 
-#: src/options/options_settings.cpp:758
+#: src/options/options_settings.cpp:831
 #, fuzzy
 msgid "Stereo for headphones: a little of each side reaches the other ear, like speakers in a room, so nothing sits inside one ear."
 msgstr "Stereo per cuffie: un po' di ogni lato raggiunge l'altro orecchio, come altoparlanti in una stanza, così nulla resta dentro un solo orecchio."
 
-#: src/options/options_settings.cpp:759
+#: src/options/options_settings.cpp:832
 #, fuzzy
 msgid "Six speakers: front, centre, bass and the two behind you, as the game mixes them."
 msgstr "Sei altoparlanti: anteriori, centrale, bassi e i due dietro di te, come li mixa il gioco."
 
-#: src/options/options_settings.cpp:760
+#: src/options/options_settings.cpp:833
 #, fuzzy
 msgid "Eight speakers: the surround pair plays on both the side and the back speakers."
 msgstr "Otto altoparlanti: la coppia surround suona sia sugli altoparlanti laterali che su quelli posteriori."
 
-#: src/options/options_settings.cpp:761
+#: src/options/options_settings.cpp:834
 #, fuzzy
 msgid "The game's surround sound goes to the device as it is, and your system fits it to your speakers."
 msgstr "Il suono surround del gioco arriva al dispositivo così com'è, e il tuo sistema lo adatta ai tuoi altoparlanti."
 
-#: src/options/options_settings.cpp:782
+#: src/options/options_settings.cpp:855
 #, fuzzy
 msgid "Invert Axis"
 msgstr "Inverti asse"
 
-#: src/options/options_settings.cpp:795
+#: src/options/options_settings.cpp:868
 #, fuzzy
 msgid "Up and down are flipped when you aim the reticle."
 msgstr "Su e giù sono invertiti quando miri con il mirino."
 
-#: src/options/options_settings.cpp:796
+#: src/options/options_settings.cpp:869
 #, fuzzy
 msgid "Aiming the reticle: up is up."
 msgstr "Mira con il mirino: su è su."
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:896
 #, fuzzy
 msgid "Move up."
 msgstr "Muoviti in su."
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:896
 #, fuzzy
 msgid "{0} up."
 msgstr "{0} in su."
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:897
 #, fuzzy
 msgid "Move down."
 msgstr "Muoviti in giù."
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:897
 #, fuzzy
 msgid "{0} down."
 msgstr "{0} in giù."
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:898
 #, fuzzy
 msgid "Move left."
 msgstr "Muoviti a sinistra."
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:898
 #, fuzzy
 msgid "{0} left."
 msgstr "{0} a sinistra."
 
-#: src/options/options_settings.cpp:826
+#: src/options/options_settings.cpp:899
 #, fuzzy
 msgid "Move right."
 msgstr "Muoviti a destra."
 
-#: src/options/options_settings.cpp:826
+#: src/options/options_settings.cpp:899
 #, fuzzy
 msgid "{0} right."
 msgstr "{0} a destra."
 
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:900
 #, fuzzy
 msgid "Hold while moving to walk instead of run."
 msgstr "Tieni premuto mentre ti muovi per camminare invece di correre."
 
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:900
 #, fuzzy
 msgid "lean {0} part of the way."
 msgstr "inclina {0} solo in parte."
 
-#: src/options/options_settings.cpp:828
+#: src/options/options_settings.cpp:901
 #, fuzzy
 msgid "The spin attack."
 msgstr "L'attacco rotante."
 
-#: src/options/options_settings.cpp:829
+#: src/options/options_settings.cpp:902
 #, fuzzy
 msgid "Jump. Press again in the air to double jump."
 msgstr "Salta. Premi di nuovo in aria per un doppio salto."
 
-#: src/options/options_settings.cpp:832
+#: src/options/options_settings.cpp:905
 #, fuzzy
 msgid "Use a save totem, or jump on a stunned titan. Again to get off."
 msgstr "Usa un totem di salvataggio, o salta su un titano stordito. Di nuovo per scendere."
 
-#: src/options/options_settings.cpp:833
+#: src/options/options_settings.cpp:906
 #, fuzzy
 msgid "A quick attack."
 msgstr "Un attacco veloce."
 
-#: src/options/options_settings.cpp:834
+#: src/options/options_settings.cpp:907
 #, fuzzy
 msgid "A strong attack."
 msgstr "Un attacco potente."
 
-#: src/options/options_settings.cpp:835
+#: src/options/options_settings.cpp:908
 #, fuzzy
 msgid "Hold to block attacks."
 msgstr "Tieni premuto per bloccare gli attacchi."
 
-#: src/options/options_settings.cpp:836
+#: src/options/options_settings.cpp:909
 #, fuzzy
 msgid "Your titan's special attack."
 msgstr "L'attacco speciale del tuo titano."
 
-#: src/options/options_settings.cpp:837
+#: src/options/options_settings.cpp:910
 #, fuzzy
 msgid "Store your titan, and bring it back later."
 msgstr "Metti in tasca il tuo titano e riprendilo più tardi."
 
-#: src/options/options_settings.cpp:838
+#: src/options/options_settings.cpp:911
 #, fuzzy
 msgid "Open the map. In the pause menu: drop out (someone else stays in)."
 msgstr "Apre la mappa. Nel menu di pausa: abbandona (un altro giocatore resta)."
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:934
 #, fuzzy
 msgctxt "key name"
 msgid "Left Mouse"
 msgstr "Tasto sinistro"
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:934
 #, fuzzy
 msgctxt "key name"
 msgid "Right Mouse"
 msgstr "Tasto destro"
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:935
 #, fuzzy
 msgctxt "key name"
 msgid "Middle Mouse"
 msgstr "Tasto centrale"
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:935
 #, fuzzy
 msgctxt "key name"
 msgid "Mouse 4 (Back)"
 msgstr "Mouse 4 (indietro)"
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:936
 #, fuzzy
 msgctxt "key name"
 msgid "Mouse 5 (Forward)"
 msgstr "Mouse 5 (avanti)"
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:936
 #, fuzzy
 msgctxt "key name"
 msgid "Wheel Up"
 msgstr "Rotella su"
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:937
 #, fuzzy
 msgctxt "key name"
 msgid "Wheel Down"
 msgstr "Rotella giù"
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:937
 #, fuzzy
 msgctxt "key name"
 msgid "Space"
 msgstr "Spazio"
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:938
 #, fuzzy
 msgctxt "key name"
 msgid "Enter"
 msgstr "Invio"
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:938
 #, fuzzy
 msgctxt "key name"
 msgid "Backspace"
 msgstr "Backspace"
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:939
 #, fuzzy
 msgctxt "key name"
 msgid "Caps Lock"
 msgstr "Bloc Maiusc"
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:939
 #, fuzzy
 msgctxt "key name"
 msgid "Up Arrow"
 msgstr "Freccia su"
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:940
 #, fuzzy
 msgctxt "key name"
 msgid "Down Arrow"
 msgstr "Freccia giù"
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:940
 #, fuzzy
 msgctxt "key name"
 msgid "Left Arrow"
 msgstr "Freccia sinistra"
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:941
 #, fuzzy
 msgctxt "key name"
 msgid "Right Arrow"
 msgstr "Freccia destra"
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:941
 #, fuzzy
 msgctxt "key name"
 msgid "Insert"
 msgstr "Ins"
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:942
 #, fuzzy
 msgctxt "key name"
 msgid "Delete"
 msgstr "Canc"
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:942
 #, fuzzy
 msgctxt "key name"
 msgid "Home"
 msgstr "Home"
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:943
 #, fuzzy
 msgctxt "key name"
 msgid "End"
 msgstr "Fine"
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:943
 #, fuzzy
 msgctxt "key name"
 msgid "Page Up"
 msgstr "Pag su"
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:944
 #, fuzzy
 msgctxt "key name"
 msgid "Page Down"
 msgstr "Pag giù"
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:944
 #, fuzzy
 msgctxt "key name"
 msgid "Pause"
 msgstr "Pausa"
 
-#: src/options/options_settings.cpp:872
+#: src/options/options_settings.cpp:945
 #, fuzzy
 msgctxt "key name"
 msgid "Scroll Lock"
 msgstr "Bloc Scorr"
 
-#: src/options/options_settings.cpp:872
+#: src/options/options_settings.cpp:945
 #, fuzzy
 msgctxt "key name"
 msgid "Num Lock"
 msgstr "Bloc Num"
 
-#: src/options/options_settings.cpp:873
+#: src/options/options_settings.cpp:946
 #, fuzzy
 msgctxt "key name"
 msgid "Print Screen"
 msgstr "Stamp"
 
-#: src/options/options_settings.cpp:873
+#: src/options/options_settings.cpp:946
 #, fuzzy
 msgctxt "key name"
 msgid "Menu Key"
 msgstr "Tasto menu"
 
-#: src/options/options_settings.cpp:886
+#: src/options/options_settings.cpp:959
 #, fuzzy
 msgid "The keyboard and mouse are turned off."
 msgstr "Tastiera e mouse sono disattivati."
 
-#: src/options/options_settings.cpp:894
+#: src/options/options_settings.cpp:967
 #, fuzzy
 msgid "Keyboard Icons"
 msgstr "Icone tastiera"
 
-#: src/options/options_settings.cpp:895
+#: src/options/options_settings.cpp:968
 #, fuzzy
 msgid "Light"
 msgstr "Chiare"
 
-#: src/options/options_settings.cpp:895
+#: src/options/options_settings.cpp:968
 #, fuzzy
 msgid "Dark"
 msgstr "Scure"
 
-#: src/options/options_settings.cpp:902
+#: src/options/options_settings.cpp:975
 #, fuzzy
 msgid "Dark keys in the button prompts."
 msgstr "Tasti scuri negli indicatori dei comandi."
 
-#: src/options/options_settings.cpp:902
+#: src/options/options_settings.cpp:975
 #, fuzzy
 msgid "Light keys in the button prompts."
 msgstr "Tasti chiari negli indicatori dei comandi."
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:906
+#: src/options/options_settings.cpp:979
 #, fuzzy
 msgid "Dark keys in the button prompts, like {0}"
 msgstr "Tasti scuri negli indicatori dei comandi, come {0}"
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:906
+#: src/options/options_settings.cpp:979
 #, fuzzy
 msgid "Light keys in the button prompts, like {0}"
 msgstr "Tasti chiari negli indicatori dei comandi, come {0}"
 
-#: src/options/options_settings.cpp:914
+#: src/options/options_settings.cpp:987
 #, fuzzy
 msgid "Controller Icons"
 msgstr "Icone controller"
 
-#: src/options/options_settings.cpp:928
+#: src/options/options_settings.cpp:1001
 #, fuzzy
 msgid "Matches player 1's controller."
 msgstr "Come il controller del giocatore 1."
 
-#: src/options/options_settings.cpp:929
+#: src/options/options_settings.cpp:1002
 #, fuzzy
 msgid "The game's own buttons."
 msgstr "I pulsanti originali del gioco."
 
-#: src/options/options_settings.cpp:930
+#: src/options/options_settings.cpp:1003
 #, fuzzy
 msgid "Always these buttons."
 msgstr "Sempre questi pulsanti."
 
-#: src/options/options_settings.cpp:938
+#: src/options/options_settings.cpp:1011
 #, fuzzy
 msgid "Default Keys"
 msgstr "Tasti predefiniti"
 
-#: src/options/options_settings.cpp:941
+#: src/options/options_settings.cpp:1014
 #, fuzzy
 msgid "Every keyboard and mouse key back as it came."
 msgstr "Tutti i tasti di tastiera e mouse come all'inizio."
 
-#: src/options/options_settings.cpp:944
+#: src/options/options_settings.cpp:1017
 #, fuzzy
 msgid "Revert Keybinds to Defaults?"
 msgstr "Ripristinare i tasti predefiniti?"
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 #, fuzzy
 msgid "Mouse Aiming"
 msgstr "Mira col mouse"
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 #, fuzzy
 msgid "Reticle"
 msgstr "Mirino"
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 #, fuzzy
 msgid "Crosshair"
 msgstr "Puntatore"
 
-#: src/options/options_settings.cpp:963
+#: src/options/options_settings.cpp:1036
 #, fuzzy
 msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
 msgstr "Da maschera, il mirino si muove con i tasti di movimento, come nel gioco originale."
 
-#: src/options/options_settings.cpp:964
+#: src/options/options_settings.cpp:1037
 #, fuzzy
 msgid "As a mask, the aiming reticle follows the mouse."
 msgstr "Da maschera, il mirino segue il mouse."
 
-#: src/options/options_settings.cpp:965
+#: src/options/options_settings.cpp:1038
 #, fuzzy
 msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
 msgstr "Come nella versione Wii: il puntatore del mouse diventa il cursore Wii, una bolla luminosa che si ingrandisce sui bersagli e attira il mojo, e da maschera il mirino lo segue."
 
-#: src/options/options_settings.cpp:975
+#: src/options/options_settings.cpp:1048
 #, fuzzy
 msgid "Window Not Focused"
 msgstr "Finestra non attiva"
 
-#: src/options/options_settings.cpp:975
+#: src/options/options_settings.cpp:1048
 #, fuzzy
 msgid "Keep Playing"
 msgstr "Continua a giocare"
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr "I controller continuano a giocare con un'altra finestra davanti. Tastiera e mouse si fermano finché non clicchi di nuovo nel gioco."
 
-#: src/options/options_settings.cpp:978
+#: src/options/options_settings.cpp:1051
 #, fuzzy
 msgid "The game pauses by itself when its window loses the focus in a level."
 msgstr "Il gioco va in pausa da solo quando la sua finestra non è più attiva in un livello."
 
-#: src/options/options_settings.cpp:989
+#: src/options/options_settings.cpp:1062
 #, fuzzy
 msgid "Button Pictures"
 msgstr "Immagini dei tasti"
 
-#: src/options/options_settings.cpp:992
+#: src/options/options_settings.cpp:1065
 #, fuzzy
 msgid "Keyboard and Mouse Keys"
 msgstr "Tasti di tastiera e mouse"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1005
+#: src/options/options_settings.cpp:1078
 #, fuzzy
 msgid "{0}, or circle {1}"
 msgstr "{0}, o ruota {1}"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1007
+#: src/options/options_settings.cpp:1080
 #, fuzzy
 msgid "circle {0}"
 msgstr "ruota {0}"
 
 #. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
-#: src/options/options_settings.cpp:1013
+#: src/options/options_settings.cpp:1086
 #, fuzzy
 msgid "{0} Controller: {1}"
 msgstr "{0} Controller: {1}"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1026
+#: src/options/options_settings.cpp:1099
 #, fuzzy
 msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
 msgstr "Per ruotare, gira la {0} di un controller, o attiva Rotazione semplice (scheda Gioco) per ruotare con questo tasto."
 
-#: src/options/options_settings.cpp:1046
+#: src/options/options_settings.cpp:1119
 #, fuzzy
 msgid "Friendly Fire"
 msgstr "Fuoco amico"
 
-#: src/options/options_settings.cpp:1047
+#: src/options/options_settings.cpp:1120
 #, fuzzy
 msgid "Players' attacks hurt each other, as in the original game."
 msgstr "Gli attacchi dei giocatori si colpiscono a vicenda, come nel gioco originale."
 
-#: src/options/options_settings.cpp:1048
+#: src/options/options_settings.cpp:1121
 #, fuzzy
 msgid "A partner's hits pass harmlessly: no damage, combos untouched."
 msgstr "I colpi di un compagno non fanno nulla: nessun danno, combo intatte."
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 #, fuzzy
 msgid "Partner Hits"
 msgstr "Colpi del compagno"
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 #, fuzzy
 msgid "End Combos"
 msgstr "Interrompono"
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 #, fuzzy
 msgid "Keep Combos"
 msgstr "Non interrompono"
 
-#: src/options/options_settings.cpp:1050
+#: src/options/options_settings.cpp:1123
 #, fuzzy
 msgid "Getting hit by a partner ends your hit combo, as in the original game."
 msgstr "Un colpo di un compagno interrompe la tua combo, come nel gioco originale."
 
-#: src/options/options_settings.cpp:1051
+#: src/options/options_settings.cpp:1124
 #, fuzzy
 msgid "A partner's hit doesn't end your combo."
 msgstr "Un colpo di un compagno non interrompe la tua combo."
 
-#: src/options/options_settings.cpp:1055
+#: src/options/options_settings.cpp:1128
 #, fuzzy
 msgid "Friendly Fire is off: partners can't hit you."
 msgstr "Il fuoco amico è disattivato: i compagni non possono colpirti."
 
-#: src/options/options_settings.cpp:1057
+#: src/options/options_settings.cpp:1130
 #, fuzzy
 msgid "Simple Spinning"
 msgstr "Rotazione semplice"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1064
+#: src/options/options_settings.cpp:1137
 #, fuzzy
 msgid "One button spins: {0} on a controller. Circling {1} still works."
 msgstr "Un solo tasto per ruotare: {0} sul controller. Girare {1} funziona ancora."
 
 #. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
-#: src/options/options_settings.cpp:1067
+#: src/options/options_settings.cpp:1140
 #, fuzzy
 msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
 msgstr "Un solo tasto per ruotare: {0} sul controller, {1} sulla tastiera. Girare {2} funziona ancora."
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1071
+#: src/options/options_settings.cpp:1144
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game."
 msgstr "Gira {0} per ruotare, come nel gioco originale."
 
 #. {0} = the left stick's picture, {1} = the Spin key's picture.
-#: src/options/options_settings.cpp:1073
+#: src/options/options_settings.cpp:1146
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game. {1} does nothing."
 msgstr "Gira {0} per ruotare, come nel gioco originale. {1} non fa nulla."
 
-#: src/options/options_settings.cpp:1075
+#: src/options/options_settings.cpp:1148
 #, fuzzy
 msgid "Keep Spinning"
 msgstr "Rotazione continua"
 
-#: src/options/options_settings.cpp:1075
+#: src/options/options_settings.cpp:1148
 #, fuzzy
 msgid "Hold to Spin"
 msgstr "Tieni premuto"
 
 #. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1080
+#: src/options/options_settings.cpp:1153
 #, fuzzy
 msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
 msgstr "Tieni premuto {0} (o continua a girare {1}) e Crash continua a ruotare, finché non gli gira la testa."
 
 #. {0} = the light attack's button / key pictures ("[X] or [LMB]").
-#: src/options/options_settings.cpp:1084
+#: src/options/options_settings.cpp:1157
 #, fuzzy
 msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
 msgstr "Ruota, poi premi {0} più volte per continuare, come nel gioco originale."
 
-#: src/options/options_settings.cpp:1090
+#: src/options/options_settings.cpp:1163
 #, fuzzy
 msgid "Turn on Simple Spinning first."
 msgstr "Prima attiva Rotazione semplice."
 
-#: src/options/options_settings.cpp:1094 launcher/settings_page.cpp:497
+#: src/options/options_settings.cpp:1167 launcher/settings_page.cpp:499
 #, fuzzy
 msgid "Co-op"
 msgstr "Cooperativa"
 
-#: src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:1170
 #, fuzzy
 msgid "Co-op Camera"
 msgstr "Telecamera cooperativa"
 
-#: src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:1170
 #, fuzzy
 msgid "Frame Everyone"
 msgstr "Tutti inquadrati"
 
-#: src/options/options_settings.cpp:1098
+#: src/options/options_settings.cpp:1171
 #, fuzzy
 msgid "The camera pulls back to keep every player on screen."
 msgstr "La telecamera si allontana per tenere tutti i giocatori sullo schermo."
 
-#: src/options/options_settings.cpp:1099
+#: src/options/options_settings.cpp:1172
 #, fuzzy
 msgid "The camera of the original game."
 msgstr "La telecamera del gioco originale."
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 #, fuzzy
 msgid "Camera Follows"
 msgstr "La telecamera segue"
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 #, fuzzy
 msgid "Nearest Player"
 msgstr "Il più vicino"
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 #, fuzzy
 msgid "Middle"
 msgstr "Il centro"
 
-#: src/options/options_settings.cpp:1101
+#: src/options/options_settings.cpp:1174
 #, fuzzy
 msgid "Front to back, the camera stays with the player nearest to it."
 msgstr "In profondità, la telecamera resta con il giocatore più vicino a lei."
 
-#: src/options/options_settings.cpp:1102
+#: src/options/options_settings.cpp:1175
 #, fuzzy
 msgid "The camera aims at the middle of the group."
 msgstr "La telecamera punta al centro del gruppo."
 
-#: src/options/options_settings.cpp:1103
+#: src/options/options_settings.cpp:1176
 #, fuzzy
 msgid "Spinning"
 msgstr "Rotazione"
 
-#: src/options/options_settings.cpp:1128
+#: src/options/options_settings.cpp:1201
 #, fuzzy
 msgid "Takes effect when the game starts again: Restart Now, or next time you play."
 msgstr "Ha effetto al prossimo avvio del gioco: Riavvia ora, o la prossima volta che giochi."
 
-#: src/options/options_settings.cpp:1131
+#: src/options/options_settings.cpp:1204
 #, fuzzy
 msgid "Restart Now"
 msgstr "Riavvia ora"
 
-#: src/options/options_settings.cpp:1135
+#: src/options/options_settings.cpp:1208
 #, fuzzy
 msgid "Restart now? Anything since your last save will be lost."
 msgstr "Riavviare ora? Tutto ciò che è successo dall'ultimo salvataggio andrà perso."
 
-#: src/options/options_settings.cpp:1148
+#: src/options/options_settings.cpp:1221
 #, fuzzy
 msgid "Text"
 msgstr "Testo"
 
-#: src/options/options_settings.cpp:1158
+#: src/options/options_settings.cpp:1231
 #, fuzzy
 msgid "Menus, tutorials and messages in this language. The voices are chosen below."
 msgstr "Menu, tutorial e messaggi in questa lingua. Le voci si scelgono qui sotto."
 
-#: src/options/options_settings.cpp:1162
+#: src/options/options_settings.cpp:1235
 #, fuzzy
 msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
 msgstr "I menu del port in questa lingua. I testi del gioco restano in inglese: il disco non ha il portoghese."
 
-#: src/options/options_settings.cpp:1168
+#: src/options/options_settings.cpp:1241
 #, fuzzy
 msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
 msgstr "I testi del port sono una traduzione automatica, non ancora controllata da un madrelingua."
 
-#: src/options/options_settings.cpp:1178
+#: src/options/options_settings.cpp:1251
 #, fuzzy
 msgid "Voices"
 msgstr "Voci"
 
-#: src/options/options_settings.cpp:1181
+#: src/options/options_settings.cpp:1254
 #, fuzzy
 msgid "Same as Text"
 msgstr "Come il testo"
 
-#: src/options/options_settings.cpp:1203
+#: src/options/options_settings.cpp:1276
 #, fuzzy
 msgid "The disc has no voices in the text's language: the characters speak English."
 msgstr "Il disco non ha voci nella lingua del testo: i personaggi parlano inglese."
 
 #. {0} = the language's name in its own language ("Deutsch").
-#: src/options/options_settings.cpp:1206
+#: src/options/options_settings.cpp:1279
 #, fuzzy
 msgid "The characters speak the text's language: {0}."
 msgstr "I personaggi parlano la lingua del testo: {0}."
 
-#: src/options/options_settings.cpp:1208
+#: src/options/options_settings.cpp:1281
 #, fuzzy
 msgid "The characters speak this language, whatever the text is."
 msgstr "I personaggi parlano questa lingua, qualunque sia il testo."
 
-#: src/options/options_settings.cpp:1217
+#: src/options/options_settings.cpp:1290
 #, fuzzy
 msgid "Notifications"
 msgstr "Notifiche"
 
-#: src/options/options_settings.cpp:1218
+#: src/options/options_settings.cpp:1291
 #, fuzzy
 msgid "A card slides up at the bottom of the screen when you earn an achievement."
 msgstr "Una scheda appare in fondo allo schermo quando ottieni un obiettivo."
 
-#: src/options/options_settings.cpp:1219
+#: src/options/options_settings.cpp:1292
 #, fuzzy
 msgid "No card: achievements are still earned and kept."
 msgstr "Nessuna scheda: gli obiettivi si ottengono e si tengono comunque."
 
-#: src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:1295
 #, fuzzy
 msgid "Jingle"
 msgstr "Jingle"
 
-#: src/options/options_settings.cpp:1223
+#: src/options/options_settings.cpp:1296
 #, fuzzy
 msgid "One of the game's own jingles plays with the card."
 msgstr "Uno dei jingle del gioco accompagna la scheda."
 
-#: src/options/options_settings.cpp:1223
+#: src/options/options_settings.cpp:1296
 #, fuzzy
 msgid "The card shows without a sound."
 msgstr "La scheda appare senza suono."
 
-#: src/options/options_settings.cpp:1226
+#: src/options/options_settings.cpp:1299
 #, fuzzy
 msgid "Notifications are off."
 msgstr "Le notifiche sono disattivate."
 
-#: src/options/options_settings.cpp:1238
+#: src/options/options_settings.cpp:1311
 #, fuzzy
 msgid "Display"
 msgstr "Schermo"
 
-#: src/options/options_settings.cpp:1240
+#: src/options/options_settings.cpp:1314
 #, fuzzy
 msgid "HUD"
 msgstr "HUD"
 
-#: src/options/options_settings.cpp:1241
+#: src/options/options_settings.cpp:1315
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Contatore fotogrammi"
 
-#: src/options/options_settings.cpp:1245
+#: src/options/options_settings.cpp:1319
 #, fuzzy
 msgid "Graphics"
 msgstr "Grafica"
 
-#: src/options/options_settings.cpp:1246
+#: src/options/options_settings.cpp:1320
 #, fuzzy
 msgid "Quality"
 msgstr "Qualità"
 
-#: src/options/options_settings.cpp:1247
+#: src/options/options_settings.cpp:1321
 #, fuzzy
 msgid "Effects"
 msgstr "Effetti"
 
-#: src/options/options_settings.cpp:1250
+#: src/options/options_settings.cpp:1324
 #, fuzzy
 msgid "Audio"
 msgstr "Audio"
 
-#: src/options/options_settings.cpp:1251
+#: src/options/options_settings.cpp:1325
 #, fuzzy
 msgid "Music"
 msgstr "Musica"
 
-#: src/options/options_settings.cpp:1252
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Il volume della musica."
 
-#: src/options/options_settings.cpp:1253
+#: src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialogo"
 
-#: src/options/options_settings.cpp:1254
+#: src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Il volume delle voci dei personaggi."
 
-#: src/options/options_settings.cpp:1255
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "SFX"
 msgstr "Effetti speciali"
 
-#: src/options/options_settings.cpp:1256
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Il volume di colpi, casse, passi e tutto il resto."
 
-#: src/options/options_settings.cpp:1257
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Output"
 msgstr "Uscita"
 
-#: src/options/options_settings.cpp:1259
+#: src/options/options_settings.cpp:1333
 #, fuzzy
 msgid "Gameplay"
 msgstr "Gioco"
 
-#: src/options/options_settings.cpp:1260
+#: src/options/options_settings.cpp:1334
 #, fuzzy
 msgid "Language"
 msgstr "Lingua"
 
-#: src/options/options_settings.cpp:1304 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1378 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Nessuno"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 #, fuzzy
 msgid "Move Up"
 msgstr "Su"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 #, fuzzy
 msgid "Move Down"
 msgstr "Giù"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 #, fuzzy
 msgid "Move Left"
 msgstr "Sinistra"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 #, fuzzy
 msgid "Move Right"
 msgstr "Destra"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Cammina (tieni)"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Light Attack"
 msgstr "Attacco leggero"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Attacco pesante"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Parata (tieni)"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Crasha / Usa"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Attacco speciale titano"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "In tasca / Fuori"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: conferma"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: indietro"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: scheda precedente"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: scheda successiva"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: azione X"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: azione Y"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Croce direzionale su"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Croce direzionale giù"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Croce direzionale sinistra"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Croce direzionale destra"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Levetta destra su"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Levetta destra giù"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Levetta destra sinistra"
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Levetta destra destra"
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Dorsale sinistro"
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clic levetta sinistra"
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clic levetta destra"
@@ -3630,7 +3702,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1665
+#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1712
 #, fuzzy
 msgid "Log: %s"
 msgstr "Registro: %s"
@@ -3711,7 +3783,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: launcher/installer.cpp:499 launcher/setup.cpp:1102
+#: launcher/installer.cpp:499 launcher/setup.cpp:1145
 #, fuzzy
 msgid "Pick your disc image (.iso) first."
 msgstr "Scegli prima l'immagine del disco (.iso)."
@@ -3748,11 +3820,11 @@ msgstr ""
 msgid "What's missing can't be installed from here (see the list)."
 msgstr ""
 
-#: launcher/installer.cpp:569 launcher/setup.cpp:1828
+#: launcher/installer.cpp:569 launcher/setup.cpp:1875
 msgid "Installing the build tools"
 msgstr ""
 
-#: launcher/installer.cpp:575 launcher/setup.cpp:1906
+#: launcher/installer.cpp:575 launcher/setup.cpp:1953
 #, fuzzy
 msgid "Check again"
 msgstr "Controlla di nuovo"
@@ -3809,7 +3881,7 @@ msgstr ""
 msgid "Looking for the newest version..."
 msgstr ""
 
-#: launcher/installer.cpp:800 launcher/setup.cpp:1898
+#: launcher/installer.cpp:800 launcher/setup.cpp:1945
 #, fuzzy
 msgid "Checking what's there..."
 msgstr "Controllo di cosa c'è..."
@@ -3871,12 +3943,12 @@ msgstr ""
 msgid "Version %s is available"
 msgstr ""
 
-#: launcher/installer.cpp:921 launcher/setup.cpp:798 launcher/setup.cpp:803 launcher/setup.cpp:1852
+#: launcher/installer.cpp:921 launcher/setup.cpp:841 launcher/setup.cpp:846 launcher/setup.cpp:1899
 #, fuzzy
 msgid "Update to {0}"
 msgstr "Aggiorna a {0}"
 
-#: launcher/installer.cpp:928 launcher/main.cpp:664 launcher/setup.cpp:817
+#: launcher/installer.cpp:928 launcher/main.cpp:664 launcher/setup.cpp:860
 #, fuzzy
 msgid "Release page"
 msgstr "Pagina della versione"
@@ -3885,7 +3957,7 @@ msgstr "Pagina della versione"
 msgid "This is the newest version."
 msgstr ""
 
-#: launcher/installer.cpp:937 launcher/setup.cpp:829
+#: launcher/installer.cpp:937 launcher/setup.cpp:872
 #, fuzzy
 msgid "Check for updates"
 msgstr "Cerca aggiornamenti"
@@ -3906,7 +3978,7 @@ msgstr ""
 msgid "Build it now"
 msgstr ""
 
-#: launcher/installer.cpp:978 launcher/setup.cpp:1992
+#: launcher/installer.cpp:978 launcher/setup.cpp:2039
 #, fuzzy
 msgid "Pick the disc image..."
 msgstr "Scegli l'immagine del disco..."
@@ -4243,7 +4315,7 @@ msgstr "Mostra il registro del gioco"
 msgid "Report a problem..."
 msgstr "Segnala un problema..."
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1660
+#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1707
 #, fuzzy
 msgid "OK"
 msgstr "OK"
@@ -4717,7 +4789,7 @@ msgstr "Due finestre: l'immagine emulata e quella nativa, entrambe disegnate dal
 msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
 msgstr "La nuova telecamera cooperativa tiene ogni giocatore nell'immagine. Va ancora provata in combattimenti, posti stretti e filmati. Spegnila per la telecamera originale."
 
-#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:72 launcher/settings_page.cpp:78 launcher/settings_page.cpp:84 launcher/settings_page.cpp:89 launcher/settings_page.cpp:95 launcher/settings_page.cpp:101
 #, fuzzy
 msgid "Native renderer only"
 msgstr "Solo rendering nativo"
@@ -4727,302 +4799,302 @@ msgstr "Solo rendering nativo"
 msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
 msgstr "Il motion blur è un effetto proprio di questo port (l'originale non ne ha). Solo il rendering nativo lo disegna: con l'immagine emulata non fa nulla."
 
-#: launcher/settings_page.cpp:71
+#: launcher/settings_page.cpp:73
 #, fuzzy
 msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
 msgstr "Solo il rendering nativo disegna a una risoluzione più alta: l'immagine emulata resta a 720p. Il 4K è pesante: ci vuole una scheda grafica potente."
 
-#: launcher/settings_page.cpp:77
+#: launcher/settings_page.cpp:79
 #, fuzzy
 msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
 msgstr "Solo il rendering nativo cambia il suo antialiasing: l'immagine emulata tiene il 2x della Xbox 360."
 
-#: launcher/settings_page.cpp:83
+#: launcher/settings_page.cpp:85
 #, fuzzy
 msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
 msgstr "Solo il rendering nativo ammorbidisce i bordi ritagliati, e solo con l'antialiasing attivo."
 
-#: launcher/settings_page.cpp:88
+#: launcher/settings_page.cpp:90
 #, fuzzy
 msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
 msgstr "Solo il rendering nativo rende le texture più nitide: l'immagine emulata resta come la disegnava la Xbox 360."
 
-#: launcher/settings_page.cpp:94
+#: launcher/settings_page.cpp:96
 #, fuzzy
 msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
 msgstr "Solo il rendering nativo rende l'immagine più nitida: l'immagine emulata resta come la disegnava la Xbox 360."
 
-#: launcher/settings_page.cpp:100
+#: launcher/settings_page.cpp:102
 #, fuzzy
 msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
 msgstr "Solo il rendering nativo cambia il bordo delle ombre: l'immagine emulata tiene quello della Xbox 360."
 
-#: launcher/settings_page.cpp:105
+#: launcher/settings_page.cpp:107
 #, fuzzy
 msgid "Less to go on"
 msgstr "Meno indizi"
 
-#: launcher/settings_page.cpp:106
+#: launcher/settings_page.cpp:108
 #, fuzzy
 msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
 msgstr "Le segnalazioni di queste sessioni non mostreranno cosa faceva il gioco (fotogrammi, suoni, cooperativa, menu): un bug potrebbe diventare impossibile da trovare."
 
-#: launcher/settings_page.cpp:112
+#: launcher/settings_page.cpp:114
 #, fuzzy
 msgid "Falls"
 msgstr "Cadute"
 
-#: launcher/settings_page.cpp:113
+#: launcher/settings_page.cpp:115
 #, fuzzy
 msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
 msgstr "Spento sopra i 30 FPS: Crash può scattare per una frazione di secondo nell'animazione di caduta scendendo su un terreno irregolare. 40 ms è il valore testato."
 
-#: launcher/settings_page.cpp:161
+#: launcher/settings_page.cpp:163
 #, fuzzy
 msgid "Emulated (the default)"
 msgstr "Emulato (predefinito)"
 
-#: launcher/settings_page.cpp:162
+#: launcher/settings_page.cpp:164
 #, fuzzy
 msgid "Native renderer"
 msgstr "Rendering nativo"
 
-#: launcher/settings_page.cpp:163
+#: launcher/settings_page.cpp:165
 #, fuzzy
 msgid "Native only (fastest, default)"
 msgstr "Solo nativo (il più veloce, predefinito)"
 
-#: launcher/settings_page.cpp:164
+#: launcher/settings_page.cpp:166
 #, fuzzy
 msgid "Both, in two windows"
 msgstr "Entrambi, in due finestre"
 
-#: launcher/settings_page.cpp:165
+#: launcher/settings_page.cpp:167
 #, fuzzy
 msgid "Emulated only"
 msgstr "Solo emulato"
 
-#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
+#: launcher/settings_page.cpp:268 launcher/settings_page.cpp:436 launcher/settings_page.cpp:677
 #, fuzzy
 msgid "Default"
 msgstr "Predefinito"
 
-#: launcher/settings_page.cpp:333
+#: launcher/settings_page.cpp:335
 #, fuzzy
 msgid "Frame rate"
 msgstr "Fotogrammi"
 
-#: launcher/settings_page.cpp:335
+#: launcher/settings_page.cpp:337
 #, fuzzy
 msgid "Frame rate cap"
 msgstr "Limite fotogrammi"
 
-#: launcher/settings_page.cpp:336
+#: launcher/settings_page.cpp:338
 #, fuzzy
 msgid "How many frames per second the game runs at. 30 is the original game's rate."
 msgstr "Quanti fotogrammi al secondo fa il gioco. 30 è il ritmo del gioco originale."
 
-#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
+#: launcher/settings_page.cpp:349 launcher/settings_page.cpp:357
 #, fuzzy
 msgid "%d (the original)"
 msgstr "%d (l'originale)"
 
-#: launcher/settings_page.cpp:362
+#: launcher/settings_page.cpp:364
 #, fuzzy
 msgid "Other..."
 msgstr "Altro..."
 
-#: launcher/settings_page.cpp:371
+#: launcher/settings_page.cpp:373
 #, fuzzy
 msgid "   Frames per second"
 msgstr "   Fotogrammi al secondo"
 
-#: launcher/settings_page.cpp:381
+#: launcher/settings_page.cpp:383
 #, fuzzy
 msgid "Ground grace"
 msgstr "Tolleranza al suolo"
 
-#: launcher/settings_page.cpp:382
+#: launcher/settings_page.cpp:384
 #, fuzzy
 msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
 msgstr "Sopra i 30 FPS: per quanto un contatto col suolo perso viene perdonato, così Crash non scatta nell'animazione di caduta scendendo su un terreno irregolare. 40 ms è il valore testato; 0 = spento."
 
-#: launcher/settings_page.cpp:391
+#: launcher/settings_page.cpp:393
 #, fuzzy
 msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
 msgstr "Emulato = il chip grafico della Xbox 360, emulato (l'immagine di riferimento). Nativo = il rendering proprio di questo port che disegna il gioco direttamente (in sviluppo). F9 passa dall'uno all'altro mentre giochi, F8 apre la seconda finestra."
 
-#: launcher/settings_page.cpp:444
+#: launcher/settings_page.cpp:446
 #, fuzzy
 msgid "Window"
 msgstr "Finestra"
 
-#: launcher/settings_page.cpp:449
+#: launcher/settings_page.cpp:451
 #, fuzzy
 msgid "Window mode"
 msgstr "Modalità finestra"
 
-#: launcher/settings_page.cpp:449
+#: launcher/settings_page.cpp:451
 #, fuzzy
 msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
 msgstr "In finestra: una finestra che puoi spostare e ridimensionare. Schermo intero: riempie tutto il monitor (quello scelto sotto Monitor)."
 
-#: launcher/settings_page.cpp:469
+#: launcher/settings_page.cpp:471
 #, fuzzy
 msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
 msgstr "Quale monitor riempie lo schermo intero. Automatico = quello dove si trova il gioco."
 
-#: launcher/settings_page.cpp:481
+#: launcher/settings_page.cpp:483
 #, fuzzy
 msgid "{0}: not connected"
 msgstr "{0}: non collegato"
 
-#: launcher/settings_page.cpp:499
+#: launcher/settings_page.cpp:501
 #, fuzzy
 msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
 msgstr "Quanti giocatori possono giocare insieme (4 di base; il gioco originale ne ha 2). I giocatori entrano dalla schermata Giocatori (menu principale o di pausa) o con START."
 
-#: launcher/settings_page.cpp:502
+#: launcher/settings_page.cpp:504
 #, fuzzy
 msgid "2 (the original)"
 msgstr "2 (l'originale)"
 
-#: launcher/settings_page.cpp:502
+#: launcher/settings_page.cpp:504
 #, fuzzy
 msgid "4 (default)"
 msgstr "4 (predefinito)"
 
-#: launcher/settings_page.cpp:513
+#: launcher/settings_page.cpp:515
 #, fuzzy
 msgid "Co-op camera"
 msgstr "Telecamera cooperativa"
 
-#: launcher/settings_page.cpp:514
+#: launcher/settings_page.cpp:516
 #, fuzzy
 msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
 msgstr "Tiene ogni giocatore nell'immagine: la telecamera si centra tra i giocatori e arretra finché ci stanno tutti. No = la telecamera originale, che segue un giocatore."
 
-#: launcher/settings_page.cpp:517
+#: launcher/settings_page.cpp:519
 #, fuzzy
 msgid "   Farthest zoom-out"
 msgstr "   Distanza massima"
 
-#: launcher/settings_page.cpp:518
+#: launcher/settings_page.cpp:520
 #, fuzzy
 msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
 msgstr "Quanto può arretrare la telecamera cooperativa per inquadrare tutti (la telecamera originale va da circa 12 a 20). Oltre, un giocatore che si allontana esce dallo schermo."
 
-#: launcher/settings_page.cpp:520
+#: launcher/settings_page.cpp:522
 #, fuzzy
 msgid "   Room around players"
 msgstr "   Spazio attorno ai giocatori"
 
-#: launcher/settings_page.cpp:521
+#: launcher/settings_page.cpp:523
 #, fuzzy
 msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
 msgstr "Quanto terreno attorno a ogni giocatore resta nell'immagine (a sinistra, a destra e oltre), così un giocatore sul bordo vede ancora una sporgenza o un salto. Crash è alto circa 2. 0 = solo i giocatori."
 
-#: launcher/settings_page.cpp:524
+#: launcher/settings_page.cpp:526
 #, fuzzy
 msgid "   Stay with the nearest player"
 msgstr "   Resta col giocatore più vicino"
 
-#: launcher/settings_page.cpp:525
+#: launcher/settings_page.cpp:527
 #, fuzzy
 msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
 msgstr "Da davanti a dietro, la telecamera resta col giocatore più vicino a lei, così chi cammina in fondo all'immagine non trascina gli altri fuori dal basso. No = la telecamera mira al centro dei giocatori (il vecchio modo)."
 
-#: launcher/settings_page.cpp:528
+#: launcher/settings_page.cpp:530
 #, fuzzy
 msgid "   Group focus"
 msgstr "   Peso dei gruppi"
 
-#: launcher/settings_page.cpp:529
+#: launcher/settings_page.cpp:531
 #, fuzzy
 msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
 msgstr "3-4 giocatori: quanto conta di più un gruppo di giocatori rispetto a un giocatore da solo quando la telecamera sceglie il suo centro. 0 = tutti uguali."
 
-#: launcher/settings_page.cpp:532
+#: launcher/settings_page.cpp:534
 #, fuzzy
 msgid "Lost controller pause"
 msgstr "Pausa per controller perso"
 
-#: launcher/settings_page.cpp:533
+#: launcher/settings_page.cpp:535
 #, fuzzy
 msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
 msgstr "Quando il controller di un giocatore si scollega in un livello: pausa con una domanda, così un altro giocatore può farlo uscire, o ricollegarlo e riprendere."
 
-#: launcher/settings_page.cpp:541
+#: launcher/settings_page.cpp:543
 #, fuzzy
 msgid "Keyboard and mouse"
 msgstr "Tastiera e mouse"
 
-#: launcher/settings_page.cpp:542
+#: launcher/settings_page.cpp:544
 #, fuzzy
 msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
 msgstr "Gioca con tastiera e mouse (anche un controller funziona). I tasti si cambiano nel gioco con F6."
 
-#: launcher/settings_page.cpp:548
+#: launcher/settings_page.cpp:550
 #, fuzzy
 msgid "Sound and logging"
 msgstr "Audio e registri"
 
-#: launcher/settings_page.cpp:550
+#: launcher/settings_page.cpp:552
 #, fuzzy
 msgid "Mute the sound"
 msgstr "Disattiva l'audio"
 
-#: launcher/settings_page.cpp:551
+#: launcher/settings_page.cpp:553
 #, fuzzy
 msgid "Event logs (for bug reports)"
 msgstr "Registri degli eventi (per le segnalazioni)"
 
-#: launcher/settings_page.cpp:552
+#: launcher/settings_page.cpp:554
 #, fuzzy
 msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
 msgstr "Il registro della sessione annota anche ciò che fa il gioco: fotogrammi ogni 5 s, i suoni riprodotti, gli ingressi in cooperativa, a quale giocatore risponde un menu, le schermate dei menu. Qualche MB all'ora; è ciò che invia \"Segnala un problema\". No = solo l'essenziale."
 
-#: launcher/settings_page.cpp:621
+#: launcher/settings_page.cpp:623
 #, fuzzy
 msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
 msgstr "Ogni impostazione del gioco, presa dal gioco stesso. Quasi tutte servono a sviluppo o diagnosi: cambiale solo se sai cosa fanno."
 
-#: launcher/settings_page.cpp:625
+#: launcher/settings_page.cpp:627
 #, fuzzy
 msgid "Search names and descriptions..."
 msgstr "Cerca in nomi e descrizioni..."
 
-#: launcher/settings_page.cpp:628
+#: launcher/settings_page.cpp:630
 #, fuzzy
 msgid "Show developer settings (debug_...)"
 msgstr "Mostra le impostazioni da sviluppatore (debug_...)"
 
-#: launcher/settings_page.cpp:690
+#: launcher/settings_page.cpp:692
 #, fuzzy
 msgid "Default: %s%s"
 msgstr "Predefinito: %s%s"
 
-#: launcher/settings_page.cpp:691
+#: launcher/settings_page.cpp:693
 #, fuzzy
 msgid "  (read at start only)"
 msgstr "  (letto solo all'avvio)"
 
-#: launcher/settings_page.cpp:702
+#: launcher/settings_page.cpp:704
 #, fuzzy
 msgid "Asking the game for its settings..."
 msgstr "Chiedo al gioco le sue impostazioni..."
 
-#: launcher/settings_page.cpp:714
+#: launcher/settings_page.cpp:716
 #, fuzzy
 msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
 msgstr "Il gioco è in esecuzione: le modifiche valgono al prossimo avvio. (Il suo menu F4 scrive lo stesso file: usa l'uno o l'altro.)"
 
-#: launcher/settings_page.cpp:718
+#: launcher/settings_page.cpp:720
 #, fuzzy
 msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
 msgstr "Salvate subito; valgono al prossimo avvio del gioco. Passa sopra un nome per sapere cosa fa, su un triangolo per sapere perché è rischioso."
 
-#: launcher/settings_page.cpp:730
+#: launcher/settings_page.cpp:732
 #, fuzzy
 msgid "All settings (advanced)"
 msgstr "Tutte le impostazioni (avanzate)"
@@ -5090,478 +5162,482 @@ msgstr "non trovato (clang e clang++)"
 msgid "not found (needs pkg-config too)"
 msgstr "non trovato (serve anche pkg-config)"
 
-#: launcher/setup.cpp:766
+#: launcher/setup.cpp:748
+msgid "Checking file dates"
+msgstr ""
+
+#: launcher/setup.cpp:809
 #, fuzzy
 msgid "Version %s"
 msgstr "Versione %s"
 
-#: launcher/setup.cpp:769
+#: launcher/setup.cpp:812
 #, fuzzy
 msgid " -  a developer copy: update it with git pull"
 msgstr " -  una copia da sviluppatore: aggiornala con git pull"
 
-#: launcher/setup.cpp:774
+#: launcher/setup.cpp:817
 #, fuzzy
 msgid " -  updated to %s: restart the launcher to finish"
 msgstr " -  aggiornato a %s: riavvia il launcher per finire"
 
-#: launcher/setup.cpp:777
+#: launcher/setup.cpp:820
 #, fuzzy
 msgid "Restart the launcher"
 msgstr "Riavvia il launcher"
 
-#: launcher/setup.cpp:781
+#: launcher/setup.cpp:824
 #, fuzzy
 msgid "Couldn't restart: start the launcher again by hand."
 msgstr "Riavvio non riuscito: riapri il launcher a mano."
 
-#: launcher/setup.cpp:791
+#: launcher/setup.cpp:834
 #, fuzzy
 msgid " -  checking for updates..."
 msgstr " -  ricerca aggiornamenti..."
 
-#: launcher/setup.cpp:793
+#: launcher/setup.cpp:836
 #, fuzzy
 msgid " -  %s is available%s%s"
 msgstr " -  %s è disponibile%s%s"
 
-#: launcher/setup.cpp:813
+#: launcher/setup.cpp:856
 #, fuzzy
 msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
 msgstr "Scarica la nuova versione e la mette al suo posto: salvataggi, impostazioni e file del gioco restano. Poi il launcher si riavvia e ricompila ciò che è cambiato."
 
-#: launcher/setup.cpp:822
+#: launcher/setup.cpp:865
 #, fuzzy
 msgid " -  the newest version"
 msgstr " -  la versione più recente"
 
-#: launcher/setup.cpp:838
+#: launcher/setup.cpp:881
 #, fuzzy
 msgid "What's new in %s"
 msgstr "Novità di %s"
 
-#: launcher/setup.cpp:903
+#: launcher/setup.cpp:946
 #, fuzzy
 msgid "the ReXGlue SDK and its libraries are there"
 msgstr "l'SDK ReXGlue e le sue librerie ci sono"
 
-#: launcher/setup.cpp:904
+#: launcher/setup.cpp:947
 #, fuzzy
 msgid "the ReXGlue SDK isn't downloaded yet"
 msgstr "l'SDK ReXGlue non è ancora scaricato"
 
-#: launcher/setup.cpp:905
+#: launcher/setup.cpp:948
 #, fuzzy
 msgid "the ReXGlue SDK submodule isn't downloaded yet"
 msgstr "il sottomodulo dell'SDK ReXGlue non è ancora scaricato"
 
-#: launcher/setup.cpp:915
+#: launcher/setup.cpp:958
 #, fuzzy
 msgid "this version needs another ReXGlue SDK ({0}): download it again"
 msgstr "questa versione richiede un altro SDK ReXGlue ({0}): riscaricalo"
 
-#: launcher/setup.cpp:929
+#: launcher/setup.cpp:972
 #, fuzzy
 msgid "extracted in {0}"
 msgstr "estratto in {0}"
 
-#: launcher/setup.cpp:932
+#: launcher/setup.cpp:975
 #, fuzzy
 msgid "no disc image found yet: pick your .iso"
 msgstr "nessuna immagine del disco trovata: scegli la tua .iso"
 
-#: launcher/setup.cpp:933
+#: launcher/setup.cpp:976
 #, fuzzy
 msgid "ready to extract {0}"
 msgstr "pronto per estrarre {0}"
 
-#: launcher/setup.cpp:964
+#: launcher/setup.cpp:1007
 #, fuzzy
 msgid "needs the source parts first"
 msgstr "servono prima i sorgenti"
 
-#: launcher/setup.cpp:971
+#: launcher/setup.cpp:1014
 #, fuzzy
 msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
 msgstr "le patch sono cambiate (un aggiornamento): verrà ripristinato, ripatchato e poi ricompilato"
 
-#: launcher/setup.cpp:975
+#: launcher/setup.cpp:1018
 #, fuzzy
 msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
 msgstr "le nostre {0} patch dell'SDK non sono né tutte applicate né tutte assenti: la cartella dell'SDK è stata cambiata a mano (o una patch è cambiata). Non toccato; vedi docs/01-building.md, passo 2 (git -C thirdparty/rexglue-sdk status)."
 
-#: launcher/setup.cpp:981
+#: launcher/setup.cpp:1024
 #, fuzzy
 msgid "patched, not built yet"
 msgstr "patchato, non ancora compilato"
 
-#: launcher/setup.cpp:981
+#: launcher/setup.cpp:1024
 #, fuzzy
 msgid "not patched or built yet"
 msgstr "né patchato né compilato"
 
-#: launcher/setup.cpp:986
+#: launcher/setup.cpp:1029
 #, fuzzy
 msgid "built without our patches: rebuild it"
 msgstr "compilato senza le nostre patch: ricompilalo"
 
-#: launcher/setup.cpp:987
+#: launcher/setup.cpp:1030
 #, fuzzy
 msgid "the patches changed since the SDK was built: rebuild it"
 msgstr "le patch sono cambiate da quando l'SDK è stato compilato: ricompilalo"
 
-#: launcher/setup.cpp:990
+#: launcher/setup.cpp:1033
 #, fuzzy
 msgid "built and installed, {0} patches"
 msgstr "compilato e installato, {0} patch"
 
-#: launcher/setup.cpp:997
+#: launcher/setup.cpp:1040
 #, fuzzy
 msgid "not built yet"
 msgstr "non ancora compilato"
 
-#: launcher/setup.cpp:1000
+#: launcher/setup.cpp:1043
 #, fuzzy
 msgid "built, not copied into program/ yet"
 msgstr "compilato, non ancora copiato in program/"
 
-#: launcher/setup.cpp:1017
+#: launcher/setup.cpp:1060
 #, fuzzy
 msgid "the sources changed since the last build: rebuild it"
 msgstr "i sorgenti sono cambiati dall'ultima compilazione: ricompilalo"
 
-#: launcher/setup.cpp:1020
+#: launcher/setup.cpp:1063
 #, fuzzy
 msgid "built: {0}"
 msgstr "compilato: {0}"
 
-#: launcher/setup.cpp:1043
+#: launcher/setup.cpp:1086
 #, fuzzy
 msgid "Downloading the source parts (git submodules)"
 msgstr "Scaricamento dei sorgenti (sottomoduli git)"
 
-#: launcher/setup.cpp:1061
+#: launcher/setup.cpp:1104
 #, fuzzy
 msgid "Finishing the SDK's libraries (a download was stopped)"
 msgstr "Completamento delle librerie dell'SDK (un download è stato interrotto)"
 
-#: launcher/setup.cpp:1066
+#: launcher/setup.cpp:1109
 #, fuzzy
 msgid "Removing the old SDK download"
 msgstr "Rimozione del vecchio download dell'SDK"
 
-#: launcher/setup.cpp:1079
+#: launcher/setup.cpp:1122
 #, fuzzy
 msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
 msgstr "Scaricamento dell'SDK ReXGlue {0} (e delle sue librerie)"
 
-#: launcher/setup.cpp:1084
+#: launcher/setup.cpp:1127
 #, fuzzy
 msgid "Checking the SDK's version"
 msgstr "Controllo della versione dell'SDK"
 
-#: launcher/setup.cpp:1109
+#: launcher/setup.cpp:1152
 #, fuzzy
 msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
 msgstr "Spazio libero insufficiente: i file del gioco richiedono circa 6,5 GB, ne sono liberi %.1f GB."
 
-#: launcher/setup.cpp:1122
+#: launcher/setup.cpp:1165
 #, fuzzy
 msgid "That file isn't an Xbox 360 disc image the extractor can read."
 msgstr "Quel file non è un'immagine di disco Xbox 360 che l'estrattore sa leggere."
 
-#: launcher/setup.cpp:1126
+#: launcher/setup.cpp:1169
 #, fuzzy
 msgid "That disc image has no default.xex: not a game disc?"
 msgstr "Quell'immagine del disco non ha default.xex: non è un disco di gioco?"
 
-#: launcher/setup.cpp:1129
+#: launcher/setup.cpp:1172
 #, fuzzy
 msgid "Extracting the disc into game/"
 msgstr "Estrazione del disco in game/"
 
-#: launcher/setup.cpp:1141
+#: launcher/setup.cpp:1184
 #, fuzzy
 msgid "Checking the game's executable"
 msgstr "Controllo dell'eseguibile del gioco"
 
-#: launcher/setup.cpp:1147
+#: launcher/setup.cpp:1190
 #, fuzzy
 msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
 msgstr "default.xex non è Crash: Mind over Mutant (ID titolo 565507FA non trovato). I file sono in game/; questo port avvia solo quel gioco."
 
-#: launcher/setup.cpp:1151
+#: launcher/setup.cpp:1194
 #, fuzzy
 msgid "Title id 565507FA: Crash: Mind over Mutant."
 msgstr "ID titolo 565507FA: Crash: Mind over Mutant."
 
-#: launcher/setup.cpp:1173
+#: launcher/setup.cpp:1217
 #, fuzzy
 msgid "Undoing the old patches"
 msgstr "Annullamento delle vecchie patch"
 
-#: launcher/setup.cpp:1174
+#: launcher/setup.cpp:1218
 #, fuzzy
 msgid "Removing files the old patches added"
 msgstr "Rimozione dei file aggiunti dalle vecchie patch"
 
-#: launcher/setup.cpp:1177
+#: launcher/setup.cpp:1221
 #, fuzzy
 msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
 msgstr "Applicazione delle nostre correzioni all'SDK (patches/rexglue-sdk)"
 
-#: launcher/setup.cpp:1192
+#: launcher/setup.cpp:1236
 #, fuzzy
 msgid "Configuring the SDK"
 msgstr "Configurazione dell'SDK"
 
-#: launcher/setup.cpp:1194
+#: launcher/setup.cpp:1238
 #, fuzzy
 msgid "Building the SDK (Release: the recompiler)"
 msgstr "Compilazione dell'SDK (Release: il ricompilatore)"
 
-#: launcher/setup.cpp:1198
+#: launcher/setup.cpp:1242
 #, fuzzy
 msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
 msgstr "Compilazione dell'SDK (RelWithDebInfo: il runtime usato dal gioco)"
 
-#: launcher/setup.cpp:1206
+#: launcher/setup.cpp:1250
 #, fuzzy
 msgid "Noting which patches the SDK was built with"
 msgstr "Annotazione delle patch con cui è stato compilato l'SDK"
 
-#: launcher/setup.cpp:1233
+#: launcher/setup.cpp:1277
 msgid "Copying default.xex for the build"
 msgstr ""
 
-#: launcher/setup.cpp:1260
+#: launcher/setup.cpp:1304
 #, fuzzy
 msgid "Linking source/game to the disc's files"
 msgstr "Collegamento di source/game ai file del disco"
 
-#: launcher/setup.cpp:1281
+#: launcher/setup.cpp:1328
 #, fuzzy
 msgid "Configuring the game's build"
 msgstr "Configurazione della compilazione del gioco"
 
-#: launcher/setup.cpp:1291
+#: launcher/setup.cpp:1338
 #, fuzzy
 msgid "Recompiling the game's code (default.xex -> C++)"
 msgstr "Ricompilazione del codice del gioco (default.xex -> C++)"
 
-#: launcher/setup.cpp:1297
+#: launcher/setup.cpp:1344
 #, fuzzy
 msgid "Compiling the game ({0} at a time; the first build takes a while)"
 msgstr "Compilazione del gioco ({0} alla volta; la prima compilazione richiede un po')"
 
-#: launcher/setup.cpp:1310
+#: launcher/setup.cpp:1357
 #, fuzzy
 msgid "Copying the game into program/"
 msgstr "Copia del gioco in program/"
 
-#: launcher/setup.cpp:1372
+#: launcher/setup.cpp:1419
 msgid "Making the game's icon from your disc"
 msgstr ""
 
-#: launcher/setup.cpp:1382
+#: launcher/setup.cpp:1429
 msgid "Putting the icon on the game"
 msgstr ""
 
-#: launcher/setup.cpp:1447
+#: launcher/setup.cpp:1494
 #, fuzzy
 msgid "Setting up"
 msgstr "Installazione in corso"
 
-#: launcher/setup.cpp:1634
+#: launcher/setup.cpp:1681
 #, fuzzy
 msgid "%s: done"
 msgstr "%s: fatto"
 
-#: launcher/setup.cpp:1636
+#: launcher/setup.cpp:1683
 #, fuzzy
 msgid "%s: cancelled"
 msgstr "%s: annullato"
 
-#: launcher/setup.cpp:1638
+#: launcher/setup.cpp:1685
 #, fuzzy
 msgid "%s: failed"
 msgstr "%s: non riuscito"
 
-#: launcher/setup.cpp:1658
+#: launcher/setup.cpp:1705
 #, fuzzy
 msgid "This step can't be stopped: a few seconds."
 msgstr "Questo passo non si può fermare: pochi secondi."
 
-#: launcher/setup.cpp:1667
+#: launcher/setup.cpp:1714
 #, fuzzy
 msgid "Follow"
 msgstr "Segui"
 
-#: launcher/setup.cpp:1736 launcher/setup.cpp:1806 launcher/setup.cpp:1846
+#: launcher/setup.cpp:1783 launcher/setup.cpp:1853 launcher/setup.cpp:1893
 msgid "Still busy: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1741
+#: launcher/setup.cpp:1788
 msgid "Still checking: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1772
+#: launcher/setup.cpp:1819
 msgid "Adding {0} (Windows asks for permission)"
 msgstr ""
 
-#: launcher/setup.cpp:1782
+#: launcher/setup.cpp:1829
 msgid "Installing {0} (winget)"
 msgstr ""
 
-#: launcher/setup.cpp:1811
+#: launcher/setup.cpp:1858
 msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
 msgstr ""
 
-#: launcher/setup.cpp:1820
+#: launcher/setup.cpp:1867
 msgid "Nothing here can be installed automatically."
 msgstr ""
 
-#: launcher/setup.cpp:1876
+#: launcher/setup.cpp:1923
 #, fuzzy
 msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
 msgstr "L'installazione compila il gioco dal codice sorgente, quindi funziona dalla cartella del progetto (un clone git). Questa copia è una copia installata."
 
-#: launcher/setup.cpp:1900
+#: launcher/setup.cpp:1947
 #, fuzzy
 msgid "Everything is set up: the game is ready to play."
 msgstr "È tutto pronto: il gioco si può giocare."
 
-#: launcher/setup.cpp:1902
+#: launcher/setup.cpp:1949
 #, fuzzy
 msgid "Some steps are left."
 msgstr "Mancano alcuni passi."
 
-#: launcher/setup.cpp:1922
+#: launcher/setup.cpp:1969
 #, fuzzy
 msgid "Set up everything"
 msgstr "Installa tutto"
 
-#: launcher/setup.cpp:1927
+#: launcher/setup.cpp:1974
 #, fuzzy
 msgid "Install the missing build tools first (step 1)."
 msgstr "Installa prima gli strumenti di compilazione mancanti (passo 1)."
 
-#: launcher/setup.cpp:1931
+#: launcher/setup.cpp:1978
 #, fuzzy
 msgid "The game is running: building waits until it's closed."
 msgstr "Il gioco è in esecuzione: la compilazione aspetta che venga chiuso."
 
-#: launcher/setup.cpp:1944
+#: launcher/setup.cpp:1991
 #, fuzzy
 msgid "Build tools"
 msgstr "Strumenti di compilazione"
 
-#: launcher/setup.cpp:1945
+#: launcher/setup.cpp:1992
 #, fuzzy
 msgid "everything needed to build is installed"
 msgstr "è installato tutto il necessario per compilare"
 
-#: launcher/setup.cpp:1952
+#: launcher/setup.cpp:1999
 #, fuzzy
 msgid "found"
 msgstr "trovato"
 
-#: launcher/setup.cpp:1952
+#: launcher/setup.cpp:1999
 #, fuzzy
 msgid "missing"
 msgstr "mancante"
 
-#: launcher/setup.cpp:1957
+#: launcher/setup.cpp:2004
 #, fuzzy
 msgid "  -  package: "
 msgstr "  -  pacchetto: "
 
-#: launcher/setup.cpp:1964
+#: launcher/setup.cpp:2011
 #, fuzzy
 msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
 msgstr "Installa quelli mancanti col tuo gestore di pacchetti (i nomi qui sopra sono quelli di %s), poi premi Controlla di nuovo."
 
-#: launcher/setup.cpp:1973 launcher/setup.cpp:1978
+#: launcher/setup.cpp:2020 launcher/setup.cpp:2025
 #, fuzzy
 msgid "Source parts"
 msgstr "Sorgenti"
 
-#: launcher/setup.cpp:1977
+#: launcher/setup.cpp:2024
 #, fuzzy
 msgid "Download them"
 msgstr "Scaricali"
 
-#: launcher/setup.cpp:1985
+#: launcher/setup.cpp:2032
 #, fuzzy
 msgid "Your disc"
 msgstr "Il tuo disco"
 
-#: launcher/setup.cpp:1989
+#: launcher/setup.cpp:2036
 #, fuzzy
 msgid "Disc image: %s"
 msgstr "Immagine del disco: %s"
 
-#: launcher/setup.cpp:1993
+#: launcher/setup.cpp:2040
 #, fuzzy
 msgid "Xbox 360 disc image"
 msgstr "Immagine di disco Xbox 360"
 
-#: launcher/setup.cpp:2008
+#: launcher/setup.cpp:2055
 #, fuzzy
 msgid "Extract it"
 msgstr "Estraila"
 
-#: launcher/setup.cpp:2012
+#: launcher/setup.cpp:2059
 #, fuzzy
 msgid "Disc"
 msgstr "Disco"
 
-#: launcher/setup.cpp:2019
+#: launcher/setup.cpp:2066
 #, fuzzy
 msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
 msgstr "La tua copia del disco (una completa è 7,8 GB); i file del gioco (6 GB) vanno in game/."
 
-#: launcher/setup.cpp:2025 launcher/setup.cpp:2034
+#: launcher/setup.cpp:2072 launcher/setup.cpp:2081
 #, fuzzy
 msgid "ReXGlue SDK"
 msgstr "SDK ReXGlue"
 
-#: launcher/setup.cpp:2030
+#: launcher/setup.cpp:2077
 #, fuzzy
 msgid "Rebuild the SDK"
 msgstr "Ricompila l'SDK"
 
-#: launcher/setup.cpp:2030
+#: launcher/setup.cpp:2077
 #, fuzzy
 msgid "Build the SDK"
 msgstr "Compila l'SDK"
 
-#: launcher/setup.cpp:2040
+#: launcher/setup.cpp:2087
 #, fuzzy
 msgid "A few minutes."
 msgstr "Pochi minuti."
 
-#: launcher/setup.cpp:2045 launcher/setup.cpp:2054
+#: launcher/setup.cpp:2092 launcher/setup.cpp:2101
 #, fuzzy
 msgid "The game"
 msgstr "Il gioco"
 
-#: launcher/setup.cpp:2050
+#: launcher/setup.cpp:2097
 #, fuzzy
 msgid "Build the game"
 msgstr "Compila il gioco"
 
-#: launcher/setup.cpp:2051
+#: launcher/setup.cpp:2098
 #, fuzzy
 msgid "Rebuild (update)"
 msgstr "Ricompila (aggiornamento)"
 
-#: launcher/setup.cpp:2052
+#: launcher/setup.cpp:2099
 #, fuzzy
 msgid "Rebuild"
 msgstr "Ricompila"
 
-#: launcher/setup.cpp:2057
+#: launcher/setup.cpp:2104
 #, fuzzy
 msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
 msgstr "%d compilazioni alla volta (secondo la RAM libera ora: chiudi prima i programmi grandi per una compilazione più veloce). La prima compilazione richiede un po'; le successive rifanno solo ciò che è cambiato."
@@ -5584,6 +5660,38 @@ msgstr ""
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Sostituzione con la nuova versione"
+
+#, fuzzy
+#~ msgid "720p (original)"
+#~ msgstr "720p (originale)"
+
+#, fuzzy
+#~ msgid "1080p"
+#~ msgstr "1080p"
+
+#, fuzzy
+#~ msgid "1440p"
+#~ msgstr "1440p"
+
+#, fuzzy
+#~ msgid "4K"
+#~ msgstr "4K"
+
+#, fuzzy
+#~ msgid "Drawn at 1280 x 720, like the Xbox 360."
+#~ msgstr "Disegnato a 1280 x 720, come su Xbox 360."
+
+#, fuzzy
+#~ msgid "Drawn at 1920 x 1080: sharper on a Full HD screen."
+#~ msgstr "Disegnato a 1920 x 1080: più nitido su uno schermo Full HD."
+
+#, fuzzy
+#~ msgid "Drawn at 2560 x 1440: sharper still, heavier on your graphics card."
+#~ msgstr "Disegnato a 2560 x 1440: ancora più nitido, più pesante per la scheda video."
+
+#, fuzzy
+#~ msgid "Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."
+#~ msgstr "Disegnato a 3840 x 2160: l'immagine più nitida, la più pesante per la scheda video."
 
 #, fuzzy
 #~ msgid "The aiming reticle follows the mouse, and in play the pointer is a glowing bubble that grows over targets and pulls in mojo, like the Wii version's pointer."

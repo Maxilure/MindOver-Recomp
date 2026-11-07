@@ -6,46 +6,46 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/crash_mom_app.h:455 src/native/native_renderer.cpp:717 src/native/native_renderer.cpp:1445
+#: src/crash_mom_app.h:459 src/native/native_renderer.cpp:718 src/native/native_renderer.cpp:1446
 msgid "EMULATED ONLY"
 msgstr ""
 
-#: src/crash_mom_app.h:455
+#: src/crash_mom_app.h:459
 msgid "No second window with --emulated_only"
 msgstr ""
 
 #. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
-#: src/fps_overlay.cpp:145
+#: src/fps_overlay.cpp:147
 msgctxt "fps counter"
 msgid "{0} FPS"
 msgstr ""
 
 #. Frame-rate counter: the average frame rate. Keep it short, capitals.
-#: src/fps_overlay.cpp:148
+#: src/fps_overlay.cpp:150
 msgctxt "fps counter"
 msgid "AVG {0}"
 msgstr ""
 
 #. Frame-rate counter: the slowest 1 % of frames. Keep it short, capitals.
-#: src/fps_overlay.cpp:150
+#: src/fps_overlay.cpp:152
 msgctxt "fps counter"
 msgid "1% LOW {0}"
 msgstr ""
 
 #. Frame-rate counter: milliseconds per frame. Capitals.
-#: src/fps_overlay.cpp:154
+#: src/fps_overlay.cpp:156
 msgctxt "fps counter"
 msgid "{0} MS"
 msgstr ""
 
 #. Frame-rate counter: how long the game's own work took (ms). Capitals.
-#: src/fps_overlay.cpp:156
+#: src/fps_overlay.cpp:158
 msgctxt "fps counter"
 msgid "GAME {0}"
 msgstr ""
 
 #. Frame-rate counter: how long showing the picture (the "swap") took (ms). Capitals.
-#: src/fps_overlay.cpp:158
+#: src/fps_overlay.cpp:160
 msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr ""
@@ -54,61 +54,61 @@ msgstr ""
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1062 src/options/options_menu.cpp:2369 src/options/options_settings.cpp:1243
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2389 src/options/options_settings.cpp:1317
 msgid "Achievements"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:499
+#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:501
 msgid "Players"
 msgstr ""
 
-#: src/native/native_renderer.cpp:718
+#: src/native/native_renderer.cpp:719
 msgid "No switching with --emulated_only"
 msgstr ""
 
-#: src/native/native_renderer.cpp:723 src/native/native_renderer.cpp:1442
+#: src/native/native_renderer.cpp:724 src/native/native_renderer.cpp:1443
 msgid "DUAL MODE"
 msgstr ""
 
-#: src/native/native_renderer.cpp:724
+#: src/native/native_renderer.cpp:725
 msgid "No switching while the second window is open (Tools closes it)"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1442
+#: src/native/native_renderer.cpp:1443
 msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1445
+#: src/native/native_renderer.cpp:1446
 msgid "Xbox 360 GPU emulation; native renderer off"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1447
+#: src/native/native_renderer.cpp:1448
 msgid "NATIVE (Vulkan)"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1449
+#: src/native/native_renderer.cpp:1450
 msgid "native only: the emulated GPU is off   F1 Tools switches"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1450
+#: src/native/native_renderer.cpp:1451
 msgid "the emulated GPU still draws in the background   F1 Tools switches"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1452
+#: src/native/native_renderer.cpp:1453
 msgid "EMULATED (Xbox 360 GPU)"
 msgstr ""
 
-#: src/native/native_renderer.cpp:1452
+#: src/native/native_renderer.cpp:1453
 msgid "native renderer idle   F1 Tools switches"
 msgstr ""
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:75 src/ui/hud_hide.cpp:77
+#: src/ui/hud_hide.cpp:80 src/ui/hud_hide.cpp:82
 msgid "HUD Hidden"
 msgstr ""
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:75
+#: src/ui/hud_hide.cpp:80
 msgid "Press {0} to show it again"
 msgstr ""
 
@@ -179,7 +179,7 @@ msgid ""
 "while the native one is drawn). The menus over the picture aren't in it."
 msgstr ""
 
-#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:388
+#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:390
 msgid "Picture"
 msgstr ""
 
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr ""
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1327
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1401
 msgid "Spin"
 msgstr ""
 
@@ -391,7 +391,7 @@ msgstr ""
 msgid "Left stick circles"
 msgstr ""
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1327
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1401
 msgid "Jump"
 msgstr ""
 
@@ -439,7 +439,7 @@ msgstr ""
 msgid "Store the titan you control, and bring it back later."
 msgstr ""
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1328
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1402
 msgid "Map"
 msgstr ""
 
@@ -447,11 +447,11 @@ msgstr ""
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr ""
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1361 src/options/options_menu.cpp:1375 launcher/installer.cpp:548
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:548
 msgid "Back"
 msgstr ""
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:975 src/options/options_settings.cpp:1328
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1048 src/options/options_settings.cpp:1402
 msgid "Pause"
 msgstr ""
 
@@ -579,7 +579,7 @@ msgstr ""
 msgid "Fighting"
 msgstr ""
 
-#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:439
+#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:442
 msgid "Titans"
 msgstr ""
 
@@ -595,7 +595,7 @@ msgstr ""
 msgid "NO KEYBOARD CONTROLS"
 msgstr ""
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1258 launcher/settings_page.cpp:539
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1332 launcher/settings_page.cpp:541
 msgid "Controls"
 msgstr ""
 
@@ -647,7 +647,7 @@ msgstr ""
 msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
 msgstr ""
 
-#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:671
+#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:744
 msgid "Device"
 msgstr ""
 
@@ -1214,16 +1214,40 @@ msgstr ""
 msgid "No achievements while playing this save"
 msgstr ""
 
-#: src/cheats/spawn.cpp:447
+#: src/cheats/spawn.cpp:450
 msgid "Crunch (boss)"
 msgstr ""
 
-#: src/cheats/spawn.cpp:447
+#: src/cheats/spawn.cpp:450
 msgid "Cortex (boss)"
 msgstr ""
 
-#: src/cheats/spawn.cpp:448
+#: src/cheats/spawn.cpp:451
 msgid "Enemies"
+msgstr ""
+
+#: src/cheats/spawn.cpp:458
+msgid "Pickups"
+msgstr ""
+
+#: src/cheats/spawn.cpp:459
+msgid "Mojo (small)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:459
+msgid "Mojo (medium)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:460
+msgid "Mojo (large)"
+msgstr ""
+
+#: src/cheats/spawn.cpp:460
+msgid "Mojo multiplier"
+msgstr ""
+
+#: src/cheats/spawn.cpp:461
+msgid "Health"
 msgstr ""
 
 #: src/players/dummy_players.cpp:232
@@ -1451,1352 +1475,1408 @@ msgstr ""
 msgid "Drop Out"
 msgstr ""
 
-#: src/options/options_menu.cpp:838 src/options/options_menu.cpp:888
+#: src/options/options_menu.cpp:857 src/options/options_menu.cpp:908
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:898
+#: src/options/options_menu.cpp:918
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:899
+#: src/options/options_menu.cpp:919
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:916
+#: src/options/options_menu.cpp:936
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:922
+#: src/options/options_menu.cpp:942
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1095
+#: src/options/options_menu.cpp:1115
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1360
+#: src/options/options_menu.cpp:1380
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1364
+#: src/options/options_menu.cpp:1384
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1364
+#: src/options/options_menu.cpp:1384
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1366 launcher/installer.cpp:1062 launcher/setup.cpp:1651
+#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1062 launcher/setup.cpp:1698
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1369
+#: src/options/options_menu.cpp:1389
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1372
+#: src/options/options_menu.cpp:1392
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1373
+#: src/options/options_menu.cpp:1393
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1498
+#: src/options/options_menu.cpp:1518
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1502 src/options/options_menu.cpp:1510
+#: src/options/options_menu.cpp:1522 src/options/options_menu.cpp:1530
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1507
+#: src/options/options_menu.cpp:1527
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1507
+#: src/options/options_menu.cpp:1527
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1512
+#: src/options/options_menu.cpp:1532
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:1956
+#: src/options/options_menu.cpp:1976
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1963
+#: src/options/options_menu.cpp:1983
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:1975
+#: src/options/options_menu.cpp:1995
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:1996
+#: src/options/options_menu.cpp:2016
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2004
+#: src/options/options_menu.cpp:2024
 msgid "{0} removed."
 msgstr ""
 
 #. {0} = a controller button's picture, {1} = a key's picture ("[LB] or [Q]").
-#: src/options/options_settings.cpp:175
+#: src/options/options_settings.cpp:177
 msgid "{0} or {1}"
 msgstr ""
 
-#: src/options/options_settings.cpp:180
+#: src/options/options_settings.cpp:182
 msgid "Frame-rate Cap"
 msgstr ""
 
-#: src/options/options_settings.cpp:184
+#: src/options/options_settings.cpp:186
 msgid "30 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:184 launcher/settings_page.cpp:345 launcher/settings_page.cpp:353
+#: src/options/options_settings.cpp:186 launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 msgid "Unlimited"
 msgstr ""
 
-#: src/options/options_settings.cpp:197
+#: src/options/options_settings.cpp:199
 msgid "The most frames a second the game draws. The original runs at 30."
 msgstr ""
 
-#: src/options/options_settings.cpp:202
+#: src/options/options_settings.cpp:204
 msgid "Above 60, jumps and timings may feel different."
 msgstr ""
 
-#: src/options/options_settings.cpp:215 launcher/settings_page.cpp:390
+#: src/options/options_settings.cpp:217 launcher/settings_page.cpp:392
 msgid "Renderer"
 msgstr ""
 
-#: src/options/options_settings.cpp:219 src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:221 src/options/options_settings.cpp:222
 msgid "Emulated"
 msgstr ""
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 msgid "Emulated Only"
 msgstr ""
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 msgid "Native"
 msgstr ""
 
-#: src/options/options_settings.cpp:220
+#: src/options/options_settings.cpp:222
 msgid "Native Only"
 msgstr ""
 
-#: src/options/options_settings.cpp:242
+#: src/options/options_settings.cpp:244
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original."
 msgstr ""
 
-#: src/options/options_settings.cpp:246
+#: src/options/options_settings.cpp:248
 msgid "Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the {0} Tools menu doesn't switch."
 msgstr ""
 
-#: src/options/options_settings.cpp:250
+#: src/options/options_settings.cpp:252
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original. The {0} Tools menu switches to the port's renderer."
 msgstr ""
 
-#: src/options/options_settings.cpp:254
+#: src/options/options_settings.cpp:256
 msgid "The port's own renderer, made for PC. The imitation keeps drawing behind it: the {0} Tools menu switches back at once."
 msgstr ""
 
-#: src/options/options_settings.cpp:256
+#: src/options/options_settings.cpp:258
 msgid "The port's own renderer alone: the lightest on your PC."
 msgstr ""
 
-#: src/options/options_settings.cpp:261
+#: src/options/options_settings.cpp:263
 msgid "Still being finished: an effect may look wrong."
 msgstr ""
 
-#: src/options/options_settings.cpp:272
+#: src/options/options_settings.cpp:274
 msgid "Dual Mode"
 msgstr ""
 
-#: src/options/options_settings.cpp:294
+#: src/options/options_settings.cpp:296
 msgid "Brightness"
 msgstr ""
 
-#: src/options/options_settings.cpp:299
+#: src/options/options_settings.cpp:301
 msgid "0 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:311
+#: src/options/options_settings.cpp:313
 msgid "Raise it until the darkest squares above can just be told apart."
 msgstr ""
 
-#: src/options/options_settings.cpp:320
+#: src/options/options_settings.cpp:322
 msgid "V-sync"
 msgstr ""
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:405 src/options/options_settings.cpp:554 src/options/options_settings.cpp:783 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:407 src/options/options_settings.cpp:627 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
 msgid "On"
 msgstr ""
 
-#: src/options/options_settings.cpp:320 src/options/options_settings.cpp:340 src/options/options_settings.cpp:405 src/options/options_settings.cpp:533 src/options/options_settings.cpp:601 src/options/options_settings.cpp:783 src/options/options_settings.cpp:962 src/options/options_settings.cpp:1046 src/options/options_settings.cpp:1057 src/options/options_settings.cpp:1217 src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:342 src/options/options_settings.cpp:407 src/options/options_settings.cpp:606 src/options/options_settings.cpp:674 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1035 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
 msgid "Off"
 msgstr ""
 
-#: src/options/options_settings.cpp:321
+#: src/options/options_settings.cpp:323
 msgid "Matches your monitor: whole pictures only, no tearing, and the game runs at most at its refresh rate."
 msgstr ""
 
-#: src/options/options_settings.cpp:323
+#: src/options/options_settings.cpp:325
 msgid "Pictures show the moment they're ready: the least delay, but the picture can tear."
 msgstr ""
 
-#: src/options/options_settings.cpp:338
+#: src/options/options_settings.cpp:340
 msgid "FPS Counter"
 msgstr ""
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 msgid "Simple"
 msgstr ""
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 msgid "Average"
 msgstr ""
 
-#: src/options/options_settings.cpp:340
+#: src/options/options_settings.cpp:342
 msgid "Detailed"
 msgstr ""
 
-#: src/options/options_settings.cpp:346
+#: src/options/options_settings.cpp:348
 msgid "No frame-rate counter."
 msgstr ""
 
-#: src/options/options_settings.cpp:347
+#: src/options/options_settings.cpp:349
 msgid "The frame rate, in a corner of the screen (FPS Position)."
 msgstr ""
 
-#: src/options/options_settings.cpp:348
+#: src/options/options_settings.cpp:350
 msgid "The frame rate, its average and its slowest 1 % (the 1% low)."
 msgstr ""
 
-#: src/options/options_settings.cpp:349
+#: src/options/options_settings.cpp:351
 msgid "Also how long a frame takes, and how much of it the game works or waits."
 msgstr ""
 
-#: src/options/options_settings.cpp:357
+#: src/options/options_settings.cpp:359
 msgid "FPS Position"
 msgstr ""
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 msgid "Top Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 msgid "Top Centre"
 msgstr ""
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 msgid "Top Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:359
+#: src/options/options_settings.cpp:361
 msgid "Bottom Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:360
+#: src/options/options_settings.cpp:362
 msgid "Bottom Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:367
+#: src/options/options_settings.cpp:369
 msgid "Where the frame-rate counter sits on the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:378
+#: src/options/options_settings.cpp:380
 msgid "HUD Size"
 msgstr ""
 
-#: src/options/options_settings.cpp:398
+#: src/options/options_settings.cpp:400
 msgid "The original size."
 msgstr ""
 
-#: src/options/options_settings.cpp:399
+#: src/options/options_settings.cpp:401
 msgid "The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:405
+#: src/options/options_settings.cpp:407
 msgid "Smaller for 3-4 Players"
 msgstr ""
 
-#: src/options/options_settings.cpp:406
+#: src/options/options_settings.cpp:408
 msgid "With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is."
 msgstr ""
 
-#: src/options/options_settings.cpp:407
+#: src/options/options_settings.cpp:409
 msgid "The HUD keeps the HUD Size above with any number of players."
 msgstr ""
 
-#: src/options/options_settings.cpp:415
+#: src/options/options_settings.cpp:417
 msgid "Window Mode"
 msgstr ""
 
-#: src/options/options_settings.cpp:416 launcher/settings_page.cpp:453
+#: src/options/options_settings.cpp:418 launcher/settings_page.cpp:455
 msgid "Windowed"
 msgstr ""
 
-#: src/options/options_settings.cpp:416 launcher/settings_page.cpp:453
+#: src/options/options_settings.cpp:418 launcher/settings_page.cpp:455
 msgid "Fullscreen"
 msgstr ""
 
-#: src/options/options_settings.cpp:423
+#: src/options/options_settings.cpp:425
 msgid "Plays in a window you can move and resize."
 msgstr ""
 
-#: src/options/options_settings.cpp:424
+#: src/options/options_settings.cpp:426
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr ""
 
-#: src/options/options_settings.cpp:438 src/options/options_settings.cpp:445 launcher/settings_page.cpp:469 launcher/settings_page.cpp:476
+#: src/options/options_settings.cpp:440 src/options/options_settings.cpp:447 launcher/settings_page.cpp:471 launcher/settings_page.cpp:478
 msgid "Monitor"
 msgstr ""
 
-#: src/options/options_settings.cpp:449 src/options/options_settings.cpp:747 src/options/options_settings.cpp:917 launcher/settings_page.cpp:471
+#: src/options/options_settings.cpp:451 src/options/options_settings.cpp:820 src/options/options_settings.cpp:990 launcher/settings_page.cpp:473
 msgid "Automatic"
 msgstr ""
 
 #. {0} = the monitor's number.
-#: src/options/options_settings.cpp:457
+#: src/options/options_settings.cpp:459
 msgid "{0}: Not Connected"
 msgstr ""
 
-#: src/options/options_settings.cpp:467
+#: src/options/options_settings.cpp:469
 msgid "Fullscreen fills the monitor the game is on."
 msgstr ""
 
-#: src/options/options_settings.cpp:469
+#: src/options/options_settings.cpp:471
 msgid "This monitor isn't connected: fullscreen fills the one the game is on."
 msgstr ""
 
-#: src/options/options_settings.cpp:471
+#: src/options/options_settings.cpp:473
 msgid "Fullscreen fills this monitor."
 msgstr ""
 
-#: src/options/options_settings.cpp:501
+#: src/options/options_settings.cpp:503
 msgid "Needs the port's renderer: set Renderer to Native on the Graphics tab."
 msgstr ""
 
-#: src/options/options_settings.cpp:507
-msgid "Motion Blur"
-msgstr ""
-
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:554 src/options/options_settings.cpp:589
-msgid "Off (original)"
-msgstr ""
-
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
-msgid "Low"
-msgstr ""
-
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
-msgid "Medium"
-msgstr ""
-
-#: src/options/options_settings.cpp:507 src/options/options_settings.cpp:589
-msgid "High"
-msgstr ""
-
-#: src/options/options_settings.cpp:508
-msgid "No motion blur, like the original game."
-msgstr ""
-
-#: src/options/options_settings.cpp:509
-msgid "A light smear of the scenery when the camera moves. The players stay sharp."
-msgstr ""
-
-#: src/options/options_settings.cpp:510
-msgid "The scenery smears more when the camera moves. The players stay sharp."
-msgstr ""
-
-#: src/options/options_settings.cpp:511
-msgid "A strong smear, as long as one frame of the original game's movement."
-msgstr ""
-
-#: src/options/options_settings.cpp:519
-msgid "Resolution"
-msgstr ""
-
-#: src/options/options_settings.cpp:520
-msgid "720p (original)"
-msgstr ""
-
-#: src/options/options_settings.cpp:520
-msgid "1080p"
-msgstr ""
-
-#: src/options/options_settings.cpp:520
-msgid "1440p"
-msgstr ""
-
-#: src/options/options_settings.cpp:520
-msgid "4K"
-msgstr ""
-
-#: src/options/options_settings.cpp:521
-msgid "Drawn at 1280 x 720, like the Xbox 360."
+#: src/options/options_settings.cpp:515
+msgid "Needs Renderer: Native Only on the Graphics tab."
 msgstr ""
 
 #: src/options/options_settings.cpp:522
-msgid "Drawn at 1920 x 1080: sharper on a Full HD screen."
+msgid "Aspect Ratio"
 msgstr ""
 
 #: src/options/options_settings.cpp:523
-msgid "Drawn at 2560 x 1440: sharper still, heavier on your graphics card."
+msgid "Match Window"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "16:9 (original)"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "21:9"
+msgstr ""
+
+#: src/options/options_settings.cpp:523
+msgid "32:9"
 msgstr ""
 
 #: src/options/options_settings.cpp:524
-msgid "Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card."
+msgid "The picture takes the window's shape: a wider window shows more of the world at the sides. Nothing is stretched."
+msgstr ""
+
+#: src/options/options_settings.cpp:525
+msgid "The game's own picture shape. A wider window gets black bars at the sides."
+msgstr ""
+
+#: src/options/options_settings.cpp:526
+msgid "Ultrawide: more of the world at the sides. Nothing is stretched."
+msgstr ""
+
+#: src/options/options_settings.cpp:527
+msgid "Super ultrawide, like two screens side by side: much more of the world at the sides."
 msgstr ""
 
 #: src/options/options_settings.cpp:533
-msgid "Anti-aliasing"
+msgid "Widescreen HUD"
 msgstr ""
 
 #: src/options/options_settings.cpp:533
-msgid "2x (original)"
+msgid "In Place"
 msgstr ""
 
 #: src/options/options_settings.cpp:533
-msgid "4x"
-msgstr ""
-
-#: src/options/options_settings.cpp:533
-msgid "8x"
+msgid "Screen Edges"
 msgstr ""
 
 #: src/options/options_settings.cpp:534
-msgid "No smoothing: jagged, shimmering edges, the lightest on your graphics card."
+msgid "In a wide picture, the HUD stays where the 16:9 game has it."
 msgstr ""
 
 #: src/options/options_settings.cpp:535
-msgid "Edges smoothed with 2 samples per pixel, like the Xbox 360."
+msgid "In a wide picture, the HUD's corner pieces move out to the corners of the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:536
-msgid "Smoother edges, 4 samples per pixel."
+#: src/options/options_settings.cpp:542
+msgid "Motion Blur"
 msgstr ""
 
-#: src/options/options_settings.cpp:537
-msgid "The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:627 src/options/options_settings.cpp:662
+msgid "Off (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:554
-msgid "Smooth Leaves"
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
+msgid "Low"
 msgstr ""
 
-#: src/options/options_settings.cpp:555
-msgid "Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the original game."
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
+msgid "Medium"
 msgstr ""
 
-#: src/options/options_settings.cpp:557
-msgid "Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing on."
+#: src/options/options_settings.cpp:542 src/options/options_settings.cpp:662
+msgid "High"
 msgstr ""
 
-#: src/options/options_settings.cpp:566
-msgid "Texture Sharpness"
+#: src/options/options_settings.cpp:543
+msgid "No motion blur, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577 src/options/options_settings.cpp:601 src/options/options_settings.cpp:1075 src/options/options_settings.cpp:1097
-msgid "Original"
+#: src/options/options_settings.cpp:544
+msgid "A light smear of the scenery when the camera moves. The players stay sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:566 src/options/options_settings.cpp:577
-msgid "Sharper"
+#: src/options/options_settings.cpp:545
+msgid "The scenery smears more when the camera moves. The players stay sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:566
-msgid "Sharpest"
+#: src/options/options_settings.cpp:546
+msgid "A strong smear, as long as one frame of the original game's movement."
 msgstr ""
 
-#: src/options/options_settings.cpp:567
-msgid "Textures soften in the distance like the Xbox 360's."
+#: src/options/options_settings.cpp:565
+msgid "Resolution"
 msgstr ""
 
-#: src/options/options_settings.cpp:568
-msgid "Textures stay crisper in the distance and on slanted ground."
+#: src/options/options_settings.cpp:570
+msgid "Match Window ({0})"
 msgstr ""
 
-#: src/options/options_settings.cpp:569
-msgid "The crispest distance, with a little more shimmer when moving."
-msgstr ""
-
-#: src/options/options_settings.cpp:577
-msgid "Shadow Softness"
-msgstr ""
-
-#: src/options/options_settings.cpp:577
-msgid "Softer"
-msgstr ""
-
-#: src/options/options_settings.cpp:577
-msgid "Softest"
-msgstr ""
-
-#: src/options/options_settings.cpp:578
-msgid "Shadows under the characters get a crisper edge."
-msgstr ""
-
-#: src/options/options_settings.cpp:579
-msgid "Shadows fade at their edge like the Xbox 360's."
-msgstr ""
-
-#: src/options/options_settings.cpp:580
-msgid "Shadows fade over a wider edge."
-msgstr ""
-
-#: src/options/options_settings.cpp:581
-msgid "The softest shadows, fading the widest."
-msgstr ""
-
-#: src/options/options_settings.cpp:589
-msgid "Sharpening"
-msgstr ""
-
-#: src/options/options_settings.cpp:590
-msgid "No sharpening, like the original game."
-msgstr ""
-
-#: src/options/options_settings.cpp:591
-msgid "Fine detail a little crisper. Hard edges stay clean."
+#: src/options/options_settings.cpp:572
+msgid "{0} (original)"
 msgstr ""
 
 #: src/options/options_settings.cpp:592
-msgid "Crisper detail across the picture."
+msgid "Drawn at the window's own size: the sharpest it can look on this screen. A big screen is heavy on your graphics card."
 msgstr ""
 
 #: src/options/options_settings.cpp:593
+msgid "Drawn at the Xbox 360's size."
+msgstr ""
+
+#: src/options/options_settings.cpp:594
+msgid "Sharper than the original. Light on your graphics card."
+msgstr ""
+
+#: src/options/options_settings.cpp:595
+msgid "Sharper still, heavier on your graphics card."
+msgstr ""
+
+#: src/options/options_settings.cpp:596
+msgid "The sharpest picture, the heaviest on your graphics card."
+msgstr ""
+
+#: src/options/options_settings.cpp:606
+msgid "Anti-aliasing"
+msgstr ""
+
+#: src/options/options_settings.cpp:606
+msgid "2x (original)"
+msgstr ""
+
+#: src/options/options_settings.cpp:606
+msgid "4x"
+msgstr ""
+
+#: src/options/options_settings.cpp:606
+msgid "8x"
+msgstr ""
+
+#: src/options/options_settings.cpp:607
+msgid "No smoothing: jagged, shimmering edges, the lightest on your graphics card."
+msgstr ""
+
+#: src/options/options_settings.cpp:608
+msgid "Edges smoothed with 2 samples per pixel, like the Xbox 360."
+msgstr ""
+
+#: src/options/options_settings.cpp:609
+msgid "Smoother edges, 4 samples per pixel."
+msgstr ""
+
+#: src/options/options_settings.cpp:610
+msgid "The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."
+msgstr ""
+
+#: src/options/options_settings.cpp:627
+msgid "Smooth Leaves"
+msgstr ""
+
+#: src/options/options_settings.cpp:628
+msgid "Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the original game."
+msgstr ""
+
+#: src/options/options_settings.cpp:630
+msgid "Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing on."
+msgstr ""
+
+#: src/options/options_settings.cpp:639
+msgid "Texture Sharpness"
+msgstr ""
+
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1148 src/options/options_settings.cpp:1170
+msgid "Original"
+msgstr ""
+
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650
+msgid "Sharper"
+msgstr ""
+
+#: src/options/options_settings.cpp:639
+msgid "Sharpest"
+msgstr ""
+
+#: src/options/options_settings.cpp:640
+msgid "Textures soften in the distance like the Xbox 360's."
+msgstr ""
+
+#: src/options/options_settings.cpp:641
+msgid "Textures stay crisper in the distance and on slanted ground."
+msgstr ""
+
+#: src/options/options_settings.cpp:642
+msgid "The crispest distance, with a little more shimmer when moving."
+msgstr ""
+
+#: src/options/options_settings.cpp:650
+msgid "Shadow Softness"
+msgstr ""
+
+#: src/options/options_settings.cpp:650
+msgid "Softer"
+msgstr ""
+
+#: src/options/options_settings.cpp:650
+msgid "Softest"
+msgstr ""
+
+#: src/options/options_settings.cpp:651
+msgid "Shadows under the characters get a crisper edge."
+msgstr ""
+
+#: src/options/options_settings.cpp:652
+msgid "Shadows fade at their edge like the Xbox 360's."
+msgstr ""
+
+#: src/options/options_settings.cpp:653
+msgid "Shadows fade over a wider edge."
+msgstr ""
+
+#: src/options/options_settings.cpp:654
+msgid "The softest shadows, fading the widest."
+msgstr ""
+
+#: src/options/options_settings.cpp:662
+msgid "Sharpening"
+msgstr ""
+
+#: src/options/options_settings.cpp:663
+msgid "No sharpening, like the original game."
+msgstr ""
+
+#: src/options/options_settings.cpp:664
+msgid "Fine detail a little crisper. Hard edges stay clean."
+msgstr ""
+
+#: src/options/options_settings.cpp:665
+msgid "Crisper detail across the picture."
+msgstr ""
+
+#: src/options/options_settings.cpp:666
 msgid "The crispest picture: may look grainy in places."
 msgstr ""
 
-#: src/options/options_settings.cpp:601
+#: src/options/options_settings.cpp:674
 msgid "Depth of Field"
 msgstr ""
 
-#: src/options/options_settings.cpp:601
+#: src/options/options_settings.cpp:674
 msgid "Strong"
 msgstr ""
 
-#: src/options/options_settings.cpp:602
+#: src/options/options_settings.cpp:675
 msgid "The distance stays sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:603
+#: src/options/options_settings.cpp:676
 msgid "The distance is gently blurred, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:604
+#: src/options/options_settings.cpp:677
 msgid "The distance is blurred twice as much."
 msgstr ""
 
-#: src/options/options_settings.cpp:696
+#: src/options/options_settings.cpp:769
 msgid "Output Device"
 msgstr ""
 
-#: src/options/options_settings.cpp:702
+#: src/options/options_settings.cpp:775
 msgid "System Default"
 msgstr ""
 
-#: src/options/options_settings.cpp:704
+#: src/options/options_settings.cpp:777
 msgid "Not Connected"
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:727
+#: src/options/options_settings.cpp:800
 msgid "Plays on the system's sound output, and follows it when you switch."
 msgstr ""
 
-#: src/options/options_settings.cpp:728
+#: src/options/options_settings.cpp:801
 msgid "Plays on the system's sound output (now: {0}), and follows it when you switch."
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:734
+#: src/options/options_settings.cpp:807
 msgid "{0} isn't connected: the system's sound output plays instead."
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:737
+#: src/options/options_settings.cpp:810
 msgid "Plays on {0} only."
 msgstr ""
 
-#: src/options/options_settings.cpp:745
+#: src/options/options_settings.cpp:818
 msgid "Speakers"
 msgstr ""
 
-#: src/options/options_settings.cpp:747
+#: src/options/options_settings.cpp:820
 msgid "Stereo"
 msgstr ""
 
-#: src/options/options_settings.cpp:747
+#: src/options/options_settings.cpp:820
 msgid "Headphones"
 msgstr ""
 
-#: src/options/options_settings.cpp:748
+#: src/options/options_settings.cpp:821
 msgid "5.1 Surround"
 msgstr ""
 
-#: src/options/options_settings.cpp:748
+#: src/options/options_settings.cpp:821
 msgid "7.1 Surround"
 msgstr ""
 
-#: src/options/options_settings.cpp:757
+#: src/options/options_settings.cpp:830
 msgid "Two speakers: the game's surround sound folded into left and right."
 msgstr ""
 
-#: src/options/options_settings.cpp:758
+#: src/options/options_settings.cpp:831
 msgid "Stereo for headphones: a little of each side reaches the other ear, like speakers in a room, so nothing sits inside one ear."
 msgstr ""
 
-#: src/options/options_settings.cpp:759
+#: src/options/options_settings.cpp:832
 msgid "Six speakers: front, centre, bass and the two behind you, as the game mixes them."
 msgstr ""
 
-#: src/options/options_settings.cpp:760
+#: src/options/options_settings.cpp:833
 msgid "Eight speakers: the surround pair plays on both the side and the back speakers."
 msgstr ""
 
-#: src/options/options_settings.cpp:761
+#: src/options/options_settings.cpp:834
 msgid "The game's surround sound goes to the device as it is, and your system fits it to your speakers."
 msgstr ""
 
-#: src/options/options_settings.cpp:782
+#: src/options/options_settings.cpp:855
 msgid "Invert Axis"
 msgstr ""
 
-#: src/options/options_settings.cpp:795
+#: src/options/options_settings.cpp:868
 msgid "Up and down are flipped when you aim the reticle."
 msgstr ""
 
-#: src/options/options_settings.cpp:796
+#: src/options/options_settings.cpp:869
 msgid "Aiming the reticle: up is up."
 msgstr ""
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:896
 msgid "Move up."
 msgstr ""
 
-#: src/options/options_settings.cpp:823
+#: src/options/options_settings.cpp:896
 msgid "{0} up."
 msgstr ""
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:897
 msgid "Move down."
 msgstr ""
 
-#: src/options/options_settings.cpp:824
+#: src/options/options_settings.cpp:897
 msgid "{0} down."
 msgstr ""
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:898
 msgid "Move left."
 msgstr ""
 
-#: src/options/options_settings.cpp:825
+#: src/options/options_settings.cpp:898
 msgid "{0} left."
 msgstr ""
 
-#: src/options/options_settings.cpp:826
+#: src/options/options_settings.cpp:899
 msgid "Move right."
 msgstr ""
 
-#: src/options/options_settings.cpp:826
+#: src/options/options_settings.cpp:899
 msgid "{0} right."
 msgstr ""
 
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:900
 msgid "Hold while moving to walk instead of run."
 msgstr ""
 
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:900
 msgid "lean {0} part of the way."
 msgstr ""
 
-#: src/options/options_settings.cpp:828
+#: src/options/options_settings.cpp:901
 msgid "The spin attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:829
+#: src/options/options_settings.cpp:902
 msgid "Jump. Press again in the air to double jump."
 msgstr ""
 
-#: src/options/options_settings.cpp:832
+#: src/options/options_settings.cpp:905
 msgid "Use a save totem, or jump on a stunned titan. Again to get off."
 msgstr ""
 
-#: src/options/options_settings.cpp:833
+#: src/options/options_settings.cpp:906
 msgid "A quick attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:834
+#: src/options/options_settings.cpp:907
 msgid "A strong attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:835
+#: src/options/options_settings.cpp:908
 msgid "Hold to block attacks."
 msgstr ""
 
-#: src/options/options_settings.cpp:836
+#: src/options/options_settings.cpp:909
 msgid "Your titan's special attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:837
+#: src/options/options_settings.cpp:910
 msgid "Store your titan, and bring it back later."
 msgstr ""
 
-#: src/options/options_settings.cpp:838
+#: src/options/options_settings.cpp:911
 msgid "Open the map. In the pause menu: drop out (someone else stays in)."
 msgstr ""
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:934
 msgctxt "key name"
 msgid "Left Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:861
+#: src/options/options_settings.cpp:934
 msgctxt "key name"
 msgid "Right Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:935
 msgctxt "key name"
 msgid "Middle Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:862
+#: src/options/options_settings.cpp:935
 msgctxt "key name"
 msgid "Mouse 4 (Back)"
 msgstr ""
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:936
 msgctxt "key name"
 msgid "Mouse 5 (Forward)"
 msgstr ""
 
-#: src/options/options_settings.cpp:863
+#: src/options/options_settings.cpp:936
 msgctxt "key name"
 msgid "Wheel Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:937
 msgctxt "key name"
 msgid "Wheel Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:864
+#: src/options/options_settings.cpp:937
 msgctxt "key name"
 msgid "Space"
 msgstr ""
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:938
 msgctxt "key name"
 msgid "Enter"
 msgstr ""
 
-#: src/options/options_settings.cpp:865
+#: src/options/options_settings.cpp:938
 msgctxt "key name"
 msgid "Backspace"
 msgstr ""
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:939
 msgctxt "key name"
 msgid "Caps Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:866
+#: src/options/options_settings.cpp:939
 msgctxt "key name"
 msgid "Up Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:940
 msgctxt "key name"
 msgid "Down Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:867
+#: src/options/options_settings.cpp:940
 msgctxt "key name"
 msgid "Left Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:941
 msgctxt "key name"
 msgid "Right Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:868
+#: src/options/options_settings.cpp:941
 msgctxt "key name"
 msgid "Insert"
 msgstr ""
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:942
 msgctxt "key name"
 msgid "Delete"
 msgstr ""
 
-#: src/options/options_settings.cpp:869
+#: src/options/options_settings.cpp:942
 msgctxt "key name"
 msgid "Home"
 msgstr ""
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:943
 msgctxt "key name"
 msgid "End"
 msgstr ""
 
-#: src/options/options_settings.cpp:870
+#: src/options/options_settings.cpp:943
 msgctxt "key name"
 msgid "Page Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:944
 msgctxt "key name"
 msgid "Page Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:871
+#: src/options/options_settings.cpp:944
 msgctxt "key name"
 msgid "Pause"
 msgstr ""
 
-#: src/options/options_settings.cpp:872
+#: src/options/options_settings.cpp:945
 msgctxt "key name"
 msgid "Scroll Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:872
+#: src/options/options_settings.cpp:945
 msgctxt "key name"
 msgid "Num Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:873
+#: src/options/options_settings.cpp:946
 msgctxt "key name"
 msgid "Print Screen"
 msgstr ""
 
-#: src/options/options_settings.cpp:873
+#: src/options/options_settings.cpp:946
 msgctxt "key name"
 msgid "Menu Key"
 msgstr ""
 
-#: src/options/options_settings.cpp:886
+#: src/options/options_settings.cpp:959
 msgid "The keyboard and mouse are turned off."
 msgstr ""
 
-#: src/options/options_settings.cpp:894
+#: src/options/options_settings.cpp:967
 msgid "Keyboard Icons"
 msgstr ""
 
-#: src/options/options_settings.cpp:895
+#: src/options/options_settings.cpp:968
 msgid "Light"
 msgstr ""
 
-#: src/options/options_settings.cpp:895
+#: src/options/options_settings.cpp:968
 msgid "Dark"
 msgstr ""
 
-#: src/options/options_settings.cpp:902
+#: src/options/options_settings.cpp:975
 msgid "Dark keys in the button prompts."
 msgstr ""
 
-#: src/options/options_settings.cpp:902
+#: src/options/options_settings.cpp:975
 msgid "Light keys in the button prompts."
 msgstr ""
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:906
+#: src/options/options_settings.cpp:979
 msgid "Dark keys in the button prompts, like {0}"
 msgstr ""
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:906
+#: src/options/options_settings.cpp:979
 msgid "Light keys in the button prompts, like {0}"
 msgstr ""
 
-#: src/options/options_settings.cpp:914
+#: src/options/options_settings.cpp:987
 msgid "Controller Icons"
 msgstr ""
 
-#: src/options/options_settings.cpp:928
+#: src/options/options_settings.cpp:1001
 msgid "Matches player 1's controller."
 msgstr ""
 
-#: src/options/options_settings.cpp:929
+#: src/options/options_settings.cpp:1002
 msgid "The game's own buttons."
 msgstr ""
 
-#: src/options/options_settings.cpp:930
+#: src/options/options_settings.cpp:1003
 msgid "Always these buttons."
 msgstr ""
 
-#: src/options/options_settings.cpp:938
+#: src/options/options_settings.cpp:1011
 msgid "Default Keys"
 msgstr ""
 
-#: src/options/options_settings.cpp:941
+#: src/options/options_settings.cpp:1014
 msgid "Every keyboard and mouse key back as it came."
 msgstr ""
 
-#: src/options/options_settings.cpp:944
+#: src/options/options_settings.cpp:1017
 msgid "Revert Keybinds to Defaults?"
 msgstr ""
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 msgid "Mouse Aiming"
 msgstr ""
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 msgid "Reticle"
 msgstr ""
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:1035
 msgid "Crosshair"
 msgstr ""
 
-#: src/options/options_settings.cpp:963
+#: src/options/options_settings.cpp:1036
 msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:964
+#: src/options/options_settings.cpp:1037
 msgid "As a mask, the aiming reticle follows the mouse."
 msgstr ""
 
-#: src/options/options_settings.cpp:965
+#: src/options/options_settings.cpp:1038
 msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
 msgstr ""
 
-#: src/options/options_settings.cpp:975
+#: src/options/options_settings.cpp:1048
 msgid "Window Not Focused"
 msgstr ""
 
-#: src/options/options_settings.cpp:975
+#: src/options/options_settings.cpp:1048
 msgid "Keep Playing"
 msgstr ""
 
-#: src/options/options_settings.cpp:976
+#: src/options/options_settings.cpp:1049
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr ""
 
-#: src/options/options_settings.cpp:978
+#: src/options/options_settings.cpp:1051
 msgid "The game pauses by itself when its window loses the focus in a level."
 msgstr ""
 
-#: src/options/options_settings.cpp:989
+#: src/options/options_settings.cpp:1062
 msgid "Button Pictures"
 msgstr ""
 
-#: src/options/options_settings.cpp:992
+#: src/options/options_settings.cpp:1065
 msgid "Keyboard and Mouse Keys"
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1005
+#: src/options/options_settings.cpp:1078
 msgid "{0}, or circle {1}"
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1007
+#: src/options/options_settings.cpp:1080
 msgid "circle {0}"
 msgstr ""
 
 #. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
-#: src/options/options_settings.cpp:1013
+#: src/options/options_settings.cpp:1086
 msgid "{0} Controller: {1}"
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1026
+#: src/options/options_settings.cpp:1099
 msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
 msgstr ""
 
-#: src/options/options_settings.cpp:1046
+#: src/options/options_settings.cpp:1119
 msgid "Friendly Fire"
 msgstr ""
 
-#: src/options/options_settings.cpp:1047
+#: src/options/options_settings.cpp:1120
 msgid "Players' attacks hurt each other, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1048
+#: src/options/options_settings.cpp:1121
 msgid "A partner's hits pass harmlessly: no damage, combos untouched."
 msgstr ""
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 msgid "Partner Hits"
 msgstr ""
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 msgid "End Combos"
 msgstr ""
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1122
 msgid "Keep Combos"
 msgstr ""
 
-#: src/options/options_settings.cpp:1050
+#: src/options/options_settings.cpp:1123
 msgid "Getting hit by a partner ends your hit combo, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1051
+#: src/options/options_settings.cpp:1124
 msgid "A partner's hit doesn't end your combo."
 msgstr ""
 
-#: src/options/options_settings.cpp:1055
+#: src/options/options_settings.cpp:1128
 msgid "Friendly Fire is off: partners can't hit you."
 msgstr ""
 
-#: src/options/options_settings.cpp:1057
+#: src/options/options_settings.cpp:1130
 msgid "Simple Spinning"
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1064
+#: src/options/options_settings.cpp:1137
 msgid "One button spins: {0} on a controller. Circling {1} still works."
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
-#: src/options/options_settings.cpp:1067
+#: src/options/options_settings.cpp:1140
 msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1071
+#: src/options/options_settings.cpp:1144
 msgid "Circle {0} to spin, as in the original game."
 msgstr ""
 
 #. {0} = the left stick's picture, {1} = the Spin key's picture.
-#: src/options/options_settings.cpp:1073
+#: src/options/options_settings.cpp:1146
 msgid "Circle {0} to spin, as in the original game. {1} does nothing."
 msgstr ""
 
-#: src/options/options_settings.cpp:1075
+#: src/options/options_settings.cpp:1148
 msgid "Keep Spinning"
 msgstr ""
 
-#: src/options/options_settings.cpp:1075
+#: src/options/options_settings.cpp:1148
 msgid "Hold to Spin"
 msgstr ""
 
 #. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1080
+#: src/options/options_settings.cpp:1153
 msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
 msgstr ""
 
 #. {0} = the light attack's button / key pictures ("[X] or [LMB]").
-#: src/options/options_settings.cpp:1084
+#: src/options/options_settings.cpp:1157
 msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1090
+#: src/options/options_settings.cpp:1163
 msgid "Turn on Simple Spinning first."
 msgstr ""
 
-#: src/options/options_settings.cpp:1094 launcher/settings_page.cpp:497
+#: src/options/options_settings.cpp:1167 launcher/settings_page.cpp:499
 msgid "Co-op"
 msgstr ""
 
-#: src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:1170
 msgid "Co-op Camera"
 msgstr ""
 
-#: src/options/options_settings.cpp:1097
+#: src/options/options_settings.cpp:1170
 msgid "Frame Everyone"
 msgstr ""
 
-#: src/options/options_settings.cpp:1098
+#: src/options/options_settings.cpp:1171
 msgid "The camera pulls back to keep every player on screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:1099
+#: src/options/options_settings.cpp:1172
 msgid "The camera of the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 msgid "Camera Follows"
 msgstr ""
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 msgid "Nearest Player"
 msgstr ""
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1173
 msgid "Middle"
 msgstr ""
 
-#: src/options/options_settings.cpp:1101
+#: src/options/options_settings.cpp:1174
 msgid "Front to back, the camera stays with the player nearest to it."
 msgstr ""
 
-#: src/options/options_settings.cpp:1102
+#: src/options/options_settings.cpp:1175
 msgid "The camera aims at the middle of the group."
 msgstr ""
 
-#: src/options/options_settings.cpp:1103
+#: src/options/options_settings.cpp:1176
 msgid "Spinning"
 msgstr ""
 
-#: src/options/options_settings.cpp:1128
+#: src/options/options_settings.cpp:1201
 msgid "Takes effect when the game starts again: Restart Now, or next time you play."
 msgstr ""
 
-#: src/options/options_settings.cpp:1131
+#: src/options/options_settings.cpp:1204
 msgid "Restart Now"
 msgstr ""
 
-#: src/options/options_settings.cpp:1135
+#: src/options/options_settings.cpp:1208
 msgid "Restart now? Anything since your last save will be lost."
 msgstr ""
 
-#: src/options/options_settings.cpp:1148
+#: src/options/options_settings.cpp:1221
 msgid "Text"
 msgstr ""
 
-#: src/options/options_settings.cpp:1158
+#: src/options/options_settings.cpp:1231
 msgid "Menus, tutorials and messages in this language. The voices are chosen below."
 msgstr ""
 
-#: src/options/options_settings.cpp:1162
+#: src/options/options_settings.cpp:1235
 msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
 msgstr ""
 
-#: src/options/options_settings.cpp:1168
+#: src/options/options_settings.cpp:1241
 msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
 msgstr ""
 
-#: src/options/options_settings.cpp:1178
+#: src/options/options_settings.cpp:1251
 msgid "Voices"
 msgstr ""
 
-#: src/options/options_settings.cpp:1181
+#: src/options/options_settings.cpp:1254
 msgid "Same as Text"
 msgstr ""
 
-#: src/options/options_settings.cpp:1203
+#: src/options/options_settings.cpp:1276
 msgid "The disc has no voices in the text's language: the characters speak English."
 msgstr ""
 
 #. {0} = the language's name in its own language ("Deutsch").
-#: src/options/options_settings.cpp:1206
+#: src/options/options_settings.cpp:1279
 msgid "The characters speak the text's language: {0}."
 msgstr ""
 
-#: src/options/options_settings.cpp:1208
+#: src/options/options_settings.cpp:1281
 msgid "The characters speak this language, whatever the text is."
 msgstr ""
 
-#: src/options/options_settings.cpp:1217
+#: src/options/options_settings.cpp:1290
 msgid "Notifications"
 msgstr ""
 
-#: src/options/options_settings.cpp:1218
+#: src/options/options_settings.cpp:1291
 msgid "A card slides up at the bottom of the screen when you earn an achievement."
 msgstr ""
 
-#: src/options/options_settings.cpp:1219
+#: src/options/options_settings.cpp:1292
 msgid "No card: achievements are still earned and kept."
 msgstr ""
 
-#: src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:1295
 msgid "Jingle"
 msgstr ""
 
-#: src/options/options_settings.cpp:1223
+#: src/options/options_settings.cpp:1296
 msgid "One of the game's own jingles plays with the card."
 msgstr ""
 
-#: src/options/options_settings.cpp:1223
+#: src/options/options_settings.cpp:1296
 msgid "The card shows without a sound."
 msgstr ""
 
-#: src/options/options_settings.cpp:1226
+#: src/options/options_settings.cpp:1299
 msgid "Notifications are off."
 msgstr ""
 
-#: src/options/options_settings.cpp:1238
+#: src/options/options_settings.cpp:1311
 msgid "Display"
 msgstr ""
 
-#: src/options/options_settings.cpp:1240
+#: src/options/options_settings.cpp:1314
 msgid "HUD"
 msgstr ""
 
-#: src/options/options_settings.cpp:1241
+#: src/options/options_settings.cpp:1315
 msgid "Frame Counter"
 msgstr ""
 
-#: src/options/options_settings.cpp:1245
+#: src/options/options_settings.cpp:1319
 msgid "Graphics"
 msgstr ""
 
-#: src/options/options_settings.cpp:1246
+#: src/options/options_settings.cpp:1320
 msgid "Quality"
 msgstr ""
 
-#: src/options/options_settings.cpp:1247
+#: src/options/options_settings.cpp:1321
 msgid "Effects"
 msgstr ""
 
-#: src/options/options_settings.cpp:1250
+#: src/options/options_settings.cpp:1324
 msgid "Audio"
 msgstr ""
 
-#: src/options/options_settings.cpp:1251
+#: src/options/options_settings.cpp:1325
 msgid "Music"
 msgstr ""
 
-#: src/options/options_settings.cpp:1252
+#: src/options/options_settings.cpp:1326
 msgid "How loud the music plays."
 msgstr ""
 
-#: src/options/options_settings.cpp:1253
+#: src/options/options_settings.cpp:1327
 msgid "Dialogue"
 msgstr ""
 
-#: src/options/options_settings.cpp:1254
+#: src/options/options_settings.cpp:1328
 msgid "How loud the characters talk."
 msgstr ""
 
-#: src/options/options_settings.cpp:1255
+#: src/options/options_settings.cpp:1329
 msgid "SFX"
 msgstr ""
 
-#: src/options/options_settings.cpp:1256
+#: src/options/options_settings.cpp:1330
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr ""
 
-#: src/options/options_settings.cpp:1257
+#: src/options/options_settings.cpp:1331
 msgid "Output"
 msgstr ""
 
-#: src/options/options_settings.cpp:1259
+#: src/options/options_settings.cpp:1333
 msgid "Gameplay"
 msgstr ""
 
-#: src/options/options_settings.cpp:1260
+#: src/options/options_settings.cpp:1334
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1304 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1378 launcher/main.cpp:953
 msgid "None"
 msgstr ""
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 msgid "Move Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 msgid "Move Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 msgid "Move Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 msgid "Move Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1400
 msgid "Walk (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 msgid "Light Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 msgid "Heavy Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1401
 msgid "Block (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 msgid "Jack / Use"
 msgstr ""
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 msgid "Titan Special Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1402
 msgid "Pocket / Unpocket"
 msgstr ""
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 msgid "Menu: Confirm"
 msgstr ""
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 msgid "Menu: Back"
 msgstr ""
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 msgid "Menu: Previous Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1403
 msgid "Menu: Next Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 msgid "Menu: X Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 msgid "Menu: Y Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 msgid "D-pad Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 msgid "D-pad Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1404
 msgid "D-pad Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 msgid "D-pad Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 msgid "Right Stick Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 msgid "Right Stick Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1405
 msgid "Right Stick Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 msgid "Right Stick Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 msgid "Left Bumper"
 msgstr ""
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 msgid "Left Stick Click"
 msgstr ""
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1406
 msgid "Right Stick Click"
 msgstr ""
 
@@ -2888,7 +2968,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1665
+#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1712
 msgid "Log: %s"
 msgstr ""
 
@@ -2968,7 +3048,7 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: launcher/installer.cpp:499 launcher/setup.cpp:1102
+#: launcher/installer.cpp:499 launcher/setup.cpp:1145
 msgid "Pick your disc image (.iso) first."
 msgstr ""
 
@@ -3004,11 +3084,11 @@ msgstr ""
 msgid "What's missing can't be installed from here (see the list)."
 msgstr ""
 
-#: launcher/installer.cpp:569 launcher/setup.cpp:1828
+#: launcher/installer.cpp:569 launcher/setup.cpp:1875
 msgid "Installing the build tools"
 msgstr ""
 
-#: launcher/installer.cpp:575 launcher/setup.cpp:1906
+#: launcher/installer.cpp:575 launcher/setup.cpp:1953
 msgid "Check again"
 msgstr ""
 
@@ -3064,7 +3144,7 @@ msgstr ""
 msgid "Looking for the newest version..."
 msgstr ""
 
-#: launcher/installer.cpp:800 launcher/setup.cpp:1898
+#: launcher/installer.cpp:800 launcher/setup.cpp:1945
 msgid "Checking what's there..."
 msgstr ""
 
@@ -3124,11 +3204,11 @@ msgstr ""
 msgid "Version %s is available"
 msgstr ""
 
-#: launcher/installer.cpp:921 launcher/setup.cpp:798 launcher/setup.cpp:803 launcher/setup.cpp:1852
+#: launcher/installer.cpp:921 launcher/setup.cpp:841 launcher/setup.cpp:846 launcher/setup.cpp:1899
 msgid "Update to {0}"
 msgstr ""
 
-#: launcher/installer.cpp:928 launcher/main.cpp:664 launcher/setup.cpp:817
+#: launcher/installer.cpp:928 launcher/main.cpp:664 launcher/setup.cpp:860
 msgid "Release page"
 msgstr ""
 
@@ -3136,7 +3216,7 @@ msgstr ""
 msgid "This is the newest version."
 msgstr ""
 
-#: launcher/installer.cpp:937 launcher/setup.cpp:829
+#: launcher/installer.cpp:937 launcher/setup.cpp:872
 msgid "Check for updates"
 msgstr ""
 
@@ -3156,7 +3236,7 @@ msgstr ""
 msgid "Build it now"
 msgstr ""
 
-#: launcher/installer.cpp:978 launcher/setup.cpp:1992
+#: launcher/installer.cpp:978 launcher/setup.cpp:2039
 msgid "Pick the disc image..."
 msgstr ""
 
@@ -3439,7 +3519,7 @@ msgstr ""
 msgid "Report a problem..."
 msgstr ""
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1660
+#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1707
 msgid "OK"
 msgstr ""
 
@@ -3818,7 +3898,7 @@ msgstr ""
 msgid "The new co-op camera keeps every player in the picture. It needs more testing in fights, tight places and cutscenes. Turn it off for the original camera."
 msgstr ""
 
-#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:70 launcher/settings_page.cpp:76 launcher/settings_page.cpp:82 launcher/settings_page.cpp:87 launcher/settings_page.cpp:93 launcher/settings_page.cpp:99
+#: launcher/settings_page.cpp:64 launcher/settings_page.cpp:72 launcher/settings_page.cpp:78 launcher/settings_page.cpp:84 launcher/settings_page.cpp:89 launcher/settings_page.cpp:95 launcher/settings_page.cpp:101
 msgid "Native renderer only"
 msgstr ""
 
@@ -3826,243 +3906,243 @@ msgstr ""
 msgid "Motion blur is this port's own effect (the original has none). Only the native renderer draws it: with the emulated picture it does nothing."
 msgstr ""
 
-#: launcher/settings_page.cpp:71
+#: launcher/settings_page.cpp:73
 msgid "Only the native renderer draws at a higher resolution: the emulated picture stays 720p. 4K is heavy: it needs a strong graphics card."
 msgstr ""
 
-#: launcher/settings_page.cpp:77
+#: launcher/settings_page.cpp:79
 msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
 msgstr ""
 
-#: launcher/settings_page.cpp:83
+#: launcher/settings_page.cpp:85
 msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
 msgstr ""
 
-#: launcher/settings_page.cpp:88
+#: launcher/settings_page.cpp:90
 msgid "Only the native renderer sharpens textures: the emulated picture stays as the Xbox 360 drew it."
 msgstr ""
 
-#: launcher/settings_page.cpp:94
+#: launcher/settings_page.cpp:96
 msgid "Only the native renderer sharpens the picture: the emulated picture stays as the Xbox 360 drew it."
 msgstr ""
 
-#: launcher/settings_page.cpp:100
+#: launcher/settings_page.cpp:102
 msgid "Only the native renderer changes the shadows' edge: the emulated picture keeps the Xbox 360's."
 msgstr ""
 
-#: launcher/settings_page.cpp:105
+#: launcher/settings_page.cpp:107
 msgid "Less to go on"
 msgstr ""
 
-#: launcher/settings_page.cpp:106
+#: launcher/settings_page.cpp:108
 msgid "Problem reports from these sessions won't show what the game was doing (frame rate, sounds, co-op, menus): a bug may be impossible to track down."
 msgstr ""
 
-#: launcher/settings_page.cpp:112
+#: launcher/settings_page.cpp:114
 msgid "Falls"
 msgstr ""
 
-#: launcher/settings_page.cpp:113
+#: launcher/settings_page.cpp:115
 msgid "Off above 30 fps: Crash may flash into his fall animation for a split second when stepping down uneven ground. 40 ms is the tested value."
 msgstr ""
 
-#: launcher/settings_page.cpp:161
+#: launcher/settings_page.cpp:163
 msgid "Emulated (the default)"
 msgstr ""
 
-#: launcher/settings_page.cpp:162
+#: launcher/settings_page.cpp:164
 msgid "Native renderer"
 msgstr ""
 
-#: launcher/settings_page.cpp:163
+#: launcher/settings_page.cpp:165
 msgid "Native only (fastest, default)"
 msgstr ""
 
-#: launcher/settings_page.cpp:164
+#: launcher/settings_page.cpp:166
 msgid "Both, in two windows"
 msgstr ""
 
-#: launcher/settings_page.cpp:165
+#: launcher/settings_page.cpp:167
 msgid "Emulated only"
 msgstr ""
 
-#: launcher/settings_page.cpp:266 launcher/settings_page.cpp:434 launcher/settings_page.cpp:675
+#: launcher/settings_page.cpp:268 launcher/settings_page.cpp:436 launcher/settings_page.cpp:677
 msgid "Default"
 msgstr ""
 
-#: launcher/settings_page.cpp:333
+#: launcher/settings_page.cpp:335
 msgid "Frame rate"
 msgstr ""
 
-#: launcher/settings_page.cpp:335
+#: launcher/settings_page.cpp:337
 msgid "Frame rate cap"
 msgstr ""
 
-#: launcher/settings_page.cpp:336
+#: launcher/settings_page.cpp:338
 msgid "How many frames per second the game runs at. 30 is the original game's rate."
 msgstr ""
 
-#: launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
+#: launcher/settings_page.cpp:349 launcher/settings_page.cpp:357
 msgid "%d (the original)"
 msgstr ""
 
-#: launcher/settings_page.cpp:362
+#: launcher/settings_page.cpp:364
 msgid "Other..."
 msgstr ""
 
-#: launcher/settings_page.cpp:371
+#: launcher/settings_page.cpp:373
 msgid "   Frames per second"
 msgstr ""
 
-#: launcher/settings_page.cpp:381
+#: launcher/settings_page.cpp:383
 msgid "Ground grace"
 msgstr ""
 
-#: launcher/settings_page.cpp:382
+#: launcher/settings_page.cpp:384
 msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
 msgstr ""
 
-#: launcher/settings_page.cpp:391
+#: launcher/settings_page.cpp:393
 msgid "Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this port's own renderer drawing the game directly (in development). F9 switches between them while playing, F8 opens the second window."
 msgstr ""
 
-#: launcher/settings_page.cpp:444
+#: launcher/settings_page.cpp:446
 msgid "Window"
 msgstr ""
 
-#: launcher/settings_page.cpp:449
+#: launcher/settings_page.cpp:451
 msgid "Window mode"
 msgstr ""
 
-#: launcher/settings_page.cpp:449
+#: launcher/settings_page.cpp:451
 msgid "Windowed: a window you can move and resize. Fullscreen: fills the whole monitor (the one picked under Monitor)."
 msgstr ""
 
-#: launcher/settings_page.cpp:469
+#: launcher/settings_page.cpp:471
 msgid "Which monitor Fullscreen fills. Automatic = the one the game is on."
 msgstr ""
 
-#: launcher/settings_page.cpp:481
+#: launcher/settings_page.cpp:483
 msgid "{0}: not connected"
 msgstr ""
 
-#: launcher/settings_page.cpp:499
+#: launcher/settings_page.cpp:501
 msgid "How many players can play at once (4 by default; the original game has 2). Players join from the Players screen (main menu or pause menu) or with START."
 msgstr ""
 
-#: launcher/settings_page.cpp:502
+#: launcher/settings_page.cpp:504
 msgid "2 (the original)"
 msgstr ""
 
-#: launcher/settings_page.cpp:502
+#: launcher/settings_page.cpp:504
 msgid "4 (default)"
 msgstr ""
 
-#: launcher/settings_page.cpp:513
+#: launcher/settings_page.cpp:515
 msgid "Co-op camera"
 msgstr ""
 
-#: launcher/settings_page.cpp:514
+#: launcher/settings_page.cpp:516
 msgid "Keep every player in the picture: the camera centres between the players and backs off until everyone fits. Off = the original camera, which follows one player."
 msgstr ""
 
-#: launcher/settings_page.cpp:517
+#: launcher/settings_page.cpp:519
 msgid "   Farthest zoom-out"
 msgstr ""
 
-#: launcher/settings_page.cpp:518
+#: launcher/settings_page.cpp:520
 msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
 msgstr ""
 
-#: launcher/settings_page.cpp:520
+#: launcher/settings_page.cpp:522
 msgid "   Room around players"
 msgstr ""
 
-#: launcher/settings_page.cpp:521
+#: launcher/settings_page.cpp:523
 msgid "How much ground around each player stays in the picture (to their left, right and beyond them), so a player at the edge still sees a ledge or a drop. Crash is about 2 tall. 0 = just the players themselves."
 msgstr ""
 
-#: launcher/settings_page.cpp:524
+#: launcher/settings_page.cpp:526
 msgid "   Stay with the nearest player"
 msgstr ""
 
-#: launcher/settings_page.cpp:525
+#: launcher/settings_page.cpp:527
 msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
 msgstr ""
 
-#: launcher/settings_page.cpp:528
+#: launcher/settings_page.cpp:530
 msgid "   Group focus"
 msgstr ""
 
-#: launcher/settings_page.cpp:529
+#: launcher/settings_page.cpp:531
 msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
 msgstr ""
 
-#: launcher/settings_page.cpp:532
+#: launcher/settings_page.cpp:534
 msgid "Lost controller pause"
 msgstr ""
 
-#: launcher/settings_page.cpp:533
+#: launcher/settings_page.cpp:535
 msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
 msgstr ""
 
-#: launcher/settings_page.cpp:541
+#: launcher/settings_page.cpp:543
 msgid "Keyboard and mouse"
 msgstr ""
 
-#: launcher/settings_page.cpp:542
+#: launcher/settings_page.cpp:544
 msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
 msgstr ""
 
-#: launcher/settings_page.cpp:548
+#: launcher/settings_page.cpp:550
 msgid "Sound and logging"
 msgstr ""
 
-#: launcher/settings_page.cpp:550
+#: launcher/settings_page.cpp:552
 msgid "Mute the sound"
 msgstr ""
 
-#: launcher/settings_page.cpp:551
+#: launcher/settings_page.cpp:553
 msgid "Event logs (for bug reports)"
 msgstr ""
 
-#: launcher/settings_page.cpp:552
+#: launcher/settings_page.cpp:554
 msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
 msgstr ""
 
-#: launcher/settings_page.cpp:621
+#: launcher/settings_page.cpp:623
 msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
 msgstr ""
 
-#: launcher/settings_page.cpp:625
+#: launcher/settings_page.cpp:627
 msgid "Search names and descriptions..."
 msgstr ""
 
-#: launcher/settings_page.cpp:628
+#: launcher/settings_page.cpp:630
 msgid "Show developer settings (debug_...)"
 msgstr ""
 
-#: launcher/settings_page.cpp:690
+#: launcher/settings_page.cpp:692
 msgid "Default: %s%s"
 msgstr ""
 
-#: launcher/settings_page.cpp:691
+#: launcher/settings_page.cpp:693
 msgid "  (read at start only)"
 msgstr ""
 
-#: launcher/settings_page.cpp:702
+#: launcher/settings_page.cpp:704
 msgid "Asking the game for its settings..."
 msgstr ""
 
-#: launcher/settings_page.cpp:714
+#: launcher/settings_page.cpp:716
 msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
 msgstr ""
 
-#: launcher/settings_page.cpp:718
+#: launcher/settings_page.cpp:720
 msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
 msgstr ""
 
-#: launcher/settings_page.cpp:730
+#: launcher/settings_page.cpp:732
 msgid "All settings (advanced)"
 msgstr ""
 
@@ -4118,391 +4198,395 @@ msgstr ""
 msgid "not found (needs pkg-config too)"
 msgstr ""
 
-#: launcher/setup.cpp:766
+#: launcher/setup.cpp:748
+msgid "Checking file dates"
+msgstr ""
+
+#: launcher/setup.cpp:809
 msgid "Version %s"
 msgstr ""
 
-#: launcher/setup.cpp:769
+#: launcher/setup.cpp:812
 msgid " -  a developer copy: update it with git pull"
 msgstr ""
 
-#: launcher/setup.cpp:774
+#: launcher/setup.cpp:817
 msgid " -  updated to %s: restart the launcher to finish"
 msgstr ""
 
-#: launcher/setup.cpp:777
+#: launcher/setup.cpp:820
 msgid "Restart the launcher"
 msgstr ""
 
-#: launcher/setup.cpp:781
+#: launcher/setup.cpp:824
 msgid "Couldn't restart: start the launcher again by hand."
 msgstr ""
 
-#: launcher/setup.cpp:791
+#: launcher/setup.cpp:834
 msgid " -  checking for updates..."
 msgstr ""
 
-#: launcher/setup.cpp:793
+#: launcher/setup.cpp:836
 msgid " -  %s is available%s%s"
 msgstr ""
 
-#: launcher/setup.cpp:813
+#: launcher/setup.cpp:856
 msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
 msgstr ""
 
-#: launcher/setup.cpp:822
+#: launcher/setup.cpp:865
 msgid " -  the newest version"
 msgstr ""
 
-#: launcher/setup.cpp:838
+#: launcher/setup.cpp:881
 msgid "What's new in %s"
 msgstr ""
 
-#: launcher/setup.cpp:903
+#: launcher/setup.cpp:946
 msgid "the ReXGlue SDK and its libraries are there"
 msgstr ""
 
-#: launcher/setup.cpp:904
+#: launcher/setup.cpp:947
 msgid "the ReXGlue SDK isn't downloaded yet"
 msgstr ""
 
-#: launcher/setup.cpp:905
+#: launcher/setup.cpp:948
 msgid "the ReXGlue SDK submodule isn't downloaded yet"
 msgstr ""
 
-#: launcher/setup.cpp:915
+#: launcher/setup.cpp:958
 msgid "this version needs another ReXGlue SDK ({0}): download it again"
 msgstr ""
 
-#: launcher/setup.cpp:929
+#: launcher/setup.cpp:972
 msgid "extracted in {0}"
 msgstr ""
 
-#: launcher/setup.cpp:932
+#: launcher/setup.cpp:975
 msgid "no disc image found yet: pick your .iso"
 msgstr ""
 
-#: launcher/setup.cpp:933
+#: launcher/setup.cpp:976
 msgid "ready to extract {0}"
 msgstr ""
 
-#: launcher/setup.cpp:964
+#: launcher/setup.cpp:1007
 msgid "needs the source parts first"
 msgstr ""
 
-#: launcher/setup.cpp:971
+#: launcher/setup.cpp:1014
 msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
 msgstr ""
 
-#: launcher/setup.cpp:975
+#: launcher/setup.cpp:1018
 msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
 msgstr ""
 
-#: launcher/setup.cpp:981
+#: launcher/setup.cpp:1024
 msgid "patched, not built yet"
 msgstr ""
 
-#: launcher/setup.cpp:981
+#: launcher/setup.cpp:1024
 msgid "not patched or built yet"
 msgstr ""
 
-#: launcher/setup.cpp:986
+#: launcher/setup.cpp:1029
 msgid "built without our patches: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:987
+#: launcher/setup.cpp:1030
 msgid "the patches changed since the SDK was built: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:990
+#: launcher/setup.cpp:1033
 msgid "built and installed, {0} patches"
 msgstr ""
 
-#: launcher/setup.cpp:997
+#: launcher/setup.cpp:1040
 msgid "not built yet"
 msgstr ""
 
-#: launcher/setup.cpp:1000
+#: launcher/setup.cpp:1043
 msgid "built, not copied into program/ yet"
 msgstr ""
 
-#: launcher/setup.cpp:1017
+#: launcher/setup.cpp:1060
 msgid "the sources changed since the last build: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:1020
+#: launcher/setup.cpp:1063
 msgid "built: {0}"
 msgstr ""
 
-#: launcher/setup.cpp:1043
+#: launcher/setup.cpp:1086
 msgid "Downloading the source parts (git submodules)"
 msgstr ""
 
-#: launcher/setup.cpp:1061
+#: launcher/setup.cpp:1104
 msgid "Finishing the SDK's libraries (a download was stopped)"
 msgstr ""
 
-#: launcher/setup.cpp:1066
+#: launcher/setup.cpp:1109
 msgid "Removing the old SDK download"
 msgstr ""
 
-#: launcher/setup.cpp:1079
+#: launcher/setup.cpp:1122
 msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
 msgstr ""
 
-#: launcher/setup.cpp:1084
+#: launcher/setup.cpp:1127
 msgid "Checking the SDK's version"
 msgstr ""
 
-#: launcher/setup.cpp:1109
+#: launcher/setup.cpp:1152
 msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
 msgstr ""
 
-#: launcher/setup.cpp:1122
+#: launcher/setup.cpp:1165
 msgid "That file isn't an Xbox 360 disc image the extractor can read."
 msgstr ""
 
-#: launcher/setup.cpp:1126
+#: launcher/setup.cpp:1169
 msgid "That disc image has no default.xex: not a game disc?"
 msgstr ""
 
-#: launcher/setup.cpp:1129
+#: launcher/setup.cpp:1172
 msgid "Extracting the disc into game/"
 msgstr ""
 
-#: launcher/setup.cpp:1141
+#: launcher/setup.cpp:1184
 msgid "Checking the game's executable"
 msgstr ""
 
-#: launcher/setup.cpp:1147
+#: launcher/setup.cpp:1190
 msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
 msgstr ""
 
-#: launcher/setup.cpp:1151
+#: launcher/setup.cpp:1194
 msgid "Title id 565507FA: Crash: Mind over Mutant."
 msgstr ""
 
-#: launcher/setup.cpp:1173
+#: launcher/setup.cpp:1217
 msgid "Undoing the old patches"
 msgstr ""
 
-#: launcher/setup.cpp:1174
+#: launcher/setup.cpp:1218
 msgid "Removing files the old patches added"
 msgstr ""
 
-#: launcher/setup.cpp:1177
+#: launcher/setup.cpp:1221
 msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
 msgstr ""
 
-#: launcher/setup.cpp:1192
+#: launcher/setup.cpp:1236
 msgid "Configuring the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:1194
+#: launcher/setup.cpp:1238
 msgid "Building the SDK (Release: the recompiler)"
 msgstr ""
 
-#: launcher/setup.cpp:1198
+#: launcher/setup.cpp:1242
 msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
 msgstr ""
 
-#: launcher/setup.cpp:1206
+#: launcher/setup.cpp:1250
 msgid "Noting which patches the SDK was built with"
 msgstr ""
 
-#: launcher/setup.cpp:1233
+#: launcher/setup.cpp:1277
 msgid "Copying default.xex for the build"
 msgstr ""
 
-#: launcher/setup.cpp:1260
+#: launcher/setup.cpp:1304
 msgid "Linking source/game to the disc's files"
 msgstr ""
 
-#: launcher/setup.cpp:1281
+#: launcher/setup.cpp:1328
 msgid "Configuring the game's build"
 msgstr ""
 
-#: launcher/setup.cpp:1291
+#: launcher/setup.cpp:1338
 msgid "Recompiling the game's code (default.xex -> C++)"
 msgstr ""
 
-#: launcher/setup.cpp:1297
+#: launcher/setup.cpp:1344
 msgid "Compiling the game ({0} at a time; the first build takes a while)"
 msgstr ""
 
-#: launcher/setup.cpp:1310
+#: launcher/setup.cpp:1357
 msgid "Copying the game into program/"
 msgstr ""
 
-#: launcher/setup.cpp:1372
+#: launcher/setup.cpp:1419
 msgid "Making the game's icon from your disc"
 msgstr ""
 
-#: launcher/setup.cpp:1382
+#: launcher/setup.cpp:1429
 msgid "Putting the icon on the game"
 msgstr ""
 
-#: launcher/setup.cpp:1447
+#: launcher/setup.cpp:1494
 msgid "Setting up"
 msgstr ""
 
-#: launcher/setup.cpp:1634
+#: launcher/setup.cpp:1681
 msgid "%s: done"
 msgstr ""
 
-#: launcher/setup.cpp:1636
+#: launcher/setup.cpp:1683
 msgid "%s: cancelled"
 msgstr ""
 
-#: launcher/setup.cpp:1638
+#: launcher/setup.cpp:1685
 msgid "%s: failed"
 msgstr ""
 
-#: launcher/setup.cpp:1658
+#: launcher/setup.cpp:1705
 msgid "This step can't be stopped: a few seconds."
 msgstr ""
 
-#: launcher/setup.cpp:1667
+#: launcher/setup.cpp:1714
 msgid "Follow"
 msgstr ""
 
-#: launcher/setup.cpp:1736 launcher/setup.cpp:1806 launcher/setup.cpp:1846
+#: launcher/setup.cpp:1783 launcher/setup.cpp:1853 launcher/setup.cpp:1893
 msgid "Still busy: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1741
+#: launcher/setup.cpp:1788
 msgid "Still checking: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1772
+#: launcher/setup.cpp:1819
 msgid "Adding {0} (Windows asks for permission)"
 msgstr ""
 
-#: launcher/setup.cpp:1782
+#: launcher/setup.cpp:1829
 msgid "Installing {0} (winget)"
 msgstr ""
 
-#: launcher/setup.cpp:1811
+#: launcher/setup.cpp:1858
 msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
 msgstr ""
 
-#: launcher/setup.cpp:1820
+#: launcher/setup.cpp:1867
 msgid "Nothing here can be installed automatically."
 msgstr ""
 
-#: launcher/setup.cpp:1876
+#: launcher/setup.cpp:1923
 msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
 msgstr ""
 
-#: launcher/setup.cpp:1900
+#: launcher/setup.cpp:1947
 msgid "Everything is set up: the game is ready to play."
 msgstr ""
 
-#: launcher/setup.cpp:1902
+#: launcher/setup.cpp:1949
 msgid "Some steps are left."
 msgstr ""
 
-#: launcher/setup.cpp:1922
+#: launcher/setup.cpp:1969
 msgid "Set up everything"
 msgstr ""
 
-#: launcher/setup.cpp:1927
+#: launcher/setup.cpp:1974
 msgid "Install the missing build tools first (step 1)."
 msgstr ""
 
-#: launcher/setup.cpp:1931
+#: launcher/setup.cpp:1978
 msgid "The game is running: building waits until it's closed."
 msgstr ""
 
-#: launcher/setup.cpp:1944
+#: launcher/setup.cpp:1991
 msgid "Build tools"
 msgstr ""
 
-#: launcher/setup.cpp:1945
+#: launcher/setup.cpp:1992
 msgid "everything needed to build is installed"
 msgstr ""
 
-#: launcher/setup.cpp:1952
+#: launcher/setup.cpp:1999
 msgid "found"
 msgstr ""
 
-#: launcher/setup.cpp:1952
+#: launcher/setup.cpp:1999
 msgid "missing"
 msgstr ""
 
-#: launcher/setup.cpp:1957
+#: launcher/setup.cpp:2004
 msgid "  -  package: "
 msgstr ""
 
-#: launcher/setup.cpp:1964
+#: launcher/setup.cpp:2011
 msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
 msgstr ""
 
-#: launcher/setup.cpp:1973 launcher/setup.cpp:1978
+#: launcher/setup.cpp:2020 launcher/setup.cpp:2025
 msgid "Source parts"
 msgstr ""
 
-#: launcher/setup.cpp:1977
+#: launcher/setup.cpp:2024
 msgid "Download them"
 msgstr ""
 
-#: launcher/setup.cpp:1985
+#: launcher/setup.cpp:2032
 msgid "Your disc"
 msgstr ""
 
-#: launcher/setup.cpp:1989
+#: launcher/setup.cpp:2036
 msgid "Disc image: %s"
 msgstr ""
 
-#: launcher/setup.cpp:1993
+#: launcher/setup.cpp:2040
 msgid "Xbox 360 disc image"
 msgstr ""
 
-#: launcher/setup.cpp:2008
+#: launcher/setup.cpp:2055
 msgid "Extract it"
 msgstr ""
 
-#: launcher/setup.cpp:2012
+#: launcher/setup.cpp:2059
 msgid "Disc"
 msgstr ""
 
-#: launcher/setup.cpp:2019
+#: launcher/setup.cpp:2066
 msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
 msgstr ""
 
-#: launcher/setup.cpp:2025 launcher/setup.cpp:2034
+#: launcher/setup.cpp:2072 launcher/setup.cpp:2081
 msgid "ReXGlue SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2030
+#: launcher/setup.cpp:2077
 msgid "Rebuild the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2030
+#: launcher/setup.cpp:2077
 msgid "Build the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2040
+#: launcher/setup.cpp:2087
 msgid "A few minutes."
 msgstr ""
 
-#: launcher/setup.cpp:2045 launcher/setup.cpp:2054
+#: launcher/setup.cpp:2092 launcher/setup.cpp:2101
 msgid "The game"
 msgstr ""
 
-#: launcher/setup.cpp:2050
+#: launcher/setup.cpp:2097
 msgid "Build the game"
 msgstr ""
 
-#: launcher/setup.cpp:2051
+#: launcher/setup.cpp:2098
 msgid "Rebuild (update)"
 msgstr ""
 
-#: launcher/setup.cpp:2052
+#: launcher/setup.cpp:2099
 msgid "Rebuild"
 msgstr ""
 
-#: launcher/setup.cpp:2057
+#: launcher/setup.cpp:2104
 msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
 msgstr ""
 

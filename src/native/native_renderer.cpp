@@ -3,6 +3,7 @@
 // =============================================================================
 
 #include "native_renderer.h"
+#include "widescreen.h"
 
 
 #include <algorithm>
@@ -1537,6 +1538,7 @@ void NativeRenderer::OnFrameEnd() {
   // picture is on screen somewhere.
   native::recorder::TakeFrame(frame_, target != nullptr);
   if (!target) {
+    widescreen::Update(false);  // the emulated picture: the game's 16:9
     // F10 photos of the emulated picture (ab_capture.h).
     native::ab_capture::WhileEmulatedShown(presenter_);
     return;
@@ -1548,13 +1550,20 @@ void NativeRenderer::OnFrameEnd() {
   }
   // This frame's render scale (the Render Resolution setting) and picture size.
   frame_scale_ = native::RenderScaleSetting();
-  out_width_ = uint32_t(native::ScaleSize(int32_t(kWidth), frame_scale_));
+  // WIDESCREEN (widescreen.h): the shape this frame was drawn with (the
+  // game's camera and menus used it), then the next frame's from the window.
+  // Only while our picture is the only one drawn (the main window, native
+  // only, no dual window): the emulated picture is always 16:9.
+  const bool wide_allowed = target == presenter_ && REXCVAR_GET(native_only) &&
+                            !window_presenter_.load(std::memory_order_relaxed);
+  frame_wide_ = widescreen::Update(wide_allowed) / widescreen::kGameAspect;
+  out_width_ = uint32_t(native::ScaleSize(int32_t(kWidth), frame_scale_ * frame_wide_));
   out_height_ = uint32_t(native::ScaleSize(int32_t(kHeight), frame_scale_));
   // The presenter picks one of its guest-output images (of that size) and
   // calls us back right away, on this thread; we must submit our work
   // before returning.
   target->RefreshGuestOutput(
-      out_width_, out_height_, 16, 9, [this](rex::ui::Presenter::GuestOutputRefreshContext& context) {
+      out_width_, out_height_, out_width_, out_height_, [this](rex::ui::Presenter::GuestOutputRefreshContext& context) {
         return RecordAndSubmit(
             static_cast<VulkanPresenter::VulkanGuestOutputRefreshContext&>(context));
       });
@@ -1587,8 +1596,40 @@ void NativeRenderer::LogCost(double frame_ms) {
   cost_ = Cost{};
 }
 
+// WIDESCREEN (widescreen.h): is this draw a flat, untextured 2D quad that
+// covers the whole of the game's 16:9 screen (in a picture `frame_wide_`
+// times wider, the middle 1 / frame_wide_ of clip x, all of clip y)? The
+// game's fades (found 2026-11-07: a 6-vertex untextured simple quad, x 318..962
+// of 1280 at 32:9 = the middle 16:9) and dimmers are; the movies' bars
+// (black outside, all ours) and the HUD aren't.
+bool NativeRenderer::CoversGameScreen(const native::DrawCommand& d) const {
+  if (d.material != native::Material::kSimple || d.textured || d.mesh || !d.layout.stride ||
+      d.vertex_count == 0 || d.vertex_count > 6) {
+    return false;
+  }
+  const uint8_t* bytes = reinterpret_cast<const uint8_t*>(frame_.vertex_data.data());
+  const size_t size = frame_.vertex_data.size() * 4;
+  float x0 = 1e9f, y0 = 1e9f, x1 = -1e9f, y1 = -1e9f;
+  for (uint32_t v = 0; v < d.vertex_count; ++v) {
+    const size_t at = size_t(d.vertex_offset) + size_t(v) * d.layout.stride;
+    if (at + 12 > size) return false;
+    float pos[3];
+    std::memcpy(pos, bytes + at, 12);
+    float c[4];
+    for (int r = 0; r < 4; ++r) {
+      c[r] = d.mvp[r] * pos[0] + d.mvp[4 + r] * pos[1] + d.mvp[8 + r] * pos[2] + d.mvp[12 + r];
+    }
+    if (c[3] <= 0.0f) return false;
+    x0 = std::min(x0, c[0] / c[3]), x1 = std::max(x1, c[0] / c[3]);
+    y0 = std::min(y0, c[1] / c[3]), y1 = std::max(y1, c[1] / c[3]);
+  }
+  const float half = 0.98f / frame_wide_;  // the game's screen, a hair in
+  return x0 <= -half && x1 >= half && y0 <= -0.98f && y1 >= 0.98f;
+}
+
 void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
                                  VkDescriptorPool descriptor_pool) {
+
   const VulkanDevice::Functions& dfn = device_->functions();
   const VkDevice device = device_->device();
 
@@ -1939,9 +1980,10 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   // size and depths within 0..1 (min > max is fine: the game's flipped
   // depth range).
   // In the game's pixels, at the render scale (render_targets.h).
-  const float scale = render_targets_->scale();
+  // (Widescreen: x and widths by the sideways scale, render_targets.h.)
+  const float scale = render_targets_->scale(), scale_x = render_targets_->scale_x();
   auto to_vulkan = [&](const native::Viewport& v) {
-    VkViewport out{v.x * scale, v.y * scale, v.width * scale, v.height * scale,
+    VkViewport out{v.x * scale_x, v.y * scale, v.width * scale_x, v.height * scale,
                    std::clamp(v.min_z, 0.0f, 1.0f), std::clamp(v.max_z, 0.0f, 1.0f)};
     if (out.width <= 0.0f || out.height <= 0.0f) {
       const VkExtent2D extent = render_targets_->pass_extent();
@@ -1987,9 +2029,9 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       VkClearRect rects[16];
       uint32_t rect_count = 0;
       for (const auto& r : c.rects) {
-        const int32_t x0 = std::clamp(native::ScaleSize(r[0], scale), 0, int32_t(extent.width));
+        const int32_t x0 = std::clamp(native::ScaleSize(r[0], scale_x), 0, int32_t(extent.width));
         const int32_t y0 = std::clamp(native::ScaleSize(r[1], scale), 0, int32_t(extent.height));
-        const int32_t x1 = std::clamp(native::ScaleSize(r[2], scale), x0, int32_t(extent.width));
+        const int32_t x1 = std::clamp(native::ScaleSize(r[2], scale_x), x0, int32_t(extent.width));
         const int32_t y1 = std::clamp(native::ScaleSize(r[3], scale), y0, int32_t(extent.height));
         if (x1 > x0 && y1 > y0 && rect_count < 16) {
           rects[rect_count++] = {{{x0, y0}, {uint32_t(x1 - x0), uint32_t(y1 - y0)}}, 0, 1};
@@ -2049,12 +2091,22 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       std::memcpy(bink.c, d.colour_matrix, sizeof(bink.c));
       bink.screen_size[0] = float(kWidth);
       bink.screen_size[1] = float(kHeight);
+      bink.screen_size[2] = frame_wide_;  // widescreen: the movie's height back to full (bink.vert)
       dfn.vkCmdPushConstants(cmd, draw_layout_,
                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                              sizeof(bink), &bink);
     } else {
       SimpleParams params{};
       std::memcpy(params.mvp, d.mvp, sizeof(params.mvp));
+      // WIDESCREEN: a flat full-screen quad (fades to / from black, dimmed
+      // backgrounds) is laid out for the game's 16:9 only: stretched to the
+      // whole wide picture (CoversGameScreen).
+      if (frame_wide_ > 1.001f && CoversGameScreen(d)) {
+        params.mvp[0] *= frame_wide_;
+        params.mvp[4] *= frame_wide_;
+        params.mvp[8] *= frame_wide_;
+        params.mvp[12] *= frame_wide_;
+      }
       params.tint_fade[0] = d.tint[0];
       params.tint_fade[1] = d.tint[1];
       params.tint_fade[2] = d.tint[2];
@@ -2166,7 +2218,7 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
     buffer_cache_->BeginFrame(completed);
   }
   render_targets_->BeginFrame(completed);
-  render_targets_->SetScale(frame_scale_);
+  render_targets_->SetScale(frame_scale_, frame_wide_);
   if ((frame_width_ != out_width_ || frame_height_ != out_height_) &&
       !ResizeFrameImage(out_width_, out_height_)) {
     return false;

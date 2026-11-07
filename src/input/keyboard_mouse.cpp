@@ -2,6 +2,7 @@
 // input/keyboard_mouse.cpp -- see keyboard_mouse.h
 // =============================================================================
 #include "keyboard_mouse.h"
+#include "../native/widescreen.h"
 
 #include "../options/options_menu.h"
 #include "mouse_menus.h"
@@ -756,14 +757,12 @@ void KeyboardMouseDriver::OnMouseMove(rex::ui::MouseEvent& e) {
   if (!window) return;
   const float w = float(window->GetActualPhysicalWidth()), h = float(window->GetActualPhysicalHeight());
   if (w <= 0 || h <= 0) return;
-  // The presenter fits the 16:9 picture into the window, centred (letterbox
+  // The presenter fits the picture into the window, centred (letterbox
   // bars left/right or top/bottom; rex/ui/presenter.cpp, safe area 100%).
-  float pw = w, ph = w * 9.0f / 16.0f;
-  if (ph > h) {
-    ph = h;
-    pw = h * 16.0f / 9.0f;
-  }
-  const float x = (float(e.x()) - (w - pw) / 2) / pw, y = (float(e.y()) - (h - ph) / 2) / ph;
+  // 0..1 = the game's 16:9 screen: in a WIDESCREEN picture its middle part
+  // (native/widescreen.h), so the sides read below 0 / above 1.
+  const widescreen::Rect game = widescreen::Game(w, h);
+  const float x = (float(e.x()) - game.x) / game.w, y = (float(e.y()) - game.y) / game.h;
   std::lock_guard<std::mutex> lock(mutex_);
   pointer_x_ = x;
   pointer_y_ = y;

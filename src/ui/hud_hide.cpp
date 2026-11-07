@@ -39,6 +39,11 @@ constexpr size_t kPageCount = sizeof(kPages) / sizeof(kPages[0]);
 std::array<std::atomic<uint32_t>, kPageCount> g_pages{};
 std::chrono::steady_clock::time_point g_last_find{};
 
+// WIDESCREEN: the cutscenes' black bars (page InGame_LetterBox: two black
+// quads x -110..750 = exactly the 16:9 screen) stretched to the wide picture
+// (hud_scale kStretchWide). Not a HUD page: they stay when the HUD is hidden.
+std::atomic<uint32_t> g_letterbox{0};
+
 bool IsHudPage(uint32_t page) {
   for (const auto& p : g_pages) {
     if (p.load(std::memory_order_relaxed) == page) return true;
@@ -84,6 +89,7 @@ void Frame(PPCContext& ctx, uint8_t* base) {
   if (now - g_last_find < std::chrono::seconds(1)) return;
   g_last_find = now;
   for (size_t i = 0; i < kPageCount; ++i) g_pages[i] = scrooby::FindPage(ctx, base, kPages[i]);
+  g_letterbox = scrooby::FindPage(ctx, base, "InGame_LetterBox");
 }
 
 }  // namespace hud_hide
@@ -105,7 +111,10 @@ extern "C" REX_FUNC(sub_82371270) {
   if (cheats::HudHidden() && hud_hide::IsHudPage(ctx.r3.u32)) return;
   // A save screen's message held back a moment (saves/save_screen_waits.h).
   if (save_screen_waits::HidingPage(page)) return;
-  hud_scale::Scope scale(ctx, base, page == 0 ? hud_scale::kNone : hud_hide::WhereOfPage(page));
+  const int where = page == 0                              ? hud_scale::kNone
+                    : page == hud_hide::g_letterbox.load() ? hud_scale::kStretchWide
+                                                           : hud_hide::WhereOfPage(page);
+  hud_scale::Scope scale(ctx, base, where);
   __imp__sub_82371270(ctx, base);
 }
 // CComboCounter / CCounterOpportunityDisplay / CPlayerIdentifierArrow draw (slot 4).

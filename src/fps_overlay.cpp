@@ -2,6 +2,7 @@
 // fps_overlay.cpp -- see fps_overlay.h
 // =============================================================================
 #include "fps_overlay.h"
+#include "native/widescreen.h"
 
 #include <algorithm>
 #include <chrono>
@@ -14,6 +15,7 @@
 
 #include <fmt/format.h>
 #include <imgui.h>
+#include <rex/cvar.h>
 #include <rex/runtime.h>
 #include <rex/ui/imgui_dialog.h>
 #include <rex/ui/imgui_drawer.h>
@@ -195,16 +197,16 @@ class CounterDialog : public rex::ui::ImGuiDialog {
     }
     if (line_.empty()) return;
 
-    // The picture's rectangle in the window: the game's 16:9, fitted
-    // (the presenter letterboxes it the same way).
+    // The picture's rectangle in the window (the presenter's fit). In a
+    // WIDESCREEN picture (native/widescreen.h) the counter follows the
+    // Widescreen HUD choice: in place = the game's middle 16:9, screen edges
+    // = the whole picture.
     const float window_w = io.DisplaySize.x, window_h = io.DisplaySize.y;
     if (window_w <= 0 || window_h <= 0) return;
-    float pic_w = window_w, pic_h = window_w * 9.0f / 16.0f;
-    if (pic_h > window_h) {
-      pic_h = window_h;
-      pic_w = window_h * 16.0f / 9.0f;
-    }
-    const float pic_x = (window_w - pic_w) * 0.5f, pic_y = (window_h - pic_h) * 0.5f;
+    const widescreen::Rect pic = rex::cvar::Query<int32_t>("widescreen_hud") == 1
+                                     ? widescreen::Picture(window_w, window_h)
+                                     : widescreen::Game(window_w, window_h);
+    const float pic_x = pic.x, pic_y = pic.y, pic_w = pic.w, pic_h = pic.h;
     const float unit = pic_h / 720.0f;  // one pixel of the game's 720p picture
     const float scale = kCapHeight * unit / font_.cap_height();
     const float width = font_.Measure(line_) * scale, height = font_.cell_height() * scale;

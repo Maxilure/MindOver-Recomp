@@ -435,6 +435,9 @@ std::vector<Category> MakeCatalogue() {
   auto character = [](const char* label, const char* name) {
     return Entry{label, std::string("Characters:") + name, false};
   };
+  auto pickup = [](const char* label, const char* name) {
+    return Entry{label, std::string("Collectables:") + name, false};
+  };
   return {
       {trsn("Titans"),
        {titan("Ratcicle"), titan("Spike"), titan("Roller"), titan("Battler"), titan("TK"),
@@ -449,6 +452,13 @@ std::vector<Category> MakeCatalogue() {
        {character("Znu", "Znu"), character("Slappy (Slap-E)", "Slappy"),
         character("Bratgirl", "Bratgirl"), character("Monkey", "Monkey"),
         character("Chiratta", "Chiratta")}},
+      // PICKUPS (2026-11-07, asked for in a playtest): template names from
+      // default.rcf ("Collectables:..."). They appear in front of the player
+      // (walk forward to take them).
+      {trsn("Pickups"),
+       {pickup(trsn("Mojo (small)"), "c_mojoS"), pickup(trsn("Mojo (medium)"), "c_mojoM"),
+        pickup(trsn("Mojo (large)"), "c_mojoXL"), pickup(trsn("Mojo multiplier"), "c_mojoMultiplier"),
+        pickup(trsn("Health"), "c_health")}},
   };
 }
 

@@ -33,6 +33,8 @@
 #include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
 #include "../ui/window_mode.h"
+#include "../native/render_targets.h"
+#include "../native/widescreen.h"
 #include "../language/language.h"
 #include "../language/texts.h"
 #include "global_options.h"
@@ -502,6 +504,39 @@ void NeedsNative(Row& r) {
   };
 }
 
+// WIDESCREEN (native/widescreen.h): a window wider than 16:9 shows more at
+// the sides. Only with the port's picture drawn alone (Renderer: Native
+// Only): the emulated picture is always 16:9.
+void NeedsNativeOnly(Row& r) {
+  r.unavailable = [](Env&) {
+    const bool native = g_hooks.native_shown && g_hooks.native_shown();
+    return native && rex::cvar::Query<bool>("native_only")
+               ? std::u16string()
+               : std::u16string(tr(u"Needs Renderer: Native Only on the Graphics tab."));
+  };
+}
+
+// ASPECT RATIO (native/widescreen.h): the picture's shape. Wider than 16:9
+// = more of the world at the sides (the top and bottom stay the game's).
+Row AspectRatioRow() {
+  Row r = LevelRow(tr(u"Aspect Ratio"), "aspect_ratio",
+                   {tr(u"Match Window"), tr(u"16:9 (original)"), tr(u"21:9"), tr(u"32:9")},
+                   {tr(u"The picture takes the window's shape: a wider window shows more of the world at the sides. Nothing is stretched."),
+                    tr(u"The game's own picture shape. A wider window gets black bars at the sides."),
+                    tr(u"Ultrawide: more of the world at the sides. Nothing is stretched."),
+                    tr(u"Super ultrawide, like two screens side by side: much more of the world at the sides.")});
+  NeedsNativeOnly(r);
+  return r;
+}
+
+Row WidescreenHudRow() {
+  Row r = LevelRow(tr(u"Widescreen HUD"), "widescreen_hud", {tr(u"In Place"), tr(u"Screen Edges")},
+                   {tr(u"In a wide picture, the HUD stays where the 16:9 game has it."),
+                    tr(u"In a wide picture, the HUD's corner pieces move out to the corners of the screen.")});
+  NeedsNativeOnly(r);
+  return r;
+}
+
 // MOTION BLUR (findings/34): ours (the 360 game has none), native only.
 Row MotionBlurRow() {
   Row r = LevelRow(tr(u"Motion Blur"), "motion_blur", {tr(u"Off (original)"), tr(u"Low"), tr(u"Medium"), tr(u"High")},
@@ -514,14 +549,52 @@ Row MotionBlurRow() {
 }
 
 // RENDER RESOLUTION (findings/45): how many pixels the native renderer draws
-// the game with (its surfaces x 1 / 1.5 / 2 / 3), native only.
+// the game with, native only. The flag holds the picture's HEIGHT (-1 = the
+// window's, effects/post_effects.cpp); the width follows the aspect ratio, so
+// each choice shows the real size at the shape in use (2560 x 1080 at 21:9).
+constexpr int kRenderHeights[] = {-1, 720, 900, 1080, 1440, 1800, 2160};
+
+std::u16string SizeText(int height) {
+  const int width = int(std::lround(height * widescreen::CurrentAspect()));
+  const std::string text = std::to_string(width) + " x " + std::to_string(height);
+  return std::u16string(text.begin(), text.end());
+}
+
 Row RenderResolutionRow() {
-  Row r = LevelRow(tr(u"Resolution"), "render_resolution",
-                   {tr(u"720p (original)"), tr(u"1080p"), tr(u"1440p"), tr(u"4K")},
-                   {tr(u"Drawn at 1280 x 720, like the Xbox 360."),
-                    tr(u"Drawn at 1920 x 1080: sharper on a Full HD screen."),
-                    tr(u"Drawn at 2560 x 1440: sharper still, heavier on your graphics card."),
-                    tr(u"Drawn at 3840 x 2160: the sharpest picture, the heaviest on your graphics card.")});
+  Row r;
+  r.label = tr(u"Resolution");
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (int h : kRenderHeights) {
+      if (h < 0) {
+        v.push_back(trf(tr(u"Match Window ({0})"), {SizeText(native::RenderHeightSettingFor(-1))}));
+      } else if (h == 720) {
+        v.push_back(trf(tr(u"{0} (original)"), {SizeText(h)}));
+      } else {
+        v.push_back(SizeText(h));
+      }
+    }
+    return v;
+  };
+  r.get = [](Env&) {
+    const int now = rex::cvar::Query<int32_t>("render_resolution");
+    if (now < 0) return 0;
+    const int height = native::RenderHeightSettingFor(now);
+    int best = 1;  // the nearest offered height (one set by hand in the file)
+    for (int i = 1; i < int(std::size(kRenderHeights)); ++i) {
+      if (std::abs(kRenderHeights[i] - height) < std::abs(kRenderHeights[best] - height)) best = i;
+    }
+    return best;
+  };
+  r.set = [](Env&, int i) { SetFlag("render_resolution", std::to_string(kRenderHeights[i])); };
+  r.describe = [](Env&, int i) -> std::u16string {
+    const int h = kRenderHeights[i];
+    if (h < 0) return tr(u"Drawn at the window's own size: the sharpest it can look on this screen. A big screen is heavy on your graphics card.");
+    if (h == 720) return tr(u"Drawn at the Xbox 360's size.");
+    if (h <= 1080) return tr(u"Sharper than the original. Light on your graphics card.");
+    if (h <= 1440) return tr(u"Sharper still, heavier on your graphics card.");
+    return tr(u"The sharpest picture, the heaviest on your graphics card.");
+  };
   NeedsNative(r);
   return r;
 }
@@ -1237,7 +1310,8 @@ std::vector<Tab> Build() {
   AddDualMode(renderer);
   tabs.push_back({tr(u"Display"),
                   {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
-                   Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(),
+                   AspectRatioRow(),
+                   Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(), WidescreenHudRow(),
                    Heading(tr(u"Frame Counter")), FpsCounterRow(), FpsPositionRow(),
                    // achievements/achievements.h: the card at the bottom centre.
                    Heading(tr(u"Achievements")), AchievementPopupsRow(), AchievementJingleRow()}});

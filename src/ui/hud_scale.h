@@ -60,10 +60,24 @@ namespace hud_scale {
 constexpr int kTopCentre = 10;
 constexpr int kTopRight = 1;       // = player 2's corner
 constexpr int kAnnouncement = 11;  // the left edge, at the announcement's height
+// WIDESCREEN (native/widescreen.h): not shrunk but STRETCHED sideways from
+// the game's 16:9 to the whole wide picture (the cutscene letterbox's black
+// bars, laid out for 16:9 only). At 16:9: untouched.
+constexpr int kStretchWide = 12;
 constexpr int kNone = -1;
 
 // The scale in use now (1 = untouched).
 float Scale();
+
+// How a HUD part at `where` is moved on screen, in the 2D stack's OUTPUT
+// space (x -0.5 .. 0.5 across the picture, y up; hud_scale.cpp ViewHalf*):
+// x' = sx x + dx, y' = s y + dy. False = untouched. For the game's own aims at
+// HUD parts (a collected mojo's flight to its portrait, more_players_hud.cpp).
+bool CornerMove(int where, float* s, float* sx, float* dx, float* dy);
+// The output space's half height (0.28125 at 16:9) and the game's 16:9 half
+// width in it (0.5 at 16:9, less in a wider picture).
+float ViewHalfHeight();
+float ViewHalfWidth();
 
 // Pushes the matrix and scales toward `where` when the scale isn't 1 (and
 // `where` isn't kNone). Pop only if Push returned true.

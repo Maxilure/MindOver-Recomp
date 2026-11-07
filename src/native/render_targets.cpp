@@ -16,16 +16,27 @@
 
 #include "guest.h"
 #include "scan.h"
+#include "widescreen.h"
 
 REXCVAR_DECLARE(int32_t, anti_aliasing);      // effects/post_effects.cpp
 REXCVAR_DECLARE(int32_t, render_resolution);  // effects/post_effects.cpp
 
 namespace native {
 
+int RenderHeightSetting() { return RenderHeightSettingFor(REXCVAR_GET(render_resolution)); }
+
+int RenderHeightSettingFor(int setting) {
+  // The old step numbers (before 2026-11-07): 720p, 1080p, 1440p, 4K.
+  constexpr int kOldSteps[4] = {720, 1080, 1440, 2160};
+  int height = setting >= 0 && setting <= 3 ? kOldSteps[setting] : setting;
+  if (setting < 0) height = widescreen::WindowPictureHeight();  // match the window (0 = unknown)
+  if (height <= 0) height = 1080;
+  return std::clamp(height, 360, 4320);
+}
+
 float RenderScaleSetting() {
-  // 720p (the game's own 1280x720), 1080p, 1440p, 4K.
-  constexpr float kScales[4] = {1.0f, 1.5f, 2.0f, 3.0f};
-  return kScales[std::clamp(int(REXCVAR_GET(render_resolution)), 0, 3)];
+  // The game's own picture is 720 rows high; we draw `height` rows.
+  return float(RenderHeightSetting()) / 720.0f;
 }
 
 namespace {
@@ -650,8 +661,8 @@ RenderTargets::Image* RenderTargets::EnsureSurface(const Surface& surface, VkCom
   }
   const VkSampleCountFlagBits samples = SamplesFor(surface.msaa);
   // Our image is the surface at the render scale (RENDER SCALE).
-  const uint32_t width = uint32_t(Scaled(int32_t(surface.width)));
-  const uint32_t height = uint32_t(Scaled(int32_t(surface.height)));
+  const uint32_t width = uint32_t(ScaledX(int32_t(surface.width)));
+  const uint32_t height = uint32_t(ScaledY(int32_t(surface.height)));
   Image& image = surfaces_[surface.guest];
   if (image.image && image.width == width && image.height == height &&
       image.depth == surface.depth && image.samples == samples) {
@@ -702,16 +713,16 @@ RenderTargets::Image* RenderTargets::EnsureTexture(const GuestTexture& texture,
                                                    VkCommandBuffer cmd) {
   uint32_t width, height;
   TextureSize(texture, width, height);
-  width = uint32_t(Scaled(int32_t(width)));  // at the render scale
-  height = uint32_t(Scaled(int32_t(height)));
+  width = uint32_t(ScaledX(int32_t(width)));  // at the render scale
+  height = uint32_t(ScaledY(int32_t(height)));
   return EnsureColourImage(textures_, TextureKey(texture), width, height, colour_format_, cmd);
 }
 
 bool RenderTargets::EnsureDepthCopies(const GuestTexture& texture, VkCommandBuffer cmd) {
   uint32_t width, height;
   TextureSize(texture, width, height);
-  width = uint32_t(Scaled(int32_t(width)));  // at the render scale
-  height = uint32_t(Scaled(int32_t(height)));
+  width = uint32_t(ScaledX(int32_t(width)));  // at the render scale
+  height = uint32_t(ScaledY(int32_t(height)));
   const uint32_t key = TextureKey(texture);
   return EnsureColourImage(depth_copies_, key, width, height, VK_FORMAT_R32_SFLOAT, cmd) &&
          EnsureColourImage(stencil_copies_, key, width, height, VK_FORMAT_R8_UNORM, cmd);
@@ -892,12 +903,12 @@ void RenderTargets::Resolve(const ResolveCommand& r, VkCommandBuffer cmd) {
   // Clamp the rectangle to both images.
   // (The game's rectangle in its pixels, at the render scale: each edge
   // scaled alone so neighbouring strips still meet.)
-  const int32_t x0 = std::clamp(Scaled(r.x0), 0, int32_t(src.width));
-  const int32_t y0 = std::clamp(Scaled(r.y0), 0, int32_t(src.height));
-  const int32_t x1 = std::clamp(Scaled(r.x1), x0, int32_t(src.width));
-  const int32_t y1 = std::clamp(Scaled(r.y1), y0, int32_t(src.height));
-  const int32_t dx = std::clamp(Scaled(r.dest_x), 0, int32_t(dst.width));
-  const int32_t dy = std::clamp(Scaled(r.dest_y), 0, int32_t(dst.height));
+  const int32_t x0 = std::clamp(ScaledX(r.x0), 0, int32_t(src.width));
+  const int32_t y0 = std::clamp(ScaledY(r.y0), 0, int32_t(src.height));
+  const int32_t x1 = std::clamp(ScaledX(r.x1), x0, int32_t(src.width));
+  const int32_t y1 = std::clamp(ScaledY(r.y1), y0, int32_t(src.height));
+  const int32_t dx = std::clamp(ScaledX(r.dest_x), 0, int32_t(dst.width));
+  const int32_t dy = std::clamp(ScaledY(r.dest_y), 0, int32_t(dst.height));
   const int32_t w = std::min(x1 - x0, int32_t(dst.width) - dx);
   const int32_t h = std::min(y1 - y0, int32_t(dst.height) - dy);
   if (w <= 0 || h <= 0) {
@@ -979,12 +990,12 @@ void RenderTargets::ResolveDepth(const ResolveCommand& r, VkCommandBuffer cmd) {
   const Image& dst_size = stencil_it->second;
   // (The game's rectangle in its pixels, at the render scale: each edge
   // scaled alone so neighbouring strips still meet.)
-  const int32_t x0 = std::clamp(Scaled(r.x0), 0, int32_t(src.width));
-  const int32_t y0 = std::clamp(Scaled(r.y0), 0, int32_t(src.height));
-  const int32_t x1 = std::clamp(Scaled(r.x1), x0, int32_t(src.width));
-  const int32_t y1 = std::clamp(Scaled(r.y1), y0, int32_t(src.height));
-  const int32_t dx = std::clamp(Scaled(r.dest_x), 0, int32_t(dst_size.width));
-  const int32_t dy = std::clamp(Scaled(r.dest_y), 0, int32_t(dst_size.height));
+  const int32_t x0 = std::clamp(ScaledX(r.x0), 0, int32_t(src.width));
+  const int32_t y0 = std::clamp(ScaledY(r.y0), 0, int32_t(src.height));
+  const int32_t x1 = std::clamp(ScaledX(r.x1), x0, int32_t(src.width));
+  const int32_t y1 = std::clamp(ScaledY(r.y1), y0, int32_t(src.height));
+  const int32_t dx = std::clamp(ScaledX(r.dest_x), 0, int32_t(dst_size.width));
+  const int32_t dy = std::clamp(ScaledY(r.dest_y), 0, int32_t(dst_size.height));
   const int32_t w = std::min(x1 - x0, int32_t(dst_size.width) - dx);
   const int32_t h = std::min(y1 - y0, int32_t(dst_size.height) - dy);
   if (w <= 0 || h <= 0) {

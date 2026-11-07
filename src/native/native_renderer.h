@@ -292,6 +292,9 @@ class NativeRenderer {
   // This frame's render scale and picture size (picked in OnFrameEnd, used
   // by everything RecordAndSubmit records).
   float frame_scale_ = 1.0f;
+  // WIDESCREEN: a flat 2D quad covering the game's whole 16:9 screen (a fade)?
+  bool CoversGameScreen(const native::DrawCommand& d) const;
+  float frame_wide_ = 1.0f;  // WIDESCREEN: this frame's aspect / 16:9 (widescreen.h)
   uint32_t out_width_ = kWidth, out_height_ = kHeight;  // The game's surfaces and resolved textures (render_targets.h).
   VkFormat depth_format_ = VK_FORMAT_UNDEFINED;
   // The GPU can bilinear-filter R32_SFLOAT images (the depth copies).

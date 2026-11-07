@@ -16,6 +16,7 @@
 
 #include "../players/more_players.h"
 #include "scrooby.h"
+#include "../native/widescreen.h"
 
 // The game's functions the test parts use (ShowTestParts).
 extern "C" REX_FUNC(__imp__sub_8236ACB8);  // name key (r3, 8 bytes) from a C string (r4)
@@ -27,11 +28,20 @@ REXCVAR_DEFINE_INT32(hud_size, 80, "CrashMoM",
                      "HUD size in percent (30-100; default 80; 100 = the original): every HUD part shrinks toward "
                      "its own screen corner")
     .range(30, 100);
+REXCVAR_DEFINE_INT32(widescreen_hud, 0, "CrashMoM",
+                     "Widescreen HUD (a picture wider than 16:9, native/widescreen.h): 0 = in place (where "
+                     "the 16:9 game has it), 1 = screen edges (the corner pieces pushed out to the wide "
+                     "picture's corners)")
+    .range(0, 1);
 REXCVAR_DEFINE_BOOL(hud_smaller_four_players, true, "CrashMoM",
                     "While players 3-4 are in the game, the HUD is at most 80 % (four corners fit); a smaller HUD Size is kept as it is");
 
 
 namespace hud_scale {
+
+float ViewHalfHeight() { return 0.5f / widescreen::CurrentAspect(); }
+float ViewHalfWidth() { return 0.5f * widescreen::kGameAspect / widescreen::CurrentAspect(); }
+
 namespace {
 
 // The game's 2D helper object: +0 = the PDDI context (xnContext); its
@@ -57,7 +67,12 @@ constexpr float kFourPlayerMaxSize = 0.8f;
 // (320, 240): the screen's edges sit at x -+0.5, y -+0.28125 (720 / 1280 / 2).
 // Working there, not in a part's own units (Scrooby texts draw in canvas /
 // 640 units, the displays in canvas units), one anchor fits every part.
-constexpr float kViewHalfWidth = 0.5f, kViewHalfHeight = 0.28125f;
+// WIDESCREEN (native/widescreen.h): the game then scales canvas units by
+// 1 / (480 x aspect) instead (its display's height is 1 / aspect), so the
+// top / bottom edges sit at y -+0.5 / aspect; x -+0.5 is the WIDE picture's
+// edges, and the game's 16:9 edges (where the HUD is laid out) at
+// -+0.5 x (16 / 9) / aspect. Both = the numbers above at 16:9.
+// (ViewHalfHeight / ViewHalfWidth: above, public: hud_scale.h)
 // THE ANNOUNCEMENT ("Attack" + its button, a dig spot's prompt; the page
 // InGame_Announcement): its set-up sub_8225B5E8 puts the text 50 canvas units
 // in from the screen's left edge (x = (W - 640) x -0.5 + 50, W = 853 wide)
@@ -65,7 +80,9 @@ constexpr float kViewHalfWidth = 0.5f, kViewHalfHeight = 0.28125f;
 // It shrinks toward the left edge at its own middle (canvas y 318), so it
 // stays at its height and keeps a smaller margin, like the corners.
 constexpr float kAnnouncementCanvasY = 300.0f + 36.0f / 2.0f;
-constexpr float kAnnouncementY = (kAnnouncementCanvasY - 240.0f) * 1.5f / 1280.0f;
+float AnnouncementY() {
+  return (kAnnouncementCanvasY - 240.0f) / (480.0f * widescreen::CurrentAspect());
+}
 uint32_t g_matrix = 0;  // guest scratch: the matrix we load (64 bytes)
 
 uint32_t Read32(uint8_t* base, uint32_t a) {
@@ -126,41 +143,66 @@ float Scale() {
   return s;
 }
 
-bool Push(PPCContext& ctx, uint8_t* base, int where) {
+bool CornerMove(int where, float* s_out, float* sx_out, float* dx_out, float* dy_out) {
   if (where == kNone) return false;
+  // The stretched kind: x times the picture's width over the game's 16:9
+  // (around the screen's centre, x = 0 in the stack's output space).
+  const float wide = widescreen::CurrentAspect() / widescreen::kGameAspect;
+  if (where == kStretchWide) {
+    if (wide < 1.001f) return false;
+    *s_out = 1.0f, *sx_out = wide, *dx_out = 0.0f, *dy_out = 0.0f;
+    return true;
+  }
   const float s = Scale();
-  if (s >= 0.999f) return false;
+  // WIDESCREEN HUD "screen edges": the corner pieces (and the announcement,
+  // on the left) move sideways by the room between the game's 16:9 edge and
+  // the wide picture's edge; the top-centre ones stay.
+  float shift = 0.0f;
+  if (REXCVAR_GET(widescreen_hud) == 1 && where != kTopCentre) {
+    const float room = 0.5f - ViewHalfWidth();
+    shift = where == kAnnouncement ? -room : (where & 1) ? room : -room;
+  }
+  if (s >= 0.999f && shift == 0.0f) return false;
+  // The anchor in the stack's OUTPUT space (x -0.5 .. 0.5 across the
+  // picture, y -0.28 .. 0.28 bottom to top at 16:9: see ViewHalf*).
+  float ax = 0.0f, ay = 0.0f;
+  if (where == kTopCentre) {
+    ay = ViewHalfHeight();
+  } else if (where == kAnnouncement) {
+    ax = -ViewHalfWidth(), ay = AnnouncementY();
+  } else {
+    ax = (where & 1) ? ViewHalfWidth() : -ViewHalfWidth();
+    ay = where >= 2 ? -ViewHalfHeight() : ViewHalfHeight();
+  }
+  *s_out = s, *sx_out = s;
+  *dx_out = ax * (1.0f - s) + shift;
+  *dy_out = ay * (1.0f - s);
+  return true;
+}
+
+bool Push(PPCContext& ctx, uint8_t* base, int where) {
+  float s, sx, dx, dy;
+  if (!CornerMove(where, &s, &sx, &dx, &dy)) return false;
   const uint32_t helper = Read32(base, kHelperGlobal);
   if (!helper) return false;
   const uint32_t context = Read32(base, helper);
   if (!context) return false;
   if (!g_matrix) g_matrix = rex::system::kernel_memory()->SystemHeapAlloc(64);
   if (!g_matrix) return false;
-  // The anchor in the stack's OUTPUT space (x -0.5 .. 0.5 across the screen,
-  // y -0.28 .. 0.28 bottom to top: see kViewHalf*).
-  float ax, ay;
-  if (where == kTopCentre) {
-    ax = 0.0f, ay = kViewHalfHeight;
-  } else if (where == kAnnouncement) {
-    ax = -kViewHalfWidth, ay = kAnnouncementY;
-  } else {
-    ax = (where & 1) ? kViewHalfWidth : -kViewHalfWidth;
-    ay = where >= 2 ? -kViewHalfHeight : kViewHalfHeight;
-  }
   CallContext(ctx, base, context, kSlotPush);
-  // top' = top x C, C = move the anchor to 0, scale by s, move back (row
-  // vectors, translation in row 3: v' = v . top . C). For an affine top only
-  // columns 0-1 change: x s, and row 3 also + anchor x (1 - s).
+  // top' = top x C, C = scale (sx, s) then move by (dx, dy) (row vectors,
+  // translation in row 3: v' = v . top . C). For an affine top only columns
+  // 0-1 change: x sx / s, and row 3 also + the move.
   const uint32_t top = CallContext(ctx, base, context, kSlotGetTop);
   if (!top) return true;  // pushed: still popped
   float m[16];
   for (int i = 0; i < 16; ++i) m[i] = ReadFloat(top + 4 * i);
   for (int row = 0; row < 4; ++row) {
-    m[row * 4 + 0] *= s;
+    m[row * 4 + 0] *= sx;
     m[row * 4 + 1] *= s;
   }
-  m[12] += ax * (1.0f - s) * m[15];
-  m[13] += ay * (1.0f - s) * m[15];
+  m[12] += dx * m[15];
+  m[13] += dy * m[15];
   for (int i = 0; i < 16; ++i) WriteFloat(g_matrix + 4 * i, m[i]);
   CallContext(ctx, base, context, kSlotLoad, g_matrix);  // copies + marks the transforms dirty
   return true;

@@ -18,11 +18,13 @@
 // multisamples, in the native renderer (native/render_targets.cpp,
 // SamplesFor). The emulated picture keeps the Xbox's 2x.
 //
-// RENDER RESOLUTION (findings/45): `render_resolution` (0 720p = the
-// original, 1 1080p, 2 1440p, 3 4K) scales every surface and resolved
-// texture of the native renderer by 1 / 1.5 / 2 / 3 (native/render_targets.h
-// "RENDER SCALE"): the game still thinks in its 1280x720 pixels, we draw
-// more of them. The emulated picture stays 720p.
+// RENDER RESOLUTION (findings/45): `render_resolution` = the picture's
+// height in pixels (720 = the original; -1 = the window's; old 0-3 = 720p,
+// 1080p, 1440p, 4K) scales every surface and resolved texture of the native
+// renderer by height / 720 (native/render_targets.h "RENDER SCALE"): the game
+// still thinks in its 1280x720 pixels, we draw more of them. The width
+// follows the picture's aspect ratio (native/widescreen.h). The emulated
+// picture stays 720p.
 //
 // MOTION BLUR (findings/34): the flag `motion_blur` (0 off, 1 low, 2 medium,
 // 3 high) is read by the native renderer's recorder (native/camera_motion.h,

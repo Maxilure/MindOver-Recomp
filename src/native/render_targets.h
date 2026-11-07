@@ -86,7 +86,11 @@ namespace native {
 // Anti-aliasing row offers what's up to it). Any thread.
 int MaxSurfaceSamples();
 
-// The render scale the `render_resolution` setting asks for (1, 1.5, 2, 3).
+// The picture height the `render_resolution` setting asks for (pixels:
+// the setting itself, its old steps 0-3, or the window's for -1), and the
+// render scale that makes (height / 720: 1 = the game's own 720p).
+int RenderHeightSetting();
+int RenderHeightSettingFor(int setting);  // the same for a given flag value
 float RenderScaleSetting();
 // A size in the game's pixels at `scale` (rounded to the nearest pixel).
 inline int32_t ScaleSize(int32_t v, float scale) {
@@ -122,8 +126,15 @@ class RenderTargets {
 
   // The render scale of the frame being recorded (RENDER SCALE above); set
   // before Prepare, constant for the whole frame.
-  void SetScale(float scale) { scale_ = scale; }
+  // WIDESCREEN (widescreen.h): `wide` = the picture's aspect / 16:9 (1 = the
+  // game's shape); every width and x is scaled by scale x wide, every height
+  // and y by scale alone.
+  void SetScale(float scale, float wide = 1.0f) {
+    scale_ = scale;
+    scale_x_ = scale * wide;
+  }
   float scale() const { return scale_; }
+  float scale_x() const { return scale_x_; }
 
   // Before the frame's draws are prepared: an image for every surface and
   // every resolve destination of `frame` (new ones are cleared to black /
@@ -245,11 +256,13 @@ class RenderTargets {
   VkFramebuffer GetFramebuffer(Image& first, Image& second, VkRenderPass pass);
 
   // A size or position in the game's pixels -> in our images' pixels.
-  int32_t Scaled(int32_t v) const { return ScaleSize(v, scale_); }
+  int32_t ScaledX(int32_t v) const { return ScaleSize(v, scale_x_); }
+  int32_t ScaledY(int32_t v) const { return ScaleSize(v, scale_); }
 
   const rex::ui::vulkan::VulkanDevice* device_;
   VkFormat colour_format_, depth_format_;
-  float scale_ = 1.0f;  // RENDER SCALE
+  float scale_ = 1.0f;    // RENDER SCALE (heights, y)
+  float scale_x_ = 1.0f;  // ... x widescreen (widths, x)
   VmaAllocator allocator_ = VK_NULL_HANDLE;
   VkRenderPass render_passes_[4] = {};  // by SampleIndex
   PFN_vkCmdCopyImage cmd_copy_image_ = nullptr;
