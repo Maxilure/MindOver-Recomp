@@ -64,7 +64,7 @@ msgstr "TROCA {0}"
 msgid "Achievement Unlocked"
 msgstr "Conquista desbloqueada"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2389 src/options/options_settings.cpp:1317
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1318
 #, fuzzy
 msgid "Achievements"
 msgstr "Conquistas"
@@ -486,7 +486,7 @@ msgstr "Andar (segurar)"
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr "Segure junto com uma direção: o analógico se inclina só em parte, então o Crash anda mais devagar."
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1401
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Spin"
 msgstr "Girar"
@@ -501,7 +501,7 @@ msgstr "O ataque giratório (no controle: \"Gire o analógico esquerdo\"). Segur
 msgid "Left stick circles"
 msgstr "Círculos com o analógico esquerdo"
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1401
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Jump"
 msgstr "Pular"
@@ -561,7 +561,7 @@ msgstr "Guardar / tirar do bolso"
 msgid "Store the titan you control, and bring it back later."
 msgstr "Guarda no bolso o titã que você controla, para tirá-lo depois."
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Map"
 msgstr "Mapa"
@@ -571,12 +571,12 @@ msgstr "Mapa"
 msgid "In the pause menu: drop out (another player stays in)."
 msgstr "No menu de pausa: sair da partida (outro jogador continua)."
 
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:548
+#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:636 launcher/installer.cpp:731 launcher/installer.cpp:787
 #, fuzzy
 msgid "Back"
 msgstr "Voltar"
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1048 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Pause"
 msgstr "Pausa"
@@ -756,7 +756,7 @@ msgstr "Resto do controle"
 msgid "NO KEYBOARD CONTROLS"
 msgstr "SEM CONTROLES DE TECLADO"
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1332 launcher/settings_page.cpp:541
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1333 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Controles"
@@ -766,7 +766,7 @@ msgstr "Controles"
 msgid "Keys"
 msgstr "Teclas"
 
-#: src/input/controls_menu.cpp:130 launcher/installer.cpp:1080 launcher/main.cpp:1043
+#: src/input/controls_menu.cpp:130 launcher/installer.cpp:1354 launcher/main.cpp:1043
 #, fuzzy
 msgid "Close"
 msgstr "Fechar"
@@ -1932,7 +1932,7 @@ msgstr "Trocar"
 msgid "Move Here"
 msgstr "Mover para cá"
 
-#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1062 launcher/setup.cpp:1698
+#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1336 launcher/setup.cpp:1864
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancelar"
@@ -1979,29 +1979,29 @@ msgstr "Escolha um jogador"
 msgid "Press any button to join"
 msgstr "Aperte qualquer botão para entrar"
 
-#: src/options/options_menu.cpp:1976
+#: src/options/options_menu.cpp:1985
 #, fuzzy
 msgid "Not changed."
 msgstr "Nada mudou."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1983
+#: src/options/options_menu.cpp:1992
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} é dos menus ({1}): escolha outra tecla."
 
-#: src/options/options_menu.cpp:1995
+#: src/options/options_menu.cpp:2004
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} era a tecla de {1}: agora é de {2}."
 
-#: src/options/options_menu.cpp:2016
+#: src/options/options_menu.cpp:2025
 #, fuzzy
 msgid "No key to remove."
 msgstr "Nenhuma tecla para remover."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2024
+#: src/options/options_menu.cpp:2033
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} removida."
@@ -2117,12 +2117,12 @@ msgstr "Aumente até mal conseguir distinguir os quadrados mais escuros acima."
 msgid "V-sync"
 msgstr "V-sync"
 
-#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:407 src/options/options_settings.cpp:627 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:407 src/options/options_settings.cpp:627 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1120 src/options/options_settings.cpp:1131 src/options/options_settings.cpp:1291 src/options/options_settings.cpp:1296
 #, fuzzy
 msgid "On"
 msgstr "Ligado"
 
-#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:342 src/options/options_settings.cpp:407 src/options/options_settings.cpp:606 src/options/options_settings.cpp:674 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1035 src/options/options_settings.cpp:1119 src/options/options_settings.cpp:1130 src/options/options_settings.cpp:1290 src/options/options_settings.cpp:1295
+#: src/options/options_settings.cpp:322 src/options/options_settings.cpp:342 src/options/options_settings.cpp:407 src/options/options_settings.cpp:606 src/options/options_settings.cpp:674 src/options/options_settings.cpp:856 src/options/options_settings.cpp:1036 src/options/options_settings.cpp:1120 src/options/options_settings.cpp:1131 src/options/options_settings.cpp:1291 src/options/options_settings.cpp:1296
 #, fuzzy
 msgid "Off"
 msgstr "Desligado"
@@ -2272,7 +2272,7 @@ msgstr "Preenche o monitor inteiro (o escolhido em Monitor)."
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/options/options_settings.cpp:451 src/options/options_settings.cpp:820 src/options/options_settings.cpp:990 launcher/settings_page.cpp:473
+#: src/options/options_settings.cpp:451 src/options/options_settings.cpp:820 src/options/options_settings.cpp:991 launcher/settings_page.cpp:473
 #, fuzzy
 msgid "Automatic"
 msgstr "Automático"
@@ -2501,7 +2501,7 @@ msgstr "Suaviza as bordas de folhas, cercas e outras formas recortadas. Precisa 
 msgid "Texture Sharpness"
 msgstr "Nitidez das texturas"
 
-#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1148 src/options/options_settings.cpp:1170
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171
 #, fuzzy
 msgid "Original"
 msgstr "Original"
@@ -3017,593 +3017,593 @@ msgstr "Teclas claras nas indicações de botões, como {0}"
 msgid "Controller Icons"
 msgstr "Ícones do controle"
 
-#: src/options/options_settings.cpp:1001
+#: src/options/options_settings.cpp:1002
 #, fuzzy
 msgid "Matches player 1's controller."
 msgstr "Segue o controle do jogador 1."
 
-#: src/options/options_settings.cpp:1002
+#: src/options/options_settings.cpp:1003
 #, fuzzy
 msgid "The game's own buttons."
 msgstr "Os botões originais do jogo."
 
-#: src/options/options_settings.cpp:1003
+#: src/options/options_settings.cpp:1004
 #, fuzzy
 msgid "Always these buttons."
 msgstr "Sempre estes botões."
 
-#: src/options/options_settings.cpp:1011
+#: src/options/options_settings.cpp:1012
 #, fuzzy
 msgid "Default Keys"
 msgstr "Teclas padrão"
 
-#: src/options/options_settings.cpp:1014
+#: src/options/options_settings.cpp:1015
 #, fuzzy
 msgid "Every keyboard and mouse key back as it came."
 msgstr "Todas as teclas do teclado e do mouse como vieram."
 
-#: src/options/options_settings.cpp:1017
+#: src/options/options_settings.cpp:1018
 #, fuzzy
 msgid "Revert Keybinds to Defaults?"
 msgstr "Voltar às teclas padrão?"
 
-#: src/options/options_settings.cpp:1035
+#: src/options/options_settings.cpp:1036
 #, fuzzy
 msgid "Mouse Aiming"
 msgstr "Mira com o mouse"
 
-#: src/options/options_settings.cpp:1035
+#: src/options/options_settings.cpp:1036
 #, fuzzy
 msgid "Reticle"
 msgstr "Mira"
 
-#: src/options/options_settings.cpp:1035
+#: src/options/options_settings.cpp:1036
 #, fuzzy
 msgid "Crosshair"
 msgstr "Ponteiro"
 
-#: src/options/options_settings.cpp:1036
+#: src/options/options_settings.cpp:1037
 #, fuzzy
 msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
 msgstr "Como máscara, a mira se move com as teclas de movimento, como no jogo original."
 
-#: src/options/options_settings.cpp:1037
+#: src/options/options_settings.cpp:1038
 #, fuzzy
 msgid "As a mask, the aiming reticle follows the mouse."
 msgstr "Como máscara, a mira segue o mouse."
 
-#: src/options/options_settings.cpp:1038
+#: src/options/options_settings.cpp:1039
 #, fuzzy
 msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
 msgstr "Como na versão de Wii: o ponteiro do mouse vira o cursor do Wii, uma bolha brilhante que cresce sobre os alvos e puxa o mojo, e como máscara a mira o segue."
 
-#: src/options/options_settings.cpp:1048
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "Window Not Focused"
 msgstr "Janela em segundo plano"
 
-#: src/options/options_settings.cpp:1048
+#: src/options/options_settings.cpp:1049
 #, fuzzy
 msgid "Keep Playing"
 msgstr "Continuar jogando"
 
-#: src/options/options_settings.cpp:1049
+#: src/options/options_settings.cpp:1050
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr "Os controles continuam jogando com outra janela na frente. O teclado e o mouse param até você clicar de novo no jogo."
 
-#: src/options/options_settings.cpp:1051
+#: src/options/options_settings.cpp:1052
 #, fuzzy
 msgid "The game pauses by itself when its window loses the focus in a level."
 msgstr "O jogo pausa sozinho quando a janela dele vai para segundo plano numa fase."
 
-#: src/options/options_settings.cpp:1062
+#: src/options/options_settings.cpp:1063
 #, fuzzy
 msgid "Button Pictures"
 msgstr "Imagens dos botões"
 
-#: src/options/options_settings.cpp:1065
+#: src/options/options_settings.cpp:1066
 #, fuzzy
 msgid "Keyboard and Mouse Keys"
 msgstr "Teclas do teclado e mouse"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1078
+#: src/options/options_settings.cpp:1079
 #, fuzzy
 msgid "{0}, or circle {1}"
 msgstr "{0}, ou gire {1}"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1080
+#: src/options/options_settings.cpp:1081
 #, fuzzy
 msgid "circle {0}"
 msgstr "gire {0}"
 
 #. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
-#: src/options/options_settings.cpp:1086
+#: src/options/options_settings.cpp:1087
 #, fuzzy
 msgid "{0} Controller: {1}"
 msgstr "{0} Controle: {1}"
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1099
+#: src/options/options_settings.cpp:1100
 #, fuzzy
 msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
 msgstr "Para girar, gire o {0} de um controle, ou ligue Giro simples (aba Jogabilidade) para girar com esta tecla."
 
-#: src/options/options_settings.cpp:1119
+#: src/options/options_settings.cpp:1120
 #, fuzzy
 msgid "Friendly Fire"
 msgstr "Fogo amigo"
 
-#: src/options/options_settings.cpp:1120
+#: src/options/options_settings.cpp:1121
 #, fuzzy
 msgid "Players' attacks hurt each other, as in the original game."
 msgstr "Os ataques dos jogadores machucam uns aos outros, como no jogo original."
 
-#: src/options/options_settings.cpp:1121
+#: src/options/options_settings.cpp:1122
 #, fuzzy
 msgid "A partner's hits pass harmlessly: no damage, combos untouched."
 msgstr "Os golpes de um parceiro não fazem nada: sem dano, combos intactos."
 
-#: src/options/options_settings.cpp:1122
+#: src/options/options_settings.cpp:1123
 #, fuzzy
 msgid "Partner Hits"
 msgstr "Golpes do parceiro"
 
-#: src/options/options_settings.cpp:1122
+#: src/options/options_settings.cpp:1123
 #, fuzzy
 msgid "End Combos"
 msgstr "Quebram combos"
 
-#: src/options/options_settings.cpp:1122
+#: src/options/options_settings.cpp:1123
 #, fuzzy
 msgid "Keep Combos"
 msgstr "Mantêm combos"
 
-#: src/options/options_settings.cpp:1123
+#: src/options/options_settings.cpp:1124
 #, fuzzy
 msgid "Getting hit by a partner ends your hit combo, as in the original game."
 msgstr "Levar um golpe de um parceiro quebra o seu combo, como no jogo original."
 
-#: src/options/options_settings.cpp:1124
+#: src/options/options_settings.cpp:1125
 #, fuzzy
 msgid "A partner's hit doesn't end your combo."
 msgstr "O golpe de um parceiro não quebra o seu combo."
 
-#: src/options/options_settings.cpp:1128
+#: src/options/options_settings.cpp:1129
 #, fuzzy
 msgid "Friendly Fire is off: partners can't hit you."
 msgstr "O fogo amigo está desligado: os parceiros não podem acertar você."
 
-#: src/options/options_settings.cpp:1130
+#: src/options/options_settings.cpp:1131
 #, fuzzy
 msgid "Simple Spinning"
 msgstr "Giro simples"
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1137
+#: src/options/options_settings.cpp:1138
 #, fuzzy
 msgid "One button spins: {0} on a controller. Circling {1} still works."
 msgstr "Um só botão para girar: {0} no controle. Girar {1} ainda funciona."
 
 #. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
-#: src/options/options_settings.cpp:1140
+#: src/options/options_settings.cpp:1141
 #, fuzzy
 msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
 msgstr "Um só botão para girar: {0} no controle, {1} no teclado. Girar {2} ainda funciona."
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1144
+#: src/options/options_settings.cpp:1145
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game."
 msgstr "Gire {0} para girar, como no jogo original."
 
 #. {0} = the left stick's picture, {1} = the Spin key's picture.
-#: src/options/options_settings.cpp:1146
+#: src/options/options_settings.cpp:1147
 #, fuzzy
 msgid "Circle {0} to spin, as in the original game. {1} does nothing."
 msgstr "Gire {0} para girar, como no jogo original. {1} não faz nada."
 
-#: src/options/options_settings.cpp:1148
+#: src/options/options_settings.cpp:1149
 #, fuzzy
 msgid "Keep Spinning"
 msgstr "Giro contínuo"
 
-#: src/options/options_settings.cpp:1148
+#: src/options/options_settings.cpp:1149
 #, fuzzy
 msgid "Hold to Spin"
 msgstr "Segurar"
 
 #. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1153
+#: src/options/options_settings.cpp:1154
 #, fuzzy
 msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
 msgstr "Segure {0} (ou continue girando {1}) e o Crash continua girando até ficar tonto."
 
 #. {0} = the light attack's button / key pictures ("[X] or [LMB]").
-#: src/options/options_settings.cpp:1157
+#: src/options/options_settings.cpp:1158
 #, fuzzy
 msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
 msgstr "Gire e depois aperte {0} várias vezes para continuar girando, como no jogo original."
 
-#: src/options/options_settings.cpp:1163
+#: src/options/options_settings.cpp:1164
 #, fuzzy
 msgid "Turn on Simple Spinning first."
 msgstr "Ligue primeiro o Giro simples."
 
-#: src/options/options_settings.cpp:1167 launcher/settings_page.cpp:499
+#: src/options/options_settings.cpp:1168 launcher/settings_page.cpp:499
 #, fuzzy
 msgid "Co-op"
 msgstr "Cooperativo"
 
-#: src/options/options_settings.cpp:1170
+#: src/options/options_settings.cpp:1171
 #, fuzzy
 msgid "Co-op Camera"
 msgstr "Câmera cooperativa"
 
-#: src/options/options_settings.cpp:1170
+#: src/options/options_settings.cpp:1171
 #, fuzzy
 msgid "Frame Everyone"
 msgstr "Todos na tela"
 
-#: src/options/options_settings.cpp:1171
+#: src/options/options_settings.cpp:1172
 #, fuzzy
 msgid "The camera pulls back to keep every player on screen."
 msgstr "A câmera se afasta para manter todos os jogadores na tela."
 
-#: src/options/options_settings.cpp:1172
+#: src/options/options_settings.cpp:1173
 #, fuzzy
 msgid "The camera of the original game."
 msgstr "A câmera do jogo original."
 
-#: src/options/options_settings.cpp:1173
+#: src/options/options_settings.cpp:1174
 #, fuzzy
 msgid "Camera Follows"
 msgstr "A câmera segue"
 
-#: src/options/options_settings.cpp:1173
+#: src/options/options_settings.cpp:1174
 #, fuzzy
 msgid "Nearest Player"
 msgstr "O mais perto"
 
-#: src/options/options_settings.cpp:1173
+#: src/options/options_settings.cpp:1174
 #, fuzzy
 msgid "Middle"
 msgstr "O meio"
 
-#: src/options/options_settings.cpp:1174
+#: src/options/options_settings.cpp:1175
 #, fuzzy
 msgid "Front to back, the camera stays with the player nearest to it."
 msgstr "Em profundidade, a câmera fica com o jogador mais perto dela."
 
-#: src/options/options_settings.cpp:1175
+#: src/options/options_settings.cpp:1176
 #, fuzzy
 msgid "The camera aims at the middle of the group."
 msgstr "A câmera mira no meio do grupo."
 
-#: src/options/options_settings.cpp:1176
+#: src/options/options_settings.cpp:1177
 #, fuzzy
 msgid "Spinning"
 msgstr "Giro"
 
-#: src/options/options_settings.cpp:1201
+#: src/options/options_settings.cpp:1202
 #, fuzzy
 msgid "Takes effect when the game starts again: Restart Now, or next time you play."
 msgstr "Vale quando o jogo iniciar de novo: Reiniciar agora, ou na próxima vez que você jogar."
 
-#: src/options/options_settings.cpp:1204
+#: src/options/options_settings.cpp:1205
 #, fuzzy
 msgid "Restart Now"
 msgstr "Reiniciar agora"
 
-#: src/options/options_settings.cpp:1208
+#: src/options/options_settings.cpp:1209
 #, fuzzy
 msgid "Restart now? Anything since your last save will be lost."
 msgstr "Reiniciar agora? Tudo desde o último salvamento será perdido."
 
-#: src/options/options_settings.cpp:1221
+#: src/options/options_settings.cpp:1222
 #, fuzzy
 msgid "Text"
 msgstr "Texto"
 
-#: src/options/options_settings.cpp:1231
+#: src/options/options_settings.cpp:1232
 #, fuzzy
 msgid "Menus, tutorials and messages in this language. The voices are chosen below."
 msgstr "Menus, tutoriais e mensagens neste idioma. As vozes são escolhidas abaixo."
 
-#: src/options/options_settings.cpp:1235
+#: src/options/options_settings.cpp:1236
 #, fuzzy
 msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
 msgstr "Os menus do próprio port neste idioma. Os textos do jogo continuam em inglês: o disco não tem português."
 
-#: src/options/options_settings.cpp:1241
+#: src/options/options_settings.cpp:1242
 #, fuzzy
 msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
 msgstr "Os textos do port são uma tradução automática, ainda não revisada por um falante nativo."
 
-#: src/options/options_settings.cpp:1251
+#: src/options/options_settings.cpp:1252
 #, fuzzy
 msgid "Voices"
 msgstr "Vozes"
 
-#: src/options/options_settings.cpp:1254
+#: src/options/options_settings.cpp:1255
 #, fuzzy
 msgid "Same as Text"
 msgstr "Igual ao texto"
 
-#: src/options/options_settings.cpp:1276
+#: src/options/options_settings.cpp:1277
 #, fuzzy
 msgid "The disc has no voices in the text's language: the characters speak English."
 msgstr "O disco não tem vozes no idioma do texto: os personagens falam inglês."
 
 #. {0} = the language's name in its own language ("Deutsch").
-#: src/options/options_settings.cpp:1279
+#: src/options/options_settings.cpp:1280
 #, fuzzy
 msgid "The characters speak the text's language: {0}."
 msgstr "Os personagens falam o idioma do texto: {0}."
 
-#: src/options/options_settings.cpp:1281
+#: src/options/options_settings.cpp:1282
 #, fuzzy
 msgid "The characters speak this language, whatever the text is."
 msgstr "Os personagens falam este idioma, seja qual for o texto."
 
-#: src/options/options_settings.cpp:1290
+#: src/options/options_settings.cpp:1291
 #, fuzzy
 msgid "Notifications"
 msgstr "Notificações"
 
-#: src/options/options_settings.cpp:1291
+#: src/options/options_settings.cpp:1292
 #, fuzzy
 msgid "A card slides up at the bottom of the screen when you earn an achievement."
 msgstr "Um cartão sobe na parte de baixo da tela quando você ganha uma conquista."
 
-#: src/options/options_settings.cpp:1292
+#: src/options/options_settings.cpp:1293
 #, fuzzy
 msgid "No card: achievements are still earned and kept."
 msgstr "Sem cartão: as conquistas continuam sendo ganhas e guardadas."
 
-#: src/options/options_settings.cpp:1295
+#: src/options/options_settings.cpp:1296
 #, fuzzy
 msgid "Jingle"
 msgstr "Vinheta"
 
-#: src/options/options_settings.cpp:1296
+#: src/options/options_settings.cpp:1297
 #, fuzzy
 msgid "One of the game's own jingles plays with the card."
 msgstr "Uma das vinhetas do próprio jogo toca com o cartão."
 
-#: src/options/options_settings.cpp:1296
+#: src/options/options_settings.cpp:1297
 #, fuzzy
 msgid "The card shows without a sound."
 msgstr "O cartão aparece sem som."
 
-#: src/options/options_settings.cpp:1299
+#: src/options/options_settings.cpp:1300
 #, fuzzy
 msgid "Notifications are off."
 msgstr "As notificações estão desligadas."
 
-#: src/options/options_settings.cpp:1311
+#: src/options/options_settings.cpp:1312
 #, fuzzy
 msgid "Display"
 msgstr "Tela"
 
-#: src/options/options_settings.cpp:1314
+#: src/options/options_settings.cpp:1315
 #, fuzzy
 msgid "HUD"
 msgstr "HUD"
 
-#: src/options/options_settings.cpp:1315
+#: src/options/options_settings.cpp:1316
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Contador de quadros"
 
-#: src/options/options_settings.cpp:1319
+#: src/options/options_settings.cpp:1320
 #, fuzzy
 msgid "Graphics"
 msgstr "Gráficos"
 
-#: src/options/options_settings.cpp:1320
+#: src/options/options_settings.cpp:1321
 #, fuzzy
 msgid "Quality"
 msgstr "Qualidade"
 
-#: src/options/options_settings.cpp:1321
+#: src/options/options_settings.cpp:1322
 #, fuzzy
 msgid "Effects"
 msgstr "Efeitos"
 
-#: src/options/options_settings.cpp:1324
+#: src/options/options_settings.cpp:1325
 #, fuzzy
 msgid "Audio"
 msgstr "Áudio"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1326
 #, fuzzy
 msgid "Music"
 msgstr "Música"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "O volume da música."
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1328
 #, fuzzy
 msgid "Dialogue"
 msgstr "Diálogo"
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "O volume das vozes dos personagens."
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "SFX"
 msgstr "Efeitos sonoros"
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "O volume de golpes, caixas, passos e todo o resto."
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1332
 #, fuzzy
 msgid "Output"
 msgstr "Saída"
 
-#: src/options/options_settings.cpp:1333
+#: src/options/options_settings.cpp:1334
 #, fuzzy
 msgid "Gameplay"
 msgstr "Jogabilidade"
 
-#: src/options/options_settings.cpp:1334
+#: src/options/options_settings.cpp:1335
 #, fuzzy
 msgid "Language"
 msgstr "Idioma"
 
-#: src/options/options_settings.cpp:1378 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1379 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Nenhuma"
 
-#: src/options/options_settings.cpp:1400
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Move Up"
 msgstr "Para cima"
 
-#: src/options/options_settings.cpp:1400
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Move Down"
 msgstr "Para baixo"
 
-#: src/options/options_settings.cpp:1400
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Move Left"
 msgstr "Para a esquerda"
 
-#: src/options/options_settings.cpp:1400
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Move Right"
 msgstr "Para a direita"
 
-#: src/options/options_settings.cpp:1400
+#: src/options/options_settings.cpp:1401
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Andar (segurar)"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Light Attack"
 msgstr "Ataque leve"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Ataque pesado"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1402
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Bloquear (segurar)"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Dominar / Usar"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Ataque especial do titã"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1403
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Guardar / Tirar"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: confirmar"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: voltar"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: aba anterior"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1404
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: próxima aba"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: ação X"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: ação Y"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Direcional para cima"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Direcional para baixo"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1405
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Direcional para a esquerda"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Direcional para a direita"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Analógico direito para cima"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Analógico direito para baixo"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1406
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Analógico direito para a esquerda"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1407
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Analógico direito para a direita"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1407
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Botão superior esquerdo"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1407
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clicar analógico esquerdo"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1407
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clicar analógico direito"
@@ -3698,437 +3698,567 @@ msgstr "{0} não parece ser uma instalação do Mind over Recomp: nada foi remov
 msgid "Some files couldn't be removed (is the game still running?), e.g. {0}"
 msgstr "Alguns arquivos não puderam ser removidos (o jogo ainda está aberto?), por exemplo {0}"
 
-#: launcher/installer.cpp:158
+#: launcher/installer.cpp:140 launcher/main.cpp:114
+#, fuzzy
+msgid "%ld h %02ld min"
+msgstr "%ld h %02ld min"
+
+#: launcher/installer.cpp:142
+#, fuzzy
+msgid "%ld min %02ld s"
+msgstr "%ld min %02ld s"
+
+#: launcher/installer.cpp:144 launcher/main.cpp:118
+#, fuzzy
+msgid "%ld s"
+msgstr "%ld s"
+
+#: launcher/installer.cpp:201
 #, fuzzy
 msgid "Still not working? Report it on GitHub and attach the log file: that's how installs get fixed. The button opens the report form and the log's folder; drag the log file into the form."
 msgstr "Ainda não funciona? Relate no GitHub e anexe o arquivo de log: é assim que as instalações são consertadas. O botão abre o formulário de relato e a pasta do log; arraste o arquivo de log para o formulário."
 
-#: launcher/installer.cpp:162
+#: launcher/installer.cpp:205
 #, fuzzy
 msgid "Report it on GitHub"
 msgstr "Relatar no GitHub"
 
-#: launcher/installer.cpp:173
+#: launcher/installer.cpp:216
 #, fuzzy
 msgid "Open the log's folder"
 msgstr "Abrir a pasta do log"
 
-#: launcher/installer.cpp:204
+#: launcher/installer.cpp:247
 #, fuzzy
 msgid "Show details"
 msgstr "Mostrar detalhes"
 
-#: launcher/installer.cpp:215 launcher/main.cpp:395 launcher/setup.cpp:1712
+#: launcher/installer.cpp:258 launcher/main.cpp:395 launcher/setup.cpp:1878
 #, fuzzy
 msgid "Log: %s"
 msgstr "Log: %s"
 
-#: launcher/installer.cpp:376
+#: launcher/installer.cpp:446
 #, fuzzy
 msgid "An unofficial PC port of Crash: Mind over Mutant, built from your own disc"
 msgstr "Um port não oficial de Crash: Mind over Mutant para PC, compilado a partir do seu próprio disco"
 
-#: launcher/installer.cpp:406
+#: launcher/installer.cpp:447
 #, fuzzy
-msgid "The game is already installed on this PC."
-msgstr "O jogo já está instalado neste PC."
+msgid "version {0}"
+msgstr "versão {0}"
 
-#: launcher/installer.cpp:411
+#: launcher/installer.cpp:479
 #, fuzzy
-msgid "To play it, update it or uninstall it, open its own Mind over Recomp (also in the Start menu). Updates come from there; this download isn't needed for them."
-msgstr "Para jogar, atualizar ou desinstalar, abra o Mind over Recomp dele (também no menu Iniciar). As atualizações vêm de lá; este download não é necessário para elas."
+msgid "What do you want to do?"
+msgstr "O que você quer fazer?"
 
-#: launcher/installer.cpp:413
+#: launcher/installer.cpp:484
 #, fuzzy
-msgid "Open the installed Mind over Recomp"
-msgstr "Abrir o Mind over Recomp instalado"
+msgid "The game is installed on this PC: %s (version %s)."
+msgstr "O jogo está instalado neste PC: %s (versão %s)."
 
-#: launcher/installer.cpp:417
+#: launcher/installer.cpp:500
 #, fuzzy
-msgid "Couldn't open it: start Mind over Recomp from the Start menu."
-msgstr "Não foi possível abrir: inicie o Mind over Recomp pelo menu Iniciar."
+msgid "Install the game"
+msgstr "Instalar o jogo"
 
-#: launcher/installer.cpp:423
+#: launcher/installer.cpp:501
 #, fuzzy
-msgid "Or install another copy:"
-msgstr "Ou instale outra cópia:"
+msgid "A new install from your disc image. The first build takes a while (often 20-60 minutes) and needs about 15 GB of free space."
+msgstr "Uma nova instalação a partir da imagem do seu disco. A primeira compilação demora (geralmente 20 a 60 minutos) e precisa de cerca de 15 GB livres."
 
-#: launcher/installer.cpp:427
+#: launcher/installer.cpp:508
 #, fuzzy
-msgid "1. Your disc and where the game goes"
-msgstr "1. Seu disco e onde o jogo vai ficar"
+msgid "Update an installed game"
+msgstr "Atualizar um jogo instalado"
 
-#: launcher/installer.cpp:429
+#: launcher/installer.cpp:509
 #, fuzzy
-msgid "The game is built on this PC from your own copy of the disc: no game files come with this program. The first build takes a while (often 20-60 minutes) and needs about 15 GB of free space."
-msgstr "O jogo é compilado neste PC a partir da sua própria cópia do disco: nenhum arquivo do jogo vem com este programa. A primeira compilação demora (geralmente de 20 a 60 minutos) e precisa de cerca de 15 GB livres."
+msgid "Brings an installed game to version {0}: pick its folder. Your saves, settings and the earlier build are kept, so only what changed is built again."
+msgstr "Leva um jogo instalado à versão {0}: escolha a pasta dele. Seus saves, configurações e a compilação anterior são mantidos, então só o que mudou é compilado de novo."
 
-#: launcher/installer.cpp:435 launcher/installer.cpp:447
+#: launcher/installer.cpp:522
+#, fuzzy
+msgid "Use fewer resources while building (slower, the PC stays usable)"
+msgstr "Usar menos recursos ao compilar (mais lento, o PC continua utilizável)"
+
+#: launcher/installer.cpp:524
+#, fuzzy
+msgid "Half of the processor and low priority: other programs come first."
+msgstr "Metade do processador e prioridade baixa: os outros programas vêm primeiro."
+
+#: launcher/installer.cpp:525
+#, fuzzy
+msgid "As fast as this PC allows, with one processor core left free for Windows."
+msgstr "O mais rápido que este PC permite, deixando um núcleo do processador livre para o Windows."
+
+#: launcher/installer.cpp:541
+#, fuzzy
+msgid "Pick the folder the game is installed in."
+msgstr "Escolha a pasta onde o jogo está instalado."
+
+#: launcher/installer.cpp:548
+#, fuzzy
+msgid "No installed game in that folder: pick the folder with \"Mind over Recomp.exe\", source and user in it (or the one above it)."
+msgstr "Não há jogo instalado nessa pasta: escolha a pasta com \"Mind over Recomp.exe\", source e user dentro (ou a pasta acima dela)."
+
+#: launcher/installer.cpp:556
+#, fuzzy
+msgid "That install has no version file (source\\RELEASE.toml): install fresh instead."
+msgstr "Essa instalação não tem arquivo de versão (source\\RELEASE.toml): faça uma instalação nova."
+
+#: launcher/installer.cpp:558
+#, fuzzy
+msgid "That install is version {0}, newer than this installer ({1}). Download the newest installer from GitHub."
+msgstr "Essa instalação é a versão {0}, mais nova que este instalador ({1}). Baixe o instalador mais novo no GitHub."
+
+#: launcher/installer.cpp:568
+#, fuzzy
+msgid "1. Update to version {0}"
+msgstr "1. Atualizar para a versão {0}"
+
+#: launcher/installer.cpp:570
+#, fuzzy
+msgid "Your saves, settings and logs stay. The earlier build is kept: only the parts that changed are built again, usually much faster than the first install."
+msgstr "Seus saves, configurações e logs ficam. A compilação anterior é mantida: só as partes que mudaram são compiladas de novo, geralmente bem mais rápido que a primeira instalação."
+
+#: launcher/installer.cpp:574 launcher/installer.cpp:586 launcher/installer.cpp:668 launcher/installer.cpp:680
 #, fuzzy
 msgid "Browse..."
 msgstr "Procurar..."
 
-#: launcher/installer.cpp:459
+#: launcher/installer.cpp:598
 #, fuzzy
-msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360"
-msgstr "Imagem do disco (.iso) de Crash: Mind over Mutant, Xbox 360"
+msgid "The installed game's folder"
+msgstr "A pasta do jogo instalado"
 
-#: launcher/installer.cpp:461
+#: launcher/installer.cpp:606
 #, fuzzy
-msgid "Install into this folder"
-msgstr "Instalar nesta pasta"
+msgid "Found version %s: already this version. Next checks it and builds whatever is missing or out of date (a repair)."
+msgstr "Versão %s encontrada: já é esta versão. Avançar verifica e compila o que faltar ou estiver desatualizado (um reparo)."
 
-#: launcher/installer.cpp:472
+#: launcher/installer.cpp:612
 #, fuzzy
-msgid "A game that was set up before is in %s: it is used as it is, nothing is built again."
-msgstr "Um jogo instalado antes está em %s: ele será usado como está, nada é compilado de novo."
+msgid "Found version %s in %s: it will be updated to %s."
+msgstr "Versão %s encontrada em %s: ela será atualizada para %s."
 
-#: launcher/installer.cpp:476
+#: launcher/installer.cpp:622
 #, fuzzy
-msgid "Its disc files are there too: no disc image needed."
-msgstr "Os arquivos do disco também estão lá: não precisa da imagem do disco."
+msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360 (its files aren't in the game folder any more: they're extracted again)"
+msgstr "Imagem de disco (.iso) de Crash: Mind over Mutant, Xbox 360 (os arquivos dela não estão mais na pasta do jogo: serão extraídos de novo)"
 
-#: launcher/installer.cpp:478
+#: launcher/installer.cpp:624
 #, fuzzy
-msgid "The game goes into %s"
-msgstr "O jogo vai para %s"
+msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360 (the game's files are checked against it)"
+msgstr "Imagem de disco (.iso) de Crash: Mind over Mutant, Xbox 360 (os arquivos do jogo são conferidos com ela)"
 
-#: launcher/installer.cpp:481
-#, fuzzy
-msgid "A shortcut on the desktop"
-msgstr "Um atalho na área de trabalho"
-
-#: launcher/installer.cpp:482
-#, fuzzy
-msgid "Copy saves and settings from an older version"
-msgstr "Copiar saves e configurações de uma versão anterior"
-
-#: launcher/installer.cpp:485
-#, fuzzy
-msgid "Pick the older version's folder (the one with \"Mind over Recomp\" and the user folder in it). Its files are copied, never moved."
-msgstr "Escolha a pasta da versão anterior (a que tem o \"Mind over Recomp\" e a pasta user dentro). Os arquivos são copiados, nunca movidos."
-
-#: launcher/installer.cpp:487
-#, fuzzy
-msgid "Older version"
-msgstr "Versão anterior"
-
-#: launcher/installer.cpp:496
+#: launcher/installer.cpp:639 launcher/installer.cpp:733
 #, fuzzy
 msgid "Next"
 msgstr "Avançar"
 
-#: launcher/installer.cpp:499 launcher/setup.cpp:1145
-#, fuzzy
-msgid "Pick your disc image (.iso) first."
-msgstr "Escolha antes a sua imagem de disco (.iso)."
-
-#: launcher/installer.cpp:501
-#, fuzzy
-msgid "That older version has no user folder: pick the folder the old \"Mind over Recomp\" is in, or untick the copy."
-msgstr "Essa versão anterior não tem a pasta user: escolha a pasta onde fica o \"Mind over Recomp\" antigo, ou desmarque a cópia."
-
-#: launcher/installer.cpp:527
-#, fuzzy
-msgid "2. Build tools"
-msgstr "2. Ferramentas de compilação"
-
-#: launcher/installer.cpp:529
-#, fuzzy
-msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
-msgstr "Ferramentas gratuitas que transformam o código do jogo em um programa do Windows. As que faltam são instaladas pelo winget, o instalador de aplicativos do próprio Windows; o Windows pode pedir sua permissão para algumas delas (Build Tools do Visual Studio, Vulkan SDK)."
-
-#: launcher/installer.cpp:541 launcher/installer.cpp:947
-#, fuzzy
-msgid "Checking..."
-msgstr "Verificando..."
-
-#: launcher/installer.cpp:551
-#, fuzzy
-msgid "Next: install"
-msgstr "Avançar: instalar"
-
-#: launcher/installer.cpp:553 launcher/installer.cpp:955
-#, fuzzy
-msgid "Install the missing tools"
-msgstr "Instalar as ferramentas que faltam"
-
-#: launcher/installer.cpp:556
-#, fuzzy
-msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft with the button below (some Windows versions hide it in the Store, and searching for it finds fake apps), install it, then press Check again."
-msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft com o botão abaixo (algumas versões do Windows o escondem na Store, e procurar por ele encontra aplicativos falsos), instale-o e depois clique em Verificar de novo."
-
-#: launcher/installer.cpp:562
-#, fuzzy
-msgid "What's missing can't be installed from here (see the list)."
-msgstr "O que falta não pode ser instalado por aqui (veja a lista)."
-
-#: launcher/installer.cpp:569 launcher/setup.cpp:1875
-#, fuzzy
-msgid "Installing the build tools"
-msgstr "Instalando as ferramentas de compilação"
-
-#: launcher/installer.cpp:575 launcher/setup.cpp:1953
-#, fuzzy
-msgid "Check again"
-msgstr "Verificar de novo"
-
-#: launcher/installer.cpp:585
-#, fuzzy
-msgid "Download App Installer (from Microsoft)"
-msgstr "Baixar o Instalador de Aplicativo (da Microsoft)"
-
-#: launcher/installer.cpp:594
-#, fuzzy
-msgid "If one keeps failing, install it by hand (its name is in the list), then press Check again."
-msgstr "Se uma delas continuar falhando, instale-a manualmente (o nome está na lista) e depois clique em Verificar de novo."
-
-#: launcher/installer.cpp:614
-#, fuzzy
-msgid "Couldn't make {0}: {1}"
-msgstr "Não foi possível criar {0}: {1}"
-
-#: launcher/installer.cpp:645
-#, fuzzy
-msgid "Copying the port's files"
-msgstr "Copiando os arquivos do port"
-
-#: launcher/installer.cpp:657
-#, fuzzy
-msgid "Copying Mind over Recomp into the game's folder"
-msgstr "Copiando o Mind over Recomp para a pasta do jogo"
-
-#: launcher/installer.cpp:671
-#, fuzzy
-msgid "Copying the older version's saves and settings"
-msgstr "Copiando os saves e configurações da versão anterior"
-
-#: launcher/installer.cpp:696
-#, fuzzy
-msgid "Getting the port's files"
-msgstr "Obtendo os arquivos do port"
-
-#: launcher/installer.cpp:731
-#, fuzzy
-msgid "3. Installing"
-msgstr "3. Instalando"
-
-#: launcher/installer.cpp:745
-#, fuzzy
-msgid "Couldn't reach the release list to download the port's files: {0}"
-msgstr "Não foi possível acessar a lista de versões para baixar os arquivos do port: {0}"
-
-#: launcher/installer.cpp:754 launcher/installer.cpp:775
-#, fuzzy
-msgid "Stopped."
-msgstr "Parado."
-
-#: launcher/installer.cpp:778
-#, fuzzy
-msgid "A build tool went missing: go Back and check the tools again."
-msgstr "Uma ferramenta de compilação sumiu: volte e verifique as ferramentas de novo."
-
-#: launcher/installer.cpp:782
-#, fuzzy
-msgid "Setting up stopped before the game was built."
-msgstr "A instalação parou antes de o jogo ser compilado."
-
-#: launcher/installer.cpp:794
-#, fuzzy
-msgid "Looking for the newest version..."
-msgstr "Procurando a versão mais recente..."
-
-#: launcher/installer.cpp:800 launcher/setup.cpp:1945
-#, fuzzy
-msgid "Checking what's there..."
-msgstr "Verificando o que tem..."
-
-#: launcher/installer.cpp:805 launcher/installer.cpp:950
-#, fuzzy
-msgid "Stop"
-msgstr "Parar"
-
-#: launcher/installer.cpp:809
-#, fuzzy
-msgid "Adding the Start menu entries and the Apps list entry..."
-msgstr "Adicionando os atalhos do menu Iniciar e a entrada na lista de aplicativos..."
-
-#: launcher/installer.cpp:815
-#, fuzzy
-msgid "Nothing is lost: the next try carries on where this one stopped. The full output is in the log below and in the game folder's user\\logs."
-msgstr "Nada se perdeu: a próxima tentativa continua de onde esta parou. A saída completa está no log abaixo e na pasta user\\logs do jogo."
-
-#: launcher/installer.cpp:818
-#, fuzzy
-msgid "Try again"
-msgstr "Tentar de novo"
-
-#: launcher/installer.cpp:830 launcher/installer.cpp:864 launcher/installer.cpp:1008
-#, fuzzy
-msgid "Open the game folder"
-msgstr "Abrir a pasta do jogo"
-
-#: launcher/installer.cpp:848
-#, fuzzy
-msgid "Done: Crash Mind over Mutant is installed"
-msgstr "Pronto: Crash Mind over Mutant está instalado"
-
-#: launcher/installer.cpp:851
-#, fuzzy
-msgid "Start it from the Start menu (\"Crash Mind over Mutant\")"
-msgstr "Abra o jogo pelo menu Iniciar (\"Crash Mind over Mutant\")"
-
-#: launcher/installer.cpp:852
-#, fuzzy
-msgid "Updates and uninstalling: \"Mind over Recomp\" in the Start menu, or Windows' Installed apps."
-msgstr "Atualizações e desinstalação: \"Mind over Recomp\" no menu Iniciar, ou em Aplicativos instalados do Windows."
-
-#: launcher/installer.cpp:860 launcher/installer.cpp:1004 launcher/main.cpp:438 launcher/main.cpp:565 launcher/main.cpp:1109
-#, fuzzy
-msgid "Play"
-msgstr "Jogar"
-
-#: launcher/installer.cpp:877
-#, fuzzy
-msgid "Installed: version %s"
-msgstr "Instalado: versão %s"
-
-#: launcher/installer.cpp:891
-#, fuzzy
-msgid "Ready to play."
-msgstr "Pronto para jogar."
-
-#: launcher/installer.cpp:897
-#, fuzzy
-msgid "The new version is in place. Mind over Recomp restarts now to build it."
-msgstr "A nova versão está no lugar. O Mind over Recomp vai reiniciar agora para compilá-la."
-
-#: launcher/installer.cpp:910
-#, fuzzy
-msgid "Checking for updates..."
-msgstr "Procurando atualizações..."
-
-#: launcher/installer.cpp:913
-#, fuzzy
-msgid "Version %s is available"
-msgstr "A versão %s está disponível"
-
-#: launcher/installer.cpp:921 launcher/setup.cpp:841 launcher/setup.cpp:846 launcher/setup.cpp:1899
-#, fuzzy
-msgid "Update to {0}"
-msgstr "Atualizar para {0}"
-
-#: launcher/installer.cpp:928 launcher/main.cpp:664 launcher/setup.cpp:860
-#, fuzzy
-msgid "Release page"
-msgstr "Página da versão"
-
-#: launcher/installer.cpp:930
-#, fuzzy
-msgid "This is the newest version."
-msgstr "Esta é a versão mais recente."
-
-#: launcher/installer.cpp:937 launcher/setup.cpp:872
-#, fuzzy
-msgid "Check for updates"
-msgstr "Procurar atualizações"
-
-#: launcher/installer.cpp:953
-#, fuzzy
-msgid "Some build tools are missing:"
-msgstr "Faltam algumas ferramentas de compilação:"
-
-#: launcher/installer.cpp:963
-#, fuzzy
-msgid "The game is built and ready."
-msgstr "O jogo está compilado e pronto."
-
-#: launcher/installer.cpp:965
-#, fuzzy
-msgid "The game needs building (an update, or an install that stopped)."
-msgstr "O jogo precisa ser compilado (uma atualização, ou uma instalação que parou no meio)."
-
-#: launcher/installer.cpp:967
-#, fuzzy
-msgid "Build it now"
-msgstr "Compilar agora"
-
-#: launcher/installer.cpp:978 launcher/setup.cpp:2039
-#, fuzzy
-msgid "Pick the disc image..."
-msgstr "Escolher a imagem de disco..."
-
-#: launcher/installer.cpp:983
-#, fuzzy
-msgid "(the disc's files aren't extracted yet)"
-msgstr "(os arquivos do disco ainda não foram extraídos)"
-
-#: launcher/installer.cpp:992
-#, fuzzy
-msgid "The game is running: close it to update or build."
-msgstr "O jogo está aberto: feche-o para atualizar ou compilar."
-
-#: launcher/installer.cpp:1010
-#, fuzzy
-msgid "Uninstall..."
-msgstr "Desinstalar..."
-
-#: launcher/installer.cpp:1016
-#, fuzzy
-msgid "Couldn't start the uninstaller."
-msgstr "Não foi possível abrir o desinstalador."
-
-#: launcher/installer.cpp:1041
-#, fuzzy
-msgid "Uninstall Crash Mind over Mutant"
-msgstr "Desinstalar Crash Mind over Mutant"
-
-#: launcher/installer.cpp:1047
-#, fuzzy
-msgid "This removes the game, its build, the disc's extracted files and the shortcuts. Your disc image (.iso) and the build tools (Visual Studio, LLVM and the rest) stay."
-msgstr "Isto remove o jogo, a compilação, os arquivos extraídos do disco e os atalhos. A sua imagem do disco (.iso) e as ferramentas de compilação (Visual Studio, LLVM e as outras) continuam."
-
-#: launcher/installer.cpp:1051
-#, fuzzy
-msgid "Keep my saves, settings and logs"
-msgstr "Manter meus saves, configurações e logs"
-
-#: launcher/installer.cpp:1052
-#, fuzzy
-msgid "They stay in %s"
-msgstr "Eles continuam em %s"
-
-#: launcher/installer.cpp:1052
-#, fuzzy
-msgid "%s goes too"
-msgstr "%s também será removida"
-
-#: launcher/installer.cpp:1056
+#: launcher/installer.cpp:642 launcher/installer.cpp:1330
 #, fuzzy
 msgid "The game is running: close it first."
 msgstr "O jogo está aberto: feche-o primeiro."
 
-#: launcher/installer.cpp:1059
+#: launcher/installer.cpp:644 launcher/installer.cpp:736 launcher/setup.cpp:1285
+#, fuzzy
+msgid "Pick your disc image (.iso) first."
+msgstr "Escolha antes a sua imagem de disco (.iso)."
+
+#: launcher/installer.cpp:660
+#, fuzzy
+msgid "1. Your disc and where the game goes"
+msgstr "1. Seu disco e onde o jogo vai ficar"
+
+#: launcher/installer.cpp:662
+#, fuzzy
+msgid "The game is built on this PC from your own copy of the disc: no game files come with this program. The first build takes a while (often 20-60 minutes) and needs about 15 GB of free space."
+msgstr "O jogo é compilado neste PC a partir da sua própria cópia do disco: nenhum arquivo do jogo vem com este programa. A primeira compilação demora (geralmente de 20 a 60 minutos) e precisa de cerca de 15 GB livres."
+
+#: launcher/installer.cpp:692
+#, fuzzy
+msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360"
+msgstr "Imagem do disco (.iso) de Crash: Mind over Mutant, Xbox 360"
+
+#: launcher/installer.cpp:694
+#, fuzzy
+msgid "Install into this folder"
+msgstr "Instalar nesta pasta"
+
+#: launcher/installer.cpp:705
+#, fuzzy
+msgid "A game that was set up before is in %s: it is used as it is, nothing is built again."
+msgstr "Um jogo instalado antes está em %s: ele será usado como está, nada é compilado de novo."
+
+#: launcher/installer.cpp:709
+#, fuzzy
+msgid "Its disc files are there too: no disc image needed."
+msgstr "Os arquivos do disco também estão lá: não precisa da imagem do disco."
+
+#: launcher/installer.cpp:711
+#, fuzzy
+msgid "The game goes into %s"
+msgstr "O jogo vai para %s"
+
+#: launcher/installer.cpp:714
+#, fuzzy
+msgid "A shortcut on the desktop"
+msgstr "Um atalho na área de trabalho"
+
+#: launcher/installer.cpp:715
+#, fuzzy
+msgid "Copy saves and settings from an older version"
+msgstr "Copiar saves e configurações de uma versão anterior"
+
+#: launcher/installer.cpp:718
+#, fuzzy
+msgid "Pick the older version's folder (the one with \"Mind over Recomp\" and the user folder in it). Its files are copied, never moved."
+msgstr "Escolha a pasta da versão anterior (a que tem o \"Mind over Recomp\" e a pasta user dentro). Os arquivos são copiados, nunca movidos."
+
+#: launcher/installer.cpp:720
+#, fuzzy
+msgid "Older version"
+msgstr "Versão anterior"
+
+#: launcher/installer.cpp:738
+#, fuzzy
+msgid "That older version has no user folder: pick the folder the old \"Mind over Recomp\" is in, or untick the copy."
+msgstr "Essa versão anterior não tem a pasta user: escolha a pasta onde fica o \"Mind over Recomp\" antigo, ou desmarque a cópia."
+
+#: launcher/installer.cpp:764
+#, fuzzy
+msgid "2. Build tools"
+msgstr "2. Ferramentas de compilação"
+
+#: launcher/installer.cpp:766
+#, fuzzy
+msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
+msgstr "Ferramentas gratuitas que transformam o código do jogo em um programa do Windows. As que faltam são instaladas pelo winget, o instalador de aplicativos do próprio Windows; o Windows pode pedir sua permissão para algumas delas (Build Tools do Visual Studio, Vulkan SDK)."
+
+#: launcher/installer.cpp:769
+#, fuzzy
+msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window. Visual Studio's Build Tools are a big download."
+msgstr "Se parecer travado, olhe a barra de tarefas: a pergunta de permissão do Windows (um escudo) pode abrir atrás desta janela. As Build Tools do Visual Studio são um download grande."
+
+#: launcher/installer.cpp:780 launcher/installer.cpp:1221
+#, fuzzy
+msgid "Checking..."
+msgstr "Verificando..."
+
+#: launcher/installer.cpp:790
+#, fuzzy
+msgid "Next: update"
+msgstr "Avançar: atualizar"
+
+#: launcher/installer.cpp:790
+#, fuzzy
+msgid "Next: install"
+msgstr "Avançar: instalar"
+
+#: launcher/installer.cpp:792 launcher/installer.cpp:1229
+#, fuzzy
+msgid "Install the missing tools"
+msgstr "Instalar as ferramentas que faltam"
+
+#: launcher/installer.cpp:795
+#, fuzzy
+msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft with the button below (some Windows versions hide it in the Store, and searching for it finds fake apps), install it, then press Check again."
+msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft com o botão abaixo (algumas versões do Windows o escondem na Store, e procurar por ele encontra aplicativos falsos), instale-o e depois clique em Verificar de novo."
+
+#: launcher/installer.cpp:801
+#, fuzzy
+msgid "What's missing can't be installed from here (see the list)."
+msgstr "O que falta não pode ser instalado por aqui (veja a lista)."
+
+#: launcher/installer.cpp:808 launcher/setup.cpp:2041
+#, fuzzy
+msgid "Installing the build tools"
+msgstr "Instalando as ferramentas de compilação"
+
+#: launcher/installer.cpp:814 launcher/setup.cpp:2119
+#, fuzzy
+msgid "Check again"
+msgstr "Verificar de novo"
+
+#: launcher/installer.cpp:824
+#, fuzzy
+msgid "Download App Installer (from Microsoft)"
+msgstr "Baixar o Instalador de Aplicativo (da Microsoft)"
+
+#: launcher/installer.cpp:833
+#, fuzzy
+msgid "If one keeps failing, install it by hand (its name is in the list), then press Check again."
+msgstr "Se uma delas continuar falhando, instale-a manualmente (o nome está na lista) e depois clique em Verificar de novo."
+
+#: launcher/installer.cpp:863
+#, fuzzy
+msgid "Couldn't make {0}: {1}"
+msgstr "Não foi possível criar {0}: {1}"
+
+#: launcher/installer.cpp:905
+#, fuzzy
+msgid "Copying the port's files"
+msgstr "Copiando os arquivos do port"
+
+#: launcher/installer.cpp:922
+#, fuzzy
+msgid "Copying Mind over Recomp into the game's folder"
+msgstr "Copiando o Mind over Recomp para a pasta do jogo"
+
+#: launcher/installer.cpp:936
+#, fuzzy
+msgid "Copying the older version's saves and settings"
+msgstr "Copiando os saves e configurações da versão anterior"
+
+#: launcher/installer.cpp:961
+#, fuzzy
+msgid "Updating the port's files"
+msgstr "Atualizando os arquivos do port"
+
+#: launcher/installer.cpp:961
+#, fuzzy
+msgid "Getting the port's files"
+msgstr "Obtendo os arquivos do port"
+
+#: launcher/installer.cpp:1005
+#, fuzzy
+msgid "Couldn't reach the release list to download the port's files: {0}"
+msgstr "Não foi possível acessar a lista de versões para baixar os arquivos do port: {0}"
+
+#: launcher/installer.cpp:1014 launcher/installer.cpp:1035
+#, fuzzy
+msgid "Stopped."
+msgstr "Parado."
+
+#: launcher/installer.cpp:1038
+#, fuzzy
+msgid "A build tool went missing: go Back and check the tools again."
+msgstr "Uma ferramenta de compilação sumiu: volte e verifique as ferramentas de novo."
+
+#: launcher/installer.cpp:1042
+#, fuzzy
+msgid "Setting up stopped before the game was built."
+msgstr "A instalação parou antes de o jogo ser compilado."
+
+#: launcher/installer.cpp:1062
+#, fuzzy
+msgid "3. Updating"
+msgstr "3. Atualizando"
+
+#: launcher/installer.cpp:1062
+#, fuzzy
+msgid "3. Installing"
+msgstr "3. Instalando"
+
+#: launcher/installer.cpp:1067
+#, fuzzy
+msgid "Running for %s"
+msgstr "Em andamento há %s"
+
+#: launcher/installer.cpp:1076
+#, fuzzy
+msgid "This is taking a while: that's normal, building the game is heavy work."
+msgstr "Está demorando: é normal, compilar o jogo é um trabalho pesado."
+
+#: launcher/installer.cpp:1078
+#, fuzzy
+msgid "To keep it fast, don't use the PC for anything heavy until it's done: no games, video editing, big downloads or many browser tabs. Keep a laptop plugged in. Minimizing this window is fine; closing it stops the build (the next try carries on where it stopped)."
+msgstr "Para continuar rápido, não use o PC para nada pesado até terminar: nada de jogos, edição de vídeo, downloads grandes ou muitas abas do navegador. Deixe o notebook na tomada. Minimizar esta janela não tem problema; fechá-la para a compilação (a próxima tentativa continua de onde parou)."
+
+#: launcher/installer.cpp:1083
+#, fuzzy
+msgid "\"Use fewer resources\" is on: the build gives way to other programs, so it takes longer."
+msgstr "\"Usar menos recursos\" está ligado: a compilação dá lugar aos outros programas, então demora mais."
+
+#: launcher/installer.cpp:1092
+#, fuzzy
+msgid "Looking for the newest version..."
+msgstr "Procurando a versão mais recente..."
+
+#: launcher/installer.cpp:1098 launcher/setup.cpp:2111
+#, fuzzy
+msgid "Checking what's there..."
+msgstr "Verificando o que tem..."
+
+#: launcher/installer.cpp:1103 launcher/installer.cpp:1224
+#, fuzzy
+msgid "Stop"
+msgstr "Parar"
+
+#: launcher/installer.cpp:1107
+#, fuzzy
+msgid "Adding the Start menu entries and the Apps list entry..."
+msgstr "Adicionando os atalhos do menu Iniciar e a entrada na lista de aplicativos..."
+
+#: launcher/installer.cpp:1112
+#, fuzzy
+msgid "Stopped after %s"
+msgstr "Parou depois de %s"
+
+#: launcher/installer.cpp:1114
+#, fuzzy
+msgid "Nothing is lost: the next try carries on where this one stopped. The full output is in the log below and in the game folder's user\\logs."
+msgstr "Nada se perdeu: a próxima tentativa continua de onde esta parou. A saída completa está no log abaixo e na pasta user\\logs do jogo."
+
+#: launcher/installer.cpp:1117
+#, fuzzy
+msgid "Try again"
+msgstr "Tentar de novo"
+
+#: launcher/installer.cpp:1132 launcher/installer.cpp:1169 launcher/installer.cpp:1282
+#, fuzzy
+msgid "Open the game folder"
+msgstr "Abrir a pasta do jogo"
+
+#: launcher/installer.cpp:1150
+#, fuzzy
+msgid "Done: Crash Mind over Mutant is updated to {0}"
+msgstr "Pronto: Crash Mind over Mutant foi atualizado para {0}"
+
+#: launcher/installer.cpp:1151
+#, fuzzy
+msgid "Done: Crash Mind over Mutant is installed"
+msgstr "Pronto: Crash Mind over Mutant está instalado"
+
+#: launcher/installer.cpp:1153
+#, fuzzy
+msgid "Finished in %s"
+msgstr "Terminou em %s"
+
+#: launcher/installer.cpp:1155
+#, fuzzy
+msgid "Start it from the Start menu (\"Crash Mind over Mutant\")"
+msgstr "Abra o jogo pelo menu Iniciar (\"Crash Mind over Mutant\")"
+
+#: launcher/installer.cpp:1156
+#, fuzzy
+msgid "Updates: download the newest installer from GitHub when a new version is out and choose \"Update an installed game\". Uninstalling: \"Mind over Recomp\" in the Start menu, or Windows' Installed apps."
+msgstr "Atualizações: quando sair uma versão nova, baixe o instalador mais novo no GitHub e escolha \"Atualizar um jogo instalado\". Desinstalar: \"Mind over Recomp\" no menu Iniciar, ou em Aplicativos instalados do Windows."
+
+#: launcher/installer.cpp:1165 launcher/installer.cpp:1278 launcher/main.cpp:438 launcher/main.cpp:565 launcher/main.cpp:1109
+#, fuzzy
+msgid "Play"
+msgstr "Jogar"
+
+#: launcher/installer.cpp:1181
+#, fuzzy
+msgid "Installed: version %s"
+msgstr "Instalado: versão %s"
+
+#: launcher/installer.cpp:1195
+#, fuzzy
+msgid "Ready to play."
+msgstr "Pronto para jogar."
+
+#: launcher/installer.cpp:1201
+#, fuzzy
+msgid "The new version is in place. Mind over Recomp restarts now to build it."
+msgstr "A nova versão está no lugar. O Mind over Recomp vai reiniciar agora para compilá-la."
+
+#: launcher/installer.cpp:1210
+#, fuzzy
+msgid "To update: download the newest Mind over Recomp from GitHub, start it and choose \"Update an installed game\". Saves, settings and the build are kept."
+msgstr "Para atualizar: baixe o Mind over Recomp mais novo no GitHub, abra e escolha \"Atualizar um jogo instalado\". Saves, configurações e a compilação são mantidos."
+
+#: launcher/installer.cpp:1212
+#, fuzzy
+msgid "Open the releases page"
+msgstr "Abrir a página de versões"
+
+#: launcher/installer.cpp:1227
+#, fuzzy
+msgid "Some build tools are missing:"
+msgstr "Faltam algumas ferramentas de compilação:"
+
+#: launcher/installer.cpp:1237
+#, fuzzy
+msgid "The game is built and ready."
+msgstr "O jogo está compilado e pronto."
+
+#: launcher/installer.cpp:1239
+#, fuzzy
+msgid "The game needs building (an update, or an install that stopped)."
+msgstr "O jogo precisa ser compilado (uma atualização, ou uma instalação que parou no meio)."
+
+#: launcher/installer.cpp:1241
+#, fuzzy
+msgid "Build it now"
+msgstr "Compilar agora"
+
+#: launcher/installer.cpp:1252 launcher/setup.cpp:2205
+#, fuzzy
+msgid "Pick the disc image..."
+msgstr "Escolher a imagem de disco..."
+
+#: launcher/installer.cpp:1257
+#, fuzzy
+msgid "(the disc's files aren't extracted yet)"
+msgstr "(os arquivos do disco ainda não foram extraídos)"
+
+#: launcher/installer.cpp:1266
+#, fuzzy
+msgid "The game is running: close it to update or build."
+msgstr "O jogo está aberto: feche-o para atualizar ou compilar."
+
+#: launcher/installer.cpp:1284
+#, fuzzy
+msgid "Uninstall..."
+msgstr "Desinstalar..."
+
+#: launcher/installer.cpp:1290
+#, fuzzy
+msgid "Couldn't start the uninstaller."
+msgstr "Não foi possível abrir o desinstalador."
+
+#: launcher/installer.cpp:1315
+#, fuzzy
+msgid "Uninstall Crash Mind over Mutant"
+msgstr "Desinstalar Crash Mind over Mutant"
+
+#: launcher/installer.cpp:1321
+#, fuzzy
+msgid "This removes the game, its build, the disc's extracted files and the shortcuts. Your disc image (.iso) and the build tools (Visual Studio, LLVM and the rest) stay."
+msgstr "Isto remove o jogo, a compilação, os arquivos extraídos do disco e os atalhos. A sua imagem do disco (.iso) e as ferramentas de compilação (Visual Studio, LLVM e as outras) continuam."
+
+#: launcher/installer.cpp:1325
+#, fuzzy
+msgid "Keep my saves, settings and logs"
+msgstr "Manter meus saves, configurações e logs"
+
+#: launcher/installer.cpp:1326
+#, fuzzy
+msgid "They stay in %s"
+msgstr "Eles continuam em %s"
+
+#: launcher/installer.cpp:1326
+#, fuzzy
+msgid "%s goes too"
+msgstr "%s também será removida"
+
+#: launcher/installer.cpp:1333
 #, fuzzy
 msgid "Uninstall"
 msgstr "Desinstalar"
 
-#: launcher/installer.cpp:1068
+#: launcher/installer.cpp:1342
 #, fuzzy
 msgid "Removing... %llu files"
 msgstr "Removendo... %llu arquivos"
 
-#: launcher/installer.cpp:1072
+#: launcher/installer.cpp:1346
 #, fuzzy
 msgid "Uninstalled."
 msgstr "Desinstalado."
 
-#: launcher/installer.cpp:1072
+#: launcher/installer.cpp:1346
 #, fuzzy
 msgid "Uninstalled, with problems:"
 msgstr "Desinstalado, com problemas:"
 
-#: launcher/installer.cpp:1075
+#: launcher/installer.cpp:1349
 #, fuzzy
 msgid "Your saves, settings and logs are still in {0}. Installing into the same place again picks them up."
 msgstr "Seus saves, configurações e logs continuam em {0}. Instalar de novo no mesmo lugar os recupera."
@@ -4199,20 +4329,10 @@ msgstr "nov"
 msgid "Dec"
 msgstr "dez"
 
-#: launcher/main.cpp:114
-#, fuzzy
-msgid "%ld h %02ld min"
-msgstr "%ld h %02ld min"
-
 #: launcher/main.cpp:116
 #, fuzzy
 msgid "%ld min"
 msgstr "%ld min"
-
-#: launcher/main.cpp:118
-#, fuzzy
-msgid "%ld s"
-msgstr "%ld s"
 
 #. A save's date: %s = short month, %d = day, then the time. Reorder freely only by keeping %s before %d.
 #: launcher/main.cpp:130
@@ -4405,7 +4525,7 @@ msgstr "Mostrar o log do jogo"
 msgid "Report a problem..."
 msgstr "Relatar um problema..."
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1707
+#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1873
 #, fuzzy
 msgid "OK"
 msgstr "OK"
@@ -4550,6 +4670,11 @@ msgstr "Atualizado para %s"
 #, fuzzy
 msgid "What's new:"
 msgstr "Novidades:"
+
+#: launcher/main.cpp:664 launcher/setup.cpp:996
+#, fuzzy
+msgid "Release page"
+msgstr "Página da versão"
 
 #: launcher/main.cpp:673
 #, fuzzy
@@ -5189,556 +5314,561 @@ msgstr "Salvas na hora; valem na próxima vez que o jogo iniciar. Passe o mouse 
 msgid "All settings (advanced)"
 msgstr "Todas as configurações (avançado)"
 
-#: launcher/setup.cpp:155
+#: launcher/setup.cpp:165
 #, fuzzy
 msgid "Replacing link files with copies (Git for Windows)"
 msgstr "Substituindo arquivos de link por cópias (Git para Windows)"
 
-#: launcher/setup.cpp:370
+#: launcher/setup.cpp:506
 #, fuzzy
 msgid "checking..."
 msgstr "verificando..."
 
-#: launcher/setup.cpp:371
+#: launcher/setup.cpp:507
 #, fuzzy
 msgid "done"
 msgstr "pronto"
 
-#: launcher/setup.cpp:372
+#: launcher/setup.cpp:508
 #, fuzzy
 msgid "out of date"
 msgstr "desatualizado"
 
-#: launcher/setup.cpp:373
+#: launcher/setup.cpp:509
 #, fuzzy
 msgid "to do"
 msgstr "a fazer"
 
-#: launcher/setup.cpp:374
+#: launcher/setup.cpp:510
 #, fuzzy
 msgid "needs attention"
 msgstr "precisa de atenção"
 
-#: launcher/setup.cpp:544 launcher/setup.cpp:558 launcher/setup.cpp:572 launcher/setup.cpp:586 launcher/setup.cpp:597 launcher/setup.cpp:613 launcher/setup.cpp:643 launcher/setup.cpp:699 launcher/setup.cpp:716 launcher/setup.cpp:722
+#: launcher/setup.cpp:680 launcher/setup.cpp:694 launcher/setup.cpp:708 launcher/setup.cpp:722 launcher/setup.cpp:733 launcher/setup.cpp:749 launcher/setup.cpp:779 launcher/setup.cpp:835 launcher/setup.cpp:852 launcher/setup.cpp:858
 #, fuzzy
 msgid "not found"
 msgstr "não encontrado"
 
-#: launcher/setup.cpp:548 launcher/setup.cpp:563 launcher/setup.cpp:694 launcher/setup.cpp:704
+#: launcher/setup.cpp:684 launcher/setup.cpp:699 launcher/setup.cpp:830 launcher/setup.cpp:840
 #, fuzzy
 msgid "too old: {0} ({1} or newer needed)"
 msgstr "velho demais: {0} (precisa de {1} ou mais novo)"
 
-#: launcher/setup.cpp:583
+#: launcher/setup.cpp:719
 #, fuzzy
 msgid "not found (or only the Store shortcut)"
 msgstr "não encontrado (ou só o atalho da Store)"
 
-#: launcher/setup.cpp:614
+#: launcher/setup.cpp:750
 #, fuzzy
 msgid "the Windows SDK is missing"
 msgstr "falta o Windows SDK"
 
-#: launcher/setup.cpp:647
+#: launcher/setup.cpp:783
 #, fuzzy
 msgid "not found: update your graphics card's driver"
 msgstr "não encontrado: atualize o driver da sua placa de vídeo"
 
-#: launcher/setup.cpp:689
+#: launcher/setup.cpp:825
 #, fuzzy
 msgid "not found (clang and clang++)"
 msgstr "não encontrado (clang e clang++)"
 
-#: launcher/setup.cpp:711
+#: launcher/setup.cpp:847
 #, fuzzy
 msgid "not found (needs pkg-config too)"
 msgstr "não encontrado (também precisa de pkg-config)"
 
-#: launcher/setup.cpp:748
+#: launcher/setup.cpp:884
 msgid "Checking file dates"
-msgstr ""
+msgstr "Verificando as datas dos arquivos"
 
-#: launcher/setup.cpp:809
+#: launcher/setup.cpp:945
 #, fuzzy
 msgid "Version %s"
 msgstr "Versão %s"
 
-#: launcher/setup.cpp:812
+#: launcher/setup.cpp:948
 #, fuzzy
 msgid " -  a developer copy: update it with git pull"
 msgstr " -  uma cópia de desenvolvedor: atualize com git pull"
 
-#: launcher/setup.cpp:817
+#: launcher/setup.cpp:953
 #, fuzzy
 msgid " -  updated to %s: restart the launcher to finish"
 msgstr " -  atualizado para %s: reinicie o iniciador para terminar"
 
-#: launcher/setup.cpp:820
+#: launcher/setup.cpp:956
 #, fuzzy
 msgid "Restart the launcher"
 msgstr "Reiniciar o iniciador"
 
-#: launcher/setup.cpp:824
+#: launcher/setup.cpp:960
 #, fuzzy
 msgid "Couldn't restart: start the launcher again by hand."
 msgstr "Não foi possível reiniciar: abra o iniciador de novo você mesmo."
 
-#: launcher/setup.cpp:834
+#: launcher/setup.cpp:970
 #, fuzzy
 msgid " -  checking for updates..."
 msgstr " -  procurando atualizações..."
 
-#: launcher/setup.cpp:836
+#: launcher/setup.cpp:972
 #, fuzzy
 msgid " -  %s is available%s%s"
 msgstr " -  %s disponível%s%s"
 
-#: launcher/setup.cpp:856
+#: launcher/setup.cpp:977 launcher/setup.cpp:982 launcher/setup.cpp:2065
+#, fuzzy
+msgid "Update to {0}"
+msgstr "Atualizar para {0}"
+
+#: launcher/setup.cpp:992
 #, fuzzy
 msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
 msgstr "Baixa a nova versão e coloca no lugar: seus saves, configurações e os arquivos do jogo ficam. Depois o iniciador reinicia e recompila o que mudou."
 
-#: launcher/setup.cpp:865
+#: launcher/setup.cpp:1001
 #, fuzzy
 msgid " -  the newest version"
 msgstr " -  a versão mais nova"
 
-#: launcher/setup.cpp:881
+#: launcher/setup.cpp:1008
+#, fuzzy
+msgid "Check for updates"
+msgstr "Procurar atualizações"
+
+#: launcher/setup.cpp:1017
 #, fuzzy
 msgid "What's new in %s"
 msgstr "Novidades da %s"
 
-#: launcher/setup.cpp:946
+#: launcher/setup.cpp:1082
 #, fuzzy
 msgid "the ReXGlue SDK and its libraries are there"
 msgstr "o SDK ReXGlue e as bibliotecas dele estão lá"
 
-#: launcher/setup.cpp:947
+#: launcher/setup.cpp:1083
 #, fuzzy
 msgid "the ReXGlue SDK isn't downloaded yet"
 msgstr "o SDK ReXGlue ainda não foi baixado"
 
-#: launcher/setup.cpp:948
+#: launcher/setup.cpp:1084
 #, fuzzy
 msgid "the ReXGlue SDK submodule isn't downloaded yet"
 msgstr "o submódulo do SDK ReXGlue ainda não foi baixado"
 
-#: launcher/setup.cpp:958
+#: launcher/setup.cpp:1094
 #, fuzzy
 msgid "this version needs another ReXGlue SDK ({0}): download it again"
 msgstr "esta versão precisa de outro SDK ReXGlue ({0}): baixe de novo"
 
-#: launcher/setup.cpp:972
+#: launcher/setup.cpp:1108
 #, fuzzy
 msgid "extracted in {0}"
 msgstr "extraído em {0}"
 
-#: launcher/setup.cpp:975
+#: launcher/setup.cpp:1111
 #, fuzzy
 msgid "no disc image found yet: pick your .iso"
 msgstr "nenhuma imagem de disco encontrada ainda: escolha o seu .iso"
 
-#: launcher/setup.cpp:976
+#: launcher/setup.cpp:1112
 #, fuzzy
 msgid "ready to extract {0}"
 msgstr "pronto para extrair {0}"
 
-#: launcher/setup.cpp:1007
+#: launcher/setup.cpp:1147
 #, fuzzy
 msgid "needs the source parts first"
 msgstr "precisa antes das partes do código"
 
-#: launcher/setup.cpp:1014
+#: launcher/setup.cpp:1154
 #, fuzzy
 msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
 msgstr "os patches mudaram (uma atualização): ele será redefinido, corrigido de novo e depois recompilado"
 
-#: launcher/setup.cpp:1018
+#: launcher/setup.cpp:1158
 #, fuzzy
 msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
 msgstr "nossos {0} patches do SDK não estão nem todos aplicados nem todos ausentes: a pasta do SDK foi mudada à mão (ou um patch foi atualizado). Não mexemos; veja docs/01-building.md, passo 2 (git -C thirdparty/rexglue-sdk status)."
 
-#: launcher/setup.cpp:1024
+#: launcher/setup.cpp:1164
 #, fuzzy
 msgid "patched, not built yet"
 msgstr "corrigido, ainda não compilado"
 
-#: launcher/setup.cpp:1024
+#: launcher/setup.cpp:1164
 #, fuzzy
 msgid "not patched or built yet"
 msgstr "nem corrigido nem compilado"
 
-#: launcher/setup.cpp:1029
+#: launcher/setup.cpp:1169
 #, fuzzy
 msgid "built without our patches: rebuild it"
 msgstr "compilado sem os nossos patches: recompile"
 
-#: launcher/setup.cpp:1030
+#: launcher/setup.cpp:1170
 #, fuzzy
 msgid "the patches changed since the SDK was built: rebuild it"
 msgstr "os patches mudaram desde que o SDK foi compilado: recompile"
 
-#: launcher/setup.cpp:1033
+#: launcher/setup.cpp:1173
 #, fuzzy
 msgid "built and installed, {0} patches"
 msgstr "compilado e instalado, {0} patches"
 
-#: launcher/setup.cpp:1040
+#: launcher/setup.cpp:1180
 #, fuzzy
 msgid "not built yet"
 msgstr "ainda não compilado"
 
-#: launcher/setup.cpp:1043
+#: launcher/setup.cpp:1183
 #, fuzzy
 msgid "built, not copied into program/ yet"
 msgstr "compilado, ainda não copiado para program/"
 
-#: launcher/setup.cpp:1060
+#: launcher/setup.cpp:1200
 #, fuzzy
 msgid "the sources changed since the last build: rebuild it"
 msgstr "o código mudou desde a última compilação: recompile"
 
-#: launcher/setup.cpp:1063
+#: launcher/setup.cpp:1203
 #, fuzzy
 msgid "built: {0}"
 msgstr "compilado: {0}"
 
-#: launcher/setup.cpp:1086
+#: launcher/setup.cpp:1226
 #, fuzzy
 msgid "Downloading the source parts (git submodules)"
 msgstr "Baixando as partes do código (submódulos do git)"
 
-#: launcher/setup.cpp:1104
+#: launcher/setup.cpp:1244
 #, fuzzy
 msgid "Finishing the SDK's libraries (a download was stopped)"
 msgstr "Terminando as bibliotecas do SDK (um download foi interrompido)"
 
-#: launcher/setup.cpp:1109
+#: launcher/setup.cpp:1249
 #, fuzzy
 msgid "Removing the old SDK download"
 msgstr "Removendo o download antigo do SDK"
 
-#: launcher/setup.cpp:1122
+#: launcher/setup.cpp:1262
 #, fuzzy
 msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
 msgstr "Baixando o SDK ReXGlue {0} (e as bibliotecas dele)"
 
-#: launcher/setup.cpp:1127
+#: launcher/setup.cpp:1267
 #, fuzzy
 msgid "Checking the SDK's version"
 msgstr "Verificando a versão do SDK"
 
-#: launcher/setup.cpp:1152
+#: launcher/setup.cpp:1292
 #, fuzzy
 msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
 msgstr "Espaço livre insuficiente: os arquivos do jogo precisam de uns 6,5 GB, há %.1f GB livres."
 
-#: launcher/setup.cpp:1165
+#: launcher/setup.cpp:1305
 #, fuzzy
 msgid "That file isn't an Xbox 360 disc image the extractor can read."
 msgstr "Esse arquivo não é uma imagem de disco de Xbox 360 que o extrator consiga ler."
 
-#: launcher/setup.cpp:1169
+#: launcher/setup.cpp:1309
 #, fuzzy
 msgid "That disc image has no default.xex: not a game disc?"
 msgstr "Essa imagem de disco não tem default.xex: não é um disco do jogo?"
 
-#: launcher/setup.cpp:1172
+#: launcher/setup.cpp:1312
 #, fuzzy
 msgid "Extracting the disc into game/"
 msgstr "Extraindo o disco em game/"
 
-#: launcher/setup.cpp:1184
+#: launcher/setup.cpp:1324
 #, fuzzy
 msgid "Checking the game's executable"
 msgstr "Verificando o executável do jogo"
 
-#: launcher/setup.cpp:1190
+#: launcher/setup.cpp:1330
 #, fuzzy
 msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
 msgstr "default.xex não é Crash: Mind over Mutant (ID de título 565507FA não encontrado). Os arquivos estão em game/; este port só roda esse jogo."
 
-#: launcher/setup.cpp:1194
+#: launcher/setup.cpp:1334
 #, fuzzy
 msgid "Title id 565507FA: Crash: Mind over Mutant."
 msgstr "ID de título 565507FA: Crash: Mind over Mutant."
 
-#: launcher/setup.cpp:1217
+#: launcher/setup.cpp:1360
 #, fuzzy
-msgid "Undoing the old patches"
-msgstr "Desfazendo os patches antigos"
+msgid "Updating our fixes in the SDK (only the files that change)"
+msgstr "Atualizando nossas correções no SDK (só os arquivos que mudam)"
 
-#: launcher/setup.cpp:1218
-#, fuzzy
-msgid "Removing files the old patches added"
-msgstr "Removendo arquivos que os patches antigos adicionaram"
-
-#: launcher/setup.cpp:1221
+#: launcher/setup.cpp:1370
 #, fuzzy
 msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
 msgstr "Aplicando nossas correções ao SDK (patches/rexglue-sdk)"
 
-#: launcher/setup.cpp:1236
+#: launcher/setup.cpp:1385
 #, fuzzy
 msgid "Configuring the SDK"
 msgstr "Configurando o SDK"
 
-#: launcher/setup.cpp:1238
+#: launcher/setup.cpp:1390
 #, fuzzy
-msgid "Building the SDK (Release: the recompiler)"
-msgstr "Compilando o SDK (Release: o recompilador)"
+msgid "Building the SDK"
+msgstr "Compilando o SDK"
 
-#: launcher/setup.cpp:1242
-#, fuzzy
-msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
-msgstr "Compilando o SDK (RelWithDebInfo: o runtime que o jogo usa)"
-
-#: launcher/setup.cpp:1250
+#: launcher/setup.cpp:1398
 #, fuzzy
 msgid "Noting which patches the SDK was built with"
 msgstr "Anotando com quais patches o SDK foi compilado"
 
-#: launcher/setup.cpp:1277
+#: launcher/setup.cpp:1425
 #, fuzzy
 msgid "Copying default.xex for the build"
 msgstr "Copiando o default.xex para a compilação"
 
-#: launcher/setup.cpp:1304
+#: launcher/setup.cpp:1452
 #, fuzzy
 msgid "Linking source/game to the disc's files"
 msgstr "Ligando source/game aos arquivos do disco"
 
-#: launcher/setup.cpp:1328
+#: launcher/setup.cpp:1476
 #, fuzzy
 msgid "Configuring the game's build"
 msgstr "Configurando a compilação do jogo"
 
-#: launcher/setup.cpp:1338
+#: launcher/setup.cpp:1486
 #, fuzzy
 msgid "Recompiling the game's code (default.xex -> C++)"
 msgstr "Recompilando o código do jogo (default.xex -> C++)"
 
-#: launcher/setup.cpp:1344
+#: launcher/setup.cpp:1492
 #, fuzzy
 msgid "Compiling the game ({0} at a time; the first build takes a while)"
 msgstr "Compilando o jogo ({0} por vez; a primeira compilação demora)"
 
-#: launcher/setup.cpp:1357
+#: launcher/setup.cpp:1505
 #, fuzzy
 msgid "Copying the game into program/"
 msgstr "Copiando o jogo para program/"
 
-#: launcher/setup.cpp:1419
+#: launcher/setup.cpp:1567
 #, fuzzy
 msgid "Making the game's icon from your disc"
 msgstr "Criando o ícone do jogo a partir do seu disco"
 
-#: launcher/setup.cpp:1429
+#: launcher/setup.cpp:1577
 #, fuzzy
 msgid "Putting the icon on the game"
 msgstr "Colocando o ícone no jogo"
 
-#: launcher/setup.cpp:1494
+#: launcher/setup.cpp:1642
 #, fuzzy
 msgid "Setting up"
 msgstr "Instalando"
 
-#: launcher/setup.cpp:1681
+#: launcher/setup.cpp:1763
+#, fuzzy
+msgid "Checking the game's files against your disc"
+msgstr "Conferindo os arquivos do jogo com o seu disco"
+
+#: launcher/setup.cpp:1847
 #, fuzzy
 msgid "%s: done"
 msgstr "%s: pronto"
 
-#: launcher/setup.cpp:1683
+#: launcher/setup.cpp:1849
 #, fuzzy
 msgid "%s: cancelled"
 msgstr "%s: cancelado"
 
-#: launcher/setup.cpp:1685
+#: launcher/setup.cpp:1851
 #, fuzzy
 msgid "%s: failed"
 msgstr "%s: falhou"
 
-#: launcher/setup.cpp:1705
+#: launcher/setup.cpp:1871
 #, fuzzy
 msgid "This step can't be stopped: a few seconds."
 msgstr "Este passo não pode ser parado: alguns segundos."
 
-#: launcher/setup.cpp:1714
+#: launcher/setup.cpp:1880
 #, fuzzy
 msgid "Follow"
 msgstr "Acompanhar"
 
-#: launcher/setup.cpp:1783 launcher/setup.cpp:1853 launcher/setup.cpp:1893
+#: launcher/setup.cpp:1949 launcher/setup.cpp:2019 launcher/setup.cpp:2059
 #, fuzzy
 msgid "Still busy: wait a moment."
 msgstr "Ainda ocupado: espere um momento."
 
-#: launcher/setup.cpp:1788
+#: launcher/setup.cpp:1954
 #, fuzzy
 msgid "Still checking: wait a moment."
 msgstr "Ainda verificando: espere um momento."
 
-#: launcher/setup.cpp:1819
+#: launcher/setup.cpp:1985
 #, fuzzy
 msgid "Adding {0} (Windows asks for permission)"
 msgstr "Adicionando {0} (o Windows pede permissão)"
 
-#: launcher/setup.cpp:1829
+#: launcher/setup.cpp:1995
 #, fuzzy
 msgid "Installing {0} (winget)"
 msgstr "Instalando {0} (winget)"
 
-#: launcher/setup.cpp:1858
+#: launcher/setup.cpp:2024
 #, fuzzy
 msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
 msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft ({0}; procurar por ele na Store pode encontrar aplicativos falsos), instale-o e tente de novo."
 
-#: launcher/setup.cpp:1867
+#: launcher/setup.cpp:2033
 #, fuzzy
 msgid "Nothing here can be installed automatically."
 msgstr "Nada aqui pode ser instalado automaticamente."
 
-#: launcher/setup.cpp:1923
+#: launcher/setup.cpp:2089
 #, fuzzy
 msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
 msgstr "A Instalação compila o jogo a partir do código-fonte, então funciona a partir da pasta do projeto (um clone do git). Esta cópia é uma cópia instalada."
 
-#: launcher/setup.cpp:1947
+#: launcher/setup.cpp:2113
 #, fuzzy
 msgid "Everything is set up: the game is ready to play."
 msgstr "Tudo instalado: o jogo está pronto para jogar."
 
-#: launcher/setup.cpp:1949
+#: launcher/setup.cpp:2115
 #, fuzzy
 msgid "Some steps are left."
 msgstr "Faltam alguns passos."
 
-#: launcher/setup.cpp:1969
+#: launcher/setup.cpp:2135
 #, fuzzy
 msgid "Set up everything"
 msgstr "Instalar tudo"
 
-#: launcher/setup.cpp:1974
+#: launcher/setup.cpp:2140
 #, fuzzy
 msgid "Install the missing build tools first (step 1)."
 msgstr "Instale antes as ferramentas de compilação que faltam (passo 1)."
 
-#: launcher/setup.cpp:1978
+#: launcher/setup.cpp:2144
 #, fuzzy
 msgid "The game is running: building waits until it's closed."
 msgstr "O jogo está rodando: a compilação espera até ele fechar."
 
-#: launcher/setup.cpp:1991
+#: launcher/setup.cpp:2157
 #, fuzzy
 msgid "Build tools"
 msgstr "Ferramentas de compilação"
 
-#: launcher/setup.cpp:1992
+#: launcher/setup.cpp:2158
 #, fuzzy
 msgid "everything needed to build is installed"
 msgstr "tudo o que é preciso para compilar está instalado"
 
-#: launcher/setup.cpp:1999
+#: launcher/setup.cpp:2165
 #, fuzzy
 msgid "found"
 msgstr "encontrado"
 
-#: launcher/setup.cpp:1999
+#: launcher/setup.cpp:2165
 #, fuzzy
 msgid "missing"
 msgstr "faltando"
 
-#: launcher/setup.cpp:2004
+#: launcher/setup.cpp:2170
 #, fuzzy
 msgid "  -  package: "
 msgstr "  -  pacote: "
 
-#: launcher/setup.cpp:2011
+#: launcher/setup.cpp:2177
 #, fuzzy
 msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
 msgstr "Instale as que faltam com o seu gerenciador de pacotes (os nomes acima são os do %s), depois aperte Verificar de novo."
 
-#: launcher/setup.cpp:2020 launcher/setup.cpp:2025
+#: launcher/setup.cpp:2186 launcher/setup.cpp:2191
 #, fuzzy
 msgid "Source parts"
 msgstr "Partes do código"
 
-#: launcher/setup.cpp:2024
+#: launcher/setup.cpp:2190
 #, fuzzy
 msgid "Download them"
 msgstr "Baixar"
 
-#: launcher/setup.cpp:2032
+#: launcher/setup.cpp:2198
 #, fuzzy
 msgid "Your disc"
 msgstr "Seu disco"
 
-#: launcher/setup.cpp:2036
+#: launcher/setup.cpp:2202
 #, fuzzy
 msgid "Disc image: %s"
 msgstr "Imagem de disco: %s"
 
-#: launcher/setup.cpp:2040
+#: launcher/setup.cpp:2206
 #, fuzzy
 msgid "Xbox 360 disc image"
 msgstr "Imagem de disco de Xbox 360"
 
-#: launcher/setup.cpp:2055
+#: launcher/setup.cpp:2221
 #, fuzzy
 msgid "Extract it"
 msgstr "Extrair"
 
-#: launcher/setup.cpp:2059
+#: launcher/setup.cpp:2225
 #, fuzzy
 msgid "Disc"
 msgstr "Disco"
 
-#: launcher/setup.cpp:2066
+#: launcher/setup.cpp:2232
 #, fuzzy
 msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
 msgstr "Sua própria cópia do disco (uma completa tem 7,8 GB); os arquivos do jogo (6 GB) vão para game/."
 
-#: launcher/setup.cpp:2072 launcher/setup.cpp:2081
+#: launcher/setup.cpp:2238 launcher/setup.cpp:2247
 #, fuzzy
 msgid "ReXGlue SDK"
 msgstr "SDK ReXGlue"
 
-#: launcher/setup.cpp:2077
+#: launcher/setup.cpp:2243
 #, fuzzy
 msgid "Rebuild the SDK"
 msgstr "Recompilar o SDK"
 
-#: launcher/setup.cpp:2077
+#: launcher/setup.cpp:2243
 #, fuzzy
 msgid "Build the SDK"
 msgstr "Compilar o SDK"
 
-#: launcher/setup.cpp:2087
+#: launcher/setup.cpp:2253
 #, fuzzy
 msgid "A few minutes."
 msgstr "Alguns minutos."
 
-#: launcher/setup.cpp:2092 launcher/setup.cpp:2101
+#: launcher/setup.cpp:2258 launcher/setup.cpp:2267
 #, fuzzy
 msgid "The game"
 msgstr "O jogo"
 
-#: launcher/setup.cpp:2097
+#: launcher/setup.cpp:2263
 #, fuzzy
 msgid "Build the game"
 msgstr "Compilar o jogo"
 
-#: launcher/setup.cpp:2098
+#: launcher/setup.cpp:2264
 #, fuzzy
 msgid "Rebuild (update)"
 msgstr "Recompilar (atualização)"
 
-#: launcher/setup.cpp:2099
+#: launcher/setup.cpp:2265
 #, fuzzy
 msgid "Rebuild"
 msgstr "Recompilar"
 
-#: launcher/setup.cpp:2104
+#: launcher/setup.cpp:2270
 #, fuzzy
 msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
 msgstr "%d tarefas de compilação por vez (pela RAM livre agora: feche programas grandes antes para compilar mais rápido). A primeira compilação demora; as próximas só refazem o que mudou."
@@ -5758,10 +5888,80 @@ msgstr "Verificando o download"
 msgid "Putting the port's files in place"
 msgstr "Colocando os arquivos do port no lugar"
 
-#: launcher/update.cpp:346
+#: launcher/update.cpp:405
 #, fuzzy
 msgid "Swapping in the new version"
 msgstr "Colocando a nova versão no lugar"
+
+#: launcher/update.cpp:453
+#, fuzzy
+msgid "Copying the new version's files"
+msgstr "Copiando os arquivos da nova versão"
+
+#: launcher/update.cpp:465
+#, fuzzy
+msgid "Swapping in the new version (your build is kept)"
+msgstr "Colocando a nova versão no lugar (sua compilação é mantida)"
+
+#, fuzzy
+#~ msgid "Disc image (.iso) of Crash: Mind over Mutant, Xbox 360 (its files aren't in the game folder any more)"
+#~ msgstr "Imagem de disco (.iso) de Crash: Mind over Mutant, Xbox 360 (os arquivos dele não estão mais na pasta do jogo)"
+
+#, fuzzy
+#~ msgid "The game's disc files are in the folder: no disc image needed."
+#~ msgstr "Os arquivos do disco estão na pasta: não precisa da imagem de disco."
+
+#, fuzzy
+#~ msgid "The game is already installed on this PC."
+#~ msgstr "O jogo já está instalado neste PC."
+
+#, fuzzy
+#~ msgid "To play it, update it or uninstall it, open its own Mind over Recomp (also in the Start menu). Updates come from there; this download isn't needed for them."
+#~ msgstr "Para jogar, atualizar ou desinstalar, abra o Mind over Recomp dele (também no menu Iniciar). As atualizações vêm de lá; este download não é necessário para elas."
+
+#, fuzzy
+#~ msgid "Open the installed Mind over Recomp"
+#~ msgstr "Abrir o Mind over Recomp instalado"
+
+#, fuzzy
+#~ msgid "Couldn't open it: start Mind over Recomp from the Start menu."
+#~ msgstr "Não foi possível abrir: inicie o Mind over Recomp pelo menu Iniciar."
+
+#, fuzzy
+#~ msgid "Or install another copy:"
+#~ msgstr "Ou instale outra cópia:"
+
+#, fuzzy
+#~ msgid "Updates and uninstalling: \"Mind over Recomp\" in the Start menu, or Windows' Installed apps."
+#~ msgstr "Atualizações e desinstalação: \"Mind over Recomp\" no menu Iniciar, ou em Aplicativos instalados do Windows."
+
+#, fuzzy
+#~ msgid "Checking for updates..."
+#~ msgstr "Procurando atualizações..."
+
+#, fuzzy
+#~ msgid "Version %s is available"
+#~ msgstr "A versão %s está disponível"
+
+#, fuzzy
+#~ msgid "This is the newest version."
+#~ msgstr "Esta é a versão mais recente."
+
+#, fuzzy
+#~ msgid "Undoing the old patches"
+#~ msgstr "Desfazendo os patches antigos"
+
+#, fuzzy
+#~ msgid "Removing files the old patches added"
+#~ msgstr "Removendo arquivos que os patches antigos adicionaram"
+
+#, fuzzy
+#~ msgid "Building the SDK (Release: the recompiler)"
+#~ msgstr "Compilando o SDK (Release: o recompilador)"
+
+#, fuzzy
+#~ msgid "Building the SDK (RelWithDebInfo: the runtime the game uses)"
+#~ msgstr "Compilando o SDK (RelWithDebInfo: o runtime que o jogo usa)"
 
 #, fuzzy
 #~ msgid "720p (original)"
