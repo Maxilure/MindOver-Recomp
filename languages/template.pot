@@ -50,11 +50,11 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr ""
 
-#: src/achievements/achievements.cpp:672
+#: src/achievements/achievements.cpp:768
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1318
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1327
 msgid "Achievements"
 msgstr ""
 
@@ -379,7 +379,7 @@ msgstr ""
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr ""
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1411
 msgid "Spin"
 msgstr ""
 
@@ -391,7 +391,7 @@ msgstr ""
 msgid "Left stick circles"
 msgstr ""
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1411
 msgid "Jump"
 msgstr ""
 
@@ -439,7 +439,7 @@ msgstr ""
 msgid "Store the titan you control, and bring it back later."
 msgstr ""
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1412
 msgid "Map"
 msgstr ""
 
@@ -451,7 +451,7 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1412
 msgid "Pause"
 msgstr ""
 
@@ -595,7 +595,7 @@ msgstr ""
 msgid "NO KEYBOARD CONTROLS"
 msgstr ""
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1333 launcher/settings_page.cpp:541
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1342 launcher/settings_page.cpp:541
 msgid "Controls"
 msgstr ""
 
@@ -1986,7 +1986,7 @@ msgstr ""
 msgid "Texture Sharpness"
 msgstr ""
 
-#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171 src/options/options_settings.cpp:1308
 msgid "Original"
 msgstr ""
 
@@ -2700,183 +2700,199 @@ msgstr ""
 msgid "Notifications are off."
 msgstr ""
 
-#: src/options/options_settings.cpp:1312
-msgid "Display"
+#: src/options/options_settings.cpp:1308
+msgid "Messages"
 msgstr ""
 
-#: src/options/options_settings.cpp:1315
-msgid "HUD"
+#: src/options/options_settings.cpp:1308
+msgid "Card"
 msgstr ""
 
-#: src/options/options_settings.cpp:1316
-msgid "Frame Counter"
+#: src/options/options_settings.cpp:1309
+msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
 msgstr ""
 
-#: src/options/options_settings.cpp:1320
-msgid "Graphics"
+#: src/options/options_settings.cpp:1311
+msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1321
-msgid "Quality"
+msgid "Display"
 msgstr ""
 
-#: src/options/options_settings.cpp:1322
-msgid "Effects"
+#: src/options/options_settings.cpp:1324
+msgid "HUD"
 msgstr ""
 
 #: src/options/options_settings.cpp:1325
-msgid "Audio"
-msgstr ""
-
-#: src/options/options_settings.cpp:1326
-msgid "Music"
-msgstr ""
-
-#: src/options/options_settings.cpp:1327
-msgid "How loud the music plays."
-msgstr ""
-
-#: src/options/options_settings.cpp:1328
-msgid "Dialogue"
+msgid "Frame Counter"
 msgstr ""
 
 #: src/options/options_settings.cpp:1329
-msgid "How loud the characters talk."
+msgid "Graphics"
 msgstr ""
 
 #: src/options/options_settings.cpp:1330
-msgid "SFX"
+msgid "Quality"
 msgstr ""
 
 #: src/options/options_settings.cpp:1331
-msgid "How loud hits, crates, footsteps and the rest are."
-msgstr ""
-
-#: src/options/options_settings.cpp:1332
-msgid "Output"
+msgid "Effects"
 msgstr ""
 
 #: src/options/options_settings.cpp:1334
-msgid "Gameplay"
+msgid "Audio"
 msgstr ""
 
 #: src/options/options_settings.cpp:1335
+msgid "Music"
+msgstr ""
+
+#: src/options/options_settings.cpp:1336
+msgid "How loud the music plays."
+msgstr ""
+
+#: src/options/options_settings.cpp:1337
+msgid "Dialogue"
+msgstr ""
+
+#: src/options/options_settings.cpp:1338
+msgid "How loud the characters talk."
+msgstr ""
+
+#: src/options/options_settings.cpp:1339
+msgid "SFX"
+msgstr ""
+
+#: src/options/options_settings.cpp:1340
+msgid "How loud hits, crates, footsteps and the rest are."
+msgstr ""
+
+#: src/options/options_settings.cpp:1341
+msgid "Output"
+msgstr ""
+
+#: src/options/options_settings.cpp:1343
+msgid "Gameplay"
+msgstr ""
+
+#: src/options/options_settings.cpp:1344
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1379 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1388 launcher/main.cpp:953
 msgid "None"
 msgstr ""
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 msgid "Move Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 msgid "Move Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 msgid "Move Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 msgid "Move Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 msgid "Walk (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 msgid "Light Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 msgid "Heavy Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 msgid "Block (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 msgid "Jack / Use"
 msgstr ""
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 msgid "Titan Special Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 msgid "Pocket / Unpocket"
 msgstr ""
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 msgid "Menu: Confirm"
 msgstr ""
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 msgid "Menu: Back"
 msgstr ""
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 msgid "Menu: Previous Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 msgid "Menu: Next Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 msgid "Menu: X Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 msgid "Menu: Y Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 msgid "D-pad Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 msgid "D-pad Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 msgid "D-pad Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 msgid "D-pad Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 msgid "Right Stick Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 msgid "Right Stick Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 msgid "Right Stick Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 msgid "Right Stick Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 msgid "Left Bumper"
 msgstr ""
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 msgid "Left Stick Click"
 msgstr ""
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 msgid "Right Stick Click"
 msgstr ""
 

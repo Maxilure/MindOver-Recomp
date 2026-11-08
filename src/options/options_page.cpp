@@ -675,6 +675,7 @@ std::atomic<bool> g_drop_out_removed{false}, g_drop_out_removed_no_save{false};
 //   AchBarRing   its dark frame, 49 x 49
 //   AchPopTitle  "Achievement Unlocked" (cyan, small)
 //   AchPopName   its name (yellow)
+//   AchPopCount  a game message's counter ("1/13"), right side (cyan)
 // The texts are placed and sized by achievements.cpp (it shrinks long names).
 // (The bar's own glass: 600 x 180 at (20, -45), its lower part under the
 // screen's edge; title at y 90, message at y 55.)
@@ -834,6 +835,10 @@ bool PatchInGameMenus(const Bytes& original, Bytes* patched) {
               MakeText(parts.label, parts.empty, "AchPopTitle", text_x, kPopY + 36, text_w, kLineHeight, kLeft, kCyan));
           layer->children.push_back(
               MakeText(parts.label, parts.empty, "AchPopName", text_x, kPopY + 8, text_w, kLineHeight, kLeft, kYellow));
+          // A game message's counter ("1/13", a voodoo doll pick-up) on the
+          // card's right, centred in its height (placed + sized at run time).
+          layer->children.push_back(MakeText(parts.label, parts.empty, "AchPopCount", kPopX + kPopW - 11 - 80,
+                                             kPopY + (kPopH - kLineHeight) / 2, 80, kLineHeight, kRight, kCyan));
           return true;
         }
         if (name == kPauseNoSave2Player) {

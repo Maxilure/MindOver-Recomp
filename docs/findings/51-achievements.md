@@ -263,7 +263,71 @@ the Options tabs, Save Game -> 897 (the save list), Quit Game -> 898 (its
 question). The Options screen opened after an Achievements visit has its
 title, tabs and rows back and no grid.
 
-## 7. Not done yet
+## 7. The game's own messages on the card, and the turning voodoo doll
+
+![The original message bar, the same message on the card with its voodoo doll, and the other doll kinds](../images/voodoo-doll-message-card.jpg)
+
+Setting `message_bar_card` (Options -> Display -> HUD -> **Messages**: Card /
+Original; default Card) shows the bar's OWN messages (voodoo dolls picked
+up, missions done, concept art unlocked) on the achievement card instead of
+the wide bar. Original = the bar exactly as the game draws it.
+
+**Waiting for an idle bar.** The bar goes from one queued message to the
+next WITHOUT an animation (the old one vanishes, the next pops in) and only
+slides away after the last. An achievement added while a game message was
+up therefore cut that message off and appeared statically. An earned
+achievement (or a notice) now joins the queue only when the queue is empty
+and the page has finished sliding away (`bar_idle` in `FrontEndFrame`), so
+each card slides in and out on its own.
+
+**The words.** While a game message heads the queue, the card's texts come
+from the game's text bank by the queue entry's own keys
+(`game_text_banks::InGame`: the running language, the Brazilian Portuguese
+translation included): title on the first line, message on the second
+(scrolling when long, and the entry's time raised so it scrolls to its end
+once), no title = the message alone in the card's middle. The counter
+("1/13", shown when value >= 0 and max > 0, as the bar does) goes on the
+card's right in a new element `AchPopCount`; the message makes room for it.
+
+**Which messages are dolls.** A doll picked up = title key = its optional
+mission's name and message key 17129 "Optional mission partially complete"
+(text bank `ingame`). The seven doll missions are keys 8796-8802, "01. No
+Place Like Wumpa" .. "07. Crash Grab", and match the seven doll templates in
+`default.rcf`, `Collectables:c_voodoo<Kind>` (Whumpa, Ice, Nina, Desert,
+Junk, Phantom, Crash), in that order.
+
+**The doll** (`src/ui/voodoo_card.*`) is drawn BY THE GAME, so both
+renderers show it and photos have it:
+
+| Step | How |
+|---|---|
+| Model | the template's inventory section (name hash `sub_82357020`, exists `sub_822E3FC8`, ready `sub_822E4D88`, the section `sub_822E4680`); in it a Pure3D Geometry `voodoo<Kind>Shape`, found like the game finds a texture by name (`sub_820D8908`): section vtable slot 3 = find(r4 = a dynamic caster, r5 = the name's 64-bit key from `sub_8236ACB8`); Geometry's caster vtable = `0x8200D5BC` |
+| Held | picking up the LAST doll of a kind in an area unloads its section (the doll actor held the reference) a frame before the card asks for the model: the first playtest pick-up came with no doll. So while a level is played, every doll kind whose section is loaded gets a reference of ours (looked at twice a second, `sub_822E44B8`), given back when play stops (`sub_822E4650`; a level change and the main menu leave game state 5) |
+| Pieces | Geometry (vtable `0x8200E60C`) keeps groups at `+0x50..+0x54`, 20 bytes each, `+4` = the piece (`PrimGroupOptimized`, vtable `0x8200CADC`). Geometry's own slot 6 draws each group's list at `+8`, EMPTY for the dolls (the levels draw them through their sorting passes): calling it drew nothing. Each piece's slot 6 (`sub_82392708`) = material `+0x40`, vertex buffer `+0x80`, fog per the material, then `xnContext::DrawPrimBuffer` |
+| Where | the card's icon element (`AchBarIcon`, a Scrooby picture: `Sprite@frontend` slot 6 `sub_82374098`, wrapped) draws the doll instead of its picture, inside the bar page's own matrices (its slide, the HUD size): push, top' = L x top, the pieces, pop (context slots 15 / 18 / 14 / 16) |
+| Units | the icon draws in its element's position units (`+92` / `+96` = canvas x the float at `0x8204701C`, 1/640); the doll is placed from that position, so the page's offset needs no knowing |
+| Size | the seven models' bounding boxes (geometry chunks on the disc) are alike: y -0.44..0.84; drawn 74 canvas units tall, feet just under the icon's box, head over the card's top edge; one turn every 4 s, starting face on (the models look down -z) |
+| Depth | the HUD draws with depth compare "always" and no depth writes: the model's parts drew in file order (the back of the head over the face, the snout through the back of the head). Culling back faces fixed the head but cut off the snout facing the camera (it is drawn two-sided). The bar's page draws into the post surface, whose depth buffer the game clears at that pass's start (to "far": reversed depth), so around the doll's draw: test on (`0x82430A40`), PDDI compare 3 = greater-or-equal (`0x82430A58`; table `0x824EDCE4` -> D3D 6, the world's own), writes on (`0x82430A78`); the context's state block (`+140`: `+8` test, `+12` compare, `+16` write) put back after. Compare 5 = nothing drawn |
+
+A kind whose section isn't loaded in the level (none of its dolls there) =
+no doll: the card's words take the picture's room. Seen: the Crash dolls'
+section is loaded in every level tried; the other kinds only where the level
+loads them (or after the spawn cheat loads them).
+
+Tested with the debug console: every kind (spawned, then its message), the
+Crash doll in two areas, a kind not loaded (no doll, words moved left), a
+long message (scrolls), a message without a title, Original (the wide bar
+untouched), the native and the emulated picture of the same frame (same
+doll), an achievement asked for while a game message was up (waits, then
+slides in); a real pick-up (a Crash doll in the Wumpa Island save, found
+through the PDDI trace: its world matrix before the doll's draw, then
+`goto` onto it): the card with the doll; Quit Game lets the kept section
+go; 0 errors.
+Console: `achievement game <title key> <message key> <value> <max> [s]`
+adds a message of the game's own kind with real keys (a Crash doll =
+`achievement game 8802 17129 1 13`).
+
+## 8. Not done yet
 
 * The SDK's own F7 achievements window still shows the SDK's old record.
 * "Going native": achievements were one of several users of Xbox system

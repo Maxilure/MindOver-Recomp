@@ -59,12 +59,12 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "SCAMBIO {0}"
 
-#: src/achievements/achievements.cpp:672
+#: src/achievements/achievements.cpp:768
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Obiettivo sbloccato"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1318
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Achievements"
 msgstr "Obiettivi"
@@ -486,7 +486,7 @@ msgstr "Cammina (tieni premuto)"
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr "Tieni premuto con una direzione: la levetta si inclina solo in parte, così Crash va più piano."
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Spin"
 msgstr "Rotazione"
@@ -501,7 +501,7 @@ msgstr "L'attacco rotante (sul controller: \"Ruota la levetta analogica sinistra
 msgid "Left stick circles"
 msgstr "Cerchi con la levetta sinistra"
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Jump"
 msgstr "Salto"
@@ -561,7 +561,7 @@ msgstr "Metti in tasca / tira fuori"
 msgid "Store the titan you control, and bring it back later."
 msgstr "Mette in tasca il titano che controlli, per tirarlo fuori più tardi."
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Map"
 msgstr "Mappa"
@@ -576,7 +576,7 @@ msgstr "Nel menu di pausa: abbandona (un altro giocatore resta)."
 msgid "Back"
 msgstr "Indietro"
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Pause"
 msgstr "Pausa"
@@ -756,7 +756,7 @@ msgstr "Resto del controller"
 msgid "NO KEYBOARD CONTROLS"
 msgstr "NESSUN COMANDO DA TASTIERA"
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1333 launcher/settings_page.cpp:541
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1342 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Comandi"
@@ -2501,7 +2501,7 @@ msgstr "Smussa i bordi di foglie, recinti e altre forme ritagliate. Serve l'anti
 msgid "Texture Sharpness"
 msgstr "Nitidezza texture"
 
-#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171 src/options/options_settings.cpp:1308
 #, fuzzy
 msgid "Original"
 msgstr "Originale"
@@ -3383,227 +3383,243 @@ msgstr "La scheda appare senza suono."
 msgid "Notifications are off."
 msgstr "Le notifiche sono disattivate."
 
-#: src/options/options_settings.cpp:1312
+#: src/options/options_settings.cpp:1308
+msgid "Messages"
+msgstr ""
+
+#: src/options/options_settings.cpp:1308
+msgid "Card"
+msgstr ""
+
+#: src/options/options_settings.cpp:1309
+msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
+msgstr ""
+
+#: src/options/options_settings.cpp:1311
+msgid "The game's own wide message bar."
+msgstr ""
+
+#: src/options/options_settings.cpp:1321
 #, fuzzy
 msgid "Display"
 msgstr "Schermo"
 
-#: src/options/options_settings.cpp:1315
+#: src/options/options_settings.cpp:1324
 #, fuzzy
 msgid "HUD"
 msgstr "HUD"
 
-#: src/options/options_settings.cpp:1316
+#: src/options/options_settings.cpp:1325
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Contatore fotogrammi"
 
-#: src/options/options_settings.cpp:1320
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Graphics"
 msgstr "Grafica"
 
-#: src/options/options_settings.cpp:1321
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "Quality"
 msgstr "Qualità"
 
-#: src/options/options_settings.cpp:1322
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Effects"
 msgstr "Effetti"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1334
 #, fuzzy
 msgid "Audio"
 msgstr "Audio"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1335
 #, fuzzy
 msgid "Music"
 msgstr "Musica"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1336
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Il volume della musica."
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1337
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialogo"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1338
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Il volume delle voci dei personaggi."
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1339
 #, fuzzy
 msgid "SFX"
 msgstr "Effetti speciali"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1340
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Il volume di colpi, casse, passi e tutto il resto."
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1341
 #, fuzzy
 msgid "Output"
 msgstr "Uscita"
 
-#: src/options/options_settings.cpp:1334
+#: src/options/options_settings.cpp:1343
 #, fuzzy
 msgid "Gameplay"
 msgstr "Gioco"
 
-#: src/options/options_settings.cpp:1335
+#: src/options/options_settings.cpp:1344
 #, fuzzy
 msgid "Language"
 msgstr "Lingua"
 
-#: src/options/options_settings.cpp:1379 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1388 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Nessuno"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Up"
 msgstr "Su"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Down"
 msgstr "Giù"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Left"
 msgstr "Sinistra"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Right"
 msgstr "Destra"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Cammina (tieni)"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Light Attack"
 msgstr "Attacco leggero"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Attacco pesante"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Parata (tieni)"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Crasha / Usa"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Attacco speciale titano"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "In tasca / Fuori"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: conferma"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: indietro"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: scheda precedente"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: scheda successiva"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: azione X"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: azione Y"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Croce direzionale su"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Croce direzionale giù"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Croce direzionale sinistra"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Croce direzionale destra"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Levetta destra su"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Levetta destra giù"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Levetta destra sinistra"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Levetta destra destra"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Dorsale sinistro"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clic levetta sinistra"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clic levetta destra"

@@ -1302,6 +1302,15 @@ Row AchievementJingleRow() {
   return r;
 }
 
+// THE GAME'S MESSAGES (achievements.cpp "game messages on the card"): the
+// bottom bar's own messages (voodoo dolls, objectives) on the achievement card.
+Row MessageBarRow() {
+  return OnOffRow(tr(u"Messages"), "message_bar_card", tr(u"Card"), tr(u"Original"),
+                  tr(u"The game's messages at the bottom (voodoo dolls, missions) use the achievement card, "
+                     u"with the voodoo doll turning on it."),
+                  tr(u"The game's own wide message bar."));
+}
+
 std::vector<Tab> Build() {
   // THE LAYOUT (sorted 2026-10-24: Display = the screen and the window,
   // Graphics = how the picture is drawn; Camera folded into Gameplay's Co-op
@@ -1312,7 +1321,7 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Display"),
                   {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
                    AspectRatioRow(),
-                   Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(), WidescreenHudRow(),
+                   Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(), WidescreenHudRow(), MessageBarRow(),
                    Heading(tr(u"Frame Counter")), FpsCounterRow(), FpsPositionRow(),
                    // achievements/achievements.h: the card at the bottom centre.
                    Heading(tr(u"Achievements")), AchievementPopupsRow(), AchievementJingleRow()}});

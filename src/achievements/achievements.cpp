@@ -7,6 +7,7 @@
 #include <atomic>
 #include <cstring>
 #include <chrono>
+#include <cstdio>
 #include <cmath>
 #include <ctime>
 #include <deque>
@@ -32,6 +33,7 @@
 #include "../guest_memory.h"
 #include "../ui/marquee.h"
 #include "../ui/menu_pictures.h"
+#include "../ui/voodoo_card.h"
 #include "../ui/scrooby.h"
 #include "../language/game_text_banks.h"
 #include "../language/texts.h"
@@ -43,6 +45,9 @@ REXCVAR_DEFINE_BOOL(achievement_popups, true, "CrashMoM",
                     "A notification at the bottom of the screen when an achievement is earned");
 REXCVAR_DEFINE_BOOL(achievement_sound, true, "CrashMoM",
                     "The game's reward jingle with the achievement notification");
+REXCVAR_DEFINE_BOOL(message_bar_card, true, "CrashMoM",
+                    "The game's own bottom messages (voodoo dolls, objectives) in the achievement card's look "
+                    "(false = the original wide bar)");
 
 namespace achievements {
 namespace {
@@ -393,11 +398,45 @@ std::deque<Notice> g_notices;  // asked for, not yet in the bar's queue
 Notice g_notice_up;            // the one the bar shows (or showed last)
 uint32_t g_showing_id = 0;          // the achievement the bar shows now (0 = none)
 std::atomic<double> g_test_bar_seconds{0};  // console "achievement bar <s>"
+// Console "achievement game <title key> <message key> <value> <max> [s]": a
+// message of the game's own with real text-bank keys (a doll pick-up =
+// "achievement game 8802 17129 1 13"). Picked up by the next front-end frame.
+struct TestGameMessage {
+  uint32_t title = 0, message = 0, value = 0, max = 0;
+  double seconds = 0;
+};
+std::mutex g_test_game_mutex;
+std::deque<TestGameMessage> g_test_game;
 // Our card's elements on the bar's page (found once per page), and the
 // bar's own glass (hidden while ours shows).
 struct Card {
-  uint32_t glass = 0, icon = 0, ring = 0, title = 0, name = 0;
+  uint32_t glass = 0, icon = 0, ring = 0, title = 0, name = 0, count = 0;
 };
+// GAME MESSAGES ON THE CARD (message_bar_card, 2026-11-08): the bar's own
+// messages (a voodoo doll picked up, a mission done) shown on the same card
+// instead of the wide bar. g_showing_id = kGameMessageId while one is up; its
+// queue entry (keys + counter) is remembered to see the next one come.
+constexpr uint32_t kGameMessageId = 0xFFFD;
+struct GameMessage {
+  uint32_t title_key = 0, message_key = 0, value = 0, max = 0;
+  bool operator==(const GameMessage&) const = default;
+};
+GameMessage g_game_up;
+// THE VOODOO DOLL MISSIONS: the bar's title for a doll picked up is its
+// optional mission's name (text bank "ingame", keys 8796-8802 = "01. No
+// Place Like Wumpa" .. "07. Crash Grab"), the message "Optional mission
+// partially complete" (17129), the counter dolls found / all. The 7 missions
+// = the 7 doll templates (default.rcf "Collectables:c_voodoo<Kind>"), in
+// mission order: Wumpa Island, Ratcicle Kingdom, Evil School, Wasteland,
+// Junkyard, Mount Grimly, Crash dolls.
+constexpr uint32_t kFirstDollMission = 8796, kDollMissions = 7;
+constexpr uint32_t kMissionPartlyDone = 17129;
+// -1 = not a doll; else 0..6 in the order above.
+int DollOf(const GameMessage& m) {
+  if (m.message_key != kMissionPartlyDone) return -1;
+  if (m.title_key < kFirstDollMission || m.title_key >= kFirstDollMission + kDollMissions) return -1;
+  return int(m.title_key - kFirstDollMission);
+}
 uint32_t g_icon_page = 0, g_bar_glass = 0;
 Card g_card;
 
@@ -450,10 +489,11 @@ std::string g_cue = "objective1";
 struct NameLayout {
   float x, room, scale, width;  // width = drawn width at `scale`
 };
-NameLayout LayoutName(const std::u16string& name, bool has_picture) {
+// `cut` = units kept free on the right (a game message's counter).
+NameLayout LayoutName(const std::u16string& name, bool has_picture, float cut = 0) {
   NameLayout l;
   l.x = has_picture ? 214.0f : 160.0f;  // a notice has no picture: its words start there
-  l.room = has_picture ? 268.0f : 320.0f;
+  l.room = (has_picture ? 268.0f : 320.0f) - cut;
   const float w = scrooby::TextWidth(name, 1.0f);
   l.scale = w * 0.9f > l.room && w > 0 ? std::max(0.6f, l.room / w) : 0.9f;
   l.width = w * l.scale;
@@ -571,6 +611,43 @@ bool Unlock(uint32_t id, const char* why) {
   return true;
 }
 
+// The card's words. Line 1: the heading, small; line 2: the name, smaller
+// when it's long. Both scaled around their box's centre: the box moves so the
+// LEFT edge stays (canvas units, the card is x 147-493, y 20-87). Without a
+// picture the words start where the picture would be (x 160). A counter
+// ("1/13", game messages) goes on the right and the name makes room for it;
+// no heading = the name alone, in the card's middle.
+static void CardTexts(PPCContext& ctx, uint8_t* base, const std::u16string& heading, const std::u16string& name,
+               bool has_picture, const std::u16string& counter) {
+  constexpr float kCountScale = 0.75f;
+  const float count_w = counter.empty() ? 0 : scrooby::TextWidth(counter, kCountScale) + 10;
+  const NameLayout l = LayoutName(name, has_picture, count_w);
+  const float kTextX = l.x, kTextW = l.room;
+  auto place = [&](uint32_t t, float top, float scale) {
+    const float box_x = kTextX - (1 - scale) * kTextW / 2;
+    const float centre = top - scale * 18;  // lines hang from the top of a 36-unit box
+    scrooby::SetBox(base, t, box_x, centre - 18, kTextW, 36);
+    scrooby::SetScale(ctx, base, t, scale);
+  };
+  scrooby::SetText(ctx, base, g_card.title, heading);
+  place(g_card.title, 81, 0.6f);
+  scrooby::SetText(ctx, base, g_card.name, name);
+  // A long name: smaller, down to 0.6; longer still, it SCROLLS inside the
+  // card (ui/marquee.h) instead of running out of the glass.
+  place(g_card.name, heading.empty() ? 53.5f + l.scale * 18 : 63, l.scale);
+  marquee::Fit(g_card.name, l.width, l.room);
+  if (g_card.count) {
+    // Right-aligned in a box ending 11 units inside the card's right edge;
+    // scaled around the box's centre, so the box moves right by what the
+    // scale takes off.
+    constexpr float kRight = 147 + 346 - 11, kW = 80;
+    const float box_x = kRight - kW + (1 - kCountScale) * kW / 2;
+    scrooby::SetText(ctx, base, g_card.count, counter);
+    scrooby::SetBox(base, g_card.count, box_x, 53.5f - 18, kW, 36);
+    scrooby::SetScale(ctx, base, g_card.count, kCountScale);
+  }
+}
+
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   const uint32_t bar = Bar(base);
   if (!bar) return;
@@ -592,10 +669,28 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     add(Read32(base, 0x825A58E8), 0, 2, 5, seconds);
     REXLOG_INFO("Achievements: test message added to the game's bar ({} s)", seconds);
   }
-  const bool set_up = *GuestPtr(base, bar + kBarFlags) & 0x80;
+  {
+    std::lock_guard lock(g_test_game_mutex);
+    while (!g_test_game.empty()) {
+      const TestGameMessage t = g_test_game.front();
+      g_test_game.pop_front();
+      add(t.message, t.title, t.value, t.max, t.seconds);
+      REXLOG_INFO("Achievements: game message {} / {} ({}/{}) added to the bar ({} s)", t.title, t.message,
+                  int32_t(t.value), int32_t(t.max), t.seconds);
+    }
+  }
   // 1. An earned one joins the bar's queue once the bar is set up (in play)
-  //    and has room.
+  //    AND IDLE: queue empty and the page gone (its slide-away finished).
+  //    WHY: the bar goes from one queued message to the next WITHOUT any
+  //    animation (the old one vanishes, the next pops in) and only slides
+  //    away after the last. Added while a game message (a voodoo doll pick-up)
+  //    was up, ours swapped in statically. Waiting for an idle bar gives the
+  //    game's message its slide-away and ours its own slide-in.
   //    Notices first (they say something about what happens next).
+  const uint32_t idle_page = Read32(base, bar + kBarPage);
+  const bool bar_idle = (*GuestPtr(base, bar + kBarFlags) & 0x80) &&
+                      Read32(base, bar + kBarQueueEnd) == bar + kBarQueue &&
+                      !(idle_page && scrooby::Visible(base, idle_page));
   uint32_t next = 0;
   {
     std::lock_guard lock(g_mutex);
@@ -609,12 +704,12 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
         notice_queued = true;
       }
     }
-    if (set_up && queued < kBarCapacity && !g_notices.empty() && !notice_queued &&
+    if (bar_idle && queued < kBarCapacity && !g_notices.empty() && !notice_queued &&
         g_showing_id != kNoticeId) {
       next = kNoticeId;
       g_notice_up = std::move(g_notices.front());
       g_notices.pop_front();
-    } else if (set_up && !g_waiting.empty() && queued < kBarCapacity) {
+    } else if (bar_idle && !g_waiting.empty() && queued < kBarCapacity) {
       next = g_waiting.front();
       g_waiting.pop_front();
     }
@@ -649,7 +744,8 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     g_icon_page = page;
     auto pic = [&](const char* n) { return page ? scrooby::FindPicture(ctx, base, page, n) : 0u; };
     auto text = [&](const char* n) { return page ? scrooby::FindTextElement(ctx, base, page, n) : 0u; };
-    g_card = {pic("AchPopGlass"), pic("AchBarIcon"), pic("AchBarRing"), text("AchPopTitle"), text("AchPopName")};
+    g_card = {pic("AchPopGlass"), pic("AchBarIcon"), pic("AchBarRing"),
+              text("AchPopTitle"), text("AchPopName"),  text("AchPopCount")};
     g_bar_glass = pic("Glass");
   }
   const uint32_t id = OursUp(base, bar);
@@ -679,25 +775,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
           name = Utf16(info->name);
         }
       }
-      // Line 1: the heading, small; line 2: the name, smaller when it's long.
-      // Both scaled around their box's centre: the box moves so the LEFT edge
-      // stays (canvas units, the card is x 147-493, y 20-87). A notice has no
-      // picture: its words start where the picture would be (x 160).
-      const NameLayout l = LayoutName(name, PictureFrame(id) >= 0);
-      const float kTextX = l.x, kTextW = l.room;
-      auto place = [&](uint32_t t, float top, float scale) {
-        const float box_x = kTextX - (1 - scale) * kTextW / 2;
-        const float centre = top - scale * 18;  // lines hang from the top of a 36-unit box
-        scrooby::SetBox(base, t, box_x, centre - 18, kTextW, 36);
-        scrooby::SetScale(ctx, base, t, scale);
-      };
-      scrooby::SetText(ctx, base, g_card.title, heading);
-      place(g_card.title, 81, 0.6f);
-      scrooby::SetText(ctx, base, g_card.name, name);
-      // A long name: smaller, down to 0.6; longer still, it SCROLLS inside the
-      // card (ui/marquee.h) instead of running out of the glass.
-      place(g_card.name, 63, l.scale);
-      marquee::Fit(g_card.name, l.width, l.room);
+      CardTexts(ctx, base, heading, name, PictureFrame(id) >= 0, u"");
       const int frame = PictureFrame(id);
       if (g_card.icon && frame >= 0) scrooby::SetFrame(ctx, base, g_card.icon, uint32_t(frame));
       if (REXCVAR_GET(achievement_sound)) {
@@ -710,18 +788,59 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
       }
       REXLOG_INFO("Achievements: the bar shows {}", id);
     }
-  } else if (!page_shown || Read32(base, bar + kBarQueueEnd) != bar + kBarQueue) {
+  } else if (const bool queued = Read32(base, bar + kBarQueueEnd) != bar + kBarQueue;
+             queued && page_shown && REXCVAR_GET(message_bar_card)) {
+    // 3. THE GAME'S OWN MESSAGE ON OUR CARD: its words from the game's text
+    //    bank by the same keys the bar uses (the running language, Brazilian
+    //    Portuguese included: game_text_banks::InGame), the counter as the bar
+    //    shows it (value >= 0 and max > 0), a voodoo doll pick-up with its
+    //    doll turning on the card (voodoo_card.h, the native renderer).
+    const uint32_t head = bar + kBarQueue;
+    GameMessage m{Read32(base, head + 4), Read32(base, head + 8), Read32(base, head + 12), Read32(base, head + 16)};
+    if (g_showing_id != kGameMessageId || !(m == g_game_up)) {
+      g_showing_id = kGameMessageId;
+      g_game_up = m;
+      const std::u16string title = m.title_key ? game_text_banks::InGame(m.title_key) : std::u16string();
+      const std::u16string message = game_text_banks::InGame(m.message_key);
+      std::u16string counter;
+      if (int32_t(m.value) >= 0 && int32_t(m.max) > 0) {
+        const std::string c = fmt::format("{}/{}", int32_t(m.value), int32_t(m.max));
+        counter.assign(c.begin(), c.end());
+      }
+      const int doll = DollOf(m);
+      const bool doll_shown = doll >= 0 && voodoo_card::Show(ctx, base, doll, g_card.icon);
+      if (!doll_shown) voodoo_card::Hide();
+      CardTexts(ctx, base, title, message, doll_shown, counter);
+      // A long message gets the time to scroll to its end once (the entry's
+      // +0 = its seconds left, counted down by the bar's Update).
+      const NameLayout l = LayoutName(message, doll_shown);
+      const float need = float(marquee::OnePassSeconds(l.width, l.room) + 0.5);
+      float left;
+      const uint32_t bits = Read32(base, head);
+      std::memcpy(&left, &bits, 4);
+      if (need > left) {
+        uint32_t nb;
+        std::memcpy(&nb, &need, 4);
+        uint8_t* p = GuestPtr(base, head);
+        for (int i = 0; i < 4; ++i) p[i] = uint8_t(nb >> (24 - 8 * i));
+      }
+      REXLOG_INFO("Achievements: the bar's message {} / {} ({}/{}) on the card{}", m.title_key, m.message_key,
+                  int32_t(m.value), int32_t(m.max), doll >= 0 ? fmt::format(", voodoo doll {}", doll) : "");
+    }
+  } else if (!page_shown || queued) {
     // (After ours the bar slides away still showing our card: it goes with
     // it. Back to the bar's own look when the bar is gone or shows one of
-    // the game's messages.)
+    // the game's messages in its own look.)
     g_showing_id = 0;
   }
+  if (g_showing_id != kGameMessageId || !page_shown) voodoo_card::Hide();
+  voodoo_card::FrontEndFrame(ctx, base);
   // Every frame (the bar's Update shows its own texts again each frame):
   // our card while ours is up or sliding away, else the bar's own.
   // (A message in the game's own look keeps the bar as it is, plus its counter.)
   const bool own_look = g_showing_id == kNoticeId && g_notice_up.game_look;
   if (g_showing_id != 0 && page_shown && own_look) {
-    for (const uint32_t e : {g_card.glass, g_card.title, g_card.name, g_card.icon, g_card.ring}) {
+    for (const uint32_t e : {g_card.glass, g_card.title, g_card.name, g_card.icon, g_card.ring, g_card.count}) {
       scrooby::SetVisible(base, e, false);
     }
     scrooby::SetVisible(base, Read32(base, bar + kBarCounter), !g_notice_up.counter.empty());
@@ -730,8 +849,14 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   }
   const bool ours = g_showing_id != 0 && page_shown;
   for (const uint32_t e : {g_card.glass, g_card.title, g_card.name}) scrooby::SetVisible(base, e, ours);
-  const bool picture = ours && PictureFrame(g_showing_id) >= 0;
-  scrooby::SetVisible(base, g_card.icon, picture);
+  const bool game_message = ours && g_showing_id == kGameMessageId;
+  scrooby::SetVisible(base, g_card.count,
+                      game_message && int32_t(g_game_up.value) >= 0 && int32_t(g_game_up.max) > 0);
+  // A game message's picture: a voodoo doll's 3D model, drawn in the icon's
+  // place (the icon element shown, its draw replaced: voodoo_card.cpp).
+  const bool doll = game_message && voodoo_card::Showing() >= 0;
+  const bool picture = ours && !game_message && PictureFrame(g_showing_id) >= 0;
+  scrooby::SetVisible(base, g_card.icon, picture || doll);
   scrooby::SetVisible(base, g_card.ring, picture);
   if (ours) {
     for (const uint32_t e : {Read32(base, bar + kBarTitle), Read32(base, bar + kBarMessage),
@@ -836,6 +961,19 @@ bool DebugCommand(std::string_view command) {
     g_cue = std::string(command.substr(4));
     REXLOG_INFO("Achievements: jingle = FE_SFX cue \"{}\"", g_cue);
     return !g_cue.empty();
+  }
+  if (command.substr(0, 5) == "game ") {
+    TestGameMessage t;
+    long long v = 0, m = 0;
+    double sec = 4;
+    if (std::sscanf(std::string(command.substr(5)).c_str(), "%u %u %lld %lld %lf", &t.title, &t.message, &v, &m,
+                    &sec) < 4) {
+      return false;
+    }
+    t.value = uint32_t(v), t.max = uint32_t(m), t.seconds = sec;
+    std::lock_guard lock(g_test_game_mutex);
+    g_test_game.push_back(t);
+    return true;
   }
   if (command.substr(0, 4) == "bar ") {
     g_test_bar_seconds = std::strtod(std::string(command.substr(4)).c_str(), nullptr);

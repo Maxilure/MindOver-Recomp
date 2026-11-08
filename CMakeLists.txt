@@ -113,6 +113,7 @@ set(CRASHMOM_SOURCES
     src/ui/marquee.cpp           # scrolling text: a menu text too long for its box scrolls through it
     src/ui/hud_scale.cpp         # HUD size: each HUD part drawn smaller toward its own screen corner (findings/53)
     src/ui/hud_hide.cpp          # hide the whole HUD (F2, not a cheat; or the Cheats menu): skipped at each piece's draw
+    src/ui/voodoo_card.cpp       # the voodoo doll turning on the message card (game messages on the achievement card)
     src/options/options_page.cpp      # the Options screen's page, rebuilt in the in-game menus package
     src/options/options_settings.cpp  # what the Options screen offers: tabs, rows, live changes, saving
     src/options/global_options.cpp    # volumes + Invert Axis from settings.toml, not from each save file

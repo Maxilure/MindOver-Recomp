@@ -58,6 +58,7 @@
 
 REXCVAR_DECLARE(bool, achievement_popups);
 REXCVAR_DECLARE(bool, achievement_sound);
+REXCVAR_DECLARE(bool, message_bar_card);
 
 namespace achievements {
 

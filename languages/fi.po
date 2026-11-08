@@ -59,12 +59,12 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "NÄYTTÖ {0}"
 
-#: src/achievements/achievements.cpp:672
+#: src/achievements/achievements.cpp:768
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Saavutus avattu"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1318
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1327
 #, fuzzy
 msgid "Achievements"
 msgstr "Saavutukset"
@@ -486,7 +486,7 @@ msgstr "Kävele (pidä pohjassa)"
 msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
 msgstr "Pidä suunnan kanssa: sauva kallistuu vain osittain, joten Crash kulkee hitaammin."
 
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Spin"
 msgstr "Kieppuminen"
@@ -501,7 +501,7 @@ msgstr "Kieppumishyökkäys (ohjaimella: \"Pyöritä vasenta analogista sauvaa\"
 msgid "Left stick circles"
 msgstr "Vasemman sauvan ympyrät"
 
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1402
+#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Jump"
 msgstr "Hyppy"
@@ -561,7 +561,7 @@ msgstr "Talteen / esiin"
 msgid "Store the titan you control, and bring it back later."
 msgstr "Ottaa ohjaamasi titaanin talteen, jotta sen voi tuoda myöhemmin esiin."
 
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Map"
 msgstr "Kartta"
@@ -576,7 +576,7 @@ msgstr "Taukovalikossa: poistu pelistä (toinen pelaaja jää)."
 msgid "Back"
 msgstr "Palaa"
 
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1403
+#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1049 src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Pause"
 msgstr "Tauko"
@@ -756,7 +756,7 @@ msgstr "Ohjaimen muut painikkeet"
 msgid "NO KEYBOARD CONTROLS"
 msgstr "EI NÄPPÄIMISTÖOHJAUSTA"
 
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1333 launcher/settings_page.cpp:541
+#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1342 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Ohjaus"
@@ -2501,7 +2501,7 @@ msgstr "Pehmentää lehtien, aitojen ja muiden leikattujen muotojen reunat. Vaat
 msgid "Texture Sharpness"
 msgstr "Pintakuvioiden terävyys"
 
-#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171
+#: src/options/options_settings.cpp:639 src/options/options_settings.cpp:650 src/options/options_settings.cpp:674 src/options/options_settings.cpp:1149 src/options/options_settings.cpp:1171 src/options/options_settings.cpp:1308
 #, fuzzy
 msgid "Original"
 msgstr "Alkuperäinen"
@@ -3383,227 +3383,243 @@ msgstr "Kortti näkyy ilman ääntä."
 msgid "Notifications are off."
 msgstr "Ilmoitukset ovat pois päältä."
 
-#: src/options/options_settings.cpp:1312
+#: src/options/options_settings.cpp:1308
+msgid "Messages"
+msgstr ""
+
+#: src/options/options_settings.cpp:1308
+msgid "Card"
+msgstr ""
+
+#: src/options/options_settings.cpp:1309
+msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
+msgstr ""
+
+#: src/options/options_settings.cpp:1311
+msgid "The game's own wide message bar."
+msgstr ""
+
+#: src/options/options_settings.cpp:1321
 #, fuzzy
 msgid "Display"
 msgstr "Näyttö"
 
-#: src/options/options_settings.cpp:1315
+#: src/options/options_settings.cpp:1324
 #, fuzzy
 msgid "HUD"
 msgstr "Näyttötiedot"
 
-#: src/options/options_settings.cpp:1316
+#: src/options/options_settings.cpp:1325
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Ruutulaskuri"
 
-#: src/options/options_settings.cpp:1320
+#: src/options/options_settings.cpp:1329
 #, fuzzy
 msgid "Graphics"
 msgstr "Grafiikka"
 
-#: src/options/options_settings.cpp:1321
+#: src/options/options_settings.cpp:1330
 #, fuzzy
 msgid "Quality"
 msgstr "Laatu"
 
-#: src/options/options_settings.cpp:1322
+#: src/options/options_settings.cpp:1331
 #, fuzzy
 msgid "Effects"
 msgstr "Tehosteet"
 
-#: src/options/options_settings.cpp:1325
+#: src/options/options_settings.cpp:1334
 #, fuzzy
 msgid "Audio"
 msgstr "Äänet"
 
-#: src/options/options_settings.cpp:1326
+#: src/options/options_settings.cpp:1335
 #, fuzzy
 msgid "Music"
 msgstr "Musiikki"
 
-#: src/options/options_settings.cpp:1327
+#: src/options/options_settings.cpp:1336
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Musiikin äänenvoimakkuus."
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1337
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialogi"
 
-#: src/options/options_settings.cpp:1329
+#: src/options/options_settings.cpp:1338
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Hahmojen puheen äänenvoimakkuus."
 
-#: src/options/options_settings.cpp:1330
+#: src/options/options_settings.cpp:1339
 #, fuzzy
 msgid "SFX"
 msgstr "Tehosteet"
 
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1340
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Iskujen, laatikoiden, askelten ja muun äänenvoimakkuus."
 
-#: src/options/options_settings.cpp:1332
+#: src/options/options_settings.cpp:1341
 #, fuzzy
 msgid "Output"
 msgstr "Ääni ulos"
 
-#: src/options/options_settings.cpp:1334
+#: src/options/options_settings.cpp:1343
 #, fuzzy
 msgid "Gameplay"
 msgstr "Pelattavuus"
 
-#: src/options/options_settings.cpp:1335
+#: src/options/options_settings.cpp:1344
 #, fuzzy
 msgid "Language"
 msgstr "Kieli"
 
-#: src/options/options_settings.cpp:1379 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1388 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Ei mitään"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Up"
 msgstr "Ylös"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Down"
 msgstr "Alas"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Left"
 msgstr "Vasemmalle"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Move Right"
 msgstr "Oikealle"
 
-#: src/options/options_settings.cpp:1401
+#: src/options/options_settings.cpp:1410
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Kävele (pidä)"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Light Attack"
 msgstr "Kevyt hyökkäys"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Raskas hyökkäys"
 
-#: src/options/options_settings.cpp:1402
+#: src/options/options_settings.cpp:1411
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Torju (pidä)"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Ota haltuun / Käytä"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Titaanin erikoishyökkäys"
 
-#: src/options/options_settings.cpp:1403
+#: src/options/options_settings.cpp:1412
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Talteen / Esiin"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Valikko: vahvista"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Valikko: palaa"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Valikko: edellinen välilehti"
 
-#: src/options/options_settings.cpp:1404
+#: src/options/options_settings.cpp:1413
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Valikko: seuraava välilehti"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Valikko: X-toiminto"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Valikko: Y-toiminto"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Ristiohjain ylös"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Ristiohjain alas"
 
-#: src/options/options_settings.cpp:1405
+#: src/options/options_settings.cpp:1414
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Ristiohjain vasemmalle"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Ristiohjain oikealle"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Oikea sauva ylös"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Oikea sauva alas"
 
-#: src/options/options_settings.cpp:1406
+#: src/options/options_settings.cpp:1415
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Oikea sauva vasemmalle"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Oikea sauva oikealle"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Vasen olkapainike"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Vasemman sauvan painallus"
 
-#: src/options/options_settings.cpp:1407
+#: src/options/options_settings.cpp:1416
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Oikean sauvan painallus"
