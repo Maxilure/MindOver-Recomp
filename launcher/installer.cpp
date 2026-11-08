@@ -166,12 +166,20 @@ bool GameRunning() {
 }
 
 // Does the folder this exe sits in hold the port's files (the release .zip
-// unpacked: "Mind over Recomp.exe" next to source\)? Then those are used
-// instead of a download.
+// unpacked: "Mind over Recomp.exe" next to source\)? An install or update
+// needs them: the installer downloads NOTHING itself (2026-11-08: the
+// download fallback, for an exe started without its files, is gone; a new
+// version = the new release's .zip from GitHub). Without them: the warning
+// below, and installs / updates are refused.
 fs::path SourceNextToMe() {
   std::error_code ec;
   const fs::path here = platform::SelfPath().parent_path() / "source";
   return fs::is_regular_file(here / "RELEASE.toml", ec) ? here : fs::path();
+}
+
+const char* MissingFilesText() {
+  return trs("The port's files aren't next to this installer. Unpack the WHOLE .zip from the GitHub "
+             "release page, then start Mind over Recomp.exe from the unpacked folder.");
 }
 
 void OpenFolder(const fs::path& path) {
@@ -301,7 +309,7 @@ enum class Mode { kInstall, kManage, kUninstall };
 enum class Page { kStart, kChoose, kUpdate, kTools, kInstalling, kDone };
 // The install's own phases (kInstalling): the port's files, then Setup, then
 // the shortcuts and the Apps list.
-enum class Phase { kFeed, kFiles, kBuild, kFinish, kFinished, kFailed };
+enum class Phase { kFiles, kBuild, kFinish, kFinished, kFailed };
 
 struct App {
   Mode mode = Mode::kInstall;
@@ -366,8 +374,7 @@ struct App {
   task_runner::Snapshot tools_job;
 
   // --- the install itself -------------------------------------------------------
-  Phase phase = Phase::kFeed;
-  std::unique_ptr<update::Updater> feed_reader;  // the newest release (download case)
+  Phase phase = Phase::kFiles;
   task_runner::Runner files_runner;
   task_runner::Snapshot files_job;
   std::string fail_text;
@@ -411,7 +418,7 @@ struct App {
   void DrawDone();
   void CheckTools();
   void BeginInstall();
-  void StartFiles(const update::Release* release);
+  void StartFiles();
   void StartBuild();
   void StartFinish();
   // MANAGE
@@ -483,6 +490,12 @@ void App::DrawStart() {
     ImGui::PushStyleColor(ImGuiCol_Text, kGood);
     ImGui::TextWrapped(trs("The game is installed on this PC: %s (version %s)."), registered_root.string().c_str(),
                        registered_version.empty() ? "?" : registered_version.c_str());
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+  }
+  if (SourceNextToMe().empty()) {
+    ImGui::PushStyleColor(ImGuiCol_Text, kWarn);
+    ImGui::TextWrapped("%s", MissingFilesText());
     ImGui::PopStyleColor();
     ImGui::Spacing();
   }
@@ -864,40 +877,30 @@ void App::BeginInstall() {
     return;
   }
   // The port's files: an existing game keeps its own (it's taken over as it
-  // is), an update brings the ones next to this exe (the release .zip), as
-  // does a fresh install; with none here, the newest release is downloaded.
+  // is), an update or a fresh install brings the ones next to this exe (the
+  // release .zip). None here = refused (MissingFilesText): no download.
   const bool update_files = updating && !update_same;
   if ((existing && !update_files) || !SourceNextToMe().empty()) {
-    StartFiles(nullptr);
+    StartFiles();
   } else {
-    phase = Phase::kFeed;
-    folders::Folders target;
-    target.root = root;
-    feed_reader = std::make_unique<update::Updater>(target, feed);
-    feed_reader->Check();
+    phase = Phase::kFailed;
+    fail_text = MissingFilesText();
   }
 }
 
 // The port's files + this exe + (optionally) an older version's user\.
-void App::StartFiles(const update::Release* release) {
+void App::StartFiles() {
   phase = Phase::kFiles;
   std::vector<Command> commands;
   if (updating && !update_same) {
-    // UPDATE: the new source\ swapped in, the build kept (update.h). From
-    // the files next to this exe, or (an installer started on its own) the
-    // newest release's download.
+    // UPDATE: the new source\ swapped in, the build kept (update.h), from
+    // the files next to this exe.
     RenameOldGameExe(root);
-    if (release) {
-      commands = update::Updater(folders::Find(root), feed).Job(*release, {});
-    } else {
-      commands = update::LocalUpdateJob(SourceNextToMe(), root);
-    }
+    commands = update::LocalUpdateJob(SourceNextToMe(), root);
   } else if (existing) {
     // Nothing: its source\ (and build) stay as they are; only an old
     // launcher's exe name is brought up to date.
     RenameOldGameExe(root);
-  } else if (release) {
-    commands = update::FreshInstallJob(*release, root);
   } else {
     const fs::path from = SourceNextToMe();
     const fs::path to = root / "source";
@@ -994,17 +997,6 @@ void App::StartFinish() {
 // Moves the install's phases on. Called every pass of the main loop, also
 // while the window is minimized (it isn't drawn then).
 void App::UpdateInstalling() {
-  if (phase == Phase::kFeed && feed_reader && !feed_reader->checking()) {
-    update::Release latest;
-    bool available = false;
-    std::string error;
-    if (feed_reader->Latest(&latest, &available, &error)) {
-      StartFiles(&latest);
-    } else {
-      phase = Phase::kFailed;
-      fail_text = trf(trs("Couldn't reach the release list to download the port's files: {0}"), {error});
-    }
-  }
   if (phase == Phase::kFiles) {
     files_runner.Copy(files_job);
     if (files_job.state == State::kDone) {
@@ -1088,9 +1080,7 @@ void App::DrawInstalling() {
     ImGui::Spacing();
   }
 
-  if (phase == Phase::kFeed) {
-    ImGui::TextUnformatted(trs("Looking for the newest version..."));
-  } else if (phase == Phase::kFiles) {
+  if (phase == Phase::kFiles) {
     DrawJob(files_job, fonts, &show_log);
   } else if (phase == Phase::kBuild && setup) {
     const auto& job = setup->JobSnapshot();
@@ -1481,23 +1471,8 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
       return 1;
     }
   } else {
-    folders::Folders target;
-    target.root = root;
-    update::Updater reader(target, feed);
-    reader.Check();
-    while (reader.checking()) SDL_Delay(50);
-    update::Release latest;
-    bool available = false;
-    std::string error;
-    if (!reader.Latest(&latest, &available, &error)) {
-      std::printf("feed: %s\n", error.c_str());
-      return 1;
-    }
-    std::printf("== downloading %s\n", latest.version.c_str());
-    if (!RunPrinted("files", update::FreshInstallJob(latest, root),
-                    root / "user" / "logs" / ("install-" + Stamp() + ".log"))) {
-      return 1;
-    }
+    std::printf("refused: no source\\ next to this installer (unpack the release .zip)\n");
+    return 1;
   }
   fs::copy_file(platform::SelfPath(), root / install::kInstallerName,
                 fs::copy_options::overwrite_existing, ec);
