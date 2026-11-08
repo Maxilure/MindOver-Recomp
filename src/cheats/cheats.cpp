@@ -102,10 +102,10 @@ struct UnlockList {
   int count;
 };
 constexpr UnlockList kUnlockLists[] = {
-    {trsn("Outfits"), 0x825A72A8, 11},
-    {trsn("Concept art"), 0x825982C8, 12},
-    {trsn("Enemy info"), 0x825982F8, 20},
-    {trsn("Tutorials"), 0x825983D0, 34},
+    {"Outfits", 0x825A72A8, 11},
+    {"Concept art", 0x825982C8, 12},
+    {"Enemy info", 0x825982F8, 20},
+    {"Tutorials", 0x825983D0, 34},
 };
 static_assert(std::size(kUnlockLists) == size_t(UnlockKind::kCount));
 constexpr int kSkinCoco = 9;
@@ -200,7 +200,9 @@ struct Requests {
   int combo[kPlayers] = {};   // debug FIFO only: hits on the combo meter (findings/26 s.25)
   bool counter[kPlayers] = {};  // debug FIFO only: show the "counter now" prompt (findings/26 s.27)
   int hud_test = 0;  // debug FIFO only: HUD parts shown on demand (hud_scale::ShowTestParts)
-  bool respawn = false;  // debug FIFO only: respawn every player, as a Crash <-> Coco outfit pick does
+  bool respawn = false;
+  // Kill every enemy within this many units of player 1 (0 = none asked).
+  float kill_enemies = 0.0f;  // debug FIFO only: respawn every player, as a Crash <-> Coco outfit pick does
   bool free_jack[kPlayers] = {};
   bool unlock[size_t(UnlockKind::kCount)] = {};
   bool step = false;
@@ -210,6 +212,10 @@ std::mutex g_mutex;          // guards g_requests and g_snapshot
 Requests g_requests;
 Snapshot g_snapshot;
 std::atomic<bool> g_god{false};
+// ONE-HIT KILLS (console "cheat onehit on", 2026-11-08): any damage to a
+// character that isn't a player's is lethal. For tests that must get
+// through a fight quickly (e.g. to reach what a fight unlocks).
+std::atomic<bool> g_one_hit{false};
 std::atomic<bool> g_no_ai{false};
 std::atomic<bool> g_frozen{false};
 std::atomic<float> g_speed{1.0f};
@@ -425,6 +431,42 @@ void Refill(PPCContext& ctx, uint8_t* base, uint32_t body) {
 // at the checkpoint with full health; in a titan the titan dies the game's way
 // (it collapses, Crash is thrown out, mojo drops) and Crash goes on on foot (a
 // second kill then kills him). God mode keeps its hands off for 3 s.
+// KILL ENEMIES (2026-11-08, for tests that must get past a fight): every
+// damageable character the game updated last frame (g_damageable_of) that
+// isn't a player's body, within `range` units of player 1, loses all its
+// hitpoints the same way as Kill below; the game then runs its own deaths
+// (and whatever a cleared fight starts: cutscenes, doors). Position = the
+// actor's world matrix (actor +44), row 3 (+48), like the console's `pos`.
+void KillEnemies(PPCContext& ctx, uint8_t* base, float range) {
+  uint32_t me = more_players::TitanOfPlayer(0);
+  if (!me) me = more_players::CharacterOfPlayer(0);
+  const uint32_t my_matrix = me ? Read32(me + 44) : 0;
+  if (!my_matrix || !Readable(my_matrix + 48, 12)) {
+    REXLOG_INFO("Cheats: kill enemies: player 1 has no position");
+    return;
+  }
+  float at[3];
+  for (int i = 0; i < 3; ++i) at[i] = ReadFloat(my_matrix + 48 + 4 * i);
+  int killed = 0;
+  for (const auto& [actor, dmg] : g_damageable_of) {
+    if (IsPlayerBody(actor)) continue;
+    const uint32_t matrix = Read32(actor + 44);
+    if (!matrix || !Readable(matrix + 48, 12)) continue;
+    float d2 = 0.0f;
+    for (int i = 0; i < 3; ++i) {
+      const float d = ReadFloat(matrix + 48 + 4 * i) - at[i];
+      d2 += d * d;
+    }
+    if (d2 > range * range) continue;
+    const uint32_t hp = Read32(dmg + kDmgHitpoints), max = Read32(dmg + kDmgMaxHitpoints);
+    if (!Readable(hp, 4) || !Readable(max, 4) || ReadFloat(hp) <= 0.0f) continue;
+    CallGame(__imp__sub_821349E0, ctx, base, dmg, 0, 0, 0,
+             -double(ReadFloat(hp) + ReadFloat(max) + 1.0f));
+    ++killed;
+  }
+  REXLOG_INFO("Cheats: killed {} enemies within {:.0f} units of player 1", killed, range);
+}
+
 void Kill(PPCContext& ctx, uint8_t* base, int p, uint32_t body, bool titan) {
   const uint32_t dmg = DamageableOf(body);
   if (!dmg) {
@@ -628,6 +670,8 @@ void Tick(PPCContext& ctx, uint8_t* base) {
     REXLOG_INFO("Cheats: players respawned (test)");
   }
 
+  if (requests.kill_enemies > 0.0f && in_level) KillEnemies(ctx, base, requests.kill_enemies);
+
   for (auto it = g_killed.begin(); it != g_killed.end();) {
     it = --it->second <= 0 ? g_killed.erase(it) : std::next(it);
   }
@@ -683,6 +727,11 @@ void RequestKill(int player) {
   std::lock_guard<std::mutex> lock(g_mutex);
   if (player >= 0 && player < kPlayers) g_requests.kill[player] = true;
 }
+void RequestKillEnemies(float range) {
+  MarkCheated();
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_requests.kill_enemies = range > 0.0f ? range : 60.0f;
+}
 void RequestRefillHealth(int player) {
   MarkCheated();
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -695,8 +744,8 @@ void SetHudHidden(bool hidden) {
 bool HudHidden() { return g_hud_hidden.load(); }
 bool AchievementsBlocked() { return g_cheated.load() || g_save_marked.load(); }
 const char* BlockReason() {
-  if (g_save_marked.load()) return trsn("this game was saved with cheats on");
-  if (g_cheated.load()) return trsn("cheats were used (until a save is loaded)");
+  if (g_save_marked.load()) return "this game was saved with cheats on";
+  if (g_cheated.load()) return "cheats were used (until a save is loaded)";
   return "";
 }
 bool SaveMarked() { return g_save_marked.load(); }
@@ -793,6 +842,7 @@ bool DebugCommand(std::string_view command) {
   const int player = count > 1 ? std::atoi(std::string(words[1]).c_str()) - 1 : 0;
   const bool player_ok = player >= 0 && player < kPlayers;
   if (verb == "god") SetGodMode(on);
+  else if (verb == "onehit") g_one_hit.store(on);
   else if (verb == "noai") SetNoAi(on);
   else if (verb == "freeze") SetFrozen(on);
   else if (verb == "step") RequestStepFrame();
@@ -805,6 +855,9 @@ bool DebugCommand(std::string_view command) {
   } else if (verb == "refill" && player_ok) RequestRefillHealth(player);
   else if (verb == "freejack" && player_ok) RequestFreeJack(player);
   else if (verb == "kill" && player_ok) RequestKill(player);
+  else if (verb == "killenemies") {
+    RequestKillEnemies(count > 1 ? std::strtof(std::string(words[1]).c_str(), nullptr) : 60.0f);
+  }
   else if (verb == "unlock" && count > 1) {
     const std::string_view what = words[1];
     const bool all = what == "all";
@@ -919,6 +972,10 @@ extern "C" REX_FUNC(sub_821349E0) {
   using namespace cheats;
   if (g_god.load() && ctx.f1.f64 < 0.0 && g_player_damageables.count(ctx.r3.u32)) {
     return;
+  }
+  // One-hit kills: an enemy's damage becomes more than any health.
+  if (g_one_hit.load() && ctx.f1.f64 < 0.0 && !g_player_damageables.count(ctx.r3.u32)) {
+    ctx.f1.f64 = -1.0e6;
   }
   __imp__sub_821349E0(ctx, base);
 }

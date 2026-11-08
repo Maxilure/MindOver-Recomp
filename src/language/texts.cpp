@@ -264,41 +264,6 @@ std::u16string trf(std::u16string_view text, std::initializer_list<std::u16strin
   return out;
 }
 
-// UTF-16 -> UTF-8 (the ImGui windows' text).
-static std::string ToUtf8(std::u16string_view s) {
-  std::string out;
-  for (size_t i = 0; i < s.size(); ++i) {
-    uint32_t c = s[i];
-    if (c >= 0xD800 && c < 0xDC00 && i + 1 < s.size()) c = 0x10000 + ((c - 0xD800) << 10) + (s[++i] - 0xDC00);
-    if (c < 0x80) {
-      out += char(c);
-    } else if (c < 0x800) {
-      out += char(0xC0 | c >> 6);
-      out += char(0x80 | (c & 0x3F));
-    } else if (c < 0x10000) {
-      out += char(0xE0 | c >> 12);
-      out += char(0x80 | (c >> 6 & 0x3F));
-      out += char(0x80 | (c & 0x3F));
-    } else {
-      out += char(0xF0 | c >> 18);
-      out += char(0x80 | (c >> 12 & 0x3F));
-      out += char(0x80 | (c >> 6 & 0x3F));
-      out += char(0x80 | (c & 0x3F));
-    }
-  }
-  return out;
-}
-
-const char* trs(const char* english) {
-  // Each English text translated once; the map's strings never move.
-  static std::mutex mutex;
-  static std::unordered_map<std::string, std::string> done;
-  std::lock_guard lock(mutex);
-  auto it = done.find(english);
-  if (it == done.end()) it = done.emplace(english, ToUtf8(tr(FromUtf8(english)))).first;
-  return it->second.c_str();
-}
-
 namespace texts {
 
 const std::unordered_map<GameTextKey, std::u16string, GameTextKeyHash>& GameTranslation() {

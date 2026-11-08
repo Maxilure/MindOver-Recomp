@@ -7,16 +7,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/crash_mom_app.h:459 src/native/native_renderer.cpp:718 src/native/native_renderer.cpp:1446
-#, fuzzy
-msgid "EMULATED ONLY"
-msgstr "SOLO EMULADO"
-
-#: src/crash_mom_app.h:459
-#, fuzzy
-msgid "No second window with --emulated_only"
-msgstr "No hay segunda ventana con --emulated_only"
-
 #. The frame-rate counter at the top of the screen, in capitals. {0} = frames per second.
 #: src/fps_overlay.cpp:147
 #, fuzzy
@@ -64,65 +54,15 @@ msgstr "PANTALLA {0}"
 msgid "Achievement Unlocked"
 msgstr "Logro desbloqueado"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2398 src/options/options_settings.cpp:1340
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2403 src/options/options_settings.cpp:1340
 #, fuzzy
 msgid "Achievements"
 msgstr "Logros"
 
-#: src/achievements/achievements_screen.cpp:42 src/input/controls_menu.cpp:121 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:42 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Jugadores"
-
-#: src/native/native_renderer.cpp:719
-#, fuzzy
-msgid "No switching with --emulated_only"
-msgstr "No se puede cambiar con --emulated_only"
-
-#: src/native/native_renderer.cpp:724 src/native/native_renderer.cpp:1443
-#, fuzzy
-msgid "DUAL MODE"
-msgstr "MODO DOBLE"
-
-#: src/native/native_renderer.cpp:725
-#, fuzzy
-msgid "No switching while the second window is open (Tools closes it)"
-msgstr "No se puede cambiar con la segunda ventana abierta (Herramientas la cierra)"
-
-#: src/native/native_renderer.cpp:1443
-#, fuzzy
-msgid "this window: emulated (Xbox 360 GPU)   second window: native (Vulkan)   F1 Tools closes it"
-msgstr "esta ventana: emulado (GPU de Xbox 360)   segunda ventana: nativo (Vulkan)   F1 Herramientas la cierra"
-
-#: src/native/native_renderer.cpp:1446
-#, fuzzy
-msgid "Xbox 360 GPU emulation; native renderer off"
-msgstr "Emulación de la GPU de Xbox 360; renderizado nativo apagado"
-
-#: src/native/native_renderer.cpp:1448
-#, fuzzy
-msgid "NATIVE (Vulkan)"
-msgstr "NATIVO (Vulkan)"
-
-#: src/native/native_renderer.cpp:1450
-#, fuzzy
-msgid "native only: the emulated GPU is off   F1 Tools switches"
-msgstr "solo nativo: la GPU emulada está apagada   F1 Herramientas cambia"
-
-#: src/native/native_renderer.cpp:1451
-#, fuzzy
-msgid "the emulated GPU still draws in the background   F1 Tools switches"
-msgstr "la GPU emulada sigue dibujando en segundo plano   F1 Herramientas cambia"
-
-#: src/native/native_renderer.cpp:1453
-#, fuzzy
-msgid "EMULATED (Xbox 360 GPU)"
-msgstr "EMULADO (GPU de Xbox 360)"
-
-#: src/native/native_renderer.cpp:1453
-#, fuzzy
-msgid "native renderer idle   F1 Tools switches"
-msgstr "renderizado nativo en reposo   F1 Herramientas cambia"
 
 #. {0} = the key that shows the HUD again ("F2").
 #: src/ui/hud_hide.cpp:80 src/ui/hud_hide.cpp:82
@@ -150,766 +90,6 @@ msgstr "Salir del juego"
 #, fuzzy
 msgid "Are you sure you want to quit the game?"
 msgstr "¿Seguro que quieres abandonar la partida?"
-
-#: src/ui/tools_menu.cpp:44 src/ui/tools_menu.cpp:49 src/ui/tools_menu.cpp:51 src/ui/tools_menu.cpp:55 src/ui/tools_menu.cpp:57
-#, fuzzy
-msgid "Game"
-msgstr "Juego"
-
-#: src/ui/tools_menu.cpp:44
-#, fuzzy
-msgid "Cheats..."
-msgstr "Trucos..."
-
-#: src/ui/tools_menu.cpp:45
-#, fuzzy
-msgid ""
-"Level ups, mojo, god mode, spawns, game speed, free camera.\n"
-"OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
-"meanwhile is marked as made with cheats (achievements stay off for it)."
-msgstr ""
-"Subidas de nivel, mojo, modo dios, apariciones, velocidad del juego, cámara libre.\n"
-"ABRIRLO DESACTIVA LOS LOGROS hasta que se cargue una partida, y una partida guardada\n"
-"mientras tanto queda marcada como hecha con trucos (logros desactivados para ella)."
-
-#: src/ui/tools_menu.cpp:49
-#, fuzzy
-msgid "Controls (keys)..."
-msgstr "Controles (teclas)..."
-
-#: src/ui/tools_menu.cpp:50
-#, fuzzy
-msgid "Keyboard and mouse keys, and which device plays as which player."
-msgstr "Teclas de teclado y ratón, y qué dispositivo juega como qué jugador."
-
-#: src/ui/tools_menu.cpp:51
-#, fuzzy
-msgid "Hide / show the HUD"
-msgstr "Ocultar / mostrar el HUD"
-
-#: src/ui/tools_menu.cpp:52
-#, fuzzy
-msgid ""
-"Hides the whole HUD (portraits, bars, mojo count, combo meters, markers, hints).\n"
-"Not a cheat: achievements are untouched. The message bar keeps showing."
-msgstr ""
-"Oculta todo el HUD (retratos, barras, contador de mojo, combos, marcadores, pistas).\n"
-"No es un truco: los logros no cambian. La barra de mensajes sigue visible."
-
-#: src/ui/tools_menu.cpp:55
-#, fuzzy
-msgid "Fullscreen on / off"
-msgstr "Pantalla completa sí / no"
-
-#: src/ui/tools_menu.cpp:55
-#, fuzzy
-msgid "F11 (still F11)"
-msgstr "F11 (sigue siendo F11)"
-
-#: src/ui/tools_menu.cpp:56
-#, fuzzy
-msgid "Borderless fullscreen on the monitor picked in Options -> Display."
-msgstr "Pantalla completa sin bordes en el monitor elegido en Opciones -> Pantalla."
-
-#: src/ui/tools_menu.cpp:57
-#, fuzzy
-msgid "Take a photo"
-msgstr "Hacer una foto"
-
-#: src/ui/tools_menu.cpp:58
-#, fuzzy
-msgid ""
-"A PNG of the next frame into the photos folder (both renderers' pictures\n"
-"while the native one is drawn). The menus over the picture aren't in it."
-msgstr ""
-"Un PNG del siguiente fotograma en la carpeta de fotos (las imágenes de ambos renderizados\n"
-"cuando el nativo dibuja). Los menús sobre la imagen no aparecen."
-
-#: src/ui/tools_menu.cpp:62 src/ui/tools_menu.cpp:66 launcher/settings_page.cpp:390
-#, fuzzy
-msgid "Picture"
-msgstr "Imagen"
-
-#: src/ui/tools_menu.cpp:62
-#, fuzzy
-msgid "Switch renderer (emulated / native)"
-msgstr "Cambiar renderizado (emulado / nativo)"
-
-#: src/ui/tools_menu.cpp:63
-#, fuzzy
-msgid ""
-"Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
-"port's own renderer. Off with Emulated Only or while the second window is open."
-msgstr ""
-"Qué imagen muestra la ventana principal: la GPU de Xbox 360 imitada o el\n"
-"renderizado propio del port. Desactivado con Solo emulado o con la segunda ventana abierta."
-
-#: src/ui/tools_menu.cpp:66
-#, fuzzy
-msgid "Second window (dual mode)"
-msgstr "Segunda ventana (modo doble)"
-
-#: src/ui/tools_menu.cpp:67
-#, fuzzy
-msgid "A second window with the port's picture; the main one shows the emulated one."
-msgstr "Una segunda ventana con la imagen del port; la principal muestra la emulada."
-
-#: src/ui/tools_menu.cpp:69 src/ui/tools_menu.cpp:71 launcher/main.cpp:580
-#, fuzzy
-msgid "Saves"
-msgstr "Partidas"
-
-#: src/ui/tools_menu.cpp:69
-#, fuzzy
-msgid "Rename the save under the cursor"
-msgstr "Renombrar la partida bajo el cursor"
-
-#: src/ui/tools_menu.cpp:69
-#, fuzzy
-msgid "F2 (F2 hides the HUD now)"
-msgstr "F2 (F2 ahora oculta el HUD)"
-
-#: src/ui/tools_menu.cpp:70
-#, fuzzy
-msgid "On the Load / Save Game screen only (X there opens the game's own name screen)."
-msgstr "Solo en la pantalla Cargar / Guardar (allí X abre la pantalla de nombre del juego)."
-
-#: src/ui/tools_menu.cpp:71
-#, fuzzy
-msgid "Delete the save under the cursor"
-msgstr "Borrar la partida bajo el cursor"
-
-#: src/ui/tools_menu.cpp:71
-#, fuzzy
-msgid "Delete (still Delete)"
-msgstr "Supr (sigue siendo Supr)"
-
-#: src/ui/tools_menu.cpp:72
-#, fuzzy
-msgid ""
-"On the Load / Save Game screen only (Y there does the same). The file is moved\n"
-"to user/saves/Deleted saves, never really deleted."
-msgstr ""
-"Solo en la pantalla Cargar / Guardar (allí Y hace lo mismo). El archivo va\n"
-"a user/saves/Deleted saves, nunca se borra de verdad."
-
-#: src/ui/tools_menu.cpp:76 src/ui/tools_menu.cpp:78 src/ui/tools_menu.cpp:80 src/ui/tools_menu.cpp:82 src/ui/tools_menu.cpp:84 src/ui/tools_menu.cpp:88 src/ui/tools_menu.cpp:92 src/ui/tools_menu.cpp:96 src/ui/tools_menu.cpp:99
-#, fuzzy
-msgid "Developer"
-msgstr "Desarrollador"
-
-#: src/ui/tools_menu.cpp:76
-#, fuzzy
-msgid "Debug overlay"
-msgstr "Superposición de depuración"
-
-#: src/ui/tools_menu.cpp:77
-#, fuzzy
-msgid "The SDK's frame times and threads."
-msgstr "Tiempos de fotograma e hilos del SDK."
-
-#: src/ui/tools_menu.cpp:78
-#, fuzzy
-msgid "Log console"
-msgstr "Consola del registro"
-
-#: src/ui/tools_menu.cpp:79
-#, fuzzy
-msgid "The SDK's live log."
-msgstr "El registro en vivo del SDK."
-
-#: src/ui/tools_menu.cpp:80
-#, fuzzy
-msgid "All settings (flags)"
-msgstr "Todos los ajustes (opciones)"
-
-#: src/ui/tools_menu.cpp:81
-#, fuzzy
-msgid "Every setting by name, as in settings.toml. Prefer the in-game Options screen."
-msgstr "Cada ajuste por su nombre, como en settings.toml. Mejor usa la pantalla Opciones del juego."
-
-#: src/ui/tools_menu.cpp:82
-#, fuzzy
-msgid "SDK achievements list"
-msgstr "Lista de logros del SDK"
-
-#: src/ui/tools_menu.cpp:83
-#, fuzzy
-msgid "The SDK's own list (the port keeps achievements itself: pause -> Achievements)."
-msgstr "La lista propia del SDK (el port lleva los logros él mismo: pausa -> Logros)."
-
-#: src/ui/tools_menu.cpp:84
-#, fuzzy
-msgid "Highlight a material (cycles)"
-msgstr "Resaltar un material (en ciclo)"
-
-#: src/ui/tools_menu.cpp:85
-#, fuzzy
-msgid ""
-"Paints one material magenta in the native picture: bump, particles, motion\n"
-"trails, off."
-msgstr ""
-"Pinta un material de magenta en la imagen nativa: relieve, partículas, estelas\n"
-"de movimiento, nada."
-
-#: src/ui/tools_menu.cpp:88
-#, fuzzy
-msgid "Particle experiment (cycles)"
-msgstr "Experimento de partículas (en ciclo)"
-
-#: src/ui/tools_menu.cpp:89
-#, fuzzy
-msgid ""
-"Changes how particles are drawn in the native picture, then erases groups of\n"
-"them in both pictures, then normal again."
-msgstr ""
-"Cambia cómo se dibujan las partículas en la imagen nativa, luego borra grupos\n"
-"de ellas en ambas imágenes, y luego vuelve a lo normal."
-
-#: src/ui/tools_menu.cpp:92
-#, fuzzy
-msgid "Test: fake achievement card"
-msgstr "Prueba: tarjeta de logro falsa"
-
-#: src/ui/tools_menu.cpp:93
-#, fuzzy
-msgid ""
-"The achievement card on the game's message bar with a made-up name (in a level).\n"
-"Nothing is earned or recorded."
-msgstr ""
-"La tarjeta de logro en la barra de mensajes del juego con un nombre inventado (en un nivel).\n"
-"No se gana ni se guarda nada."
-
-#: src/ui/tools_menu.cpp:96
-#, fuzzy
-msgid "Test: long fake achievement card"
-msgstr "Prueba: tarjeta de logro falsa larga"
-
-#: src/ui/tools_menu.cpp:97
-#, fuzzy
-msgid "The same with a name too long for the card: it scrolls (ui/marquee.h)."
-msgstr "La misma con un nombre demasiado largo para la tarjeta: se desplaza (ui/marquee.h)."
-
-#: src/ui/tools_menu.cpp:99
-#, fuzzy
-msgid "Test: game-style message (voodoo doll look)"
-msgstr "Prueba: mensaje del juego (estilo muñeco vudú)"
-
-#: src/ui/tools_menu.cpp:100
-#, fuzzy
-msgid ""
-"A message in the message bar's own wide look (title, message, counter), as the\n"
-"game shows a voodoo doll or an objective. Nothing else happens."
-msgstr ""
-"Un mensaje con el aspecto ancho de la barra de mensajes (título, mensaje, contador), como\n"
-"el juego muestra un muñeco vudú o un objetivo. No pasa nada más."
-
-#: src/ui/tools_menu.cpp:136
-#, fuzzy
-msgid "Tools (F1)"
-msgstr "Herramientas (F1)"
-
-#: src/ui/tools_menu.cpp:150
-#, fuzzy
-msgid "NOT AVAILABLE"
-msgstr "NO DISPONIBLE"
-
-#: src/ui/tools_menu.cpp:160
-#, fuzzy
-msgid "Tools"
-msgstr "Herramientas"
-
-#: src/ui/tools_menu.cpp:162
-#, fuzzy
-msgid "F1 opens / closes   F2 = HUD   F11 = fullscreen"
-msgstr "F1 abre / cierra   F2 = HUD   F11 = pantalla completa"
-
-#. Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
-#: src/ui/tools_menu.cpp:174
-#, fuzzy
-msgid ""
-"%s\n"
-"\n"
-"(Key, or the key it used to have: %s. Setting name: %s)"
-msgstr ""
-"%s\n"
-"\n"
-"(Tecla, o la que tenía antes: %s. Nombre del ajuste: %s)"
-
-#: src/ui/tools_menu.cpp:181
-#, fuzzy
-msgid "Achievements are off: %s"
-msgstr "Logros desactivados: %s"
-
-#: src/ui/tools_menu.cpp:183
-#, fuzzy
-msgid "Opening it turns achievements off until a save is loaded."
-msgstr "Abrirlo desactiva los logros hasta que se cargue una partida."
-
-#: src/input/bindings.cpp:146
-#, fuzzy
-msgid "Move up"
-msgstr "Arriba"
-
-#: src/input/bindings.cpp:146
-#, fuzzy
-msgid "Also moves through menus."
-msgstr "También mueve por los menús."
-
-#: src/input/bindings.cpp:146 src/input/bindings.cpp:148 src/input/bindings.cpp:150 src/input/bindings.cpp:152 src/input/bindings.cpp:154
-#, fuzzy
-msgid "Left stick"
-msgstr "Stick izquierdo"
-
-#: src/input/bindings.cpp:148
-#, fuzzy
-msgid "Move down"
-msgstr "Abajo"
-
-#: src/input/bindings.cpp:150
-#, fuzzy
-msgid "Move left"
-msgstr "Izquierda"
-
-#: src/input/bindings.cpp:152
-#, fuzzy
-msgid "Move right"
-msgstr "Derecha"
-
-#: src/input/bindings.cpp:154
-#, fuzzy
-msgid "Walk (hold)"
-msgstr "Caminar (mantener)"
-
-#: src/input/bindings.cpp:154
-#, fuzzy
-msgid "Hold with a direction: the stick leans only part of the way, so Crash goes slower."
-msgstr "Mantener con una dirección: el stick solo se inclina en parte, así que Crash va más despacio."
-
-#: src/input/bindings.cpp:155 src/options/options_settings.cpp:1424
-#, fuzzy
-msgid "Spin"
-msgstr "Girar"
-
-#: src/input/bindings.cpp:155
-#, fuzzy
-msgid "The spin attack (on a controller: \"Rotate the Left Analog Stick\"). Hold to keep spinning. With other keys: the spin moves (Spin, then Heavy attack; Spin, then Jack to jump off a titan...). Crash still moves with the movement keys while spinning."
-msgstr "El ataque giratorio (en el mando: \"Gira el stick analógico izquierdo\"). Mantén para seguir girando. Con otras teclas: los movimientos de giro (Girar y luego Ataque fuerte; Girar y luego Dominar para saltar de un titán...). Crash sigue moviéndose con las teclas de movimiento mientras gira."
-
-#: src/input/bindings.cpp:157
-#, fuzzy
-msgid "Left stick circles"
-msgstr "Círculos con el stick izquierdo"
-
-#: src/input/bindings.cpp:158 src/options/options_settings.cpp:1424
-#, fuzzy
-msgid "Jump"
-msgstr "Saltar"
-
-#: src/input/bindings.cpp:158
-#, fuzzy
-msgid "Press again in the air for a double jump."
-msgstr "Pulsa otra vez en el aire para un doble salto."
-
-#: src/input/bindings.cpp:161
-#, fuzzy
-msgid "Light attack"
-msgstr "Ataque ligero"
-
-#: src/input/bindings.cpp:163
-#, fuzzy
-msgid "Heavy attack"
-msgstr "Ataque fuerte"
-
-#: src/input/bindings.cpp:165
-#, fuzzy
-msgid "Block (hold)"
-msgstr "Bloquear (mantener)"
-
-#: src/input/bindings.cpp:165
-#, fuzzy
-msgid "Hold to block an enemy's light attack."
-msgstr "Mantén para bloquear el ataque ligero de un enemigo."
-
-#: src/input/bindings.cpp:170
-#, fuzzy
-msgid "Jack / use"
-msgstr "Dominar / usar"
-
-#: src/input/bindings.cpp:170
-#, fuzzy
-msgid "Stun an enemy, then press to jump on and control it (\"jack\"). Press again to get off. Also uses save totems."
-msgstr "Aturde a un enemigo y pulsa para subirte encima y controlarlo. Pulsa otra vez para bajar. También usa los tótems de guardado."
-
-#: src/input/bindings.cpp:172
-#, fuzzy
-msgid "Titan special attack"
-msgstr "Ataque especial del titán"
-
-#: src/input/bindings.cpp:172
-#, fuzzy
-msgid "The special attack of the titan you control (watch its mutant meter)."
-msgstr "El ataque especial del titán que controlas (mira su barra de mutante)."
-
-#: src/input/bindings.cpp:174
-#, fuzzy
-msgid "Pocket / unpocket"
-msgstr "Guardar / sacar del bolsillo"
-
-#: src/input/bindings.cpp:174
-#, fuzzy
-msgid "Store the titan you control, and bring it back later."
-msgstr "Guarda en el bolsillo el titán que controlas, para sacarlo más tarde."
-
-#: src/input/bindings.cpp:178 src/options/options_settings.cpp:1425
-#, fuzzy
-msgid "Map"
-msgstr "Mapa"
-
-#: src/input/bindings.cpp:178
-#, fuzzy
-msgid "In the pause menu: drop out (another player stays in)."
-msgstr "En el menú de pausa: abandonar (otro jugador sigue)."
-
-#: src/input/bindings.cpp:178 src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:649 launcher/installer.cpp:744 launcher/installer.cpp:800
-#, fuzzy
-msgid "Back"
-msgstr "Atrás"
-
-#: src/input/bindings.cpp:180 src/options/options_settings.cpp:1062 src/options/options_settings.cpp:1425
-#, fuzzy
-msgid "Pause"
-msgstr "Pausa"
-
-#: src/input/bindings.cpp:180
-#, fuzzy
-msgid "Opens the pause menu (in menus, Menu: back closes it)."
-msgstr "Abre el menú de pausa (en los menús, Menú: atrás lo cierra)."
-
-#: src/input/bindings.cpp:180
-#, fuzzy
-msgid "Start"
-msgstr "Start"
-
-#: src/input/bindings.cpp:182
-#, fuzzy
-msgid "Menu: confirm"
-msgstr "Menú: aceptar"
-
-#: src/input/bindings.cpp:182
-#, fuzzy
-msgid "Choose the selected item."
-msgstr "Elige la opción seleccionada."
-
-#: src/input/bindings.cpp:184
-#, fuzzy
-msgid "Menu: back"
-msgstr "Menú: atrás"
-
-#: src/input/bindings.cpp:184
-#, fuzzy
-msgid "Back to the previous screen; in the pause menu: play on."
-msgstr "Vuelve a la pantalla anterior; en el menú de pausa: seguir jugando."
-
-#: src/input/bindings.cpp:186
-#, fuzzy
-msgid "Menu: previous tab"
-msgstr "Menú: pestaña anterior"
-
-#: src/input/bindings.cpp:186
-#, fuzzy
-msgid "The Options screen's tabs."
-msgstr "Las pestañas de la pantalla Opciones."
-
-#: src/input/bindings.cpp:188
-#, fuzzy
-msgid "Menu: next tab"
-msgstr "Menú: pestaña siguiente"
-
-#: src/input/bindings.cpp:190
-#, fuzzy
-msgid "Menu: X action"
-msgstr "Menú: acción X"
-
-#: src/input/bindings.cpp:190
-#, fuzzy
-msgid "What the menu's X prompt says: rename a save, Dual Mode, erase a letter on the name screen."
-msgstr "Lo que dice el aviso X del menú: renombrar una partida, Modo doble, borrar una letra en la pantalla de nombre."
-
-#: src/input/bindings.cpp:193
-#, fuzzy
-msgid "Menu: Y action"
-msgstr "Menú: acción Y"
-
-#: src/input/bindings.cpp:193
-#, fuzzy
-msgid "What the menu's Y prompt says: delete a save, remove a key (Options -> Controls)."
-msgstr "Lo que dice el aviso Y del menú: borrar una partida, quitar una tecla (Opciones -> Controles)."
-
-#: src/input/bindings.cpp:195
-#, fuzzy
-msgid "D-pad up"
-msgstr "Cruceta arriba"
-
-#: src/input/bindings.cpp:195 src/input/bindings.cpp:197 src/input/bindings.cpp:199 src/input/bindings.cpp:201
-#, fuzzy
-msgid "D-pad"
-msgstr "Cruceta"
-
-#: src/input/bindings.cpp:197
-#, fuzzy
-msgid "D-pad down"
-msgstr "Cruceta abajo"
-
-#: src/input/bindings.cpp:199
-#, fuzzy
-msgid "D-pad left"
-msgstr "Cruceta izquierda"
-
-#: src/input/bindings.cpp:201
-#, fuzzy
-msgid "D-pad right"
-msgstr "Cruceta derecha"
-
-#: src/input/bindings.cpp:204
-#, fuzzy
-msgid "Right stick up"
-msgstr "Stick derecho arriba"
-
-#: src/input/bindings.cpp:204
-#, fuzzy
-msgid "The camera follows Crash by itself; this is for the few things that use the right stick."
-msgstr "La cámara sigue a Crash sola; esto es para las pocas cosas que usan el stick derecho."
-
-#: src/input/bindings.cpp:205 src/input/bindings.cpp:207 src/input/bindings.cpp:209 src/input/bindings.cpp:211
-#, fuzzy
-msgid "Right stick"
-msgstr "Stick derecho"
-
-#: src/input/bindings.cpp:207
-#, fuzzy
-msgid "Right stick down"
-msgstr "Stick derecho abajo"
-
-#: src/input/bindings.cpp:209
-#, fuzzy
-msgid "Right stick left"
-msgstr "Stick derecho izquierda"
-
-#: src/input/bindings.cpp:211
-#, fuzzy
-msgid "Right stick right"
-msgstr "Stick derecho derecha"
-
-#: src/input/bindings.cpp:213
-#, fuzzy
-msgid "Left bumper"
-msgstr "Botón LB"
-
-#: src/input/bindings.cpp:213
-#, fuzzy
-msgid "No use in play found so far."
-msgstr "Ningún uso en el juego encontrado hasta ahora."
-
-#: src/input/bindings.cpp:215
-#, fuzzy
-msgid "Left stick click"
-msgstr "Pulsar el stick izquierdo"
-
-#: src/input/bindings.cpp:215 src/input/bindings.cpp:217
-#, fuzzy
-msgid "No use in the game found so far."
-msgstr "Ningún uso en el juego encontrado hasta ahora."
-
-#: src/input/bindings.cpp:217
-#, fuzzy
-msgid "Right stick click"
-msgstr "Pulsar el stick derecho"
-
-#: src/input/bindings.cpp:372
-#, fuzzy
-msgid "Moving"
-msgstr "Movimiento"
-
-#: src/input/bindings.cpp:374
-#, fuzzy
-msgid "Fighting"
-msgstr "Combate"
-
-#: src/input/bindings.cpp:376 src/cheats/spawn.cpp:442
-#, fuzzy
-msgid "Titans"
-msgstr "Titanes"
-
-#: src/input/bindings.cpp:378
-#, fuzzy
-msgid "Menus and map"
-msgstr "Menús y mapa"
-
-#: src/input/bindings.cpp:380
-#, fuzzy
-msgid "Rest of the controller"
-msgstr "Resto del mando"
-
-#: src/input/controls_menu.cpp:51
-#, fuzzy
-msgid "NO KEYBOARD CONTROLS"
-msgstr "SIN CONTROLES DE TECLADO"
-
-#: src/input/controls_menu.cpp:79 src/input/controls_menu.cpp:109 src/options/options_settings.cpp:1355 launcher/settings_page.cpp:541
-#, fuzzy
-msgid "Controls"
-msgstr "Controles"
-
-#: src/input/controls_menu.cpp:117
-#, fuzzy
-msgid "Keys"
-msgstr "Teclas"
-
-#: src/input/controls_menu.cpp:130 launcher/installer.cpp:1344 launcher/main.cpp:1043
-#, fuzzy
-msgid "Close"
-msgstr "Cerrar"
-
-#: src/input/controls_menu.cpp:142
-#, fuzzy
-msgid "Click a key to change it, then press the new key or mouse button (Esc cancels). Right-click a key to remove it. The game's button prompts show Xbox buttons: the middle column says which one each action presses. A controller works at the same time."
-msgstr "Haz clic en una tecla para cambiarla y pulsa la nueva tecla o botón del ratón (Esc cancela). Clic derecho en una tecla para quitarla. Los avisos del juego muestran botones de Xbox: la columna del medio dice cuál pulsa cada acción. Un mando funciona a la vez."
-
-#: src/input/controls_menu.cpp:158
-#, fuzzy
-msgid "Spin held (spins per second)"
-msgstr "Girar mantenido (giros por segundo)"
-
-#: src/input/controls_menu.cpp:161
-#, fuzzy
-msgid "Spin speed saved."
-msgstr "Velocidad de giro guardada."
-
-#: src/input/controls_menu.cpp:163
-#, fuzzy
-msgid "While Spin is held, how often it counts as one more spin (a press is one at once). On a controller each full circle of the left stick is one."
-msgstr "Con Girar mantenido, cada cuánto cuenta como un giro más (una pulsación cuenta uno al instante). En el mando cada círculo completo del stick izquierdo es uno."
-
-#: src/input/controls_menu.cpp:166
-#, fuzzy
-msgid "Walk (how far the stick leans)"
-msgstr "Caminar (cuánto se inclina el stick)"
-
-#: src/input/controls_menu.cpp:169
-#, fuzzy
-msgid "Walk saved."
-msgstr "Caminar guardado."
-
-#: src/input/controls_menu.cpp:171
-#, fuzzy
-msgid "Reset keys to defaults"
-msgstr "Restablecer las teclas"
-
-#: src/input/controls_menu.cpp:178
-#, fuzzy
-msgid "Back to the default keys."
-msgstr "De vuelta a las teclas predeterminadas."
-
-#: src/input/controls_menu.cpp:186
-#, fuzzy
-msgid "Player assignment isn't available in this run."
-msgstr "La asignación de jugadores no está disponible en esta sesión."
-
-#: src/input/controls_menu.cpp:190
-#, fuzzy
-msgid "Which device plays as which player. For two players: keyboard and mouse on Player 1, a controller on Player 2. In a level, press Start on the second device to join (the pause menu also offers Join Game and Drop Out). Moving a device onto a player swaps it with the device that was there. In the title and main menus every device works. Changes apply at once and are remembered."
-msgstr "Qué dispositivo juega como qué jugador. Para dos: teclado y ratón para el jugador 1, un mando para el jugador 2. En un nivel, pulsa Start en el segundo dispositivo para unirte (el menú de pausa también ofrece Unirse y Abandonar). Poner un dispositivo en un jugador lo intercambia con el que había. En la pantalla de título y los menús principales funciona cualquier dispositivo. Los cambios se aplican al momento y se recuerdan."
-
-#: src/input/controls_menu.cpp:201 src/options/options_settings.cpp:744
-#, fuzzy
-msgid "Device"
-msgstr "Dispositivo"
-
-#: src/input/controls_menu.cpp:202
-#, fuzzy
-msgid "Plays as"
-msgstr "Juega como"
-
-#: src/input/controls_menu.cpp:218
-#, fuzzy
-msgid "No controller connected. Connect one: it shows up here."
-msgstr "No hay ningún mando conectado. Conecta uno: aparecerá aquí."
-
-#: src/input/controls_menu.cpp:227
-#, fuzzy
-msgid "Off (not used)"
-msgstr "No (sin usar)"
-
-#: src/input/controls_menu.cpp:229
-#, fuzzy
-msgid "Automatic (Player {})"
-msgstr "Automático (jugador {})"
-
-#: src/input/controls_menu.cpp:230
-#, fuzzy
-msgid "Automatic (not used)"
-msgstr "Automático (sin usar)"
-
-#: src/input/controls_menu.cpp:232 src/input/controls_menu.cpp:263 src/cheats/cheat_menu.cpp:148
-#, fuzzy
-msgid "Player {}"
-msgstr "Jugador {}"
-
-#: src/input/controls_menu.cpp:280
-#, fuzzy
-msgid "Action"
-msgstr "Acción"
-
-#: src/input/controls_menu.cpp:282
-#, fuzzy
-msgid "Key 1"
-msgstr "Tecla 1"
-
-#: src/input/controls_menu.cpp:283
-#, fuzzy
-msgid "Key 2"
-msgstr "Tecla 2"
-
-#: src/input/controls_menu.cpp:307
-#, fuzzy
-msgid "(menus)"
-msgstr "(menús)"
-
-#: src/input/controls_menu.cpp:334
-#, fuzzy
-msgid "press a key..."
-msgstr "pulsa una tecla..."
-
-#: src/input/controls_menu.cpp:351
-#, fuzzy
-msgid "Press the new key for {}."
-msgstr "Pulsa la nueva tecla para {}."
-
-#: src/input/controls_menu.cpp:362
-#, fuzzy
-msgid "{0} removed from {1}."
-msgstr "{0} quitada de {1}."
-
-#: src/input/controls_menu.cpp:375
-#, fuzzy
-msgid "Cancelled."
-msgstr "Cancelado."
-
-#: src/input/controls_menu.cpp:381
-#, fuzzy
-msgid "{0} -> {1} (taken from {2})."
-msgstr "{0} -> {1} (quitada de {2})."
-
-#: src/input/controls_menu.cpp:383
-#, fuzzy
-msgid "{0} -> {1}."
-msgstr "{0} -> {1}."
-
-#: src/input/controls_menu.cpp:390
-#, fuzzy
-msgid "Couldn't save the controls file (see the log)."
-msgstr "No se pudo guardar el archivo de controles (mira el registro)."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -949,45 +129,10 @@ msgstr "Borrar"
 msgid "Rename"
 msgstr "Renombrar"
 
-#: src/saves/save_library.cpp:1021
-#, fuzzy
-msgid "Rename failed"
-msgstr "No se pudo renombrar"
-
-#: src/saves/save_library.cpp:1066
-#, fuzzy
-msgid "Delete failed"
-msgstr "No se pudo borrar"
-
 #: src/saves/save_library.cpp:1095
 #, fuzzy
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr "¿Seguro que quieres borrar esta partida guardada? Se moverá a la carpeta Deleted saves."
-
-#: src/saves/save_library.cpp:1193
-#, fuzzy
-msgid "Rename save"
-msgstr "Renombrar partida"
-
-#: src/saves/save_library.cpp:1232
-#, fuzzy
-msgid "Rename \"%s\""
-msgstr "Renombrar \"%s\""
-
-#: src/saves/save_library.cpp:1233
-#, fuzzy
-msgid "Type up to %zu letters, digits, spaces. Controller: A rename, B cancel"
-msgstr "Escribe hasta %zu letras, cifras, espacios. Mando: A renombra, B cancela"
-
-#: src/saves/save_library.cpp:1245
-#, fuzzy
-msgid "Rename (Enter)"
-msgstr "Renombrar (Intro)"
-
-#: src/saves/save_library.cpp:1248
-#, fuzzy
-msgid "Cancel (Esc)"
-msgstr "Cancelar (Esc)"
 
 #: src/saves/save_library.cpp:1875
 #, fuzzy
@@ -1012,620 +157,25 @@ msgstr "Cargando..."
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: src/cheats/cheat_menu.cpp:90 src/cheats/cheat_menu.cpp:103
-#, fuzzy
-msgid "Cheats"
-msgstr "Trucos"
-
-#: src/cheats/cheat_menu.cpp:105
-#, fuzzy
-msgid "for testing (not saved by us; the game saves what they change)"
-msgstr "para pruebas (no los guardamos nosotros; el juego guarda lo que cambian)"
-
-#: src/cheats/cheat_menu.cpp:108
-#, fuzzy
-msgid "Not in a level: character cheats wait until you're playing one."
-msgstr "Fuera de un nivel: los trucos de personaje esperan a que juegues uno."
-
-#: src/cheats/cheat_menu.cpp:115
-#, fuzzy
-msgid "Everyone"
-msgstr "Todos"
-
-#: src/cheats/cheat_menu.cpp:117
-#, fuzzy
-msgid "God mode"
-msgstr "Modo dios"
-
-#: src/cheats/cheat_menu.cpp:119
-#, fuzzy
-msgid ""
-"Every player's Crash and titan loses no health (and refills).\n"
-"Deaths that skip health (pits?) may still happen."
-msgstr ""
-"El Crash y el titán de cada jugador no pierden salud (y se rellenan).\n"
-"Las muertes que saltan la salud (¿fosos?) aún pueden pasar."
-
-#: src/cheats/cheat_menu.cpp:122
-#, fuzzy
-msgid "No AI"
-msgstr "Sin IA"
-
-#: src/cheats/cheat_menu.cpp:123
-#, fuzzy
-msgid ""
-"Enemies and enemy titans stop thinking: no attacks, no moving.\n"
-"They can still be hit and beaten."
-msgstr ""
-"Los enemigos y titanes enemigos dejan de pensar: ni ataques ni movimiento.\n"
-"Se les puede seguir golpeando y venciendo."
-
-#: src/cheats/cheat_menu.cpp:130
-#, fuzzy
-msgid "Screen"
-msgstr "Pantalla"
-
-#: src/cheats/cheat_menu.cpp:132
-#, fuzzy
-msgid "Hide the HUD"
-msgstr "Ocultar el HUD"
-
-#: src/cheats/cheat_menu.cpp:133
-#, fuzzy
-msgid "Portraits, health and special bars. The mojo count text stays."
-msgstr "Retratos, barras de salud y especial. El texto del contador de mojo se queda."
-
-#: src/cheats/cheat_menu.cpp:135
-#, fuzzy
-msgid "All mojo collected: %s"
-msgstr "Mojo recogido en total: %s"
-
-#: src/cheats/cheat_menu.cpp:137
-#, fuzzy
-msgid "Achievements are off: %s."
-msgstr "Logros desactivados: %s."
-
-#: src/cheats/cheat_menu.cpp:139
-#, fuzzy
-msgid "Loading a save turns them back on (with this window closed and the"
-msgstr "Cargar una partida los vuelve a activar (con esta ventana cerrada y los"
-
-#: src/cheats/cheat_menu.cpp:140
-#, fuzzy
-msgid "switches off). A save made now is marked as made with cheats."
-msgstr "interruptores apagados). Una partida guardada ahora queda marcada como hecha con trucos."
-
-#: src/cheats/cheat_menu.cpp:145
-#, fuzzy
-msgid "Character"
-msgstr "Personaje"
-
-#: src/cheats/cheat_menu.cpp:155
-#, fuzzy
-msgid "Player %d isn't in the level."
-msgstr "El jugador %d no está en el nivel."
-
-#: src/cheats/cheat_menu.cpp:162
-#, fuzzy
-msgid "In a titan: %s"
-msgstr "En un titán: %s"
-
-#: src/cheats/cheat_menu.cpp:164
-#, fuzzy
-msgid "Riding another player as a mask (cheats act on the shared upgrades)"
-msgstr "Montado en otro jugador como máscara (los trucos actúan sobre las mejoras compartidas)"
-
-#: src/cheats/cheat_menu.cpp:166
-#, fuzzy
-msgid "On foot"
-msgstr "A pie"
-
-#: src/cheats/cheat_menu.cpp:169
-#, fuzzy
-msgid "Level: %d of %d  (fully upgraded)"
-msgstr "Nivel: %d de %d  (mejorado al máximo)"
-
-#: src/cheats/cheat_menu.cpp:169
-#, fuzzy
-msgid "Level: %d of %d"
-msgstr "Nivel: %d de %d"
-
-#: src/cheats/cheat_menu.cpp:172
-#, fuzzy
-msgid "Level: %d"
-msgstr "Nivel: %d"
-
-#: src/cheats/cheat_menu.cpp:175
-#, fuzzy
-msgid "Every mojo upgrade bought: the rest come with the story"
-msgstr "Todas las mejoras de mojo compradas: el resto llega con la historia"
-
-#: src/cheats/cheat_menu.cpp:177
-#, fuzzy
-msgid "Mojo toward the next upgrade: %s / %s"
-msgstr "Mojo hacia la siguiente mejora: %s / %s"
-
-#: src/cheats/cheat_menu.cpp:180
-#, fuzzy
-msgid "Mojo toward upgrades: %s"
-msgstr "Mojo hacia las mejoras: %s"
-
-#: src/cheats/cheat_menu.cpp:184
-#, fuzzy
-msgid "Health %.0f / %.0f"
-msgstr "Salud %.0f / %.0f"
-
-#: src/cheats/cheat_menu.cpp:190
-#, fuzzy
-msgid "Level up"
-msgstr "Subir de nivel"
-
-#: src/cheats/cheat_menu.cpp:192
-#, fuzzy
-msgid "Buys this titan's next upgrade (with the game's upgrade screen)."
-msgstr "Compra la siguiente mejora de este titán (con la pantalla de mejora del juego)."
-
-#: src/cheats/cheat_menu.cpp:193
-#, fuzzy
-msgid ""
-"Gives Crash the mojo his level's script waits for: the game then\n"
-"upgrades him itself (screen and all). If nothing happens, the\n"
-"script isn't waiting for an upgrade right now."
-msgstr ""
-"Le da a Crash el mojo que espera el script de su nivel: el juego\n"
-"lo mejora solo (pantalla incluida). Si no pasa nada, el\n"
-"script no espera ninguna mejora ahora mismo."
-
-#: src/cheats/cheat_menu.cpp:197
-#, fuzzy
-msgid "Max level"
-msgstr "Nivel máximo"
-
-#: src/cheats/cheat_menu.cpp:198
-#, fuzzy
-msgid "Buys every upgrade left at once (no screens)."
-msgstr "Compra de golpe todas las mejoras que quedan (sin pantallas)."
-
-#: src/cheats/cheat_menu.cpp:199
-#, fuzzy
-msgid ""
-"Feeds Crash every upgrade his scripts ask for, one at a time:\n"
-"close each \"Level Up!\" screen (B) for the next one.\n"
-"Mojo buys 18 of them (the last at 220,000); the others\n"
-"of the 32 are unlocked by the story."
-msgstr ""
-"Le da a Crash cada mejora que piden sus scripts, de una en una:\n"
-"cierra cada pantalla \"¡Subes de nivel!\" (B) para la siguiente.\n"
-"El mojo compra 18 (la última a 220.000); las demás\n"
-"de las 32 las desbloquea la historia."
-
-#: src/cheats/cheat_menu.cpp:209
-#, fuzzy
-msgid "+{} mojo, as if picked up"
-msgstr "+{} mojo, como recogido"
-
-#: src/cheats/cheat_menu.cpp:212
-#, fuzzy
-msgid "Refill health"
-msgstr "Rellenar la salud"
-
-#: src/cheats/cheat_menu.cpp:216
-#, fuzzy
-msgid "Kill"
-msgstr "Matar"
-
-#: src/cheats/cheat_menu.cpp:219
-#, fuzzy
-msgid ""
-"In a titan: the titan dies and the player is thrown out.\n"
-"On foot: the player dies (back at the checkpoint). Works with god mode."
-msgstr ""
-"En un titán: el titán muere y el jugador sale despedido.\n"
-"A pie: el jugador muere (vuelve al punto de control). Funciona con el modo dios."
-
-#: src/cheats/cheat_menu.cpp:223
-#, fuzzy
-msgid "Free jack"
-msgstr "Dominar gratis"
-
-#: src/cheats/cheat_menu.cpp:226
-#, fuzzy
-msgid ""
-"The game's Free Jack power-up: jack any titan (B) without beating\n"
-"it first. Lasts until the next jack. On foot only."
-msgstr ""
-"El potenciador Dominar gratis del juego: domina cualquier titán (B) sin\n"
-"vencerlo antes. Dura hasta el siguiente dominio. Solo a pie."
-
-#: src/cheats/cheat_menu.cpp:233
-#, fuzzy
-msgid "Spawn"
-msgstr "Aparecer"
-
-#: src/cheats/cheat_menu.cpp:258
-#, fuzzy
-msgid "How many"
-msgstr "Cuántos"
-
-#: src/cheats/cheat_menu.cpp:261
-#, fuzzy
-msgid "Ready to jack"
-msgstr "Listo para dominar"
-
-#: src/cheats/cheat_menu.cpp:263
-#, fuzzy
-msgid ""
-"Arrives already down, ready to jack: walk up and press B.\n"
-"Off: a normal titan, ready to fight. Or use Free jack (Character)."
-msgstr ""
-"Llega ya caído, listo para dominar: acércate y pulsa B.\n"
-"No: un titán normal, listo para luchar. O usa Dominar gratis (Personaje)."
-
-#: src/cheats/cheat_menu.cpp:268
-#, fuzzy
-msgid "Spawn in front of player {}"
-msgstr "Aparecer delante del jugador {}"
-
-#: src/cheats/cheat_menu.cpp:275
-#, fuzzy
-msgid "or a template, e.g. Characters:Znu"
-msgstr "o una plantilla, p. ej. Characters:Znu"
-
-#: src/cheats/cheat_menu.cpp:278
-#, fuzzy
-msgid ""
-"Any template the game's data names (\"Group:Name\"). Experimental:\n"
-"only titans are tested; other things can crash the game."
-msgstr ""
-"Cualquier plantilla que nombren los datos del juego (\"Grupo:Nombre\"). Experimental:\n"
-"solo los titanes están probados; otras cosas pueden colgar el juego."
-
-#: src/cheats/cheat_menu.cpp:282
-#, fuzzy
-msgid "Spawn by name"
-msgstr "Aparecer por nombre"
-
-#: src/cheats/cheat_menu.cpp:287
-#, fuzzy
-msgid "Last: %s"
-msgstr "Último: %s"
-
-#: src/cheats/cheat_menu.cpp:288
-#, fuzzy
-msgid "Not in this level? It's loaded first (takes a moment)."
-msgstr "¿No está en este nivel? Se carga primero (tarda un momento)."
-
-#: src/cheats/cheat_menu.cpp:293
-#, fuzzy
-msgid "Unlocks"
-msgstr "Desbloqueos"
-
-#: src/cheats/cheat_menu.cpp:305
-#, fuzzy
-msgid "Unlocked / all. Click to unlock all of them."
-msgstr "Desbloqueados / total. Haz clic para desbloquearlos todos."
-
-#: src/cheats/cheat_menu.cpp:307
-#, fuzzy
-msgid "Unlock everything"
-msgstr "Desbloquear todo"
-
-#: src/cheats/cheat_menu.cpp:311
-#, fuzzy
-msgid ""
-"Every outfit (Coco and the titan suits included: pick them at the chest),\n"
-"concept art, enemy info and tutorial page, in the game being played.\n"
-"Kept when the game saves. Nobody's outfit changes by itself."
-msgstr ""
-"Cada traje (Coco y los trajes de titán incluidos: elígelos en el baúl),\n"
-"boceto, ficha de enemigo y página de tutorial, en la partida en curso.\n"
-"Se conservan al guardar. El traje de nadie cambia solo."
-
-#: src/cheats/cheat_menu.cpp:319
-#, fuzzy
-msgid "Time"
-msgstr "Tiempo"
-
-#: src/cheats/cheat_menu.cpp:322
-#, fuzzy
-msgid "Game speed"
-msgstr "Velocidad del juego"
-
-#: src/cheats/cheat_menu.cpp:333
-#, fuzzy
-msgid "Freeze"
-msgstr "Congelar"
-
-#: src/cheats/cheat_menu.cpp:335
-#, fuzzy
-msgid ""
-"Everything stops; the picture keeps drawing (with the free camera:\n"
-"a photo mode). The game's own \"pause for screenshots\"."
-msgstr ""
-"Todo se para; la imagen se sigue dibujando (con la cámara libre:\n"
-"un modo foto). La \"pausa para capturas\" del propio juego."
-
-#: src/cheats/cheat_menu.cpp:339
-#, fuzzy
-msgid "Step one frame"
-msgstr "Avanzar un fotograma"
-
-#: src/cheats/cheat_menu.cpp:346
-#, fuzzy
-msgid "Dummy players"
-msgstr "Jugadores de prueba"
-
-#: src/cheats/cheat_menu.cpp:349
-#, fuzzy
-msgid "No dummy controllers. Add  debug_fake_pads = 3  to user/settings.toml"
-msgstr "No hay mandos de prueba. Añade  debug_fake_pads = 3  a user/settings.toml"
-
-#: src/cheats/cheat_menu.cpp:350
-#, fuzzy
-msgid "(1-3 dummies) and restart the game."
-msgstr "(1-3 de prueba) y reinicia el juego."
-
-#: src/cheats/cheat_menu.cpp:353
-#, fuzzy
-msgid "START joins, B leaves a mask. Hold a direction on the pad to walk."
-msgstr "START se une, B deja una máscara. Mantén una dirección en el pad para caminar."
-
-#: src/cheats/cheat_menu.cpp:354
-#, fuzzy
-msgid "Idle (buttons only)"
-msgstr "Quieto (solo botones)"
-
-#: src/cheats/cheat_menu.cpp:354
-#, fuzzy
-msgid "Follow player 1"
-msgstr "Seguir al jugador 1"
-
-#: src/cheats/cheat_menu.cpp:354
-#, fuzzy
-msgid "Follow player 2"
-msgstr "Seguir al jugador 2"
-
-#: src/cheats/cheat_menu.cpp:354
-#, fuzzy
-msgid "Follow player 3"
-msgstr "Seguir al jugador 3"
-
-#: src/cheats/cheat_menu.cpp:355
-#, fuzzy
-msgid "Follow player 4"
-msgstr "Seguir al jugador 4"
-
-#: src/cheats/cheat_menu.cpp:355
-#, fuzzy
-msgid "Copy player 1"
-msgstr "Copiar al jugador 1"
-
-#: src/cheats/cheat_menu.cpp:355
-#, fuzzy
-msgid "Copy player 2"
-msgstr "Copiar al jugador 2"
-
-#: src/cheats/cheat_menu.cpp:355
-#, fuzzy
-msgid "Copy player 3"
-msgstr "Copiar al jugador 3"
-
-#: src/cheats/cheat_menu.cpp:356
-#, fuzzy
-msgid "Copy player 4"
-msgstr "Copiar al jugador 4"
-
-#: src/cheats/cheat_menu.cpp:361
-#, fuzzy
-msgid "Dummy controller %d: player %d"
-msgstr "Mando de prueba %d: jugador %d"
-
-#: src/cheats/cheat_menu.cpp:363
-#, fuzzy
-msgid "Dummy controller %d: plays as nobody (Controls -> Players)"
-msgstr "Mando de prueba %d: no juega como nadie (Controles -> Jugadores)"
-
-#: src/cheats/cheat_menu.cpp:377
-#, fuzzy
-msgid ""
-"Follow: walks after that player, stops ~3 units away, jumps when stuck\n"
-"below them. Copy: repeats that player's controller (not START / BACK).\n"
-"The buttons and the stick pad work in every mode."
-msgstr ""
-"Seguir: camina tras ese jugador, se para a ~3 unidades, salta si se atasca\n"
-"debajo de él. Copiar: repite el mando de ese jugador (salvo START / BACK).\n"
-"Los botones y el pad del stick funcionan en todos los modos."
-
-#: src/cheats/cheat_menu.cpp:391
-#, fuzzy
-msgid ""
-"Which controller this dummy pretends to be. With Controller Icons on\n"
-"Automatic, the game detects it from its maker and model like a real pad\n"
-"and shows that player's prompts in its button pictures."
-msgstr ""
-"Qué mando finge ser este de prueba. Con Iconos del mando en\n"
-"Automático, el juego lo detecta por su marca y modelo como uno real\n"
-"y muestra los avisos de ese jugador con sus imágenes de botones."
-
-#: src/cheats/cheat_menu.cpp:434
-#, fuzzy
-msgid "Camera"
-msgstr "Cámara"
-
-#: src/cheats/cheat_menu.cpp:436
-#, fuzzy
-msgid "Free camera"
-msgstr "Cámara libre"
-
-#: src/cheats/cheat_menu.cpp:440
-#, fuzzy
-msgid "Keys move the camera"
-msgstr "Las teclas mueven la cámara"
-
-#: src/cheats/cheat_menu.cpp:443
-#, fuzzy
-msgid ""
-"On: the keyboard and mouse fly the camera (Crash stands still;\n"
-"a controller still plays). Off: the camera stays put and the keys\n"
-"play the game again."
-msgstr ""
-"Sí: el teclado y el ratón hacen volar la cámara (Crash se queda quieto;\n"
-"un mando sigue jugando). No: la cámara se queda quieta y las teclas\n"
-"vuelven a jugar."
-
-#: src/cheats/cheat_menu.cpp:447
-#, fuzzy
-msgid "W A S D move, E / Q up / down, Shift fast, Ctrl slow,"
-msgstr "W A S D mover, E / Q subir / bajar, Mayús rápido, Ctrl lento,"
-
-#: src/cheats/cheat_menu.cpp:448
-#, fuzzy
-msgid "right mouse button held (or arrow keys) = look around"
-msgstr "botón derecho del ratón mantenido (o flechas) = mirar alrededor"
-
-#: src/cheats/cheat_menu.cpp:451
-#, fuzzy
-msgid "Flying speed"
-msgstr "Velocidad de vuelo"
-
-#: src/cheats/cheat_menu.cpp:457
-#, fuzzy
-msgid "Look speed"
-msgstr "Velocidad de la vista"
-
-#: src/cheats/cheat_menu.cpp:460
-#, fuzzy
-msgid "Back to the game's camera"
-msgstr "Volver a la cámara del juego"
-
-#: src/cheats/cheat_menu.cpp:463
-#, fuzzy
-msgid "Camera at (%.1f, %.1f, %.1f)"
-msgstr "Cámara en (%.1f, %.1f, %.1f)"
-
-#: src/cheats/cheats.cpp:105
-#, fuzzy
-msgid "Outfits"
-msgstr "Trajes"
-
-#: src/cheats/cheats.cpp:106
-#, fuzzy
-msgid "Concept art"
-msgstr "Bocetos"
-
-#: src/cheats/cheats.cpp:107
-#, fuzzy
-msgid "Enemy info"
-msgstr "Fichas de enemigos"
-
-#: src/cheats/cheats.cpp:108
-#, fuzzy
-msgid "Tutorials"
-msgstr "Tutoriales"
-
-#: src/cheats/cheats.cpp:230
+#: src/cheats/cheats.cpp:236
 #, fuzzy
 msgid "Cheats Enabled"
 msgstr "Trucos activados"
 
-#: src/cheats/cheats.cpp:230
+#: src/cheats/cheats.cpp:236
 #, fuzzy
 msgid "No achievements until a save is loaded"
 msgstr "Sin logros hasta cargar una partida guardada"
 
-#: src/cheats/cheats.cpp:698
-#, fuzzy
-msgid "this game was saved with cheats on"
-msgstr "esta partida se guardó con trucos activados"
-
-#: src/cheats/cheats.cpp:699
-#, fuzzy
-msgid "cheats were used (until a save is loaded)"
-msgstr "se han usado trucos (hasta que se cargue una partida)"
-
-#: src/cheats/cheats.cpp:729
+#: src/cheats/cheats.cpp:778
 #, fuzzy
 msgid "Save Made With Cheats"
 msgstr "Partida guardada con trucos"
 
-#: src/cheats/cheats.cpp:729
+#: src/cheats/cheats.cpp:778
 #, fuzzy
 msgid "No achievements while playing this save"
 msgstr "Sin logros mientras juegues esta partida"
-
-#: src/cheats/spawn.cpp:450
-#, fuzzy
-msgid "Crunch (boss)"
-msgstr "Crunch (jefe)"
-
-#: src/cheats/spawn.cpp:450
-#, fuzzy
-msgid "Cortex (boss)"
-msgstr "Cortex (jefe)"
-
-#: src/cheats/spawn.cpp:451
-#, fuzzy
-msgid "Enemies"
-msgstr "Enemigos"
-
-#: src/cheats/spawn.cpp:458
-msgid "Pickups"
-msgstr ""
-
-#: src/cheats/spawn.cpp:459
-msgid "Mojo (small)"
-msgstr ""
-
-#: src/cheats/spawn.cpp:459
-msgid "Mojo (medium)"
-msgstr ""
-
-#: src/cheats/spawn.cpp:460
-msgid "Mojo (large)"
-msgstr ""
-
-#: src/cheats/spawn.cpp:460
-msgid "Mojo multiplier"
-msgstr ""
-
-#: src/cheats/spawn.cpp:461
-msgid "Health"
-msgstr ""
-
-#: src/players/dummy_players.cpp:232
-#, fuzzy
-msgid "Test pad (no model)"
-msgstr "Mando de prueba (sin modelo)"
-
-#: src/players/dummy_players.cpp:233
-#, fuzzy
-msgid "Xbox 360 controller"
-msgstr "Mando de Xbox 360"
-
-#: src/players/dummy_players.cpp:234
-#, fuzzy
-msgid "Xbox Series controller"
-msgstr "Mando de Xbox Series"
-
-#: src/players/dummy_players.cpp:235
-#, fuzzy
-msgid "PlayStation 4 (DualShock 4)"
-msgstr "PlayStation 4 (DualShock 4)"
-
-#: src/players/dummy_players.cpp:236
-#, fuzzy
-msgid "PlayStation 5 (DualSense)"
-msgstr "PlayStation 5 (DualSense)"
-
-#: src/players/dummy_players.cpp:237
-#, fuzzy
-msgid "Switch Pro controller"
-msgstr "Mando Switch Pro"
-
-#: src/players/dummy_players.cpp:238
-#, fuzzy
-msgid "Another maker (8BitDo)"
-msgstr "Otro fabricante (8BitDo)"
 
 #: src/players/lost_controller.cpp:269
 #, fuzzy
@@ -1780,6 +330,11 @@ msgstr "Naranja"
 #, fuzzy
 msgid "Crash"
 msgstr "Crash"
+
+#: src/players/outfit_picker.cpp:1103 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:649 launcher/installer.cpp:744 launcher/installer.cpp:800
+#, fuzzy
+msgid "Back"
+msgstr "Atrás"
 
 #: src/players/outfit_picker.cpp:1104
 #, fuzzy
@@ -1979,29 +534,29 @@ msgstr "Elige un jugador"
 msgid "Press any button to join"
 msgstr "Pulsa un botón para unirte"
 
-#: src/options/options_menu.cpp:1985
+#: src/options/options_menu.cpp:1990
 #, fuzzy
 msgid "Not changed."
 msgstr "Sin cambios."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1992
+#: src/options/options_menu.cpp:1997
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} es de los menús ({1}): elige otra tecla."
 
-#: src/options/options_menu.cpp:2004
+#: src/options/options_menu.cpp:2009
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} era la tecla de {1}: ahora es de {2}."
 
-#: src/options/options_menu.cpp:2025
+#: src/options/options_menu.cpp:2030
 #, fuzzy
 msgid "No key to remove."
 msgstr "No hay tecla que quitar."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2033
+#: src/options/options_menu.cpp:2038
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} quitada."
@@ -2616,6 +1171,11 @@ msgstr "La distancia se desenfoca un poco, como en el juego original."
 msgid "The distance is blurred twice as much."
 msgstr "La distancia se desenfoca el doble."
 
+#: src/options/options_settings.cpp:744
+#, fuzzy
+msgid "Device"
+msgstr "Dispositivo"
+
 #: src/options/options_settings.cpp:769
 #, fuzzy
 msgid "Output Device"
@@ -3123,6 +1683,11 @@ msgstr "Ventana en segundo plano"
 msgid "Keep Playing"
 msgstr "Seguir jugando"
 
+#: src/options/options_settings.cpp:1062 src/options/options_settings.cpp:1425
+#, fuzzy
+msgid "Pause"
+msgstr "Pausa"
+
 #: src/options/options_settings.cpp:1063
 #, fuzzy
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
@@ -3505,6 +2070,11 @@ msgstr "El volumen de golpes, cajas, pasos y todo lo demás."
 msgid "Output"
 msgstr "Salida"
 
+#: src/options/options_settings.cpp:1355 launcher/settings_page.cpp:541
+#, fuzzy
+msgid "Controls"
+msgstr "Controles"
+
 #: src/options/options_settings.cpp:1356
 #, fuzzy
 msgid "Gameplay"
@@ -3547,6 +2117,16 @@ msgstr "Andar (mantener)"
 
 #: src/options/options_settings.cpp:1424
 #, fuzzy
+msgid "Spin"
+msgstr "Girar"
+
+#: src/options/options_settings.cpp:1424
+#, fuzzy
+msgid "Jump"
+msgstr "Saltar"
+
+#: src/options/options_settings.cpp:1424
+#, fuzzy
 msgid "Light Attack"
 msgstr "Ataque ligero"
 
@@ -3574,6 +2154,11 @@ msgstr "Ataque especial del titán"
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Guardar / Sacar"
+
+#: src/options/options_settings.cpp:1425
+#, fuzzy
+msgid "Map"
+msgstr "Mapa"
 
 #: src/options/options_settings.cpp:1426
 #, fuzzy
@@ -4194,6 +2779,11 @@ msgstr ""
 msgid "Your saves, settings and logs are still in {0}. Installing into the same place again picks them up."
 msgstr ""
 
+#: launcher/installer.cpp:1344 launcher/main.cpp:1043
+#, fuzzy
+msgid "Close"
+msgstr "Cerrar"
+
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
 #, fuzzy
@@ -4541,6 +3131,11 @@ msgstr "Archivo de partida %d, guardada %s"
 #, fuzzy
 msgid "Open:"
 msgstr "Abrir:"
+
+#: launcher/main.cpp:580
+#, fuzzy
+msgid "Saves"
+msgstr "Partidas"
 
 #: launcher/main.cpp:584
 #, fuzzy
@@ -5064,6 +3659,11 @@ msgstr "Margen de suelo"
 #, fuzzy
 msgid "Above 30 fps: how long a lost ground contact is forgiven, so Crash doesn't flash into his fall animation stepping down uneven ground. 40 ms is the tested value; 0 = off."
 msgstr "Por encima de 30 FPS: cuánto tiempo se perdona un contacto con el suelo perdido, para que Crash no pase a su animación de caída al bajar por suelo irregular. 40 ms es el valor probado; 0 = desactivado."
+
+#: launcher/settings_page.cpp:390
+#, fuzzy
+msgid "Picture"
+msgstr "Imagen"
 
 #: launcher/settings_page.cpp:393
 #, fuzzy

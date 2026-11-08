@@ -4,7 +4,8 @@ The game itself already speaks many languages: its menus, tutorials, subtitles a
 from the disc in English, French, German, Italian, Spanish, Dutch, Danish, Finnish, Norwegian,
 Swedish and Russian (Options → Language). The texts in this folder are the ones **this port adds**
 on top: its Options rows and descriptions, the Players screen, the outfit chest, question boxes,
-button prompts, the launcher, the tool windows (F1) and so on, about 970 short texts. (The
+button prompts, the launcher and so on, about 890 short texts. (The developer tool windows
+behind F1 stay in English, like the logs.) (The
 achievements come from the disc in every language the game has: nothing to translate here.)
 
 The first version of every language here is a **machine translation**, written using the

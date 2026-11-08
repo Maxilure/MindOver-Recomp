@@ -19,12 +19,12 @@
 #include <rex/ui/keybinds.h>
 #include <rex/ui/vulkan/util.h>
 
-#include "../language/texts.h"
 #include "../pddi/intercept.h"
 #include "../pddi/trace.h"
 #include "ab_capture.h"
 #include "guest.h"
 #include "recorder.h"
+#include "scan.h"
 #include "spotter.h"
 #include "../overlay_banner.h"
 
@@ -715,15 +715,15 @@ bool NativeRenderer::Initialize() {
                         "Switch the picture between the emulated GPU and the native renderer",
                         [this] {
                           if (emulated_only()) {
-                            overlay_banner::Show(trs("EMULATED ONLY"),
-                                                 trs("No switching with --emulated_only"));
+                            overlay_banner::Show("EMULATED ONLY",
+                                                 "No switching with --emulated_only");
                             return;
                           }
                           // Dual mode: each window already shows one picture.
                           if (window_presenter_.load(std::memory_order_relaxed)) {
-                            overlay_banner::Show(trs("DUAL MODE"),
-                                                 trs("No switching while the second window is open "
-                                                 "(Tools closes it)"));
+                            overlay_banner::Show("DUAL MODE",
+                                                 "No switching while the second window is open "
+                                                 "(Tools closes it)");
                             REXLOG_INFO(
                                 "NativeRenderer: no renderer switch while the native window is open "
                                 "(the main window shows the emulated picture, the native window "
@@ -1440,17 +1440,17 @@ void NativeRenderer::AnnouncePicture() {
   // The on-screen message (overlay_banner.h): which picture the MAIN window
   // shows now, and what the other renderer is doing meanwhile.
   if (window_presenter_.load(std::memory_order_relaxed)) {
-    overlay_banner::Show(trs("DUAL MODE"), trs("this window: emulated (Xbox 360 GPU)   second window: "
-                                      "native (Vulkan)   F1 Tools closes it"));
+    overlay_banner::Show("DUAL MODE", "this window: emulated (Xbox 360 GPU)   second window: "
+                                      "native (Vulkan)   F1 Tools closes it");
   } else if (emulated_only()) {
-    overlay_banner::Show(trs("EMULATED ONLY"), trs("Xbox 360 GPU emulation; native renderer off"));
+    overlay_banner::Show("EMULATED ONLY", "Xbox 360 GPU emulation; native renderer off");
   } else if (show_native()) {
-    overlay_banner::Show(trs("NATIVE (Vulkan)"),
+    overlay_banner::Show("NATIVE (Vulkan)",
                          REXCVAR_GET(native_only)
-                             ? trs("native only: the emulated GPU is off   F1 Tools switches")
-                             : trs("the emulated GPU still draws in the background   F1 Tools switches"));
+                             ? "native only: the emulated GPU is off   F1 Tools switches"
+                             : "the emulated GPU still draws in the background   F1 Tools switches");
   } else {
-    overlay_banner::Show(trs("EMULATED (Xbox 360 GPU)"), trs("native renderer idle   F1 Tools switches"));
+    overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle   F1 Tools switches");
   }
 }
 
@@ -1703,11 +1703,25 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   //    whole screen.
   prepared_.assign(frame_.draws.size(), PreparedDraw{});
   uint32_t drawn = 0, meshes = 0, block_drawn = 0;
+  // A draw dropped here is a NATIVE GAP (scan.h): named by its material and
+  // the reason, counted, and the first time a banner + photo. (Until
+  // 2026-11-08 these drops were silent: a missing object left no trace.)
+  auto skipped = [](const native::DrawCommand& draw, const char* reason) {
+    native::scan::NewGap(std::string("skipped draw: ") + MaterialName(draw.material) +
+                         (draw.mesh ? " mesh: " : ": ") + reason);
+  };
   for (size_t i = 0; i < frame_.draws.size(); ++i) {
     const native::DrawCommand& d = frame_.draws[i];
     PreparedDraw& p = prepared_[i];
-    if (!d.targets.colour || !blocks) {
-      continue;  // no render target 0: nothing D3D would draw either
+    if (!blocks) {
+      skipped(d, "no room for material blocks this frame");
+      continue;
+    }
+    if (!d.targets.colour) {
+      // No render target 0. D3D could still draw depth / stencil alone
+      // (colour writes off), so this is reported, not assumed harmless.
+      skipped(d, "no colour render target (depth / stencil only draw?)");
+      continue;
     }
     p.has_depth = d.targets.depth != 0;
     if (d.mesh) {
@@ -1716,13 +1730,16 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       if (d.index_buffer.present()) {
         p.index_buffer = buffer_cache_->Get(d.index_buffer, cmd, submission);
         if (!p.index_buffer) {
+          skipped(d, "its index buffer couldn't be uploaded");
           continue;
         }
       }
       if (!p.vertex_buffer) {
+        skipped(d, "its vertex buffer couldn't be uploaded");
         continue;
       }
     } else if (!d.vertex_count || !vertex_buffer || (d.index_count && !index_buffer)) {
+      skipped(d, !d.vertex_count ? "no vertices" : "no room in the frame's vertex / index upload");
       continue;
     }
     // The textures (bindings: see kTexturesPerDraw) and how each is sampled.
@@ -1741,12 +1758,17 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       if (!view.view) {
         // Fetch constant word 1: bits 0-5 format, 12-31 address (4 KB units).
         const uint32_t format = texture.fetch[1] & 0x3F;
+        // A NATIVE GAP (scan.h), keyed by material, binding and format (the
+        // address changes between runs); the first address goes in the log.
         if (reported_textures_.insert(uint32_t(d.material) << 16 | binding << 8 | format)
                 .second) {
           REXLOG_INFO("NativeRenderer: a {} draw's texture {} isn't available (format {}, "
                       "address {:08X})",
                       MaterialName(d.material), binding, format, texture.fetch[1] & 0xFFFFF000u);
         }
+        native::scan::NewGap(std::string("texture missing: ") + MaterialName(d.material) +
+                             " texture " + std::to_string(binding) + ", format " +
+                             std::to_string(format));
         return false;
       }
       views[binding] = view.view;
@@ -1901,6 +1923,9 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
         const native::RenderTargets::TextureView copy =
             render_targets_->FindStencilCopy(d.stencil_copy);
         ok = copy.view != VK_NULL_HANDLE;
+        if (!ok) {
+          skipped(d, "its stencil copy (a depth resolve) wasn't found");
+        }
         if (ok) {
           views[0] = copy.view;
           samplers[0] = GetSampler(d.stencil_sampler);
@@ -1908,7 +1933,13 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
         break;
       }
     }
-    if (!ok || (UsesBlock(d.material) && !block)) {
+    if (!ok) {
+      // The texture itself was reported by bind() (or the stencil copy above).
+      skipped(d, "a texture it needs isn't available");
+      continue;
+    }
+    if (UsesBlock(d.material) && !block) {
+      skipped(d, "no room for its material block");
       continue;
     }
     p.texture_width = texture_size[0];
@@ -1918,7 +1949,8 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     alloc_info.descriptorSetCount = 1;
     alloc_info.pSetLayouts = &draw_set_layout_;
     if (dfn.vkAllocateDescriptorSets(device, &alloc_info, &p.set) != VK_SUCCESS) {
-      continue;  // more than kMaxDrawsPerFrame
+      skipped(d, "more draws than descriptor sets this frame (kMaxDrawsPerFrame)");
+      continue;
     }
     VkDescriptorImageInfo images[kTexturesPerDraw];
     for (uint32_t t = 0; t < kTexturesPerDraw; ++t) {
@@ -1945,6 +1977,9 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     dfn.vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
     p.pipeline =
         GetPipeline(d, p.has_depth, render_targets_->SurfaceSamples(d.targets.colour));
+    if (!p.pipeline) {
+      skipped(d, "its pipeline couldn't be made (shader / state combination)");
+    }
     drawn += p.pipeline ? 1 : 0;
     meshes += p.pipeline && d.mesh ? 1 : 0;
     block_drawn += p.pipeline && block ? 1 : 0;
@@ -2053,7 +2088,11 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     }
     const native::DrawCommand& d = frame_.draws[command.index];
     const PreparedDraw& p = prepared_[command.index];
-    if (!p.pipeline || !enter_pass(d.targets)) {
+    if (!p.pipeline) {
+      continue;  // reported above (or a skipped draw)
+    }
+    if (!enter_pass(d.targets)) {
+      skipped(d, "its render pass couldn't be opened (surfaces)");
       continue;
     }
     if (p.pipeline != bound) {

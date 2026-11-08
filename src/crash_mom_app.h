@@ -46,7 +46,6 @@
 #include <rex/ui/keybinds.h>
 
 #include "audio_trace.h"
-#include "language/texts.h"
 #include "cheats/cheat_menu.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
@@ -456,7 +455,7 @@ class CrashMomApp : public rex::ReXApp {
   void ToggleNativeWindow() {
     // --emulated_only: our renderer never draws, so no window for it.
     if (native_renderer_->emulated_only()) {
-      overlay_banner::Show(trs("EMULATED ONLY"), trs("No second window with --emulated_only"));
+      overlay_banner::Show("EMULATED ONLY", "No second window with --emulated_only");
       return;
     }
     if (!native_window_) {

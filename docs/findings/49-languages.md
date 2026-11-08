@@ -165,10 +165,11 @@ files in `languages/` (src/language/texts.h, languages/README.md):
   drawn by the port (s.8.3).
 - Machine drafts carry gettext's `fuzzy` flag until a speaker checks them; the
   Language tab says so for the running language.
-- **The developer tools and the launcher** use the same files (2026-10-31): the
-  ImGui windows (F1 Tools, F5 Cheats, F6 Controls, the renderer banners) through
-  `trs("...")` = UTF-8 in and out, the frame-rate counter's words through `trc`
-  (game font, context "fps counter"). The launcher has no game code: its own
+- **The launcher** uses the same files (2026-10-31), and so does the frame-rate
+  counter (its words through `trc`, game font, context "fps counter"). The game's
+  ImGui windows (F1 Tools, F5 Cheats, F6 Controls, the renderer banners) were
+  translated too until 2026-11-08; since then they are developer tools in
+  ENGLISH ONLY, like the logs (their 253 texts left the .po files). The launcher has no game code: its own
   reader (launcher/texts.h: `trs`, `trsc` with a context, `trf`) loads
   `<code>.po` from user/languages, program/languages or source/languages, by the
   text_language in user/settings.toml. `tools/translations.py` extracts `src/`

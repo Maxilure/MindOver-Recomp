@@ -25,13 +25,13 @@
 //     trcn("key name", u"Delete")           the same with a context: shown
 //                                           with trc("key name", text)
 //
-//     trs("Fullscreen")                     the same for the ImGui tool windows:
-//                                           UTF-8 in, UTF-8 out (a const char*
-//                                           valid for the session; printf-style
-//                                           %s / %d stay as they are in the
-//                                           translation)
-//     trsn("Fullscreen")                    marks a UTF-8 text in a static table
-//                                           (returns it untouched: trs() it where shown)
+//
+// NOT TRANSLATED (decided 2026-11-08): the game's ImGui windows (F1 Tools and
+// everything it opens: Cheats, Controls, dummy players, the old rename box)
+// and their banners are developer tools: English only, like the logs. Write
+// their texts as plain literals. (Until 2026-11-08 they went through trs();
+// the launcher and the installer keep their own trs(), launcher/texts.h:
+// those are for players.)
 //
 // A comment line "// TR: ..." right above a tr() call is copied into the .po
 // file for translators (where it shows, how much room it has).
@@ -75,10 +75,6 @@ std::u16string trf(std::u16string_view text, std::initializer_list<std::u16strin
 // a context, looked up later with trc(context, ...).
 constexpr const char16_t* trn(const char16_t* english) { return english; }
 constexpr const char16_t* trcn(const char* /*context*/, const char16_t* english) { return english; }
-
-// The UTF-8 forms for ImGui (the developer tool windows, launcher-style text).
-const char* trs(const char* english);
-constexpr const char* trsn(const char* english) { return english; }
 
 namespace texts {
 

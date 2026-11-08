@@ -128,6 +128,9 @@ void RequestRefillHealth(int player);
 // out), on foot Crash dies (the game's death: back at the checkpoint).
 // Works with god mode on.
 void RequestKill(int player);
+// Kills every non-player character within `range` units of player 1 (the
+// game's own deaths follow). Console: "cheat killenemies [range]" (60).
+void RequestKillEnemies(float range);
 // The game's "free jack" power-up: jack any titan without beating it first
 // (until the next jack). On foot only.
 void RequestFreeJack(int player);
@@ -187,9 +190,9 @@ void OnGameStarted(bool from_marked_save, int save_number);
 void OnSaveWritten(bool marked);
 
 // Debug FIFO (debug_input_script.h): "cheat <command>" for test runs without
-// clicking the menu. Commands: god on|off, freeze on|off, step, speed <x>,
+// clicking the menu. Commands: god on|off, onehit on|off (enemies die in one hit), freeze on|off, step, speed <x>,
 // hud on|off, levelup <player 1-4>, maxlevel <p>, mojo <p> <amount>, refill <p>,
-// freejack <p>, kill <p>, unlock outfits|art|enemies|tutorials|all, hurt <p> <amount> (test damage through the game's own path),
+// freejack <p>, kill <p>, killenemies [range], unlock outfits|art|enemies|tutorials|all, hurt <p> <amount> (test damage through the game's own path),
 // freecam on|off, freecam_keys on|off, freecam_reset, info (logs the
 // snapshot), spawn <template> [player] [count] [ko] (spawn.h). False if unknown. ("cheat menu" = F5, handled by the FIFO.)
 bool DebugCommand(std::string_view command);

@@ -36,5 +36,11 @@ const uint kBumpMegaNoColour = 256u;
 const uint kBumpMegaNoNormalMap = 512u;
 const uint kBumpMegaNoUv = 1024u;
 const uint kBumpMegaHighlight = 2048u;
+const uint kBumpMegaNoShine = 4096u;          // debug experiments (frame.h)
+const uint kBumpMegaNoRim = 8192u;
+const uint kBumpMegaShowNormalMap = 16384u;
+const uint kBumpMegaShowDiffuse = 32768u;
+const uint kBumpMegaShowVertexColour = 65536u;
+const uint kBumpMegaNormalBaseLevel = 131072u;
 
 bool BumpFlag(uint flag) { return (bump.flags.x & flag) != 0u; }

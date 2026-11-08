@@ -102,7 +102,12 @@ float Shine(vec3 p, vec3 v) {
   vec4 r6 = vec4(v.z, v.y, 0.0, v.x);
   float r3y = dot(vec4(r9.z, r9.z, r9.y, r9.y), vec4(a, a, -a, -a));  // 246
   float r3x = dot(vec4(r9.z, r9.z, r9.y, r9.y), vec4(-a));              // 247
-  float r0y = r9.x * a, r0z = r9.x * a, r0w = r9.y * -a;                // 248
+  // 248: mul r0.yzw, r9.xxxy, c255.xxyy -> y = x*a, z = x*(-a), w = y*(-a).
+  // (Until 2026-11-08 r0z had +a: the fourth glint pointed the wrong way;
+  // found on the desert oil, checked by emulating 246-269 on 20,000 random
+  // directions: findings/44 s.7.)
+  float r0y = r9.x * a, r0z = r9.x * -a, r0w = r9.y * -a;
+
   float r3z = r0w + r0z, r3w = r0w + r0y;                               // 249
   float r7x = -r9.y * r3x - a, r7y = -r9.y * r3y - a;                   // 250
   float r5z = r9.y * -a + r9.x * a + r3w;                               // 251
@@ -153,7 +158,8 @@ void main() {
   vec4 normal_texel = BumpFlag(kBumpMegaNoNormalMap) ? vec4(0.5, 0.5, 1.0, 1.0)
                       : BumpFlag(kBumpMegaPalette2)
                           ? SamplePalettizedBump(u_normal_map, u_palette2, bump.palette_sizes.zw, in_uv)
-                          : texture(u_normal_map, in_uv);
+                          : BumpFlag(kBumpMegaNormalBaseLevel) ? textureLod(u_normal_map, in_uv, 0.0)
+                                                               : texture(u_normal_map, in_uv);
   vec3 n = 2.0 * normal_texel.xyz - 1.0;  // the shader: (texel - 1) + texel
   vec3 t = normalize(in_tangent);
   vec3 b = normalize(in_binormal);
@@ -203,7 +209,8 @@ void main() {
   }
 
   // 4. + the shine (246-270).
-  vec3 colour = surface.rgb * (1.0 - shadow) + Shine(p, v);
+  vec3 colour = surface.rgb * (1.0 - shadow) +
+                (BumpFlag(kBumpMegaNoShine) ? vec3(0.0) : vec3(Shine(p, v)));
   float alpha = surface.a;
   // 5. (271-272)
   if (BumpFlag(kBumpMegaReflect)) {
@@ -218,7 +225,7 @@ void main() {
     alpha = 1.0;
   }
   // 7. Rim glow (b10, 277-281).
-  if (BumpFlag(kBumpMegaRim)) {
+  if (BumpFlag(kBumpMegaRim) && !BumpFlag(kBumpMegaNoRim)) {
     float edge = 1.0 - abs(dot(p, v));
     colour += edge * edge * edge * bump.rim_colour.rgb;
   }
@@ -236,6 +243,10 @@ void main() {
   }
   // Debug (F11, spotter.h): paint the material magenta so it can be found
   // on screen. Mostly magenta, a little shading left to see its shape.
+  // Debug experiments (frame.h, --debug_bump_experiment): one input alone.
+  if (BumpFlag(kBumpMegaShowNormalMap)) colour = normal_texel.rgb;
+  if (BumpFlag(kBumpMegaShowDiffuse)) colour = diffuse.rgb;
+  if (BumpFlag(kBumpMegaShowVertexColour)) colour = in_colour.rgb;
   if (BumpFlag(kBumpMegaHighlight)) {
     colour = mix(colour, vec3(1.0, 0.0, 1.0), 0.75);
   }

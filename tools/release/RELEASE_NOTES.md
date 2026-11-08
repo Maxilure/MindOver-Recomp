@@ -95,6 +95,10 @@ Activision or the game's other owners.
 - **Text colours fixed in busy menus.** Some menu texts could show another
   text's colour, e.g. player 1's "P1" in the outfit chest turning blue with
   four players.
+- **Shiny surfaces look like the original in the native renderer.** One of
+  the four glints of the game's "bump" material pointed the wrong way: the
+  oil pools in the desert were blotchy, half bright and half dark, instead
+  of an even gloss. Ice and crystals get the corrected glint too.
 - **Installer: minimizing the window no longer pauses the install or makes
   it stop early.** Windows no longer slows the build down while the window
   is in the background, and the PC doesn't go to sleep during it.

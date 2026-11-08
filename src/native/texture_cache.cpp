@@ -353,15 +353,8 @@ bool GetMipLayout(const xenos::xe_gpu_texture_fetch_t& f, const Layout& l, MipLa
 }
 
 // Log each unsupported thing once (Get runs every frame).
-void ReportOnce(const std::string& what) {
-  static std::mutex mutex;
-  static std::unordered_set<std::string> reported;
-  std::lock_guard<std::mutex> lock(mutex);
-  if (reported.insert(what).second) {
-    REXLOG_WARN("NativeRenderer: texture not supported yet: {}", what);
-    native::scan::NewGap("texture: " + what);  // with --trace: record this spot (scan.h)
-  }
-}
+// Every time (scan.h counts it; the first time = banner + photo).
+void ReportOnce(const std::string& what) { native::scan::NewGap("texture: " + what); }
 
 }  // namespace
 

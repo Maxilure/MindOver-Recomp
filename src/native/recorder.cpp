@@ -16,6 +16,7 @@
 #include "../input/prompt_icons.h"
 #include "../guest_memory.h"
 #include "../ui/marquee.h"
+#include "../debug/guest_stack.h"
 #include "spotter.h"
 
 #include <algorithm>
@@ -39,6 +40,13 @@
 
 REXCVAR_DECLARE(int32_t, motion_blur);      // effects/post_effects.cpp
 REXCVAR_DECLARE(int32_t, shadow_softness);  // effects/post_effects.cpp
+REXCVAR_DEFINE_INT32(debug_bump_experiment, 0, "CrashMoM",
+                     "Debug: the bump material (native picture only) with steps left out / shown "
+                     "alone, bits: 1 no shine, 2 no rim glow, 4 no normal map, 8 show the normal "
+                     "map, 16 show the diffuse texture, 32 show the vertex colour, 64 normal map's "
+                     "sharpest level only")
+    .range(0, 127)
+    .lifecycle(rex::cvar::Lifecycle::kHotReload);
 
 namespace native {
 
@@ -92,6 +100,10 @@ using namespace native::guest;
 // Recorder state. Main thread only (see recorder.h).
 struct State {
   bool recording = false;
+  // Inside a renderer call the recorder records (BeginPrims / EndPrims /
+  // xnPrimBuffer::Draw): a D3D draw met while this is 0 came by another
+  // road (OnD3DDraw, the NATIVE GAP catch-all).
+  int inside_recorded_call = 0;
   Frame frame;
   uint64_t frame_counter = 0;
   // The D3D surfaces bound right now (render target 0, depth/stencil).
@@ -132,16 +144,10 @@ struct State {
   uint32_t mesh_context = 0;
   uint32_t mesh_material = 0;
 
-  // Things the native renderer can't draw yet, each reported once.
-  std::unordered_set<std::string> reported;
 } g;
 
-void ReportOnce(const std::string& what) {
-  if (g.reported.insert(what).second) {
-    REXLOG_INFO("NativeRenderer: not drawn natively yet: {}", what);
-    scan::NewGap(what);  // with --trace: record this spot (scan.h)
-  }
-}
+// Every time (scan.h counts it; the first time = banner + photo).
+void ReportOnce(const std::string& what) { scan::NewGap(what); }
 
 void ReadFetchConstant(const uint8_t* base, uint32_t d3d_texture, GuestTexture& out) {
   for (uint32_t i = 0; i < 6; ++i) {
@@ -593,6 +599,14 @@ void CommitDraw(DrawCommand& d) {
                : 0) |
           (spotter::Highlighting() == spotter::Highlight::kBumpMega ? kBumpMegaHighlight
                                                                      : 0);  // F11 (spotter.h)
+      // Experiments (frame.h): bit 4 = the plain normal (no normal map).
+      const int e = REXCVAR_GET(debug_bump_experiment);
+      g.block.bump_mega.flags[0] |= (e & 1 ? kBumpMegaNoShine : 0) | (e & 2 ? kBumpMegaNoRim : 0) |
+                                    (e & 4 ? kBumpMegaNoNormalMap : 0) |
+                                    (e & 8 ? kBumpMegaShowNormalMap : 0) |
+                                    (e & 16 ? kBumpMegaShowDiffuse : 0) |
+                                    (e & 32 ? kBumpMegaShowVertexColour : 0) |
+                                    (e & 64 ? kBumpMegaNormalBaseLevel : 0);
     }
     d.block = uint32_t(g.frame.blocks.size());
     g.frame.blocks.push_back(g.block);
@@ -733,6 +747,7 @@ bool ReadMaterial(const uint8_t* base, uint32_t xn_context, uint32_t material,
   }
   if (character) {
     if (!d.textured) {
+      ReportOnce("character material without its diffuse texture");
       return false;  // nothing sensible to draw without its diffuse texture
     }
     // Normal map (sampler 1) and the second texture (sampler 3), see guest.h.
@@ -1193,7 +1208,9 @@ void BeginImmediate(PPCContext& ctx, uint8_t* base, PPCFunc* original, bool inde
   uint32_t material = ctx.r4.u32;
   const uint32_t prim_type = ctx.r5.u32;
   const uint32_t index_count = indexed ? ctx.r8.u32 : 0;
+  ++g.inside_recorded_call;
   original(ctx, base);
+  --g.inside_recorded_call;
   // Scrolling menu texts (ui/marquee.h): whatever renderer shows the picture.
   if (!indexed) marquee::OnBeginPrims(base, xn_context, prim_type);
   if (!g.recording) {
@@ -1206,6 +1223,8 @@ void BeginImmediate(PPCContext& ctx, uint8_t* base, PPCFunc* original, bool inde
   const uint32_t prim_stream = Load32(base, xn_context + context::kPrimStream);
   const uint32_t vertices = Load32(base, prim_stream + stream::kPosition);
   if (!material || !prim_stream || !vertices) {
+    ReportOnce(!material ? "immediate draw without a material"
+                         : "immediate draw without a vertex stream");
     return;
   }
   if (prim_type > uint32_t(Topology::kPointList)) {
@@ -1243,6 +1262,15 @@ void BeginImmediate(PPCContext& ctx, uint8_t* base, PPCFunc* original, bool inde
   // Whole 32-bit words per vertex (frame.h, VertexLayout), sane counts.
   g.pending = d.vertex_count > 0 && d.vertex_count <= 65536 && stride >= 12 && stride <= 252 &&
               stride % 4 == 0 && d.index_count <= 3 * 65536;
+  if (!g.pending) {
+    // Named by its material: the counts change from draw to draw.
+    ReportOnce(std::string("immediate draw with vertex data we don't read (") +
+               (d.vertex_count == 0 ? "no vertices"
+                : d.vertex_count > 65536 ? "over 65536 vertices"
+                : stride % 4 != 0 || stride < 12 || stride > 252 ? "odd vertex size"
+                                                                  : "over 196608 indices") +
+               ")");
+  }
 }
 void OnBeginPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   BeginImmediate(ctx, base, original, false);
@@ -1312,7 +1340,9 @@ void OnEndPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
     }
   }
   g.pending = false;
+  ++g.inside_recorded_call;
   original(ctx, base);
+  --g.inside_recorded_call;
 }
 
 // --- xnContext::DrawPrimBuffer (0x82430878) -----------------------------------
@@ -1461,7 +1491,69 @@ void OnPrimBufferDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
       }
     }
   }
+  ++g.inside_recorded_call;
   original(ctx, base);
+  --g.inside_recorded_call;
+}
+
+// --- NATIVE GAP CATCH-ALL: D3D draws by another road (2026-11-08) -----------
+// Every draw the game makes ends in one of D3D's draw functions (the
+// 0x82476000-0x82478000 block, findings/08): BeginVertices 0x82476DA0 and
+// BeginIndexedVertices 0x82477248 (both from xnPrimBufferStream, i.e.
+// BeginPrims / BeginIndexedPrims), DrawIndexedVertices 0x82477B58 and
+// 0x82477768 (both from xnPrimBuffer::Draw: indexed / not), and 0x82477FA8
+// (from xnDevice::v8 via 0x82432078: not on any recorded road). The recorder
+// records the first four through the PDDI calls around them. A D3D draw
+// while none of those calls is running is a draw our picture DOESN'T HAVE:
+// a material or helper that draws by itself (the "missing shader" case),
+// which no other check can see. Reported as a native gap (scan.h) named by
+// its callers' functions, so it can be traced in the code (xexdis / Ghidra).
+std::string DescribeGuestFunction(uint32_t address) {
+  const uint32_t start = guest_stack::FunctionContaining(address);
+  if (!start) return "?";
+  for (const pddi::FnInfo& fn : pddi::kFns) {
+    if (fn.address == start) return fn.name;  // e.g. "xnDevice::v8"
+  }
+  char text[16];
+  std::snprintf(text, sizeof(text), "sub_%08X", start);
+  return text;
+}
+void OnD3DDraw(const char* which, PPCContext& ctx, uint8_t* base, PPCFunc* original) {
+  if (g.recording && g.inside_recorded_call == 0) {
+    // The key: function starts only (offsets would split one road in many).
+    // Cached by return address: this can run for every such draw.
+    static std::unordered_map<uint64_t, std::string> names;
+    const uint32_t lr = uint32_t(ctx.lr);
+    std::string& what = names[uint64_t(lr) << 32 | ctx.r1.u32];
+    if (what.empty()) {
+      guest_stack::SetMembase(base);
+      uint32_t callers[3] = {};
+      const int n = guest_stack::Callers(ctx.r1.u32, callers, 3);
+      what = std::string("D3D draw outside the recorded roads (") + which + ") from " +
+             DescribeGuestFunction(lr);
+      for (int i = 0; i < n; ++i) {
+        what += " <- " + DescribeGuestFunction(callers[i]);
+      }
+      if (names.size() > 4096) names.clear();  // bounded (stacks differ by r1)
+    }
+    ReportOnce(what);
+  }
+  original(ctx, base);
+}
+void OnD3DBeginVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
+  OnD3DDraw("BeginVertices", c, b, o);
+}
+void OnD3DBeginIndexedVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
+  OnD3DDraw("BeginIndexedVertices", c, b, o);
+}
+void OnD3DDrawIndexedVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
+  OnD3DDraw("DrawIndexedVertices", c, b, o);
+}
+void OnD3DDrawVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
+  OnD3DDraw("d3d_82477768", c, b, o);
+}
+void OnD3DDeviceDraw(PPCContext& c, uint8_t* b, PPCFunc* o) {
+  OnD3DDraw("d3d_82477FA8", c, b, o);
 }
 
 // The functions the recorder listens to, and its handler for each.
@@ -1478,6 +1570,9 @@ constexpr Hook kHooks[] = {
     {pddi::kFn_823193D0, &OnD3DBeginTiling},
     {pddi::kFn_82430B98, &OnStencilBackOps},      {pddi::kFn_82430C00, &OnStencilBackCompare},
     {pddi::kFn_82430C18, &OnStencilTwoSided},
+    {pddi::kFn_82476DA0, &OnD3DBeginVertices},   {pddi::kFn_82477248, &OnD3DBeginIndexedVertices},
+    {pddi::kFn_82477B58, &OnD3DDrawIndexedVertices}, {pddi::kFn_82477768, &OnD3DDrawVertices},
+    {pddi::kFn_82477FA8, &OnD3DDeviceDraw},
 };
 
 }  // namespace

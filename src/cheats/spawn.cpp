@@ -3,7 +3,6 @@
 // =============================================================================
 #include "spawn.h"
 
-#include "../language/texts.h"
 #include "../guest_memory.h"
 
 #include <algorithm>
@@ -439,7 +438,7 @@ std::vector<Category> MakeCatalogue() {
     return Entry{label, std::string("Collectables:") + name, false};
   };
   return {
-      {trsn("Titans"),
+      {"Titans",
        {titan("Ratcicle"), titan("Spike"), titan("Roller"), titan("Battler"), titan("TK"),
         titan("Shurtle"), titan("Scorporilla"), titan("Phantom"), titan("Stinky"),
         titan("Parafox"), titan("Sludge"), titan("Yuktopus"), titan("RatcicleHero"),
@@ -447,18 +446,18 @@ std::vector<Category> MakeCatalogue() {
         titan("ParafoxHero"),
         // the two boss titans (their upgrade levels are stats 104 / 105, so
         // they're jackable titans like the others; names from default.rcf)
-        titan_as(trsn("Crunch (boss)"), "CrunchBoss"), titan_as(trsn("Cortex (boss)"), "CortexBoss")}},
-      {trsn("Enemies"),
+        titan_as("Crunch (boss)", "CrunchBoss"), titan_as("Cortex (boss)", "CortexBoss")}},
+      {"Enemies",
        {character("Znu", "Znu"), character("Slappy (Slap-E)", "Slappy"),
         character("Bratgirl", "Bratgirl"), character("Monkey", "Monkey"),
         character("Chiratta", "Chiratta")}},
       // PICKUPS (2026-11-07, asked for in a playtest): template names from
       // default.rcf ("Collectables:..."). They appear in front of the player
       // (walk forward to take them).
-      {trsn("Pickups"),
-       {pickup(trsn("Mojo (small)"), "c_mojoS"), pickup(trsn("Mojo (medium)"), "c_mojoM"),
-        pickup(trsn("Mojo (large)"), "c_mojoXL"), pickup(trsn("Mojo multiplier"), "c_mojoMultiplier"),
-        pickup(trsn("Health"), "c_health")}},
+      {"Pickups",
+       {pickup("Mojo (small)", "c_mojoS"), pickup("Mojo (medium)", "c_mojoM"),
+        pickup("Mojo (large)", "c_mojoXL"), pickup("Mojo multiplier", "c_mojoMultiplier"),
+        pickup("Health", "c_health")}},
   };
 }
 

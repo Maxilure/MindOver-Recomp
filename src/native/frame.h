@@ -425,6 +425,15 @@ constexpr uint32_t kBumpMegaNoColour = 256;        // the vertex has no colour: 
 constexpr uint32_t kBumpMegaNoNormalMap = 512;     // no normal map (or no tangents): flat
 constexpr uint32_t kBumpMegaNoUv = 1024;           // the vertex has no texture coordinates
 constexpr uint32_t kBumpMegaHighlight = 2048;      // debug: F11 paints it magenta (spotter.h)
+// Debug: --debug_bump_experiment (recorder.cpp), one step of bumpmega.frag
+// left out or shown alone, to find which one differs from the emulated
+// picture (the desert oil, 2026-11-08). Native picture only.
+constexpr uint32_t kBumpMegaNoShine = 4096;        // bit 1: no four-way shine
+constexpr uint32_t kBumpMegaNoRim = 8192;          // bit 2: no rim glow
+constexpr uint32_t kBumpMegaShowNormalMap = 16384; // bit 8: the normal map's texel as the colour
+constexpr uint32_t kBumpMegaShowDiffuse = 32768;   // bit 16: the diffuse texel as the colour
+constexpr uint32_t kBumpMegaShowVertexColour = 65536; // bit 32: the vertex colour as the colour
+constexpr uint32_t kBumpMegaNormalBaseLevel = 131072;  // bit 64: the normal map's sharpest level only
 
 // One draw's slot in the frame's uniform buffer (binding 9): its layout
 // depends on the material.

@@ -462,6 +462,25 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
                    b.bump[0], b.bump[3], b.bump[2], b.bump[1], b.reflect_colour[0],
                    b.reflect_colour[1], b.reflect_colour[2], b.reflect_colour[3], b.rim_colour[0],
                    b.rim_colour[1], b.rim_colour[2]);
+      // Each sampler's texture: format (fetch word 1 bits 0-5), size (word
+      // 2: width-1 bits 0-12, height-1 bits 13-25) and the sign / swizzle
+      // bits (word 0 bits 2-9 sign, word 3 bits 1-12 swizzle): the oil
+      // study (2026-11-08) needed them.
+      for (size_t s = 0; s < d.device_textures.size(); ++s) {
+        const GuestTexture& t = d.device_textures[s];
+        if (!t.present()) continue;
+        const SamplerState& st = d.device_samplers[s];
+        // + the sampler: filters (mag/min linear, mip 0 none 1 point 2
+        // linear), anisotropy, mip levels allowed (word 4 bits 2-5 / 6-9),
+        // level bias in 1/32.
+        std::fprintf(file,
+                     " | s%zu fmt %u %ux%u sign %02X swz %03X lin %d%d mip %u aniso %u levels %u-%u "
+                     "bias %d",
+                     s, t.fetch[1] & 0x3F, (t.fetch[2] & 0x1FFF) + 1,
+                     ((t.fetch[2] >> 13) & 0x1FFF) + 1, (t.fetch[0] >> 2) & 0xFF,
+                     (t.fetch[3] >> 1) & 0xFFF, st.linear, st.min_linear, st.mip, st.anisotropy,
+                     (t.fetch[4] >> 2) & 15, (t.fetch[4] >> 6) & 15, st.lod_bias);
+      }
     }
     // Particles: the soft edge's numbers (particle.frag).
     if (d.material == Material::kParticle && d.block < frame.blocks.size()) {

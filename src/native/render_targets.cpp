@@ -81,15 +81,8 @@ int MaxSurfaceSamples() { return g_max_samples.load(); }
 
 namespace {
 
-void ReportOnce(const std::string& what) {
-  static std::mutex mutex;
-  static std::unordered_set<std::string> reported;
-  std::lock_guard<std::mutex> lock(mutex);
-  if (reported.insert(what).second) {
-    REXLOG_INFO("NativeRenderer: not drawn natively yet: {}", what);
-    native::scan::NewGap(what);  // with --trace: record this spot (scan.h)
-  }
-}
+// Every time (scan.h counts it; the first time = banner + photo).
+void ReportOnce(const std::string& what) { native::scan::NewGap(what); }
 
 // The guest address of a texture's pixels (its fetch constant's word 1, bits
 // 12-31), which identifies a resolve destination: the texture object the

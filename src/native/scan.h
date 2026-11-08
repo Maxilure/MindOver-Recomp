@@ -1,22 +1,38 @@
 // =============================================================================
-// native/scan.h -- automatic "area scan" for playtests
+// native/scan.h -- NATIVE GAPS: everything the native renderer can't draw yet
 // =============================================================================
 //
-// WHY (2026-09-27): playtesting walks through the game's areas one by one to
-// find what the native renderer doesn't draw yet in each. The log names
-// every gap once ("not drawn natively yet: ...", "buffer / texture not
-// supported yet: ..."), but to rebuild a missing effect we need the frame
-// itself: every renderer call (pddi/trace.cpp) and a picture of where it is.
-// Pressing F10 at the right moment in every area is tedious and easy to miss.
+// WHY (2026-09-27, grown 2026-11-08): playtesting walks through the game's
+// areas one by one to find what the native renderer doesn't draw yet. Gaps
+// used to be one quiet INFO line each, only from some places: a draw the
+// renderer dropped at the last step (a missing buffer, a stencil copy that
+// never arrived, a render pass that couldn't open) left no trace at all, and
+// a draw that reached D3D by a road the recorder doesn't listen to (a
+// material or helper we have never met: the "missing shader" case) was
+// invisible by construction. A 2026-11-08 session showed something plainly
+// missing with ZERO gap lines in its log.
 //
-// WHAT: while a trace folder is set (tools/play.sh --trace), the FIRST time
-// each gap shows up in a session, the next frame is recorded (a trace, like
-// F10's) and a photo is taken (both renderers' pictures of one frame when
-// ours is drawn). The log says so: "Scan: first time: <gap> -> recording".
-// Without --trace nothing changes.
+// WHAT: one place every gap goes through. Per gap ("what" = its text, which
+// names the material / reason / game caller):
+//   * the FIRST time in a session: a loud WARN banner
+//       *** NATIVE GAP #3 (first time): skipped draw: particle: ... ***
+//     plus an automatic photo (Tools -> Take a photo: both pictures of one
+//     frame + its draw list, in user/photos/), at most one every 3 s (an area
+//     with five new gaps gets one photo), and with --trace (tools/play.sh
+//     --trace) a recording of the next frame's renderer calls;
+//   * every time: a counter;
+//   * <log name>-native-gaps.txt beside the session log: every gap met so
+//     far, numbered, with its first time, its count and its photo's name;
+//     rewritten when a new gap shows up and every 10 s while counts change.
+// The numbers (#3) are the ones to go through one by one afterwards.
 //
-// The four places that log gaps (recorder, texture cache, buffer cache,
-// render targets) call NewGap from their report-once functions.
+// --debug_native_gaps=false: back to the old quiet log line, no photo.
+// Gaps are only met while our picture is recorded (native shown, native
+// only, or dual mode): with the emulated picture alone nothing is checked.
+//
+// The callers: recorder (material classes, primitive types, odd vertex
+// data, D3D draws outside the recorded roads), texture / buffer caches,
+// render targets, and the renderer's draw loop (each reason it drops a draw).
 // =============================================================================
 
 #pragma once
@@ -25,8 +41,8 @@
 
 namespace native::scan {
 
-// A gap met for the first time this session (`what` = its log text). Any
-// thread. Does nothing without --debug_pddi_trace_dir.
+// A gap met (`what` = its text: the same text = the same gap). Any thread;
+// cheap enough to call per draw (a short lock + a hash lookup).
 void NewGap(std::string_view what);
 
 }  // namespace native::scan

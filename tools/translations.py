@@ -6,7 +6,8 @@ tr(u"..."), trc("context", u"...") or trn(u"...") (src/language/texts.h).
 This tool:
 
   extract   finds every such text (also trcn("context", u"..."), and trs("...") / trsn("...")
-            = UTF-8 texts of the ImGui windows) in src/ and launcher/ and writes languages/template.pot
+            = UTF-8 texts of the launcher's ImGui pages; the game's own ImGui tool windows are
+            English only since 2026-11-08) in src/ and launcher/ and writes languages/template.pot
             (the list translators work from; never edit it by hand)
   update    extract, then brings every languages/<code>.po up to date: new
             texts added (empty), changed references/notes refreshed, texts the

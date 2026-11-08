@@ -60,15 +60,8 @@ void Swap(uint8_t* data, size_t size, uint8_t endian) {
   }
 }
 
-void ReportOnce(const std::string& what) {
-  static std::mutex mutex;
-  static std::unordered_set<std::string> reported;
-  std::lock_guard<std::mutex> lock(mutex);
-  if (reported.insert(what).second) {
-    REXLOG_WARN("NativeRenderer: buffer not supported yet: {}", what);
-    native::scan::NewGap("buffer: " + what);  // with --trace: record this spot (scan.h)
-  }
-}
+// Every time (scan.h counts it; the first time = banner + photo).
+void ReportOnce(const std::string& what) { native::scan::NewGap("buffer: " + what); }
 
 }  // namespace
 

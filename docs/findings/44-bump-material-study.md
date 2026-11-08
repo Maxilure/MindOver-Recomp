@@ -145,5 +145,58 @@ the same before and after.
 
 - Draw lists: the bump line above.
 - `debug_bump_off`: the both-pictures switch (spotter.cpp).
+- `debug_bump_experiment` (2026-11-08, native picture only, live with the console's `flag`):
+  bits 1 no shine, 2 no rim, 4 no normal map, 8 / 16 / 32 show the normal map / diffuse /
+  vertex colour, 64 normal map's sharpest level. Draw lists also print every bump sampler's
+  format, size, sign / swizzle bits, filters, anisotropy, mip range and bias.
 - F11 got a fourth step, **motion trails** magenta (findings/42; the simple
   shader's `kFlagHighlight`), for masks of the attack trails.
+
+## 7. The desert oil: one shine sign (2026-11-08)
+
+![Native before, native fixed, original](../images/bump-shine-oil-fix.jpg)
+
+The oil pools in the desert junkyard (name TBD) are the first bump surface
+found **without** see-through and with an almost flat normal map: draw flags
+rim + fog only, diffuse and normal map both k_8_8_8_8 256x256 (16x
+anisotropic, 6 mip levels). Natively the oil had a bright left part, a dark
+right part and a jagged edge between them; the original is an even, dark
+gloss. Inside the oil (F11 mask, frozen frame, fire out) the two pictures
+differed by **8.16/255**, the rest of the frame 0.4.
+
+**Narrowing it down** (`debug_bump_experiment`, native picture only, on the
+frozen frame): the diffuse texture and the vertex colours are smooth, the
+normal map nearly constant (a tilt in x, spread 1.8/255), and forcing its
+sharpest mip changes nothing. Without the four-way shine our oil is far too
+dark (9.5 vs 20.4 average), so the shine belongs there; the blotches came and
+went with the normal map and the shine. The vertex side was checked against
+the game: the declaration builder (0x8243CF28) puts binormal then tangent
+(3 floats each), and the game's vertex shader (5FA983E554AC0C36) sends the
+tangent to interpolator 1 and the binormal to 2, the order the pixel shader
+multiplies by n.x and n.y. Same as ours.
+
+**The cause:** the shine, instructions 246-269 of the pixel shader
+(31E6C4753783EF87), emulated in Python straight from the disassembly and
+compared with `Shine()` on 20,000 random direction pairs: one of the four
+glints (the term of instruction 262) disagreed in 12% of them, by up to a
+whole glint (0.1). Instruction 248 is `mul r0.yzw, r9.xxxy, c255.xxyy`, so
+r0.z = p.z x **-0.7071**; the transcription had +0.7071. With the sign fixed
+the two agree to 1e-15 on all 20,000.
+
+| Surface | Bump-masked difference before | after |
+|---|---|---|
+| Desert oil (rim + fog) | 8.16/255 | **0.08/255** |
+| Ratcicle Kingdom ice (rim + see-through) | 3.08/255 | 2.97/255 |
+
+The ice keeps its see-through edge noise (section 5); every bump surface
+gets the corrected fourth glint.
+
+**How it was found:** the session that went looking for it added the
+native-gap reporter (`native/scan.h`: every draw the native renderer drops
+or can't handle, plus D3D draws by a road the recorder doesn't listen to,
+loud the first time with a photo, counted in `<log>-native-gaps.txt`). The oil
+reported nothing there (it was drawn, just wrong), so it was found the
+classic way: an F10 pair, then the F11 mask. To reach it on a test copy:
+console `goto` to the pool, `cheat killenemies` (new: every non-player
+character within 60 units of player 1 dies the game's way), then about 25 s
+for the oil fire to burn out.
