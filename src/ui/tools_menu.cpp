@@ -9,6 +9,7 @@
 
 #include <imgui.h>
 
+#include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ui/imgui_dialog.h>
 #include <rex/ui/imgui_drawer.h>
@@ -16,6 +17,7 @@
 
 #include "../achievements/achievements.h"
 #include "../cheats/cheats.h"
+#include "../options/options_settings.h"
 #include "../overlay_banner.h"
 
 namespace tools_menu {
@@ -36,6 +38,11 @@ struct Tool {
   const char* hint;
   bool close_menu;  // the tool opens its own window / changes the picture: get out of its way
   void (*run)() = nullptr;
+  // QUICK KEY (2026-11-08): a key the player can give the tool back with a
+  // checkbox beside its button (e.g. F9 for the renderer switch, the old
+  // key). Ticked = the bind's setting holds this key (saved in
+  // settings.toml, so it lasts); unticked = no key, the button only.
+  const char* quick_key = nullptr;
 };
 
 // In the order shown. Sections: what a player may use, then the developers'.
@@ -61,7 +68,7 @@ constexpr Tool kTools[] = {
     {"Picture", "Switch renderer (emulated / native)", "bind_renderer", "F9",
      "Which picture the main window shows: the imitated Xbox 360 GPU or the\n"
      "port's own renderer. Off with Emulated Only or while the second window is open.",
-     true},
+     true, nullptr, "F9"},
     {"Picture", "Second window (dual mode)", "bind_native_window", "F8",
      "A second window with the port's picture; the main one shows the emulated one.", true},
 
@@ -167,7 +174,9 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
         section = tool.section;
         Section(section);
       }
-      if (ImGui::Button(tool.label, ImVec2(width, 0.0f))) picked = &tool;
+      // A tool with a quick key: its button leaves room for the checkbox.
+      const float quick_width = tool.quick_key ? 60.0f : 0.0f;
+      if (ImGui::Button(tool.label, ImVec2(width - quick_width, 0.0f))) picked = &tool;
       if (tool.bind) {
         // TR: Tooltip under each Tools button: %s = what it does, then the key, then the setting name.
         ImGui::SetItemTooltip("%s\n\n(Key, or the key it used to have: %s. Setting name: %s)", tool.hint,
@@ -175,6 +184,7 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
       } else {
         ImGui::SetItemTooltip("%s", tool.hint);
       }
+      if (tool.quick_key && tool.bind) DrawQuickKey(tool);
       if (tool.bind && std::string(tool.bind) == "bind_cheat_menu") {
         if (cheats::AchievementsBlocked()) {
           ImGui::TextColored(kWarnColour, "Achievements are off: %s", cheats::BlockReason());
@@ -184,6 +194,24 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
       }
     }
     return picked;
+  }
+
+  // The checkbox beside a tool's button: is its bind's key the quick key?
+  // The SDK reads a bind's key from its setting at every key press
+  // (rex/ui/keybinds.h), so changing the setting takes effect at once.
+  static void DrawQuickKey(const Tool& tool) {
+    ImGui::SameLine();
+    bool on = rex::cvar::GetFlagByName(tool.bind) == tool.quick_key;
+    const std::string id = std::string(tool.quick_key) + "##quick_" + tool.bind;
+    if (ImGui::Checkbox(id.c_str(), &on)) {
+      options_settings::SetFlagToSave(tool.bind, on ? tool.quick_key : "");
+      options_settings::SaveChanged();
+      REXLOG_INFO("Tools: {} key {} ({} = \"{}\")", tool.label, on ? "on" : "off", tool.bind,
+                  on ? tool.quick_key : "");
+    }
+    ImGui::SetItemTooltip("Ticked: %s also runs \"%s\", from anywhere in the game.\n"
+                          "Saved in settings.toml (%s).",
+                          tool.quick_key, tool.label, tool.bind);
   }
 
   mutable std::mutex mutex_;  // UI thread (Toggle comes from the key handler)

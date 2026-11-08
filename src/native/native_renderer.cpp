@@ -1444,13 +1444,20 @@ void NativeRenderer::AnnouncePicture() {
                                       "native (Vulkan)   F1 Tools closes it");
   } else if (emulated_only()) {
     overlay_banner::Show("EMULATED ONLY", "Xbox 360 GPU emulation; native renderer off");
-  } else if (show_native()) {
-    overlay_banner::Show("NATIVE (Vulkan)",
-                         REXCVAR_GET(native_only)
-                             ? "native only: the emulated GPU is off   F1 Tools switches"
-                             : "the emulated GPU still draws in the background   F1 Tools switches");
   } else {
-    overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle   F1 Tools switches");
+    // Who switches: the Tools button, plus the key its checkbox gave back
+    // (ui/tools_menu.cpp, quick key: usually F9).
+    const std::string key = rex::cvar::GetFlagByName("bind_renderer");
+    const std::string switches = key.empty() ? "   F1 Tools switches" : "   " + key + " or F1 Tools switches";
+    if (show_native()) {
+      overlay_banner::Show("NATIVE (Vulkan)",
+                           std::string(REXCVAR_GET(native_only)
+                                           ? "native only: the emulated GPU is off"
+                                           : "the emulated GPU still draws in the background") +
+                               switches);
+    } else {
+      overlay_banner::Show("EMULATED (Xbox 360 GPU)", "native renderer idle" + switches);
+    }
   }
 }
 
