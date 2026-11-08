@@ -191,6 +191,16 @@ int PlayerAssignment::PlayerOf(const Known& d) const {
   }
   auto it = choices_.find(d.key);
   int choice = it != choices_.end() ? it->second : kPlayerAuto;
+  if (d.keyboard) {
+    // THE KEYBOARD AND MOUSE ARE ALWAYS PLAYER 1 (2026-11-08). Every
+    // keyboard and mouse on the PC is this ONE device (SDL merges them), so a
+    // choice of player 2-4 (an old controls.toml line, or the Controls
+    // window's old player list) left player 1 with no keys while player 2
+    // played on them: seen on a stream (Players screen: player 1 = a pad
+    // only, player 2 = "Keyboard and Mouse"). Only "off" is kept, for test
+    // runs that must not hear the keyboard (bindings.cpp drops 2-4 too).
+    return choice == kPlayerOff ? kPlayerOff : 0;
+  }
   if (fake_pad && choice == kPlayerAuto) {
     return d.key.back() - '1';  // "debug-pad-3" = player 3
   }
@@ -250,6 +260,8 @@ std::vector<PlayerAssignment::Device> PlayerAssignment::Devices() const {
 std::vector<PlayerAssignment::Change> PlayerAssignment::SetChoice(const std::string& key,
                                                                   int choice) {
   std::vector<Change> changes;
+  // The keyboard and mouse are player 1's or off, never players 2-4 (PlayerOf).
+  if (key == "keyboard" && choice != kPlayerOff && choice != kPlayerAuto) choice = 0;
   {
     std::lock_guard<std::mutex> lock(mutex_);
     // What the moved device plays as BEFORE the change (its old player).

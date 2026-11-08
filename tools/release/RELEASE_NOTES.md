@@ -74,6 +74,10 @@ Activision or the game's other owners.
 
 **Fixes**
 
+- **The keyboard and mouse always belong to player 1.** A setting from an
+  older version could put the keyboard on player 2 (or 3, 4), leaving
+  player 1 with only a controller. That setting is now ignored, and
+  every keyboard and mouse plugged in controls player 1.
 - **Volumes are right on the title screen.** Your Music, Dialogue and
   Sound Effects volumes now apply before the title shows. Before, the
   title played at full volume until the first button press.

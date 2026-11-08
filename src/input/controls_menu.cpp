@@ -242,6 +242,8 @@ class ControlsDialog : public rex::ui::ImGuiDialog {
     std::vector<int> options;
     if (!dev.keyboard) options.push_back(kbm::kPlayerAuto);
     for (int p = 0; p < 4; ++p) {
+      // The keyboard and mouse: player 1 or off only (players.h: never 2-4).
+      if (dev.keyboard && p > 0) break;
       if (p < more_players::LocalPlayerCount() || p == shown) options.push_back(p);
     }
     options.push_back(kbm::kPlayerOff);
