@@ -206,12 +206,43 @@ VkBuffer BufferCache::Get(const GuestBuffer& guest, VkCommandBuffer cmd, uint64_
       entry.content_hash = 0;
       return VK_NULL_HANDLE;
     }
-    const uint64_t hash = XXH3_64bits(source, guest.size);
-    if (hash != entry.content_hash) {
-      // On failure the hash is still remembered, so it's only retried once
-      // the data changes.
-      entry.content_hash = hash;
-      Upload(entry, guest, source, cmd, submission);
+    // The write watch first (texture_cache.cpp Get has the same steps).
+    const bool watched = use_write_watch_ && entry.watched;
+    const bool written = watched && watch_.Written(guest.address, guest.size, entry.ticket);
+    constexpr uint64_t kVerifyRounds = 32;  // safety net: hashed anyway every 32 frames
+    const bool verify = ((round_ + Key(guest)) % kVerifyRounds) == 0;
+    if (watched && !written && !verify) {
+      ++stats_.unchanged;  // nothing wrote there: same data, no hash
+    } else {
+      ++stats_.hashed;
+      entry.watched = false;
+      constexpr uint32_t kCooldownChecks = 120;  // ~2 s at 60 fps of plain hashing after a write
+      if (written) {
+        entry.cooldown = kCooldownChecks;
+      } else if (entry.cooldown > 0) {
+        --entry.cooldown;
+      }
+      // Ticket, THEN protect, THEN read (write_watch.h, ordering).
+      if (use_write_watch_ && entry.cooldown == 0 && watch_.Watchable(guest.address, guest.size)) {
+        entry.ticket = watch_.Arm(guest.address, guest.size);
+        entry.watched = true;
+      }
+      const uint64_t hash = XXH3_64bits(source, guest.size);
+      if (hash != entry.content_hash) {
+        if (watched && !written && entry.content_hash != 0) {
+          ++stats_.missed;  // only the safety net saw it (should never happen)
+          if (missed_logged_ < 16) {
+            ++missed_logged_;
+            REXLOG_WARN("NativeRenderer: a mesh buffer at {:08X} ({} bytes) changed unseen by the write "
+                        "watch (found by the periodic re-hash)",
+                        guest.address, guest.size);
+          }
+        }
+        // On failure the hash is still remembered, so it's only retried once
+        // the data changes.
+        entry.content_hash = hash;
+        Upload(entry, guest, source, cmd, submission);
+      }
     }
   }
   if (!entry.buffer.buffer) {

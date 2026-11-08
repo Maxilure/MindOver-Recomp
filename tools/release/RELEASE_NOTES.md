@@ -107,6 +107,15 @@ Activision or the game's other owners.
 
 **Changes**
 
+- **The game runs faster on the CPU.** About 20% less CPU time per frame
+  in a busy area (measured on one PC: 184 → 236 fps uncapped). Slower PCs,
+  where the CPU is what holds the frame rate back, gain the most.
+  - The characters' skinning (moving every vertex with its bones) is now
+    the port's own code, with results identical to the original's.
+  - The native renderer does less work per frame (it reuses texture memory
+    and skips re-checking meshes that haven't changed).
+  - On PCs with fewer than 6 CPU threads, the game log is no longer filled
+    with hundreds of "Too few processor cores" lines a second.
 - **A faster, simpler installer.** A fresh install now takes about 20
   minutes on a mid-range PC, and an update a few minutes.
   - **Two choices at the start: Install the game or Update an installed

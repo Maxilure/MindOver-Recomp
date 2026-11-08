@@ -132,6 +132,7 @@ set(CRASHMOM_SOURCES
     src/native/render_targets.cpp   # the game's render targets (surfaces) + resolves -> Vulkan images
     src/native/ab_capture.cpp       # F10 photos + debug: the same frame from both renderers
     src/native/translucent_sort.cpp # see-through objects: a draw order that does not flicker
+    src/decomp/skinning.cpp # characters' CPU skinning (sub_823ED688) as C++: same results, no maths-library calls
     src/native/native_window.cpp    # F8 / --native_window: a 2nd window with the native picture
     src/native/spotter.cpp          # loud log banners when a hunted material (bump) shows up
     src/native/scan.cpp             # with --trace: the first time a gap shows up, record the frame
@@ -203,6 +204,30 @@ endif()
 # source tree keeps the player's files in <repo>/user/ (gitignored), so wiping
 # out/ never deletes saves. Installed builds use <folder>/program -> <folder>.
 target_compile_definitions(crash_mom PRIVATE CRASHMOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
+# NO SDK PERF COUNTERS IN THE GAME'S CODE (2026-11-09, findings/57). The SDK
+# turns them on for every build that isn't "Release" (REXGLUE_ENABLE_PERF_
+# COUNTERS from the rexglue target), and players build RelWithDebInfo. Then
+# EVERY indirect call in the recompiled game (each virtual function call:
+# REX_CALL_INDIRECT_FUNC in generated/default/crash_mom_pch.h) did an atomic
+# add through a call into the SDK library: ~1.4% of the main thread in a
+# profile, for a counter nothing reads. Undefined here for our target only
+# (-U comes after the interface's -D on the command line). The only SDK
+# header whose LAYOUT depends on it is ui/overlay/debug_overlay.h
+# (DebugOverlayDialog), which our code never includes; keep it that way.
+# The recompiled code is its own target (crash_mom_recomp, an OBJECT library
+# made by rexglue_setup_target): it needs the switch too, it's where the
+# indirect calls are.
+if(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    set(_no_perf_counters /UREXGLUE_ENABLE_PERF_COUNTERS)
+else()
+    set(_no_perf_counters -UREXGLUE_ENABLE_PERF_COUNTERS)
+endif()
+foreach(_target crash_mom crash_mom_recomp)
+    if(TARGET ${_target})
+        target_compile_options(${_target} PRIVATE ${_no_perf_counters})
+    endif()
+endforeach()
 
 # The port's version (VERSION.txt, e.g. 0.1.0-alpha) for the first line of
 # every log (session_log.cpp). Re-read at the next build when the file changes.
