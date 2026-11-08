@@ -8,23 +8,41 @@
 // (no settings, no save list: those live in the game; logs are in user\logs).
 // It runs in one of three MODES, picked at start:
 //
-//   INSTALL    run from anywhere else (the download):
+//   INSTALL    run from anywhere else (the download). Page 0 asks which:
+//     INSTALL FRESH
 //     1. Choose     the disc image (.iso) and where to put the game (a folder
 //                   "Crash Mind over Mutant" is made in the picked folder),
-//                   a desktop shortcut, optionally saves of an older version
+//                   a desktop shortcut, optionally saves of an older version,
+//                   "use fewer resources while building"
+//     UPDATE (2026-11-08: the way to update; the old in-program updater
+//     never worked reliably on players' PCs, so each release's installer is
+//     downloaded again and pointed at the game)
+//     1. Choose     the installed game's folder (its version is read from
+//                   source\RELEASE.toml and compared with this installer's)
+//                   and the disc image only if its extracted files are gone
+//     then, both:
 //     2. Tools      the build tools (setup.cpp step 1); missing ones are
 //                   installed with winget at the press of one button
 //     3. Install    the port's files (next to this exe when it came in the
-//                   release .zip, else downloaded from the release feed),
+//                   release .zip, else downloaded from the release feed;
+//                   an update swaps them in KEEPING the build: update.h
+//                   LocalUpdateJob, so only what changed compiles again),
 //                   this exe copied in, then setup.h's "set up everything":
 //                   SDK download, disc extraction, SDK + game build; last,
-//                   the Start menu, the desktop and Windows' Apps list
-//     4. Done       Play
+//                   the Start menu, the desktop and Windows' Apps list.
+//                   The PC is kept awake meanwhile; after 10 minutes a note
+//                   asks to leave heavy programs closed.
+//     4. Done       "Finished in N min", Play
+//   The window's title carries this installer's version.
+//   The steps move on in Update(), every pass of the main loop, drawn or
+//   not: they used to move only while the page was DRAWN, and a minimized
+//   window isn't drawn.
 //
 //   MANAGE     run from inside an install (its Start menu "Mind over
-//              Recomp"): the version, Update (download, swap, restart,
-//              rebuild: update.h), Build again when something's out of date,
-//              missing tools, Play, the game folder, Uninstall.
+//              Recomp"): the version, Build again when something's out of
+//              date, missing tools, Play, the game folder, Uninstall.
+//              Updates: a link to the releases page (download the new
+//              installer, choose Update).
 //
 //   UNINSTALL  --uninstall (Windows' Apps list, or the button): one checkbox,
 //              "Keep my saves, settings and logs" (on), then everything else
@@ -36,7 +54,8 @@
 //   --install_tools                       installs the missing ones (winget)
 //   --install_to=<folder> --iso=<file>    a whole install into <folder>\Crash Mind over Mutant
 //       [--desktop]                       (+ a desktop shortcut)
-//   --update                              (in an install) update + rebuild
+//   --update --game_folder=<install> [--iso=<file>]   (with --iso: game\ checked against the disc)
+//                                         update that install with this installer's files + rebuild
 //   --uninstall --quiet [--remove_user]   uninstall (keeps user\ unless --remove_user)
 // Other options: --update_feed=<url> (a test feed, update.h), --game_folder=
 // (an install to manage), --screenshot=<png> [--screenshot_after=<s>] (a
@@ -105,6 +124,30 @@ std::string WindowsLanguage() {
   return lang.starts_with("pt") ? "pt_BR" : "";
 #endif
 }
+
+// This installer's version (VERSION.txt, baked in by launcher/CMakeLists.txt):
+// the window's title, and what an update brings.
+#ifndef MOR_VERSION
+#define MOR_VERSION "unknown"
+#endif
+constexpr const char* kVersion = MOR_VERSION;
+
+// "1 h 05 min", "12 min 30 s", "40 s".
+std::string Duration(double seconds) {
+  const long total = long(seconds + 0.5);
+  char text[48];
+  if (total >= 3600) {
+    std::snprintf(text, sizeof(text), trs("%ld h %02ld min"), total / 3600, (total / 60) % 60);
+  } else if (total >= 60) {
+    std::snprintf(text, sizeof(text), trs("%ld min %02ld s"), total / 60, total % 60);
+  } else {
+    std::snprintf(text, sizeof(text), trs("%ld s"), total);
+  }
+  return text;
+}
+
+// After this long, the installing page asks to keep heavy programs closed.
+constexpr double kSlowNoteSeconds = 10 * 60;
 
 // Space a whole install takes: ~6.5 GB of disc files + ~2-4 GB of SDK and
 // build (8.5 GB measured on Windows 11) + room for an update's download.
@@ -180,7 +223,7 @@ void DrawReportHelp(const std::string& what_failed, const fs::path& log, const s
 std::mutex g_pick_mutex;
 std::string g_picked;      // the chosen path
 int g_pick_target = 0;     // which field asked (Picker below)
-enum Picker { kPickIso = 1, kPickParent, kPickOldVersion };
+enum Picker { kPickIso = 1, kPickParent, kPickOldVersion, kPickUpdateFolder };
 
 void OnPicked(void* target, const char* const* files, int) {
   if (files && files[0]) {  // null = error, empty list = cancelled
@@ -253,7 +296,9 @@ bool EverythingDone(const setup::Status& s) {
 // =============================================================================
 
 enum class Mode { kInstall, kManage, kUninstall };
-enum class Page { kChoose, kTools, kInstalling, kDone };
+// kStart: "install fresh" or "update"; kChoose = a fresh install's choices,
+// kUpdate = an update's (then both go on to kTools).
+enum class Page { kStart, kChoose, kUpdate, kTools, kInstalling, kDone };
 // The install's own phases (kInstalling): the port's files, then Setup, then
 // the shortcuts and the Apps list.
 enum class Phase { kFeed, kFiles, kBuild, kFinish, kFinished, kFailed };
@@ -265,7 +310,25 @@ struct App {
   bool show_log = false;
 
   // --- INSTALL: the player's choices ---------------------------------------
-  Page page = Page::kChoose;
+  Page page = Page::kStart;
+  // UPDATE (2026-11-08): this run updates the game in `update_folder`
+  // (picked; its root found by install::ExistingGameAt) from version
+  // `update_from` to kVersion. update_same = already this version: the
+  // files stay, only what's missing is built (a repair).
+  bool updating = false;
+  std::string update_folder;
+  std::string update_checked_for;    // the folder the fields below describe
+  fs::path update_root;
+  std::string update_from;
+  std::string update_problem;        // why it can't be updated ("" = fine)
+  bool update_same = false;
+  bool update_needs_disc = false;    // its game\ (extracted disc) is missing
+  // "Use fewer resources while building" (setup.h SetLimitedResources).
+  bool limited = false;
+  // The clock: from the Install / Update press to Done.
+  Clock::time_point started{};
+  double took_seconds = 0;
+  bool awake = false;                // platform::KeepAwake is on
   std::string iso;
   std::string parent = install::DefaultParent().string();
   bool desktop = true;
@@ -332,10 +395,17 @@ struct App {
   }
 
   void Draw();
+  void Update();                 // the steps' state machine: every loop pass, drawn or not
   void DrawHeader();
   void TakePicks();
   // INSTALL
+  void DrawStart();
   void DrawChoose();
+  void DrawUpdate();
+  void CheckUpdateFolder();
+  void DrawSpeedOption();
+  void UpdateInstalling();
+  void SetAwake(bool on);
   void DrawToolsPage();
   void DrawInstalling();
   void DrawDone();
@@ -373,7 +443,8 @@ void App::DrawHeader() {
       ImGui::EndCombo();
     }
   }
-  ImGui::TextDisabled("%s", trs("An unofficial PC port of Crash: Mind over Mutant, built from your own disc"));
+  ImGui::TextDisabled("%s  -  %s", trs("An unofficial PC port of Crash: Mind over Mutant, built from your own disc"),
+                      trf(trs("version {0}"), {kVersion}).c_str());
   ImGui::Spacing();
   ImGui::Separator();
   ImGui::Spacing();
@@ -384,13 +455,16 @@ void App::TakePicks() {
   if (g_pick_target == kPickIso) iso = g_picked;
   if (g_pick_target == kPickParent) parent = g_picked;
   if (g_pick_target == kPickOldVersion) old_version = g_picked;
+  if (g_pick_target == kPickUpdateFolder) update_folder = g_picked;
   if (g_pick_target) choose_error.clear();
   g_pick_target = 0;
 }
 
-// --- INSTALL, page 1 -----------------------------------------------------------
+// --- INSTALL, page 0: install fresh, or update --------------------------------
 
-void App::DrawChoose() {
+void App::DrawStart() {
+  // An install Windows' Installed apps knows about (install::RegisteredRoot):
+  // named here, and the Update page starts on it.
   if (!registered_checked) {
     registered_checked = true;
     const fs::path at = install::RegisteredRoot();
@@ -398,31 +472,190 @@ void App::DrawChoose() {
     if (!at.empty() && install::LooksInstalled(at) && !fs::equivalent(at, platform::SelfPath().parent_path(), ec)) {
       registered_root = at;
       registered_version = update::InstalledVersion(folders::Find(at));
+      update_folder = at.string();
     }
   }
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted(trs("What do you want to do?"));
+  ImGui::PopFont();
+  ImGui::Spacing();
   if (!registered_root.empty()) {
-    ImGui::PushFont(fonts.bold, 0.0f);
     ImGui::PushStyleColor(ImGuiCol_Text, kGood);
-    ImGui::TextWrapped("%s", trs("The game is already installed on this PC."));
+    ImGui::TextWrapped(trs("The game is installed on this PC: %s (version %s)."), registered_root.string().c_str(),
+                       registered_version.empty() ? "?" : registered_version.c_str());
     ImGui::PopStyleColor();
-    ImGui::PopFont();
-    ImGui::TextDisabled("%s%s%s", registered_root.string().c_str(), registered_version.empty() ? "" : "  -  ",
-                        registered_version.c_str());
-    MutedText(trs("To play it, update it or uninstall it, open its own Mind over Recomp (also in the "
-                  "Start menu). Updates come from there; this download isn't needed for them."));
-    if (AccentButton(trs("Open the installed Mind over Recomp"))) {
-      if (install::StartDetached(registered_root / install::kInstallerName, registered_root)) {
-        quit = true;
+    ImGui::Spacing();
+  }
+  const float width = 330 * ImGui::GetStyle().FontScaleDpi;
+  auto choice = [&](const char* label, const char* text, bool accent) {
+    const bool pressed = accent ? AccentButton(label, ImVec2(width, 0)) : ImGui::Button(label, ImVec2(width, 0));
+    ImGui::Indent();
+    MutedText(text);
+    ImGui::Unindent();
+    ImGui::Spacing();
+    return pressed;
+  };
+  const bool installed = !registered_root.empty();
+  // The likely pick is the accented one: Update when an install is there.
+  if (choice(trs("Install the game"),
+             trs("A new install from your disc image. The first build takes a while (often 20-60 "
+                 "minutes) and needs about 15 GB of free space."),
+             !installed)) {
+    updating = false;
+    page = Page::kChoose;
+    choose_error.clear();
+  }
+  if (choice(trs("Update an installed game"),
+             trf(trs("Brings an installed game to version {0}: pick its folder. Your saves, settings "
+                     "and the earlier build are kept, so only what changed is built again."),
+                 {kVersion}).c_str(),
+             installed)) {
+    updating = true;
+    page = Page::kUpdate;
+    choose_error.clear();
+    update_checked_for = "\x01";  // look at the folder again
+  }
+}
+
+// "Use fewer resources while building" (both kinds of install).
+void App::DrawSpeedOption() {
+  ImGui::Checkbox(trs("Use fewer resources while building (slower, the PC stays usable)"), &limited);
+  ImGui::Indent();
+  MutedText(limited ? trs("Half of the processor and low priority: other programs come first.")
+                    : trs("As fast as this PC allows, with one processor core left free for Windows."));
+  ImGui::Unindent();
+}
+
+// --- UPDATE, page 1 -----------------------------------------------------------
+
+// What's in `update_folder`: an install of ours, its version, its disc files.
+void App::CheckUpdateFolder() {
+  if (update_checked_for == update_folder) return;
+  update_checked_for = update_folder;
+  update_root.clear();
+  update_from.clear();
+  update_problem.clear();
+  update_same = false;
+  update_needs_disc = false;
+  if (update_folder.empty()) {
+    update_problem = trs("Pick the folder the game is installed in.");
+    return;
+  }
+  // The picked folder, or the "Crash Mind over Mutant" folder in it.
+  const fs::path at = install::ExistingGameAt(fs::path(update_folder));
+  const folders::Folders found = at.empty() ? folders::Folders{} : folders::Find(at);
+  if (at.empty() || !found.release) {
+    update_problem = trs("No installed game in that folder: pick the folder with \"Mind over Recomp.exe\", "
+                         "source and user in it (or the one above it).");
+    return;
+  }
+  update_root = at;
+  update_from = update::InstalledVersion(found);
+  update_needs_disc = !found.DiscExists();
+  if (update_from.empty()) {
+    update_problem = trs("That install has no version file (source\\RELEASE.toml): install fresh instead.");
+  } else if (update::Newer(update_from, kVersion)) {
+    update_problem = trf(trs("That install is version {0}, newer than this installer ({1}). Download the "
+                             "newest installer from GitHub."),
+                         {update_from, kVersion});
+  } else {
+    update_same = update_from == kVersion;
+  }
+}
+
+void App::DrawUpdate() {
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted(trf(trs("1. Update to version {0}"), {kVersion}).c_str());
+  ImGui::PopFont();
+  MutedText(trs("Your saves, settings and logs stay. The earlier build is kept: only the parts that "
+                "changed are built again, usually much faster than the first install."));
+  ImGui::Spacing();
+  SDL_Window* window = SDL_GetMouseFocus();
+  const float button_w = ImGui::CalcTextSize(trs("Browse...")).x + ImGui::GetStyle().FramePadding.x * 2;
+  auto path_row = [&](const char* label, std::string* value, int target, bool folder) {
+    ImGui::TextUnformatted(label);
+    ImGui::SetNextItemWidth(-button_w - ImGui::GetStyle().ItemSpacing.x);
+    char buffer[1024];
+    std::snprintf(buffer, sizeof(buffer), "%s", value->c_str());
+    ImGui::PushID(target);
+    if (ImGui::InputText("##path", buffer, sizeof(buffer))) {
+      *value = buffer;
+      choose_error.clear();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(trs("Browse..."))) {
+      if (folder) {
+        SDL_ShowOpenFolderDialog(OnPicked, reinterpret_cast<void*>(intptr_t(target)), window,
+                                 value->empty() ? nullptr : value->c_str(), false);
       } else {
-        choose_error = trs("Couldn't open it: start Mind over Recomp from the Start menu.");
+        static const SDL_DialogFileFilter kIso[] = {{"Xbox 360 disc image (*.iso)", "iso"}};
+        SDL_ShowOpenFileDialog(OnPicked, reinterpret_cast<void*>(intptr_t(target)), window, kIso, 1,
+                               nullptr, false);
       }
     }
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-    MutedText(trs("Or install another copy:"));
+    ImGui::PopID();
+  };
+  path_row(trs("The installed game's folder"), &update_folder, kPickUpdateFolder, true);
+  CheckUpdateFolder();
+  if (!update_problem.empty()) {
+    ImGui::PushStyleColor(ImGuiCol_Text, kWarn);
+    ImGui::TextWrapped("%s", update_problem.c_str());
+    ImGui::PopStyleColor();
+  } else if (update_same) {
+    ImGui::PushStyleColor(ImGuiCol_Text, kGood);
+    ImGui::TextWrapped(trs("Found version %s: already this version. Next checks it and builds whatever is "
+                           "missing or out of date (a repair)."),
+                       update_from.c_str());
+    ImGui::PopStyleColor();
+  } else {
+    ImGui::PushStyleColor(ImGuiCol_Text, kGood);
+    ImGui::TextWrapped(trs("Found version %s in %s: it will be updated to %s."), update_from.c_str(),
+                       update_root.string().c_str(), kVersion);
+    ImGui::PopStyleColor();
+  }
+  ImGui::Spacing();
+  // The disc image, ALWAYS (2026-11-08): the update checks the extracted
+  // disc files (game\) against it and copies again only what's missing or
+  // damaged (setup::DiscRepairCommand); with game\ gone it extracts it all.
+  if (update_problem.empty()) {
+    path_row(update_needs_disc
+                 ? trs("Disc image (.iso) of Crash: Mind over Mutant, Xbox 360 (its files aren't in the game "
+                       "folder any more: they're extracted again)")
+                 : trs("Disc image (.iso) of Crash: Mind over Mutant, Xbox 360 (the game's files are checked "
+                       "against it)"),
+             &iso, kPickIso, false);
     ImGui::Spacing();
   }
+  DrawSpeedOption();
+  ImGui::Spacing();
+  if (!choose_error.empty()) {
+    ImGui::PushStyleColor(ImGuiCol_Text, kBad);
+    ImGui::TextWrapped("%s", choose_error.c_str());
+    ImGui::PopStyleColor();
+  }
+  if (ImGui::Button(trs("Back"))) page = Page::kStart;
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!update_problem.empty());
+  if (AccentButton(trs("Next"), ImVec2(160 * ImGui::GetStyle().FontScaleDpi, 0))) {
+    std::error_code ec;
+    if (GameRunning()) {
+      choose_error = trs("The game is running: close it first.");
+    } else if (iso.empty() || !fs::is_regular_file(fs::path(iso), ec)) {
+      choose_error = trs("Pick your disc image (.iso) first.");
+    } else {
+      root = update_root;
+      existing = true;   // nothing new to make: the folder is there
+      desktop = false;   // shortcuts are rewritten; a desktop one only if it was there
+      page = Page::kTools;
+      CheckTools();
+    }
+  }
+  ImGui::EndDisabled();
+}
+
+// --- INSTALL, page 1 -----------------------------------------------------------
+
+void App::DrawChoose() {
   ImGui::PushFont(fonts.bold, 0.0f);
   ImGui::TextUnformatted(trs("1. Your disc and where the game goes"));
   ImGui::PopFont();
@@ -488,11 +721,15 @@ void App::DrawChoose() {
     ImGui::Unindent();
   }
   ImGui::Spacing();
+  DrawSpeedOption();
+  ImGui::Spacing();
   if (!choose_error.empty()) {
     ImGui::PushStyleColor(ImGuiCol_Text, kBad);
     ImGui::TextWrapped("%s", choose_error.c_str());
     ImGui::PopStyleColor();
   }
+  if (ImGui::Button(trs("Back"))) page = Page::kStart;
+  ImGui::SameLine();
   if (AccentButton(trs("Next"), ImVec2(160 * ImGui::GetStyle().FontScaleDpi, 0))) {
     std::error_code ec;
     if (!disc_there && (iso.empty() || !fs::is_regular_file(fs::path(iso), ec))) {
@@ -529,6 +766,8 @@ void App::DrawToolsPage() {
   MutedText(trs("Free tools that turn the game's code into a Windows program. Missing ones are "
                 "installed with winget, Windows' own app installer; Windows may ask for your "
                 "permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."));
+  MutedText(trs("If it seems stuck, look at the taskbar: Windows' permission question (a shield) can "
+                "open behind this window. Visual Studio's Build Tools are a big download."));
   ImGui::Spacing();
   tools_runner.Copy(tools_job);
   setup::Status status;
@@ -545,10 +784,10 @@ void App::DrawToolsPage() {
   ImGui::Spacing();
   const bool all = status.done && AllToolsFound(status);
   ImGui::BeginDisabled(installing || tools_checking);
-  if (ImGui::Button(trs("Back"))) page = Page::kChoose;
+  if (ImGui::Button(trs("Back"))) page = updating ? Page::kUpdate : Page::kChoose;
   ImGui::SameLine();
   if (all) {
-    if (AccentButton(trs("Next: install"))) BeginInstall();
+    if (AccentButton(updating ? trs("Next: update") : trs("Next: install"))) BeginInstall();
   } else if (status.done) {
     if (AccentButton(trs("Install the missing tools"))) {
       std::vector<Command> commands = setup::Setup::ToolsJob(status);
@@ -602,10 +841,20 @@ void App::DrawToolsPage() {
 
 bool RenameOldGameExe(const fs::path& root);  // (below, by HeadlessInstall)
 
+void App::SetAwake(bool on) {
+  if (awake == on) return;
+  awake = on;
+  platform::KeepAwake(on);
+}
+
 void App::BeginInstall() {
   page = Page::kInstalling;
   fail_text.clear();
   show_log = false;
+  started = Clock::now();
+  took_seconds = 0;
+  setup::SetLimitedResources(limited);
+  SetAwake(true);
   std::error_code ec;
   fs::create_directories(root / "user" / "logs", ec);
   if (!ec) install::MarkInstalled(root);
@@ -615,9 +864,10 @@ void App::BeginInstall() {
     return;
   }
   // The port's files: an existing game keeps its own (it's taken over as it
-  // is; Mind over Recomp offers an update afterwards when it's older), else
-  // here already (the release .zip), or the newest release.
-  if (existing || !SourceNextToMe().empty()) {
+  // is), an update brings the ones next to this exe (the release .zip), as
+  // does a fresh install; with none here, the newest release is downloaded.
+  const bool update_files = updating && !update_same;
+  if ((existing && !update_files) || !SourceNextToMe().empty()) {
     StartFiles(nullptr);
   } else {
     phase = Phase::kFeed;
@@ -632,7 +882,17 @@ void App::BeginInstall() {
 void App::StartFiles(const update::Release* release) {
   phase = Phase::kFiles;
   std::vector<Command> commands;
-  if (existing) {
+  if (updating && !update_same) {
+    // UPDATE: the new source\ swapped in, the build kept (update.h). From
+    // the files next to this exe, or (an installer started on its own) the
+    // newest release's download.
+    RenameOldGameExe(root);
+    if (release) {
+      commands = update::Updater(folders::Find(root), feed).Job(*release, {});
+    } else {
+      commands = update::LocalUpdateJob(SourceNextToMe(), root);
+    }
+  } else if (existing) {
     // Nothing: its source\ (and build) stay as they are; only an old
     // launcher's exe name is brought up to date.
     RenameOldGameExe(root);
@@ -650,6 +910,11 @@ void App::StartFiles(const update::Release* release) {
       return !ec;
     };
     commands.push_back(std::move(copy));
+  }
+  if (updating && !update_needs_disc && !iso.empty()) {
+    // The update's disc check (after the swap: the new source's extractor).
+    // With game\ gone, Setup's disc step extracts it all instead.
+    commands.push_back(setup::DiscRepairCommand(fs::path(iso), root / "source", folders::Find(root).disc));
   }
   const fs::path self = platform::SelfPath();
   const fs::path target = root / install::kInstallerName;
@@ -693,7 +958,7 @@ void App::StartFiles(const update::Release* release) {
     }
   }
   files_runner.Forget();
-  files_runner.Start(trs("Getting the port's files"), std::move(commands),
+  files_runner.Start(updating ? trs("Updating the port's files") : trs("Getting the port's files"), std::move(commands),
                      root / "user" / "logs" / ("install-" + Stamp() + ".log"),
                      [](bool) {});
 }
@@ -726,14 +991,9 @@ void App::StartFinish() {
   });
 }
 
-void App::DrawInstalling() {
-  ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted(trs("3. Installing"));
-  ImGui::PopFont();
-  ImGui::TextDisabled("%s", root.string().c_str());
-  ImGui::Spacing();
-
-  // Move the phases on.
+// Moves the install's phases on. Called every pass of the main loop, also
+// while the window is minimized (it isn't drawn then).
+void App::UpdateInstalling() {
   if (phase == Phase::kFeed && feed_reader && !feed_reader->checking()) {
     update::Release latest;
     bool available = false;
@@ -787,9 +1047,47 @@ void App::DrawInstalling() {
     if (finish_thread.joinable()) finish_thread.join();
     phase = Phase::kFinished;
     page = Page::kDone;
+    took_seconds = std::chrono::duration<double>(Clock::now() - started).count();
+    SetAwake(false);
+    std::printf("installer: finished in %s\n", Duration(took_seconds).c_str());
+  }
+  if (phase == Phase::kFailed) {
+    if (took_seconds == 0) took_seconds = std::chrono::duration<double>(Clock::now() - started).count();
+    SetAwake(false);
+  }
+}
+
+void App::DrawInstalling() {
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted(updating ? trs("3. Updating") : trs("3. Installing"));
+  ImGui::PopFont();
+  ImGui::TextDisabled("%s", root.string().c_str());
+  const double elapsed = std::chrono::duration<double>(Clock::now() - started).count();
+  if (phase != Phase::kFailed) {
+    ImGui::TextDisabled(trs("Running for %s"), Duration(elapsed).c_str());
+  }
+  ImGui::Spacing();
+  // A long build: what keeps it fast (the most common cause of very slow
+  // installs is the PC doing something heavy at the same time).
+  if (phase != Phase::kFailed && elapsed >= kSlowNoteSeconds) {
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4{0.20f, 0.16f, 0.07f, 1.0f});
+    ImGui::BeginChild("slow", ImVec2(-1, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Borders);
+    ImGui::PushStyleColor(ImGuiCol_Text, kWarn);
+    ImGui::TextWrapped("%s", trs("This is taking a while: that's normal, building the game is heavy work."));
+    ImGui::PopStyleColor();
+    ImGui::TextWrapped("%s", trs("To keep it fast, don't use the PC for anything heavy until it's done: no games, "
+                                 "video editing, big downloads or many browser tabs. Keep a laptop plugged in. "
+                                 "Minimizing this window is fine; closing it stops the build (the next try "
+                                 "carries on where it stopped)."));
+    if (limited) {
+      ImGui::TextWrapped("%s", trs("\"Use fewer resources\" is on: the build gives way to other programs, so "
+                                   "it takes longer."));
+    }
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
   }
 
-  // Draw.
   if (phase == Phase::kFeed) {
     ImGui::TextUnformatted(trs("Looking for the newest version..."));
   } else if (phase == Phase::kFiles) {
@@ -811,12 +1109,16 @@ void App::DrawInstalling() {
     ImGui::PushStyleColor(ImGuiCol_Text, kBad);
     ImGui::TextWrapped("%s", fail_text.c_str());
     ImGui::PopStyleColor();
+    ImGui::TextDisabled(trs("Stopped after %s"), Duration(took_seconds).c_str());
     ImGui::Spacing();
     MutedText(trs("Nothing is lost: the next try carries on where this one stopped. The full "
                   "output is in the log below and in the game folder's user\\logs."));
     ImGui::Spacing();
     if (AccentButton(trs("Try again"))) {
       fail_text.clear();
+      started = Clock::now();
+      took_seconds = 0;
+      SetAwake(true);
       if (setup) {
         setup->ForgetJob();
         setup->Recheck();
@@ -845,12 +1147,15 @@ void App::DrawInstalling() {
 
 void App::DrawDone() {
   ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted(trs("Done: Crash Mind over Mutant is installed"));
+  ImGui::TextUnformatted(updating ? trf(trs("Done: Crash Mind over Mutant is updated to {0}"), {kVersion}).c_str()
+                                  : trs("Done: Crash Mind over Mutant is installed"));
   ImGui::PopFont();
+  ImGui::TextColored(kGood, trs("Finished in %s"), Duration(took_seconds).c_str());
   ImGui::Spacing();
   MutedText(trs("Start it from the Start menu (\"Crash Mind over Mutant\")" ));
-  MutedText(trs("Updates and uninstalling: \"Mind over Recomp\" in the Start menu, or Windows' "
-                "Installed apps."));
+  MutedText(trs("Updates: download the newest installer from GitHub when a new version is out and "
+                "choose \"Update an installed game\". Uninstalling: \"Mind over Recomp\" in the Start "
+                "menu, or Windows' Installed apps."));
   if (!finish_error.empty()) {
     ImGui::PushStyleColor(ImGuiCol_Text, kWarn);
     ImGui::TextWrapped("%s", finish_error.c_str());
@@ -868,7 +1173,6 @@ void App::DrawDone() {
 
 void App::DrawManage() {
   if (!setup) return;
-  setup->Tick(GameRunning());
   const setup::Status s = setup->CurrentStatus();
   const auto& job = setup->JobSnapshot();
   const bool busy = job.state == State::kRunning || setup->SettingUp();
@@ -900,43 +1204,13 @@ void App::DrawManage() {
     return;  // (only reached if the restart failed)
   }
 
-  // Updates.
-  if (update::Updater* updater = setup->updater()) {
-    update::Release latest;
-    bool available = false;
-    std::string error;
-    const bool known = updater->Latest(&latest, &available, &error);
-    if (updater->checking()) {
-      ImGui::TextDisabled("%s", trs("Checking for updates..."));
-    } else if (known && available) {
-      ImGui::PushFont(fonts.bold, 0.0f);
-      ImGui::TextColored(kOrange, trs("Version %s is available"), latest.version.c_str());
-      ImGui::PopFont();
-      if (!latest.notes.empty()) {
-        ImGui::BeginChild("notes", ImVec2(-1, ImGui::GetTextLineHeight() * 8), true);
-        ImGui::TextWrapped("%s", latest.notes.c_str());
-        ImGui::EndChild();
-      }
-      ImGui::BeginDisabled(busy || GameRunning());
-      if (AccentButton(trf(trs("Update to {0}"), {latest.version}).c_str())) {
-        std::string why;
-        if (!setup->StartUpdate(latest, &why)) manage_note = why;
-        show_log = false;
-      }
-      ImGui::EndDisabled();
-      ImGui::SameLine();
-      if (ImGui::Button(trs("Release page"))) SDL_OpenURL(update::ReleasePage(latest.version).c_str());
-    } else if (known) {
-      ImGui::TextColored(kGood, "%s", trs("This is the newest version."));
-    } else if (!error.empty()) {
-      ImGui::TextDisabled("%s", error.c_str());
-    }
-    if (!updater->checking()) {
-      ImGui::SameLine();
-      ImGui::BeginDisabled(busy);
-      if (ImGui::SmallButton(trs("Check for updates"))) updater->Check();
-      ImGui::EndDisabled();
-    }
+  // Updates (2026-11-08): no update from in here any more (the download +
+  // swap + restart route didn't work reliably on players' PCs). Each release
+  // has a new installer: download it, choose "Update an installed game".
+  MutedText(trs("To update: download the newest Mind over Recomp from GitHub, start it and choose "
+                "\"Update an installed game\". Saves, settings and the build are kept."));
+  if (ImGui::Button(trs("Open the releases page"))) {
+    SDL_OpenURL("https://github.com/Maxilure/MindOver-Recomp/releases/latest");
   }
   ImGui::Spacing();
   ImGui::Separator();
@@ -1085,8 +1359,13 @@ void App::DrawUninstall() {
   }
 }
 
-void App::Draw() {
+void App::Update() {
   TakePicks();
+  if (mode == Mode::kInstall && page == Page::kInstalling) UpdateInstalling();
+  if (mode == Mode::kManage && setup) setup->Tick(GameRunning());
+}
+
+void App::Draw() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -1097,7 +1376,9 @@ void App::Draw() {
   switch (mode) {
     case Mode::kInstall:
       switch (page) {
+        case Page::kStart: DrawStart(); break;
         case Page::kChoose: DrawChoose(); break;
+        case Page::kUpdate: DrawUpdate(); break;
         case Page::kTools: DrawToolsPage(); break;
         case Page::kInstalling: DrawInstalling(); break;
         case Page::kDone: DrawDone(); break;
@@ -1259,10 +1540,14 @@ int main(int argc, char** argv) {
     else if (arg == "--install_tools") install_tools = true;
     else if (arg == "--update") do_update = true;
     else if (arg == "--desktop") desktop = true;
+    else if (arg == "--limited") setup::SetLimitedResources(true);  // headless "use fewer resources"
     // Developer test of the setup's icon step on any exe (platform::EmbedIcon).
     else if (arg.starts_with("--embed_icon=")) embed_icon_exe = value("--embed_icon=");
     else if (arg.starts_with("--ico=")) embed_icon_ico = value("--ico=");
   }
+
+  // Windows: never slowed down to save power, minimized or not (platform.h).
+  platform::KeepFullSpeed();
 
   // Where the install is: --game_folder, else this exe's own folder when it
   // is an install's "Mind over Recomp.exe".
@@ -1324,19 +1609,53 @@ int main(int argc, char** argv) {
     std::_Exit(why.empty() ? 0 : 1);
   }
   if (!install_to.empty()) {
+    const auto begin = Clock::now();
     const int code = HeadlessInstall(install_to, iso, feed, desktop);
+    std::printf("== finished in %s\n", Duration(std::chrono::duration<double>(Clock::now() - begin).count()).c_str());
     std::fflush(stdout);
     std::_Exit(code);
   }
   if (do_update) {
+    // The window's Update route (App::DrawUpdate / StartFiles): this
+    // installer's files swapped into the install, the build kept, then
+    // everything that's left built.
     if (found.root.empty() || !found.release) {
       std::printf("update: not an install (--game_folder)\n");
       std::_Exit(1);
     }
-    setup::Setup setup(found, feed, found.root / install::kInstallerName);
-    int code = setup.RunHeadless("update", {});
-    if (code == 0) code = setup::Setup(found, feed, found.root / install::kInstallerName).RunHeadless("all", {});
-    if (code == 0) code = Finish(found, false);
+    const auto begin = Clock::now();
+    const std::string from = update::InstalledVersion(found);
+    std::printf("== update %s -> %s in %s\n", from.c_str(), kVersion, found.root.string().c_str());
+    if (!from.empty() && update::Newer(from, kVersion)) {
+      std::printf("refused: the install is newer than this installer\n");
+      std::_Exit(1);
+    }
+    const fs::path log = found.root / "user" / "logs" / ("update-" + Stamp() + ".log");
+    if (from != kVersion) {
+      RenameOldGameExe(found.root);
+      const fs::path here = SourceNextToMe();
+      if (here.empty()) {
+        std::printf("refused: no source\\ next to this installer (unpack the release .zip)\n");
+        std::_Exit(1);
+      }
+      if (!RunPrinted("update", update::LocalUpdateJob(here, found.root), log)) std::_Exit(1);
+    }
+    std::error_code ec;
+    if (!fs::equivalent(self, found.root / install::kInstallerName, ec)) {
+      fs::copy_file(self, found.root / install::kInstallerName, fs::copy_options::overwrite_existing, ec);
+    }
+    const folders::Folders now = folders::Find(found.root);
+    const bool had_disc = now.DiscExists();
+    int code = setup::Setup(now, feed, now.root / install::kInstallerName).RunHeadless("all", iso);
+    // The disc check (the window's update does it before the build; here
+    // after it: the build needs only default.xex, and Setup's checks found
+    // Python by now). Skipped without --iso, or when Setup extracted it all.
+    if (code == 0 && had_disc && !iso.empty() &&
+        !RunPrinted("disc", {setup::DiscRepairCommand(fs::path(iso), now.source, now.disc)}, log)) {
+      code = 1;
+    }
+    if (code == 0) code = Finish(now, false);
+    std::printf("== finished in %s\n", Duration(std::chrono::duration<double>(Clock::now() - begin).count()).c_str());
     std::fflush(stdout);
     std::_Exit(code);
   }
@@ -1363,14 +1682,15 @@ int main(int argc, char** argv) {
   }
 
   // --- the window -------------------------------------------------------------------
-  SDL_SetAppMetadata("Mind over Recomp", "1", "mind_over_recomp");
+  SDL_SetAppMetadata("Mind over Recomp", kVersion, "mind_over_recomp");
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     std::fprintf(stderr, "installer: SDL_Init failed: %s\n", SDL_GetError());
     return 1;
   }
   const float scale = std::max(1.0f, SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay()));
+  const std::string title = std::string("Mind over Recomp ") + kVersion;
   SDL_Window* window = SDL_CreateWindow(
-      "Mind over Recomp", int(860 * scale), int(620 * scale),
+      title.c_str(), int(860 * scale), int(680 * scale),
       SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
   if (!window) {
     std::fprintf(stderr, "installer: no window: %s\n", SDL_GetError());
@@ -1435,17 +1755,10 @@ int main(int argc, char** argv) {
       ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) running = false;
     }
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
-      // Jobs keep going; the INSTALL phases move on only when drawn.
-      if (app->mode == Mode::kInstall && app->page == Page::kInstalling) {
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-        app->Draw();
-        ImGui::EndFrame();
-      }
-      continue;
-    }
+    // The steps move on whether or not the window is drawn (App::Update).
+    app->Update();
+    if (app->quit) running = false;
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) continue;
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();

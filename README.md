@@ -120,8 +120,10 @@ Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** 
 
 **Windows**
 1. Unpack the `.zip` and start **Mind over Recomp.exe**, the installer. If Windows warns about an unknown program: **More info → Run anyway**.
-2. Pick your `.iso` and a folder, then **Next: install**. It gets the build tools it needs and builds the game; the first time takes a while.
-3. Play **Crash Mind over Mutant** from the Start menu. To update or uninstall, open **Mind over Recomp** from the Start menu.
+2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. It gets the build tools it needs and builds the game; the first time takes a while (leave heavy programs closed meanwhile).
+3. Play **Crash Mind over Mutant** from the Start menu.
+
+**Updating (Windows):** download the new release's `.zip`, start its **Mind over Recomp.exe**, choose **Update an installed game** and pick the game's folder and your `.iso` (the game's disc files are checked against it). Saves, settings and the earlier build are kept, so only what changed is built again. Uninstall from **Mind over Recomp** in the Start menu or Windows' *Installed apps*.
 
 **Linux**
 1. Unpack the archive and start the launcher, **Mind over Recomp**.

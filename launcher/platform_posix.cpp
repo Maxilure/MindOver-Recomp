@@ -361,6 +361,10 @@ void Restart(const fs::path& program, const std::vector<std::string>& args) {
   execv(argv[0], argv.data());
 }
 
+// Windows only (platform.h).
+void KeepFullSpeed() {}
+void KeepAwake(bool) {}
+
 }  // namespace platform
 
 #endif  // !_WIN32

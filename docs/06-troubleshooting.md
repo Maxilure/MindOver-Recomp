@@ -163,7 +163,8 @@ Still stuck? [Report it](#reporting-a-bug) with that log.
 
 The game is installed by **Mind over Recomp.exe**, the installer. It
 installs the build tools, builds the game, adds **Crash Mind over Mutant**
-to the Start menu and *Installed apps*, and later updates or uninstalls it.
+to the Start menu and *Installed apps*, and later uninstalls it. Each new
+release comes with a new installer, which also updates an installed game.
 The game's settings are in the game itself (**Options**).
 
 ### "Windows protected your PC"
@@ -194,7 +195,7 @@ coming from 0.1.0:
 2. The installer finds the game set up there and uses it as it is: nothing
    is built again. The disc image is only needed if the `game` folder is gone.
 3. It adds the Start menu and *Installed apps* entries back. If that game is
-   older, **Mind over Recomp** offers the update afterwards.
+   older, choose **Update an installed game** instead (see [Updating](#updating)).
 
 ### "winget isn't there"
 
@@ -452,8 +453,16 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 
 ### Updating
 
-* **Windows:** open **Mind over Recomp** from the Start menu. It shows a new
-  version and updates the game. Your `user` folder stays.
+* **Windows:** download the new release's `.zip`, unpack it, start its
+  **Mind over Recomp.exe** and choose **Update an installed game**. Pick the
+  game's folder (the installer finds one listed in *Installed apps* by
+  itself) and your disc image; it shows the installed version and the new
+  one. The game's extracted disc files (`game` folder) are checked against
+  the disc image: only missing or damaged ones are copied again (all of them
+  if the folder is gone). Your `user` folder and
+  the earlier build stay, so only what changed is built again: usually
+  minutes, not the first install's hour. (The old **Update** button in the
+  installed copy's **Mind over Recomp** was removed: it didn't work reliably.)
 * **Linux:** the launcher's **Setup** tab does the same.
 
 ### The update failed
@@ -464,6 +473,23 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 * **Linux:** unpack it into a new folder, copy your `user/` folder (and
   `game/`, to skip extracting the disc again) into it, then start the
   launcher there and run **Setup**.
+
+### The install is very slow (hours)
+
+A first install is usually 20-60 minutes. When it takes much longer:
+
+* **Something heavy runs at the same time** (a game, video editing, many
+  browser tabs, a big download): the build competes with it. Close what you
+  can until it's done.
+* **Too little free memory.** Each compile needs 1-2 GB; the installer runs
+  as many at once as the free memory allows, so with little free it runs one
+  at a time. Close programs before starting.
+* **Sleep.** The installer keeps the PC awake while it works, but a laptop
+  closed or out of power still stops it. Keep it plugged in.
+* **"Use fewer resources while building"** is on: the build gives way to
+  everything else and takes longer. Leave it off for the fastest install.
+* Minimizing the installer is fine: it keeps working at full speed.
+  Closing it stops the build; the next start carries on where it stopped.
 
 ### Shaders or game data look wrong after an update
 

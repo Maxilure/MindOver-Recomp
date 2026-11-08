@@ -67,6 +67,14 @@ USAGE
 -----
     python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
     python3 tools/xiso_extract.py --list "Crash - Mind over Mutant (USA).iso"
+    python3 tools/xiso_extract.py --repair "Crash - Mind over Mutant (USA).iso" game/
+
+--repair (the installer's update, 2026-11-08): compare an earlier extraction
+with the disc and copy again ONLY the files that are missing or have another
+size; files that match are left alone (same dates, so a build made from them
+isn't redone). It refuses a disc whose default.xex differs in size from the
+one already in the folder: that's another disc (or another game), and its
+files must not be mixed into this one.
 """
 
 import argparse
@@ -174,16 +182,49 @@ def human(n):
         n /= 1024
 
 
+def repair(img, out_dir):
+    """--repair: re-copy only what differs from the disc (see USAGE)."""
+    entries = list(img.walk())
+    # Same disc? Its default.xex must be the size of the one already there.
+    xex = os.path.join(out_dir, "default.xex")
+    disc_xex = [size for path, attr, _, size in entries
+                if path.lower() == "default.xex" and not attr & ATTR_DIRECTORY]
+    if not disc_xex:
+        sys.exit("[xiso] error: that disc image has no default.xex: not a game disc?")
+    if os.path.isfile(xex) and os.path.getsize(xex) != disc_xex[0]:
+        sys.exit("[xiso] error: that disc's default.xex differs from the one in "
+                 f"{out_dir}/: another disc, nothing changed")
+    files = fixed = 0
+    for path, attr, sector, size in entries:
+        dest = os.path.join(out_dir, path)
+        if attr & ATTR_DIRECTORY:
+            os.makedirs(dest, exist_ok=True)
+            continue
+        files += 1
+        if os.path.isfile(dest) and os.path.getsize(dest) == size:
+            continue  # matches: left alone (date kept)
+        os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+        print(f"  {human(size):>10}  {path} (copied again)", flush=True)
+        img.extract_file(sector, size, dest)
+        fixed += 1
+    print(f"[xiso] {files} files checked against the disc, {fixed} copied again")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Extract an Xbox 360 (XDVDFS) disc image.")
     ap.add_argument("iso", help="path to the .iso disc image")
     ap.add_argument("out_dir", nargs="?", default="game", help="where to extract (default: game/)")
     ap.add_argument("--list", action="store_true", help="only list files, extract nothing")
+    ap.add_argument("--repair", action="store_true",
+                    help="copy again only the files missing from out_dir or of another size")
     args = ap.parse_args()
 
     img = XisoImage(args.iso)
     print(f"[xiso] {args.iso}")
     print(f"[xiso] disc type {img.disc_type}, game partition at 0x{img.base:X}")
+
+    if args.repair:
+        return repair(img, args.out_dir)
 
     files = dirs = total = 0
     for path, attr, sector, size in img.walk():

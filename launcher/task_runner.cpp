@@ -117,6 +117,16 @@ void Runner::Run(std::vector<Command> commands, fs::path log_file,
       ok = false;
     }
   }
+  AddLine(ok ? "== Done." : cancel_ ? "== Cancelled." : "== Failed: " + state_.error, log);
+  // on_done runs BEFORE the end is published (2026-11-08). The setup's
+  // on_done starts its checks (Setup::Check sets "checking" at once); when the
+  // end was published first, the window thread could see "job over, no check
+  // running" with the checks from BEFORE the job, and start the same steps
+  // again from them (a disc extracted twice, an SDK built twice). Slow PCs
+  // (or a minimized, throttled installer) widened that gap.
+  if (on_done) {
+    on_done(ok);
+  }
   {
     std::lock_guard lock(mutex_);
     state_.state = ok ? State::kDone : cancel_ ? State::kCancelled : State::kFailed;
@@ -126,10 +136,6 @@ void Runner::Run(std::vector<Command> commands, fs::path log_file,
       state_.detail.clear();
     }
     ++state_.version;
-  }
-  AddLine(ok ? "== Done." : cancel_ ? "== Cancelled." : "== Failed: " + state_.error, log);
-  if (on_done) {
-    on_done(ok);
   }
 }
 
@@ -160,7 +166,7 @@ bool Runner::RunOne(const Command& command, size_t index, size_t count, std::ofs
   platform::Child child;
   std::string start_error;
   platform::ChildOptions options{command.argv, command.work_folder, /*die_with_launcher=*/true,
-                                 command.environment.get()};
+                                 command.environment.get(), command.low_priority};
   if (!child.Start(options, &start_error)) {
     std::lock_guard lock(mutex_);
     state_.error = start_error;

@@ -28,8 +28,13 @@ How to install (Windows 10 / 11)
 5. Let it work: the first install takes a while (often 20-60 minutes).
    When it's done, "Crash Mind over Mutant" is in your Start menu.
 
-Updates and uninstalling: "Mind over Recomp" in the Start menu, or Windows'
-"Installed apps". Uninstalling can keep your saves, settings and logs.
+Updates: download the new release, start its "Mind over Recomp.exe" and
+choose "Update an installed game", then pick the game's folder and your
+disc image (.iso): the game's disc files are checked against it. Your
+saves, settings and the earlier build are kept, so only what changed is
+built again.
+Uninstalling: "Mind over Recomp" in the Start menu, or Windows' "Installed
+apps". Uninstalling can keep your saves, settings and logs.
 
 It didn't work? The installer shows a "Report it on GitHub" button: it
 opens the bug form and the log's folder; attach the log file.
@@ -68,9 +73,14 @@ Como instalar (Windows 10 / 11)
 5. Deixe trabalhar: a primeira instalação demora (geralmente 20 a 60
    minutos). No fim, "Crash Mind over Mutant" fica no menu Iniciar.
 
-Atualizar e desinstalar: "Mind over Recomp" no menu Iniciar, ou em
-"Aplicativos instalados" do Windows. A desinstalação pode manter seus
-saves, configurações e logs.
+Atualizar: baixe a nova versão, abra o "Mind over Recomp.exe" dela e
+escolha "Atualizar um jogo instalado", depois escolha a pasta do jogo e a
+sua imagem de disco (.iso): os arquivos do disco do jogo são conferidos com
+ela. Seus saves, configurações e a compilação anterior são mantidos, então
+só o que mudou é compilado de novo.
+Desinstalar: "Mind over Recomp" no menu Iniciar, ou em "Aplicativos
+instalados" do Windows. A desinstalação pode manter seus saves,
+configurações e logs.
 
 Não funcionou? O instalador mostra o botão "Relatar no GitHub": ele abre o
 formulário de bug e a pasta do log; anexe o arquivo de log.

@@ -1,0 +1,71 @@
+Fix: install the codegen tool from a RelWithDebInfo build too (one SDK build, not two)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0019-codegen-tool-in-relwithdebinfo.patch
+Status:     build-time improvement (could go upstream)
+
+WHAT WAS SLOW
+  The game builds in RelWithDebInfo (its runtime libraries are the "rd"
+  ones), but the codegen tool `rexglue` was installed ONLY from a Release
+  build. A fresh setup therefore built and installed the whole SDK TWICE:
+  Release (only for the tool) and RelWithDebInfo (for the game). On player
+  PCs that doubled the longest step of the Windows installer.
+
+FIX
+  - cmake/rexglue_install.cmake: the tool is installed for Release AND
+    RelWithDebInfo (both optimised; RelWithDebInfo's file is rexgluerd(.exe),
+    the SDK's usual postfix).
+  - cmake/rexglueConfig.cmake.in: consumers map each config to a LIST, the
+    first installed one wins (Release first, then RelWithDebInfo), so an
+    install with either build works. Release first on purpose: an install
+    made before this patch keeps its Release tool, the game's recompile
+    command stays the same and nothing is recompiled because of the switch.
+  Building only `--config RelWithDebInfo --target install` is then enough.
+
+HOW FOUND
+  Reading the installer's SDK step (launcher/setup.cpp SdkJob) while looking
+  into very slow Windows installs (2026-11-08).
+
+diff --git a/cmake/rexglueConfig.cmake.in b/cmake/rexglueConfig.cmake.in
+index ff7f132..a98de84 100644
+--- a/cmake/rexglueConfig.cmake.in
++++ b/cmake/rexglueConfig.cmake.in
+@@ -38,12 +38,15 @@ endif()
+ 
+ include("${CMAKE_CURRENT_LIST_DIR}/rexglueTargets.cmake")
+ 
+-# Only Release rexglue is installed, so every consumer config has to reach it.
++# Only Release / RelWithDebInfo rexglue is installed, so every consumer config
++# has to reach one of them (the first one installed wins). Release first: an
++# install that has it (built before 0019) keeps running the same tool, so the
++# game's recompile step doesn't see a new command and redo everything.
+ if(TARGET rex::rexglue)
+     set_target_properties(rex::rexglue PROPERTIES
+-        MAP_IMPORTED_CONFIG_DEBUG Release
+-        MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+-        MAP_IMPORTED_CONFIG_MINSIZEREL Release)
++        MAP_IMPORTED_CONFIG_DEBUG "Release;RelWithDebInfo"
++        MAP_IMPORTED_CONFIG_RELWITHDEBINFO "Release;RelWithDebInfo"
++        MAP_IMPORTED_CONFIG_MINSIZEREL "Release;RelWithDebInfo")
+ endif()
+ 
+ if(TARGET rex::runtime AND NOT TARGET rex::system)
+diff --git a/cmake/rexglue_install.cmake b/cmake/rexglue_install.cmake
+index d9a64eb..21ca018 100644
+--- a/cmake/rexglue_install.cmake
++++ b/cmake/rexglue_install.cmake
+@@ -52,10 +52,13 @@ install(TARGETS ${REXGLUE_INSTALL_TARGETS}
+ )
+ 
+ # A Debug codegen tool runs an order of magnitude slower, so only Release ships.
++# RelWithDebInfo too (optimised as well): a consumer that builds only
++# RelWithDebInfo then needs ONE SDK build, not a whole second Release one just
++# for this tool.
+ install(TARGETS rexglue
+     EXPORT rexglueTargets
+     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-    CONFIGURATIONS Release
++    CONFIGURATIONS Release RelWithDebInfo
+ )
+ 
+ if(REXGLUE_INSTALL_FIDELITYFX_TARGETS)

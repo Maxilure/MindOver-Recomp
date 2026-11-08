@@ -106,14 +106,24 @@ bool Exists(const fs::path& path) {
   return fs::exists(path, ec);
 }
 
+// The installer's "use fewer resources" choice (setup.h SetLimitedResources).
+std::atomic<bool> g_limited{false};
+
 // Parallel compile jobs from the RAM that's FREE now (not the total: a
 // desktop with apps open may have a third of it; going over makes Linux's
-// out-of-memory killer end the whole desktop session, seen 2026-10-06), at
-// most one per core. The game's generated files need 1-2 GB each
-// (docs/01-building.md, step 4): 2.5 GB per job; the SDK's ~1 GB.
+// out-of-memory killer end the whole desktop session, seen 2026-10-06; on
+// Windows it means swapping, which made some builds take hours). The game's
+// generated files need 1-2 GB each (docs/01-building.md, step 4): 2.5 GB per
+// job; the SDK's ~1 GB.
+//   full     one core left free for the desktop (never the whole PC);
+//   limited  half the cores, and the RAM counted with room to spare
+//            (the build also runs at low priority: UseBuildEnvironment).
 int JobsFor(double gb_per_job) {
-  const int by_ram = int(platform::MemAvailableGb() / gb_per_job);
-  return std::clamp(by_ram, 1, platform::Cores());
+  const bool limited = g_limited;
+  const int cores = platform::Cores();
+  const int max_jobs = limited ? std::max(1, cores / 2) : std::max(1, cores - 1);
+  const int by_ram = int(platform::MemAvailableGb() / (limited ? gb_per_job * 1.5 : gb_per_job));
+  return std::clamp(by_ram, 1, max_jobs);
 }
 int GameJobs() { return JobsFor(2.5); }
 int SdkJobs() { return JobsFor(1.0); }
@@ -333,6 +343,132 @@ PatchState CheckPatchStack(const fs::path& sdk, const std::vector<fs::path>& pat
   if (equals_patched) return PatchState::kAll;
   if (equals_head && patched) return PatchState::kNone;
   return PatchState::kMixed;
+}
+
+// AN UPDATE'S NEW PATCH SET, touching only what changes (2026-11-08). The
+// old way, `git checkout -- .` + `git clean -fd` + `git apply`, rewrote EVERY
+// patched file, so Ninja saw all of them (and every file including the
+// patched headers) as changed: one new patch = most of the SDK and the game
+// compiled again. Now:
+//   1. what "clean HEAD + the new patches" looks like is built in `scratch`
+//      for every file the new patches touch AND every tracked file the old
+//      ones had changed (`git diff --name-only`, submodules left out; link files that Git for
+//      Windows checked out as text, mode 120000, are left alone: AddLinkFix
+//      replaced those on purpose);
+//   2. only files whose content differs are written (they get a new date);
+//   3. files an old patch had ADDED that the new set doesn't make are removed
+//      (`git ls-files --others --exclude-standard`: untracked, not ignored,
+//      so out/ and the other build output stay).
+// False + message on failure (the SDK is then partly up to date: the next
+// try does the rest the same way).
+bool RefreshPatchedFiles(const fs::path& sdk, const std::vector<fs::path>& patches,
+                         const fs::path& scratch, std::string* message) {
+  std::vector<std::string> changed, created;
+  TouchedFiles(patches, &changed, &created);
+  auto lines_of = [](const std::string& text) {
+    std::vector<std::string> out;
+    std::istringstream in(text);
+    std::string line;
+    while (std::getline(in, line)) {
+      if (!line.empty() && line.back() == '\r') line.pop_back();
+      if (!line.empty()) out.push_back(line);
+    }
+    return out;
+  };
+  auto has = [](const std::vector<std::string>& list, const std::string& item) {
+    return std::find(list.begin(), list.end(), item) != list.end();
+  };
+  bool ok = false;
+  // Tracked files the old patches changed (minus link files, see above).
+  std::vector<std::string> modified =
+      lines_of(task_runner::Capture({"git", "-c", "core.autocrlf=false", "diff", "--name-only",
+                                    // the SDK's own libraries (submodules: AddLinkFix changes
+                                    // files in them on Windows) aren't ours to restore
+                                    "--ignore-submodules=all"},
+                                   &ok, sdk, 60000));
+  if (!ok) {
+    *message = "git diff failed in " + sdk.string();
+    return false;
+  }
+  if (!modified.empty()) {
+    std::vector<std::string> argv = {"git", "ls-files", "-s", "--"};
+    argv.insert(argv.end(), modified.begin(), modified.end());
+    for (const std::string& line : lines_of(task_runner::Capture(argv, &ok, sdk, 60000))) {
+      const size_t tab = line.find('\t');
+      if (line.starts_with("120000 ") && tab != std::string::npos) {
+        modified.erase(std::remove(modified.begin(), modified.end(), line.substr(tab + 1)), modified.end());
+      }
+    }
+  }
+  std::vector<std::string> from_head = changed;
+  for (const std::string& file : modified) {
+    if (!has(from_head, file) && !has(created, file)) from_head.push_back(file);
+  }
+  // 1. The wanted versions.
+  std::error_code ec;
+  fs::remove_all(scratch, ec);
+  fs::create_directories(scratch / "patched", ec);
+  if (!from_head.empty()) {
+    std::vector<std::string> archive = {"git", "-c", "core.autocrlf=false", "archive", "-o",
+                                        (scratch / "head.tar").string(), "HEAD", "--"};
+    archive.insert(archive.end(), from_head.begin(), from_head.end());
+    task_runner::Capture(archive, &ok, sdk, 60000);
+    if (ok) task_runner::Capture({"tar", "-xf", "../head.tar"}, &ok, scratch / "patched", 60000);
+    if (!ok) {
+      *message = "couldn't take the SDK's original files (git archive)";
+      fs::remove_all(scratch, ec);
+      return false;
+    }
+  }
+  if (!patches.empty()) {
+    std::vector<std::string> apply = {"git", "-c", "core.autocrlf=false", "apply"};
+    for (const fs::path& patch : patches) apply.push_back(patch.string());
+    const std::string out = task_runner::Capture(apply, &ok, scratch / "patched", 60000);
+    if (!ok) {
+      *message = "the patches don't apply to this SDK: " + out;
+      fs::remove_all(scratch, ec);
+      return false;
+    }
+  }
+  // 2. Write only what differs.
+  auto read = [](const fs::path& file, bool* exists) {
+    std::ifstream in(file, std::ios::binary);
+    *exists = bool(in);
+    return std::string((std::istreambuf_iterator<char>(in)), {});
+  };
+  int written = 0, kept = 0, removed = 0;
+  std::vector<std::string> wanted = from_head;
+  wanted.insert(wanted.end(), created.begin(), created.end());
+  for (const std::string& file : wanted) {
+    bool have_exists = false, want_exists = false;
+    const std::string want = read(scratch / "patched" / file, &want_exists);
+    const std::string have = read(sdk / file, &have_exists);
+    if (!want_exists) continue;  // (a patch deleting a file: none in our set)
+    if (have_exists && have == want) {
+      ++kept;
+      continue;
+    }
+    fs::create_directories((sdk / file).parent_path(), ec);
+    std::ofstream out(sdk / file, std::ios::binary | std::ios::trunc);
+    out << want;
+    if (!out) {
+      *message = "couldn't write " + (sdk / file).string();
+      fs::remove_all(scratch, ec);
+      return false;
+    }
+    ++written;
+  }
+  // 3. Files an old patch added that no new one makes.
+  for (const std::string& file :
+       lines_of(task_runner::Capture({"git", "ls-files", "--others", "--exclude-standard"}, &ok, sdk, 60000))) {
+    if (ok && !has(created, file)) {
+      if (fs::remove(sdk / file, ec)) ++removed;
+    }
+  }
+  fs::remove_all(scratch, ec);
+  *message = std::to_string(written) + " files updated, " + std::to_string(kept) + " already right, " +
+             std::to_string(removed) + " removed.";
+  return true;
 }
 
 // A fingerprint of the patch set (FNV-1a 64 over names + contents), written
@@ -996,7 +1132,11 @@ Status Setup::RunChecks() {
   }
   s.patches_applied = all_applied ? s.patches_total : 0;
   const fs::path runtime = RuntimeLibrary(install);
-  const bool installed = Exists(install / "bin" / platform::ExeName("rexglue")) && Exists(runtime);
+  // The recompiler: RelWithDebInfo's "rexgluerd" (SDK patch 0019: one SDK
+  // build) or an older install's Release "rexglue".
+  const bool installed = (Exists(install / "bin" / platform::ExeName("rexgluerd")) ||
+                          Exists(install / "bin" / platform::ExeName("rexglue"))) &&
+                         Exists(runtime);
   std::string built_with;  // the fingerprint the launcher's last SDK build left
   {
     std::ifstream in(install / kFingerprintFile);
@@ -1211,13 +1351,22 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
   const fs::path sdk = folders_.source / "thirdparty" / "rexglue-sdk";
   out->push_back(NoFutureDates(sdk));  // issue #7: see NoFutureDates
   if (status.sdk_needs_reset) {
-    // A release's own SDK download, patched by an older set (RunChecks):
-    // every tracked file back to the downloaded version. Untracked build
-    // output (out/, ignored) stays, so the rebuild is incremental.
-    out->push_back({trs("Undoing the old patches"), {"git", "checkout", "--", "."}, sdk});
-    out->push_back({trs("Removing files the old patches added"), {"git", "clean", "-fd"}, sdk});
-  }
-  if ((status.patches_applied == 0 || status.sdk_needs_reset) && status.patches_total > 0) {
+    // A release's own SDK download, patched by an older set (RunChecks): the
+    // new set, rewriting only the files whose content changes, so the SDK
+    // rebuild (and the game's) redoes only what the new patches touch
+    // (RefreshPatchedFiles).
+    const std::vector<fs::path> patches = Patches(folders_.source);
+    Command refresh;
+    refresh.title = trs("Updating our fixes in the SDK (only the files that change)");
+    refresh.function = [sdk, patches](std::string* message) {
+      std::error_code ec;
+      const fs::path scratch = fs::temp_directory_path(ec) /
+                               ("crash_mom_patch_refresh_" +
+                                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+      return RefreshPatchedFiles(sdk, patches, scratch, message);
+    };
+    out->push_back(std::move(refresh));
+  } else if (status.patches_applied == 0 && status.patches_total > 0) {
     Command apply{trs("Applying our fixes to the SDK (patches/rexglue-sdk)"), {"git", "apply"}, sdk};
     for (const fs::path& patch : Patches(folders_.source)) {
       apply.argv.push_back(patch.string());
@@ -1235,11 +1384,10 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
     argv.insert(argv.end(), kSdkOptions.begin(), kSdkOptions.end());
     out->push_back({trs("Configuring the SDK"), argv, sdk});
   }
-  out->push_back({trs("Building the SDK (Release: the recompiler)"),
-                  {"cmake", "--build", std::string("out/build/") + kSdkPreset, "-j", std::to_string(SdkJobs()), "--config", "Release", "--target",
-                   "install"},
-                  sdk, Progress::kNinja});
-  out->push_back({trs("Building the SDK (RelWithDebInfo: the runtime the game uses)"),
+  // ONE build (2026-11-08): RelWithDebInfo has everything the game needs,
+  // the recompiler included since SDK patch 0019. It used to be built a
+  // second time in Release just for the recompiler: the whole SDK twice.
+  out->push_back({trs("Building the SDK"),
                   {"cmake", "--build", std::string("out/build/") + kSdkPreset, "-j", std::to_string(SdkJobs()), "--config", "RelWithDebInfo",
                    "--target", "install"},
                   sdk, Progress::kNinja});
@@ -1598,7 +1746,25 @@ void Setup::UseBuildEnvironment(std::vector<Command>& commands) {
     if (!command.function && !command.environment) {
       command.environment = env;
     }
+    if (!command.function) command.low_priority = g_limited;  // "use fewer resources"
   }
+}
+
+void SetLimitedResources(bool limited) { g_limited = limited; }
+bool LimitedResources() { return g_limited; }
+
+// THE UPDATE'S DISC CHECK (2026-11-08): the installed game's extracted disc
+// files (game\) against the player's .iso: only missing or wrong-sized files
+// are copied again (tools/xiso_extract.py --repair); matching files keep
+// their dates, so nothing is rebuilt because of this. Run from the NEW
+// source (after the swap: the repair mode is new in 0.2.2). The extractor
+// refuses a different disc (another default.xex) and changes nothing then.
+Command DiscRepairCommand(const fs::path& iso, const fs::path& source, const fs::path& disc) {
+  Command repair{trs("Checking the game's files against your disc"),
+                 {PythonProgram(), "-u", (source / "tools" / "xiso_extract.py").string(), "--repair",
+                  iso.string(), disc.string()},
+                 source.parent_path()};
+  return repair;
 }
 
 int Setup::RunHeadlessJob(const std::string& step, std::vector<Command> commands) {

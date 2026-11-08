@@ -336,22 +336,13 @@ std::vector<Command> FreshInstallJob(const Release& release, const fs::path& roo
   return commands;
 }
 
-std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
-  const fs::path root = folders_.root;
-  const fs::path work = root / ".update";
-  std::vector<Command> commands;
-  AddDownload(release, root, work, &commands);
-
-  Command swap;
-  swap.title = trs("Swapping in the new version");
-  swap.function = [root, work, launcher](std::string* message) {
-    const fs::path fresh = UnpackedRelease(work);
+// THE SWAP (see the header, step 3), shared by the launcher's download and
+// the installer's update (LocalUpdateJob): `new_src` (a complete new source/)
+// takes the place of <root>/source, keeping the build state; the old one is
+// moved to <work>/old-source. Appends to *message; false = nothing swapped.
+static bool SwapSource(const fs::path& root, const fs::path& work, const fs::path& new_src, std::string* message) {
+  {
     std::error_code ec;
-    if (fresh.empty()) {
-      *message = "The download isn't a release of this port (no source/RELEASE.toml).";
-      return false;
-    }
-    const fs::path new_src = fresh / "source";
     const fs::path old_src = root / "source";
 
     // Dates: unchanged files keep the old date, changed / new ones get now.
@@ -387,6 +378,8 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     }
     // Old out, new in.
     const fs::path retired = work / "old-source";
+    fs::remove_all(retired, ec);
+    ec.clear();
     fs::rename(old_src, retired, ec);
     if (ec) {
       *message += "couldn't move the old source/ away: " + ec.message();
@@ -398,6 +391,26 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
       *message += "couldn't put the new source/ in place";
       return false;
     }
+    return true;
+  }
+}
+
+std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
+  const fs::path root = folders_.root;
+  const fs::path work = root / ".update";
+  std::vector<Command> commands;
+  AddDownload(release, root, work, &commands);
+
+  Command swap;
+  swap.title = trs("Swapping in the new version");
+  swap.function = [root, work, launcher](std::string* message) {
+    const fs::path fresh = UnpackedRelease(work);
+    std::error_code ec;
+    if (fresh.empty()) {
+      *message = "The download isn't a release of this port (no source/RELEASE.toml).";
+      return false;
+    }
+    if (!SwapSource(root, work, fresh / "source", message)) return false;
     // The launcher (replacing the running file is fine: rename) and the readme.
     for (const auto& entry : fs::directory_iterator(fresh, ec)) {
       if (!entry.is_regular_file(ec)) {
@@ -427,6 +440,34 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     }
     fs::remove_all(work, ec);
     *message += "Done: the new version is in place.";
+    return true;
+  };
+  commands.push_back(std::move(swap));
+  return commands;
+}
+
+std::vector<Command> LocalUpdateJob(const fs::path& new_source, const fs::path& root) {
+  const fs::path work = root / ".update";
+  std::vector<Command> commands;
+  Command copy;
+  copy.title = trs("Copying the new version's files");
+  copy.function = [new_source, work](std::string* message) {
+    std::error_code ec;
+    fs::remove_all(work, ec);
+    ec.clear();
+    fs::create_directories(work, ec);
+    fs::copy(new_source, work / "source", fs::copy_options::recursive, ec);
+    *message = ec ? "couldn't copy " + new_source.string() + ": " + ec.message() : "";
+    return !ec;
+  };
+  commands.push_back(std::move(copy));
+  Command swap;
+  swap.title = trs("Swapping in the new version (your build is kept)");
+  swap.function = [root, work](std::string* message) {
+    if (!SwapSource(root, work, work / "source", message)) return false;
+    std::error_code ec;
+    fs::remove_all(work, ec);  // the old source/ with it
+    *message += "The new version's files are in place.";
     return true;
   };
   commands.push_back(std::move(swap));

@@ -87,6 +87,14 @@ std::string ReleasePage(const std::string& version);
 std::vector<task_runner::Command> FreshInstallJob(const Release& release,
                                                   const std::filesystem::path& root);
 
+// THE INSTALLER'S UPDATE (2026-11-08): the new version's source/ that came
+// with the installer (the release .zip) swapped into the install at `root`
+// exactly like a downloaded update (step 3 above: unchanged files keep their
+// dates, out/ generated/ and the SDK move over, so the next build redoes
+// only what changed). user/, game/ and program/ aren't touched.
+std::vector<task_runner::Command> LocalUpdateJob(const std::filesystem::path& new_source,
+                                                 const std::filesystem::path& root);
+
 // a newer than b? (see the header)
 bool Newer(const std::string& a, const std::string& b);
 

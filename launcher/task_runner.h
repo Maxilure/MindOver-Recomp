@@ -53,6 +53,8 @@ struct Command {
   // Optional: exit codes that count as success too (winget answers
   // "already installed" with 0x8A15002B instead of 0).
   std::vector<int> also_ok;
+  // Run at low priority (platform.h ChildOptions::low_priority).
+  bool low_priority = false;
 };
 
 enum class State { kIdle, kRunning, kDone, kFailed, kCancelled };
