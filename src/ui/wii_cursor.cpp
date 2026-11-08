@@ -17,6 +17,7 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>  // the context's window list (InteractiveWindowOpen)
+#include <rex/cvar.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 #include <rex/logging.h>
@@ -44,6 +45,15 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
 #include "stb_image.h"
+
+// THE BUBBLE SLEEPS (2026-11-08, playtest: it sat in every menu and cutscene
+// for a player on a controller). It wakes when the MOUSE MOVES and goes away
+// again: at once when a controller is used after it (the keyboard's socket),
+// or faded out after this long without a mouse move. Index into kFadeAfterMs.
+REXCVAR_DEFINE_INT32(wii_cursor_fade, 2, "CrashMoM",
+                     "Wii cursor (the mouse bubble) fades out when the mouse stops: 0 = never, "
+                     "1 = after 1 s, 2 = after 3 s, 3 = after 5 s. A controller press hides it at once")
+    .range(0, 3);
 
 extern "C" REX_FUNC(__imp__sub_82102F28);  // CBehaviour: switch on / off (r3 it, r5 on): slot 15 / 16
 
@@ -91,6 +101,20 @@ constexpr float kGrow = 1.3f;
 constexpr float kGrowSeconds = 0.06f;
 
 constexpr int kMaxPlayers = 4;
+
+// Sleeping (REXCVAR wii_cursor_fade above): the idle time per setting, and how
+// long the fade itself takes.
+constexpr int kFadeAfterMs[] = {0, 1000, 3000, 5000};
+constexpr float kFadeSeconds = 0.35f;
+// The socket the keyboard plays on (its controller presses put the bubble
+// to sleep); -1 = none. Written per game frame, read by the overlay.
+std::atomic<int> g_keyboard_socket{0};
+
+// A colour with its alpha scaled by k (0..1): the fade.
+ImU32 Faded(ImU32 c, float k) {
+  const uint32_t a = (c >> IM_COL32_A_SHIFT) & 0xFF;
+  return (c & ~IM_COL32_A_MASK) | (ImU32(float(a) * k + 0.5f) << IM_COL32_A_SHIFT);
+}
 
 // Decided per game frame (OnFrameEnd), read by the overlay (UI thread).
 std::atomic<bool> g_show{false};
@@ -191,6 +215,17 @@ bool ShouldShow() {
 void OnFrameEnd(void*) {
   const bool show = ShouldShow();
   g_show.store(show);
+  // Whose controller presses put the bubble to sleep: the socket the keyboard
+  // answers for (player 1 normally; outside play every device is socket 0).
+  int socket = 0;
+  if (const kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get()) {
+    socket = -1;
+    for (int p = 0; p < kMaxPlayers && socket < 0; ++p) {
+      if (players->KeyboardAnswersFor(uint32_t(p))) socket = p;
+    }
+    if (socket < 0 || !more_players::InPlay()) socket = 0;
+  }
+  g_keyboard_socket.store(socket);
   // The system pointer's rule (keyboard_mouse.h SetPointerRule): shown while
   // an ImGui window of ours is open, hidden in play (whatever Mouse Aiming
   // says: Off had it back with every move), and hidden in a menu the mouse
@@ -293,17 +328,43 @@ class CursorDialog : public rex::ui::ImGuiDialog {
     const Clock::time_point now = Clock::now();
     g_imgui_mouse.store(io.WantCaptureMouse);
     g_imgui_window.store(InteractiveWindowOpen());
-    if (!g_show.load() || !TextureReady()) {
+    const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+    float px = 0, py = 0;
+    uint32_t moves = 0;
+    const bool pointer = driver && driver->Pointer(&px, &py, &moves);
+
+    // AWAKE OR ASLEEP: a mouse move wakes it (the first count seen is only
+    // remembered: asleep from the start, so a controller player never sees
+    // it); a controller press after the last move puts it to sleep at once;
+    // no move for the chosen time fades it out. Moves are followed while it
+    // isn't shown too (a move in play wakes it in the pause menu after).
+    if (pointer) {
+      if (!seen_moves_) {
+        seen_moves_ = true;
+        last_moves_ = moves;
+      } else if (moves != last_moves_) {
+        last_moves_ = moves;
+        last_move_ = now;
+        awake_ = true;
+      }
+    }
+    if (awake_ && prompt_icons::PadActivity(g_keyboard_socket.load()) > last_move_.time_since_epoch().count()) {
+      awake_ = false;
+    }
+    float alpha = awake_ ? 1.0f : 0.0f;
+    const int fade_ms = kFadeAfterMs[std::clamp(int(REXCVAR_GET(wii_cursor_fade)), 0, 3)];
+    if (awake_ && fade_ms > 0) {
+      const float idle = std::chrono::duration<float>(now - last_move_).count() - fade_ms / 1000.0f;
+      if (idle > 0) alpha = std::max(0.0f, 1.0f - idle / kFadeSeconds);
+      if (alpha <= 0) awake_ = false;
+    }
+    if (!g_show.load() || !TextureReady() || !pointer || alpha <= 0) {
       trail_.clear();
       have_last_ = false;  // it comes back round, not flung from where it was
       velocity_ = ImVec2(0, 0);
       grow_ = 1.0f;
       return;
     }
-    const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
-    float px = 0, py = 0;
-    uint32_t moves = 0;
-    if (!driver || !driver->Pointer(&px, &py, &moves)) return;
 
     // The game's 16:9 screen in the window (the presenter's fit; in a
     // WIDESCREEN picture its middle part, native/widescreen.h), and one pixel
@@ -343,7 +404,7 @@ class CursorDialog : public rex::ui::ImGuiDialog {
                         std::chrono::duration<float>(kTrailLife).count();
       const float k = std::clamp(1.0f - age, 0.0f, 1.0f);
       const float r = half * (0.45f + 0.4f * k);
-      const ImU32 c = (kColour & 0x00FFFFFFu) | (ImU32(kTrailAlpha * k) << IM_COL32_A_SHIFT);
+      const ImU32 c = (kColour & 0x00FFFFFFu) | (ImU32(kTrailAlpha * k * alpha) << IM_COL32_A_SHIFT);
       list->AddImage(id, ImVec2(b.at.x - r, b.at.y - r), ImVec2(b.at.x + r, b.at.y + r), ImVec2(0, 0),
                      ImVec2(1, 1), c);
     }
@@ -380,7 +441,7 @@ class CursorDialog : public rex::ui::ImGuiDialog {
     const float g = half * kGlowScale;
     list->AddImage(glow, ImVec2(at.x - g * std::sqrt(stretch), at.y - g * std::sqrt(stretch)),
                    ImVec2(at.x + g * std::sqrt(stretch), at.y + g * std::sqrt(stretch)), ImVec2(0, 0), ImVec2(1, 1),
-                   kGlowColour);
+                   Faded(kGlowColour, alpha));
     auto bubble = [&](float scale, ImU32 colour) {
       auto c = [&](float sx, float sy) {
         const ImVec2 v = corner(sx, sy);
@@ -389,10 +450,10 @@ class CursorDialog : public rex::ui::ImGuiDialog {
       list->AddImageQuad(id, c(-1, -1), c(1, -1), c(1, 1), c(-1, 1), ImVec2(0, 0), ImVec2(1, 0), ImVec2(1, 1),
                          ImVec2(0, 1), colour);
     };
-    bubble(kOutlineScale, kOutlineColour);
-    bubble(kOutlineScale, kOutlineColour);
-    bubble(1.0f, kColour);
-    bubble(1.0f, kRimColour);
+    bubble(kOutlineScale, Faded(kOutlineColour, alpha));
+    bubble(kOutlineScale, Faded(kOutlineColour, alpha));
+    bubble(1.0f, Faded(kColour, alpha));
+    bubble(1.0f, Faded(kRimColour, alpha));
   }
 
  private:
@@ -428,6 +489,12 @@ class CursorDialog : public rex::ui::ImGuiDialog {
   Clock::time_point last_when_;
   ImVec2 velocity_{0, 0};
   float grow_ = 1.0f;  // the size over targets, eased
+  // Sleeping: the pointer's move counter last seen, when it last changed,
+  // and whether the bubble is awake (only the overlay touches these).
+  bool seen_moves_ = false;
+  uint32_t last_moves_ = 0;
+  Clock::time_point last_move_{};
+  bool awake_ = false;
 };
 
 // The one dialog, kept for the whole session (like fps_overlay's).

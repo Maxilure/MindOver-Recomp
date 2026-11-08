@@ -1042,6 +1042,19 @@ Row MouseAimingRow() {
   return r;
 }
 
+// CURSOR FADES (ui/wii_cursor.cpp, 2026-11-08): the mouse bubble shows only
+// after the mouse moves, hides at once on a controller press, and fades out
+// after this long without a move.
+Row CursorFadeRow() {
+  Row r = LevelRow(tr(u"Cursor Fades"), "wii_cursor_fade", {tr(u"Never"), tr(u"After 1 s"), tr(u"After 3 s"), tr(u"After 5 s")},
+                   {tr(u"The cursor stays on screen until a controller is used."),
+                    tr(u"The cursor fades out 1 second after the mouse stops. Move the mouse to bring it back."),
+                    tr(u"The cursor fades out 3 seconds after the mouse stops. Move the mouse to bring it back."),
+                    tr(u"The cursor fades out 5 seconds after the mouse stops. Move the mouse to bring it back.")});
+  r.unavailable = NoKeyboard;
+  return r;
+}
+
 // IN THE BACKGROUND (input/background_input.h, 2026-10-30): what a controller
 // does while the game window isn't focused: keep playing, or the game pauses
 // itself the moment the window loses the focus.
@@ -1060,7 +1073,7 @@ Row BackgroundInputRow() {
 }
 
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), BackgroundInputRow(), Heading(tr(u"Button Pictures")), KeyboardIconsRow(),
+  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), CursorFadeRow(), BackgroundInputRow(), Heading(tr(u"Button Pictures")), KeyboardIconsRow(),
                         ControllerIconsRow()};
   // The keys start under a heading of their own.
   rows.push_back(Heading(tr(u"Keyboard and Mouse Keys")));

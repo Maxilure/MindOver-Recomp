@@ -120,6 +120,21 @@ void ApplyInvertAxis(uint8_t* base, uint32_t fe) {
   }
 }
 
+void ApplyOnceAudioReady(PPCContext& ctx, uint8_t* base, uint32_t fe) {
+  static bool done = false;
+  if (done) return;
+  const uint32_t audio = Load32(base, kAudioSettings);
+  if (!audio) return;
+  for (uint32_t bus = 4; bus <= 12; bus += 4) {
+    if (!Load32(base, audio + bus)) return;  // buses not made yet: next frame
+  }
+  done = true;
+  ApplyVolumes(ctx, base);
+  ApplyInvertAxis(base, fe);
+  REXLOG_INFO("Options: volumes ({} / {} / {} stars) and Invert Axis applied at boot", Stars(Volume::kMusic),
+              Stars(Volume::kDialogue), Stars(Volume::kSfx));
+}
+
 }  // namespace global_options
 
 // -----------------------------------------------------------------------------

@@ -2124,6 +2124,7 @@ std::string FontNameAt(uint32_t font) {
 }
 
 bool KeysShown() { return g_keys_shown.load(); }
+int64_t PadActivity(int p) { return p >= 0 && p < int(g_pad_activity.size()) ? g_pad_activity[size_t(p)].load() : 0; }
 
 namespace {
 // Lends a slot to `what` (Slot): the one already holding it, else the least

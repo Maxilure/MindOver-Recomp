@@ -25,7 +25,8 @@
 // Slot 2 no longer saves them: the volumes are written as 1.0 and the Invert
 // Axis bits as off (the game's New Game values = "no setting"; the bytes
 // stay, the block is a fixed-size image, see global_options.cpp).
-// The front end's set-up (who_plays.cpp, sub_82266398) applies them at boot.
+// The front end's set-up (who_plays.cpp, sub_82266398) applies them at boot,
+// and ApplyOnceAudioReady again once the audio exists (before the title).
 // =============================================================================
 #pragma once
 
@@ -51,5 +52,14 @@ const char* InvertAxisFlag(int slot);
 // front end `fe`.
 void ApplyVolumes(PPCContext& ctx, uint8_t* base);
 void ApplyInvertAxis(uint8_t* base, uint32_t fe);
+
+// BEFORE THE TITLE (2026-11-08, playtest: Music at 0 stars still played on
+// the title screen, and only went quiet after Press START). The boot set-up
+// (who_plays.cpp, sub_82266398) runs BEFORE the audio object exists, so its
+// ApplyVolumes was skipped, and the next one came with Press START. Called
+// every front-end frame (more_players_frontend.cpp, sub_82261C40 hook): the
+// first frame the audio object and its three buses exist, the volumes and
+// Invert Axis are applied once. Game thread.
+void ApplyOnceAudioReady(PPCContext& ctx, uint8_t* base, uint32_t fe);
 
 }  // namespace global_options
