@@ -1604,7 +1604,16 @@ void RefreshPlayers(Env& env) {
       SetBox(base, c.style, x, top - options_page::kPlyStyleTop[k / 2] - 36.0f, float(options_page::kPlyCardW), 36.0f);
       const float arrow = kPlyLineArrowScale * float(options_page::kPlyArrowSide);
       if (styling) {
-        static const std::u16string kWidest = u"PlayStation 5";
+        // The arrows sit just outside the WIDEST style name (measured once:
+        // the names are "Xbox Series", "DualSense", "Joy-Con"...).
+        static const std::u16string kWidest = [] {
+          std::u16string widest;
+          for (int s = 0; s <= 5; ++s) {
+            const std::u16string name = Utf16(players_setup::StyleName(s));
+            if (TextWidth(name, 1.0f) > TextWidth(widest, 1.0f)) widest = name;
+          }
+          return widest;
+        }();
         const float scale = FitScale(kWidest, room - 2.0f * (arrow + 6.0f), kPlyStyleScale);
         scrooby::SetScale(ctx, base, c.style, scale);
         const float half = TextWidth(kWidest, 1.0f) / kPageScale * scale / 2.0f;

@@ -89,7 +89,14 @@ class TextureCache {
   // The image of a guest texture. If it's new or its pixels changed, records
   // the upload into `cmd`, which must not be inside a render pass.
   // `submission` = the tracker index `cmd` will be submitted as.
-  View Get(const GuestTexture& texture, VkCommandBuffer cmd, uint64_t submission);
+  // `snapshot` = the texture's bytes copied when its draw was recorded (a
+  // palette, frame.h GuestTexture::snapshot), used instead of guest memory;
+  // such textures are cached by CONTENT (one entry per set of colours: two
+  // draws of one frame may need the same palette address in two states).
+  // (`snapshot_size` = its bytes; shorter than the texture's layout needs =
+  // read from guest memory as usual.)
+  View Get(const GuestTexture& texture, VkCommandBuffer cmd, uint64_t submission,
+           const uint8_t* snapshot = nullptr, size_t snapshot_size = 0);
 
   // Before submitting `cmd`: makes the upload data visible to the GPU.
   void FlushUploads();
@@ -138,6 +145,7 @@ class TextureCache {
     Image image;
     uint32_t width = 0, height = 0;
     uint64_t content_hash = 0;
+    bool snapshot = false;       // made from a draw-time copy (keyed by content)
     uint64_t checked_round = 0;  // BeginFrame round when the hash was last compared
     // Write watch (write_watch.h): armed at the last hash, with this
     // ticket; `cooldown` = checks to go before it may be armed again (set

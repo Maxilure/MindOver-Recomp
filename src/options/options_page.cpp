@@ -296,7 +296,7 @@ std::vector<Bytes> PlayersSprites(Parts* parts) {
 //   PlyTitle<k>     the player's number, big, in that corner
 //   PlyInfo<k>      the device's name / "Press any button to join" /
 //                   whose a controller is while choosing (centred, small)
-//   PlyStyle<k>     its button pictures ("Buttons: PlayStation 5"; only with
+//   PlyStyle<k>     its button pictures ("DualSense"; only with
 //                   a controller: LB / RB change them; centred, small)
 //   PlyLeft<k> / PlyRight<k>  the chooser's arrows beside the picture (the
 //                   map's arrow, turned by options_menu.cpp)

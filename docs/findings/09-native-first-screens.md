@@ -231,6 +231,38 @@ right after creating the object. It then lives exactly as long as the
 game's own mapping of it, and the kernel frees it however the process ends.
 Test captures now get deleted after each comparison.
 
+## 10. Palettes refilled within a frame (texts in another text's colour)
+
+**Symptom.** In the outfit chest with four players, player 1's "P1" tag at
+the top of its card was sometimes blue instead of orange. It came and went
+with what the cards showed: with player 1 on Crash's own look it stayed
+orange, on another look ("Reddy", "Bluey"...) it turned blue. Emulated
+picture: always right. Repro: four players at the chest, player 1 stepping
+through the looks, a photo per step (11 of 20 frames wrong).
+
+**How it was found.** The photo's draw list now prints the texture words
+and the first vertex colours of 2D draws too (it did so for particles
+only). The tag's two draws (one per font page: "P" and "1") were IDENTICAL
+in a right and a wrong frame: same textures, white vertex colours, white
+tint. So the colour came from the palette. A temporary check hashed each
+palette when its draw was recorded and again at its next use in the same
+frame: 40 palettes of the font changed WITHIN a frame in a few seconds.
+
+**Cause.** A palettized texture has a ring of 16 palettes (`xnTexture+24`,
+index `+88`), and a Scrooby text's colour is a palette the game fills for
+that draw: a font page used by many coloured texts goes round its ring
+more than once a frame. The Xbox GPU reads each palette as the draw runs;
+our renderer reads guest memory after the frame ends, when an early text's
+palette already holds a later text's colours. Longer look names = more
+coloured glyph draws = the ring wrapped onto player 1's tag.
+
+**Fix.** The recorder copies every palette's bytes (1 KB) when its draw is
+recorded (`Frame::snapshots`, `GuestTexture::snapshot`); the texture cache
+uploads such a palette from the copy and keys it by its CONTENT, so two
+draws of one frame can use the same address in two states. Copies unused
+for ~2 s are dropped. Cost: the write-watch numbers stayed where they were
+(~300 textures unchanged per frame, under 1 upload).
+
 ## Open questions
 
 * Which game code sets the gamma ramp (for the replacement phase), and

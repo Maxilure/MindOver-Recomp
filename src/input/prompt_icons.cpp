@@ -58,8 +58,8 @@ REXCVAR_DEFINE_INT32(keyboard_icons, 0, "CrashMoM",
 REXCVAR_DEFINE_INT32(controller_icons, 0, "CrashMoM",
                      "Controller prompt pictures: 0 = automatic (by the controller in use: "
                      "PlayStation 5 / 4, Switch, Xbox One / Series; any other = the game's own), "
-                     "1 = the game's own Xbox 360 buttons, 2 = Xbox Series, 3 = PlayStation 5, "
-                     "4 = PlayStation 4, 5 = Switch");
+                     "1 = the game's own Xbox 360 buttons, 2 = Xbox Series, 3 = DualSense (PlayStation 5), "
+                     "4 = DualShock (PlayStation 4), 5 = Joy-Con (Switch)");
 REXCVAR_DEFINE_STRING(debug_fake_pad_styles, "", "CrashMoM",
                       "Debug: the button pictures of --debug_fake_pads' controllers 2, 3, 4 (with "
                       "Controller Icons = automatic), comma-separated: xbox-series, ps5, ps4, switch, 360 "
@@ -739,13 +739,13 @@ constexpr PadSet kPadSets[] = {
      {"XboxSeriesX_A", "XboxSeriesX_B", "XboxSeriesX_X", "XboxSeriesX_Y", "XboxSeriesX_View",
       "XboxSeriesX_Menu", "XboxSeriesX_RT", "XboxSeriesX_RB", "XboxSeriesX_LT", "XboxSeriesX_LB",
       "XboxSeriesX_Left_Stick", "XboxSeriesX_Right_Stick"}},
-    {"ps5", "PlayStation 5",
+    {"ps5", "DualSense",
      {"PS5_Cross", "PS5_Circle", "PS5_Square", "PS5_Triangle", "PS5_Share", "PS5_Options", "PS5_R2",
       "PS5_R1", "PS5_L2", "PS5_L1", "PS5_Left_Stick", "PS5_Right_Stick"}},
-    {"ps4", "PlayStation 4",
+    {"ps4", "DualShock",
      {"PS4_Cross", "PS4_Circle", "PS4_Square", "PS4_Triangle", "PS4_Share", "PS4_Options", "PS4_R2",
       "PS4_R1", "PS4_L2", "PS4_L1", "PS4_Left_Stick", "PS4_Right_Stick"}},
-    {"switch", "Switch",
+    {"switch", "Joy-Con",
      {"Switch_B", "Switch_A", "Switch_Y", "Switch_X", "Switch_Minus", "Switch_Plus", "Switch_RT",
       "Switch_RB", "Switch_LT", "Switch_LB", "Switch_Left_Stick", "Switch_Right_Stick"}},
 };

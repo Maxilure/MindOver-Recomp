@@ -105,7 +105,8 @@ struct Box {
 };
 std::array<Box, kPlayers> Boxes();
 
-// "Xbox 360", "Xbox Series", "PlayStation 5", "PlayStation 4", "Switch"
+// "Xbox 360", "Xbox Series", "DualSense", "DualShock", "Joy-Con" (named after
+// the controllers since 0.2.2: PlayStation 5, PlayStation 4, Switch)
 // (style numbers as --controller_icons; 0 = "Automatic").
 const char* StyleName(int style);
 

@@ -986,9 +986,10 @@ Row ControllerIconsRow() {
   Row r;
   r.label = tr(u"Controller Icons");
   r.values = [](Env&) {
-    // The consoles' own names stay as they are in every language.
-    return std::vector<std::u16string>{tr(u"Automatic"), u"Xbox 360", u"Xbox Series", u"PlayStation 5",
-                                       u"PlayStation 4", u"Switch"};
+    // The controllers' own names (DualSense = PlayStation 5's, DualShock =
+    // PlayStation 4's, Joy-Con = Switch's) stay as they are in every language.
+    return std::vector<std::u16string>{tr(u"Automatic"), u"Xbox 360", u"Xbox Series", u"DualSense",
+                                       u"DualShock", u"Joy-Con"};
   };
   r.get = [](Env&) { return std::clamp(int(REXCVAR_GET(controller_icons)), 0, 5); };
   r.set = [](Env&, int i) { SetFlag("controller_icons", std::to_string(i)); };

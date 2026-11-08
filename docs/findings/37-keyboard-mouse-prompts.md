@@ -129,7 +129,9 @@ are the 360's A and B again.
 
 **Styles.** Options -> Controls has **Keyboard Icons** (Light / Dark,
 `--keyboard_icons`) and **Controller Icons** (Automatic / Xbox 360 / Xbox
-Series / PlayStation 5 / PlayStation 4 / Switch, `--controller_icons`). The
+Series / PlayStation 5 / PlayStation 4 / Switch, `--controller_icons`;
+RENAMED in 0.2.2 after the controllers: **DualSense**, **DualShock**,
+**Joy-Con**, same numbers 3-5, so saved choices keep working). The
 controller sets are Xelu's too (assets/prompts/README.md). They go into the
 same pages the keys do: while a controller is the device in use and a style
 other than the game's own is chosen, every button page gets that set's

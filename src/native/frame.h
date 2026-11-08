@@ -129,6 +129,13 @@ VertexLayout MeshVertexLayout(uint32_t format_flags, uint32_t stride);
 // size, format, tiling and address from these. All zero = no texture.
 struct GuestTexture {
   std::array<uint32_t, 6> fetch{};
+  // PALETTES ONLY: 1 + the byte offset of the copy of its colours taken
+  // when the draw was recorded (Frame::snapshots); 0 = read guest memory
+  // when the frame is drawn. Why: the game refills its palettes WITHIN a
+  // frame (a font page's 16 palettes are a ring, one per coloured text), so
+  // memory read at the frame's end held the colours of a LATER text: player
+  // 1's "P1" in the chest's 4-player picker came out blue (docs/findings/09 s.10).
+  uint32_t snapshot = 0;
   bool present() const { return fetch[1] != 0; }  // word 1 holds the address
 };
 
@@ -634,6 +641,9 @@ struct Frame {
   // vertices as 32-bit words, and 16-bit indices.
   std::vector<uint32_t> vertex_data;
   std::vector<uint16_t> indices;
+  // Palettes' colours as they were at their draw (GuestTexture::snapshot):
+  // raw guest bytes, one copy per palettized draw.
+  std::vector<uint8_t> snapshots;
   std::vector<MaterialBlock> blocks;  // parameters of the draws with a block (DrawCommand::block)
   std::vector<DrawCommand> draws;
   std::vector<ClearCommand> clears;
@@ -652,6 +662,7 @@ struct Frame {
     recorded = false;
     vertex_data.clear();
     indices.clear();
+    snapshots.clear();
     blocks.clear();
     draws.clear();
     clears.clear();

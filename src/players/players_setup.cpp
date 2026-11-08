@@ -143,7 +143,7 @@ void Settle(PPCContext& ctx, uint8_t* base) {
 }  // namespace
 
 const char* StyleName(int style) {
-  static const char* kNames[] = {"Automatic", "Xbox 360", "Xbox Series", "PlayStation 5", "PlayStation 4", "Switch"};
+  static const char* kNames[] = {"Automatic", "Xbox 360", "Xbox Series", "DualSense", "DualShock", "Joy-Con"};
   return style >= 0 && style < int(std::size(kNames)) ? kNames[style] : "?";
 }
 

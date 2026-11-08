@@ -701,16 +701,17 @@ bool SaveBindings(const Bindings& b, const std::filesystem::path& path) {
 
   // Players 2-4's button pictures (Settings::pad_icons): only the chosen ones.
   {
-    static constexpr const char* kStyles[6] = {"Automatic", "Xbox 360", "Xbox Series", "PlayStation 5",
-                                               "PlayStation 4", "Switch"};
+    static constexpr const char* kStyles[6] = {"Automatic", "Xbox 360", "Xbox Series", "DualSense",
+                                               "DualShock", "Joy-Con"};
     bool header = false;
     for (int p = 1; p < 4; ++p) {
       const int style = b.settings.pad_icons[size_t(p)];
       if (style <= 0 || style > 5) continue;
       if (!header) {
         out << "\n# Players 2-4's button pictures (Players screen; player 1's = Options ->\n"
-               "# Controller Icons): 1 Xbox 360, 2 Xbox Series, 3 PlayStation 5, 4 PlayStation 4,\n"
-               "# 5 Switch; not listed = automatic (by the controller's maker).\n";
+               "# Controller Icons): 1 Xbox 360, 2 Xbox Series, 3 DualSense (PlayStation 5),\n"
+               "# 4 DualShock (PlayStation 4), 5 Joy-Con (Switch); not listed = automatic\n"
+               "# (by the controller's maker).\n";
         header = true;
       }
       out << "icons.player" << (p + 1) << " = " << style << "   # " << kStyles[style] << "\n";

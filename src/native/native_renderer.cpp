@@ -1688,6 +1688,12 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       return native::TextureCache::View{resolved.view, resolved.width, resolved.height};
     }
     CostTimer timer(cost_.textures_ms);
+    // A palette copied at its draw (frame.h GuestTexture::snapshot).
+    const size_t at = texture.snapshot - 1;  // (wraps for 0 = none: fails the check)
+    if (texture.snapshot != 0 && at < frame_.snapshots.size()) {
+      return texture_cache_->Get(texture, cmd, submission, frame_.snapshots.data() + at,
+                                 frame_.snapshots.size() - at);
+    }
     return texture_cache_->Get(texture, cmd, submission);
   };
 
