@@ -32,7 +32,7 @@ Activision or the game's other owners.
 
 ### What's new in 0.2.2-alpha.2
 
-A small installer fix on top of 0.2.2-alpha. The game itself is the same.
+An installer fix and one controls fix on top of 0.2.2-alpha.
 
 - **The SDK step no longer fails with "file INSTALL cannot find
   ...TracyClient.dll".** The SDK compiled, but its last step couldn't copy
@@ -45,6 +45,13 @@ A small installer fix on top of 0.2.2-alpha. The game itself is the same.
   says it's probably the antivirus and what to check, and the
   [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#file-install-cannot-find-a-dll)
   page has an entry for it.
+- **A controller aims with its stick again while Mouse Aiming is on.**
+  Player 1 plays on the keyboard and can hold a controller too, but the
+  reticle (a mask's aim, a TK titan's guard aim) followed only the mouse,
+  so the stick couldn't move it. Now whichever was used last aims: move
+  the mouse and it takes over, use the controller and its stick does.
+  Thanks to **[zanettevini](https://github.com/zanettevini)** for the
+  report in [#13](https://github.com/Maxilure/MindOver-Recomp/issues/13).
 - **The installer shows its version** at the top of its window
   (for example "version 0.2.2-alpha.2"), so a screenshot says which
   installer it is.

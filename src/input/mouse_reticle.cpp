@@ -11,11 +11,13 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include <chrono>
 #include <cstring>
 
 #include "../guest_memory.h"
 #include "keyboard_mouse.h"
 #include "players.h"
+#include "prompt_icons.h"
 #include "../players/more_players.h"
 #include "../players/reticle_idle.h"
 #include "../ui/wii_cursor.h"
@@ -69,6 +71,26 @@ void CallGame(GuestFunction f, PPCContext& ctx, uint8_t* base, uint32_t r3, uint
   ctx = saved;
 }
 
+// WHO AIMS: the mouse or the stick, whichever was used LAST. Player 1 is
+// always on the keyboard AND may hold a controller too; without this the
+// pointer's spot overwrote the stick's movement every frame, so a player 1
+// who picked up a pad couldn't aim with its stick any more. The mouse's turn
+// starts when the pointer moves (its counter goes up, checked every frame:
+// player 1's reticle updates always, aiming or not, so a move made just
+// before aiming counts at its time); the stick's when a controller is used on
+// the keyboard's socket (prompt_icons PadActivity: buttons, triggers, sticks
+// past the dead zone; the same signal hides the Wii cursor). steady_clock ticks.
+int64_t g_mouse_used = 0;
+uint32_t g_seen_moves = 0;
+void NoteMouseMoves() {
+  kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  float px = 0, py = 0;
+  uint32_t moves = 0;
+  if (!driver || !driver->Pointer(&px, &py, &moves) || moves == g_seen_moves) return;
+  g_seen_moves = moves;
+  g_mouse_used = std::chrono::steady_clock::now().time_since_epoch().count();
+}
+
 // After the game's Update of `reticle`: on the pointer, if its player is on
 // the keyboard and the reticle is on.
 void FollowPointer(PPCContext& ctx, uint8_t* base, uint32_t reticle) {
@@ -88,6 +110,7 @@ void FollowPointer(PPCContext& ctx, uint8_t* base, uint32_t reticle) {
   float px = 0, py = 0;
   uint32_t moves = 0;
   if (!driver || !driver->Pointer(&px, &py, &moves)) return;
+  if (prompt_icons::PadActivity(int(player)) > g_mouse_used) return;  // the stick aims (WHO AIMS)
   // The pointer (0..1 over the 16:9 picture) on the 640 x 480 canvas drawn
   // 4:3 in its middle (x = 160 + 1.5 cx of 1280, y = 720 - 1.5 cy of 720;
   // the same mapping as the menu mouse, mouse_menus.h).
@@ -118,7 +141,10 @@ extern "C" REX_FUNC(sub_82255160) {
   const uint32_t reticle = ctx.r3.u32;
   // Once per frame (player 1's reticle always exists and updates): the
   // game's own Wii cursor on / off for crosshair mode (ui/wii_cursor.h).
-  if (mouse_reticle::Read32(base, reticle + 44) == 0) wii_cursor::SwitchGameCursors(ctx, base);
+  if (mouse_reticle::Read32(base, reticle + 44) == 0) {
+    wii_cursor::SwitchGameCursors(ctx, base);
+    mouse_reticle::NoteMouseMoves();
+  }
   // Its spot before and after (stick + mouse): moved = its player aims
   // (players/reticle_idle.h hides a plain mask's reticle while they don't).
   const float x0 = mouse_reticle::ReadFloat(base, reticle + 0x14);
