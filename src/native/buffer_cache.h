@@ -19,13 +19,16 @@
 //   directly.
 //
 // WHEN IT RE-UPLOADS
-//   Like the texture cache: every buffer used in a frame is hashed once per
-//   frame (XXH3, many GB/s), and a changed hash means a new upload into a new
-//   buffer (the old one may still be in use by frames in flight, so it's
-//   freed later). Simple and always correct, also for buffers the game
-//   rewrites (animated or reused memory). If hashing ever shows up in
-//   profiles, the game's own Lock/Unlock calls (xnPrimBuffer vtable slots
-//   4/5, 7/8) are the natural dirty signal.
+//   A changed hash (XXH3) means a new upload into a new buffer (the old one
+//   may still be in use by frames in flight, so it's freed later). Until
+//   2026-11-09 every buffer used in a frame was hashed once per frame: ~2% of
+//   the game's main thread on Wumpa Island (findings/57), more on slow CPUs.
+//   Now the same WRITE WATCH as the texture cache (write_watch.h): a buffer's
+//   pages are write-protected after its hash, and while nothing wrote there
+//   the hash is skipped. A buffer caught changing is hashed every frame for a
+//   while (cool-down: rewritten buffers would fault on every write), and every
+//   watched buffer is hashed anyway once every 32 frames (safety net, logs
+//   "changed unseen by the write watch").
 //
 // MEMORY
 //   Buffers come from the SDK's Vulkan Memory Allocator (VMA), which packs
@@ -46,6 +49,8 @@
 #include <rex/ui/vulkan/upload_buffer_pool.h>
 
 #include "frame.h"
+
+#include "write_watch.h"
 
 namespace native {
 
@@ -75,8 +80,20 @@ class BufferCache {
   // Before submitting `cmd`: makes the upload data visible to the GPU.
   void FlushUploads();
 
+  // The write watch on or off (off for the debug modes the texture cache
+  // turns it off for: NativeRenderer::RecordScene).
+  void UseWriteWatch(bool on) { use_write_watch_ = on; }
+
   // Stats for the renderer's periodic log line.
   size_t buffer_count() const { return entries_.size(); }
+  struct CheckStats {
+    uint64_t unchanged = 0, hashed = 0, missed = 0;  // like TextureCache::CheckStats
+  };
+  CheckStats TakeCheckStats() {
+    CheckStats s = stats_;
+    stats_ = {};
+    return s;
+  }
   uint64_t bytes_uploaded() const { return bytes_uploaded_; }
 
  private:
@@ -89,6 +106,10 @@ class BufferCache {
     Buffer buffer;
     uint64_t content_hash = 0;
     uint64_t checked_round = 0;  // BeginFrame round when the hash was last compared
+    // Write watch: armed at the last hash with this ticket (write_watch.h).
+    uint64_t ticket = 0;
+    bool watched = false;
+    uint32_t cooldown = 0;  // checks left before arming again (it was written)
   };
 
   void DestroyBuffer(Buffer& buffer);
@@ -103,6 +124,10 @@ class BufferCache {
   uint64_t round_ = 0;
   bool uploaded_this_frame_ = false;
   uint64_t bytes_uploaded_ = 0;
+  WriteWatch watch_;
+  bool use_write_watch_ = true;
+  CheckStats stats_;
+  uint32_t missed_logged_ = 0;
 };
 
 }  // namespace native

@@ -91,6 +91,7 @@ A few minutes per configuration.
   | `0016-renderdoc-only-when-attached` | RenderDoc is used only when it is already in the process (the game started from RenderDoc): the SDK loaded `librenderdoc.so` whenever RenderDoc was installed, which hid Vulkan's Wayland surface, so on a Wayland desktop the game window never appeared |
   | `0017-tools-menu-binds` | `InvokeBind(name)` runs a key bind by name (the port's Tools menu, F1, runs the SDK's own overlays through it), and the SDK's F3 / F4 / F7 / backtick binds start with no key: one stray function key press no longer opens a window mid-game |
   | `0018-commit-without-proc-maps` | Committing memory inside an already reserved range no longer reads and parses all of `/proc/self/maps` first (`mprotect` already refuses unmapped pages): after a long session that file had grown so long that a load (the title's, after the attract movie) crawled for 20+ s |
+  | `0020-few-cores-warn-once` | "Too few processor cores" is logged once per run instead of at every guest affinity change (~300 lines/s on PCs with fewer than 6 logical processors: a 16 MB log in 8 minutes) |
 
   `patches/rexglue-sdk/debug/` holds **optional debugging patches** that
   the `*.patch` glob above deliberately skips. Apply one by hand when

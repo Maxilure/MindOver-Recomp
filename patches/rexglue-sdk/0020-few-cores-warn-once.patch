@@ -1,0 +1,48 @@
+Fix: the "too few processor cores" warning is said once, not at every affinity change
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0020-few-cores-warn-once.patch
+Status:     upstream log-spam bug (report to rexglue-sdk)
+
+WHAT BROKE
+  On a PC with fewer than 6 logical processors (a 2-core / 4-thread laptop
+  CPU), a game log of 8 minutes held 163,671 lines, 162,000 of them the same
+  warning: "Too few processor cores - scheduling will be wonky". About 300
+  lines per second, from the game's D3D thread and another guest thread.
+
+WHY
+  XThread::SetActiveCpu (src/system/xthread.cpp) pins the host thread to the
+  guest's core only with 6+ logical processors, and otherwise logged the
+  warning. It runs for every KeSetAffinityThread, and Crash: Mind over
+  Mutant's D3D code moves its threads between cores constantly. Each line is a
+  formatted log write on a thread the game is waiting for, on exactly the PCs
+  with the least CPU to spare.
+
+FIX
+  The warning is said once per run (std::atomic flag) and names the core
+  count. Behaviour is unchanged: affinities are still ignored below 6.
+
+HOW IT WAS FOUND
+  A player's log from a 4-thread PC (lag spikes while streaming) was 16 MB;
+  sorting its lines by message showed the one warning.
+
+diff --git a/src/system/xthread.cpp b/src/system/xthread.cpp
+index 77bce25..6052693 100644
+--- a/src/system/xthread.cpp
++++ b/src/system/xthread.cpp
+@@ -899,7 +899,14 @@ void XThread::SetActiveCpu(uint8_t cpu_index) {
+       thread_->set_affinity_mask(uint64_t(1) << cpu_index);
+     }
+   } else {
+-    REXSYS_WARN("Too few processor cores - scheduling will be wonky");
++    // Said ONCE: games re-pin threads constantly (Crash: Mind over Mutant ~300 calls/s), and on a
++    // 4-thread PC this line alone filled 160,000 log lines in 8 minutes, each a formatted file write
++    // on the busy threads.
++    static std::atomic<bool> warned{false};
++    if (!warned.exchange(true)) {
++      REXSYS_WARN("Too few processor cores ({} logical, 6 needed) - guest thread affinities are ignored "
++                  "(said once)", rex::thread::logical_processor_count());
++    }
+   }
+ }
+ 

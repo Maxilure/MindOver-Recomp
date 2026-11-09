@@ -114,6 +114,8 @@ class TextureCache {
   // net found a change the watch hadn't reported (should stay 0).
   struct CheckStats {
     uint64_t unchanged = 0, hashed = 0, uploaded = 0, missed = 0;
+    // Uploads into a recycled image (`reused`) or a newly allocated one (`created`).
+    uint64_t reused = 0, created = 0;
   };
   CheckStats TakeCheckStats() {
     CheckStats s = stats_;
@@ -140,6 +142,11 @@ class TextureCache {
     VkDeviceMemory memory = VK_NULL_HANDLE;
     VkImageView view = VK_NULL_HANDLE;
     uint64_t last_submission = 0;  // last frame that sampled it
+    // Its shape, so a retired image can be REUSED by an upload of the same
+    // shape (spare_): format, size, levels and the view's channel order.
+    VkFormat format = VK_FORMAT_UNDEFINED;
+    uint32_t width = 0, height = 0, levels = 0;
+    VkComponentMapping swizzle{};
   };
   struct Entry {
     Image image;
@@ -174,11 +181,20 @@ class TextureCache {
   bool MipExtent(const GuestTexture& texture, uint32_t& address, uint32_t& size) const;
   bool Upload(Entry& entry, const GuestTexture& texture, const uint8_t* source,
               const uint8_t* mip_source, VkCommandBuffer cmd, uint64_t submission);
+  // A new image + view of image.format/width/height/levels/swizzle.
+  bool CreateImage(Image& image);
+  // Upload's 2nd half: the decoded levels (scratch_) copied into entry.image.
+  bool CopyIntoImage(Entry& entry, const GuestTexture& texture, VkCommandBuffer cmd, uint64_t submission);
 
   const rex::ui::vulkan::VulkanDevice* device_;
   std::unique_ptr<rex::ui::vulkan::VulkanUploadBufferPool> upload_pool_;
   std::unordered_map<uint64_t, Entry> entries_;  // key: hash of the layout words
-  std::vector<Image> graveyard_;                 // replaced images, freed when unused
+  std::vector<Image> graveyard_;                 // replaced images, until the GPU is done with them
+  // Retired images the GPU is done with, kept for reuse (2026-11-09,
+  // findings/57): textures that change often (palette copies, animated
+  // textures) made a NEW image + memory allocation per change, a slow driver
+  // call on the game's main thread. Oldest first; at most kSpareImages.
+  std::vector<Image> spare_;
   WriteWatch watch_;
   bool use_write_watch_ = true;
   CheckStats stats_;

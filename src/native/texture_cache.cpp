@@ -377,6 +377,9 @@ TextureCache::~TextureCache() {
   for (Image& image : graveyard_) {
     DestroyImage(image);
   }
+  for (Image& image : spare_) {
+    DestroyImage(image);
+  }
 }
 
 void TextureCache::DestroyImage(Image& image) {
@@ -392,15 +395,24 @@ void TextureCache::BeginFrame(uint64_t completed) {
   completed_ = completed;
   ++round_;
   upload_pool_->Reclaim(completed);
-  // Replaced images: free those the GPU finished with.
+  // Replaced images the GPU finished with: kept as spares for the next upload
+  // of the same shape (Upload), the oldest freed past kSpareImages.
+  constexpr size_t kSpareImages = 48;
   auto done = std::remove_if(graveyard_.begin(), graveyard_.end(), [&](Image& image) {
     if (image.last_submission > completed) {
       return false;
     }
-    DestroyImage(image);
+    spare_.push_back(image);
     return true;
   });
   graveyard_.erase(done, graveyard_.end());
+  if (spare_.size() > kSpareImages) {
+    const size_t extra = spare_.size() - kSpareImages;
+    for (size_t i = 0; i < extra; ++i) {
+      DestroyImage(spare_[i]);
+    }
+    spare_.erase(spare_.begin(), spare_.begin() + ptrdiff_t(extra));
+  }
   // Forget textures unused for a while (the game frees and reuses memory;
   // a stale entry would only waste VRAM). Checked every 64 frames.
   constexpr uint64_t kUnusedRounds = 600;  // ~10 s at 60 fps
@@ -629,12 +641,44 @@ bool TextureCache::Upload(Entry& entry, const GuestTexture& texture, const uint8
   const uint32_t width = scratch_levels_[0].width, height = scratch_levels_[0].height;
   const uint32_t level_count = uint32_t(scratch_levels_.size());
 
-  // A new image every time the pixels change: the old one may still be in
+  // Another image every time the pixels change: the old one may still be in
   // use by frames in flight, so it goes to the graveyard (BeginFrame).
   if (entry.image.image) {
     graveyard_.push_back(entry.image);
     entry.image = Image{};
   }
+  // A spare of the same shape, if there is one (no allocation: the copy below
+  // overwrites every level, and the barrier from UNDEFINED discards the old
+  // contents). Newest first: most likely still in the GPU's caches.
+  for (size_t i = spare_.size(); i-- > 0;) {
+    const Image& s = spare_[i];
+    if (s.format == format && s.width == width && s.height == height && s.levels == level_count &&
+        std::memcmp(&s.swizzle, &swizzle, sizeof(swizzle)) == 0) {
+      entry.image = s;
+      spare_.erase(spare_.begin() + ptrdiff_t(i));
+      ++stats_.reused;
+      break;
+    }
+  }
+  if (!entry.image.image) {
+    entry.image.format = format;
+    entry.image.width = width;
+    entry.image.height = height;
+    entry.image.levels = level_count;
+    entry.image.swizzle = swizzle;
+    if (!CreateImage(entry.image)) {
+      return false;
+    }
+  }
+  return CopyIntoImage(entry, texture, cmd, submission);
+}
+
+bool TextureCache::CreateImage(Image& image) {
+  const VulkanDevice::Functions& dfn = device_->functions();
+  const VkDevice device = device_->device();
+  const VkFormat format = image.format;
+  const uint32_t width = image.width, height = image.height, level_count = image.levels;
+  const VkComponentMapping swizzle = image.swizzle;
   VkImageCreateInfo image_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
   image_info.imageType = VK_IMAGE_TYPE_2D;
   image_info.format = format;
@@ -648,19 +692,29 @@ bool TextureCache::Upload(Entry& entry, const GuestTexture& texture, const uint8
   image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   if (!rex::ui::vulkan::util::CreateDedicatedAllocationImage(
           device_, image_info, rex::ui::vulkan::util::MemoryPurpose::kDeviceLocal,
-          entry.image.image, entry.image.memory)) {
+          image.image, image.memory)) {
     return false;
   }
   VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-  view_info.image = entry.image.image;
+  view_info.image = image.image;
   view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
   view_info.format = format;
   view_info.components = swizzle;
   view_info.subresourceRange = rex::ui::vulkan::util::InitializeSubresourceRange();
-  if (dfn.vkCreateImageView(device, &view_info, nullptr, &entry.image.view) != VK_SUCCESS) {
-    DestroyImage(entry.image);
+  if (dfn.vkCreateImageView(device, &view_info, nullptr, &image.view) != VK_SUCCESS) {
+    DestroyImage(image);
     return false;
   }
+  ++stats_.created;
+  return true;
+}
+
+// The decoded pixels (scratch_) -> the entry's image, by a staging copy.
+bool TextureCache::CopyIntoImage(Entry& entry, const GuestTexture& texture, VkCommandBuffer cmd,
+                                 uint64_t submission) {
+  const VulkanDevice::Functions& dfn = device_->functions();
+  const uint32_t width = entry.image.width, height = entry.image.height;
+  const uint32_t level_count = entry.image.levels;
 
   // Staging copy, then GPU copy into the image.
   if (scratch_.size() > kUploadPageSize) {

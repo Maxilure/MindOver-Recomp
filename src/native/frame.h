@@ -84,6 +84,9 @@
 #include <array>
 #include <cstdint>
 #include <vector>
+#include <memory>
+#include <new>
+#include <utility>
 
 namespace native {
 
@@ -634,13 +637,38 @@ struct Command {
   uint32_t index;  // into Frame::clears, Frame::draws or Frame::resolves
 };
 
+// A vector whose resize() leaves new elements UNINITIALISED (2026-11-09,
+// findings/57): the recorder grows vertex_data / indices by resize() and
+// overwrites every new element right away, and std::vector's zero-fill of
+// ~700 KB per frame was ~1% of the game's main thread. Only for plain words.
+template <typename T>
+struct UninitialisedAllocator : std::allocator<T> {
+  template <typename U>
+  struct rebind {
+    using other = UninitialisedAllocator<U>;
+  };
+  UninitialisedAllocator() = default;
+  template <typename U>
+  UninitialisedAllocator(const UninitialisedAllocator<U>&) noexcept {}
+  template <typename U>
+  void construct(U* p) noexcept {
+    ::new (static_cast<void*>(p)) U;  // default-init: no zeroing for int types
+  }
+  template <typename U, typename... Args>
+  void construct(U* p, Args&&... args) {
+    ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+  }
+};
+template <typename T>
+using RawVector = std::vector<T, UninitialisedAllocator<T>>;
+
 struct Frame {
   uint64_t number = 0;    // game frames since start
   bool recorded = false;  // false: recording was off, the lists are empty
   // Immediate-mode geometry of all draws, in host byte order (VertexLayout):
   // vertices as 32-bit words, and 16-bit indices.
-  std::vector<uint32_t> vertex_data;
-  std::vector<uint16_t> indices;
+  RawVector<uint32_t> vertex_data;  // (RawVector: resize() doesn't zero, see above)
+  RawVector<uint16_t> indices;
   // Palettes' colours as they were at their draw (GuestTexture::snapshot):
   // raw guest bytes, one copy per palettized draw.
   std::vector<uint8_t> snapshots;

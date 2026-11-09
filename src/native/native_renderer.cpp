@@ -1582,8 +1582,13 @@ void NativeRenderer::LogCost(double frame_ms) {
   // "unchanged" ones cost no hash thanks to the write watch.
   const native::TextureCache::CheckStats checks = texture_cache_->TakeCheckStats();
   REXLOG_INFO("NativeRenderer: texture checks per frame: {:.1f} unchanged (write watch), {:.1f} "
-              "hashed, {:.2f} uploaded; {} missed by the watch",
-              checks.unchanged / n, checks.hashed / n, checks.uploaded / n, checks.missed);
+              "hashed, {:.2f} uploaded ({} into recycled images, {} new); {} missed by the watch",
+              checks.unchanged / n, checks.hashed / n, checks.uploaded / n, checks.reused, checks.created,
+              checks.missed);
+  const native::BufferCache::CheckStats buffers = buffer_cache_->TakeCheckStats();
+  REXLOG_INFO("NativeRenderer: mesh buffer checks per frame: {:.1f} unchanged (write watch), {:.1f} hashed; "
+              "{} missed by the watch",
+              buffers.unchanged / n, buffers.hashed / n, buffers.missed);
   cost_ = Cost{};
 }
 
@@ -1639,6 +1644,7 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   const bool use_emulated_resolves = REXCVAR_GET(debug_native_emulated_resolves);
   // Those resolves are written by the emulated GPU, past the write watch.
   texture_cache_->UseWriteWatch(!use_emulated_resolves && REXCVAR_GET(debug_native_write_watch));
+  buffer_cache_->UseWriteWatch(!use_emulated_resolves && REXCVAR_GET(debug_native_write_watch));
   auto get_texture = [&](const native::GuestTexture& texture) {
     const native::RenderTargets::TextureView resolved =
         use_emulated_resolves ? native::RenderTargets::TextureView{}
