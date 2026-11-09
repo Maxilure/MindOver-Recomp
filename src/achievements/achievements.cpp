@@ -592,10 +592,19 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     add(Read32(base, 0x825A58E8), 0, 2, 5, seconds);
     REXLOG_INFO("Achievements: test message added to the game's bar ({} s)", seconds);
   }
-  const bool set_up = *GuestPtr(base, bar + kBarFlags) & 0x80;
   // 1. An earned one joins the bar's queue once the bar is set up (in play)
-  //    and has room.
+  //    AND IDLE: queue empty and the page gone (its slide-away finished).
+  //    WHY: the bar goes from one queued message to the next WITHOUT any
+  //    animation (the old one vanishes, the next pops in) and only slides
+  //    away after the last. Added while a game message (a voodoo doll pick-up)
+  //    was up, ours swapped in statically and cut the game's message off.
+  //    Waiting for an idle bar gives the game's message its slide-away and
+  //    ours its own slide-in.
   //    Notices first (they say something about what happens next).
+  const uint32_t idle_page = Read32(base, bar + kBarPage);
+  const bool bar_idle = (*GuestPtr(base, bar + kBarFlags) & 0x80) &&
+                      Read32(base, bar + kBarQueueEnd) == bar + kBarQueue &&
+                      !(idle_page && scrooby::Visible(base, idle_page));
   uint32_t next = 0;
   {
     std::lock_guard lock(g_mutex);
@@ -609,12 +618,12 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
         notice_queued = true;
       }
     }
-    if (set_up && queued < kBarCapacity && !g_notices.empty() && !notice_queued &&
+    if (bar_idle && queued < kBarCapacity && !g_notices.empty() && !notice_queued &&
         g_showing_id != kNoticeId) {
       next = kNoticeId;
       g_notice_up = std::move(g_notices.front());
       g_notices.pop_front();
-    } else if (set_up && !g_waiting.empty() && queued < kBarCapacity) {
+    } else if (bar_idle && !g_waiting.empty() && queued < kBarCapacity) {
       next = g_waiting.front();
       g_waiting.pop_front();
     }
