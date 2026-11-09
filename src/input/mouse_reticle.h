@@ -23,7 +23,9 @@
 // bytes, value at +0x10 each) toward it. After that Update, the port sets
 // both target and shown position to the pointer's spot (clamped by the
 // game's own sub_82255360, set by sub_822EAA18), for the player the keyboard
-// plays as, and the system pointer is hidden while it aims (it would sit on
+// plays as, unless that player used a CONTROLLER after the mouse last moved
+// (player 1 = keyboard + an optional pad: the stick aims then, and the mouse
+// takes over again at its next move), and the system pointer is hidden while it aims (it would sit on
 // top of the reticle; keyboard_mouse.h HidePointerWhileAiming).
 // =============================================================================
 #pragma once

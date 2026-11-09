@@ -224,3 +224,27 @@ used a controller. Now the overlay follows the pointer's move counter
 
 The system pointer stays hidden while the bubble sleeps (the same rule as
 before); the next mouse move brings the bubble back where the pointer is.
+
+## 9. A controller on player 1 aims with its stick again (fixed)
+
+Player 1 always plays on the keyboard and may hold a controller as well.
+The reticle followed the mouse whenever the keyboard answered for its
+player, so a player 1 who switched to a controller could not move the
+reticle with the stick: the pointer's spot overwrote the stick's movement
+every frame (seen with a jacked TK titan holding guard, and with any
+masked aim).
+
+Now the device used LAST aims (`mouse_reticle.cpp`, WHO AIMS):
+
+- the mouse's turn starts when the pointer's move counter goes up. It is
+  checked every frame from player 1's reticle Update (it runs whether or
+  not anyone aims), so a move made just before aiming counts at its time;
+- the stick's turn starts when a controller is used on the keyboard's
+  socket (`prompt_icons::PadActivity`: buttons, triggers, sticks past the
+  dead zone, minus what the keyboard itself pressed). Keyboard keys (WASD,
+  the Shift guard) do not end the mouse's turn.
+
+Checked by console on Wumpa Island with a TK titan, guard held on Shift:
+mouse at 0.3 of the width = reticle x 149.3; controller stick right =
+746.5 (the right edge) and it stays there while the mouse is still; one
+mouse move to 0.2 = 64.0 at once.
