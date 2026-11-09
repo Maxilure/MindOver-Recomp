@@ -23,6 +23,33 @@ installer.
 > see [Updating from 0.1.0-alpha](#updating-from-010-alpha) before you play.
 
 
+### What's new in 0.2.3-alpha
+
+Another small fix-up release, mostly for the Windows installer. Already on
+0.2.0 or 0.2.1? Open **Mind over Recomp** from the Start menu and it offers
+the update. (There is no 0.2.2: that version was folded into the next big
+one.)
+
+**The install no longer stops with "Couldn't find cmake (is it
+installed?)" when the tools page says CMake is OK.** Visual Studio's C++
+tools come with their own copy of CMake (and Ninja), kept outside the
+usual program search path. The installer's tools check counted that copy
+as found, but the build step then looked for CMake only on the search path,
+didn't find it and stopped before building anything. The build steps now
+look in the same places as the check. Thanks to
+**[Mr-P2000](https://github.com/Mr-P2000)** and
+**[Zepiririquito](https://github.com/Zepiririquito)** for the reports in
+[#10](https://github.com/Maxilure/MindOver-Recomp/issues/10) and
+[#11](https://github.com/Maxilure/MindOver-Recomp/issues/11); the setup
+logs in #11 showed exactly where it stopped.
+
+**Dig spots with 3 or 4 players: fixed.** When one Crash dug into the
+ground or came back up, only player 2 was handled: players 3 and 4 could
+stay stuck in the digging pose. Now the player who digs stays a Crash and
+everyone else in the game rides along as a mask, as in a 2-player game.
+Three or more Crashes underground at once also crashed the game; that is
+fixed too.
+
 ### What's new in 0.2.1-alpha
 
 A small fix-up release for the Windows installer. Already on 0.2.0? Open
