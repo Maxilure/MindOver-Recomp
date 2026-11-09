@@ -2684,3 +2684,36 @@ from `sub_8218E938`. Tested at the same dig spot: players 1-4 all
 underground, no crash, the hole drawn; player 1 digs out, players 2-4
 become his masks. Not seen: a waiting third digger taking over a freed slot
 (it needs two diggers to leave while one stays).
+
+
+## 65. The keyboard and mouse are always player 1
+
+Every keyboard and mouse on the PC is ONE device to the port: the driver has
+one fixed device id (`KeyboardMouseDriver::kDeviceId`) and SDL merges all
+physical keyboards and mice into it. A second keyboard plugged in therefore
+never makes a second "Keyboard and Mouse" card; all of them steer the same
+player.
+
+Which player that is used to be a choice like a controller's:
+`player.keyboard = 1-4` in `controls.toml`, and the Controls window's Players
+tab (once F6, now a Tools button) offered Player 1 to 4. The Players screen
+never moves the keyboard, but a file or a pick from an earlier version stays.
+Seen on Windows: player 1 = a PlayStation controller only, player 2 =
+"Keyboard and Mouse". Player 1's card showed a (dimmed) keyboard picture as
+well, because the keys + controller pair on that card was drawn without
+asking whether the keyboard was player 1's.
+
+Now:
+
+* `input/players.cpp` PlayerOf: the keyboard is player 1, or off (kept for
+  test runs that must not hear the keyboard). Any other choice reads as
+  player 1. SetChoice turns a keyboard move to 2-4 into player 1.
+* `input/bindings.cpp`: `player.keyboard = 2`-`4` is ignored with a log line
+  ("the keyboard and mouse are always player 1"); the next save of the file
+  drops it.
+* The Controls window lists only Player 1 and Off for the keyboard.
+* `options/options_menu.cpp`: player 1's card shows the keys + controller pair
+  only while the keyboard is in player 1's devices.
+
+Checked with a `controls.toml` saying `player.keyboard = 2`: log "Keyboard and
+mouse = player 1 (automatic)", fake controller 2 = player 2.

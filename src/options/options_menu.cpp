@@ -1539,7 +1539,12 @@ void RefreshPlayers(Env& env) {
           }
         }
       }
-      const bool pair = pad != nullptr && !(styling && !faces.empty());
+      // ... and only while the keyboard really is player 1's (it was drawn
+      // regardless, so a keyboard set to player 2 by an old controls.toml
+      // showed on BOTH cards; players.h: it can only be 1 or off now).
+      bool keys_here = false;
+      for (const players_setup::ShownDevice& m : b.devices) keys_here |= m.keyboard;
+      const bool pair = pad != nullptr && keys_here && !(styling && !faces.empty());
       scrooby::SetVisible(base, g.ply_pair_keys, pair);
       scrooby::SetVisible(base, g.ply_pair_pad, pair);
       if (pair) {

@@ -16,7 +16,8 @@
 // keyboard and the pad were always the same player.
 //
 // THE RULE, per device:
-//   * Keyboard and mouse: the chosen player (default 1), or off.
+//   * Keyboard and mouse: ALWAYS player 1 (or off, for test runs). Every
+//     keyboard and mouse is this one device; players 2-4 never get it.
 //   * A controller: the chosen player, off, or Automatic = the SDK's rule
 //     (the Nth controller connected = player N), the default.
 //   * Other synthetic devices (the SDK's "None" stand-in that keeps player 1

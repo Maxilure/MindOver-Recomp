@@ -494,6 +494,14 @@ Bindings LoadBindings(const std::filesystem::path& path) {
         REXLOG_WARN("Controls: {} = \"{}\": not 1-4 or off (skipped)", key, value);
         continue;
       }
+      if (key == "player.keyboard" && choice.player > 0) {
+        // The keyboard and mouse are always player 1 (input/players.h,
+        // 2026-11-08): a file from before that may say 2-4. Read as
+        // automatic (= player 1); the next save of the file drops the line.
+        REXLOG_INFO("Controls: player.keyboard = {}: the keyboard and mouse are always player 1 (line ignored)",
+                    value);
+        continue;
+      }
       b.players[std::string(key.substr(7))] = std::move(choice);
       continue;
     }
