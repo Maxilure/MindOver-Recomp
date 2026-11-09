@@ -52,6 +52,7 @@
 #include "debug_console.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "discord_presence.h"
 #include "ui/hud_hide.h"
 #include "ui/tools_menu.h"
 #include "ui/font_letters.h"
@@ -335,6 +336,7 @@ class CrashMomApp : public rex::ReXApp {
 
   // Last hook before the game's main thread starts running.
   void OnPreLaunchModule() override {
+    discord_presence::Start();
     // Room for four players in the game's co-op tables (players/more_players.h):
     // the tables move before any game code runs.
     more_players::Install();
@@ -390,6 +392,7 @@ class CrashMomApp : public rex::ReXApp {
   // (Closing the main window ends the process right away instead: ReXApp's
   // OnClosing hard-exits, so this runs only on other ways out.)
   void OnShutdown() override {
+    discord_presence::Stop();
     frame_rate::StopFrameStats();
     rex::ui::UnregisterBind("bind_native_window");
     // Renderer first: until it's gone it may be drawing into the native
