@@ -79,7 +79,10 @@ cursor for controller players, achievements and messages, text colours,
 shiny surfaces) and its faster CPU work (native skinning, renderer trims). Also the fixes of
 [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2)
 (no Tracy DLL in the SDK build, an antivirus hint, the version in the
-installer's title).
+installer's title) and of
+[0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3)
+(the build uses exactly the Python, Ninja, Git and shader compiler the
+installer's check found).
 
 **Changes**
 
@@ -100,13 +103,6 @@ installer's title).
     "fork: Resource temporarily unavailable" (exit code 254), the
     installer says what usually causes it and what to try
     ([#14](https://github.com/Maxilure/MindOver-Recomp/issues/14)).
-  - **The build uses exactly the tools the check found.** Python, Ninja,
-    Git and the shader compiler are handed to the build by their full path.
-    Before, the build searched for them again by itself and could land on a
-    different file: with Python from python.org, the SDK build stopped
-    with "Python was not found ... Microsoft Store" because it picked
-    Windows' Store shortcut for Python
-    ([#16](https://github.com/Maxilure/MindOver-Recomp/issues/16)).
   - **The installer downloads nothing itself.** It uses the files from its
     own `.zip`: unpack the whole `.zip` before starting it, or it says so.
 - **Button styles named after their controllers.** In **Options → Controls
@@ -150,6 +146,9 @@ you don't need it.
 
 ### Changelog
 
+- [0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3):
+  installer fix (the SDK build no longer picks Windows' Store shortcut for
+  Python).
 - [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2):
   installer fix (the SDK no longer builds the Tracy DLL an antivirus removed),
   the installer's version in its window.

@@ -290,7 +290,7 @@ looked for a program named `python3` on its own and found Windows'
 `AppData\Local\Microsoft\WindowsApps`). A python.org install has no
 `python3.exe`, so the shortcut was the only match.
 
-Installers from 0.3.0-alpha on give the build the exact Python, Ninja, Git
+Installers from 0.2.2-alpha.3 on give the build the exact Python, Ninja, Git
 and glslc the tool check found, so this can't happen there. With an older
 installer:
 
