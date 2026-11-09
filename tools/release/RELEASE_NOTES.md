@@ -30,31 +30,24 @@ Activision or the game's other owners.
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
 
-### What's new in 0.2.2-alpha.2
+### What's new in 0.2.2-alpha.3
 
-An installer fix and one controls fix on top of 0.2.2-alpha.
+One installer fix on top of 0.2.2-alpha.2.
 
-- **The SDK step no longer fails with "file INSTALL cannot find
-  ...TracyClient.dll".** The SDK compiled, but its last step couldn't copy
-  a file it had built minutes earlier. On the PC where it happened, the
-  antivirus had removed that freshly built file. It was a profiler library
-  that nobody needs to play, so the installer no longer builds it at all.
-  Thanks to **[Zepiririquito](https://github.com/Zepiririquito)** for the
-  logs in [#10](https://github.com/Maxilure/MindOver-Recomp/issues/10).
-- **If a file the build just made disappears,** the installer's error now
-  says it's probably the antivirus and what to check, and the
-  [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#file-install-cannot-find-a-dll)
+- **The SDK step no longer fails with "Python was not found; run without
+  arguments to install from the Microsoft Store".** Python was installed
+  and working (the installer had just used it to copy the disc), but one of
+  the SDK's libraries looked for Python again on its own. It searched for a
+  program called `python3`, and with Python from python.org the only one it
+  found was Windows' **Microsoft Store shortcut**, which isn't Python. The
+  installer now hands the build the exact Python, Ninja, Git and shader
+  compiler its tool check found, so the build can't pick a different file.
+  Thanks to **[MrSanic](https://github.com/MrSanic)** for the logs in
+  [#16](https://github.com/Maxilure/MindOver-Recomp/issues/16).
+- **If the build ever meets that Store shortcut again,** the installer's
+  error says what to do, and the
+  [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#python-was-not-found-run-without-arguments-to-install-from-the-microsoft-store)
   page has an entry for it.
-- **A controller aims with its stick again while Mouse Aiming is on.**
-  Player 1 plays on the keyboard and can hold a controller too, but the
-  reticle (a mask's aim, a TK titan's guard aim) followed only the mouse,
-  so the stick couldn't move it. Now whichever was used last aims: move
-  the mouse and it takes over, use the controller and its stick does.
-  Thanks to **[zanettevini](https://github.com/zanettevini)** for the
-  report in [#13](https://github.com/Maxilure/MindOver-Recomp/issues/13).
-- **The installer shows its version** at the top of its window
-  (for example "version 0.2.2-alpha.2"), so a screenshot says which
-  installer it is.
 
 ### Install or update
 
@@ -66,14 +59,15 @@ An installer fix and one controls fix on top of 0.2.2-alpha.
   menu.
 - **Already on 0.2.0, 0.2.1 or 0.2.2:** open **Mind over Recomp** from the Start
   menu. It offers the update.
-- **Your install stopped at "Couldn't find cmake" or "file INSTALL cannot
-  find"?** Start this version's **Mind over Recomp.exe** and install into
-  the same folder: it carries on where it stopped.
+- **Your install stopped at "Couldn't find cmake", "file INSTALL cannot
+  find" or "Python was not found"?** Start this version's
+  **Mind over Recomp.exe** and install into the same folder: it carries on
+  where it stopped.
 - **Coming from 0.1.0:** don't use the old launcher's **Update** button.
   Follow [Updating from 0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha)
   on the 0.2.0 page.
 
-**Download:** `MindOverRecomp-0.2.2-alpha.2-windows-x86_64.zip` (Windows 10 / 11,
+**Download:** `MindOverRecomp-0.2.2-alpha.3-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` is only for the update check; you don't need it.
 
 ### Help and bug reports
@@ -87,6 +81,9 @@ An installer fix and one controls fix on top of 0.2.2-alpha.
 
 ### Changelog
 
+- [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2):
+  the SDK step without the Tracy DLL an antivirus removed, controller aiming
+  with Mouse Aiming on, the installer shows its version.
 - [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha):
   installer fixes (Visual Studio's CMake, minimized window), dig spots with
   3-4 players, mouse cursor, faster game on the CPU.

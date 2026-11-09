@@ -443,13 +443,52 @@ std::shared_ptr<const platform::Environment> BuildEnvironment(const fs::path& vc
 // Package ids are winget's (the same ones a community script used, PR #4 on
 // GitHub: Visual Studio's override and winget's "already installed" code).
 
-// The Python found by the checks (setup.cpp runs the disc tools with it).
-std::mutex g_python_mutex;
-std::string g_python = "python";
+// THE TOOLS THE CHECKS FOUND, by full path (GitHub issue #16, 2026-11-09).
+// The installer runs the disc tools with this Python, and every configure
+// names these files to CMake (FoundToolOptions) instead of letting each
+// library search PATH by itself. Why: the build's own search can land on a
+// DIFFERENT file than the one the checks looked at. Issue #16: glslang
+// searches "python3" before "python" in all of PATH; a python.org install
+// has only python.exe, so CMake took the Microsoft Store's python3.exe
+// SHORTCUT (an App Execution Alias in WindowsApps). It even answered "3.14"
+// while configuring, then said "Python was not found" when the build ran it.
+// The same family as issues #10/#11 (a CMake/Ninja found by us but not by
+// the build). Empty = not found: the option is left out.
+struct FoundTools {
+  std::string python = "python";  // full path once the checks found one
+  fs::path ninja, git, glslc;
+};
+std::mutex g_found_mutex;
+FoundTools g_found;
 
 std::string PythonProgram() {
-  std::lock_guard lock(g_python_mutex);
-  return g_python;
+  std::lock_guard lock(g_found_mutex);
+  return g_found.python;
+}
+
+// "-D" options naming the checked tools, for the SDK's and the game's
+// configure. Forward slashes: CMake's own spelling, so a value the cache
+// already holds compares equal (nothing reruns).
+//   PYTHON_EXECUTABLE   glslang (old FindPythonInterp)
+//   Python3_EXECUTABLE  SPIRV-Tools, the Vulkan loader (FindPython3)
+//   CMAKE_MAKE_PROGRAM  the Ninja every build runs
+//   GIT_EXECUTABLE      the SDK's version text (rex_version.cmake)
+//   GLSLC_EXECUTABLE    the game's shaders (CMakeLists.txt)
+// Compilers are NOT named: a changed CMAKE_C_COMPILER makes CMake throw
+// its whole cache away (= a full rebuild on every update), and clang is
+// found by the same PATH search as in the checks.
+std::vector<std::string> FoundToolOptions() {
+  std::lock_guard lock(g_found_mutex);
+  std::vector<std::string> options;
+  auto add = [&](const char* name, const fs::path& file) {
+    if (file.is_absolute()) options.push_back(std::string("-D") + name + "=" + file.generic_string());
+  };
+  add("PYTHON_EXECUTABLE", fs::path(g_found.python));
+  add("Python3_EXECUTABLE", fs::path(g_found.python));
+  add("CMAKE_MAKE_PROGRAM", g_found.ninja);
+  add("GIT_EXECUTABLE", g_found.git);
+  add("GLSLC_EXECUTABLE", g_found.glslc);
+  return options;
 }
 
 // A real Python 3 (see above): its full path, or "" if none.
@@ -583,8 +622,8 @@ void CheckTools(Status* s) {
   // tools find it too.
   const fs::path python = FindPython(&version);
   if (!python.empty()) {
-    std::lock_guard lock(g_python_mutex);
-    g_python = python.string();
+    std::lock_guard lock(g_found_mutex);
+    g_found.python = python.string();
     extra_path += python.parent_path().string() + ";";
   }
   add("Python 3", "Python 3.12", !python.empty(),
@@ -603,6 +642,13 @@ void CheckTools(Status* s) {
   }
   add("glslc (shader compiler)", "Vulkan SDK", !glslc.empty(),
       glslc.empty() ? trs("not found") : glslc.string(), "KhronosGroup.VulkanSDK");
+  {
+    // For the configures (FoundToolOptions). Python is stored above.
+    std::lock_guard lock(g_found_mutex);
+    g_found.ninja = ninja;
+    g_found.git = git;
+    g_found.glslc = glslc;
+  }
   // Visual Studio's C++ tools + the Windows SDK (Windows' own headers).
   std::string windows_sdk;
   std::error_code ec;
@@ -1241,6 +1287,13 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
                                      "-DCMAKE_INSTALL_PREFIX=" +
                                          (folders_.source / "thirdparty" / "rexglue-install").string()};
     argv.insert(argv.end(), kSdkOptions.begin(), kSdkOptions.end());
+#ifdef _WIN32
+    // The checked tools by full path (FoundToolOptions, GitHub issue #16):
+    // a path wins over any search, and over a wrong one cached by an
+    // earlier configure (the retry after a failure).
+    const std::vector<std::string> tools = FoundToolOptions();
+    argv.insert(argv.end(), tools.begin(), tools.end());
+#endif
     out->push_back({trs("Configuring the SDK"), argv, sdk});
   }
   out->push_back({trs("Building the SDK (Release: the recompiler)"),
@@ -1332,13 +1385,19 @@ std::vector<Command> Setup::GameJob() {
   // Always configured (seconds), naming THIS folder's SDK explicitly and
   // ignoring the per-user CMake package list: a build must never use another
   // folder's SDK (see SdkJob); a cached choice is corrected too.
-  const Command configure{
+  Command configure{
       trs("Configuring the game's build"),
       {"cmake", "--preset", kGamePreset,
        "-Drexglue_DIR=" +
            (root / "thirdparty" / "rexglue-install" / "lib" / "cmake" / "rexglue").string(),
        "-DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF"},
       root};
+#ifdef _WIN32
+  // The checked tools by full path, like the SDK's configure (FoundToolOptions,
+  // GitHub issue #16): here glslc and Ninja matter.
+  const std::vector<std::string> tools = FoundToolOptions();
+  configure.argv.insert(configure.argv.end(), tools.begin(), tools.end());
+#endif
   commands.push_back(configure);
   // First time: recompile on its own, then configure again so the build picks
   // the generated files up (docs/01-building.md, step 4).

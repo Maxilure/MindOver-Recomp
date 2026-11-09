@@ -51,6 +51,17 @@ std::string KnownProblemHint(const std::string& line) {
            "mistake: check Windows Security > Virus & threat protection > Protection history, allow the "
            "file, add the game's folder as an exclusion, then run this step again.";
   }
+  // A build tool ran the Microsoft Store's "python" shortcut instead of a
+  // real Python (GitHub issue #16: glslang's build_info.h step). The SDK's
+  // configure now names the Python the checks found, so this should only
+  // show when no real Python was found at all.
+  if (line.find("Python was not found; run without arguments to install from the Microsoft Store") !=
+      std::string::npos) {
+    return "A build step found only Windows' Microsoft Store shortcut for Python, not Python itself. Install "
+           "Python 3 from python.org (tick \"Add python.exe to PATH\"), or turn off the python.exe and "
+           "python3.exe shortcuts in Settings > Apps > Advanced app settings > App execution aliases, then "
+           "run this step again.";
+  }
   return {};
 }
 
