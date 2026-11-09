@@ -293,6 +293,7 @@ struct App {
   fs::path registered_root;
   std::string registered_version;
   bool quit = false;           // the window closes after this frame
+  bool awake = false;          // platform::KeepAwake is on (while installing)
 
   // --- step 1, the tools (before any folder exists) ---------------------------
   std::mutex tools_mutex;
@@ -331,13 +332,18 @@ struct App {
     }
   }
 
+  // The steps' state machine: every pass of the main loop, drawn or not
+  // (a minimized window isn't drawn; see main's loop).
+  void Update();
   void Draw();
   void DrawHeader();
   void TakePicks();
   // INSTALL
   void DrawChoose();
   void DrawToolsPage();
+  void UpdateInstalling();
   void DrawInstalling();
+  void SetAwake(bool on);
   void DrawDone();
   void CheckTools();
   void BeginInstall();
@@ -602,10 +608,17 @@ void App::DrawToolsPage() {
 
 bool RenameOldGameExe(const fs::path& root);  // (below, by HeadlessInstall)
 
+void App::SetAwake(bool on) {
+  if (awake == on) return;
+  awake = on;
+  platform::KeepAwake(on);
+}
+
 void App::BeginInstall() {
   page = Page::kInstalling;
   fail_text.clear();
   show_log = false;
+  SetAwake(true);  // a long build left alone mustn't end in the PC's sleep
   std::error_code ec;
   fs::create_directories(root / "user" / "logs", ec);
   if (!ec) install::MarkInstalled(root);
@@ -726,14 +739,11 @@ void App::StartFinish() {
   });
 }
 
-void App::DrawInstalling() {
-  ImGui::PushFont(fonts.bold, 0.0f);
-  ImGui::TextUnformatted(trs("3. Installing"));
-  ImGui::PopFont();
-  ImGui::TextDisabled("%s", root.string().c_str());
-  ImGui::Spacing();
-
-  // Move the phases on.
+// Moves the install's phases on. Called every pass of the main loop, also
+// while the window is minimized. (Until 0.2.2 this ran inside the DRAWING
+// of the page, and a minimized window was "drawn" without a real frame:
+// players saw the install pause or call itself done while minimized.)
+void App::UpdateInstalling() {
   if (phase == Phase::kFeed && feed_reader && !feed_reader->checking()) {
     update::Release latest;
     bool available = false;
@@ -787,9 +797,18 @@ void App::DrawInstalling() {
     if (finish_thread.joinable()) finish_thread.join();
     phase = Phase::kFinished;
     page = Page::kDone;
+    SetAwake(false);
   }
+  if (phase == Phase::kFailed) SetAwake(false);
+}
 
-  // Draw.
+void App::DrawInstalling() {
+  ImGui::PushFont(fonts.bold, 0.0f);
+  ImGui::TextUnformatted(trs("3. Installing"));
+  ImGui::PopFont();
+  ImGui::TextDisabled("%s", root.string().c_str());
+  ImGui::Spacing();
+
   if (phase == Phase::kFeed) {
     ImGui::TextUnformatted(trs("Looking for the newest version..."));
   } else if (phase == Phase::kFiles) {
@@ -817,6 +836,7 @@ void App::DrawInstalling() {
     ImGui::Spacing();
     if (AccentButton(trs("Try again"))) {
       fail_text.clear();
+      SetAwake(true);
       if (setup) {
         setup->ForgetJob();
         setup->Recheck();
@@ -868,7 +888,6 @@ void App::DrawDone() {
 
 void App::DrawManage() {
   if (!setup) return;
-  setup->Tick(GameRunning());
   const setup::Status s = setup->CurrentStatus();
   const auto& job = setup->JobSnapshot();
   const bool busy = job.state == State::kRunning || setup->SettingUp();
@@ -1085,8 +1104,13 @@ void App::DrawUninstall() {
   }
 }
 
-void App::Draw() {
+void App::Update() {
   TakePicks();
+  if (mode == Mode::kInstall && page == Page::kInstalling) UpdateInstalling();
+  if (mode == Mode::kManage && setup) setup->Tick(GameRunning());
+}
+
+void App::Draw() {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -1264,6 +1288,9 @@ int main(int argc, char** argv) {
     else if (arg.starts_with("--ico=")) embed_icon_ico = value("--ico=");
   }
 
+  // Windows: never slowed down to save power, minimized or not (platform.h).
+  platform::KeepFullSpeed();
+
   // Where the install is: --game_folder, else this exe's own folder when it
   // is an install's "Mind over Recomp.exe".
   const fs::path self = platform::SelfPath();
@@ -1435,17 +1462,9 @@ int main(int argc, char** argv) {
       ImGui_ImplSDL3_ProcessEvent(&event);
       if (event.type == SDL_EVENT_QUIT) running = false;
     }
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
-      // Jobs keep going; the INSTALL phases move on only when drawn.
-      if (app->mode == Mode::kInstall && app->page == Page::kInstalling) {
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-        app->Draw();
-        ImGui::EndFrame();
-      }
-      continue;
-    }
+    // The steps move on whether or not the window is drawn (App::Update).
+    app->Update();
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) continue;
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();

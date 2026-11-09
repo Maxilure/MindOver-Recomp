@@ -12,6 +12,13 @@
 //     ends them all (TerminateJobObject); build steps' jobs also have
 //     KILL_ON_JOB_CLOSE, so they end with the launcher (die_with_launcher).
 //   - a .cmd / .bat runs through cmd.exe /d /s /c.
+//   - FULL SPEED (2026-11-08): Windows 11 runs the work of apps it thinks are
+//     in the background (a minimized window; processes without any window,
+//     like cmake -> ninja -> clang) on its power-saving "efficiency" footing
+//     (EcoQoS). Players saw builds crawl or seem to stop while the installer
+//     was minimized. Every process in a build step's job is told to opt out
+//     (FullSpeed below), the new ones as they appear (a watcher thread per
+//     step, once a second).
 // Text: the launcher works in UTF-8; Windows calls get UTF-16 (wide).
 // =============================================================================
 #include "platform.h"
@@ -26,6 +33,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <thread>
 #include <vector>
 #include <cstdlib>
 #include <cstring>  // _stricmp
@@ -399,11 +407,64 @@ struct Child::State {
   HANDLE read = nullptr;
   DWORD pid = 0;
   bool waited = false;
+  std::thread speed_watcher;  // FullSpeed for every process of the job (header)
 };
+
+namespace {
+
+// Opts one process out of Windows' power throttling (EcoQoS): ControlMask
+// names the throttling kinds we decide, StateMask 0 = "off" for all of them
+// (Microsoft's documented way to ask for full speed, "HighQoS").
+void FullSpeed(HANDLE process) {
+  PROCESS_POWER_THROTTLING_STATE state{};
+  state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+  state.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
+#ifdef PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION
+  state.ControlMask |= PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+#endif
+  state.StateMask = 0;
+  SetProcessInformation(process, ProcessPowerThrottling, &state, sizeof(state));
+}
+
+// Until `process` ends: every process in `job` (the step's tool and all it
+// starts: ninja's compilers come and go) is put on full speed once.
+void WatchJobSpeed(HANDLE job, HANDLE process) {
+  std::vector<ULONG_PTR> seen;
+  std::vector<uint8_t> buffer(sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + 1024 * sizeof(ULONG_PTR));
+  do {
+    auto* list = reinterpret_cast<JOBOBJECT_BASIC_PROCESS_ID_LIST*>(buffer.data());
+    if (QueryInformationJobObject(job, JobObjectBasicProcessIdList, list, DWORD(buffer.size()), nullptr) ||
+        GetLastError() == ERROR_MORE_DATA) {
+      for (DWORD i = 0; i < list->NumberOfProcessIdsInList; ++i) {
+        const ULONG_PTR pid = list->ProcessIdList[i];
+        if (std::find(seen.begin(), seen.end(), pid) != seen.end()) continue;
+        seen.push_back(pid);
+        if (HANDLE p = OpenProcess(PROCESS_SET_INFORMATION, FALSE, DWORD(pid))) {
+          FullSpeed(p);
+          CloseHandle(p);
+        }
+      }
+      if (seen.size() > 4096) seen.erase(seen.begin(), seen.begin() + 2048);  // pids get reused
+    }
+  } while (WaitForSingleObject(process, 1000) == WAIT_TIMEOUT);
+  CloseHandle(job);
+  CloseHandle(process);
+}
+
+}  // namespace
+
+void KeepFullSpeed() { FullSpeed(GetCurrentProcess()); }
+
+void KeepAwake(bool on) {
+  // ES_SYSTEM_REQUIRED: no sleep by itself while set (ES_CONTINUOUS = until
+  // cleared). The display may still go dark: that doesn't slow a build.
+  SetThreadExecutionState(on ? (ES_CONTINUOUS | ES_SYSTEM_REQUIRED) : ES_CONTINUOUS);
+}
 
 Child::Child() : state_(std::make_unique<State>()) {}
 
 Child::~Child() {
+  if (state_->speed_watcher.joinable()) state_->speed_watcher.join();  // ends with the process
   if (state_->read) CloseHandle(state_->read);
   if (state_->process) CloseHandle(state_->process);
   if (state_->job) CloseHandle(state_->job);  // KILL_ON_JOB_CLOSE jobs end their steps here
@@ -498,7 +559,19 @@ bool Child::Start(const ChildOptions& options, std::string* error) {
     SetInformationJobObject(state_->job, JobObjectExtendedLimitInformation, &limits, sizeof(limits));
   }
   if (state_->job) AssignProcessToJobObject(state_->job, info.hProcess);
+  FullSpeed(info.hProcess);
   ResumeThread(info.hThread);
+  // Build steps: their children on full speed too, as they start (header).
+  if (state_->job && options.die_with_launcher) {
+    HANDLE job_copy = nullptr, process_copy = nullptr;
+    const HANDLE me = GetCurrentProcess();
+    if (DuplicateHandle(me, state_->job, me, &job_copy, 0, FALSE, DUPLICATE_SAME_ACCESS) &&
+        DuplicateHandle(me, info.hProcess, me, &process_copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+      state_->speed_watcher = std::thread(WatchJobSpeed, job_copy, process_copy);
+    } else {
+      if (job_copy) CloseHandle(job_copy);
+    }
+  }
   CloseHandle(info.hThread);
   state_->process = info.hProcess;
   state_->pid = info.dwProcessId;

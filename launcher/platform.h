@@ -99,6 +99,18 @@ struct ChildOptions {
   const Environment* environment = nullptr;  // the WHOLE environment, or null = inherit
 };
 
+// WINDOWS: tells Windows never to slow THIS process down to save power.
+// Windows 11 puts the work of apps that are minimized or hidden on its
+// "efficiency" footing (EcoQoS: slow cores, low clocks); a build in a
+// minimized installer could crawl or seem to stop (players' reports,
+// 2026-11). Build steps' children get the same (Child::Start). Linux: no-op.
+void KeepFullSpeed();
+
+// WINDOWS: while `on`, the PC doesn't go to sleep by itself (a long build
+// left alone overnight, then asleep for hours, looked like a 5-hour
+// install). The screen may still turn off. Linux: no-op.
+void KeepAwake(bool on);
+
 struct Ended {
   bool crashed = false;   // a crash (see the header)
   bool killed = false;    // ended from outside (Linux signals other than crash ones)
