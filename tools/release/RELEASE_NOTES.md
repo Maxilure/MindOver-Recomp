@@ -76,7 +76,10 @@ Activision or the game's other owners.
 (the installer's CMake and minimize fixes, dig spots with 3-4 players,
 keyboard and mouse always on player 1, volumes on the title, the mouse
 cursor for controller players, achievements and messages, text colours,
-shiny surfaces) and its faster CPU work (native skinning, renderer trims).
+shiny surfaces) and its faster CPU work (native skinning, renderer trims). Also the fixes of
+[0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2)
+(no Tracy DLL in the SDK build, an antivirus hint, the version in the
+installer's title).
 
 **Changes**
 
@@ -136,6 +139,9 @@ you don't need it.
 
 ### Changelog
 
+- [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2):
+  installer fix (the SDK no longer builds the Tracy DLL an antivirus removed),
+  the installer's version in its window.
 - [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha):
   installer fixes (CMake from Visual Studio, minimized installs), co-op and
   menu fixes, a faster game on the CPU.
