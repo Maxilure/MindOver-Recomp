@@ -149,6 +149,26 @@ void ReadFetchConstant(const uint8_t* base, uint32_t d3d_texture, GuestTexture& 
   }
 }
 
+// A palette's colours copied NOW, at the draw (frame.h, GuestTexture::
+// snapshot): the game refills a texture's 16 palettes within the frame (a
+// font page's palettes take turns, one per coloured text: 40 refills in a
+// few seconds of the chest screen), and the frame is drawn after it ends.
+// Found 2026-11-08: player 1's "P1" in the 4-player outfit picker showed a
+// later text's colours (blue) whenever the cards held more coloured texts.
+void SnapshotPalette(GuestTexture& palette) {
+  // Its size from the fetch constant (word 2: width-1 bits 0-12, height-1
+  // bits 13-25; 4 bytes a colour): 256 x 1 = 1 KB for every palette seen.
+  const uint32_t width = (palette.fetch[2] & 0x1FFF) + 1;
+  const uint32_t height = ((palette.fetch[2] >> 13) & 0x1FFF) + 1;
+  const uint32_t size = width * height * 4;
+  if (size > 16384) return;  // not a palette's shape: read at the frame's end as before
+  const uint32_t address = (palette.fetch[1] >> 12) << 12;
+  const uint8_t* source = guest::TranslateReadable(address, size);
+  if (!source) return;
+  palette.snapshot = uint32_t(g.frame.snapshots.size()) + 1;
+  g.frame.snapshots.insert(g.frame.snapshots.end(), source, source + size);
+}
+
 // An xnTexture's D3D texture, and its palette if it's 8-bit palettized
 // (guest.h, texture). False if it has no plain 2D D3D texture.
 bool ReadXnTexture(const uint8_t* base, uint32_t xn_texture, GuestTexture& texture,
@@ -163,6 +183,7 @@ bool ReadXnTexture(const uint8_t* base, uint32_t xn_texture, GuestTexture& textu
     const uint32_t index = Load32(base, xn_texture + texture::kPaletteIndex) & 15;
     if (const uint32_t pal = Load32(base, xn_texture + texture::kPalettes + 4 * index)) {
       ReadFetchConstant(base, pal, palette);
+      SnapshotPalette(palette);
     }
   }
   return true;

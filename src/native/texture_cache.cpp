@@ -405,8 +405,12 @@ void TextureCache::BeginFrame(uint64_t completed) {
   // a stale entry would only waste VRAM). Checked every 64 frames.
   constexpr uint64_t kUnusedRounds = 600;  // ~10 s at 60 fps
   if ((round_ & 63) == 0) {
+    // Palette copies (one entry per set of colours: fading texts make many)
+    // go sooner, ~2 s.
+    constexpr uint64_t kUnusedSnapshotRounds = 128;
     for (auto it = entries_.begin(); it != entries_.end();) {
-      if (round_ - it->second.checked_round > kUnusedRounds) {
+      if (round_ - it->second.checked_round >
+          (it->second.snapshot ? kUnusedSnapshotRounds : kUnusedRounds)) {
         if (it->second.image.image) {
           graveyard_.push_back(it->second.image);
         }
@@ -715,9 +719,33 @@ bool TextureCache::Upload(Entry& entry, const GuestTexture& texture, const uint8
 }
 
 TextureCache::View TextureCache::Get(const GuestTexture& texture, VkCommandBuffer cmd,
-                                     uint64_t submission) {
+                                     uint64_t submission, const uint8_t* snapshot,
+                                     size_t snapshot_size) {
   if (!texture.present()) {
     return {};
+  }
+  uint32_t snapshot_address = 0, snapshot_bytes = 0;
+  if (snapshot && SourceExtent(texture, snapshot_address, snapshot_bytes) &&
+      snapshot_bytes <= snapshot_size) {
+    // A draw-time copy (a palette): keyed by layout AND content, uploaded once
+    // per set of colours; no write watch (the copy can't change).
+    const uint32_t size = snapshot_bytes;
+    const uint64_t hash = XXH3_64bits(snapshot, size);
+    Entry& entry = entries_[LayoutKey(texture) ^ (hash * 0x9E3779B97F4A7C15ull)];
+    entry.checked_round = round_;
+    if (!entry.snapshot || entry.content_hash != hash) {
+      entry.snapshot = true;
+      entry.content_hash = hash;
+      ++stats_.uploaded;
+      Upload(entry, texture, snapshot, nullptr, cmd, submission);
+    } else {
+      ++stats_.unchanged;
+    }
+    if (!entry.image.view) {
+      return {};
+    }
+    entry.image.last_submission = submission;
+    return {entry.image.view, entry.width, entry.height};
   }
   const uint64_t key = LayoutKey(texture);
   Entry& entry = entries_[key];

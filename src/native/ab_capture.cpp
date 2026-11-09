@@ -469,6 +469,11 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
       std::fprintf(file, " | particle flags 0x%X fade %.3f falloff %.3f nearfar %.4f %.4f",
                    p.flags[0], p.fade_falloff_near_far[0], p.fade_falloff_near_far[1],
                    p.fade_falloff_near_far[2], p.fade_falloff_near_far[3]);
+    }
+    // Particles and 2D (immediate simple) draws, e.g. menu texts: the
+    // texture and the first corners' colours (a text's colour lives in its
+    // vertices; found a byte-order question in the chest's "P1" this way).
+    if (d.material == Material::kParticle || (d.material == Material::kSimple && !d.mesh)) {
       // The sprite's texture: fetch constant words 0-1 (word 1 bits 0-5 =
       // format; 2 = k_8 palettized, 6 = k_8_8_8_8, 18-20 = DXT) and the
       // first corners' raw colour words (host order, read as B8G8R8A8:
