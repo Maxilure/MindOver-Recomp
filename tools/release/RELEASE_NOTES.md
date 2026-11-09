@@ -21,9 +21,11 @@
     (**New**, **Fixes**, **Changes**), not "####" headings: a heading line
     would end the section the installer shows.
 
-  0.3.0-alpha takes in what was planned as 0.2.2-alpha (never released).
-  No Changelog section: 0.3.0 is the first of its line. Bump VERSION.txt
-  to 0.3.0-alpha when releasing.
+  0.3.0-alpha comes after 0.2.2-alpha (branch release-0.2.2): every fix of
+  0.2.2 is in 0.3.0 too, so they are NOT listed again here (one line points
+  at 0.2.2's page). Changelog: the previous line's first release (0.2.0)
+  plus 0.2.2 (what 0.3.0 builds on). Bump VERSION.txt to 0.3.0-alpha when
+  releasing.
 -->
 
 **Mind over Recomp** is an unofficial, fan-made native PC port of the Xbox 360
@@ -60,9 +62,6 @@ Activision or the game's other owners.
   shows its own doll. The counter ("1/13") sits on the card's right, and
   long messages scroll. **Options → Display → HUD → Messages: Original**
   brings back the game's wide bar.
-- **Cursor Fades.** **Options → Controls → Cursor Fades**: the glowing
-  mouse cursor fades out after 1, 3 (default) or 5 seconds without a mouse
-  move, or never.
 - **Installer: "Use fewer resources while building".** It uses half the
   processor at low priority so the PC stays usable, but the build is
   slower. Unchecked, the build uses all cores but one, and no more at once
@@ -72,50 +71,15 @@ Activision or the game's other owners.
   it runs longer than usual, a note suggests closing heavy programs
   meanwhile.
 
-**Fixes**
-
-- **The keyboard and mouse always belong to player 1.** A setting from an
-  older version could put the keyboard on player 2 (or 3, 4), leaving
-  player 1 with only a controller. That setting is now ignored, and
-  every keyboard and mouse plugged in controls player 1.
-- **Volumes are right on the title screen.** Your Music, Dialogue and
-  Sound Effects volumes now apply before the title shows. Before, the
-  title played at full volume until the first button press.
-- **The mouse cursor no longer sits in every menu for controller
-  players.** It shows only once the mouse moves and hides as soon as a
-  controller is used.
-- **Dig spots with 3-4 players.** When one Crash dug in or out, players 3
-  and 4 could come up stuck in the digging pose; now everyone else turns
-  into a mask, as player 2 always did. Three or more Crashes underground at
-  once no longer crash the game.
-- **Achievements no longer cut off the game's messages.** An achievement
-  earned while a message was on screen made that message vanish at once
-  and the achievement pop up without its slide. Now it waits until the
-  message has slid away, then slides in on its own.
-- **Text colours fixed in busy menus.** Some menu texts could show another
-  text's colour, e.g. player 1's "P1" in the outfit chest turning blue with
-  four players.
-- **Shiny surfaces look like the original in the native renderer.** One of
-  the four glints of the game's "bump" material pointed the wrong way: the
-  oil pools in the desert were blotchy, half bright and half dark, instead
-  of an even gloss. Ice and crystals get the corrected glint too.
-- **Installer: minimizing the window no longer pauses the install or makes
-  it stop early.** Windows no longer slows the build down while the window
-  is in the background, and the PC doesn't go to sleep during it.
-- **Installer: steps no longer run twice** (for example, extracting the
-  disc again) right after a step finished.
+**Also in this version:** every fix of
+[0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha)
+(the installer's CMake and minimize fixes, dig spots with 3-4 players,
+keyboard and mouse always on player 1, volumes on the title, the mouse
+cursor for controller players, achievements and messages, text colours,
+shiny surfaces) and its faster CPU work (native skinning, renderer trims).
 
 **Changes**
 
-- **The game runs faster on the CPU.** About 20% less CPU time per frame
-  in a busy area (measured on one PC: 184 → 236 fps uncapped). Slower PCs,
-  where the CPU is what holds the frame rate back, gain the most.
-  - The characters' skinning (moving every vertex with its bones) is now
-    the port's own code, with results identical to the original's.
-  - The native renderer does less work per frame (it reuses texture memory
-    and skips re-checking meshes that haven't changed).
-  - On PCs with fewer than 6 CPU threads, the game log is no longer filled
-    with hundreds of "Too few processor cores" lines a second.
 - **A faster, simpler installer.** A fresh install now takes about 20
   minutes on a mid-range PC, and an update a few minutes.
   - **Two choices at the start: Install the game or Update an installed
@@ -169,3 +133,12 @@ you don't need it.
   **[bug report form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose)**
   and attach the `user\logs` folder from the game's folder. If the
   installer fails, it opens the form and that folder for you.
+
+### Changelog
+
+- [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha):
+  installer fixes (CMake from Visual Studio, minimized installs), co-op and
+  menu fixes, a faster game on the CPU.
+- [0.2.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha):
+  Windows installer, Options screen, keyboard and mouse everywhere, Players
+  screen and outfits for co-op, achievements, many co-op fixes.
