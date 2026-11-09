@@ -326,7 +326,8 @@ class CrashMomApp : public rex::ReXApp {
     // Window Mode + Monitor rows (ui/window_mode.h): the monitor list, read on
     // the UI thread; after a change the refresh rate is read again.
     window_mode::Install([this](std::function<void()> job) { app_context().CallInUIThread(std::move(job)); },
-                         [] { frame_rate::UpdateDisplayRefresh(); });
+                         [] { frame_rate::UpdateDisplayRefresh(); },
+                         window() ? std::string(window()->GetTitle()) : std::string());
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).

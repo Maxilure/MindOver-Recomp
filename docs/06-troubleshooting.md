@@ -51,6 +51,7 @@ controls, photos and logs.
 * [The game crashed](#the-game-crashed)
 * [A setting broke something](#a-setting-broke-something)
 * [Achievements stopped showing](#achievements-stopped-showing)
+* [Screen sharing shows a frozen picture](#screen-sharing-shows-a-frozen-picture)
 
 **Saves and updates**
 * [Where are my saves?](#where-are-my-saves) · [I deleted a save](#i-deleted-a-save-by-mistake) · [I saved over the wrong save](#i-saved-over-the-wrong-save)
@@ -476,6 +477,20 @@ is. Seen with a DualSense over USB whose connection had failed (on Linux,
 ### The HUD is gone
 
 **F2** hides it (a card at the bottom says so). Press **F2** again.
+
+### Screen sharing shows a frozen picture
+
+On Windows, sharing or recording the game in **Fullscreen** (Discord, for
+example) can show one frame that barely updates, while **Windowed** shares
+fine. In **Options → Display → Window Mode** pick **Borderless Window**: a
+window without a border over the whole monitor. If it still freezes:
+
+* NVIDIA: **NVIDIA Control Panel → Manage 3D settings → Vulkan/OpenGL present
+  method → Prefer layered on DXGI swapchain**.
+* Share the **window** instead of the whole screen, or play in **Windowed**.
+
+Please say on GitHub whether Borderless Window helped (which GPU, and
+what the sharing app captured): it's new and not checked on many systems.
 
 ### The game crashed
 

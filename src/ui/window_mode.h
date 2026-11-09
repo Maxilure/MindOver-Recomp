@@ -17,8 +17,8 @@
 //                         SDL_GetDisplays()'s order (window centred there,
 //                         fullscreen on it)
 //
-// This module turns them into two modes (Windowed, Fullscreen = borderless),
-// and keeps a list
+// This module turns them into three modes (Windowed, Fullscreen = borderless,
+// Borderless Window = our own flag borderless_window, see below), and keeps a list
 // of the connected monitors (names, sizes, refresh rates) for the Monitor
 // row. SDL's display calls belong on the UI thread, while the Options rows
 // run on the game's thread: the list is read on the UI thread and cached.
@@ -42,7 +42,21 @@ namespace window_mode {
 // desktops it looked the same and mixed up monitors). A settings file with
 // fullscreen_exclusive = true still reads as Fullscreen, and picking a mode
 // in Options sets it back to false.
-enum class Mode : int { kWindowed = 0, kFullscreen = 1 };
+//
+// BORDERLESS WINDOW (2026-11-09): an ordinary window (fullscreen flag OFF)
+// with no border, placed and sized over the whole monitor by us (SDL
+// SetWindowBordered / SetWindowPosition / SetWindowSize on the UI thread).
+// Why a third mode when Fullscreen is already borderless: on Windows, a
+// window SDL marks as fullscreen can get its frames sent straight to the
+// screen past the desktop compositor ("independent flip"); screen sharing
+// that captures through the compositor (Discord) then shows one stale frame.
+// Windowed shares fine. Whether an unmarked window over the same area is
+// treated differently depends on Windows and the GPU driver: this mode is
+// the try. debug_borderless_window_gap = pixels left off the bottom (a
+// window that doesn't cover the monitor is never flipped past the
+// compositor) for players to test when the exact size still freezes.
+// Wayland: the compositor places windows, so only the size applies.
+enum class Mode : int { kWindowed = 0, kFullscreen = 1, kBorderlessWindow = 2 };
 
 // One connected monitor, in SDL_GetDisplays() order (= the monitor flag's
 // 1..N numbering).
@@ -59,7 +73,10 @@ struct Display {
 // At setup: how to run work on the UI thread (app_context().CallInUIThread)
 // and the call that re-reads the monitor's refresh rate (V-sync paces to it).
 // Reads the monitor list once.
-void Install(std::function<void(std::function<void()>)> post_to_ui, std::function<void()> on_moved);
+// `main_title` = the main window's title: the SDL window with it is the one
+// the Borderless Window mode moves (the dual-mode 2nd window isn't).
+void Install(std::function<void(std::function<void()>)> post_to_ui, std::function<void()> on_moved,
+             std::string main_title);
 
 // The mode the three flags describe now.
 Mode Current();

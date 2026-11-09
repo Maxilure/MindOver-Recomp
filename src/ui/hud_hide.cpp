@@ -18,6 +18,7 @@
 #include "../cheats/cheats.h"
 #include "../saves/save_screen_waits.h"
 #include "hud_scale.h"
+#include "slide_fade.h"
 #include "scrooby.h"
 #include "../language/texts.h"
 
@@ -115,6 +116,8 @@ extern "C" REX_FUNC(sub_82371270) {
                     : page == hud_hide::g_letterbox.load() ? hud_scale::kStretchWide
                                                            : hud_hide::WhereOfPage(page);
   hud_scale::Scope scale(ctx, base, where);
+  // A menu sliding sideways fades on a wide picture (ui/slide_fade.h).
+  slide_fade::Scope fade(ctx, base, page);
   __imp__sub_82371270(ctx, base);
 }
 // CComboCounter / CCounterOpportunityDisplay / CPlayerIdentifierArrow draw (slot 4).

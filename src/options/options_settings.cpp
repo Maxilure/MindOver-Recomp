@@ -409,21 +409,28 @@ Row HudFourPlayersRow() {
                   tr(u"The HUD keeps the HUD Size above with any number of players."));
 }
 
-// WINDOW MODE (ui/window_mode.h, findings/50): Windowed or Fullscreen; the
-// fullscreen is always the borderless kind (a window covering the monitor at
-// its own mode: quick to switch away, behaves the same on every system).
+// WINDOW MODE (ui/window_mode.h, findings/50): Windowed, Fullscreen (always
+// the borderless kind: a window covering the monitor at its own mode, quick
+// to switch away, the same on every system) or Borderless Window (an ordinary
+// window without a border over the monitor: other windows and overlays sit
+// on top of it; window_mode.h "BORDERLESS WINDOW").
 Row WindowModeRow() {
   Row r;
   r.label = tr(u"Window Mode");
-  r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Windowed"), tr(u"Fullscreen")}; };
-  r.get = [](Env&) { return window_mode::Current() == window_mode::Mode::kWindowed ? 0 : 1; };
+  r.values = [](Env&) {
+    return std::vector<std::u16string>{tr(u"Windowed"), tr(u"Fullscreen"), tr(u"Borderless Window")};
+  };
+  r.get = [](Env&) { return int(window_mode::Current()); };
   r.set = [](Env&, int i) {
-    window_mode::Set(i == 0 ? window_mode::Mode::kWindowed : window_mode::Mode::kFullscreen,
-                     [](const char* name, const std::string& value) { SetFlag(name, value); });
+    const auto mode = i == 1 ? window_mode::Mode::kFullscreen
+                      : i == 2 ? window_mode::Mode::kBorderlessWindow
+                               : window_mode::Mode::kWindowed;
+    window_mode::Set(mode, [](const char* name, const std::string& value) { SetFlag(name, value); });
   };
   r.describe = [](Env&, int i) -> std::u16string {
-    return i == 0 ? tr(u"Plays in a window you can move and resize.")
-                  : tr(u"Fills the whole monitor (the one picked under Monitor).");
+    if (i == 0) return tr(u"Plays in a window you can move and resize.");
+    if (i == 1) return tr(u"Fills the whole monitor (the one picked under Monitor).");
+    return tr(u"Fills the whole monitor as an ordinary window without a border. The system treats it like any other window: switching to other programs and overlays work as in Windowed.");
   };
   return r;
 }

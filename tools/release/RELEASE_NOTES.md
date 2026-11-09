@@ -52,6 +52,12 @@ Activision or the game's other owners.
   Ratio**: Match Window, 16:9 (original), 21:9 or 32:9. **Widescreen HUD**
   keeps the HUD where the game has it, or moves its corners to the screen's
   edges.
+- **Sliding menus fade on wide screens.** The pause menu and other panels
+  that slide in and out now fade as they slide, gone by the edge of the
+  16:9 area, instead of staying visible at the sides and vanishing at once.
+- **Window Mode: Borderless Window.** **Options → Display → Window Mode**
+  gets a third choice: an ordinary window without a border that covers the
+  whole monitor, treated by the system like any other window.
 - **Resolutions in pixels.** **Options → Graphics → Resolution** lists real
   sizes at the shape in use (for example 2560 x 1080 at 21:9), plus Match
   Window.

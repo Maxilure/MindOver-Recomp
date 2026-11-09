@@ -41,6 +41,35 @@ from). A settings file with `fullscreen_exclusive = true` still reads as
 Fullscreen, and choosing a mode in Options or the launcher sets it back to
 false. The exclusive flag goes first, so the window is switched once.
 
+### 2.1 Borderless Window (a third mode)
+
+| Mode | fullscreen | borderless_window |
+|---|---|---|
+| Borderless Window | false | true |
+
+A report: on Windows, sharing the game's screen in Discord while in
+Fullscreen showed one frozen frame that barely updated; Windowed shared fine.
+Fullscreen here is already borderless, so the window's kind isn't the cause.
+The likely one: when a window SDL marks as fullscreen covers the whole
+monitor, Windows and the GPU driver can present its frames straight to the
+screen, past the desktop compositor ("independent flip"), and capture that
+reads the compositor's picture sees a stale frame.
+
+Borderless Window is an ordinary window (`fullscreen` off) that the port
+makes borderless and not resizable, then places and sizes over the monitor
+(`SDL_SetWindowBordered`, `SDL_SetWindowPosition`, `SDL_SetWindowSize` on
+the UI thread, `ui/window_mode.cpp` ApplyBorderless). The monitor is the
+Monitor row's pick when it's connected, else the one the window is on. The
+windowed size from before is put back when the mode ends. It runs again
+after every mode or Monitor change (the SDK centres the window on a Monitor
+change). Whether Windows treats such a window differently from SDL's
+fullscreen depends on the system and the driver: this mode is the thing to
+try. `debug_borderless_window_gap` (pixels left uncovered at the bottom)
+makes a window that never covers the monitor, for a test when the exact
+size still freezes. Not seen on Windows yet; on Wayland only the size
+applies (the compositor places windows). F11 from Borderless Window goes
+to Windowed.
+
 ## 3. The monitor list
 
 SDL's display calls belong on the UI thread; the Options rows run on the
@@ -89,3 +118,5 @@ Console-driven runs on an installed-style test copy, several monitors connected
 Monitor = 1 live and saved; a fresh start with the saved monitor opens
 fullscreen there; a start with `--fullscreen=false` opens a window. 0 errors.
 Not tested: moving to another monitor (kept off screens in use), Windows.
+Borderless Window: start in it, off, on again, F11 to Fullscreen and back,
+by console (log lines "Window: borderless window W x H at x,y" / "off").

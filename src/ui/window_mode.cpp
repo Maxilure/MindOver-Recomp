@@ -3,6 +3,7 @@
 // =============================================================================
 #include "window_mode.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -13,6 +14,17 @@
 #include <rex/cvar.h>
 #include <rex/logging.h>
 
+// Our third Window Mode (window_mode.h "BORDERLESS WINDOW"): only read while
+// the SDK's fullscreen flag is off.
+REXCVAR_DEFINE_BOOL(borderless_window, false, "CrashMoM",
+                    "Borderless Window: with fullscreen off, the window has no border and covers the whole "
+                    "monitor as an ordinary window (try it when screen sharing shows a frozen picture in "
+                    "Fullscreen)");
+REXCVAR_DEFINE_INT32(debug_borderless_window_gap, 0, "CrashMoM",
+                     "Borderless Window test: pixels left uncovered at the bottom of the monitor (0 = the "
+                     "exact monitor size; 1 = a window Windows never treats as fullscreen)")
+    .range(0, 64);
+
 namespace window_mode {
 namespace {
 
@@ -22,6 +34,13 @@ std::function<void()> g_on_moved;                   // frame_rate::UpdateDisplay
 std::mutex g_mutex;
 std::vector<Display> g_displays;
 std::atomic<bool> g_refresh_queued{false};
+
+// UI thread only: the Borderless Window mode's state.
+std::string g_main_title;          // finds the main SDL window
+SDL_WindowID g_main_window_id = 0;  // found once
+bool g_borderless_applied = false;  // our border / place / size are on the window now
+int g_windowed_w = 0, g_windowed_h = 0;  // the window's size before (put back after)
+SDL_Rect g_borderless_rect{};            // last place / size given (log only on a change)
 
 // SDL's names are long on Linux: "Shenzhen Acme Technology Group X27Q
 // 000000000000 (DP-2)" = maker, model, serial number, connector. The short
@@ -120,16 +139,104 @@ void ReadDisplays() {
   g_displays = std::move(list);
 }
 
+// UI thread: the main window (the one whose title is the main window's;
+// alone at Install, before the dual-mode 2nd window can exist).
+SDL_Window* MainWindow() {
+  if (g_main_window_id != 0) {
+    if (SDL_Window* w = SDL_GetWindowFromID(g_main_window_id)) return w;
+    g_main_window_id = 0;  // re-opened: look again
+  }
+  int count = 0;
+  SDL_Window** windows = SDL_GetWindows(&count);
+  SDL_Window* found = nullptr;
+  for (int i = 0; windows && i < count && !found; ++i) {
+    const char* title = SDL_GetWindowTitle(windows[i]);
+    if (count == 1 || (title && g_main_title == title)) found = windows[i];
+  }
+  SDL_free(windows);
+  if (found) g_main_window_id = SDL_GetWindowID(found);
+  return found;
+}
+
+// UI thread: the monitor the Borderless Window covers = the Monitor row's pick
+// when it's connected, else the one the window is on.
+SDL_DisplayID TargetDisplay(SDL_Window* window) {
+  const int pick = int(rex::cvar::Query<int32_t>("monitor"));
+  if (pick > 0) {
+    int count = 0;
+    SDL_DisplayID* ids = SDL_GetDisplays(&count);
+    const SDL_DisplayID id = ids && pick <= count ? ids[pick - 1] : 0;
+    SDL_free(ids);
+    if (id != 0) return id;
+  }
+  return SDL_GetDisplayForWindow(window);
+}
+
+// UI thread: puts the main window in or out of the Borderless Window shape,
+// whatever the flags say now. Runs after every mode / monitor change (queued
+// after the SDK's own jobs for those flags) and once at start.
+void ApplyBorderless() {
+  SDL_Window* window = MainWindow();
+  if (!window) return;
+  const bool want = !rex::cvar::Query<bool>("fullscreen") &&
+                    rex::cvar::Query<bool>("borderless_window");
+  if (want) {
+    if (!g_borderless_applied) {
+      SDL_GetWindowSize(window, &g_windowed_w, &g_windowed_h);  // put back when leaving
+      SDL_SetWindowResizable(window, false);
+      SDL_SetWindowBordered(window, false);
+      g_borderless_applied = true;
+    }
+    // Placed again every time: the SDK centres the window on a Monitor change.
+    SDL_Rect bounds{};
+    if (!SDL_GetDisplayBounds(TargetDisplay(window), &bounds)) return;
+    const int gap = int(rex::cvar::Query<int32_t>("debug_borderless_window_gap"));
+    const SDL_Rect want_rect{bounds.x, bounds.y, bounds.w, std::max(1, bounds.h - gap)};
+    SDL_SetWindowPosition(window, want_rect.x, want_rect.y);
+    SDL_SetWindowSize(window, want_rect.w, want_rect.h);
+    if (!SDL_RectsEqual(&want_rect, &g_borderless_rect)) {  // logged once per change
+      g_borderless_rect = want_rect;
+      REXLOG_INFO("Window: borderless window {}x{} at {},{}", want_rect.w, want_rect.h, want_rect.x,
+                  want_rect.y);
+    }
+  } else if (g_borderless_applied) {
+    g_borderless_applied = false;
+    g_borderless_rect = SDL_Rect{};
+    SDL_SetWindowBordered(window, true);
+    SDL_SetWindowResizable(window, true);
+    // Back to the old size. Going to Fullscreen: SDL keeps it as the size the
+    // window returns to when fullscreen ends (else Windowed later = monitor-sized).
+    if (g_windowed_w > 0 && g_windowed_h > 0) {
+      SDL_SetWindowSize(window, g_windowed_w, g_windowed_h);
+      if (!rex::cvar::Query<bool>("fullscreen")) {
+        SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED_DISPLAY(TargetDisplay(window)),
+                              SDL_WINDOWPOS_CENTERED_DISPLAY(TargetDisplay(window)));
+      }
+    }
+    REXLOG_INFO("Window: borderless window off");
+  }
+}
+
 }  // namespace
 
-void Install(std::function<void(std::function<void()>)> post_to_ui, std::function<void()> on_moved) {
+void Install(std::function<void(std::function<void()>)> post_to_ui, std::function<void()> on_moved,
+             std::string main_title) {
   g_post = std::move(post_to_ui);
   g_on_moved = std::move(on_moved);
+  // Copied on the UI thread (the only reader) through the job.
+  g_post([title = std::move(main_title)] {
+    g_main_title = title;
+    ApplyBorderless();  // a settings file with the mode on
+  });
+  // A hand-edited / console change of the flag moves the window too.
+  rex::cvar::RegisterChangeCallback("borderless_window",
+                                    [](std::string_view, std::string_view) { AfterChange(); });
   RefreshDisplays();
 }
 
 Mode Current() {
-  return rex::cvar::Query<bool>("fullscreen") ? Mode::kFullscreen : Mode::kWindowed;
+  if (rex::cvar::Query<bool>("fullscreen")) return Mode::kFullscreen;
+  return rex::cvar::Query<bool>("borderless_window") ? Mode::kBorderlessWindow : Mode::kWindowed;
 }
 
 void Set(Mode mode, const std::function<void(const char*, const std::string&)>& set_flag) {
@@ -137,7 +244,10 @@ void Set(Mode mode, const std::function<void(const char*, const std::string&)>& 
   // thread, in this order: the kind of fullscreen first (always borderless;
   // only written when it was on, from an older file), then on / off.
   if (rex::cvar::Query<bool>("fullscreen_exclusive")) set_flag("fullscreen_exclusive", "false");
-  set_flag("fullscreen", mode == Mode::kWindowed ? "false" : "true");
+  // Ours first: leaving Borderless Window gives the border back before the
+  // SDK's fullscreen job runs (ApplyBorderless runs again after it anyway).
+  set_flag("borderless_window", mode == Mode::kBorderlessWindow ? "true" : "false");
+  set_flag("fullscreen", mode == Mode::kFullscreen ? "true" : "false");
   AfterChange();
 }
 
@@ -156,6 +266,7 @@ void AfterChange() {
   // Now (after the flags' own jobs, queued before this one), then twice
   // more: a Wayland compositor moves the window when it gets to it.
   auto recheck = [] {
+    ApplyBorderless();  // after the SDK's own move (it centres on a Monitor change)
     ReadDisplays();
     if (g_on_moved) g_on_moved();
   };

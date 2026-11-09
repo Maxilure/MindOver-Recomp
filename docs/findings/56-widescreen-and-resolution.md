@@ -113,6 +113,26 @@ scale = height / 720.
   at the ORIGINAL portrait's place (findings/26 s.40). Midasm hooks at
   `0x82198ED8` / `0x82198F6C` scale the aim's side and up parts by the
   portrait's move (HUD Size, Screen Edges).
+* **Sliding menus** (`ui/slide_fade.*`). The pause menu (and other screens)
+  slide a whole page or layer sideways through its TRANSFORM every frame
+  (`CPauseScreenAction`'s step `sub_820DA120` -> `sub_82370E98(element, x,
+  0)` on the glass layer +32 and the menu page +20, x from the interpolator
+  at +52; out to about 850 canvas units). On a 16:9 screen the panel leaves
+  the screen before the slide ends; at 32:9 it stayed in view at the side
+  and vanished at once. Now a Parent element (page, group, layer: slot 7 =
+  `sub_823711A8`) whose canvas centre has moved more than 120 units fades
+  out (smoothstep) and is fully see-through at 426.7 units, the 16:9
+  screen's half width: the panel's centre at the original screen's edge.
+  How: element +16 = its 4 x 4 matrix (row vectors; translation at +64, in
+  canvas widths, written by `sub_824239E0` / `sub_82370E98`), +110 bit 0x40
+  = the matrix is in use. The colour an element draws with is CACHED at
+  +84: its own +80 times its parent's, worked out by the parent's draw
+  (`sub_82371270`) only while +84 holds the sentinel `[0x824EA190]`. Slot 7
+  stores +84 and resets every child to the sentinel. So the fade = slot 7
+  with the faded colour before the element's draw, the old +84 after.
+  (Lowering +80 at draw time came one step late: a slid-out panel stayed
+  faintly visible.) Only on a picture wider than 16:9; flag
+  `menu_slide_fade`.
 * **Pointer maths.** The mouse in menus, the Wii-style cursor and the FPS
   counter use `widescreen::Game()` (the middle 16:9 of the picture) or
   `Picture()`.
@@ -133,4 +153,7 @@ Console-driven runs on an installed-style test copy at 16:9, 21:9 and 32:9
 Island, N. Gin's lab cutscene, boot and story movies, a level's fade-in,
 the pause menu and Options (rows, sizes updating live), two players' markers,
 spawned mojo, all resolutions (2560 x 1080, 5120 x 1440, Match Window).
+Sliding menus at 32:9: the pause menu opening and closing photographed
+frame by frame (gone at the sides, solid at rest), pause -> Options
+unchanged, 0 errors.
 0 errors.

@@ -2566,6 +2566,17 @@ extern "C" REX_FUNC(sub_820D2A00) {
       }
     }
   }
+  // The tab keys (LB / RB, or Q / E on the keyboard) show only while the
+  // menu takes input, like the game's own button prompts at the bottom
+  // (FE_Buttons, hidden while a screen slides in or out). They were left up
+  // during the slide. Not touched under a question (ShowContent hides them).
+  {
+    const bool takes_input = fe && (*GuestPtr(base, fe + kMenuFlags) & 0x40);
+    if (g.asking_row < 0 && !OtherMode()) {
+      scrooby::SetVisible(base, g.lb, takes_input);
+      scrooby::SetVisible(base, g.rb, takes_input);
+    }
+  }
   if (!fe || !(*GuestPtr(base, fe + kMenuFlags) & 0x40)) return;
   Env env{ctx, base, owner};
   if (g.pending_select >= 0) {
