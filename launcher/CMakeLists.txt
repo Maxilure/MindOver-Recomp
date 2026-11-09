@@ -128,6 +128,12 @@ string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," PT_BR_BYTES "${PT_BR_HEX}")
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/builtin/pt_BR_po.inc
      "// Generated from languages/pt_BR.po by launcher/CMakeLists.txt\nstatic const unsigned char kPtBrPo[] = {${PT_BR_BYTES}0};\n")
 target_include_directories(mind_over_recomp PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/builtin)
+# The installer's version (shown in its header line): the first line of
+# VERSION.txt, re-read when it changes.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION.txt)
+file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/../VERSION.txt MOR_VERSION LIMIT_COUNT 1)
+string(STRIP "${MOR_VERSION}" MOR_VERSION)
+target_compile_definitions(mind_over_recomp PRIVATE MOR_VERSION="${MOR_VERSION}")
 target_link_libraries(mind_over_recomp PRIVATE launcher_imgui)
 if(WIN32)
     # ole32 / shell32 / uuid: shortcuts (COM's IShellLink), known folders;

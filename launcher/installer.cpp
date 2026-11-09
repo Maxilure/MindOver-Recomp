@@ -110,6 +110,14 @@ std::string WindowsLanguage() {
 // build (8.5 GB measured on Windows 11) + room for an update's download.
 constexpr double kNeededGb = 15.0;
 
+// This installer's version (VERSION.txt, baked in by launcher/CMakeLists.txt):
+// shown in the header line, so a screenshot of the installer says which one
+// it is (0.2.2-alpha.2: it was missing from 0.2.2's window).
+#ifndef MOR_VERSION
+#define MOR_VERSION "unknown"
+#endif
+constexpr const char* kVersion = MOR_VERSION;
+
 std::string Stamp() {
   const std::tm local = platform::LocalTime(std::time(nullptr));
   char text[32];
@@ -379,7 +387,8 @@ void App::DrawHeader() {
       ImGui::EndCombo();
     }
   }
-  ImGui::TextDisabled("%s", trs("An unofficial PC port of Crash: Mind over Mutant, built from your own disc"));
+  ImGui::TextDisabled("%s  -  %s", trs("An unofficial PC port of Crash: Mind over Mutant, built from your own disc"),
+                      trf(trs("version {0}"), {kVersion}).c_str());
   ImGui::Spacing();
   ImGui::Separator();
   ImGui::Spacing();

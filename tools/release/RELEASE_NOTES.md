@@ -30,56 +30,24 @@ Activision or the game's other owners.
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
 
-### What's new in 0.2.2-alpha
+### What's new in 0.2.2-alpha.2
 
-A fix-up release: installer fixes, game fixes, and a faster game on the CPU.
+A small installer fix on top of 0.2.2-alpha. The game itself is the same.
 
-- **No more "Couldn't find cmake (is it installed?)" when the tools page
-  says CMake is OK.** Visual Studio's C++ tools come with their own CMake
-  (and Ninja), kept outside the usual search path. The tools check counted
-  it, but the build step didn't look there and stopped before building
-  anything. Thanks to **[Mr-P2000](https://github.com/Mr-P2000)** and
-  **[Zepiririquito](https://github.com/Zepiririquito)** for the reports in
-  [#10](https://github.com/Maxilure/MindOver-Recomp/issues/10) and
-  [#11](https://github.com/Maxilure/MindOver-Recomp/issues/11).
-- **Installer: minimizing the window no longer pauses the install or makes
-  it stop early.** Windows no longer slows the build down while the window
-  is in the background, and the PC doesn't go to sleep during it.
-- **Installer: steps no longer run twice** (for example, extracting the
-  disc again) right after a step finished.
-- **Dig spots with 3-4 players.** When one Crash dug in or out, players 3
-  and 4 could come up stuck in the digging pose; now everyone else turns
-  into a mask, as player 2 always did. Three or more Crashes underground at
-  once no longer crash the game.
-- **The keyboard and mouse always belong to player 1.** A setting from an
-  older version could put them on player 2 (or 3, 4), leaving player 1 with
-  only a controller.
-- **Volumes are right on the title screen.** Your Music, Dialogue and
-  Sound Effects volumes now apply before the title shows, not at the first
-  button press.
-- **The mouse cursor no longer sits in every menu for controller
-  players.** It shows once the mouse moves, hides as soon as a controller
-  is used, and fades out after a few seconds without a move (**Options →
-  Controls → Cursor Fades**: 1, 3 or 5 seconds, or never).
-- **Achievements no longer cut off the game's messages.** An achievement
-  now waits until the message on screen has slid away, then slides in on
-  its own.
-- **Text colours fixed in busy menus.** Some menu texts could show another
-  text's colour, e.g. player 1's "P1" in the outfit chest turning blue with
-  four players.
-- **Shiny surfaces look like the original in the native renderer.** One of
-  the four glints of the game's "bump" material pointed the wrong way: the
-  desert's oil pools were blotchy instead of evenly glossy. Ice and crystals
-  get the corrected glint too.
-- **The game runs faster on the CPU.** About 20% less CPU time per frame
-  in a busy area (measured on one PC: 184 → 236 fps uncapped). Slower PCs,
-  where the CPU is what holds the frame rate back, gain the most.
-  - The characters' skinning (moving every vertex with its bones) is now
-    the port's own code, with results identical to the original's.
-  - The native renderer does less work per frame (it reuses texture memory
-    and skips re-checking meshes that haven't changed).
-  - On PCs with fewer than 6 CPU threads, the game log is no longer filled
-    with hundreds of "Too few processor cores" lines a second.
+- **The SDK step no longer fails with "file INSTALL cannot find
+  ...TracyClient.dll".** The SDK compiled, but its last step couldn't copy
+  a file it had built minutes earlier. On the PC where it happened, the
+  antivirus had removed that freshly built file. It was a profiler library
+  that nobody needs to play, so the installer no longer builds it at all.
+  Thanks to **[Zepiririquito](https://github.com/Zepiririquito)** for the
+  logs in [#10](https://github.com/Maxilure/MindOver-Recomp/issues/10).
+- **If a file the build just made disappears,** the installer's error now
+  says it's probably the antivirus and what to check, and the
+  [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#file-install-cannot-find-a-dll)
+  page has an entry for it.
+- **The installer shows its version** at the top of its window
+  (for example "version 0.2.2-alpha.2"), so a screenshot says which
+  installer it is.
 
 ### Install or update
 
@@ -89,16 +57,16 @@ A fix-up release: installer fixes, game fixes, and a faster game on the CPU.
   free**, an NTFS drive, not OneDrive), then **Next: install**. The first
   build takes a while. Then start **Crash Mind over Mutant** from the Start
   menu.
-- **Already on 0.2.0 or 0.2.1:** open **Mind over Recomp** from the Start
+- **Already on 0.2.0, 0.2.1 or 0.2.2:** open **Mind over Recomp** from the Start
   menu. It offers the update.
-- **Your 0.2.1 install stopped at "Couldn't find cmake"?** Start this
-  version's **Mind over Recomp.exe** and install into the same folder: it
-  carries on where it stopped.
+- **Your install stopped at "Couldn't find cmake" or "file INSTALL cannot
+  find"?** Start this version's **Mind over Recomp.exe** and install into
+  the same folder: it carries on where it stopped.
 - **Coming from 0.1.0:** don't use the old launcher's **Update** button.
   Follow [Updating from 0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha)
   on the 0.2.0 page.
 
-**Download:** `MindOverRecomp-0.2.2-alpha-windows-x86_64.zip` (Windows 10 / 11,
+**Download:** `MindOverRecomp-0.2.2-alpha.2-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` is only for the update check; you don't need it.
 
 ### Help and bug reports
@@ -112,6 +80,9 @@ A fix-up release: installer fixes, game fixes, and a faster game on the CPU.
 
 ### Changelog
 
+- [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha):
+  installer fixes (Visual Studio's CMake, minimized window), dig spots with
+  3-4 players, mouse cursor, faster game on the CPU.
 - [0.2.1-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.1-alpha):
   installer fixes (clock check, winget detection), clearer Troubleshooting page.
 - [0.2.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha):

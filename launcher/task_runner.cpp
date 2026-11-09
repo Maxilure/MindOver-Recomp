@@ -41,6 +41,16 @@ std::string KnownProblemHint(const std::string& line) {
            "time zone correctly (Windows: Settings > Time & language > Date & time > Sync now), then run "
            "this step again.";
   }
+  // CMake's install step can't find a file the build made minutes earlier:
+  // something removed it in between, almost always an antivirus quarantining
+  // a freshly built DLL by mistake (GitHub issue #10: TracyClient.dll, a
+  // profiler library, vanished between its link and the SDK's install). The
+  // "File exists" CMake prints after it is a stale error code, not the cause.
+  if (line.find("file INSTALL cannot find") != std::string::npos) {
+    return "A file the build had just made has disappeared. This is usually the antivirus removing it by "
+           "mistake: check Windows Security > Virus & threat protection > Protection history, allow the "
+           "file, add the game's folder as an exclusion, then run this step again.";
+  }
   return {};
 }
 

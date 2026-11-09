@@ -3692,6 +3692,11 @@ msgstr "Log: %s"
 msgid "An unofficial PC port of Crash: Mind over Mutant, built from your own disc"
 msgstr "Um port não oficial de Crash: Mind over Mutant para PC, compilado a partir do seu próprio disco"
 
+#: launcher/installer.cpp:391
+#, fuzzy
+msgid "version {0}"
+msgstr "versão {0}"
+
 #: launcher/installer.cpp:412
 #, fuzzy
 msgid "The game is already installed on this PC."

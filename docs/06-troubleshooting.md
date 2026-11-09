@@ -28,6 +28,7 @@ controls, photos and logs.
 * [Installing over a game folder I kept](#installing-over-a-game-folder-i-kept)
 * ["winget isn't there"](#winget-isnt-there)
 * ["Couldn't find cmake" although CMake shows OK](#couldnt-find-cmake)
+* ["file INSTALL cannot find ... TracyClient.dll"](#file-install-cannot-find-a-dll)
 * [A tool keeps failing to install](#a-tool-keeps-failing-to-install)
 * ["Vulkan loader: not found"](#vulkan-loader-not-found)
 * [The install failed](#the-install-failed) · [Uninstalling](#uninstalling) · [The build is very slow](#the-build-is-very-slow)
@@ -233,6 +234,24 @@ look there. **Fixed in 0.2.2-alpha.**
    `winget install Kitware.CMake` in a terminal or from
    [cmake.org](https://cmake.org/download/) (tick **Add CMake to the PATH**).
    Then close the installer, open it again and continue.
+
+### "file INSTALL cannot find" a DLL
+
+The SDK step ("Building the SDK") stops at the very end with
+**file INSTALL cannot find ".../TracyClient.dll": File exists.** (or another
+`.dll`). The SDK compiled fine: the file was made minutes earlier and then
+disappeared before the install step could copy it. That's almost always the
+**antivirus** quarantining a freshly built file by mistake. (The "File
+exists" part is a leftover error code; ignore it.)
+
+1. Open **Windows Security > Virus & threat protection > Protection
+   history**. If the DLL is listed, restore it / allow it.
+2. Add the game's folder as an exclusion (**Manage settings > Exclusions**)
+   so the next build isn't touched.
+3. Run the installer again and continue.
+
+TracyClient.dll is a profiler library nobody needs to play: installers newer
+than 0.2.2-alpha no longer build it at all.
 
 ### A tool keeps failing to install
 
