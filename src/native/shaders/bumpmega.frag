@@ -102,7 +102,11 @@ float Shine(vec3 p, vec3 v) {
   vec4 r6 = vec4(v.z, v.y, 0.0, v.x);
   float r3y = dot(vec4(r9.z, r9.z, r9.y, r9.y), vec4(a, a, -a, -a));  // 246
   float r3x = dot(vec4(r9.z, r9.z, r9.y, r9.y), vec4(-a));              // 247
-  float r0y = r9.x * a, r0z = r9.x * a, r0w = r9.y * -a;                // 248
+  // 248: mul r0.yzw, r9.xxxy, c255.xxyy -> y = x*a, z = x*(-a), w = y*(-a).
+  // (Until 2026-11-08 r0z had +a: the fourth glint pointed the wrong way;
+  // found on the desert oil, checked by emulating 246-269 on 20,000 random
+  // directions: findings/44 s.7.)
+  float r0y = r9.x * a, r0z = r9.x * -a, r0w = r9.y * -a;
   float r3z = r0w + r0z, r3w = r0w + r0y;                               // 249
   float r7x = -r9.y * r3x - a, r7y = -r9.y * r3y - a;                   // 250
   float r5z = r9.y * -a + r9.x * a + r3w;                               // 251
