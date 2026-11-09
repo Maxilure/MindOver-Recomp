@@ -82,7 +82,10 @@ shiny surfaces) and its faster CPU work (native skinning, renderer trims). Also 
 installer's title) and of
 [0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3)
 (the build uses exactly the Python, Ninja, Git and shader compiler the
-installer's check found).
+installer's check found) and of
+[0.2.2-alpha.4](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.4)
+(the SDK's libraries download without Git's shell, with advice if another
+Git step can't start its helpers).
 
 **Changes**
 
@@ -99,13 +102,6 @@ installer's check found).
   - **The SDK is built once instead of twice.**
   - **The Update button in the installed Mind over Recomp is gone:** it
     didn't work reliably. Each release's installer does the update instead.
-  - **The SDK's libraries download without Git's shell.** On some PCs Git
-    for Windows' shell can't start its helper programs ("fork: Resource
-    temporarily unavailable", exit code 254), which stopped the download of
-    the SDK's libraries. The installer now fetches each library with plain
-    Git commands that don't need that shell, and a stopped download goes on
-    where it stopped
-    ([#14](https://github.com/Maxilure/MindOver-Recomp/issues/14)).
   - **The installer downloads nothing itself.** It uses the files from its
     own `.zip`: unpack the whole `.zip` before starting it, or it says so.
 - **Button styles named after their controllers.** In **Options → Controls
@@ -149,6 +145,9 @@ you don't need it.
 
 ### Changelog
 
+- [0.2.2-alpha.4](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.4):
+  installer fix (the SDK's libraries download without Git's shell, which
+  can't start programs on some PCs).
 - [0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3):
   installer fix (the SDK build no longer picks Windows' Store shortcut for
   Python).
