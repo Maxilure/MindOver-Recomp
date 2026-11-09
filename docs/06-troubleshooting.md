@@ -29,6 +29,8 @@ controls, photos and logs.
 * ["winget isn't there"](#winget-isnt-there)
 * ["Couldn't find cmake" although CMake shows OK](#couldnt-find-cmake)
 * ["file INSTALL cannot find ... TracyClient.dll"](#file-install-cannot-find-a-dll)
+* ["fork: Resource temporarily unavailable" / exit code 254](#fork-resource-temporarily-unavailable--exit-code-254)
+* ["Python was not found; run without arguments to install from the Microsoft Store"](#python-was-not-found-run-without-arguments-to-install-from-the-microsoft-store)
 * [A tool keeps failing to install](#a-tool-keeps-failing-to-install)
 * ["Vulkan loader: not found"](#vulkan-loader-not-found)
 * [The install failed](#the-install-failed) · [Uninstalling](#uninstalling) · [The build is very slow](#the-build-is-very-slow)
@@ -277,6 +279,29 @@ Try these in order, and run the step again after each:
    (Git's shell can't run with it forced on), restart, and try again.
 
 Installers from 0.3.0-alpha on show this advice under the error.
+
+### "Python was not found; run without arguments to install from the Microsoft Store"
+
+The step **"Building the SDK"** stops a few minutes in, at a line about
+**glslang/build_info.h**, with this message just below it. Python itself is
+fine (the installer used it to copy the disc). One of the SDK's libraries
+looked for a program named `python3` on its own and found Windows'
+**Microsoft Store shortcut** for Python instead (a stand-in file in
+`AppData\Local\Microsoft\WindowsApps`). A python.org install has no
+`python3.exe`, so the shortcut was the only match.
+
+Installers from 0.3.0-alpha on give the build the exact Python, Ninja, Git
+and glslc the tool check found, so this can't happen there. With an older
+installer:
+
+1. Open **Settings > Apps > Advanced app settings > App execution aliases**
+   and turn **off** the two entries for **python.exe** and **python3.exe**
+   (the ones called "App Installer" or "Python").
+2. Delete the file
+   `source\thirdparty\rexglue-sdk\out\build\win-amd64\CMakeCache.txt` in the
+   game's folder. It still remembers the shortcut, and a retry would use it
+   again.
+3. Run the installer again.
 
 ### A tool keeps failing to install
 

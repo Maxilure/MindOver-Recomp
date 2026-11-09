@@ -100,6 +100,13 @@ installer's title).
     "fork: Resource temporarily unavailable" (exit code 254), the
     installer says what usually causes it and what to try
     ([#14](https://github.com/Maxilure/MindOver-Recomp/issues/14)).
+  - **The build uses exactly the tools the check found.** Python, Ninja,
+    Git and the shader compiler are handed to the build by their full path.
+    Before, the build searched for them again by itself and could land on a
+    different file: with Python from python.org, the SDK build stopped
+    with "Python was not found ... Microsoft Store" because it picked
+    Windows' Store shortcut for Python
+    ([#16](https://github.com/Maxilure/MindOver-Recomp/issues/16)).
   - **The installer downloads nothing itself.** It uses the files from its
     own `.zip`: unpack the whole `.zip` before starting it, or it says so.
 - **Button styles named after their controllers.** In **Options → Controls
