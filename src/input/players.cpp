@@ -2,6 +2,7 @@
 // input/players.cpp -- see players.h
 // =============================================================================
 #include "players.h"
+#include "native_controllers.h"
 
 #include <atomic>
 
@@ -330,6 +331,9 @@ bool PlayerAssignment::ProbeState(const std::string& key, rex::input::X_INPUT_ST
     for (const Known& d : devices_) {
       if (d.key == key) id = d.id;
     }
+  }
+  if (native_controllers::Enabled()) {
+    return id != DeviceId::kInvalid && native_controllers::ReadDevice(id, out);
   }
   auto* input = static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
   if (id == DeviceId::kInvalid || !input) return false;

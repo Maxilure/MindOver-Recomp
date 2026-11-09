@@ -23,17 +23,16 @@
 #include <imgui.h>
 
 #include <rex/cvar.h>
-#include <rex/input/input_system.h>
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
-#include <rex/runtime.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 #include <rex/ui/imgui_dialog.h>
 #include <rex/ui/imgui_drawer.h>
 
 #include "../input/keyboard_mouse.h"
+#include "../input/native_controllers.h"
 #include "../options/options_menu.h"
 #include "../ui/main_menu_extras.h"
 #include "../ui/scrooby.h"
@@ -861,11 +860,6 @@ void SetPrompts(PPCContext& ctx, uint8_t* base, bool on) {
 // the input system directly, so the game's muted view of the controller
 // (g_block_game_input) doesn't hide them.
 uint16_t MenuButtonsDown(PPCContext& ctx, uint8_t* base, uint16_t mask) {
-  auto* input =
-      static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
-  if (!input) {
-    return 0;
-  }
   const int owner = more_players::InPlay() ? menu_input::CurrentMenuOwner(ctx, base) : 0;
   const int players = more_players::InPlay() ? more_players::LocalPlayerCount() : 1;
   uint16_t down = 0;
@@ -874,7 +868,7 @@ uint16_t MenuButtonsDown(PPCContext& ctx, uint8_t* base, uint16_t mask) {
       continue;
     }
     rex::input::X_INPUT_STATE state{};
-    input->GetState(uint32_t(p), &state);
+    native_controllers::Read(uint32_t(p), &state);
     down |= uint16_t(state.gamepad.buttons) & mask;
     // The keyboard isn't in the SDK's input system since 2026-10-11
     // (input/keyboard_mouse.h: its keys go into the game's own XInputGetState
@@ -1791,8 +1785,19 @@ extern "C" REX_FUNC(sub_8211BE58) {
 // socket's presses here too, and mutes them (players/lost_controller.h).
 extern "C" REX_FUNC(sub_824742F0) {
   using namespace save_library;
+  using rex::X_RESULT;  // The SDK's error-code macros cast to this type.
   const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
-  __imp__sub_824742F0(ctx, base);
+  if (native_controllers::Enabled()) {
+    rex::input::X_INPUT_STATE pad{};
+    if (state && !native_controllers::Writable(state, sizeof(pad))) {
+      ctx.r3.u64 = X_ERROR_BAD_ARGUMENTS;
+      return;
+    }
+    ctx.r3.u64 = native_controllers::Read(user, state ? &pad : nullptr);
+    if (state && ctx.r3.u32 == 0) std::memcpy(GuestPtr(base, state), &pad, sizeof(pad));
+  } else {
+    __imp__sub_824742F0(ctx, base);
+  }
   // The keyboard and mouse, straight into the game's state for the sockets
   // the keyboard answers on (input/keyboard_mouse.h MergeInto: no pretend
   // controller in the SDK's input system).

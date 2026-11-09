@@ -193,3 +193,99 @@ Space / Escape").
 
 Not covered yet: the mouse in menus, typing a name with the keyboard on the
 name screen, the texts that name the controller ("Rotate the Left Stick").
+
+## 7. Reading controller state without the Xbox service
+
+This was the initial state-only implementation. Section 8 describes the
+current backend.
+
+The existing wrapper at `sub_824742F0` is the boundary before the port's
+keyboard merge and controller filters. The SDK's `XamInputGetState`
+ultimately calls `InputSystem::GetState`. That host method already resolves
+devices assigned to each socket, merges them and tracks the last active
+device. Calling it from the wrapper keeps those rules and avoids the
+recompiled call to the Xbox service for regular polls.
+
+Disassembly of the disc build with `xexdis` confirmed that
+`sub_824742F0` forwards the output pointer and tail-calls the import at
+`0x824BBFBC` with gamepad flag 1. It leaves the import's return code
+as-is. For sockets 0–3, the SDK passes that socket to its host input
+system without remapping it.
+
+`--native_controller_state=true` enables this path for sockets 0–3 with
+a writable output buffer. The SDK returns the 16-byte state in the
+game's layout: a big-endian 32-bit packet number at +0 and the 12-byte
+gamepad at +4. The wrapper copies it on success and leaves the buffer
+alone if the SDK reports a disconnected device. The original call is the
+default and handles requests outside this path. Both paths pass through
+the same keyboard merge, input recording and controller filters.
+Capabilities and vibration still use their existing paths.
+
+Clang checked the wrapper on Windows with the project's SDK headers, and
+a standalone check confirmed the 16-byte layout and byte order using the
+pinned SDK's state type.
+
+The full Windows disc build completed. Both paths loaded separate copies
+of the same test save. During the scripted in-level portion, the 21
+recorded controller-state changes matched in order across the four
+sockets, ignoring timestamps. The kernel trace showed the first five
+`XamInputGetState` calls in the reference run and none in the direct run.
+A one-controller run also produced the same recorded stick, trigger and
+button changes in both modes. The input records confirm polling across
+four sockets. Actual co-op joins, hot-unplug, and keyboard and mouse
+still need interactive verification.
+
+To compare the two paths, launch with the option off and on using copies
+of the saves and controls, with audio muted and the same frame cap.
+Compare title and pause menus, gameplay with keyboard and mouse and a
+controller, and joining, disconnecting and reconnecting on sockets 1–4.
+On Linux the debug console's `xbox` command can check whether regular
+polls still reach `XamInputGetState`. On Windows the SDK's kernel trace
+can report its first five calls for the same comparison.
+
+## 8. Port-owned SDL controller backend
+
+The state-only path still delegated device discovery and input to the
+SDK. The port now owns the SDL gamepad handles and calls SDL to sample
+buttons and axes, query vibration support and send motor speeds. The
+existing player assignment still maps devices to sockets and remembers
+their SDL GUIDs in `controls.toml`. Device changes preserve the ordinals
+of controllers that are still connected.
+
+`xexdis` and the generated import table identify the three boundaries.
+
+| Game wrapper | ABI | Replacement |
+| --- | --- | --- |
+| `sub_824742E8` | User and flags in r3/r4, 20-byte capabilities output in r5 | Host gamepad capabilities |
+| `sub_824742F0` | User in r3, 16-byte state output in r4 | Host controller state, then the existing keyboard merge and game filters |
+| `sub_82474300` | User in r3, two big-endian 16-bit motor speeds at r4 | SDL rumble for the physical pads on the socket |
+
+The last wrapper contains a workaround for an early Xbox wheel. The
+native backend exposes SDL controllers as standard gamepads. It uses the
+normal motor order and does not apply the console wheel workaround.
+The save menu, outfit picker and device-join probe read from the same
+native backend. The native path is the default and starts the runtime
+with its input factory unset. `--native_controller_state=false` restores
+the original input subsystem and wrappers for comparisons.
+
+The Windows disc build loaded the same test save with both backends. The
+21 scripted controller-state changes in the level matched in order
+across the four sockets. The native run logged no XAM state or
+capabilities calls. A physical Xbox One S controller was detected and
+its axes reached the game. A separate SDL virtual gamepad test verified
+button and axis input, reported vibration support, delivery of both
+motor values, a stop command, and disconnect/reconnect on the assigned
+socket.
+
+A standalone Windows test used the port's SDL backend with a physical
+Xbox One S controller. SDL reported rumble support and accepted two
+250 ms pulses, one per motor, and both stop commands. This checks host
+command delivery. The motor response was not observed independently.
+
+An in-game Windows test used four scripted controllers, a copy of a
+test save, muted audio and a 30 fps cap. After skipping the opening
+movie, players 2, 3 and 4 joined as masks. Player 4 paused the game,
+left with Back, rejoined with Start and sent stick input again. The
+game logged the state sequence `2 0 0 0 → 2 1 0 0 → 2 1 1 0 →
+2 1 1 1 → 2 1 1 0 → 2 1 1 1`. Co-op with multiple physical controllers
+and Linux remain untested.
