@@ -137,7 +137,15 @@ constexpr const char* kLibFolder = "bin";      // where the SDK installs its lib
 constexpr const char* kLibSuffix = ".dll";
 // The SDK defaults to Direct3D 12 on Windows; our native renderer is Vulkan,
 // and the emulated one should match Linux: Vulkan on, D3D12 off.
-const std::vector<std::string> kSdkOptions = {"-DREXGLUE_USE_VULKAN=ON", "-DREXGLUE_USE_D3D12=OFF"};
+// Tracy OFF (2026-11-09, GitHub issue #10): the SDK builds the Tracy profiler
+// as its own DLL (TracyClient.dll / TracyClientrd.dll). Players never use it
+// (our profiling is the game's own console `profile`), and an antivirus
+// quarantined the freshly built DLL on a player's PC: the SDK's install step
+// then failed with "file INSTALL cannot find ... TracyClient.dll". Off = no
+// such DLL is built at all; the game's CMake only stages rex::TracyClient
+// when the SDK has it. Checked with a full SDK + game build on Windows.
+const std::vector<std::string> kSdkOptions = {"-DREXGLUE_USE_VULKAN=ON", "-DREXGLUE_USE_D3D12=OFF",
+                                              "-DREXGLUE_ENABLE_TRACY=OFF"};
 #else
 constexpr const char* kSdkPreset = "linux-amd64";
 constexpr const char* kGamePreset = "linux-amd64-relwithdebinfo";
