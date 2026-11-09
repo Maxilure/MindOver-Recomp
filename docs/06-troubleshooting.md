@@ -224,9 +224,9 @@ after "Configuring the SDK", although the tools page shows CMake as OK.
 
 This was a bug in 0.2.0 and 0.2.1: the tools check accepted the copy of
 CMake that comes with Visual Studio's C++ tools, but the build step didn't
-look there. **Fixed in 0.2.3-alpha.**
+look there. **Fixed in 0.2.2-alpha.**
 
-1. Download **0.2.3-alpha or newer** from the
+1. Download **0.2.2-alpha or newer** from the
    [releases page](https://github.com/Maxilure/MindOver-Recomp/releases)
    and run its installer again.
 2. Or, staying on 0.2.1: install CMake by itself, either with
