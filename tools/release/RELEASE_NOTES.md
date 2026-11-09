@@ -136,6 +136,13 @@ Activision or the game's other owners.
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**
   (was Switch). Xbox 360 and Xbox Series keep their names. Your choice is
   kept.
+- **Brazilian Portuguese checked by a native speaker.** Every new 0.3.0
+  text (widescreen, resolutions, Cursor Fades, the message card, the
+  installer) is translated by a person, month names in the save dates start
+  with a capital letter, and the Renderer choices read **Apenas Nativo** /
+  **Apenas Emulado**. Thanks to
+  [zanettevini](https://github.com/zanettevini)
+  ([#9](https://github.com/Maxilure/MindOver-Recomp/issues/9)).
 
 ### Install or update
 

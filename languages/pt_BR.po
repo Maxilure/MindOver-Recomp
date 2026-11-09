@@ -605,7 +605,7 @@ msgstr "Emulado"
 #: src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Emulated Only"
-msgstr "Só emulado"
+msgstr "Apenas Emulado"
 
 #: src/options/options_settings.cpp:222
 #, fuzzy
@@ -615,7 +615,7 @@ msgstr "Nativo"
 #: src/options/options_settings.cpp:222
 #, fuzzy
 msgid "Native Only"
-msgstr "Só nativo"
+msgstr "Apenas Nativo"
 
 #: src/options/options_settings.cpp:244
 #, fuzzy
@@ -860,63 +860,63 @@ msgstr "Precisa do renderizador do port: coloque Renderizador em Nativo na aba G
 
 #: src/options/options_settings.cpp:515
 msgid "Needs Renderer: Native Only on the Graphics tab."
-msgstr ""
+msgstr "Precisa de Renderizador: Apenas Nativo na aba de Gráficos."
 
 #: src/options/options_settings.cpp:522
 msgid "Aspect Ratio"
-msgstr ""
+msgstr "Proporção de Tela"
 
 #: src/options/options_settings.cpp:523
 msgid "Match Window"
-msgstr ""
+msgstr "Ajustar à Janela"
 
 #: src/options/options_settings.cpp:523
 msgid "16:9 (original)"
-msgstr ""
+msgstr "16:9 (original)"
 
 #: src/options/options_settings.cpp:523
 msgid "21:9"
-msgstr ""
+msgstr "21:9"
 
 #: src/options/options_settings.cpp:523
 msgid "32:9"
-msgstr ""
+msgstr "32:9"
 
 #: src/options/options_settings.cpp:524
 msgid "The picture takes the window's shape: a wider window shows more of the world at the sides. Nothing is stretched."
-msgstr ""
+msgstr "A tela se ajusta ao formato da janela: uma janela mais larga mostra mais do mundo nos lados. Nada é esticado."
 
 #: src/options/options_settings.cpp:525
 msgid "The game's own picture shape. A wider window gets black bars at the sides."
-msgstr ""
+msgstr "O formato de tela próprio do jogo. Uma janela mais larga tem barras pretas dos lados."
 
 #: src/options/options_settings.cpp:526
 msgid "Ultrawide: more of the world at the sides. Nothing is stretched."
-msgstr ""
+msgstr "Ultrawide: mais do mundo nos lados. Nada é esticado."
 
 #: src/options/options_settings.cpp:527
 msgid "Super ultrawide, like two screens side by side: much more of the world at the sides."
-msgstr ""
+msgstr "Super ultrawide, como duas telas lado a lado: muito mais do mundo nos lados."
 
 #: src/options/options_settings.cpp:533
 msgid "Widescreen HUD"
-msgstr ""
+msgstr "HUD Widescreen"
 
 #: src/options/options_settings.cpp:533
 msgid "In Place"
-msgstr ""
+msgstr "No lugar"
 
 #: src/options/options_settings.cpp:533
 msgid "Screen Edges"
-msgstr ""
+msgstr "Bordas da tela"
 
 #: src/options/options_settings.cpp:534
 msgid "In a wide picture, the HUD stays where the 16:9 game has it."
-msgstr ""
+msgstr "Em uma tela larga, o HUD se mantém onde o 16:9 estava."
 
 #: src/options/options_settings.cpp:535
 msgid "In a wide picture, the HUD's corner pieces move out to the corners of the screen."
-msgstr ""
+msgstr "Em uma tela larga, as bordas do HUD se movem através das bordas da tela."
 
 #: src/options/options_settings.cpp:542
 #, fuzzy
@@ -970,31 +970,31 @@ msgstr "Resolução"
 
 #: src/options/options_settings.cpp:570
 msgid "Match Window ({0})"
-msgstr ""
+msgstr "Ajustar à Janela ({0})"
 
 #: src/options/options_settings.cpp:572
 msgid "{0} (original)"
-msgstr ""
+msgstr "{0} (original)"
 
 #: src/options/options_settings.cpp:592
 msgid "Drawn at the window's own size: the sharpest it can look on this screen. A big screen is heavy on your graphics card."
-msgstr ""
+msgstr "Desenha no tamanho próprio da janela: o mais nítido que pode ser na tela. Uma tela grande pesa na sua placa de vídeo."
 
 #: src/options/options_settings.cpp:593
 msgid "Drawn at the Xbox 360's size."
-msgstr ""
+msgstr "Desenha no tamanho do Xbox 360."
 
 #: src/options/options_settings.cpp:594
 msgid "Sharper than the original. Light on your graphics card."
-msgstr ""
+msgstr "Mais nítido que o original. Leve na sua placa de vídeo."
 
 #: src/options/options_settings.cpp:595
 msgid "Sharper still, heavier on your graphics card."
-msgstr ""
+msgstr "Ainda nítido, pesado na sua placa de vídeo."
 
 #: src/options/options_settings.cpp:596
 msgid "The sharpest picture, the heaviest on your graphics card."
-msgstr ""
+msgstr "O mais nítido, o mais pesado na sua placa de vídeo."
 
 #: src/options/options_settings.cpp:606
 #, fuzzy
@@ -1639,39 +1639,39 @@ msgstr "Como na versão de Wii: o ponteiro do mouse vira o cursor do Wii, uma bo
 
 #: src/options/options_settings.cpp:1049
 msgid "Cursor Fades"
-msgstr ""
+msgstr "O cursor desaparece"
 
 #: src/options/options_settings.cpp:1049
 msgid "Never"
-msgstr ""
+msgstr "Nunca"
 
 #: src/options/options_settings.cpp:1049
 msgid "After 1 s"
-msgstr ""
+msgstr "Depois de 1 s"
 
 #: src/options/options_settings.cpp:1049
 msgid "After 3 s"
-msgstr ""
+msgstr "Depois de 3 s"
 
 #: src/options/options_settings.cpp:1049
 msgid "After 5 s"
-msgstr ""
+msgstr "Depois de 5 s"
 
 #: src/options/options_settings.cpp:1050
 msgid "The cursor stays on screen until a controller is used."
-msgstr ""
+msgstr "O cursor permanece na tela até usar o controle."
 
 #: src/options/options_settings.cpp:1051
 msgid "The cursor fades out 1 second after the mouse stops. Move the mouse to bring it back."
-msgstr ""
+msgstr "O cursor desaparece 1 segundo após o mouse parar. Mova o mouse para trazê-lo de volta."
 
 #: src/options/options_settings.cpp:1052
 msgid "The cursor fades out 3 seconds after the mouse stops. Move the mouse to bring it back."
-msgstr ""
+msgstr "O cursor desaparece 3 segundos após o mouse parar. Mova o mouse para trazê-lo de volta."
 
 #: src/options/options_settings.cpp:1053
 msgid "The cursor fades out 5 seconds after the mouse stops. Move the mouse to bring it back."
-msgstr ""
+msgstr "O cursor desaparece 5 segundos após o mouse parar. Mova o mouse para trazê-lo de volta."
 
 #: src/options/options_settings.cpp:1062
 #, fuzzy
@@ -1986,19 +1986,19 @@ msgstr "As notificações estão desligadas."
 
 #: src/options/options_settings.cpp:1321
 msgid "Messages"
-msgstr ""
+msgstr "Mensagens"
 
 #: src/options/options_settings.cpp:1321
 msgid "Card"
-msgstr ""
+msgstr "Cartão"
 
 #: src/options/options_settings.cpp:1322
 msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
-msgstr ""
+msgstr "As mensagens do jogo na parte inferior (bonecos de vodu, missões) usam o cartão de conquistas, com o boneco de vodu sobre ele."
 
 #: src/options/options_settings.cpp:1324
 msgid "The game's own wide message bar."
-msgstr ""
+msgstr "A barra larga de mensagens do jogo."
 
 #: src/options/options_settings.cpp:1334
 #, fuzzy
@@ -2352,7 +2352,7 @@ msgstr "%ld s"
 
 #: launcher/installer.cpp:181
 msgid "The port's files aren't next to this installer. Unpack the WHOLE .zip from the GitHub release page, then start Mind over Recomp.exe from the unpacked folder."
-msgstr ""
+msgstr "Os arquivos do porte não estão próximos ao instalador. Descompacte TODO o .zip da página de Releases, então abra o Mind over Recomp.exe na pasta descompactada."
 
 #: launcher/installer.cpp:209
 #, fuzzy
@@ -2901,69 +2901,57 @@ msgstr "Fechar"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "Jan"
-msgstr "jan"
+msgstr "Jan"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "Feb"
-msgstr "fev"
+msgstr "Fev"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "Mar"
-msgstr "mar"
+msgstr "Mar"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "Apr"
-msgstr "abr"
+msgstr "Abr"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "May"
-msgstr "mai"
+msgstr "Mai"
 
 #. Short month names (3 letters if the language has short forms), in the save list's dates.
 #: launcher/main.cpp:106
-#, fuzzy
 msgid "Jun"
-msgstr "jun"
+msgstr "Jun"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Jul"
-msgstr "jul"
+msgstr "Jul"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Aug"
-msgstr "ago"
+msgstr "Ago"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Sep"
-msgstr "set"
+msgstr "Set"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Oct"
-msgstr "out"
+msgstr "Out"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Nov"
-msgstr "nov"
+msgstr "Nov"
 
 #: launcher/main.cpp:107
-#, fuzzy
 msgid "Dec"
-msgstr "dez"
+msgstr "Dez"
 
 #: launcher/main.cpp:116
 #, fuzzy
@@ -3718,7 +3706,7 @@ msgstr "Renderizador nativo"
 #: launcher/settings_page.cpp:165
 #, fuzzy
 msgid "Native only (fastest, default)"
-msgstr "Só nativo (o mais rápido, padrão)"
+msgstr "Apenas nativo (o mais rápido, padrão)"
 
 #: launcher/settings_page.cpp:166
 #, fuzzy
@@ -3728,7 +3716,7 @@ msgstr "Os dois, em duas janelas"
 #: launcher/settings_page.cpp:167
 #, fuzzy
 msgid "Emulated only"
-msgstr "Só emulado"
+msgstr "Apenas emulado"
 
 #: launcher/settings_page.cpp:268 launcher/settings_page.cpp:436 launcher/settings_page.cpp:677
 #, fuzzy

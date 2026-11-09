@@ -281,6 +281,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 
 - **Maxilure**: project lead, direction, playtesting, art
 - **[YWZsaXRv](https://github.com/YWZsaXRv)**: the Windows setup script the installer builds on
+- **[zanettevini](https://github.com/zanettevini)**: Brazilian Portuguese translation
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)** and **[Xenia](https://github.com/xenia-project/xenia)**: the recompiler and runtime this port is built on
 - **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece: the button prompt pictures
 - **[Icons8](https://icons8.com)**: the Windows installer's icon

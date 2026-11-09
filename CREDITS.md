@@ -38,6 +38,14 @@ engineering, testing, bug reports, corrections, art. See
   ([#4](https://github.com/Maxilure/MindOver-Recomp/pull/4)); the Windows
   installer's tool installation (0.2.0) is based on it.
 
+### zanettevini: Brazilian Portuguese
+
+- Translated the port's new 0.3.0 texts into Brazilian Portuguese
+  (widescreen, resolutions, Cursor Fades, the message card, the installer)
+  and corrected the month names
+  ([#9](https://github.com/Maxilure/MindOver-Recomp/issues/9));
+  the first translation in `languages/pt_BR.po` checked by a native speaker.
+
 ### Bug reports
 
 - **hesyourgamer** reported players 3 and 4 appearing on player 1's
