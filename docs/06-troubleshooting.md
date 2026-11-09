@@ -27,6 +27,7 @@ controls, photos and logs.
 * [The installer won't use my folder](#the-installer-wont-use-my-folder)
 * [Installing over a game folder I kept](#installing-over-a-game-folder-i-kept)
 * ["winget isn't there"](#winget-isnt-there)
+* ["Couldn't find cmake" although CMake shows OK](#couldnt-find-cmake)
 * [A tool keeps failing to install](#a-tool-keeps-failing-to-install)
 * ["Vulkan loader: not found"](#vulkan-loader-not-found)
 * [The install failed](#the-install-failed) · [Uninstalling](#uninstalling) · [The build is very slow](#the-build-is-very-slow)
@@ -216,6 +217,23 @@ look-alike apps that aren't Microsoft's.
 was missing even when App Installer *was* installed. Download the installer
 again from the release page. With the old one, the tools can still be
 installed by hand (next entry).
+
+### "Couldn't find cmake"
+
+The install stops with **Couldn't find cmake (is it installed?)** right
+after "Configuring the SDK", although the tools page shows CMake as OK.
+
+This was a bug in 0.2.0 and 0.2.1: the tools check accepted the copy of
+CMake that comes with Visual Studio's C++ tools, but the build step didn't
+look there. **Fixed in 0.2.2-alpha.**
+
+1. Download **0.2.2-alpha or newer** from the
+   [releases page](https://github.com/Maxilure/MindOver-Recomp/releases)
+   and run its installer again.
+2. Or, staying on 0.2.1: install CMake by itself, either with
+   `winget install Kitware.CMake` in a terminal or from
+   [cmake.org](https://cmake.org/download/) (tick **Add CMake to the PATH**).
+   Then close the installer, open it again and continue.
 
 ### A tool keeps failing to install
 
