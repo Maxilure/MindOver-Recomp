@@ -28,6 +28,7 @@
 #include <iterator>
 #include <vector>
 #include <cstdlib>
+#include <cstring>  // _stricmp
 #include <cwctype>
 
 namespace fs = std::filesystem;
@@ -205,7 +206,8 @@ static bool IsProgramFile(const fs::path& file) {
   return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-fs::path FindProgram(const std::string& name) {
+// FindProgram's search; `path` = the PATH to walk (";"-separated).
+static fs::path FindProgramOnPath(const std::string& name, const std::wstring& path) {
   if (name.empty()) return {};
   const fs::path given(Wide(name));
   const bool has_ext = given.has_extension();
@@ -231,7 +233,6 @@ fs::path FindProgram(const std::string& name) {
     if (local.empty()) return {};
     return try_file(fs::path(local) / L"Microsoft" / L"WindowsApps" / given);
   };
-  const std::wstring path = EnvironmentVariable(L"PATH");
   size_t start = 0;
   while (start <= path.size()) {
     const size_t end = path.find(L';', start);
@@ -243,6 +244,33 @@ fs::path FindProgram(const std::string& name) {
     start = end + 1;
   }
   return try_aliases();
+}
+
+fs::path FindProgram(const std::string& name) {
+  return FindProgramOnPath(name, EnvironmentVariable(L"PATH"));
+}
+
+// The program a child runs: looked up on the PATH of the environment the child
+// will GET first, then on ours.
+//
+// GitHub issues #10 / #11 (2026-11-08, 0.2.1): "Couldn't find cmake (is it
+// installed?)" right at the SDK's configure step, while the tools page said
+// CMake was OK. Those PCs had only Visual Studio's own CMake (its C++ tools
+// carry one, outside PATH): the tools check accepts it and puts its folder on
+// the BUILD environment's PATH (setup.cpp BuildEnvironment), but the lookup
+// here only walked the installer's own PATH, so "cmake" was never found and
+// the step never started. Found from a player's setup log (the failure is the
+// first "cmake --preset" line, nothing ran) + reading the two lookups side by
+// side. Same for Visual Studio's Ninja and an off-PATH Python.
+static fs::path FindProgramFor(const ChildOptions& options) {
+  const std::string name = options.argv.empty() ? std::string() : options.argv[0];
+  if (options.environment) {
+    for (const auto& [key, value] : *options.environment) {
+      if (_stricmp(key.c_str(), "PATH") != 0) continue;
+      if (fs::path found = FindProgramOnPath(name, Wide(value)); !found.empty()) return found;
+    }
+  }
+  return FindProgram(name);
 }
 
 double MemAvailableGb() {
@@ -382,7 +410,7 @@ Child::~Child() {
 }
 
 bool Child::Start(const ChildOptions& options, std::string* error) {
-  const fs::path program = FindProgram(options.argv.empty() ? std::string() : options.argv[0]);
+  const fs::path program = FindProgramFor(options);
   if (program.empty()) {
     *error = "Couldn't find " + (options.argv.empty() ? std::string("?") : options.argv[0]) +
              " (is it installed?)";
