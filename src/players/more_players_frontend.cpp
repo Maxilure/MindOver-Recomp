@@ -40,6 +40,7 @@
 #include "../achievements/achievements.h"
 #include "../achievements/achievements_screen.h"
 #include "../ui/wii_cursor.h"
+#include "../options/global_options.h"
 
 #include <cstring>
 
@@ -193,6 +194,9 @@ extern "C" REX_FUNC(sub_82261C40) {
   const uint32_t fe = ctx.r3.u32;
   const double dt = ctx.f1.f64;
   __imp__sub_82261C40(ctx, base);
+  // The volumes + Invert Axis once the audio exists: before the title
+  // (options/global_options.h ApplyOnceAudioReady).
+  global_options::ApplyOnceAudioReady(ctx, base, fe);
   // The menus' prompt bar gets the menu glyphs (input/prompt_icons.h).
   prompt_icons::FrontEndFrame(ctx, base);
   // The prompt bar answers to the mouse (input/mouse_menus.h).

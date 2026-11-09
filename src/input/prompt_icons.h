@@ -192,6 +192,12 @@ char16_t ButtonGlyphInStyle(char16_t face, int style, SlotSize size = SlotSize::
 // (input/name_typing.h). Any thread.
 bool KeysShown();
 
+// When a controller was last used on socket `p` (0-3), as steady_clock ticks
+// (time_since_epoch().count()); 0 = never. Socket 0 = player 1, and outside
+// play every device answers there. The Wii cursor hides the moment a
+// controller is used after the mouse (ui/wii_cursor.cpp). Any thread.
+int64_t PadActivity(int p);
+
 // A text the port writes for ONE player (0-3): its prompt characters (± ²...
 // and the menu glyphs) drawn as that player's own device's pictures (player
 // slots, as the co-op corners get them); player 1, or a player whose look is

@@ -207,3 +207,20 @@ Menus are unchanged: the bubble shows there whatever the device.
 Tested with the debug console in crosshair mode: the game's cursor switched
 on at the level start (keyboard), off at player 1's first controller press
 (it stayed off while the stick moved), and on again at the next key press.
+
+## 8. The bubble sleeps until the mouse moves
+
+Menus and cutscenes showed the bubble for everyone, even a player who only
+used a controller. Now the overlay follows the pointer's move counter
+(`KeyboardMouseDriver::Pointer`) every draw, shown or not:
+
+- **Wakes** on a mouse move. The first counter value seen is only
+  remembered, so the bubble starts asleep: a controller player never sees it.
+- **Sleeps at once** when the keyboard's socket reports controller input
+  newer than the last move (`prompt_icons::PadActivity`, the same per-socket
+  time the button pictures use; outside play every device is socket 0).
+- **Fades out** (0.35 s) after `wii_cursor_fade` without a move: 0 never,
+  1 = 1 s, 2 = 3 s (default), 3 = 5 s. Options -> Controls -> Cursor Fades.
+
+The system pointer stays hidden while the bubble sleeps (the same rule as
+before); the next mouse move brings the bubble back where the pointer is.
