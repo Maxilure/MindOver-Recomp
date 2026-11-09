@@ -30,24 +30,22 @@ Activision or the game's other owners.
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
 
-### What's new in 0.2.2-alpha.3
+### What's new in 0.2.2-alpha.4
 
-One installer fix on top of 0.2.2-alpha.2.
+One installer fix on top of 0.2.2-alpha.3.
 
-- **The SDK step no longer fails with "Python was not found; run without
-  arguments to install from the Microsoft Store".** Python was installed
-  and working (the installer had just used it to copy the disc), but one of
-  the SDK's libraries looked for Python again on its own. It searched for a
-  program called `python3`, and with Python from python.org the only one it
-  found was Windows' **Microsoft Store shortcut**, which isn't Python. The
-  installer now hands the build the exact Python, Ninja, Git and shader
-  compiler its tool check found, so the build can't pick a different file.
-  Thanks to **[MrSanic](https://github.com/MrSanic)** for the logs in
-  [#16](https://github.com/Maxilure/MindOver-Recomp/issues/16).
-- **If the build ever meets that Store shortcut again,** the installer's
-  error says what to do, and the
-  [Troubleshooting](https://github.com/Maxilure/MindOver-Recomp/blob/main/docs/06-troubleshooting.md#python-was-not-found-run-without-arguments-to-install-from-the-microsoft-store)
-  page has an entry for it.
+- **The SDK's libraries download without Git's shell.** On some PCs the
+  step **"Finishing the SDK's libraries"** (or the SDK download before it)
+  stopped with **"fork: Resource temporarily unavailable"** and **exit
+  code 254**, even with no antivirus installed. The tool Git uses for
+  submodules is a script that runs in Git for Windows' own shell, and on
+  those PCs Windows stopped every program that shell tried to start. The
+  installer now fetches each of the SDK's libraries with plain Git
+  commands that don't need that shell. A download that was stopped goes on
+  where it stopped. Thanks to **[lionessbzzz](https://github.com/lionessbzzz)**
+  for the logs in [#14](https://github.com/Maxilure/MindOver-Recomp/issues/14).
+- **If another Git step ever meets that error,** the installer's message
+  says what usually causes it and what to try.
 
 ### Install or update
 
@@ -60,14 +58,15 @@ One installer fix on top of 0.2.2-alpha.2.
 - **Already on 0.2.0, 0.2.1 or 0.2.2:** open **Mind over Recomp** from the Start
   menu. It offers the update.
 - **Your install stopped at "Couldn't find cmake", "file INSTALL cannot
-  find" or "Python was not found"?** Start this version's
+  find", "Python was not found" or "fork: Resource temporarily
+  unavailable"?** Start this version's
   **Mind over Recomp.exe** and install into the same folder: it carries on
   where it stopped.
 - **Coming from 0.1.0:** don't use the old launcher's **Update** button.
   Follow [Updating from 0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha)
   on the 0.2.0 page.
 
-**Download:** `MindOverRecomp-0.2.2-alpha.3-windows-x86_64.zip` (Windows 10 / 11,
+**Download:** `MindOverRecomp-0.2.2-alpha.4-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` is only for the update check; you don't need it.
 
 ### Help and bug reports
@@ -81,6 +80,8 @@ One installer fix on top of 0.2.2-alpha.2.
 
 ### Changelog
 
+- [0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3):
+  the SDK step no longer picks Windows' Microsoft Store shortcut for Python.
 - [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2):
   the SDK step without the Tracy DLL an antivirus removed, controller aiming
   with Mouse Aiming on, the installer shows its version.

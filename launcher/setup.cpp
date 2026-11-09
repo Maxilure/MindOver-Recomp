@@ -2,6 +2,7 @@
 // setup.cpp -- see setup.h
 // =============================================================================
 #include "setup.h"
+#include "git_parts.h"
 #include "texts.h"
 
 #include <algorithm>
@@ -163,17 +164,14 @@ void AddLinkFix(const fs::path& sdk, std::vector<task_runner::Command>* commands
   fix.title = trs("Replacing link files with copies (Git for Windows)");
   fix.function = [sdk](std::string* message) {
     bool ok = false;
+    // The SDK + every library checked out in it (git_parts: not `git
+    // submodule foreach`, a shell script that fails on some PCs, issue #14).
     std::vector<fs::path> repos = {sdk};
-    const std::string subs = platform::Capture(
-        {"git", "-C", sdk.string(), "submodule", "foreach", "--recursive", "--quiet",
-         "echo $displaypath"},
-        &ok, {}, 60000);
-    std::istringstream sub_lines(subs);
-    std::string line;
-    while (std::getline(sub_lines, line)) {
-      if (!line.empty() && line.back() == '\r') line.pop_back();
-      if (!line.empty()) repos.push_back(sdk / fs::path(line));
+    bool all_ok = false;
+    for (const git_parts::Part& part : git_parts::AllParts(sdk, &ok, &all_ok)) {
+      if (git_parts::StateOf(part) == git_parts::PartState::kOk) repos.push_back(part.path);
     }
+    std::string line;
     int fixed = 0;
     for (const fs::path& repo : repos) {
       const std::string files =
@@ -981,20 +979,13 @@ Status Setup::RunChecks() {
                    Exists(sdk / "thirdparty" / "fmt" / "CMakeLists.txt") &&
                    Exists(sdk / "thirdparty" / "sdl3" / "CMakeLists.txt");
   if (source_ok) {
-    // Every one of the SDK's own libraries checked out? A download stopped
-    // halfway leaves some empty: `git submodule status` marks those with
-    // '-' (not checked out) or '+' (another version than recorded).
-    bool ok = false;
-    const std::string list =
-        task_runner::Capture({"git", "submodule", "status", "--recursive"}, &ok, sdk, 20000);
-    std::istringstream lines(list);
-    std::string line;
-    while (std::getline(lines, line)) {
-      if (!line.empty() && (line[0] == '-' || line[0] == '+' || line[0] == 'U')) {
-        ok = false;
-      }
-    }
-    source_ok = ok;
+    // Every one of the SDK's own libraries checked out, at the commit the SDK
+    // records? A download stopped halfway leaves some empty. (git_parts, not
+    // `git submodule status`: that one is a shell script, and Git's shell
+    // can't start programs on some Windows PCs, issue #14.)
+    bool ok = false, all_ok = false;
+    git_parts::AllParts(sdk, &ok, &all_ok);
+    source_ok = ok && all_ok;
   }
   s.source_state = source_ok ? StepState::kDone : StepState::kMissing;
   s.source_detail = source_ok ? trs("the ReXGlue SDK and its libraries are there")
@@ -1151,11 +1142,18 @@ std::vector<Command> Setup::SourceJob() {
   bool head_ok = false;
   std::string head = task_runner::Capture({"git", "rev-parse", "HEAD"}, &head_ok, sdk);
   head = head.substr(0, head.find('\n'));
+  // The libraries come through git_parts (plain init / fetch / checkout), not
+  // `git submodule update`: that is a shell script, and Git for Windows' shell
+  // can't start its helper programs on some PCs (0xC0000142, issue #14).
   if (head_ok && head == pin.commit) {
-    std::vector<std::string> argv = {"git"};
-    argv.insert(argv.end(), kGitOptions.begin(), kGitOptions.end());
-    argv.insert(argv.end(), {"submodule", "update", "--init", "--recursive", "--depth", "1"});
-    commands.push_back({trs("Finishing the SDK's libraries (a download was stopped)"), argv, sdk});
+    Command finish;
+    finish.title = trs("Finishing the SDK's libraries (a download was stopped)");
+    finish.function = [sdk](std::string* message) {
+      git_parts::DownloadCommands(sdk, kGitOptions, message);  // only for the count
+      return true;
+    };
+    finish.then = [sdk]() { return git_parts::DownloadCommands(sdk, kGitOptions); };
+    commands.push_back(std::move(finish));
     AddLinkFix(sdk, &commands);
     return commands;
   }
@@ -1171,10 +1169,13 @@ std::vector<Command> Setup::SourceJob() {
   {
     std::vector<std::string> argv = {"git"};
     argv.insert(argv.end(), kGitOptions.begin(), kGitOptions.end());
-    argv.insert(argv.end(), {"clone", "--depth", "1", "--branch", pin.tag, "--recurse-submodules",
-                             "--shallow-submodules", pin.url, sdk.string()});
-    commands.push_back({trf(trs("Downloading the ReXGlue SDK {0} (and its libraries)"), {pin.tag}), argv,
-                        folders_.source});
+    // The SDK alone (no --recurse-submodules: that runs `git submodule`, see
+    // above); its libraries follow, one by one, once their list is here.
+    argv.insert(argv.end(), {"clone", "--depth", "1", "--branch", pin.tag, pin.url, sdk.string()});
+    Command clone{trf(trs("Downloading the ReXGlue SDK {0} (and its libraries)"), {pin.tag}), argv,
+                  folders_.source};
+    clone.then = [sdk]() { return git_parts::DownloadCommands(sdk, kGitOptions); };
+    commands.push_back(std::move(clone));
   }
   AddLinkFix(sdk, &commands);
   Command verify;

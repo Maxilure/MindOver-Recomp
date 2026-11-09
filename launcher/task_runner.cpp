@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <sstream>
 #include <thread>
 
@@ -61,6 +62,31 @@ std::string KnownProblemHint(const std::string& line) {
            "Python 3 from python.org (tick \"Add python.exe to PATH\"), or turn off the python.exe and "
            "python3.exe shortcuts in Settings > Apps > Advanced app settings > App execution aliases, then "
            "run this step again.";
+  }
+  // Git for Windows' shell (MSYS2 runtime) couldn't start a child program:
+  //   "sh 1213 dofork: child -1 - forked process 12936 died unexpectedly,
+  //    retry 0, exit code 0xC0000142, errno 11"
+  //   ".../git-submodule: fork: Resource temporarily unavailable"
+  // `git submodule` is a shell script, so the SDK's "Finishing the SDK's
+  // libraries" step is where it showed (GitHub issue #14, exit code 254).
+  // Since 2026-11-09 the SDK's libraries come without that script
+  // (git_parts.cpp), so this hint is only a safety net for any other Git
+  // step that might still reach the shell.
+  // 0xC0000142 = STATUS_DLL_INIT_FAILED: the new process died while its DLLs
+  // were starting, before running any of Git's code. The causes MSYS2 / Git
+  // for Windows users report: security software that injects a DLL into
+  // every process (antivirus, overlays, "game boosters"), Windows Exploit
+  // protection forcing "Mandatory ASLR" system-wide (MSYS2's fork needs DLLs
+  // at fixed addresses), or Windows out of resources (a restart fixes it).
+  // Nothing in our command can change that, so the hint lists them in order
+  // of how easy they are to try.
+  if (line.find("dofork: child") != std::string::npos ||
+      line.find("0xC0000142") != std::string::npos ||
+      line.find("fork: Resource temporarily unavailable") != std::string::npos) {
+    return "Git couldn't start its helper programs (Windows stopped them while they were starting). Restart "
+           "the PC and run this step again. If it still fails: pause the antivirus and close overlay or "
+           "\"game booster\" programs, and in Windows Security > App & browser control > Exploit protection "
+           "settings, set \"Force randomization for images (Mandatory ASLR)\" to Off by default.";
   }
   return {};
 }
@@ -131,6 +157,12 @@ void Runner::Run(std::vector<Command> commands, fs::path log_file,
   bool ok = true;
   for (size_t i = 0; i < commands.size() && ok; ++i) {
     ok = RunOne(commands[i], i, commands.size(), log);
+    // Commands this one makes known (Command::then) go in right after it.
+    if (ok && !cancel_ && commands[i].then) {
+      std::vector<Command> more = commands[i].then();
+      commands.insert(commands.begin() + std::ptrdiff_t(i + 1), std::make_move_iterator(more.begin()),
+                      std::make_move_iterator(more.end()));
+    }
     // Cancel stops what's LEFT: a last step that finished well is done (an
     // update's swap pressed "Cancel" on while it worked, swapped everything,
     // and was then called cancelled: the update was offered again).
