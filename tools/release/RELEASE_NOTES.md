@@ -96,6 +96,10 @@ installer's title).
   - **The SDK is built once instead of twice.**
   - **The Update button in the installed Mind over Recomp is gone:** it
     didn't work reliably. Each release's installer does the update instead.
+  - **Advice when Git can't start its helpers.** If a Git step stops with
+    "fork: Resource temporarily unavailable" (exit code 254), the
+    installer says what usually causes it and what to try
+    ([#14](https://github.com/Maxilure/MindOver-Recomp/issues/14)).
   - **The installer downloads nothing itself.** It uses the files from its
     own `.zip`: unpack the whole `.zip` before starting it, or it says so.
 - **Button styles named after their controllers.** In **Options → Controls

@@ -51,6 +51,28 @@ std::string KnownProblemHint(const std::string& line) {
            "mistake: check Windows Security > Virus & threat protection > Protection history, allow the "
            "file, add the game's folder as an exclusion, then run this step again.";
   }
+  // Git for Windows' shell (MSYS2 runtime) couldn't start a child program:
+  //   "sh 1213 dofork: child -1 - forked process 12936 died unexpectedly,
+  //    retry 0, exit code 0xC0000142, errno 11"
+  //   ".../git-submodule: fork: Resource temporarily unavailable"
+  // `git submodule` is a shell script, so the SDK's "Finishing the SDK's
+  // libraries" step is where it shows (GitHub issue #14, exit code 254).
+  // 0xC0000142 = STATUS_DLL_INIT_FAILED: the new process died while its DLLs
+  // were starting, before running any of Git's code. The causes MSYS2 / Git
+  // for Windows users report: security software that injects a DLL into
+  // every process (antivirus, overlays, "game boosters"), Windows Exploit
+  // protection forcing "Mandatory ASLR" system-wide (MSYS2's fork needs DLLs
+  // at fixed addresses), or Windows out of resources (a restart fixes it).
+  // Nothing in our command can change that, so the hint lists them in order
+  // of how easy they are to try.
+  if (line.find("dofork: child") != std::string::npos ||
+      line.find("0xC0000142") != std::string::npos ||
+      line.find("fork: Resource temporarily unavailable") != std::string::npos) {
+    return "Git couldn't start its helper programs (Windows stopped them while they were starting). Restart "
+           "the PC and run this step again. If it still fails: pause the antivirus and close overlay or "
+           "\"game booster\" programs, and in Windows Security > App & browser control > Exploit protection "
+           "settings, set \"Force randomization for images (Mandatory ASLR)\" to Off by default.";
+  }
   return {};
 }
 

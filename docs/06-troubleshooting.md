@@ -254,6 +254,30 @@ exists" part is a leftover error code; ignore it.)
 TracyClient.dll is a profiler library nobody needs to play: installers newer
 than 0.2.2-alpha no longer build it at all.
 
+### "fork: Resource temporarily unavailable" / exit code 254
+
+The step **"Finishing the SDK's libraries"** (or another Git step) stops
+with lines like **dofork: child -1 - forked process ... died unexpectedly,
+exit code 0xC0000142** and **fork: Resource temporarily unavailable**, then
+**exit code 254**. Git for Windows' own shell couldn't start its helper
+programs: Windows stopped each one while its libraries were loading
+(`0xC0000142`), before Git ran any code. The download itself isn't the
+problem.
+
+Try these in order, and run the step again after each:
+
+1. **Restart the PC.** Windows running short of resources is a common cause,
+   and a restart clears it.
+2. **Pause the antivirus** and close overlay or "game booster" programs
+   while installing. Some of them load themselves into every program, and
+   Git's shell is sensitive to that.
+3. **Exploit protection:** open **Windows Security > App & browser control >
+   Exploit protection settings**. If **Force randomization for images
+   (Mandatory ASLR)** is **On by default**, set it to **Off by default**
+   (Git's shell can't run with it forced on), restart, and try again.
+
+Installers from 0.3.0-alpha on show this advice under the error.
+
 ### A tool keeps failing to install
 
 Install it by hand. The installer's list shows each tool's winget name.
