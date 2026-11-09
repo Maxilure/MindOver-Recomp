@@ -1,7 +1,7 @@
 #include "discord_presence.h"
 
 #ifdef _WIN32
-#include "guest_memory.h"
+#include "gameplay/game_state.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -9,27 +9,19 @@
 #include <windows.h>
 
 #include <array>
-#include <atomic>
-#include <bit>
 #include <chrono>
-#include <cstring>
 #include <format>
-#include <mutex>
 #include <string>
 #include <string_view>
 #include <thread>
 
 #include <rex/logging.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xmemory.h>
 
 namespace discord_presence {
 namespace {
 using namespace std::chrono_literals;
 using Clock = std::chrono::steady_clock;
 
-// GAMESTATE (Xbox context 1) from the disc's XDBF. sub_8227B3B8 sends
-// game+0x178 as the context value during gameplay (game+8 == 5).
 constexpr std::array<std::string_view, 15> kAreas = {
     "In Game", "Main Menu", "Starting Game", "Title Screen", "Watching Movie",
     "Wumpa Island", "Ratcicle Kingdom", "Frozen Coast", "Wasteland",
@@ -38,90 +30,37 @@ constexpr std::array<std::string_view, 15> kAreas = {
 };
 constexpr std::array<std::string_view, 3> kDifficulties = {"Mild", "Tricky", "Bonkers"};
 constexpr std::string_view kApplicationId = "1569078085200904435";
-constexpr uint32_t kGameGlobal = 0x8259B190;
-constexpr uint32_t kSettings = 0x825B0008;
-
-struct Snapshot {
-  unsigned context = 2;
-  unsigned difficulty = kDifficulties.size();
-  int seconds = -1;
-};
-
-std::atomic<bool> enabled{false};
-std::mutex snapshot_mutex;
-Snapshot latest;
 std::jthread worker;
 
-uint32_t Read32(const uint8_t* base, uint32_t address) {
-  uint32_t value;
-  std::memcpy(&value, GuestPtr(base, address), sizeof(value));
-  return std::byteswap(value);
-}
-
-}  // namespace
-
-void Sample() {
-  if (!enabled.load(std::memory_order_relaxed)) return;
-
-  // Only this game-thread hook touches guest memory. The IPC worker sees
-  // host snapshots and can wait on the Discord client without stalling a frame.
-  static auto next_sample = Clock::time_point{};
-  const auto now = Clock::now();
-  if (now < next_sample) return;
-  next_sample = now + 250ms;
-
-  const auto* base = rex::system::kernel_memory()->virtual_membase();
-  const uint32_t game = Read32(base, kGameGlobal);
-  if (!game) return;
-
-  Snapshot current;
-  switch (Read32(base, game + 8)) {
-    case 1:
-      current.context = 4;
-      break;
-    case 4:
-    case 6:
-      current.context = 1;
-      break;
-    case 5: {
-      const unsigned area = *GuestPtr(base, game + 0x178);
-      current.context = area >= 5 && area < kAreas.size() ? area : 0;
-      // The live progress and settings fields used by the save screen.
-      current.difficulty = Read32(base, kSettings + 240);
-      if (const uint32_t progress = Read32(base, game + 96)) {
-        const float seconds = std::bit_cast<float>(Read32(base, progress + 20));
-        if (seconds >= 0 && seconds < 1'000'000'000) {
-          current.seconds = static_cast<int>(seconds);
-        }
+std::string_view Details(const game_state::Snapshot& current) {
+  using game_state::Phase;
+  switch (current.phase) {
+    case Phase::kStarting: return "Starting Game";
+    case Phase::kFrontEnd: return "Main Menu";
+    case Phase::kLoading: return "Loading";
+    case Phase::kMovie: return "Watching Movie";
+    case Phase::kInGame:
+      if (current.area_id && *current.area_id >= 5 && *current.area_id < kAreas.size()) {
+        return kAreas[*current.area_id];
       }
-      break;
-    }
+      return "In Game";
   }
-
-  std::lock_guard lock(snapshot_mutex);
-  latest = current;
+  return "In Game";
 }
 
-namespace {
 std::string Activity(int64_t session_start) {
-  Snapshot current;
-  {
-    std::lock_guard lock(snapshot_mutex);
-    current = latest;
-  }
+  const auto current = game_state::Current();
   std::string state;
-  if (current.difficulty < kDifficulties.size()) {
-    state = std::format("Difficulty: {}", kDifficulties[current.difficulty]);
+  if (current.difficulty && *current.difficulty < kDifficulties.size()) {
+    state = std::format("Difficulty: {}", kDifficulties[*current.difficulty]);
   }
-  if (current.seconds >= 0) {
+  if (current.completion) {
     if (!state.empty()) state += " | ";
-    const int seconds = current.seconds;
-    state += std::format("Played {:02}:{:02}:{:02}", seconds / 3600,
-                         seconds / 60 % 60, seconds % 60);
+    state += std::format("Completion: {}%", *current.completion);
   }
 
   // The Discord client uses the registered application's icon.
-  auto activity = std::format(R"({{"details":"{}")", kAreas[current.context]);
+  auto activity = std::format(R"({{"details":"{}")", Details(current));
   activity += std::format(R"(,"timestamps":{{"start":{}}})", session_start);
   if (!state.empty()) activity += std::format(R"(,"state":"{}")", state);
   return activity + '}';
@@ -254,12 +193,10 @@ void Run(std::stop_token stop) {
 
 void Start() {
   if (worker.joinable()) return;
-  enabled.store(true, std::memory_order_relaxed);
   worker = std::jthread(Run);
 }
 
 void Stop() {
-  enabled.store(false, std::memory_order_relaxed);
   if (worker.joinable()) {
     worker.request_stop();
     worker.join();
@@ -269,7 +206,6 @@ void Stop() {
 #else
 namespace discord_presence {
 void Start() {}
-void Sample() {}
 void Stop() {}
 }  // namespace discord_presence
 #endif

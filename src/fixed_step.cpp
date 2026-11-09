@@ -39,7 +39,6 @@
 // =============================================================================
 
 #include "fixed_step.h"
-#include "discord_presence.h"
 
 #if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>  // _mm_pause
@@ -267,7 +266,6 @@ extern "C" REX_FUNC(sub_8235ABC8) {  // milliseconds, 32 bits
 // Codegen declares `extern void CrashMomPassDelta(PPCRegister& f31);`.
 // Game's main thread, once per main-loop pass.
 void CrashMomPassDelta(PPCRegister& f31) {
-  discord_presence::Sample();
   using namespace fixed_step;
   t_main = true;
   g_reads_this_pass = 0;

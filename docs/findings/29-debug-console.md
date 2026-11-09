@@ -387,3 +387,27 @@ load's many commits read a longer file. `mprotect` already refuses (ENOMEM,
 changing nothing) a range with unmapped pages, so the check went: SDK patch
 `0018-commit-without-proc-maps`. The same load now takes 0.37 s.
 
+## 8. Game activity for native consumers
+
+The front-end decision dispatcher (`sub_8211AF40`) already observes the
+current node on the game thread. It now publishes the activity before
+running the decision. Reading the mapped Xbox memory on a consumer thread
+would couple that thread to the guest object's lifetime. The published
+copy contains the activity phase, an optional level index and a pause flag.
+During gameplay it also includes the area, difficulty and completion
+percentage used by Discord Rich Presence.
+
+Nodes 51–53 and 486 mark loading (sections 2 and 7). The existing loading
+screen draw signal covers other loads, and remains active for 250 ms
+after its last draw. Otherwise the dispatcher checks that the game object
+is readable before using mode 5 at +8, the level byte at +18 (findings/24
+s.6), and pause bit 0x20 at +168 (the same flag the reticle uses).
+Consumers see the most recent dispatcher sample and can read it from
+any thread through `game_state::Current()`. The dispatcher uses the
+save screen's calculation for completion and publishes the result as a
+host value. The Discord worker reads that snapshot without accessing
+the guest memory.
+
+The snapshot was tested on Windows with concurrent reads and writes.
+The integrated build also published loading and gameplay snapshots
+when starting from a save.
