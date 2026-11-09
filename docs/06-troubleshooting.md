@@ -278,7 +278,9 @@ Try these in order, and run the step again after each:
    (Mandatory ASLR)** is **On by default**, set it to **Off by default**
    (Git's shell can't run with it forced on), restart, and try again.
 
-Installers from 0.3.0-alpha on show this advice under the error.
+Installers from 0.3.0-alpha on no longer use Git's shell to download the
+SDK's libraries (each one is fetched with plain Git commands), so this error
+should not come back there. Older installers: the steps above.
 
 ### "Python was not found; run without arguments to install from the Microsoft Store"
 

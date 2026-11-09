@@ -55,6 +55,10 @@ struct Command {
   std::vector<int> also_ok;
   // Run at low priority (platform.h ChildOptions::low_priority).
   bool low_priority = false;
+  // Optional: more commands, known only once this one has finished well
+  // (the SDK's libraries: their list arrives with the download). They run
+  // right after it, before the rest of the list (git_parts.cpp).
+  std::function<std::vector<Command>()> then;
 };
 
 enum class State { kIdle, kRunning, kDone, kFailed, kCancelled };

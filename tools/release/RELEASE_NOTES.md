@@ -99,9 +99,12 @@ installer's check found).
   - **The SDK is built once instead of twice.**
   - **The Update button in the installed Mind over Recomp is gone:** it
     didn't work reliably. Each release's installer does the update instead.
-  - **Advice when Git can't start its helpers.** If a Git step stops with
-    "fork: Resource temporarily unavailable" (exit code 254), the
-    installer says what usually causes it and what to try
+  - **The SDK's libraries download without Git's shell.** On some PCs Git
+    for Windows' shell can't start its helper programs ("fork: Resource
+    temporarily unavailable", exit code 254), which stopped the download of
+    the SDK's libraries. The installer now fetches each library with plain
+    Git commands that don't need that shell, and a stopped download goes on
+    where it stopped
     ([#14](https://github.com/Maxilure/MindOver-Recomp/issues/14)).
   - **The installer downloads nothing itself.** It uses the files from its
     own `.zip`: unpack the whole `.zip` before starting it, or it says so.

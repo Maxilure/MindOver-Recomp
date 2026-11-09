@@ -384,7 +384,7 @@ msgstr ""
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1326 launcher/setup.cpp:1864
+#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1326 launcher/setup.cpp:1932
 msgid "Cancel"
 msgstr ""
 
@@ -1852,6 +1852,22 @@ msgstr ""
 msgid "The game is already running."
 msgstr ""
 
+#: launcher/git_parts.cpp:63
+msgid "Preparing {0}"
+msgstr ""
+
+#: launcher/git_parts.cpp:93
+msgid "Downloading {0}"
+msgstr ""
+
+#: launcher/git_parts.cpp:98
+msgid "Unpacking {0}"
+msgstr ""
+
+#: launcher/git_parts.cpp:195
+msgid "Listing the SDK's libraries"
+msgstr ""
+
 #: launcher/install.cpp:220
 msgid "That path is too long: the build's files nest deep, and Windows stops at 260 characters. Pick a folder closer to the drive, like C:\\Games."
 msgstr ""
@@ -1932,7 +1948,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:266 launcher/main.cpp:395 launcher/setup.cpp:1878
+#: launcher/installer.cpp:266 launcher/main.cpp:395 launcher/setup.cpp:1946
 msgid "Log: %s"
 msgstr ""
 
@@ -2036,7 +2052,7 @@ msgstr ""
 msgid "The game is running: close it first."
 msgstr ""
 
-#: launcher/installer.cpp:657 launcher/installer.cpp:749 launcher/setup.cpp:1285
+#: launcher/installer.cpp:657 launcher/installer.cpp:749 launcher/setup.cpp:1340
 msgid "Pick your disc image (.iso) first."
 msgstr ""
 
@@ -2124,11 +2140,11 @@ msgstr ""
 msgid "What's missing can't be installed from here (see the list)."
 msgstr ""
 
-#: launcher/installer.cpp:821 launcher/setup.cpp:2041
+#: launcher/installer.cpp:821 launcher/setup.cpp:2109
 msgid "Installing the build tools"
 msgstr ""
 
-#: launcher/installer.cpp:827 launcher/setup.cpp:2119
+#: launcher/installer.cpp:827 launcher/setup.cpp:2187
 msgid "Check again"
 msgstr ""
 
@@ -2200,7 +2216,7 @@ msgstr ""
 msgid "\"Use fewer resources\" is on: the build gives way to other programs, so it takes longer."
 msgstr ""
 
-#: launcher/installer.cpp:1088 launcher/setup.cpp:2111
+#: launcher/installer.cpp:1088 launcher/setup.cpp:2179
 msgid "Checking what's there..."
 msgstr ""
 
@@ -2288,7 +2304,7 @@ msgstr ""
 msgid "Build it now"
 msgstr ""
 
-#: launcher/installer.cpp:1242 launcher/setup.cpp:2205
+#: launcher/installer.cpp:1242 launcher/setup.cpp:2273
 msgid "Pick the disc image..."
 msgstr ""
 
@@ -2563,7 +2579,7 @@ msgstr ""
 msgid "Report a problem..."
 msgstr ""
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1873
+#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:1941
 msgid "OK"
 msgstr ""
 
@@ -2684,7 +2700,7 @@ msgstr ""
 msgid "What's new:"
 msgstr ""
 
-#: launcher/main.cpp:664 launcher/setup.cpp:996
+#: launcher/main.cpp:664 launcher/setup.cpp:1048
 msgid "Release page"
 msgstr ""
 
@@ -3202,451 +3218,451 @@ msgstr ""
 msgid "All settings (advanced)"
 msgstr ""
 
-#: launcher/setup.cpp:165
+#: launcher/setup.cpp:174
 msgid "Replacing link files with copies (Git for Windows)"
 msgstr ""
 
-#: launcher/setup.cpp:506
+#: launcher/setup.cpp:512
 msgid "checking..."
 msgstr ""
 
-#: launcher/setup.cpp:507
+#: launcher/setup.cpp:513
 msgid "done"
 msgstr ""
 
-#: launcher/setup.cpp:508
+#: launcher/setup.cpp:514
 msgid "out of date"
 msgstr ""
 
-#: launcher/setup.cpp:509
+#: launcher/setup.cpp:515
 msgid "to do"
 msgstr ""
 
-#: launcher/setup.cpp:510
+#: launcher/setup.cpp:516
 msgid "needs attention"
 msgstr ""
 
-#: launcher/setup.cpp:680 launcher/setup.cpp:694 launcher/setup.cpp:708 launcher/setup.cpp:722 launcher/setup.cpp:733 launcher/setup.cpp:749 launcher/setup.cpp:779 launcher/setup.cpp:835 launcher/setup.cpp:852 launcher/setup.cpp:858
+#: launcher/setup.cpp:725 launcher/setup.cpp:739 launcher/setup.cpp:753 launcher/setup.cpp:767 launcher/setup.cpp:778 launcher/setup.cpp:801 launcher/setup.cpp:831 launcher/setup.cpp:887 launcher/setup.cpp:904 launcher/setup.cpp:910
 msgid "not found"
 msgstr ""
 
-#: launcher/setup.cpp:684 launcher/setup.cpp:699 launcher/setup.cpp:830 launcher/setup.cpp:840
+#: launcher/setup.cpp:729 launcher/setup.cpp:744 launcher/setup.cpp:882 launcher/setup.cpp:892
 msgid "too old: {0} ({1} or newer needed)"
 msgstr ""
 
-#: launcher/setup.cpp:719
+#: launcher/setup.cpp:764
 msgid "not found (or only the Store shortcut)"
 msgstr ""
 
-#: launcher/setup.cpp:750
+#: launcher/setup.cpp:802
 msgid "the Windows SDK is missing"
 msgstr ""
 
-#: launcher/setup.cpp:783
+#: launcher/setup.cpp:835
 msgid "not found: update your graphics card's driver"
 msgstr ""
 
-#: launcher/setup.cpp:825
+#: launcher/setup.cpp:877
 msgid "not found (clang and clang++)"
 msgstr ""
 
-#: launcher/setup.cpp:847
+#: launcher/setup.cpp:899
 msgid "not found (needs pkg-config too)"
 msgstr ""
 
-#: launcher/setup.cpp:884
+#: launcher/setup.cpp:936
 msgid "Checking file dates"
 msgstr ""
 
-#: launcher/setup.cpp:945
+#: launcher/setup.cpp:997
 msgid "Version %s"
 msgstr ""
 
-#: launcher/setup.cpp:948
+#: launcher/setup.cpp:1000
 msgid " -  a developer copy: update it with git pull"
 msgstr ""
 
-#: launcher/setup.cpp:953
+#: launcher/setup.cpp:1005
 msgid " -  updated to %s: restart the launcher to finish"
 msgstr ""
 
-#: launcher/setup.cpp:956
+#: launcher/setup.cpp:1008
 msgid "Restart the launcher"
 msgstr ""
 
-#: launcher/setup.cpp:960
+#: launcher/setup.cpp:1012
 msgid "Couldn't restart: start the launcher again by hand."
 msgstr ""
 
-#: launcher/setup.cpp:970
+#: launcher/setup.cpp:1022
 msgid " -  checking for updates..."
 msgstr ""
 
-#: launcher/setup.cpp:972
+#: launcher/setup.cpp:1024
 msgid " -  %s is available%s%s"
 msgstr ""
 
-#: launcher/setup.cpp:977 launcher/setup.cpp:982 launcher/setup.cpp:2065
+#: launcher/setup.cpp:1029 launcher/setup.cpp:1034 launcher/setup.cpp:2133
 msgid "Update to {0}"
 msgstr ""
 
-#: launcher/setup.cpp:992
+#: launcher/setup.cpp:1044
 msgid "Downloads the new version and swaps it in: your saves, settings and the game's files stay. Then the launcher restarts and rebuilds what changed."
 msgstr ""
 
-#: launcher/setup.cpp:1001
+#: launcher/setup.cpp:1053
 msgid " -  the newest version"
 msgstr ""
 
-#: launcher/setup.cpp:1008
+#: launcher/setup.cpp:1060
 msgid "Check for updates"
 msgstr ""
 
-#: launcher/setup.cpp:1017
+#: launcher/setup.cpp:1069
 msgid "What's new in %s"
 msgstr ""
 
-#: launcher/setup.cpp:1082
+#: launcher/setup.cpp:1127
 msgid "the ReXGlue SDK and its libraries are there"
 msgstr ""
 
-#: launcher/setup.cpp:1083
+#: launcher/setup.cpp:1128
 msgid "the ReXGlue SDK isn't downloaded yet"
 msgstr ""
 
-#: launcher/setup.cpp:1084
+#: launcher/setup.cpp:1129
 msgid "the ReXGlue SDK submodule isn't downloaded yet"
 msgstr ""
 
-#: launcher/setup.cpp:1094
+#: launcher/setup.cpp:1139
 msgid "this version needs another ReXGlue SDK ({0}): download it again"
 msgstr ""
 
-#: launcher/setup.cpp:1108
+#: launcher/setup.cpp:1153
 msgid "extracted in {0}"
 msgstr ""
 
-#: launcher/setup.cpp:1111
+#: launcher/setup.cpp:1156
 msgid "no disc image found yet: pick your .iso"
 msgstr ""
 
-#: launcher/setup.cpp:1112
+#: launcher/setup.cpp:1157
 msgid "ready to extract {0}"
 msgstr ""
 
-#: launcher/setup.cpp:1147
+#: launcher/setup.cpp:1192
 msgid "needs the source parts first"
 msgstr ""
 
-#: launcher/setup.cpp:1154
+#: launcher/setup.cpp:1199
 msgid "the patches changed (an update): it will be reset and patched again, then rebuilt"
 msgstr ""
 
-#: launcher/setup.cpp:1158
+#: launcher/setup.cpp:1203
 msgid "our {0} SDK patches are neither all applied nor all missing: the SDK folder was changed by hand (or a patch was updated). Not touched; see docs/01-building.md, step 2 (git -C thirdparty/rexglue-sdk status)."
 msgstr ""
 
-#: launcher/setup.cpp:1164
+#: launcher/setup.cpp:1209
 msgid "patched, not built yet"
 msgstr ""
 
-#: launcher/setup.cpp:1164
+#: launcher/setup.cpp:1209
 msgid "not patched or built yet"
 msgstr ""
 
-#: launcher/setup.cpp:1169
+#: launcher/setup.cpp:1214
 msgid "built without our patches: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:1170
+#: launcher/setup.cpp:1215
 msgid "the patches changed since the SDK was built: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:1173
+#: launcher/setup.cpp:1218
 msgid "built and installed, {0} patches"
 msgstr ""
 
-#: launcher/setup.cpp:1180
+#: launcher/setup.cpp:1225
 msgid "not built yet"
 msgstr ""
 
-#: launcher/setup.cpp:1183
+#: launcher/setup.cpp:1228
 msgid "built, not copied into program/ yet"
 msgstr ""
 
-#: launcher/setup.cpp:1200
+#: launcher/setup.cpp:1245
 msgid "the sources changed since the last build: rebuild it"
 msgstr ""
 
-#: launcher/setup.cpp:1203
+#: launcher/setup.cpp:1248
 msgid "built: {0}"
 msgstr ""
 
-#: launcher/setup.cpp:1226
+#: launcher/setup.cpp:1271
 msgid "Downloading the source parts (git submodules)"
 msgstr ""
 
-#: launcher/setup.cpp:1244
+#: launcher/setup.cpp:1290
 msgid "Finishing the SDK's libraries (a download was stopped)"
 msgstr ""
 
-#: launcher/setup.cpp:1249
+#: launcher/setup.cpp:1301
 msgid "Removing the old SDK download"
 msgstr ""
 
-#: launcher/setup.cpp:1262
+#: launcher/setup.cpp:1315
 msgid "Downloading the ReXGlue SDK {0} (and its libraries)"
 msgstr ""
 
-#: launcher/setup.cpp:1267
+#: launcher/setup.cpp:1322
 msgid "Checking the SDK's version"
 msgstr ""
 
-#: launcher/setup.cpp:1292
+#: launcher/setup.cpp:1347
 msgid "Not enough free space: the game's files need about 6.5 GB, %.1f GB are free."
 msgstr ""
 
-#: launcher/setup.cpp:1305
+#: launcher/setup.cpp:1360
 msgid "That file isn't an Xbox 360 disc image the extractor can read."
 msgstr ""
 
-#: launcher/setup.cpp:1309
+#: launcher/setup.cpp:1364
 msgid "That disc image has no default.xex: not a game disc?"
 msgstr ""
 
-#: launcher/setup.cpp:1312
+#: launcher/setup.cpp:1367
 msgid "Extracting the disc into game/"
 msgstr ""
 
-#: launcher/setup.cpp:1324
+#: launcher/setup.cpp:1379
 msgid "Checking the game's executable"
 msgstr ""
 
-#: launcher/setup.cpp:1330
+#: launcher/setup.cpp:1385
 msgid "default.xex isn't Crash: Mind over Mutant (title id 565507FA not found). The files are in game/; this port only runs that game."
 msgstr ""
 
-#: launcher/setup.cpp:1334
+#: launcher/setup.cpp:1389
 msgid "Title id 565507FA: Crash: Mind over Mutant."
 msgstr ""
 
-#: launcher/setup.cpp:1360
+#: launcher/setup.cpp:1415
 msgid "Updating our fixes in the SDK (only the files that change)"
 msgstr ""
 
-#: launcher/setup.cpp:1370
+#: launcher/setup.cpp:1425
 msgid "Applying our fixes to the SDK (patches/rexglue-sdk)"
 msgstr ""
 
-#: launcher/setup.cpp:1385
+#: launcher/setup.cpp:1447
 msgid "Configuring the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:1390
+#: launcher/setup.cpp:1452
 msgid "Building the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:1398
+#: launcher/setup.cpp:1460
 msgid "Noting which patches the SDK was built with"
 msgstr ""
 
-#: launcher/setup.cpp:1425
+#: launcher/setup.cpp:1487
 msgid "Copying default.xex for the build"
 msgstr ""
 
-#: launcher/setup.cpp:1452
+#: launcher/setup.cpp:1514
 msgid "Linking source/game to the disc's files"
 msgstr ""
 
-#: launcher/setup.cpp:1476
+#: launcher/setup.cpp:1538
 msgid "Configuring the game's build"
 msgstr ""
 
-#: launcher/setup.cpp:1486
+#: launcher/setup.cpp:1554
 msgid "Recompiling the game's code (default.xex -> C++)"
 msgstr ""
 
-#: launcher/setup.cpp:1492
+#: launcher/setup.cpp:1560
 msgid "Compiling the game ({0} at a time; the first build takes a while)"
 msgstr ""
 
-#: launcher/setup.cpp:1505
+#: launcher/setup.cpp:1573
 msgid "Copying the game into program/"
 msgstr ""
 
-#: launcher/setup.cpp:1567
+#: launcher/setup.cpp:1635
 msgid "Making the game's icon from your disc"
 msgstr ""
 
-#: launcher/setup.cpp:1577
+#: launcher/setup.cpp:1645
 msgid "Putting the icon on the game"
 msgstr ""
 
-#: launcher/setup.cpp:1642
+#: launcher/setup.cpp:1710
 msgid "Setting up"
 msgstr ""
 
-#: launcher/setup.cpp:1763
+#: launcher/setup.cpp:1831
 msgid "Checking the game's files against your disc"
 msgstr ""
 
-#: launcher/setup.cpp:1847
+#: launcher/setup.cpp:1915
 msgid "%s: done"
 msgstr ""
 
-#: launcher/setup.cpp:1849
+#: launcher/setup.cpp:1917
 msgid "%s: cancelled"
 msgstr ""
 
-#: launcher/setup.cpp:1851
+#: launcher/setup.cpp:1919
 msgid "%s: failed"
 msgstr ""
 
-#: launcher/setup.cpp:1871
+#: launcher/setup.cpp:1939
 msgid "This step can't be stopped: a few seconds."
 msgstr ""
 
-#: launcher/setup.cpp:1880
+#: launcher/setup.cpp:1948
 msgid "Follow"
 msgstr ""
 
-#: launcher/setup.cpp:1949 launcher/setup.cpp:2019 launcher/setup.cpp:2059
+#: launcher/setup.cpp:2017 launcher/setup.cpp:2087 launcher/setup.cpp:2127
 msgid "Still busy: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1954
+#: launcher/setup.cpp:2022
 msgid "Still checking: wait a moment."
 msgstr ""
 
-#: launcher/setup.cpp:1985
+#: launcher/setup.cpp:2053
 msgid "Adding {0} (Windows asks for permission)"
 msgstr ""
 
-#: launcher/setup.cpp:1995
+#: launcher/setup.cpp:2063
 msgid "Installing {0} (winget)"
 msgstr ""
 
-#: launcher/setup.cpp:2024
+#: launcher/setup.cpp:2092
 msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
 msgstr ""
 
-#: launcher/setup.cpp:2033
+#: launcher/setup.cpp:2101
 msgid "Nothing here can be installed automatically."
 msgstr ""
 
-#: launcher/setup.cpp:2089
+#: launcher/setup.cpp:2157
 msgid "Setup builds the game from its source code, so it works from the project's folder (a git clone). This copy is an installed one."
 msgstr ""
 
-#: launcher/setup.cpp:2113
+#: launcher/setup.cpp:2181
 msgid "Everything is set up: the game is ready to play."
 msgstr ""
 
-#: launcher/setup.cpp:2115
+#: launcher/setup.cpp:2183
 msgid "Some steps are left."
 msgstr ""
 
-#: launcher/setup.cpp:2135
+#: launcher/setup.cpp:2203
 msgid "Set up everything"
 msgstr ""
 
-#: launcher/setup.cpp:2140
+#: launcher/setup.cpp:2208
 msgid "Install the missing build tools first (step 1)."
 msgstr ""
 
-#: launcher/setup.cpp:2144
+#: launcher/setup.cpp:2212
 msgid "The game is running: building waits until it's closed."
 msgstr ""
 
-#: launcher/setup.cpp:2157
+#: launcher/setup.cpp:2225
 msgid "Build tools"
 msgstr ""
 
-#: launcher/setup.cpp:2158
+#: launcher/setup.cpp:2226
 msgid "everything needed to build is installed"
 msgstr ""
 
-#: launcher/setup.cpp:2165
+#: launcher/setup.cpp:2233
 msgid "found"
 msgstr ""
 
-#: launcher/setup.cpp:2165
+#: launcher/setup.cpp:2233
 msgid "missing"
 msgstr ""
 
-#: launcher/setup.cpp:2170
+#: launcher/setup.cpp:2238
 msgid "  -  package: "
 msgstr ""
 
-#: launcher/setup.cpp:2177
+#: launcher/setup.cpp:2245
 msgid "Install the missing ones with your package manager (the package names above are %s's), then press Check again."
 msgstr ""
 
-#: launcher/setup.cpp:2186 launcher/setup.cpp:2191
+#: launcher/setup.cpp:2254 launcher/setup.cpp:2259
 msgid "Source parts"
 msgstr ""
 
-#: launcher/setup.cpp:2190
+#: launcher/setup.cpp:2258
 msgid "Download them"
 msgstr ""
 
-#: launcher/setup.cpp:2198
+#: launcher/setup.cpp:2266
 msgid "Your disc"
 msgstr ""
 
-#: launcher/setup.cpp:2202
+#: launcher/setup.cpp:2270
 msgid "Disc image: %s"
 msgstr ""
 
-#: launcher/setup.cpp:2206
+#: launcher/setup.cpp:2274
 msgid "Xbox 360 disc image"
 msgstr ""
 
-#: launcher/setup.cpp:2221
+#: launcher/setup.cpp:2289
 msgid "Extract it"
 msgstr ""
 
-#: launcher/setup.cpp:2225
+#: launcher/setup.cpp:2293
 msgid "Disc"
 msgstr ""
 
-#: launcher/setup.cpp:2232
+#: launcher/setup.cpp:2300
 msgid "Your own dump of the disc (a full one is 7.8 GB); the game's files (6 GB) go into game/."
 msgstr ""
 
-#: launcher/setup.cpp:2238 launcher/setup.cpp:2247
+#: launcher/setup.cpp:2306 launcher/setup.cpp:2315
 msgid "ReXGlue SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2243
+#: launcher/setup.cpp:2311
 msgid "Rebuild the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2243
+#: launcher/setup.cpp:2311
 msgid "Build the SDK"
 msgstr ""
 
-#: launcher/setup.cpp:2253
+#: launcher/setup.cpp:2321
 msgid "A few minutes."
 msgstr ""
 
-#: launcher/setup.cpp:2258 launcher/setup.cpp:2267
+#: launcher/setup.cpp:2326 launcher/setup.cpp:2335
 msgid "The game"
 msgstr ""
 
-#: launcher/setup.cpp:2263
+#: launcher/setup.cpp:2331
 msgid "Build the game"
 msgstr ""
 
-#: launcher/setup.cpp:2264
+#: launcher/setup.cpp:2332
 msgid "Rebuild (update)"
 msgstr ""
 
-#: launcher/setup.cpp:2265
+#: launcher/setup.cpp:2333
 msgid "Rebuild"
 msgstr ""
 
-#: launcher/setup.cpp:2270
+#: launcher/setup.cpp:2338
 msgid "%d compile jobs at a time (from the RAM free now: close big programs first for a faster build). The first build takes a while; later ones only redo what changed."
 msgstr ""
 

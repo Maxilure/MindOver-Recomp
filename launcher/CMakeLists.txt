@@ -86,6 +86,7 @@ add_executable(crash_mom_launcher WIN32   # WIN32: a window, no console (Windows
     settings_page.cpp # the Settings tab
     desktop_entry.cpp # the launcher in the desktop's applications menu
     task_runner.cpp   # runs a setup step's commands one after another, with progress
+    git_parts.cpp     # the SDK's libraries (submodules) without `git submodule` (Git's shell)
     setup.cpp         # the Setup tab: build tools listed, disc, SDK, game builds
     update.cpp        # new versions: the feed, download, swap (release layout)
     texts.cpp         # the launcher's texts in the player's language (languages/*.po, like the game)
@@ -113,6 +114,7 @@ add_executable(mind_over_recomp WIN32
     sha256.cpp
     folders.cpp
     task_runner.cpp
+    git_parts.cpp
     setup.cpp
     update.cpp
     texts.cpp
