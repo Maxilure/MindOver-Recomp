@@ -22,11 +22,15 @@ How to install (Windows 10 / 11)
 3. Pick your .iso and where the game goes (a short path on your PC's own
    drive, e.g. C:\Games; about 15 GB free). Then "Next".
 
-4. Missing build tools: press "Install the missing tools" (winget, Windows'
-   own installer, does it; Windows may ask for permission). Then "Next".
+4. Missing build tools: press "Install the missing tools". Keep the whole
+   release extracted so setup can use the tools in the ZIP. Windows may
+   ask for permission. Then press "Next".
 
 5. Let it work: the first install takes a while (often 20-60 minutes).
    When it's done, "Crash Mind over Mutant" is in your Start menu.
+
+Setup can run offline with the complete ZIP extracted to a short path,
+such as C:\MoRSetup. The PC needs a Vulkan-capable graphics driver.
 
 Updates: download the new release, start its "Mind over Recomp.exe" and
 choose "Update an installed game", then pick the game's folder and your
@@ -67,11 +71,14 @@ Como instalar (Windows 10 / 11)
    PC, por exemplo C:\Games; cerca de 15 GB livres). Depois "Avançar".
 
 4. Faltam ferramentas de compilação: clique em "Instalar as ferramentas que
-   faltam" (o winget, o instalador do Windows, faz isso; o Windows pode pedir
-   permissão). Depois "Avançar".
+   faltam". Mantenha todo o ZIP extraído para o instalador usar as ferramentas
+   incluídas. O Windows pode pedir permissão. Depois clique em "Avançar".
 
 5. Deixe trabalhar: a primeira instalação demora (geralmente 20 a 60
    minutos). No fim, "Crash Mind over Mutant" fica no menu Iniciar.
+
+Você pode instalar sem internet com o ZIP completo extraído em um caminho
+curto, como C:\MoRSetup. O PC precisa de um driver gráfico compatível com Vulkan.
 
 Atualizar: baixe a nova versão, abra o "Mind over Recomp.exe" dela e
 escolha "Atualizar um jogo instalado", depois escolha a pasta do jogo e a

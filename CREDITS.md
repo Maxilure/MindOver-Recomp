@@ -32,6 +32,10 @@ engineering, testing, bug reports, corrections, art. See
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
 
+### Codex (OpenAI): AI assistant
+
+- Added Windows build tool packaging and local prerequisite installation.
+
 ### YWZsaXRv: Windows setup script
 
 - Contributed a script that installs the Windows build tools with winget

@@ -116,11 +116,11 @@ The game's 48 achievements, kept by the port, with their own screen and pop-up.
 | **Download** | `MindOverRecomp-…-windows-x86_64.zip` | `MindOverRecomp-…-linux-x86_64.tar.gz` |
 | **Free space** | ~15 GB, on an NTFS drive (not OneDrive) | ~25 GB |
 
-Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** recommended, and internet for the first setup.
+Both need a **Vulkan** graphics card (only NVIDIA tested so far) and **16 GB RAM** is recommended. Linux needs internet for the first setup.
 
 **Windows**
 1. Unpack the `.zip` and start **Mind over Recomp.exe**, the installer. If Windows warns about an unknown program: **More info → Run anyway**.
-2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. It gets the build tools it needs and builds the game; the first time takes a while (leave heavy programs closed meanwhile).
+2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. The installer uses the build tools in the ZIP and builds the game offline. The first build takes a while (leave heavy programs closed meanwhile).
 3. Play **Crash Mind over Mutant** from the Start menu.
 
 **Updating (Windows):** download the new release's `.zip`, start its **Mind over Recomp.exe**, choose **Update an installed game** and pick the game's folder and your `.iso` (the game's disc files are checked against it). Saves, settings and the earlier build are kept, so only what changed is built again. Uninstall from **Mind over Recomp** in the Start menu or Windows' *Installed apps*.

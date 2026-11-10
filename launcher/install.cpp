@@ -29,6 +29,19 @@ namespace {
 
 constexpr const wchar_t* kUninstallRoot = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\";
 constexpr const wchar_t* kCMakePackages = L"Software\\Kitware\\CMake\\Packages\\rexglue";
+constexpr char kInstallMarker[] =
+    "# This folder is an install of Mind over Recomp (launcher/install.h).\n"
+    "# Delete the whole folder through Windows' Installed apps, not by hand.\n";
+
+// The marker is written before the first copy. Match its contents so a
+// failed copy can resume without accepting arbitrary nonempty folders.
+bool HasInstallMarker(const fs::path& root) {
+  std::ifstream in(root / kMarkerName);
+  char text[sizeof(kInstallMarker)] = {};
+  in.read(text, sizeof(text));
+  return in.eof() && in.gcount() == sizeof(text) - 1 &&
+         std::string_view(text, sizeof(text) - 1) == kInstallMarker;
+}
 
 std::wstring LowerW(std::wstring s) {
   std::transform(s.begin(), s.end(), s.begin(), [](wchar_t c) { return wchar_t(std::towlower(c)); });
@@ -41,17 +54,6 @@ std::wstring Wide(const std::string& text) {
   std::wstring out(size_t(n), L'\0');
   MultiByteToWideChar(CP_UTF8, 0, text.data(), int(text.size()), out.data(), n);
   return out;
-}
-
-// A path Windows takes past 260 characters: "\\?\C:\..." (no "..", "\" only).
-std::wstring LongPath(const fs::path& path) {
-  std::error_code ec;
-  std::wstring p = fs::absolute(path, ec).lexically_normal().wstring();
-  std::replace(p.begin(), p.end(), L'/', L'\\');
-  while (p.size() > 3 && p.back() == L'\\') p.pop_back();
-  if (p.starts_with(L"\\\\?\\")) return p;
-  if (p.starts_with(L"\\\\")) return L"\\\\?\\UNC\\" + p.substr(2);
-  return L"\\\\?\\" + p;
 }
 
 // Is `inner` inside `outer` (or the same)? Case-insensitive, by text.
@@ -232,7 +234,7 @@ std::string WhyNotHere(const fs::path& root, double needed_gb, bool existing_gam
       return trs("The game is already installed there. Start its \"Mind over Recomp\" from the "
                  "Start menu to update or uninstall it.");
     }
-    if (!fs::is_directory(absolute, ec) || !fs::is_empty(absolute, ec)) {
+    if (!fs::is_directory(absolute, ec) || (!fs::is_empty(absolute, ec) && !HasInstallMarker(absolute))) {
       return trf(trs("{0} already exists and isn't empty: pick another place."),
                  {absolute.string()});
     }
@@ -308,7 +310,7 @@ bool Register(const Entry& entry, std::string* error) {
   SetString(key, L"QuietUninstallString", L"\"" + installer + L"\" --uninstall --quiet");
   SetDword(key, L"NoModify", 1);
   SetDword(key, L"NoRepair", 1);
-  SetDword(key, L"EstimatedSize", DWORD(SizeOf(LongPath(entry.root)) / 1024));  // in KB
+  SetDword(key, L"EstimatedSize", DWORD(SizeOf(platform::LongPath(entry.root).native()) / 1024));  // in KB
   wchar_t date[16];
   SYSTEMTIME now;
   GetLocalTime(&now);
@@ -381,8 +383,7 @@ bool LooksInstalled(const fs::path& root) {
 
 void MarkInstalled(const fs::path& root) {
   std::ofstream out(root / kMarkerName, std::ios::trunc);
-  out << "# This folder is an install of Mind over Recomp (launcher/install.h).\n"
-         "# Delete the whole folder through Windows' Installed apps, not by hand.\n";
+  out << kInstallMarker;
 }
 
 bool RemoveInstall(const fs::path& root, bool keep_user,
@@ -397,7 +398,7 @@ bool RemoveInstall(const fs::path& root, bool keep_user,
                                      L".install", L"program.new", L"READ ME FIRST.txt", Wide(kMarkerName),
                                      Wide(kInstallerName), Wide(kInstallerName) + L".old"};
   if (!keep_user) parts.push_back(L"user");
-  const std::wstring base = LongPath(root);
+  const std::wstring base = platform::LongPath(root).native();
   uint64_t files = 0;
   std::wstring failed;
   bool ok = true;

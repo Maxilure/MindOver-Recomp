@@ -65,13 +65,6 @@
 
 namespace setup {
 
-// WINDOWS: where to get "App Installer" (winget), when it's missing.
-// Microsoft's own short link (its winget docs use it); it downloads the App
-// Installer package from Microsoft's winget releases on GitHub. Not a Store
-// link on purpose: some Windows versions hide App Installer in the Store,
-// and searching the Store for it turns up fake look-alike apps.
-inline constexpr const char* kAppInstallerUrl = "https://aka.ms/getwinget";
-
 struct Look {
   ImFont* bold = nullptr;
   ImFont* mono = nullptr;
@@ -86,14 +79,7 @@ struct Tool {
   bool found = false;
   std::string detail;      // "22.1.8" / "not found" / "too old: 18.1"
   std::string package;     // the package that provides it on this distro
-  // WINDOWS: how the installer gets it (Setup::ToolsJob): a winget package id
-  // ("LLVM.LLVM") plus optional installer arguments (winget --override), or a
-  // whole command of its own (Visual Studio's C++ parts added to an existing
-  // Visual Studio through its own installer). Empty = can't be installed for
-  // the player (the graphics driver's Vulkan loader).
-  std::string winget;
-  std::string winget_override;
-  std::vector<std::string> install_argv;
+  std::string package_id;  // Windows: key for the bundled installer, if any
 };
 
 // What the checks found (copied as a whole between threads).
@@ -172,12 +158,12 @@ class Setup {
   bool SettingUp() const { return continue_setup_; }
   // Installs every missing build tool it can (ToolsJob), then checks again.
   bool StartToolsInstall(std::string* error);
-  // The commands of that: winget per missing tool (Tool::winget), or the
-  // tool's own install command (Tool::install_argv). Empty on Linux.
-  static std::vector<task_runner::Command> ToolsJob(const Status& status);
+  // Windows: build the commands for the local prerequisite installers.
+  static std::vector<task_runner::Command> ToolsJob(const Status& status,
+                                                   const std::filesystem::path& packages);
   // Step 1 alone (no game folder needed: the installer's first page). Slow
   // (a few tool calls): run it off the UI thread.
-  static Status CheckToolsOnly();
+  static Status CheckToolsOnly(const std::filesystem::path& source = {});
   // The game's icon from the player's disc into program/ (+ into the exe on
   // Windows): part of GameJob, and run by the installer for a folder whose
   // game was built before the icon existed. Never fails.

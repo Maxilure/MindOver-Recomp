@@ -22,13 +22,13 @@
 //                   and the disc image only if its extracted files are gone
 //     then, both:
 //     2. Tools      the build tools (setup.cpp step 1); missing ones are
-//                   installed with winget at the press of one button
+//                   installed from the release at the press of one button
 //     3. Install    the port's files (next to this exe when it came in the
 //                   release .zip, else downloaded from the release feed;
 //                   an update swaps them in KEEPING the build: update.h
 //                   LocalUpdateJob, so only what changed compiles again),
 //                   this exe copied in, then setup.h's "set up everything":
-//                   SDK download, disc extraction, SDK + game build; last,
+//                   unpack the SDK, extract the disc, build SDK + game; last,
 //                   the Start menu, the desktop and Windows' Apps list.
 //                   The PC is kept awake meanwhile; after 10 minutes a note
 //                   asks to leave heavy programs closed.
@@ -51,7 +51,7 @@
 //
 // WITHOUT A WINDOW (tests over ssh; output on stdout):
 //   --check_tools                         prints the build tools' checks
-//   --install_tools                       installs the missing ones (winget)
+//   --install_tools                       installs the missing ones from the ZIP
 //   --install_to=<folder> --iso=<file>    a whole install into <folder>\Crash Mind over Mutant
 //       [--desktop]                       (+ a desktop shortcut)
 //   --update --game_folder=<install> [--iso=<file>]   (with --iso: game\ checked against the disc)
@@ -343,9 +343,6 @@ struct App {
   bool import_saves = false;
   std::string old_version;     // an older install's folder (its user\ is copied)
   std::string choose_error;
-  // winget (App Installer) wasn't found: the tools page offers Microsoft's
-  // official download (setup::kAppInstallerUrl) under the error.
-  bool winget_missing = false;
   fs::path root;               // <parent>\Crash Mind over Mutant
   // A game set up and built before, found where the player points
   // (install::ExistingGameAt): taken over as it is, nothing built again
@@ -765,7 +762,7 @@ void App::CheckTools() {
   if (tools_checking.exchange(true)) return;
   if (tools_thread.joinable()) tools_thread.join();
   tools_thread = std::thread([this] {
-    setup::Status status = setup::Setup::CheckToolsOnly();
+    setup::Status status = setup::Setup::CheckToolsOnly(SourceNextToMe());
     std::lock_guard lock(tools_mutex);
     tools = std::move(status);
     tools_checking = false;
@@ -777,10 +774,9 @@ void App::DrawToolsPage() {
   ImGui::TextUnformatted(trs("2. Build tools"));
   ImGui::PopFont();
   MutedText(trs("Free tools that turn the game's code into a Windows program. Missing ones are "
-                "installed with winget, Windows' own app installer; Windows may ask for your "
-                "permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."));
+                "installed from the release ZIP. Windows may ask for permission."));
   MutedText(trs("If it seems stuck, look at the taskbar: Windows' permission question (a shield) can "
-                "open behind this window. Visual Studio's Build Tools are a big download."));
+                "open behind this window."));
   ImGui::Spacing();
   tools_runner.Copy(tools_job);
   setup::Status status;
@@ -803,18 +799,12 @@ void App::DrawToolsPage() {
     if (AccentButton(updating ? trs("Next: update") : trs("Next: install"))) BeginInstall();
   } else if (status.done) {
     if (AccentButton(trs("Install the missing tools"))) {
-      std::vector<Command> commands = setup::Setup::ToolsJob(status);
-      if (platform::FindProgram("winget").empty()) {
-        choose_error = trs("winget, Windows' own app installer, isn't there. Get \"App "
-                           "Installer\" from Microsoft with the button below (some Windows "
-                           "versions hide it in the Store, and searching for it finds fake "
-                           "apps), install it, then press Check again.");
-        winget_missing = true;
-      } else if (commands.empty()) {
+      std::vector<Command> commands =
+          setup::Setup::ToolsJob(status, platform::SelfPath().parent_path() / "prerequisites");
+      if (commands.empty()) {
         choose_error = trs("What's missing can't be installed from here (see the list).");
       } else {
         choose_error.clear();
-        winget_missing = false;
         show_log = true;
         tools_runner.Forget();
         std::error_code ec;
@@ -831,13 +821,6 @@ void App::DrawToolsPage() {
     ImGui::PushStyleColor(ImGuiCol_Text, kBad);
     ImGui::TextWrapped("%s", choose_error.c_str());
     ImGui::PopStyleColor();
-    if (winget_missing) {
-      // Microsoft's own link: it downloads App Installer's package from
-      // Microsoft's winget releases on GitHub (opened in the browser).
-      if (ImGui::Button(trs("Download App Installer (from Microsoft)"))) {
-        SDL_OpenURL(setup::kAppInstallerUrl);
-      }
-    }
   }
   if (tools_job.state != State::kIdle) {
     ImGui::Spacing();
@@ -908,7 +891,8 @@ void App::StartFiles() {
     copy.title = trs("Copying the port's files");
     copy.function = [from, to](std::string* message) {
       std::error_code ec;
-      fs::copy(from, to, fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+      fs::copy(platform::LongPath(from), platform::LongPath(to),
+               fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
       *message = ec ? "couldn't copy " + from.string() + ": " + ec.message() : "source\\ copied.";
       return !ec;
     };
@@ -1411,7 +1395,7 @@ bool RunPrinted(const std::string& title, std::vector<Command> commands, const f
 void PrintTools(const setup::Status& status) {
   for (const setup::Tool& tool : status.tools) {
     std::printf("  %-3s %-38s %s  [%s]\n", tool.found ? "OK" : "--", tool.label.c_str(),
-                tool.detail.c_str(), tool.winget.empty() ? tool.package.c_str() : tool.winget.c_str());
+                tool.detail.c_str(), tool.package_id.empty() ? tool.package.c_str() : tool.package_id.c_str());
   }
 }
 
@@ -1450,7 +1434,7 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
     std::printf("refused: %s\n", why.c_str());
     return 1;
   }
-  setup::Status tools = setup::Setup::CheckToolsOnly();
+  setup::Status tools = setup::Setup::CheckToolsOnly(SourceNextToMe());
   PrintTools(tools);
   if (!AllToolsFound(tools)) {
     std::printf("refused: build tools missing (--install_tools)\n");
@@ -1465,7 +1449,8 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
     if (RenameOldGameExe(root)) std::printf("== its game renamed to %s\n", folders::InstalledExeName().c_str());
   } else if (const fs::path here = SourceNextToMe(); !here.empty()) {
     std::printf("== the port's files from %s\n", here.string().c_str());
-    fs::copy(here, root / "source", fs::copy_options::recursive, ec);
+    fs::copy(platform::LongPath(here), platform::LongPath(root / "source"),
+             fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
     if (ec) {
       std::printf("copy failed: %s\n", ec.message().c_str());
       return 1;
@@ -1544,19 +1529,15 @@ int main(int argc, char** argv) {
     std::_Exit(ok ? 0 : 1);
   }
   if (check_tools || install_tools) {
-    setup::Status status = setup::Setup::CheckToolsOnly();
+    setup::Status status = setup::Setup::CheckToolsOnly(SourceNextToMe());
     PrintTools(status);
-    // What installs the missing tools (winget = App Installer): its path, or
-    // "not found". Helps when a player says it's installed but the page says
-    // it isn't (the app execution alias case, platform_win.cpp FindProgram).
-    const fs::path winget = platform::FindProgram("winget");
-    std::printf("  winget: %s\n", winget.empty() ? "not found" : winget.string().c_str());
     if (install_tools && !AllToolsFound(status)) {
       std::error_code ec;
-      const bool ok = RunPrinted("tools", setup::Setup::ToolsJob(status),
+      const auto packages = platform::SelfPath().parent_path() / "prerequisites";
+      const bool ok = RunPrinted("tools", setup::Setup::ToolsJob(status, packages),
                                  fs::temp_directory_path(ec) / ("MindOverRecomp-tools-" + Stamp() + ".log"));
       std::printf("== checking again\n");
-      status = setup::Setup::CheckToolsOnly();
+      status = setup::Setup::CheckToolsOnly(SourceNextToMe());
       PrintTools(status);
       std::fflush(stdout);
       std::_Exit(ok && AllToolsFound(status) ? 0 : 1);

@@ -109,6 +109,18 @@ std::wstring EnvironmentVariable(const wchar_t* name) {
 
 }  // namespace
 
+// The extended Win32 path form bypasses MAX_PATH without a registry setting.
+// It takes absolute paths, backslashes and no dot components.
+fs::path LongPath(const fs::path& path) {
+  std::error_code ec;
+  std::wstring p = fs::absolute(path, ec).lexically_normal().make_preferred().wstring();
+  if (ec) return path;
+  while (p.size() > 3 && p.back() == L'\\') p.pop_back();
+  if (p.starts_with(L"\\\\?\\")) return p;
+  if (p.starts_with(L"\\\\")) return L"\\\\?\\UNC\\" + p.substr(2);
+  return L"\\\\?\\" + p;
+}
+
 fs::path SelfPath() {
   std::wstring buffer(32768, L'\0');
   const DWORD n = GetModuleFileNameW(nullptr, buffer.data(), DWORD(buffer.size()));

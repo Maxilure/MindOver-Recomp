@@ -2116,12 +2116,12 @@ msgstr ""
 msgid "2. Build tools"
 msgstr ""
 
-#: launcher/installer.cpp:779
-msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
+#: launcher/installer.cpp:776
+msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed from the release ZIP. Windows may ask for permission."
 msgstr ""
 
-#: launcher/installer.cpp:782
-msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window. Visual Studio's Build Tools are a big download."
+#: launcher/installer.cpp:778
+msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window."
 msgstr ""
 
 #: launcher/installer.cpp:793 launcher/installer.cpp:1211
@@ -2140,10 +2140,6 @@ msgstr ""
 msgid "Install the missing tools"
 msgstr ""
 
-#: launcher/installer.cpp:808
-msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft with the button below (some Windows versions hide it in the Store, and searching for it finds fake apps), install it, then press Check again."
-msgstr ""
-
 #: launcher/installer.cpp:814
 msgid "What's missing can't be installed from here (see the list)."
 msgstr ""
@@ -2154,10 +2150,6 @@ msgstr ""
 
 #: launcher/installer.cpp:827 launcher/setup.cpp:2187
 msgid "Check again"
-msgstr ""
-
-#: launcher/installer.cpp:837
-msgid "Download App Installer (from Microsoft)"
 msgstr ""
 
 #: launcher/installer.cpp:846
@@ -3540,18 +3532,6 @@ msgstr ""
 
 #: launcher/setup.cpp:2022
 msgid "Still checking: wait a moment."
-msgstr ""
-
-#: launcher/setup.cpp:2053
-msgid "Adding {0} (Windows asks for permission)"
-msgstr ""
-
-#: launcher/setup.cpp:2063
-msgid "Installing {0} (winget)"
-msgstr ""
-
-#: launcher/setup.cpp:2092
-msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
 msgstr ""
 
 #: launcher/setup.cpp:2101

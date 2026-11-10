@@ -2604,15 +2604,13 @@ msgstr "Essa versão anterior não tem a pasta user: escolha a pasta onde fica o
 msgid "2. Build tools"
 msgstr "2. Ferramentas de compilação"
 
-#: launcher/installer.cpp:779
-#, fuzzy
-msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
-msgstr "Ferramentas gratuitas que transformam o código do jogo em um programa do Windows. As que faltam são instaladas pelo winget, o instalador de aplicativos do próprio Windows; o Windows pode pedir sua permissão para algumas delas (Build Tools do Visual Studio, Vulkan SDK)."
+#: launcher/installer.cpp:776
+msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed from the release ZIP. Windows may ask for permission."
+msgstr "As ferramentas transformam o código do jogo em um programa para Windows. As que faltarem serão instaladas a partir do ZIP. O Windows pode pedir permissão."
 
-#: launcher/installer.cpp:782
-#, fuzzy
-msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window. Visual Studio's Build Tools are a big download."
-msgstr "Se parecer travado, olhe a barra de tarefas: a pergunta de permissão do Windows (um escudo) pode abrir atrás desta janela. As Build Tools do Visual Studio são um download grande."
+#: launcher/installer.cpp:778
+msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window."
+msgstr "Se parecer travado, olhe a barra de tarefas. A solicitação de permissão do Windows (um escudo) pode abrir atrás desta janela."
 
 #: launcher/installer.cpp:793 launcher/installer.cpp:1211
 #, fuzzy
@@ -2634,11 +2632,6 @@ msgstr "Avançar: instalar"
 msgid "Install the missing tools"
 msgstr "Instalar as ferramentas que faltam"
 
-#: launcher/installer.cpp:808
-#, fuzzy
-msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft with the button below (some Windows versions hide it in the Store, and searching for it finds fake apps), install it, then press Check again."
-msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft com o botão abaixo (algumas versões do Windows o escondem na Store, e procurar por ele encontra aplicativos falsos), instale-o e depois clique em Verificar de novo."
-
 #: launcher/installer.cpp:814
 #, fuzzy
 msgid "What's missing can't be installed from here (see the list)."
@@ -2653,11 +2646,6 @@ msgstr "Instalando as ferramentas de compilação"
 #, fuzzy
 msgid "Check again"
 msgstr "Verificar de novo"
-
-#: launcher/installer.cpp:837
-#, fuzzy
-msgid "Download App Installer (from Microsoft)"
-msgstr "Baixar o Instalador de Aplicativo (da Microsoft)"
 
 #: launcher/installer.cpp:846
 #, fuzzy
@@ -4372,21 +4360,6 @@ msgstr "Ainda ocupado: espere um momento."
 msgid "Still checking: wait a moment."
 msgstr "Ainda verificando: espere um momento."
 
-#: launcher/setup.cpp:2053
-#, fuzzy
-msgid "Adding {0} (Windows asks for permission)"
-msgstr "Adicionando {0} (o Windows pede permissão)"
-
-#: launcher/setup.cpp:2063
-#, fuzzy
-msgid "Installing {0} (winget)"
-msgstr "Instalando {0} (winget)"
-
-#: launcher/setup.cpp:2092
-#, fuzzy
-msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
-msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft ({0}; procurar por ele na Store pode encontrar aplicativos falsos), instale-o e tente de novo."
-
 #: launcher/setup.cpp:2101
 #, fuzzy
 msgid "Nothing here can be installed automatically."
@@ -4702,3 +4675,31 @@ msgstr "Colocando a nova versão no lugar (sua compilação é mantida)"
 #, fuzzy
 #~ msgid "Earned {0}"
 #~ msgstr "Obtida em {0}"
+
+#, fuzzy
+#~ msgid "Free tools that turn the game's code into a Windows program. Missing ones are installed with winget, Windows' own app installer; Windows may ask for your permission for some of them (Visual Studio's Build Tools, the Vulkan SDK)."
+#~ msgstr "Ferramentas gratuitas que transformam o código do jogo em um programa do Windows. As que faltam são instaladas pelo winget, o instalador de aplicativos do próprio Windows; o Windows pode pedir sua permissão para algumas delas (Build Tools do Visual Studio, Vulkan SDK)."
+
+#, fuzzy
+#~ msgid "If it seems stuck, look at the taskbar: Windows' permission question (a shield) can open behind this window. Visual Studio's Build Tools are a big download."
+#~ msgstr "Se parecer travado, olhe a barra de tarefas: a pergunta de permissão do Windows (um escudo) pode abrir atrás desta janela. As Build Tools do Visual Studio são um download grande."
+
+#, fuzzy
+#~ msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft with the button below (some Windows versions hide it in the Store, and searching for it finds fake apps), install it, then press Check again."
+#~ msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft com o botão abaixo (algumas versões do Windows o escondem na Store, e procurar por ele encontra aplicativos falsos), instale-o e depois clique em Verificar de novo."
+
+#, fuzzy
+#~ msgid "Download App Installer (from Microsoft)"
+#~ msgstr "Baixar o Instalador de Aplicativo (da Microsoft)"
+
+#, fuzzy
+#~ msgid "Adding {0} (Windows asks for permission)"
+#~ msgstr "Adicionando {0} (o Windows pede permissão)"
+
+#, fuzzy
+#~ msgid "Installing {0} (winget)"
+#~ msgstr "Instalando {0} (winget)"
+
+#, fuzzy
+#~ msgid "winget, Windows' own app installer, isn't there. Get \"App Installer\" from Microsoft ({0}; searching the Store for it can find fake apps), install it, then try again."
+#~ msgstr "O winget, o instalador de aplicativos do Windows, não está presente. Baixe o \"Instalador de Aplicativo\" da Microsoft ({0}; procurar por ele na Store pode encontrar aplicativos falsos), instale-o e tente de novo."

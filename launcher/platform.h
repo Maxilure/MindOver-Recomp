@@ -43,6 +43,13 @@ namespace platform {
 
 std::filesystem::path SelfPath();   // the running launcher's own file
 std::filesystem::path HomeDir();    // ~ / %USERPROFILE%
+// Use for filesystem operations on trees that can exceed Windows' path limit.
+// Keep the original spelling for display and arguments to external tools.
+#ifdef _WIN32
+std::filesystem::path LongPath(const std::filesystem::path& path);
+#else
+inline std::filesystem::path LongPath(const std::filesystem::path& path) { return path; }
+#endif
 // The first `name` on PATH ("cmake"; Windows adds .exe / .cmd / .bat), or a
 // path that's given directly; empty if none.
 std::filesystem::path FindProgram(const std::string& name);

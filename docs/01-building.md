@@ -374,7 +374,8 @@ out/release/<version>/
     Mind over Recomp/
       Mind over Recomp.exe        the installer (launcher/ target mind_over_recomp)
       READ ME FIRST.txt           tools/release/READ_ME_FIRST_windows.txt
-      source/                     as above
+      prerequisites/              local vendor installers
+      source/                     as above, plus build-tools/ (CMake, Ninja, ReXGlue)
   release.toml                    the update feed: version, archive, SHA-256
 ```
 
@@ -382,8 +383,8 @@ out/release/<version>/
 [`launcher/install.h`](../launcher/install.h)). It installs, updates and
 uninstalls, nothing else (the game's settings are in its own Options).
 Install: the player picks the `.iso` and a parent folder; the installer
-makes `<parent>\Crash Mind over Mutant\`, installs the missing build tools
-through winget, copies `source/` and itself in, runs the same setup steps
+makes `<parent>\Crash Mind over Mutant\`, copies `source/` and itself in,
+runs the same setup steps
 as the Linux launcher (disc, SDK, game), names the built game
 `program\Crash Mind over Mutant.exe`, and registers an *Installed apps*
 entry (`HKCU\...\Uninstall\MindOverRecomp`) plus Start menu shortcuts.
@@ -396,6 +397,26 @@ Headless runs for tests: `--check_tools`, `--install_tools`,
 `--install_to=<parent> --iso=<file>`, `--check_install_to=<parent>` (a dry
 run: what an install there would do), `--update`, `--uninstall --quiet`.
 
+**Windows build tools:** the ZIP includes portable CMake and Ninja, the
+pinned ReXGlue source and libraries, and the local x64 installers for
+LLVM, Python, Git for Windows, Vulkan SDK and the Visual C++ runtime. It
+also includes a Visual Studio Build Tools 2022 layout with the Windows
+SDK. Setup installs missing tools from the ZIP and passes `--noWeb` to
+Visual Studio. The machine needs a Vulkan-capable graphics driver.
+
+**Packaging Windows:** prepare the layout on a connected machine using
+`powershell -File tools/release/prepare_vs_layout.ps1 -Layout C:\vs-layout`.
+From Git Bash, run `tools/make_release.sh --windows-vs-layout /c/vs-layout`
+in the Visual Studio x64 environment with Python 3.11 or later. The
+packager verifies the pinned tool downloads with SHA-256 and includes the
+exact ReXGlue commit and submodule checkouts, including the Git metadata
+used for applying patches. The Windows release workflow creates the same
+bundle. For a public repository, enable the workflow with
+`WINDOWS_LAYOUT_REDISTRIBUTION_ALLOWED=true` only when redistribution of
+the vendor layout is authorized.
+ZIPs of 2 GiB or more are available as Actions artifacts and exceed the
+GitHub Releases per-file limit.
+
 **The icon** is made during the setup from the player's disc
 ([`tools/make_icon.py`](../tools/make_icon.py): the game's own HUD portrait
 of Crash as a mask, `MugshotCrashMask.tga`) into `program/crash_mom.ico` +
@@ -404,7 +425,7 @@ art is in the repository or the release.
 
 After Setup the folder (Linux) also has `game/` (the disc's files), `program/` (the
 built game, copied there from `source/out/`) and `user/` (saves, settings).
-In a release, Setup's step 2 downloads the SDK version named in
+In a Linux release, Setup's step 2 downloads the SDK version named in
 `RELEASE.toml` (a shallow clone with its libraries, ~550 MB) instead of the
 git submodule.
 
@@ -434,8 +455,8 @@ have to be built on an older system.
 
 ## Building on Windows
 
-The installer does this on Windows (and installs each missing tool with
-winget). By hand, the differences from the Linux steps:
+The Windows installer uses the tools packaged in the release ZIP. By hand,
+the differences from the Linux steps:
 
 * **Tools**: LLVM (clang 20+), CMake, Ninja, Python 3, Git, the Vulkan SDK
   (for `glslc`), and Visual Studio 2022 (or its Build Tools) with the

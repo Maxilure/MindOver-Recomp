@@ -26,7 +26,7 @@ controls, photos and logs.
 * ["Windows protected your PC"](#windows-protected-your-pc)
 * [The installer won't use my folder](#the-installer-wont-use-my-folder)
 * [Installing over a game folder I kept](#installing-over-a-game-folder-i-kept)
-* ["winget isn't there"](#winget-isnt-there)
+* ["A build tool is missing from the ZIP"](#a-build-tool-is-missing-from-the-zip)
 * ["Couldn't find cmake" although CMake shows OK](#couldnt-find-cmake)
 * ["file INSTALL cannot find ... TracyClient.dll"](#file-install-cannot-find-a-dll)
 * ["fork: Resource temporarily unavailable" / exit code 254](#fork-resource-temporarily-unavailable--exit-code-254)
@@ -202,25 +202,14 @@ coming from 0.1.0:
 3. It adds the Start menu and *Installed apps* entries back. If that game is
    older, choose **Update an installed game** instead (see [Updating](#updating)).
 
-### "winget isn't there"
+### "A build tool is missing from the ZIP"
 
-The installer installs its tools with **winget**, Windows' own package
-manager. It comes with Microsoft's **App Installer**.
-
-1. Press the installer's **Download App Installer (from Microsoft)**
-   button, or open Microsoft's link <https://aka.ms/getwinget>. It downloads
-   `Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle`.
-2. Open that file to install it.
-3. Press **Check again** in the installer.
-
-Don't search the Microsoft Store or the web for "App Installer": some
-Windows versions hide the real one in the Store, and searches turn up
-look-alike apps that aren't Microsoft's.
-
-**The first 0.2.0-alpha download** (replaced on 2026-11-06) could say winget
-was missing even when App Installer *was* installed. Download the installer
-again from the release page. With the old one, the tools can still be
-installed by hand (next entry).
+Extract the complete Windows release ZIP into a short path such as
+`C:\MoRSetup` and run the installer there. The `source/` and
+`prerequisites/` folders must be next to the executable. If you opened
+the installed copy from the Start menu, use the installer from the
+extracted ZIP to install missing tools. Older installers that report
+missing winget used the online setup.
 
 ### "Couldn't find cmake"
 
@@ -308,25 +297,13 @@ installer:
 
 ### A tool keeps failing to install
 
-Install it by hand. The installer's list shows each tool's winget name.
+Open the matching installer in `prerequisites/` and then press
+**Check again**. If a tool still shows as missing, restart Windows.
 
-1. Open **Terminal** (Start menu → type *Terminal*).
-2. Type `winget install` and the name, for example:
-
-   ```
-   winget install LLVM.LLVM
-   ```
-
-3. Press **Check again** in the installer. If a tool still shows as
-   missing, restart Windows.
-
-**Visual Studio's C++ tools** need one more step:
-
-1. `winget install Microsoft.VisualStudio.2022.BuildTools`
-2. Open the **Visual Studio Installer**, choose **Modify**.
-3. Tick the **Desktop development with C++** workload, and a **Windows 11
-   SDK** under *Individual components*.
-4. Install, then press **Check again**.
+For Visual Studio Build Tools, run the bundled
+`prerequisites\vs-layout\vs_buildtools.exe --noWeb` from a terminal.
+The layout supplies the **Desktop development with C++** workload and
+the **Windows 11 SDK**.
 
 ### "Vulkan loader: not found"
 

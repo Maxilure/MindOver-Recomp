@@ -2,21 +2,8 @@
 # release.yml -- builds the release files on GitHub's machines
 # =============================================================================
 #
-# WHY HERE: the launcher is the one part of a release that comes ready-built,
-# and a Linux program only runs on systems with a C library (glibc) at least
-# as new as the one it was built on. Building on Ubuntu 24.04 makes it run on
-# 24.04 and everything newer, which is also the oldest kind of system that
-# can build the game itself (clang 20+). The game is never built here: each
-# player builds it on their own computer, from their own disc.
-#
-# TWO JOBS:
-#   windows-launcher  builds ONLY the launcher .exe (Windows runner, Visual
-#                     Studio's x64 environment + LLVM's clang, like the test
-#                     PC), kept as an artifact of the run
-#   release           (Linux) packs the Windows release with that .exe
-#                     (make_release.sh --system windows --launcher): packed
-#                     on Linux, so the source has no CRLF line ends or
-#                     symlinks-as-text from a Windows checkout
+# The Windows runner builds the installer and stages the complete offline
+# toolchain. The game is built on the player's computer from their own disc.
 #
 # WINDOWS ONLY since 0.2.0: Linux releases come back later as a terminal
 # tool. The Linux launcher still builds from the source (launcher/), it's
@@ -25,10 +12,9 @@
 #
 # WHEN:
 #   - a version tag is pushed (git tag v0.1.0-alpha && git push origin v0.1.0-alpha):
-#     tools/make_release.sh runs and a DRAFT GitHub release is created with
-#     the .zip and release.toml (the update feed). Nothing is
-#     public until someone presses Publish on GitHub's Releases page. The tag
-#     must match the VERSION.txt file.
+#     The tag must match VERSION.txt. The ZIP and feed are kept as an Actions
+#     artifact. A draft release is created only when distribution of the
+#     vendor layout is enabled and the ZIP fits the Releases asset limit.
 #   - by hand ("Run workflow" on the Actions tab): the same build, files kept
 #     as a downloadable artifact of the run, no release (a test).
 #
@@ -47,7 +33,9 @@ permissions:
   contents: write   # creating the release and attaching its files
 
 jobs:
-  windows-launcher:
+  windows-release:
+    # Workflow artifacts are downloadable on public repositories too.
+    if: github.event.repository.private || vars.WINDOWS_LAYOUT_REDISTRIBUTION_ALLOWED == 'true'
     runs-on: windows-2025
     steps:
       # Before the checkout: long paths (the SDK's third-party folders are
@@ -78,24 +66,13 @@ jobs:
           cmake -S launcher -B out/build/launcher-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ || exit /b 1
           cmake --build out/build/launcher-release --target mind_over_recomp || exit /b 1
 
-      - name: Keep the installer for the release job
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: windows-launcher
-          path: out/build/launcher-release/mind_over_recomp.exe
-
-  release:
-    needs: windows-launcher
-    runs-on: ubuntu-24.04
-    steps:
-      # The submodule: make_release.sh reads the SDK's commit and tag.
-      - name: Check out (with the SDK submodule)
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+          python-version: '3.12'
 
       - name: The tag matches VERSION.txt
         if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         run: |
           version=$(tr -d '[:space:]' < VERSION.txt)
           if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
@@ -103,33 +80,41 @@ jobs:
             exit 1
           fi
 
-      # Outside the checkout: an untracked file would make the tree "dirty".
-      - name: Fetch the Windows launcher
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-launcher
-          path: ${{ runner.temp }}/windows-launcher
+      - name: Prepare the offline Visual Studio layout
+        shell: pwsh
+        run: ./tools/release/prepare_vs_layout.ps1 -Layout (Join-Path $env:RUNNER_TEMP 'vs-layout')
 
-      - name: Make the Windows release (same source, that installer)
-        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/mind_over_recomp.exe"
+      - name: Make the offline Windows release
+        shell: bash
+        run: |
+          tools/make_release.sh --system windows --launcher out/build/launcher-release/mind_over_recomp.exe \
+            --windows-vs-layout "$(cygpath -u "$RUNNER_TEMP")/vs-layout"
 
-      - name: Keep the files (test runs)
-        if: "!startsWith(github.ref, 'refs/tags/')"
+      - name: Keep the offline package
         uses: actions/upload-artifact@v4
         with:
           name: release-files
           path: out/release/
+          compression-level: 0
 
       - name: Create the draft release
+        # A private layout may be used to build/test the bundle. Publishing a
+        # vendor layout requires the maintainer to confirm distribution rights.
         if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(tr -d '[:space:]' < VERSION.txt)
+          archive="out/release/${version}/MindOverRecomp-${version}-windows-x86_64.zip"
+          if [ "$(wc -c < "$archive")" -ge 2147483648 ]; then
+            echo "::notice::The offline ZIP exceeds the GitHub Releases asset limit. Download it from the workflow artifacts."
+            exit 0
+          fi
           # NOT marked "pre-release" even for -alpha versions: GitHub's
           # releases/latest link (the launchers' update feed) skips those.
           gh release create "${GITHUB_REF_NAME}" --draft \
             --title "Mind over Recomp ${version}" \
             --notes-file tools/release/RELEASE_NOTES.md \
-            "out/release/${version}/MindOverRecomp-${version}-windows-x86_64.zip" \
+            "$archive" \
             "out/release/${version}/release.toml"

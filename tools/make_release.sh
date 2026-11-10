@@ -14,8 +14,10 @@
 #       Mind over Recomp/
 #         Mind over Recomp           the launcher (Windows: ... .exe)
 #         READ ME FIRST.txt          tools/release/READ_ME_FIRST[_windows].txt
+#         prerequisites/            Windows vendor installers and VS layout
 #         source/                    every tracked file of this repo (no .git,
-#                                    no submodule: Setup downloads the SDK)
+#                                    no checked-out submodule)
+#           build-tools/             Windows CMake, Ninja and SDK archive
 #           RELEASE.toml             version + the exact ReXGlue SDK to use
 #     feed-<system>.toml             this system's lines of the update feed:
 #                                    <system>_archive / <system>_sha256
@@ -42,6 +44,7 @@
 #                                         package the OTHER system's release here,
 #                                         with a launcher built there (tests:
 #                                         the Windows test PC has no git clone)
+#   --windows-vs-layout <dir>             prepared Build Tools 2022 offline layout
 #
 # The launcher is linked with libstdc++ / libgcc built in, but still needs a
 # glibc at least as new as the machine that built it: real releases are built
@@ -56,12 +59,14 @@ allow_dirty=0
 out_base=out/release
 system_override=""
 launcher_file=""
+vs_layout=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --allow-dirty) allow_dirty=1 ;;
     --out) out_base=$2; shift ;;
     --system) system_override=$2; shift ;;
     --launcher) launcher_file=$2; shift ;;
+    --windows-vs-layout) vs_layout=$2; shift ;;
     *) echo "unknown option $1"; exit 1 ;;
   esac
   shift
@@ -86,6 +91,11 @@ case "$system" in
   windows) exe=".exe"; archive="MindOverRecomp-$version-windows-x86_64.zip" ;;
   *) exe=""; archive="MindOverRecomp-$version-linux-x86_64.tar.gz" ;;
 esac
+if [ "$system" = windows ] && { [ -z "$vs_layout" ] || [ ! -f "$vs_layout/vs_buildtools.exe" ] ||
+                                [ ! -f "$vs_layout/Catalog.json" ] || [ ! -f "$vs_layout/Response.json" ]; }; then
+  echo "Windows packaging needs --windows-vs-layout <dir> (see docs/01-building.md)."
+  exit 1
+fi
 
 # A real release is exactly a commit: refuse uncommitted changes (the SDK
 # submodule's applied patches don't count: they're not part of the repo).
@@ -134,7 +144,11 @@ cmake -S launcher -B out/build/launcher-release -G Ninja -DCMAKE_BUILD_TYPE=Rele
       -DCMAKE_C_COMPILER="${CC:-clang}" -DCMAKE_CXX_COMPILER="${CXX:-clang++}" \
       -DCMAKE_EXE_LINKER_FLAGS="$link_flags" > /dev/null
 cmake --build out/build/launcher-release > /dev/null
-cp "out/build/launcher-release/crash_mom_launcher$exe" "$stage/$name$exe"
+if [ "$system" = windows ]; then
+  cp "out/build/launcher-release/mind_over_recomp.exe" "$stage/$name$exe"
+else
+  cp "out/build/launcher-release/crash_mom_launcher$exe" "$stage/$name$exe"
+fi
 [ $system = linux ] && strip "$stage/$name"
 fi
 
@@ -158,6 +172,28 @@ sdk_tag = "$sdk_tag"
 sdk_commit = "$sdk_commit"
 EOF
 
+if [ "$system" = windows ]; then
+  echo "== Staging the Windows build tools"
+  if [ "$host" = windows ]; then
+    python tools/release/windows_prerequisites.py "$(cygpath -w "$stage")" "$(cygpath -w "$vs_layout")"
+  else
+    python3 tools/release/windows_prerequisites.py "$stage" "$vs_layout"
+  fi
+
+  # Keep Git metadata for the pin checks and SDK patches. Materialize symlinks
+  # as link text just as Git for Windows does, so setup can repair them.
+  sdk_stage="$out/stage/rexglue-sdk"
+  git -c core.symlinks=false -c core.autocrlf=false -c core.longpaths=true clone --depth 1 \
+      --branch "$sdk_tag" --recurse-submodules --shallow-submodules --jobs 6 \
+      "$sdk_url" "$sdk_stage"
+  [ "$(git -C "$sdk_stage" rev-parse HEAD)" = "$sdk_commit" ]
+  sdk_config='git config core.filemode false && git config core.symlinks false &&
+              git config core.autocrlf false && git config core.longpaths true'
+  (cd "$sdk_stage" && sh -c "$sdk_config")
+  git -C "$sdk_stage" submodule foreach --recursive "$sdk_config"
+  tar -C "$out/stage" -czf "$stage/source/build-tools/rexglue-sdk.tar.gz" rexglue-sdk
+fi
+
 # 3. The readme, with the version filled in.
 readme=tools/release/READ_ME_FIRST.txt
 [ $system = windows ] && readme=tools/release/READ_ME_FIRST_windows.txt
@@ -167,8 +203,8 @@ sed "s/@VERSION@/$version/" "$readme" > "$stage/READ ME FIRST.txt"
 echo "== Packing"
 if [ $system = linux ]; then
   tar -C "$out/stage" -czf "$out/$archive" "$name"
-elif [ $host = linux ]; then
-  # A Windows zip made on Linux (python's zipfile: no extra tool needed).
+else
+  # Stream the Windows ZIP with ZIP64 support for the offline layout.
   # DATES: a zip entry's date has NO time zone, and Windows reads it as local
   # time. Dated "now" in UTC (GitHub's machines), the files of 0.2.0 looked up
   # to ~10 hours in the FUTURE west of UTC on release day, and the build gave
@@ -176,22 +212,22 @@ elif [ $host = linux ]; then
   # entry is dated ONE DAY AGO instead: in the past in every time zone (they
   # span UTC-12..UTC+14). Fresh installs don't need real dates, and updates
   # re-date what changed themselves (launcher/update.cpp, the swap).
-  python3 - "$out/stage" "$name" "$out/$archive" <<'PY'
-import os, sys, time, zipfile
+  python_cmd=python3
+  [ "$host" != windows ] || python_cmd=python
+  "$python_cmd" - "$out/stage" "$name" "$out/$archive" <<'PY'
+import os, shutil, sys, time, zipfile
 root, name, target = sys.argv[1], sys.argv[2], sys.argv[3]
 day_ago = time.gmtime(time.time() - 24 * 3600)[:6]
 with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
     for folder, _, files in os.walk(os.path.join(root, name)):
         for f in files:
             full = os.path.join(folder, f)
-            info = zipfile.ZipInfo.from_file(full, os.path.relpath(full, root))
+            info = zipfile.ZipInfo.from_file(full, os.path.relpath(full, root), strict_timestamps=False)
             info.date_time = day_ago
             info.compress_type = zipfile.ZIP_DEFLATED
-            with open(full, "rb") as data:
-                z.writestr(info, data.read())
+            with open(full, "rb") as data, z.open(info, "w") as entry:
+                shutil.copyfileobj(data, entry)
 PY
-else
-  powershell -NoProfile -Command "Compress-Archive -Force -Path '$(cygpath -w "$out/stage/$name")' -DestinationPath '$(cygpath -w "$out/$archive")'"
 fi
 sha=$(sha256sum "$out/$archive" | awk '{print $1}')
 cat > "$out/feed-$system.toml" <<EOF

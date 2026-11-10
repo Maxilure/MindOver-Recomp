@@ -456,7 +456,7 @@ std::vector<Command> LocalUpdateJob(const fs::path& new_source, const fs::path& 
     fs::remove_all(work, ec);
     ec.clear();
     fs::create_directories(work, ec);
-    fs::copy(new_source, work / "source", fs::copy_options::recursive, ec);
+    fs::copy(platform::LongPath(new_source), platform::LongPath(work / "source"), fs::copy_options::recursive, ec);
     *message = ec ? "couldn't copy " + new_source.string() + ": " + ec.message() : "";
     return !ec;
   };
