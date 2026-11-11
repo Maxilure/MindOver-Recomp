@@ -155,6 +155,64 @@ constexpr const char* kLibSuffix = ".so";
 const std::vector<std::string> kSdkOptions = {};
 #endif
 
+// =============================================================================
+// THE BUILD KIT (2026-11-10, GitHub issues #10 #11 #14 #16 #17 #18 #20)
+// =============================================================================
+// Every one of those reports failed while building the SDK, each for a
+// different reason that came from the PLAYER'S PC, not from our code: an
+// antivirus deleting a DLL mid-build (#10), a CMake/Ninja found by us but
+// not by the build (#11), Git's shell unable to start (#14), the Microsoft
+// Store's python3 shortcut (#16), devkitPro's MSYS CMake first on PATH
+// ("Could not use disabled preset": it calls the system "MSYS", #17), and a
+// configure that inherited a broken cache from an earlier try (every SDL
+// feature check "failed": no SSE, no XInput, #20). Fixing them one by one
+// only waited for the next PC with something odd installed.
+//
+// Installers in general don't build from source with whatever the user has.
+// They ship what they need, pinned, and run it in a known environment. So a
+// Windows release now ships (inside source/, see tools/make_release.sh and
+// the release workflow's windows-sdk job):
+//   thirdparty/rexglue-install/   the ReXGlue SDK, ALREADY BUILT and patched
+//                                 by GitHub Actions (BSD-3 code, no game
+//                                 content: fine to ship), + the 3 header
+//                                 folders the game reads from SDK sources
+//   buildtools/cmake/  ninja/  glslc/  python/
+//                                 pinned CMake, Ninja, glslc (shaders) and
+//                                 Python's embeddable package (disc tools)
+// What's left for the player's PC: LLVM's clang and Visual Studio's C++
+// tools + Windows SDK (the compiler and Windows' own headers/libraries:
+// Microsoft's licence doesn't allow shipping those). And every build step
+// runs with a CLEAN PATH (BuildEnvironment): our tools, LLVM, Visual Studio,
+// Windows' own folders, nothing else, so nothing else on the PC can be
+// picked instead. The game's configure is always --fresh (no state of an
+// earlier failed try is reused).
+//
+// A developer clone (no buildtools/kit.txt) works as before: SDK from the
+// submodule, tools from PATH.
+struct Kit {
+  bool present = false;           // buildtools/kit.txt is there
+  fs::path cmake, ninja, glslc, python;
+  fs::path sdk_marker;            // the shipped SDK's own note (prebuilt.txt)
+};
+
+Kit KitIn(const fs::path& source) {
+  Kit kit;
+  const fs::path tools = source / "buildtools";
+  kit.present = Exists(tools / "kit.txt");
+  kit.cmake = tools / "cmake" / "bin" / platform::ExeName("cmake");
+  kit.ninja = tools / "ninja" / platform::ExeName("ninja");
+  kit.glslc = tools / "glslc" / platform::ExeName("glslc");
+  kit.python = tools / "python" / platform::ExeName("python");
+  kit.sdk_marker = source / "thirdparty" / "rexglue-install" / "share" / "mindoverrecomp" / "prebuilt.txt";
+  return kit;
+}
+
+// Every file of the kit, for the check (a missing one = the release folder
+// was damaged: an antivirus, a half-copied folder).
+std::vector<fs::path> KitFiles(const Kit& kit) {
+  return {kit.cmake, kit.ninja, kit.glslc, kit.python, kit.sdk_marker};
+}
+
 // Git options for the SDK download: no line-ending conversion (Git for
 // Windows would turn LF into CR LF, and our patches no longer fit), long
 // paths allowed (some of the SDK's libraries nest deep). Harmless on Linux.
@@ -525,16 +583,49 @@ const char* StateText(StepState state) {
 // Windows SDK and library paths), read once by running it and printing the
 // environment. LLVM's and the Vulkan SDK's folders are added to PATH when
 // their installers didn't (LLVM's doesn't by default).
-std::shared_ptr<const platform::Environment> BuildEnvironment(const fs::path& vcvars,
-                                                              const fs::path& extra_path) {
+//
+// CLEAN (the build kit, see Kit): `clean_dirs` given = vcvars64.bat runs with
+// PATH = those folders + Windows' own, and without the variables that steer
+// compilers and build tools from outside (CC, CMAKE_*, INCLUDE, MSYSTEM,
+// PYTHONHOME...). What comes out is Visual Studio's environment on top of
+// exactly that: a devkitPro / MSYS2 / Cygwin / Strawberry Perl / Store
+// shortcut folder on the player's PATH can no longer be found by any step.
+std::shared_ptr<const platform::Environment> BuildEnvironment(
+    const fs::path& vcvars, const fs::path& extra_path, const std::vector<fs::path>* clean_dirs = nullptr) {
   std::error_code ec;
   const fs::path script = fs::temp_directory_path(ec) / "crash_mom_vcvars.cmd";
   {
     std::ofstream out(script, std::ios::trunc);
     out << "@call \"" << vcvars.string() << "\" >nul\r\n@set\r\n";
   }
+  platform::Environment start;
+  if (clean_dirs) {
+    static const char* const kOutside[] = {
+        "PATH", "CC", "CXX", "CFLAGS", "CXXFLAGS", "CPPFLAGS", "LDFLAGS", "INCLUDE", "LIB", "LIBPATH",
+        "CPATH", "C_INCLUDE_PATH", "CPLUS_INCLUDE_PATH", "LIBRARY_PATH", "PKG_CONFIG_PATH",
+        "CMAKE_GENERATOR", "CMAKE_GENERATOR_PLATFORM", "CMAKE_GENERATOR_TOOLSET", "CMAKE_PREFIX_PATH",
+        "CMAKE_TOOLCHAIN_FILE", "CMAKE_MAKE_PROGRAM", "CMAKE_C_COMPILER", "CMAKE_CXX_COMPILER",
+        "CMAKE_BUILD_PARALLEL_LEVEL", "CMAKE_EXPORT_COMPILE_COMMANDS", "VCPKG_ROOT", "MSYSTEM", "MSYS",
+        "MSYS2_PATH_TYPE", "CHERE_INVOKING", "PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP", "VULKAN_SDK",
+        "NINJA_STATUS", "DEVKITPRO", "DEVKITARM", "DEVKITPPC"};
+    for (const auto& [key, value] : platform::CurrentEnvironment()) {
+      bool outside = false;
+      for (const char* name : kOutside) outside = outside || _stricmp(key.c_str(), name) == 0;
+      if (!outside) start[key] = value;
+    }
+    const std::string windows = platform::GetEnv("SystemRoot").empty() ? "C:\\Windows"
+                                                                       : platform::GetEnv("SystemRoot");
+    std::string path;
+    for (const fs::path& dir : *clean_dirs) {
+      if (!dir.empty()) path += dir.string() + ";";
+    }
+    path += windows + "\\System32;" + windows + ";" + windows + "\\System32\\Wbem;" + windows +
+            "\\System32\\WindowsPowerShell\\v1.0";
+    start["Path"] = path;
+  }
   bool ok = false;
-  const std::string text = platform::Capture({script.string()}, &ok, {}, 60000);
+  const std::string text =
+      platform::Capture({script.string()}, &ok, {}, 60000, clean_dirs ? &start : nullptr);
   fs::remove(script, ec);
   if (!ok) {
     return nullptr;
@@ -669,7 +760,7 @@ fs::path FindPython(std::string* version) {
   return {};
 }
 
-void CheckTools(Status* s) {
+void CheckTools(Status* s, const Kit& kit) {
   s->distro = "Windows";
   // What Windows has NOW (see above), before any lookup.
   platform::RefreshEnvironment();
@@ -715,8 +806,10 @@ void CheckTools(Status* s) {
       : vs_cpp / "Common7" / "IDE" / "CommonExtensions" / "Microsoft" / "CMake";
 
   // clang: on PATH, or LLVM's default folder (its installer doesn't add it).
-  fs::path clang = platform::FindProgram("clang");
+  // With the kit, LLVM's own folder FIRST (the clean PATH puts that folder
+  // in): another clang on PATH (MSYS2's, devkitPro's) targets another system.
   const fs::path llvm_clang = fs::path(program_files) / "LLVM" / "bin" / "clang.exe";
+  fs::path clang = kit.present && Exists(llvm_clang) ? llvm_clang : platform::FindProgram("clang");
   if (clang.empty() && Exists(llvm_clang)) {
     clang = llvm_clang;
     extra_path += llvm_clang.parent_path().string() + ";";
@@ -729,59 +822,78 @@ void CheckTools(Status* s) {
         major >= 20 ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "20"}),
         "LLVM.LLVM");
   }
-  // CMake 3.25+: on PATH, else Visual Studio's own copy.
-  fs::path cmake = platform::FindProgram("cmake");
-  if (cmake.empty() && Exists(vs_cmake_dir / "CMake" / "bin" / "cmake.exe")) {
-    cmake = vs_cmake_dir / "CMake" / "bin" / "cmake.exe";
-    extra_path += cmake.parent_path().string() + ";";
-  }
-  if (cmake.empty()) {
-    add("CMake 3.25 or newer", "CMake", false, trs("not found"), "Kitware.CMake");
-  } else {
-    const int major = MajorVersion(platform::Capture({cmake.string(), "--version"}, &ok), &version);
-    const bool good = major > 3 || (major == 3 && MinorVersion(version) >= 25);
-    add("CMake 3.25 or newer", "CMake", good,
-        good ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"}),
-        "Kitware.CMake");
-  }
-  // Ninja: on PATH (winget puts it in its "Links" folder), else Visual Studio's.
-  fs::path ninja = platform::FindProgram("ninja");
-  if (ninja.empty() && Exists(vs_cmake_dir / "Ninja" / "ninja.exe")) {
-    ninja = vs_cmake_dir / "Ninja" / "ninja.exe";
-    extra_path += ninja.parent_path().string() + ";";
-  }
-  add("Ninja", "Ninja", !ninja.empty(), ninja.empty() ? trs("not found") : ninja.string(),
-      "Ninja-build.Ninja");
-  // Python 3 (see above). Installed with "add to PATH" on, so the build's own
-  // tools find it too.
-  const fs::path python = FindPython(&version);
-  if (!python.empty()) {
-    std::lock_guard lock(g_found_mutex);
-    g_found.python = python.string();
-    extra_path += python.parent_path().string() + ";";
-  }
-  add("Python 3", "Python 3.12", !python.empty(),
-      python.empty() ? trs("not found (or only the Store shortcut)") : version + "  " + python.string(),
-      "Python.Python.3.12", "/quiet InstallAllUsers=0 PrependPath=1 Include_launcher=1");
-  const fs::path git = platform::FindProgram("git");
-  add("Git", "Git", !git.empty(), git.empty() ? trs("not found") : git.string(), "Git.Git");
-  // glslc: on PATH or in the Vulkan SDK (VULKAN_SDK, re-read from the registry).
-  fs::path glslc = platform::FindProgram("glslc");
-  if (const std::string sdk = platform::GetEnv("VULKAN_SDK"); glslc.empty() && !sdk.empty()) {
-    const fs::path in_sdk = fs::path(sdk) / "Bin" / "glslc.exe";
-    if (Exists(in_sdk)) {
-      glslc = in_sdk;
-      extra_path += in_sdk.parent_path().string() + ";";
+  if (kit.present) {
+    // This release's own CMake, Ninja, glslc and Python (Kit): nothing to
+    // look for on the PC, nothing to install. One line for all of them.
+    std::string missing;
+    for (const fs::path& file : KitFiles(kit)) {
+      if (!Exists(file)) missing += (missing.empty() ? "" : ", ") + file.filename().string();
     }
-  }
-  add("glslc (shader compiler)", "Vulkan SDK", !glslc.empty(),
-      glslc.empty() ? trs("not found") : glslc.string(), "KhronosGroup.VulkanSDK");
-  {
-    // For the configures (FoundToolOptions). Python is stored above.
+    add("CMake, Ninja, glslc, Python (included)", "Mind over Recomp", missing.empty(),
+        missing.empty() ? std::string(trs("included in this release"))
+                        : trf(trs("files missing from the release folder ({0}): run the installer's Update "
+                                  "(same version = repair), and check your antivirus"),
+                              {missing}));
     std::lock_guard lock(g_found_mutex);
-    g_found.ninja = ninja;
-    g_found.git = git;
-    g_found.glslc = glslc;
+    g_found.python = kit.python.string();
+    g_found.ninja = kit.ninja;
+    g_found.glslc = kit.glslc;
+    g_found.git.clear();
+  } else {
+    // CMake 3.25+: on PATH, else Visual Studio's own copy.
+    fs::path cmake = platform::FindProgram("cmake");
+    if (cmake.empty() && Exists(vs_cmake_dir / "CMake" / "bin" / "cmake.exe")) {
+      cmake = vs_cmake_dir / "CMake" / "bin" / "cmake.exe";
+      extra_path += cmake.parent_path().string() + ";";
+    }
+    if (cmake.empty()) {
+      add("CMake 3.25 or newer", "CMake", false, trs("not found"), "Kitware.CMake");
+    } else {
+      const int major = MajorVersion(platform::Capture({cmake.string(), "--version"}, &ok), &version);
+      const bool good = major > 3 || (major == 3 && MinorVersion(version) >= 25);
+      add("CMake 3.25 or newer", "CMake", good,
+          good ? version : trf(trs("too old: {0} ({1} or newer needed)"), {version, "3.25"}),
+          "Kitware.CMake");
+    }
+    // Ninja: on PATH (winget puts it in its "Links" folder), else Visual Studio's.
+    fs::path ninja = platform::FindProgram("ninja");
+    if (ninja.empty() && Exists(vs_cmake_dir / "Ninja" / "ninja.exe")) {
+      ninja = vs_cmake_dir / "Ninja" / "ninja.exe";
+      extra_path += ninja.parent_path().string() + ";";
+    }
+    add("Ninja", "Ninja", !ninja.empty(), ninja.empty() ? trs("not found") : ninja.string(),
+        "Ninja-build.Ninja");
+    // Python 3 (see above). Installed with "add to PATH" on, so the build's own
+    // tools find it too.
+    const fs::path python = FindPython(&version);
+    if (!python.empty()) {
+      std::lock_guard lock(g_found_mutex);
+      g_found.python = python.string();
+      extra_path += python.parent_path().string() + ";";
+    }
+    add("Python 3", "Python 3.12", !python.empty(),
+        python.empty() ? trs("not found (or only the Store shortcut)") : version + "  " + python.string(),
+        "Python.Python.3.12", "/quiet InstallAllUsers=0 PrependPath=1 Include_launcher=1");
+    const fs::path git = platform::FindProgram("git");
+    add("Git", "Git", !git.empty(), git.empty() ? trs("not found") : git.string(), "Git.Git");
+    // glslc: on PATH or in the Vulkan SDK (VULKAN_SDK, re-read from the registry).
+    fs::path glslc = platform::FindProgram("glslc");
+    if (const std::string sdk = platform::GetEnv("VULKAN_SDK"); glslc.empty() && !sdk.empty()) {
+      const fs::path in_sdk = fs::path(sdk) / "Bin" / "glslc.exe";
+      if (Exists(in_sdk)) {
+        glslc = in_sdk;
+        extra_path += in_sdk.parent_path().string() + ";";
+      }
+    }
+    add("glslc (shader compiler)", "Vulkan SDK", !glslc.empty(),
+        glslc.empty() ? trs("not found") : glslc.string(), "KhronosGroup.VulkanSDK");
+    {
+      // For the configures (FoundToolOptions). Python is stored above.
+      std::lock_guard lock(g_found_mutex);
+      g_found.ninja = ninja;
+      g_found.git = git;
+      g_found.glslc = glslc;
+    }
   }
   // Visual Studio's C++ tools + the Windows SDK (Windows' own headers).
   std::string windows_sdk;
@@ -835,7 +947,14 @@ void CheckTools(Status* s) {
       vulkan ? "vulkan-1.dll" : trs("not found: update your graphics card's driver"));
 
   if (Exists(vcvars)) {
-    s->build_env = BuildEnvironment(vcvars, extra_path);
+    if (kit.present) {
+      const std::vector<fs::path> dirs = {kit.cmake.parent_path(), kit.ninja.parent_path(),
+                                          kit.glslc.parent_path(), kit.python.parent_path(),
+                                          clang.empty() ? fs::path() : clang.parent_path()};
+      s->build_env = BuildEnvironment(vcvars, {}, &dirs);
+    } else {
+      s->build_env = BuildEnvironment(vcvars, extra_path);
+    }
   }
 }
 
@@ -861,8 +980,9 @@ constexpr ToolSpec kTools[] = {
 
 std::string PythonProgram() { return "python3"; }
 
-// Step 1 on Linux: each tool with its package on this distribution.
-void CheckTools(Status* s) {
+// Step 1 on Linux: each tool with its package on this distribution (no
+// kit: Linux releases build with the distribution's packages).
+void CheckTools(Status* s, const Kit&) {
   const Distro distro = DetectDistro();
   s->distro = distro.name;
   for (size_t i = 0; i < std::size(kTools); ++i) {
@@ -1106,15 +1226,17 @@ Status Setup::RunChecks() {
   const Pin pin = ReadPin(root);
 
   // 1. Tools (and, on Windows, Visual Studio's build environment).
-  CheckTools(&s);
+  const Kit kit = folders_.release ? KitIn(root) : Kit{};
+  CheckTools(&s, kit);
   const bool tools_ok = std::all_of(s.tools.begin(), s.tools.end(), [](const Tool& t) { return t.found; });
   s.tools_state = tools_ok ? StepState::kDone : StepState::kMissing;
 
-  // 2. Source parts.
-  bool source_ok = Exists(sdk / "CMakeLists.txt") &&
-                   Exists(sdk / "thirdparty" / "fmt" / "CMakeLists.txt") &&
-                   Exists(sdk / "thirdparty" / "sdl3" / "CMakeLists.txt");
-  if (source_ok) {
+  // 2. Source parts. With the build kit (Kit) there are none to download:
+  // the SDK comes ready-built in the release (steps 2 and 4 = "included").
+  bool source_ok = kit.present || (Exists(sdk / "CMakeLists.txt") &&
+                                   Exists(sdk / "thirdparty" / "fmt" / "CMakeLists.txt") &&
+                                   Exists(sdk / "thirdparty" / "sdl3" / "CMakeLists.txt"));
+  if (source_ok && !kit.present) {
     // Every one of the SDK's own libraries checked out, at the commit the SDK
     // records? A download stopped halfway leaves some empty. (git_parts, not
     // `git submodule status`: that one is a shell script, and Git's shell
@@ -1124,12 +1246,13 @@ Status Setup::RunChecks() {
     source_ok = ok && all_ok;
   }
   s.source_state = source_ok ? StepState::kDone : StepState::kMissing;
-  s.source_detail = source_ok ? trs("the ReXGlue SDK and its libraries are there")
+  s.source_detail = kit.present ? trs("included in this release")
+                    : source_ok ? trs("the ReXGlue SDK and its libraries are there")
                               : folders_.release ? trs("the ReXGlue SDK isn't downloaded yet")
                                                  : trs("the ReXGlue SDK submodule isn't downloaded yet");
   // A release names the exact SDK version (source/RELEASE.toml): another
   // one in the folder (an update moved to a newer SDK) = download again.
-  if (source_ok && folders_.release && !pin.commit.empty()) {
+  if (source_ok && folders_.release && !kit.present && !pin.commit.empty()) {
     bool ok = false;
     std::string head = task_runner::Capture({"git", "rev-parse", "HEAD"}, &ok, sdk);
     head = head.substr(0, head.find('\n'));
@@ -1164,7 +1287,7 @@ Status Setup::RunChecks() {
   // set fails both ways (forward on a clean tree, reverse on a patched one),
   // so CheckPatchStack compares the files themselves.
   bool all_applied = false, none_applied = false;
-  if (source_ok && !patches.empty()) {
+  if (source_ok && !kit.present && !patches.empty()) {
     // The scratch folder must be OUTSIDE any git repository: `git apply`
     // inside one takes the paths as relative to that repository's root and
     // silently skips them (the game folder is one when built from source).
@@ -1187,7 +1310,17 @@ Status Setup::RunChecks() {
     std::ifstream in(install / kFingerprintFile);
     std::getline(in, built_with);
   }
-  if (!source_ok) {
+  if (kit.present) {
+    // Built by GitHub Actions with our patches (the release workflow); its
+    // files can only be missing if something deleted them (an antivirus).
+    s.patches_applied = s.patches_total;
+    s.sdk_state = installed && Exists(kit.sdk_marker) ? StepState::kDone : StepState::kBlocked;
+    s.sdk_detail = s.sdk_state == StepState::kDone
+                       ? trf(trs("included in this release (built with our {0} patches)"),
+                             {std::to_string(s.patches_total)})
+                       : trs("files of the included SDK are missing: run the installer's Update (same "
+                             "version = repair), and check your antivirus");
+  } else if (!source_ok) {
     s.sdk_state = StepState::kMissing;
     s.sdk_detail = trs("needs the source parts first");
   } else if (!patches.empty() && !all_applied && !none_applied && folders_.release) {
@@ -1358,6 +1491,8 @@ bool Setup::DiscJob(const fs::path& iso, std::vector<Command>* out, std::string*
   static const std::regex count(R"(\[xiso\] (\d+) files)");
   if (!ok || !std::regex_search(listing, match, count)) {
     *error = trs("That file isn't an Xbox 360 disc image the extractor can read.");
+    // What the extractor said (or that it didn't start), for the log.
+    *error += "\n(" + PythonProgram() + ": " + (listing.empty() ? std::string("no output") : listing.substr(0, 400)) + ")";
     return false;
   }
   if (listing.find(" default.xex") == std::string::npos) {
@@ -1531,12 +1666,19 @@ std::vector<Command> Setup::GameJob() {
   // After the copy above (it keeps default.xex's date): nothing in the
   // source tree may be dated in the future (issue #7, NoFutureDates).
   commands.push_back(NoFutureDates(root));
+  // The build kit (Kit): the release's own CMake by full path, and a FRESH
+  // configure every time: nothing an earlier try cached (a compiler test
+  // that failed, another CMake's choices, a tool found elsewhere) is reused.
+  // Only build.ninja is written again; ninja then rebuilds only files whose
+  // command changed (it compares each command with the last one it ran).
+  const Kit kit = folders_.release ? KitIn(root) : Kit{};
+  const std::string cmake = kit.present ? kit.cmake.string() : std::string("cmake");
   // Always configured (seconds), naming THIS folder's SDK explicitly and
   // ignoring the per-user CMake package list: a build must never use another
   // folder's SDK (see SdkJob); a cached choice is corrected too.
   Command configure{
       trs("Configuring the game's build"),
-      {"cmake", "--preset", kGamePreset,
+      {cmake, "--preset", kGamePreset,
        "-Drexglue_DIR=" +
            (root / "thirdparty" / "rexglue-install" / "lib" / "cmake" / "rexglue").string(),
        "-DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF"},
@@ -1547,19 +1689,20 @@ std::vector<Command> Setup::GameJob() {
   const std::vector<std::string> tools = FoundToolOptions();
   configure.argv.insert(configure.argv.end(), tools.begin(), tools.end());
 #endif
+  if (kit.present) configure.argv.push_back("--fresh");
   commands.push_back(configure);
   // First time: recompile on its own, then configure again so the build picks
   // the generated files up (docs/01-building.md, step 4).
   if (!Exists(root / "generated" / "default" / "sources.cmake")) {
     commands.push_back({trs("Recompiling the game's code (default.xex -> C++)"),
-                        {"cmake", "--build", "--preset", kGamePreset, "--target",
+                        {cmake, "--build", "--preset", kGamePreset, "--target",
                          "crash_mom_codegen"},
                         root, Progress::kNinja});
     commands.push_back(configure);
   }
   commands.push_back({trf(trs("Compiling the game ({0} at a time; the first build takes a while)"),
                           {std::to_string(GameJobs())}),
-                      {"cmake", "--build", "--preset", kGamePreset, "-j",
+                      {cmake, "--build", "--preset", kGamePreset, "-j",
                        std::to_string(GameJobs())},
                       root, Progress::kNinja});
   if (folders_.release) {
@@ -2073,9 +2216,11 @@ std::vector<Command> Setup::ToolsJob(const Status& status) {
   return commands;
 }
 
-Status Setup::CheckToolsOnly() {
+Status Setup::CheckToolsOnly(const fs::path& release_source) {
   Status s;
-  CheckTools(&s);
+  // The installer checks before anything is installed: the release's own
+  // source/ (next to it) says whether the build kit comes with it.
+  CheckTools(&s, release_source.empty() ? Kit{} : KitIn(release_source));
   const bool ok = std::all_of(s.tools.begin(), s.tools.end(), [](const Tool& t) { return t.found; });
   s.tools_state = ok ? StepState::kDone : StepState::kMissing;
   s.done = true;

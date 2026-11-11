@@ -105,7 +105,19 @@ Git step can't start its helpers).
     again. Picking the same version repairs the install.
   - **The update checks the game's disc files against your `.iso`** and
     copies again only the missing or damaged ones.
-  - **The SDK is built once instead of twice.**
+  - **The SDK comes ready-built, and the release brings its own build
+    tools.** The ReXGlue SDK is now built once by GitHub, with the port's
+    fixes, and shipped in the `.zip`, together with the CMake, Ninja, glslc
+    and Python the build uses. Your PC only needs LLVM and Visual Studio's
+    C++ tools (the installer gets both), and it builds only the game. Every
+    build step runs with only those tools on its PATH, so other programs on
+    the PC (devkitPro, MSYS2, the Microsoft Store's Python shortcut, other
+    CMake or Git copies) can't get in the way any more, and a failed try
+    leaves nothing behind that breaks the next one. This fixes the SDK step
+    failures in
+    [#17](https://github.com/Maxilure/MindOver-Recomp/issues/17),
+    [#18](https://github.com/Maxilure/MindOver-Recomp/issues/18) and
+    [#20](https://github.com/Maxilure/MindOver-Recomp/issues/20).
   - **The Update button in the installed Mind over Recomp is gone:** it
     didn't work reliably. Each release's installer does the update instead.
   - **The installer downloads nothing itself.** It uses the files from its

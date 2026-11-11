@@ -301,16 +301,25 @@ endforeach()
 target_sources(crash_mom PRIVATE ${_shader_headers})
 target_include_directories(crash_mom PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 
+# Three header folders the SDK doesn't install come from the SDK's SOURCE
+# tree (thirdparty/rexglue-sdk/thirdparty/...). A Windows RELEASE has no SDK
+# source: it ships the SDK ready-built by GitHub Actions (the release
+# workflow's windows-sdk job), and these headers are packed INTO that install
+# under share/mindoverrecomp/sdk-headers. Same folders, same files.
+set(CRASHMOM_SDK_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rexglue-sdk/thirdparty)
+if(NOT EXISTS ${CRASHMOM_SDK_HEADERS}/renderdoc AND DEFINED rexglue_DIR)
+    get_filename_component(_sdk_install "${rexglue_DIR}/../../.." ABSOLUTE)
+    set(CRASHMOM_SDK_HEADERS ${_sdk_install}/share/mindoverrecomp/sdk-headers)
+endif()
 # The SDK's <rex/ui/vulkan/presenter.h> (used by the native renderer) includes
-# RenderDoc's API header, which the SDK doesn't install: take it from the SDK
-# source tree, like xexdis does for the disassembler headers.
-target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/renderdoc)
+# RenderDoc's API header, which the SDK doesn't install.
+target_include_directories(crash_mom PRIVATE ${CRASHMOM_SDK_HEADERS}/renderdoc)
 # stb_image (PNG reader) for players 3-4's marker pictures (src/players/more_players_markers.cpp).
-target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/stb)
+target_include_directories(crash_mom PRIVATE ${CRASHMOM_SDK_HEADERS}/stb)
 # FFmpeg's XMA frame decoder (src/audio/xma_native.cpp): the SDK's own static
 # FFmpeg build (installed as rex::libavcodec / rex::libavutil; its copy inside
 # librexruntime is not exported), headers from the SDK's FFmpeg source tree.
-target_include_directories(crash_mom PRIVATE thirdparty/rexglue-sdk/thirdparty/FFmpeg)
+target_include_directories(crash_mom PRIVATE ${CRASHMOM_SDK_HEADERS}/FFmpeg)
 target_link_libraries(crash_mom PRIVATE rex::libavcodec rex::libavutil)
 
 # Copy ReXGlue's shared libraries next to the executable (Linux and Windows).
@@ -369,5 +378,5 @@ target_link_libraries(xexdis PRIVATE rex::runtime rex::disasm)
 # xma_test: the port's XMA decoder core on one .rsd file, outside the game
 # (tools/xma_test/xma_test.cpp, docs/findings/54 s.5).
 add_executable(xma_test tools/xma_test/xma_test.cpp src/audio/xma_stream.cpp)
-target_include_directories(xma_test PRIVATE src thirdparty/rexglue-sdk/thirdparty/FFmpeg)
+target_include_directories(xma_test PRIVATE src ${CRASHMOM_SDK_HEADERS}/FFmpeg)
 target_link_libraries(xma_test PRIVATE rex::libavcodec rex::libavutil)

@@ -9,14 +9,31 @@
 # can build the game itself (clang 20+). The game is never built here: each
 # player builds it on their own computer, from their own disc.
 #
-# TWO JOBS:
+# JOBS:
 #   windows-launcher  builds ONLY the launcher .exe (Windows runner, Visual
 #                     Studio's x64 environment + LLVM's clang, like the test
 #                     PC), kept as an artifact of the run
-#   release           (Linux) packs the Windows release with that .exe
-#                     (make_release.sh --system windows --launcher): packed
-#                     on Linux, so the source has no CRLF line ends or
-#                     symlinks-as-text from a Windows checkout
+#   windows-sdk       THE BUILD KIT (since 0.3.0; launcher/setup.cpp "THE
+#                     BUILD KIT"): the ReXGlue SDK built here with our
+#                     patches, + pinned CMake, Ninja, glslc and Python's
+#                     embeddable package. Players no longer build the SDK:
+#                     every Windows setup failure reported so far (issues
+#                     #10 #11 #14 #16 #17 #18 #20) happened while building
+#                     it, each caused by something else installed on that PC.
+#   release           (Linux) packs the Windows release with that .exe and
+#                     that kit (make_release.sh --system windows --launcher
+#                     --kit): packed on Linux, so the source has no CRLF line
+#                     ends or symlinks-as-text from a Windows checkout
+#   windows-verify    unpacks the .zip on a FRESH Windows machine with
+#                     broken look-alike tools first on PATH (a fake cmake,
+#                     python3, git, ninja, like devkitPro / MSYS2 / the Store
+#                     shortcut) and outside build variables set, then: the
+#                     installer's tool check, and the game's configure + a
+#                     real build target (xma_test: links the shipped SDK) in
+#                     the same clean environment the installer makes. No
+#                     game files are needed for that (the disc is the
+#                     player's).
+#   draft             (tags only) the DRAFT release, only once verify passed
 #
 # WINDOWS ONLY since 0.2.0: Linux releases come back later as a terminal
 # tool. The Linux launcher still builds from the source (launcher/), it's
@@ -84,8 +101,108 @@ jobs:
           name: windows-launcher
           path: out/build/launcher-release/mind_over_recomp.exe
 
+  windows-sdk:
+    runs-on: windows-2025
+    env:
+      # Pinned tool versions of the kit (bump on purpose, never "latest").
+      CMAKE_VERSION: "4.4.5"
+      NINJA_VERSION: "1.13.2"
+      PYTHON_VERSION: "3.12.10"
+      VULKAN_SDK_VERSION: "1.4.363.0"
+    steps:
+      - name: Git settings for Windows
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
+
+      - name: Check out (with the SDK and all its libraries)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Visual Studio's x64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # The newest LLVM, like winget gives players (clang 20+ needed).
+      - name: LLVM
+        shell: pwsh
+        run: |
+          choco upgrade llvm -y --no-progress
+          & "C:\Program Files\LLVM\bin\clang.exe" --version
+
+      # glslc (the SDK's and the game's shaders) comes with LunarG's SDK.
+      - name: Vulkan SDK (for glslc)
+        shell: pwsh
+        run: |
+          $v = $env:VULKAN_SDK_VERSION
+          curl.exe -sSL -o vulkan_sdk.exe "https://sdk.lunarg.com/sdk/download/$v/windows/vulkan_sdk.exe"
+          Start-Process -Wait -FilePath .\vulkan_sdk.exe -ArgumentList "--root","C:\VulkanSDK\$v","--accept-licenses","--default-answer","--confirm-command","install"
+          if (!(Test-Path "C:\VulkanSDK\$v\Bin\glslc.exe")) { throw "no glslc after the Vulkan SDK install" }
+
+      - name: Apply our SDK patches
+        shell: pwsh
+        working-directory: thirdparty/rexglue-sdk
+        run: |
+          $patches = Get-ChildItem ..\..\patches\rexglue-sdk\*.patch | Sort-Object Name | ForEach-Object FullName
+          git apply @patches
+          if ($LASTEXITCODE -ne 0) { throw "a patch didn't apply" }
+
+      # The same options the installer used (launcher/setup.cpp kSdkOptions,
+      # SdkJob): Vulkan on, D3D12 off, Tracy off, one RelWithDebInfo build
+      # (SDK patch 0019: the recompiler is in it).
+      - name: Build the SDK
+        shell: cmd
+        working-directory: thirdparty/rexglue-sdk
+        run: |
+          set "PATH=C:\Program Files\LLVM\bin;%PATH%"
+          cmake --preset win-amd64 "-DCMAKE_INSTALL_PREFIX=%GITHUB_WORKSPACE%\kit\rexglue-install" -DREXGLUE_USE_VULKAN=ON -DREXGLUE_USE_D3D12=OFF -DREXGLUE_ENABLE_TRACY=OFF -DCMAKE_EXPORT_PACKAGE_REGISTRY=OFF "-DGLSLC_EXECUTABLE=C:/VulkanSDK/%VULKAN_SDK_VERSION%/Bin/glslc.exe" || exit /b 1
+          cmake --build out/build/win-amd64 --config RelWithDebInfo --target install || exit /b 1
+
+      - name: Pack the kit
+        shell: pwsh
+        run: |
+          $kit = "$env:GITHUB_WORKSPACE\kit"
+          $sdk = "$env:GITHUB_WORKSPACE\thirdparty\rexglue-sdk"
+          # The 3 header folders the game reads from SDK sources (CMakeLists.txt
+          # CRASHMOM_SDK_HEADERS); FFmpeg: its headers only.
+          $h = "$kit\rexglue-install\share\mindoverrecomp\sdk-headers"
+          robocopy "$sdk\thirdparty\renderdoc" "$h\renderdoc" /S /NFL /NDL /NJH /NJS | Out-Null
+          robocopy "$sdk\thirdparty\stb" "$h\stb" /S /NFL /NDL /NJH /NJS | Out-Null
+          robocopy "$sdk\thirdparty\FFmpeg" "$h\FFmpeg" *.h /S /NFL /NDL /NJH /NJS | Out-Null
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed" }
+          $commit = git -C $sdk rev-parse HEAD
+          $patches = (Get-ChildItem patches\rexglue-sdk\*.patch | Sort-Object Name | ForEach-Object Name) -join "`n  "
+          "ReXGlue SDK $commit, built by GitHub Actions ($env:GITHUB_REPOSITORY run $env:GITHUB_RUN_ID) with:`n  $patches" |
+            Set-Content -Encoding utf8 "$kit\rexglue-install\share\mindoverrecomp\prebuilt.txt"
+          # The tools.
+          $t = "$kit\buildtools"
+          New-Item -ItemType Directory -Force "$t\ninja", "$t\glslc", "$t\python" | Out-Null
+          curl.exe -sSL -o cmake.zip "https://github.com/Kitware/CMake/releases/download/v$env:CMAKE_VERSION/cmake-$env:CMAKE_VERSION-windows-x86_64.zip"
+          Expand-Archive cmake.zip -DestinationPath cmake-unzip
+          Move-Item "cmake-unzip\cmake-$env:CMAKE_VERSION-windows-x86_64" "$t\cmake"
+          Remove-Item -Recurse "$t\cmake\man", "$t\cmake\doc\cmake-*\html" -ErrorAction SilentlyContinue
+          curl.exe -sSL -o ninja.zip "https://github.com/ninja-build/ninja/releases/download/v$env:NINJA_VERSION/ninja-win.zip"
+          Expand-Archive ninja.zip -DestinationPath "$t\ninja"
+          Copy-Item "C:\VulkanSDK\$env:VULKAN_SDK_VERSION\Bin\glslc.exe" "$t\glslc\"
+          curl.exe -sSL -o python.zip "https://www.python.org/ftp/python/$env:PYTHON_VERSION/python-$env:PYTHON_VERSION-embed-amd64.zip"
+          Expand-Archive python.zip -DestinationPath "$t\python"
+          Copy-Item tools\release\BUILDTOOLS_LICENSES.txt "$t\LICENSES.txt"
+          foreach ($exe in "cmake\bin\cmake.exe", "ninja\ninja.exe", "glslc\glslc.exe", "python\python.exe") {
+            & "$t\$exe" --version
+            if ($LASTEXITCODE -ne 0) { throw "$exe doesn't run" }
+          }
+          "{0:N0} MB" -f ((Get-ChildItem -Recurse $kit | Measure-Object Length -Sum).Sum / 1MB)
+
+      - name: Keep the kit for the release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-kit
+          path: kit/
+
   release:
-    needs: windows-launcher
+    needs: [windows-launcher, windows-sdk]
     runs-on: ubuntu-24.04
     steps:
       # The submodule: make_release.sh reads the SDK's commit and tag.
@@ -110,12 +227,90 @@ jobs:
           name: windows-launcher
           path: ${{ runner.temp }}/windows-launcher
 
-      - name: Make the Windows release (same source, that installer)
-        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/mind_over_recomp.exe"
+      - name: Fetch the Windows build kit
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-kit
+          path: ${{ runner.temp }}/windows-kit
 
-      - name: Keep the files (test runs)
-        if: "!startsWith(github.ref, 'refs/tags/')"
+      - name: Make the Windows release (same source, that installer, that kit)
+        run: tools/make_release.sh --system windows --launcher "${{ runner.temp }}/windows-launcher/mind_over_recomp.exe" --kit "${{ runner.temp }}/windows-kit"
+
+      - name: Keep the files (the verify and draft jobs, test runs)
         uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: out/release/
+
+
+  windows-verify:
+    needs: release
+    runs-on: windows-2025
+    steps:
+      - name: Fetch the release files
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: release-files
+
+      - name: Unpack the .zip like a player
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Recurse release-files\*windows-x86_64.zip | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath C:\player
+
+      # Look-alike tools that BREAK when used: each is a copy of where.exe
+      # (prints nonsense, wrong exit codes), first on PATH. Plus outside build
+      # variables. The installer and the build must not use any of it.
+      - name: A messy PC
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory C:\messy\bin | Out-Null
+          foreach ($n in "cmake", "python3", "python", "git", "ninja", "glslc", "sh", "make") {
+            Copy-Item C:\Windows\System32\where.exe "C:\messy\bin\$n.exe"
+          }
+          "C:\messy\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "CMAKE_GENERATOR=MSYS Makefiles" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "CC=gcc" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "MSYSTEM=MINGW64" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "PYTHONHOME=C:\nowhere" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: The installer's tool check
+        shell: pwsh
+        run: |
+          $out = & "C:\player\Mind over Recomp\Mind over Recomp.exe" --check_tools | Out-String
+          $out
+          if ($out -notmatch "OK\s+CMake, Ninja, glslc, Python \(included\)") { throw "the kit wasn't seen" }
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          "VS=$vs" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      # What the installer's game step runs (launcher/setup.cpp GameJob), in
+      # the environment it makes (BuildEnvironment, clean): Visual Studio's
+      # vcvars64 over a PATH of the kit + LLVM + Windows only.
+      - name: The game's configure + a real build target, clean environment
+        shell: cmd
+        working-directory: C:\player\Mind over Recomp\source
+        run: |
+          set "K=%CD%\buildtools"
+          set "CC=" & set "CMAKE_GENERATOR=" & set "MSYSTEM=" & set "PYTHONHOME="
+          set "PATH=%K%\cmake\bin;%K%\ninja;%K%\glslc;%K%\python;C:\Program Files\LLVM\bin;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0"
+          call "%VS%\VC\Auxiliary\Build\vcvars64.bat" >nul || exit /b 1
+          where cmake ninja glslc python clang
+          "%K%\cmake\bin\cmake.exe" --preset win-amd64-relwithdebinfo "-Drexglue_DIR=%CD%\thirdparty\rexglue-install\lib\cmake\rexglue" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF "-DCMAKE_MAKE_PROGRAM=%K%/ninja/ninja.exe" "-DGLSLC_EXECUTABLE=%K%/glslc/glslc.exe" --fresh || exit /b 1
+          "%K%\cmake\bin\cmake.exe" --build --preset win-amd64-relwithdebinfo --target xma_test || exit /b 1
+          "%K%\glslc\glslc.exe" --target-env=vulkan1.0 -O -mfmt=c -o simple.vert.h src\native\shaders\simple.vert || exit /b 1
+          "%K%\python\python.exe" -c "import argparse, os, struct, sys, zlib; print('python ok')" || exit /b 1
+
+  draft:
+    needs: windows-verify
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out (the release notes)
+        uses: actions/checkout@v4
+
+      - name: Fetch the release files
+        uses: actions/download-artifact@v4
         with:
           name: release-files
           path: out/release/

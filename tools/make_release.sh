@@ -56,12 +56,14 @@ allow_dirty=0
 out_base=out/release
 system_override=""
 launcher_file=""
+kit_dir=""   # --kit: the Windows build kit (release workflow, job windows-sdk)
 while [ $# -gt 0 ]; do
   case "$1" in
     --allow-dirty) allow_dirty=1 ;;
     --out) out_base=$2; shift ;;
     --system) system_override=$2; shift ;;
     --launcher) launcher_file=$2; shift ;;
+    --kit) kit_dir=$2; shift ;;
     *) echo "unknown option $1"; exit 1 ;;
   esac
   shift
@@ -157,6 +159,27 @@ sdk_url = "$sdk_url"
 sdk_tag = "$sdk_tag"
 sdk_commit = "$sdk_commit"
 EOF
+
+# 2b. THE BUILD KIT (Windows, launcher/setup.cpp "THE BUILD KIT"): the SDK
+#     already built + patched by GitHub Actions (thirdparty/rexglue-install,
+#     with share/mindoverrecomp/prebuilt.txt and sdk-headers/) and our pinned
+#     tools (buildtools/cmake, ninja, glslc, python). The player's PC then
+#     builds only the game, with nothing taken from its own PATH.
+if [ -n "$kit_dir" ]; then
+  for need in rexglue-install/share/mindoverrecomp/prebuilt.txt buildtools/cmake/bin/cmake.exe \
+              buildtools/ninja/ninja.exe buildtools/glslc/glslc.exe buildtools/python/python.exe; do
+    [ -f "$kit_dir/$need" ] || { echo "The kit has no $need"; exit 1; }
+  done
+  echo "== Adding the build kit ($(du -sh "$kit_dir" | cut -f1))"
+  mkdir -p "$stage/source/thirdparty"
+  cp -a "$kit_dir/rexglue-install" "$stage/source/thirdparty/rexglue-install"
+  cp -a "$kit_dir/buildtools" "$stage/source/buildtools"
+  cat > "$stage/source/buildtools/kit.txt" <<EOF
+The build kit of Mind over Recomp $version: the SDK ($sdk_tag + our patches) is
+ready-built in thirdparty/rexglue-install, and this folder holds the CMake,
+Ninja, glslc and Python every build step uses. Made by GitHub Actions.
+EOF
+fi
 
 # 3. The readme, with the version filled in.
 readme=tools/release/READ_ME_FIRST.txt

@@ -367,10 +367,22 @@ static bool SwapSource(const fs::path& root, const fs::path& work, const fs::pat
     *message = std::to_string(changed) + " files changed or new, " + std::to_string(same) +
                " unchanged.\n";
 
-    // The build state moves into the new source tree.
+    // The build state moves into the new source tree. A new version WITH the
+    // build kit (buildtools/kit.txt: the SDK ships ready-built, launcher/
+    // setup.cpp "THE BUILD KIT") brings its own SDK: the old self-built one
+    // (and its download) stays behind with the old source, never over the
+    // new one. The game's build folder still moves (only what changed builds
+    // again; its configure is fresh anyway).
+    const bool new_has_kit = fs::exists(new_src / "buildtools" / "kit.txt", ec);
+    std::vector<const char*> parts = {"out", "generated/default"};
+    if (!new_has_kit) {
+      parts.push_back("thirdparty/rexglue-sdk");
+      parts.push_back("thirdparty/rexglue-install");
+    } else if (fs::exists(old_src / "thirdparty" / "rexglue-install", ec)) {
+      *message += "the new version brings its own ready-built SDK: the old one isn't kept.\n";
+    }
     bool ok = true;
-    for (const char* part : {"out", "generated/default", "thirdparty/rexglue-sdk",
-                             "thirdparty/rexglue-install"}) {
+    for (const char* part : parts) {
       ok = MoveIfThere(old_src / part, new_src / part, message) && ok;
     }
     if (!ok) {

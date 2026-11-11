@@ -374,9 +374,24 @@ out/release/<version>/
     Mind over Recomp/
       Mind over Recomp.exe        the installer (launcher/ target mind_over_recomp)
       READ ME FIRST.txt           tools/release/READ_ME_FIRST_windows.txt
-      source/                     as above
+      source/                     as above, PLUS the build kit (~CI-built):
+        buildtools/               pinned CMake, Ninja, glslc, Python (embeddable) + kit.txt
+        thirdparty/rexglue-install/  the ReXGlue SDK built with our patches
+                                  (share/mindoverrecomp/prebuilt.txt + sdk-headers/)
   release.toml                    the update feed: version, archive, SHA-256
 ```
+
+**The Windows build kit** (since 0.3.0; `launcher/setup.cpp` "THE BUILD
+KIT"). The release workflow's `windows-sdk` job builds the SDK and collects
+the tools; `make_release.sh --kit <folder>` packs them into `source/`. With
+`buildtools/kit.txt` there, the setup skips the source download and the SDK
+build, checks only LLVM, Visual Studio's C++ tools + Windows SDK, the Visual
+C++ runtime and the Vulkan loader, and runs every step in Visual Studio's
+environment over a CLEAN PATH (the kit, LLVM, Windows' own folders; outside
+build variables removed). The game's configure is always `--fresh`. The
+`windows-verify` job tests the `.zip` on a fresh Windows machine with
+broken look-alike tools first on PATH before a draft release is made. A
+developer clone (no kit) builds the SDK itself, as before.
 
 **Windows: the installer** ([`launcher/installer.cpp`](../launcher/installer.cpp),
 [`launcher/install.h`](../launcher/install.h)). It installs, updates and

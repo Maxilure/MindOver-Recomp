@@ -765,7 +765,7 @@ void App::CheckTools() {
   if (tools_checking.exchange(true)) return;
   if (tools_thread.joinable()) tools_thread.join();
   tools_thread = std::thread([this] {
-    setup::Status status = setup::Setup::CheckToolsOnly();
+    setup::Status status = setup::Setup::CheckToolsOnly(SourceNextToMe());
     std::lock_guard lock(tools_mutex);
     tools = std::move(status);
     tools_checking = false;
@@ -1450,7 +1450,7 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
     std::printf("refused: %s\n", why.c_str());
     return 1;
   }
-  setup::Status tools = setup::Setup::CheckToolsOnly();
+  setup::Status tools = setup::Setup::CheckToolsOnly(SourceNextToMe());
   PrintTools(tools);
   if (!AllToolsFound(tools)) {
     std::printf("refused: build tools missing (--install_tools)\n");
@@ -1544,7 +1544,7 @@ int main(int argc, char** argv) {
     std::_Exit(ok ? 0 : 1);
   }
   if (check_tools || install_tools) {
-    setup::Status status = setup::Setup::CheckToolsOnly();
+    setup::Status status = setup::Setup::CheckToolsOnly(SourceNextToMe());
     PrintTools(status);
     // What installs the missing tools (winget = App Installer): its path, or
     // "not found". Helps when a player says it's installed but the page says
@@ -1556,7 +1556,7 @@ int main(int argc, char** argv) {
       const bool ok = RunPrinted("tools", setup::Setup::ToolsJob(status),
                                  fs::temp_directory_path(ec) / ("MindOverRecomp-tools-" + Stamp() + ".log"));
       std::printf("== checking again\n");
-      status = setup::Setup::CheckToolsOnly();
+      status = setup::Setup::CheckToolsOnly(SourceNextToMe());
       PrintTools(status);
       std::fflush(stdout);
       std::_Exit(ok && AllToolsFound(status) ? 0 : 1);

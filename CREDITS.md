@@ -107,6 +107,17 @@ engineering, testing, bug reports, corrections, art. See
 The SDK brings more libraries of its own. They are listed in
 `thirdparty/rexglue-sdk`.
 
+### Build tools in the Windows release
+
+The Windows `.zip` brings the ReXGlue SDK ready-built (built by GitHub
+Actions with the port's patches) and these tools, unchanged, each under its
+own licence (`source/buildtools/LICENSES.txt`):
+**[CMake](https://cmake.org)** (BSD 3-Clause),
+**[Ninja](https://ninja-build.org)** (Apache 2.0),
+**glslc** from **[shaderc](https://github.com/google/shaderc)** via
+**[LunarG's Vulkan SDK](https://vulkan.lunarg.com)** (Apache 2.0) and
+**[Python](https://www.python.org)**'s embeddable package (PSF License).
+
 ## The game
 
 *Crash: Mind over Mutant* was made by **Radical Entertainment** and

@@ -172,6 +172,13 @@ to the Start menu and *Installed apps*, and later uninstalls it. Each new
 release comes with a new installer, which also updates an installed game.
 The game's settings are in the game itself (**Options**).
 
+Since 0.3.0 the release brings the ReXGlue SDK ready-built and its own
+CMake, Ninja, glslc and Python (`source\buildtools\`), and every build step
+runs with only those, LLVM and Visual Studio on its PATH. Most entries below
+about CMake, Git, Python or the SDK step are for older installers: the
+simplest fix there is the newest release's installer (**Update** keeps your
+game, saves and settings).
+
 ### "Windows protected your PC"
 
 That's SmartScreen. The installer isn't signed (signing costs money; this

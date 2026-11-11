@@ -177,7 +177,8 @@ class Setup {
   static std::vector<task_runner::Command> ToolsJob(const Status& status);
   // Step 1 alone (no game folder needed: the installer's first page). Slow
   // (a few tool calls): run it off the UI thread.
-  static Status CheckToolsOnly();
+  // `release_source` = a release's source/ folder (its build kit, setup.cpp Kit).
+  static Status CheckToolsOnly(const std::filesystem::path& release_source = {});
   // The game's icon from the player's disc into program/ (+ into the exe on
   // Windows): part of GameJob, and run by the installer for a folder whose
   // game was built before the icon existed. Never fails.
