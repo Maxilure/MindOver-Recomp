@@ -159,6 +159,14 @@ DONE = {
     # Notifications: both listeners (sign-in, storage) are gone.
     "XamNotifyCreateListener": "who_plays.cpp: sub_8227CE70; pc_save_drive.cpp: sub_823007D0",
     "XNotifyGetNext": "who_plays.cpp: sub_8227B1D8 (and the save drive's device check, unused)",
+    # Title lifecycle (findings/58): the game imports are answered directly
+    # by native host handlers; launch-to-dashboard, terminate-title and the
+    # observed firmware reboot all close this single PC process. Callback
+    # registration has no consumer in the SDK runtime or on the PC.
+    "XamLoaderLaunchTitle": "native/quit_launch.cpp: 0x824BBA6C",
+    "XamLoaderTerminateTitle": "native/quit_launch.cpp: 0x824BBA5C",
+    "HalReturnToFirmware": "native/quit_launch.cpp: 0x824BBC6C",
+    "ExRegisterTitleTerminateNotification": "native/quit_launch.cpp: 0x824BBE1C",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

@@ -166,7 +166,7 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
-**Xbox services replaced: 24 of 66 (36%)** `▰▰▰▰▱▱▱▱▱▱`
+**Xbox services replaced: 28 of 66 (42%)** `▰▰▰▰▱▱▱▱▱▱`
 
 | Xbox piece | Replaced | Becomes |
 |---|---|---|
@@ -179,7 +179,7 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 | System pop-ups and notifications | `▰▰▰▰▱▱▱▱▱▱` 2 / 5 | PC behaviour (the port's own messages); gone once profiles and saves are native |
 | System messages (achievements, ...) | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the port's own handlers |
 | Console settings | `▱▱▱▱▱▱▱▱▱▱` 0 / 8 | the port's settings (language, region, video mode) |
-| Quit and launch | `▱▱▱▱▱▱▱▱▱▱` 0 / 4 | quit the program cleanly |
+| Quit and launch | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | quit the program cleanly |
 | Network | `▱▱▱▱▱▱▱▱▱▱` 0 / 1 | not needed (no online features) |
 
 Not counted: 89 kernel basics (threads, locks, memory, files), already thin translations to the PC's own.
@@ -278,7 +278,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 
 - **Maxilure**: project lead, direction, playtesting, art
 - **[YWZsaXRv](https://github.com/YWZsaXRv)**: the Windows setup script the installer builds on
-- **[zanettevini](https://github.com/zanettevini)**: Brazilian Portuguese translation
+- **[zanettevini](https://github.com/zanettevini)**: Brazilian Portuguese translation, native quit and launch code (with Codex)
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)** and **[Xenia](https://github.com/xenia-project/xenia)**: the recompiler and runtime this port is built on
 - **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece: the button prompt pictures
 - **[Icons8](https://icons8.com)**: the Windows installer's icon

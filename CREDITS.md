@@ -38,13 +38,18 @@ engineering, testing, bug reports, corrections, art. See
   ([#4](https://github.com/Maxilure/MindOver-Recomp/pull/4)); the Windows
   installer's tool installation (0.2.0) is based on it.
 
-### zanettevini: Brazilian Portuguese
+### zanettevini: Brazilian Portuguese, native code
 
 - Translated the port's new 0.3.0 texts into Brazilian Portuguese
   (widescreen, resolutions, Cursor Fades, the message card, the installer)
   and corrected the month names
   ([#9](https://github.com/Maxilure/MindOver-Recomp/issues/9));
   the first translation in `languages/pt_BR.po` checked by a native speaker.
+- Replaced the game's Xbox title-lifecycle calls (back to the dashboard, end
+  the game, reboot) with native PC code that closes the program cleanly, with
+  the help of Codex (OpenAI)
+  ([#21](https://github.com/Maxilure/MindOver-Recomp/pull/21),
+  [finding 58](docs/findings/58-native-title-lifecycle.md)).
 
 ### Bug reports
 
