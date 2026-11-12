@@ -104,7 +104,7 @@
 
 #include <fmt/format.h>
 #include <rex/cvar.h>
-#include <rex/input/input_system.h>
+#include "../input/native_controllers.h"
 #include <rex/logging.h>
 #include <rex/ppc/func.h>
 #include <rex/runtime.h>
@@ -711,14 +711,11 @@ struct Pad {
 };
 Pad ReadPad(int p) {
   Pad pad;
-  auto* input = static_cast<rex::input::InputSystem*>(rex::Runtime::instance()->input_system());
-  if (input) {
-    rex::input::X_INPUT_STATE state{};
-    if (input->GetState(uint32_t(p), &state) == 0) {
-      pad.buttons = uint16_t(state.gamepad.buttons);
-      pad.x = float(int16_t(state.gamepad.thumb_lx)) / 32767.0f;
-      pad.y = float(int16_t(state.gamepad.thumb_ly)) / 32767.0f;
-    }
+  rex::input::X_INPUT_STATE state{};
+  if (native_controllers::Read(uint32_t(p), &state) == 0) {
+    pad.buttons = uint16_t(state.gamepad.buttons);
+    pad.x = float(int16_t(state.gamepad.thumb_lx)) / 32767.0f;
+    pad.y = float(int16_t(state.gamepad.thumb_ly)) / 32767.0f;
   }
   const auto* assignment = kbm::PlayerAssignment::Get();
   if (auto* driver = kbm::KeyboardMouseDriver::Get(); driver && assignment && assignment->KeyboardAnswersFor(uint32_t(p))) {

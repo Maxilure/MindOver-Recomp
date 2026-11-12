@@ -64,6 +64,7 @@ set(CRASHMOM_SOURCES
     src/input/bindings.cpp       # keyboard + mouse: the actions, their keys, controls.toml
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
     src/input/players.cpp        # which device plays as which player (local co-op)
+    src/input/native_controllers.cpp  # SDL gamepad polling and vibration
     src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
     src/input/prompt_icons.cpp   # key / mouse pictures in the game's button prompts (Xelu's CC0 prompts)
     src/input/name_typing.cpp       # typing a name on the keyboard, the mouse on the on-screen keys

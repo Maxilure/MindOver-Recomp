@@ -52,6 +52,7 @@
 #include "debug_console.h"
 #include "debug_input_script.h"
 #include "frame_rate.h"
+#include "input/native_controllers.h"
 #include "ui/hud_hide.h"
 #include "ui/tools_menu.h"
 #include "ui/font_letters.h"
@@ -111,6 +112,7 @@ class CrashMomApp : public rex::ReXApp {
   // Runs after CVars/command line are read, before the GPU/audio/input
   // backends are created.
   void OnPreSetup(rex::RuntimeConfig& config) override {
+    if (native_controllers::Enabled()) config.input_factory = {};
     // GPU emulation lives in a separate plugin library, and ReXGlue loads
     // NONE by default. Without one, every Vd* graphics kernel call is
     // ignored and the game can never draw.
@@ -344,9 +346,8 @@ class CrashMomApp : public rex::ReXApp {
     // timeline starts at launch. ReXApp's own code casts input_system() the
     // same way.
     auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system());
-    if (auto driver = ScriptedInputDriver::CreateFromCvars(); driver && input) {
-      input->AddDriver(std::move(driver));
-    }
+    auto scripted = ScriptedInputDriver::CreateFromCvars();
+    if (input && scripted) input->AddDriver(std::move(scripted));
     // The debug console, only with --debug_console (debug_console.h): a
     // socket that answers questions (memory, players, front end) mid-run.
     debug_console::Start(
@@ -355,7 +356,9 @@ class CrashMomApp : public rex::ReXApp {
     widescreen::AttachWindow(window());
     // Keyboard + mouse as a virtual controller (input/keyboard_mouse.h), on
     // unless --keyboard_mouse=false. Merged with a real pad into player 1.
-    if (auto kbm_driver = kbm::KeyboardMouseDriver::Create(); kbm_driver && input) {
+    auto kbm_driver = kbm::KeyboardMouseDriver::Create();
+    std::map<std::string, int> choices;
+    if (kbm_driver) {
       kbm_driver->SetPausedCheck([this] { return KeyboardInputPaused(); });
       // Menus or play: which job each key does (input/bindings.h "PLAY AND MENUS").
       kbm_driver->SetMenuCheck([] { return menu_input::MenuOnScreen(); });
@@ -366,16 +369,21 @@ class CrashMomApp : public rex::ReXApp {
       // Which device plays as which player (input/players.h; the Controls
       // menu's Players tab), replacing the SDK's fixed rule (keyboard + first
       // pad = player 1). Before the game's first poll, as the SDK asks.
-      std::map<std::string, int> choices;
       for (const auto& [key, choice] : kbm_driver->bindings().players) {
         choices[key] = choice.player;
       }
+    }
+    if (native_controllers::Enabled() || (input && kbm_driver)) {
       auto assignment =
           std::make_unique<kbm::PlayerAssignment>(kbm::KeyboardMouseDriver::kDeviceId, choices);
       // Outside play every device also answers as player 1 (title, menus).
       assignment->SetInPlayCheck([] { return more_players::InPlay(); });
-      input->SetDeviceAssignment(std::move(assignment));
-      input->AddDriver(std::move(kbm_driver));
+      if (native_controllers::Enabled()) {
+        native_controllers::Start(std::move(assignment), std::move(kbm_driver), std::move(scripted));
+      } else {
+        input->SetDeviceAssignment(std::move(assignment));
+        input->AddDriver(std::move(kbm_driver));
+      }
     }
     // Controllers while the window isn't focused (input/background_input.h):
     // the setting's SDL hint, the focus check its pause-on-focus-loss reads,
@@ -391,6 +399,7 @@ class CrashMomApp : public rex::ReXApp {
   // (Closing the main window ends the process right away instead: ReXApp's
   // OnClosing hard-exits, so this runs only on other ways out.)
   void OnShutdown() override {
+    if (native_controllers::Enabled()) native_controllers::Stop();
     frame_rate::StopFrameStats();
     rex::ui::UnregisterBind("bind_native_window");
     // Renderer first: until it's gone it may be drawing into the native
@@ -524,18 +533,19 @@ class CrashMomApp : public rex::ReXApp {
   // for the setting background_input (input/background_input.h): on, the
   // controllers keep playing while no game window is focused.
   void UseEitherWindowForInput() {
-    auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system());
-    if (!input) {
-      return;
-    }
-    input->SetActiveCallback([this]() {
+    auto active = [this]() {
       if (!AnyWindowFocused()) {
         // Unfocused: the ImGui overlays can't be in use, so only the setting decides.
         return background_input::Allowed();
       }
       rex::ui::ImGuiDrawer* drawer = imgui_drawer();
       return !drawer || !drawer->GetIO().WantCaptureMouse;
-    });
+    };
+    if (native_controllers::Enabled()) {
+      native_controllers::SetActiveCheck(active);
+    } else if (auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system())) {
+      input->SetActiveCallback(active);
+    }
   }
 
   // Has the main window or the second (native) window the keyboard focus?
