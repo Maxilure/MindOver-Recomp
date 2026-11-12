@@ -248,6 +248,7 @@ void ProfileReport(double seconds) {
   };
   int area_game[kAreas] = {}, area_host[kAreas] = {}, area_incl[kAreas] = {};
   std::map<std::string, int> raw_frames;  // "library offset" of unnamed library frames
+  std::map<uint32_t, int> own;  // samples with the CPU in that game function's own code
   int idle = 0;
   for (int i = 0; i < n; ++i) {
     const Sample& sm = g_samples[size_t(i)];
@@ -272,6 +273,9 @@ void ProfileReport(double seconds) {
         }
       }
       if (f == 2) ++host_self[r.guest ? fmt::format("(game) sub_{:08X}", r.guest) : r.host];
+      // The CPU was in this game function's OWN code (not in host code it
+      // called): the "ALL GAME FUNCTIONS" appendix at the end of the report.
+      if (f == 2 && r.guest) ++own[r.guest];
       // A frame in a shared library with no symbol name (the SDK's GPU
       // plugin exports none): kept as library+offset for llvm-symbolizer.
       if (!r.guest && r.host.find('!') == std::string::npos && r.host.find(".so") != std::string::npos &&
@@ -375,6 +379,20 @@ void ProfileReport(double seconds) {
 
   table("UNNAMED LIBRARY FRAMES (innermost per sample: 'file offset', name them with llvm-symbolizer --obj=file)",
         raw_frames, same, 400);
+  {
+    // APPENDIX: every game function seen, with its own-code samples (the CPU
+    // was in that function's instructions), self (innermost game function,
+    // host code below it included) and inclusive counts, sorted by address:
+    // for summing whole address ranges or a list of functions afterwards
+    // (e.g. all material set-ups, findings/60). Columns are sample counts.
+    out += "\n== ALL GAME FUNCTIONS (address, own code, self, inclusive; sample counts) ==\n";
+    for (auto& [g, c] : inclusive) {
+      const auto o = own.find(g);
+      const auto s2 = self.find(g);
+      out += fmt::format("sub_{:08X} {} {} {}\n", g, o == own.end() ? 0 : o->second,
+                         s2 == self.end() ? 0 : s2->second, c);
+    }
+  }
   bool written = false;
   if (FILE* f = std::fopen(g_profile_path.c_str(), "w")) {
     written = std::fwrite(out.data(), 1, out.size(), f) == out.size();

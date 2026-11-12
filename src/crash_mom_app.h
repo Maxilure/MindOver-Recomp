@@ -89,6 +89,7 @@
 #include "saves/save_screen_waits.h"
 #include "native/native_window.h"
 #include "native/widescreen.h"
+#include "decomp/matrices.h"
 #include "players/lost_controller.h"
 #include "players/more_players.h"
 #include "players/outfits.h"
@@ -322,6 +323,7 @@ class CrashMomApp : public rex::ReXApp {
     // Depth of field strength (both pictures) + the motion blur flag (effects/post_effects.h).
     post_effects::Install();
     widescreen::Install();  // the world's projection as wide as the picture (native/widescreen.h)
+    decomp_matrices::Install();  // UpdateTransforms as C++, bit-identical (decomp/matrices.h, findings/60)
     language::Install();
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });

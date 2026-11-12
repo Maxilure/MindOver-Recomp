@@ -138,6 +138,8 @@ set(CRASHMOM_SOURCES
     src/native/render_targets.cpp   # the game's render targets (surfaces) + resolves -> Vulkan images
     src/native/ab_capture.cpp       # F10 photos + debug: the same frame from both renderers
     src/native/translucent_sort.cpp # see-through objects: a draw order that does not flicker
+    src/decomp/memory_copy.cpp # the game's memcpy (sub_8245C1A0) as a host copy when the buffers don't overlap (findings/60)
+    src/decomp/matrices.cpp # Radical's matrix helpers + the renderer's UpdateTransforms as C++ (findings/60), bit-identical
     src/decomp/skinning.cpp # characters' CPU skinning (sub_823ED688) as C++: same results, no maths-library calls
     src/native/native_window.cpp    # F8 / --native_window: a 2nd window with the native picture
     src/native/spotter.cpp          # loud log banners when a hunted material (bump) shows up

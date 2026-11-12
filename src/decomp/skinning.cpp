@@ -69,16 +69,7 @@
 
 #include "../guest_memory.h"
 
-// CPU feature check: <cpuid.h> + inline asm with any clang / GCC (also
-// clang-cl on Windows, where MSVC's _xgetbv intrinsic would need -mxsave);
-// MSVC's own intrinsics only with MSVC itself.
-#if defined(__clang__) || defined(__GNUC__)
-#include <cpuid.h>
-#define SKIN_GNU_CPUID 1
-#else
-#include <intrin.h>
-#define SKIN_GNU_CPUID 0
-#endif
+#include "cpu_features.h"  // decomp::CpuHasFma (the CPUID check)
 
 extern "C" REX_FUNC(__imp__sub_823ED688);  // the recompiled original (fallback + answer key)
 
@@ -319,32 +310,9 @@ void SkinWithFma(uint8_t* b, uint32_t r, uint32_t m, uint32_t p, uint32_t o) { S
 #endif
 void SkinPlain(uint8_t* b, uint32_t r, uint32_t m, uint32_t p, uint32_t o) { Skin(b, r, m, p, o); }
 
-// FMA usable = CPUID.1:ECX bit 12 (FMA) + bit 27 (the OS saves the AVX
-// registers) + XCR0 says it does (bits 1-2).
-bool CpuHasFma() {
-  unsigned c = 0;
-#if SKIN_GNU_CPUID
-  unsigned a = 0, b = 0, d = 0;
-  if (!__get_cpuid(1, &a, &b, &c, &d)) return false;
-#else
-  int r[4];
-  __cpuid(r, 1);
-  c = unsigned(r[2]);
-#endif
-  if (!(c & (1u << 12)) || !(c & (1u << 27))) return false;
-#if SKIN_GNU_CPUID
-  unsigned lo = 0, hi = 0;
-  __asm__ volatile("xgetbv" : "=a"(lo), "=d"(hi) : "c"(0));
-  const unsigned long long xcr0 = (static_cast<unsigned long long>(hi) << 32) | lo;
-#else
-  const unsigned long long xcr0 = _xgetbv(0);
-#endif
-  return (xcr0 & 6) == 6;
-}
-
 using SkinFn = void (*)(uint8_t*, uint32_t, uint32_t, uint32_t, uint32_t);
 SkinFn PickSkin() {
-  const bool fma = CpuHasFma() && !REXCVAR_GET(debug_native_skin_no_fma);
+  const bool fma = decomp::CpuHasFma() && !REXCVAR_GET(debug_native_skin_no_fma);
   REXLOG_INFO("Skinning: native C++ ({})", fma ? "the CPU's FMA instruction" : "no FMA instruction: std::fma");
   return fma ? &SkinWithFma : &SkinPlain;
 }
