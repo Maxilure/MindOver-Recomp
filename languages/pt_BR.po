@@ -137,7 +137,7 @@ msgstr "Tem certeza de que quer apagar este jogo salvo? Ele será movido para a 
 #: src/saves/save_library.cpp:1875
 #, fuzzy
 msgid "Backspace"
-msgstr "Apagar"
+msgstr "Backspace"
 
 #. Shown while the save list is read (a few tenths of a second). Short: replaces the Xbox wording.
 #: src/saves/save_screen_waits.cpp:320
@@ -521,7 +521,7 @@ msgstr "Teclado e mouse"
 #: src/options/options_menu.cpp:1527
 #, fuzzy
 msgid "Moving to Player {0}"
-msgstr "Para o jogador {0}"
+msgstr "Movendo para o jogador {0}"
 
 #. {0} = a player's number (1-4).
 #: src/options/options_menu.cpp:1527
@@ -645,7 +645,7 @@ msgstr "Só o renderizador do port: o mais leve para o seu PC."
 #: src/options/options_settings.cpp:263
 #, fuzzy
 msgid "Still being finished: an effect may look wrong."
-msgstr "Ainda em acabamento: algum efeito pode aparecer errado."
+msgstr "Ainda em desenvolvimento: algum efeito pode aparecer errado."
 
 #: src/options/options_settings.cpp:274
 #, fuzzy
@@ -926,7 +926,7 @@ msgstr "Em uma tela larga, o HUD se mantém onde o 16:9 estava."
 
 #: src/options/options_settings.cpp:542
 msgid "In a wide picture, the HUD's corner pieces move out to the corners of the screen."
-msgstr "Em uma tela larga, as bordas do HUD se movem através das bordas da tela."
+msgstr "Em uma tela larga, os elementos dos cantos do HUD vão para os cantos da tela."
 
 #: src/options/options_settings.cpp:549
 #, fuzzy
@@ -1000,7 +1000,7 @@ msgstr "Mais nítido que o original. Leve na sua placa de vídeo."
 
 #: src/options/options_settings.cpp:602
 msgid "Sharper still, heavier on your graphics card."
-msgstr "Ainda nítido, pesado na sua placa de vídeo."
+msgstr "Ainda mais nítido, mais pesado para a sua placa de vídeo."
 
 #: src/options/options_settings.cpp:603
 msgid "The sharpest picture, the heaviest on your graphics card."
@@ -1079,7 +1079,7 @@ msgstr "Mais nítidas"
 #: src/options/options_settings.cpp:646
 #, fuzzy
 msgid "Sharpest"
-msgstr "O mais nítidas"
+msgstr "Mais nítidas ainda"
 
 #: src/options/options_settings.cpp:647
 #, fuzzy
@@ -1109,7 +1109,7 @@ msgstr "Mais suaves"
 #: src/options/options_settings.cpp:657
 #, fuzzy
 msgid "Softest"
-msgstr "O mais suaves"
+msgstr "Mais suaves ainda"
 
 #: src/options/options_settings.cpp:658
 #, fuzzy
@@ -1134,7 +1134,7 @@ msgstr "As sombras mais suaves, com a borda mais larga."
 #: src/options/options_settings.cpp:669
 #, fuzzy
 msgid "Sharpening"
-msgstr "Nitidez"
+msgstr "Aumento de nitidez"
 
 #: src/options/options_settings.cpp:670
 #, fuzzy
@@ -1282,7 +1282,7 @@ msgstr "Inverter eixo"
 #: src/options/options_settings.cpp:875
 #, fuzzy
 msgid "Up and down are flipped when you aim the reticle."
-msgstr "Cima e baixo ficam invertidos ao mirar com a mira."
+msgstr "Cima e baixo ficam invertidos ao mirar."
 
 #: src/options/options_settings.cpp:876
 #, fuzzy
@@ -2004,7 +2004,7 @@ msgstr "Cartão"
 
 #: src/options/options_settings.cpp:1329
 msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
-msgstr "As mensagens do jogo na parte inferior (bonecos de vodu, missões) usam o cartão de conquistas, com o boneco de vodu sobre ele."
+msgstr "As mensagens do jogo na parte inferior (bonecos de vodu, missões) usam o cartão de conquistas, com o boneco de vodu girando nele."
 
 #: src/options/options_settings.cpp:1331
 msgid "The game's own wide message bar."
@@ -2382,7 +2382,7 @@ msgstr "%ld s"
 
 #: launcher/installer.cpp:181
 msgid "The port's files aren't next to this installer. Unpack the WHOLE .zip from the GitHub release page, then start Mind over Recomp.exe from the unpacked folder."
-msgstr "Os arquivos do porte não estão próximos ao instalador. Descompacte TODO o .zip da página de Releases, então abra o Mind over Recomp.exe na pasta descompactada."
+msgstr "Os arquivos do port não estão ao lado deste instalador. Descompacte TODO o .zip da página de Releases, então abra o Mind over Recomp.exe na pasta descompactada."
 
 #: launcher/installer.cpp:209
 #, fuzzy
@@ -3681,12 +3681,12 @@ msgstr "Só o renderizador nativo desenha em resolução maior: a imagem emulada
 #: launcher/settings_page.cpp:79
 #, fuzzy
 msgid "Only the native renderer changes its anti-aliasing: the emulated picture keeps the Xbox 360's 2x."
-msgstr "Só o renderizador nativo muda o seu antisserrilhado: a imagem emulada mantém o 2x do Xbox 360."
+msgstr "Só o renderizador nativo muda o seu anti-aliasing: a imagem emulada mantém o 2x do Xbox 360."
 
 #: launcher/settings_page.cpp:85
 #, fuzzy
 msgid "Only the native renderer smooths cut-out edges, and only while anti-aliasing is on."
-msgstr "Só o renderizador nativo suaviza bordas recortadas, e só com o antisserrilhado ligado."
+msgstr "Só o renderizador nativo suaviza bordas recortadas, e só com o anti-aliasing ligado."
 
 #: launcher/settings_page.cpp:90
 #, fuzzy
