@@ -179,6 +179,31 @@ About 10% of the main thread. Inclusive shares: UpdateTransforms 4.5% ->
 movies, title, main menu, Load Game and play checked with the C++ path on:
 0 errors.
 
-Next (option 1 continued): the material set-ups (slot 14, the simple
-material first: 1.8% inclusive), the tint writer sub_8242FF88 (0.9%), then
-the D3D `Set...` helpers they call.
+## 9. Small leaves don't pay on their own
+
+The byte-for-byte check moved to src/decomp/check.h (shared by every
+rewrite: the original on a copy of the registers, ours on the same input,
+written bytes and r3 compared, the original's results kept; log lines
+"Native check:").
+
+D3D's SetPixelShaderConstantB (sub_82312B58, 24 instructions, ~200,000
+calls a second uncapped, 0.26% of the main thread) was rewritten the same way
+and checked (856,000 calls, 0 differences), then measured: ~19 ns a call
+either way, its share 0.26% -> 0.41%. For a leaf that small the call itself
+(the PDDI intercept wrapper, the handler, the switch reads) is the whole
+cost, so it was taken out again. Such leaves only pay inside a bigger native
+caller, where their few instructions are inlined: they belong with the
+material set-ups that call them, not alone.
+
+What is left of the back end's own code after section 8 (Wumpa Island,
+uncapped): ~6% of the main thread in Radical's renderer code and ~3% in D3D,
+spread over some 30 functions of 0.1-0.8% each. The largest: the tint and
+light writer sub_8242FF88 (0.8%, 1,656 bytes, eight virtual calls into the
+lighting objects), DrawPrimBuffer's own code (0.4%), the PS-bool setter
+(0.4%), the common material state sub_8242DA28 (0.3% own, 0.7% inclusive:
+blend, alpha, depth bias, shadow spheres), the simple set-up's own code
+(0.25%), SetTexture (0.2%).
+
+Next (option 1 continued): the material set-ups as WHOLE native functions
+with their D3D leaves inlined (slot 14, the simple material first: 1.8%
+inclusive with its common state and leaves), then the tint and light writer.

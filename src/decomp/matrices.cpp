@@ -51,7 +51,7 @@
 //     mode set like the original's.
 //   CHECKED by --debug_native_matrix_check: every call runs the original AND
 //   ours on the same input, compares the bytes it may write and r3, keeps the
-//   original's results (log "Matrix check:").
+//   original's results (log "Native check:").
 //
 // --native_matrices=false = the recompiled originals.
 // =============================================================================
@@ -71,6 +71,7 @@
 
 #include "../guest_memory.h"
 #include "../pddi/intercept.h"
+#include "check.h"
 #include "cpu_features.h"
 #include "matrices.h"
 
@@ -95,7 +96,7 @@ REXCVAR_DEFINE_BOOL(debug_native_matrix_no_fma, false, "CrashMoM",
                     "check it too");
 REXCVAR_DEFINE_BOOL(debug_native_matrix_check, false, "CrashMoM",
                     "Debug: run the original matrix helpers / UpdateTransforms AND ours on every call and compare "
-                    "what they write byte for byte (slow; log lines \"Matrix check:\")");
+                    "what they write byte for byte (slow; log lines \"Native check:\")");
 
 namespace decomp_matrices {
 namespace {
@@ -643,104 +644,14 @@ const Fns& Pick() {
   return *fns;
 }
 
-// --- The byte-for-byte check (debug_native_matrix_check) ------------------------
-struct Range {
-  uint32_t address, bytes;
-};
-// At most two ranges per function; a fixed array (no allocation per call:
-// the overrides run ~200,000 times a second).
-struct Ranges {
-  Range r[2];
-  size_t n;
-  size_t size() const { return n; }
-  const Range& operator[](size_t i) const { return r[i]; }
-  const Range* begin() const { return r; }
-  const Range* end() const { return r + n; }
-};
-struct Stats {
-  const char* name;
-  uint64_t calls = 0, differed = 0;
-  int described = 0;
-};
-std::vector<Stats*>& AllStats() {
-  static std::vector<Stats*> all;
-  return all;
-}
-void MaybeReport() {
-  static std::chrono::steady_clock::time_point last{};
-  const auto now = std::chrono::steady_clock::now();
-  if (now - last < std::chrono::seconds(10)) return;
-  last = now;
-  std::string line;
-  for (const Stats* s : AllStats()) {
-    line += fmt::format("{}{} {} calls / {} differed", line.empty() ? "" : ", ", s->name, s->calls, s->differed);
-  }
-  REXLOG_INFO("Matrix check: {}", line);
-}
-
-// Runs the original on a copy of the registers, keeps what it wrote, runs
-// ours on the same input, compares; the original's results stay (memory and
-// registers: the answer key wins).
-template <class Ours>
-void Checked(Stats& st, PPCContext& ctx, uint8_t* base, PPCFunc* original, const Ranges& ranges,
-             Ours ours) {
-  if (st.calls == 0) AllStats().push_back(&st);
-  std::vector<std::vector<uint8_t>> before, theirs;
-  for (const Range& r : ranges) {
-    const uint8_t* p = GuestPtr(base, r.address);
-    before.emplace_back(p, p + r.bytes);
-  }
-  PPCContext answer = ctx;
-  original(answer, base);
-  for (const Range& r : ranges) {
-    const uint8_t* p = GuestPtr(base, r.address);
-    theirs.emplace_back(p, p + r.bytes);
-  }
-  for (size_t i = 0; i < ranges.size(); ++i) std::memcpy(GuestPtr(base, ranges[i].address), before[i].data(), ranges[i].bytes);
-  PPCContext mine = ctx;
-  const bool handled = ours(mine);
-  ++st.calls;
-  bool same = !handled || mine.r3.u64 == answer.r3.u64;
-  std::string what = same ? "" : fmt::format("r3 original {:X} ours {:X}", answer.r3.u64, mine.r3.u64);
-  for (size_t i = 0; handled && i < ranges.size(); ++i) {
-    const uint8_t* p = GuestPtr(base, ranges[i].address);
-    if (std::memcmp(p, theirs[i].data(), ranges[i].bytes) == 0) continue;
-    uint32_t at = 0;
-    while (p[at] == theirs[i][at]) ++at;
-    at &= ~3u;
-    uint32_t o, m;
-    std::memcpy(&o, &theirs[i][at], 4);
-    std::memcpy(&m, p + at, 4);
-    if (what.empty()) {
-      what = fmt::format("bytes at {:08X} (+{} of range {}): original {:08X} ours {:08X}", ranges[i].address + at, at,
-                         i, __builtin_bswap32(o), __builtin_bswap32(m));
-    }
-    same = false;
-  }
-  if (!same) {
-    ++st.differed;
-    if (st.described < 8) {
-      ++st.described;
-      REXLOG_WARN("Matrix check: {} DIFFERS (r3 {:08X} r4 {:08X} r5 {:08X}): {}", st.name, ctx.r3.u32, ctx.r4.u32,
-                  ctx.r5.u32, what);
-    }
-  }
-  for (size_t i = 0; i < ranges.size(); ++i) std::memcpy(GuestPtr(base, ranges[i].address), theirs[i].data(), ranges[i].bytes);
-  ctx = answer;
-  MaybeReport();
-}
-
-// One override: the check, ours, or the original.
+// --- The check: decomp/check.h --------------------------------------------------
+using decomp::Range;
+using decomp::Ranges;
+using decomp::Stats;
 template <class Ours>
 void Run(Stats& st, PPCContext& ctx, uint8_t* base, PPCFunc* original, const Ranges& ranges, Ours ours) {
-  if (!REXCVAR_GET(native_matrices)) {
-    original(ctx, base);
-  } else if (REXCVAR_GET(debug_native_matrix_check)) {
-    Checked(st, ctx, base, original, ranges, ours);
-  } else {
-    ctx.fpscr.disableFlushMode();  // the originals' first lfs does this
-    if (!ours(ctx)) original(ctx, base);
-  }
+  decomp::Run(REXCVAR_GET(native_matrices), REXCVAR_GET(debug_native_matrix_check), st, ctx, base, original,
+              ranges, ours);
 }
 
 }  // namespace
