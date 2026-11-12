@@ -97,6 +97,11 @@ and put back when an update fails).
 
 **Changes**
 
+- **Native Only is faster and uses less CPU.** While the port's own renderer
+  shows the game, the game no longer builds Xbox GPU commands for its draws
+  and the emulated GPU no longer works through them: about 10% more frames
+  per second when uncapped, and most of a CPU core freed, which helps most on
+  processors with few cores.
 - **The port answers the game's questions about the console itself.** The
   TV mode, video settings and start-up checks the game asks an Xbox 360 for
   now come from the port, always the same: an old display setting in a

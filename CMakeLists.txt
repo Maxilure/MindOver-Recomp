@@ -128,6 +128,7 @@ set(CRASHMOM_SOURCES
     src/pddi/trace.cpp           # --debug_pddi_trace_dir: log every renderer call of chosen frames
     src/native/native_renderer.cpp  # our Vulkan renderer (F9: emulated <-> native picture)
     src/native/recorder.cpp         # shadow mode: turns the game's renderer calls into a frame list
+    src/native/d3d_draw_skip.cpp  # Native Only: the game's D3D draws build no GPU commands (findings/59 s.4)
     src/native/camera_motion.cpp    # the camera's movement between frames, for the motion blur option
     src/native/texture_cache.cpp    # the game's textures -> Vulkan images (untile, byte swap)
     src/native/write_watch.cpp      # page write tracking: textures re-hashed only when written

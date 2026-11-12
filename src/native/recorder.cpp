@@ -35,6 +35,7 @@
 #include "../pddi/intercept.h"
 #include "ab_capture.h"
 #include "camera_motion.h"
+#include "d3d_draw_skip.h"
 #include "guest.h"
 #include "scan.h"
 
@@ -1518,7 +1519,11 @@ std::string DescribeGuestFunction(uint32_t address) {
   std::snprintf(text, sizeof(text), "sub_%08X", start);
   return text;
 }
-void OnD3DDraw(const char* which, PPCContext& ctx, uint8_t* base, PPCFunc* original) {
+// `skip`: in Native Only (d3d_draw_skip::Active), the call is answered by
+// d3d_draw_skip instead of D3D (no GPU commands built; findings/59 s.4).
+using SkipFn = bool (*)(PPCContext&, uint8_t*);
+void OnD3DDraw(const char* which, PPCContext& ctx, uint8_t* base, PPCFunc* original,
+               SkipFn skip = nullptr) {
   if (g.recording && g.inside_recorded_call == 0) {
     // The key: function starts only (offsets would split one road in many).
     // Cached by return address: this can run for every such draw.
@@ -1538,19 +1543,22 @@ void OnD3DDraw(const char* which, PPCContext& ctx, uint8_t* base, PPCFunc* origi
     }
     ReportOnce(what);
   }
+  // Only draws the recorder has (inside a recorded PDDI call) may be skipped:
+  // one outside them is a gap, and D3D still draws it for the emulated side.
+  if (skip && g.inside_recorded_call > 0 && d3d_draw_skip::Active() && skip(ctx, base)) return;
   original(ctx, base);
 }
 void OnD3DBeginVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
-  OnD3DDraw("BeginVertices", c, b, o);
+  OnD3DDraw("BeginVertices", c, b, o, &d3d_draw_skip::BeginVertices);
 }
 void OnD3DBeginIndexedVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
-  OnD3DDraw("BeginIndexedVertices", c, b, o);
+  OnD3DDraw("BeginIndexedVertices", c, b, o, &d3d_draw_skip::BeginIndexedVertices);
 }
 void OnD3DDrawIndexedVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
-  OnD3DDraw("DrawIndexedVertices", c, b, o);
+  OnD3DDraw("DrawIndexedVertices", c, b, o, &d3d_draw_skip::Draw);
 }
 void OnD3DDrawVertices(PPCContext& c, uint8_t* b, PPCFunc* o) {
-  OnD3DDraw("d3d_82477768", c, b, o);
+  OnD3DDraw("d3d_82477768", c, b, o, &d3d_draw_skip::Draw);
 }
 void OnD3DDeviceDraw(PPCContext& c, uint8_t* b, PPCFunc* o) {
   OnD3DDraw("d3d_82477FA8", c, b, o);
@@ -1581,12 +1589,14 @@ void Install() {
   for (const Hook& hook : kHooks) {
     pddi::SetHandler(hook.fn, hook.handler);
   }
+  d3d_draw_skip::Install();
 }
 
 void Uninstall() {
   for (const Hook& hook : kHooks) {
     pddi::SetHandler(hook.fn, nullptr);
   }
+  d3d_draw_skip::Uninstall();
 }
 
 void TakeFrame(Frame& out, bool record_next) {

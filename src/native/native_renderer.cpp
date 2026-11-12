@@ -3,6 +3,7 @@
 // =============================================================================
 
 #include "native_renderer.h"
+#include "d3d_draw_skip.h"
 #include "widescreen.h"
 
 
@@ -1469,6 +1470,7 @@ void NativeRenderer::UpdateEmulatedDrawing() {
       rex::cvar::SetFlagByName("skip_draws", "false");
       REXLOG_INFO("NativeRenderer: emulated GPU drawing ON (native only switched off)");
     }
+    d3d_draw_skip::SetEmulatedIdle(false);
     return;
   }
   // Off exactly when the emulated picture is on no screen: main window on
@@ -1478,8 +1480,12 @@ void NativeRenderer::UpdateEmulatedDrawing() {
   // ab_capture's readback_resolve. Hot-reloadable: read at every draw.
   if (!rex::cvar::SetFlagByName("skip_draws", skip ? "true" : "false")) {
     REXLOG_WARN("NativeRenderer: --native_only needs SDK patch 0009 (GPU flag skip_draws)");
+    d3d_draw_skip::SetEmulatedIdle(false);
     return;
   }
+  // The game's D3D draws build no GPU commands while nothing draws them
+  // (native/d3d_draw_skip.h).
+  d3d_draw_skip::SetEmulatedIdle(skip);
   REXLOG_INFO("NativeRenderer: emulated GPU drawing {} (--native_only)",
               skip ? "OFF: only our renderer draws" : "ON");
 }

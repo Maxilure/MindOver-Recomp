@@ -38,7 +38,9 @@ void Install();
 
 // Console `profile`: starts a run on its own thread (returns at once with a
 // line for the console, or why it can't). The report goes to `path`.
-std::string StartProfile(double seconds, const std::string& path);
+// `thread` = a thread name prefix ("GPU Commands", "Audio Worker"): sample
+// that thread instead of the game's main one ("" = the main thread).
+std::string StartProfile(double seconds, const std::string& path, const std::string& thread = "");
 // A profile (or slow-load) run is still sampling or writing its report.
 bool ProfileRunning();
 

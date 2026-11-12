@@ -1019,7 +1019,7 @@ const char kHelp[] =
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | interactables |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
     "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"
-    "profile <seconds> [file] | wait profile [ms] |\n"
+    "profile <seconds> [file] [thread] | wait profile [ms] |\n"
     "<any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
 
@@ -1055,11 +1055,14 @@ std::string Run(std::string_view line) {
   if (verb == "track") return TrackCommand(w);
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
   if (verb == "profile") {
-    // `profile <seconds> [file]`: where the main thread's time goes (debug/slow_load_sampler.h).
-    if (w.size() < 2) throw Error{"profile <seconds> [file]"};
+    // `profile <seconds> [file] [thread name...]`: where the main thread's (or
+    // the named thread's, e.g. GPU Commands) time goes (debug/slow_load_sampler.h).
+    if (w.size() < 2) throw Error{"profile <seconds> [file] [thread name]"};
     const double seconds = std::strtod(std::string(w[1]).c_str(), nullptr);
     const std::string path = w.size() >= 3 ? std::string(w[2]) : "profile.txt";
-    return slow_load_sampler::StartProfile(seconds, path);
+    std::string thread;
+    for (size_t k = 3; k < w.size(); ++k) thread += (k > 3 ? " " : "") + std::string(w[k]);
+    return slow_load_sampler::StartProfile(seconds, path, thread);
   }
   // Everything else: an input line (buttons, keys, cheats).
   ScriptedInputDriver* driver = ScriptedInputDriver::Live();

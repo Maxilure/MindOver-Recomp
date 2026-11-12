@@ -13,6 +13,8 @@ REXCVAR_DEFINE_BOOL(debug_slow_load_sampler, true, "CrashMoM",
 #if defined(__linux__)
 
 #include <cxxabi.h>
+#include <dirent.h>
+#include <dlfcn.h>
 #include <execinfo.h>
 #include <signal.h>
 #include <sys/syscall.h>
@@ -68,6 +70,9 @@ struct FrameSums {
 std::atomic<bool> g_profiling{false};
 FrameSums g_sums;  // main thread writes while g_profiling, the sampler reads after it's cleared
 std::atomic<pid_t> g_main_tid{0};
+// A profile run's thread: the main thread unless `profile` named another one.
+std::atomic<pid_t> g_profile_tid{0};
+std::string g_profile_thread = "the game's main thread";
 int g_slow_in_a_row = 0;
 std::chrono::steady_clock::time_point g_last_run{};
 
@@ -229,6 +234,20 @@ void ProfileReport(double seconds) {
   // "Called from": for each sample's innermost-outside-libraries function, the
   // next DIFFERENT function up the stack (its caller).
   std::map<std::string, std::map<std::string, int>> called_from;
+  // BY AREA (2026-11-12): which PART of the game's code the time belongs to,
+  // by address: the Xbox graphics stack (Microsoft's D3D, Radical's PDDI Xbox
+  // back end xn*) vs everything else. Per area: samples whose innermost game
+  // function is there, split into "the CPU was in that game code itself" and
+  // "in host code it called" (our renderer's handlers, the SDK); plus
+  // inclusive (an area function anywhere on the stack).
+  enum Area { kD3D, kXn, kOther, kAreas };
+  auto area_of = [](uint32_t g) {
+    if ((g >= 0x82305000 && g < 0x82323000) || (g >= 0x82476000 && g < 0x82478000)) return kD3D;
+    if (g >= 0x82420000 && g < 0x82460000) return kXn;
+    return kOther;
+  };
+  int area_game[kAreas] = {}, area_host[kAreas] = {}, area_incl[kAreas] = {};
+  std::map<std::string, int> raw_frames;  // "library offset" of unnamed library frames
   int idle = 0;
   for (int i = 0; i < n; ++i) {
     const Sample& sm = g_samples[size_t(i)];
@@ -241,6 +260,8 @@ void ProfileReport(double seconds) {
     bool want_caller = false;
     std::set<uint32_t> seen_guest;
     std::set<std::string> seen_host;
+    bool area_counted = false, area_seen[kAreas] = {};
+    bool have_raw = false;  // the innermost unnamed library frame of this sample is counted
     for (int f = 2; f < sm.depth; ++f) {  // [0] = OnSignal, [1] = the signal trampoline
       const Resolved& r = resolve(sm.frames[f]);
       if (want_caller) {
@@ -251,7 +272,29 @@ void ProfileReport(double seconds) {
         }
       }
       if (f == 2) ++host_self[r.guest ? fmt::format("(game) sub_{:08X}", r.guest) : r.host];
+      // A frame in a shared library with no symbol name (the SDK's GPU
+      // plugin exports none): kept as library+offset for llvm-symbolizer.
+      if (!r.guest && r.host.find('!') == std::string::npos && r.host.find(".so") != std::string::npos &&
+          !have_raw) {
+        Dl_info info{};
+        if (dladdr(sm.frames[f], &info) && info.dli_fname) {
+          std::string lib = info.dli_fname;
+          ++raw_frames[fmt::format("{} 0x{:x}", lib,
+                                   reinterpret_cast<uint64_t>(sm.frames[f]) -
+                                       reinterpret_cast<uint64_t>(info.dli_fbase))];
+          have_raw = true;
+        }
+      }
       if (r.guest) {
+        const Area a = area_of(r.guest);
+        if (!area_counted) {
+          ++(f == 2 ? area_game : area_host)[a];
+          area_counted = true;
+        }
+        if (!area_seen[a]) {
+          area_seen[a] = true;
+          ++area_incl[a];
+        }
         if (!have_self) {
           ++self[r.guest];
           have_self = true;
@@ -278,7 +321,7 @@ void ProfileReport(double seconds) {
   }
   auto pct = [&](int c) { return 100.0 * c / std::max(n, 1); };
   std::string out;
-  out += fmt::format("PROFILE of the game's main thread: {} samples over {:.1f} s (every 1 ms)\n", n, seconds);
+  out += fmt::format("PROFILE of {}: {} samples over {:.1f} s (every 1 ms)\n", g_profile_thread, n, seconds);
   if (sums.frames) {
     out += fmt::format(
         "game frames: {} ({:.1f} fps); per frame: game {:.2f} ms (worst {:.1f}), SwapBuffers {:.2f} ms, "
@@ -296,6 +339,16 @@ void ProfileReport(double seconds) {
       out += fmt::format("{:6.2f}%  {:6}  {}\n", pct(v[i].first), v[i].first, v[i].second);
     }
   };
+  {
+    static const char* kNames[kAreas] = {"Xbox Direct3D (Microsoft, 0x82305000-0x82323000 + draws 0x82476000-0x82478000)",
+                                         "PDDI Xbox back end (Radical's xn* classes, 0x82420000-0x82460000)",
+                                         "everything else"};
+    out += "\n== BY AREA (innermost game function's area: in its own code / in host code it called; inclusive) ==\n";
+    for (int a = 0; a < kAreas; ++a) {
+      out += fmt::format("{:6.2f}% own code  {:6.2f}% host below  {:6.2f}% inclusive  {}\n", pct(area_game[a]),
+                         pct(area_host[a]), pct(area_incl[a]), kNames[a]);
+    }
+  }
   auto sub = [](uint32_t g) { return fmt::format("sub_{:08X}", g); };
   auto same = [](const std::string& x) { return x; };
   table("GAME FUNCTIONS, SELF (innermost game function of each sample)", self, sub, 60);
@@ -320,6 +373,8 @@ void ProfileReport(double seconds) {
     }
   }
 
+  table("UNNAMED LIBRARY FRAMES (innermost per sample: 'file offset', name them with llvm-symbolizer --obj=file)",
+        raw_frames, same, 400);
   bool written = false;
   if (FILE* f = std::fopen(g_profile_path.c_str(), "w")) {
     written = std::fwrite(out.data(), 1, out.size(), f) == out.size();
@@ -337,8 +392,31 @@ void ProfileReport(double seconds) {
   REXLOG_INFO("Profile: report {} {}", written ? "written to" : "COULDN'T be written to", g_profile_path);
 }
 
+
+// The first thread of this process whose name (/proc/self/task/<tid>/comm,
+// 15 characters at most) starts with `prefix`; 0 = none.
+pid_t ThreadNamed(const std::string& prefix) {
+  if (DIR* d = opendir("/proc/self/task")) {
+    while (dirent* e = readdir(d)) {
+      if (e->d_name[0] == '.') continue;
+      char path[64], comm[64] = {};
+      std::snprintf(path, sizeof(path), "/proc/self/task/%s/comm", e->d_name);
+      if (FILE* f = std::fopen(path, "r")) {
+        if (std::fgets(comm, sizeof(comm), f) && std::string(comm).rfind(prefix, 0) == 0) {
+          std::fclose(f);
+          closedir(d);
+          return pid_t(std::atoi(e->d_name));
+        }
+        std::fclose(f);
+      }
+    }
+    closedir(d);
+  }
+  return 0;
+}
+
 void ProfileRun(double seconds) {
-  const pid_t pid = getpid(), tid = g_main_tid.load();
+  const pid_t pid = getpid(), tid = g_profile_tid.load();
   const auto start = std::chrono::steady_clock::now();
   const auto end = start + std::chrono::duration<double>(seconds);
   while (std::chrono::steady_clock::now() < end && g_count.load() < g_capacity.load()) {
@@ -353,8 +431,18 @@ void ProfileRun(double seconds) {
 
 }  // namespace
 
-std::string StartProfile(double seconds, const std::string& path) {
+std::string StartProfile(double seconds, const std::string& path, const std::string& thread) {
   if (!g_main_tid.load()) return "the game's main thread hasn't finished a frame yet\n";
+  if (g_running.load()) return "a sampler run is already under way\n";
+  if (thread.empty()) {
+    g_profile_tid = g_main_tid.load();
+    g_profile_thread = "the game's main thread";
+  } else {
+    const pid_t t = ThreadNamed(thread);
+    if (!t) return "no thread named '" + thread + "...'\n";
+    g_profile_tid = t;
+    g_profile_thread = "thread '" + thread + "' (tid " + std::to_string(t) + ")";
+  }
   bool expected = false;
   if (!g_running.compare_exchange_strong(expected, true)) return "a sampler run is already under way\n";
   seconds = std::clamp(seconds, 0.5, 60.0);
@@ -390,7 +478,7 @@ void Install() {
 
 namespace slow_load_sampler {
 void Install() {}
-std::string StartProfile(double, const std::string&) { return "profiling needs Linux\n"; }
+std::string StartProfile(double, const std::string&, const std::string&) { return "profiling needs Linux\n"; }
 bool ProfileRunning() { return false; }
 }  // namespace slow_load_sampler
 

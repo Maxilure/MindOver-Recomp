@@ -1,0 +1,261 @@
+Feature: the LIGHT STREAM while skip_draws is on (the emulated GPU stops doing drawing bookkeeping nobody uses)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk), after 0004, 0009, 0013, 0015
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0021-light-command-stream.patch
+Status:     local patch (a feature for our port, not a bug fix)
+
+WHY
+  With the port's native renderer showing the game alone (Native Only,
+  patch 0009's skip_draws), the emulated GPU draws nothing, but its command
+  processor thread still did all the work drawing needs for every register
+  write in the stream: the register info lookup (a debug check), shader
+  constant dirty marks, texture cache and vertex buffer notes. Plus, every
+  time the stream ran dry, 500 yields before sleeping. Measured 2026-11-12
+  (the port's `profile 10 <file> GPU Commands`, Wumpa Island, 60 fps):
+  the thread used ~29% of a CPU core (81% uncapped, ~4-5 ms of CPU per game
+  frame); of its awake time ~75% was register writes, ~25% the idle spin.
+
+WHAT
+  New hot-reloadable GPU flag skip_draws_light_stream (default true). While
+  skip_draws AND it are on:
+  - register writes (type-0/1 packets, SET_CONSTANT, LOAD_*_CONSTANT ranges)
+    are only stored in the register file. Registers with side effects outside
+    drawing keep the full path: the scratch registers (fences written back to
+    memory), COHER_STATUS_HOST, the DC_LUT gamma registers (the port's
+    renderer reads the gamma ramp). Decided once per primary buffer.
+  - the idle worker sleeps on its event at once (no 500-yield spin).
+  - the first draw issued afterwards (F9 back to the emulated picture, or
+    the flag turned off) calls the new virtual InvalidateStateAfterLightWrites():
+    Vulkan marks every constant buffer out of date, every texture fetch
+    constant written and every vertex buffer out of sync, so everything is
+    rebuilt from the stored values.
+  Not for frames skipped by draw_every_nth_frame (0013): their state is
+  needed by the next drawn frame.
+  Everything else in the stream runs as before (fences, interrupts, swaps,
+  waits), so the game never waits longer.
+
+HOW WE MEASURED IT
+  See the port's docs/findings/59-native-only-gpu-thread.md.
+
+diff --git a/include/rex/graphics/command_processor.h b/include/rex/graphics/command_processor.h
+index 5c5a59a..ef62f19 100644
+--- a/include/rex/graphics/command_processor.h
++++ b/include/rex/graphics/command_processor.h
+@@ -167,6 +167,24 @@ class CommandProcessor {
+   virtual void OnGammaRampPWLValueWritten() {}
+ 
+   virtual void MakeCoherent();
++  // Mind over Recomp (patch 0021): THE LIGHT STREAM. While skip_draws is on
++  // (a host renderer shows the game, nothing here is drawn), register writes
++  // in the command stream are only STORED: the work done for drawing (shader
++  // constant dirty marks, texture cache / vertex buffer notes, the register
++  // info lookup) is skipped. Registers with side effects outside drawing
++  // (scratch fences written back to memory, the coherency flag, the gamma
++  // ramp a host renderer reads) still take the full path. The first draw
++  // issued after the light stream (F9 back to this picture) first calls
++  // InvalidateStateAfterLightWrites(): everything derived from registers is
++  // rebuilt. light_stream_ is decided per primary buffer (ExecutePrimaryBuffer).
++  static bool RegisterHasSideEffects(uint32_t index);
++  // True = handled (stored); false = take the full WriteRegister path.
++  bool LightRegisterWrite(uint32_t index, uint32_t value);
++  // True = the range was stored (no side-effect register in it).
++  bool LightRegisterRange(uint32_t start_index, const uint32_t* base, uint32_t num_registers);
++  virtual void InvalidateStateAfterLightWrites() {}
++  bool light_stream_ = false;
++  bool light_writes_pending_ = false;
+   // Mind over Recomp (patch 0013): true while the current frame's draws are
+   // skipped because of the GPU flag draw_every_nth_frame. Read per draw (and
+   // at the swap), so a change of the flag takes effect at once.
+diff --git a/include/rex/graphics/vulkan/command_processor.h b/include/rex/graphics/vulkan/command_processor.h
+index 6503203..893b513 100644
+--- a/include/rex/graphics/vulkan/command_processor.h
++++ b/include/rex/graphics/vulkan/command_processor.h
+@@ -249,6 +249,8 @@ class VulkanCommandProcessor : public CommandProcessor {
+   void ShutdownContext() override;
+ 
+   void WriteRegister(uint32_t index, uint32_t value) override;
++  // Mind over Recomp (patch 0021): after the light stream, rebuild what was skipped.
++  void InvalidateStateAfterLightWrites() override;
+   void WriteRegistersFromMem(uint32_t start_index, uint32_t* base, uint32_t num_registers) override;
+   bool ExecutePacketType3_EVENT_WRITE_ZPD(memory::RingBuffer* reader, uint32_t packet,
+                                           uint32_t count) override;
+diff --git a/src/graphics/command_processor.cpp b/src/graphics/command_processor.cpp
+index a1e1a3c..a41db06 100644
+--- a/src/graphics/command_processor.cpp
++++ b/src/graphics/command_processor.cpp
+@@ -50,6 +50,14 @@ REXCVAR_DEFINE_BOOL(occlusion_query_enable, true, "GPU", "Enable host occlusion
+ // picture is on screen. Draw packets (and the resolves, which are draws in
+ // copy mode) are still parsed and counted as done, so fences, interrupts and
+ // swaps carry on and the game never waits; only the host GPU work is skipped.
++// Mind over Recomp (patch 0021): the light stream while skip_draws is on (see
++// command_processor.h). false = every register write takes the full path, as
++// before (for comparisons).
++REXCVAR_DEFINE_BOOL(skip_draws_light_stream, true, "GPU",
++                    "While skip_draws is on, register writes in the command stream are only stored "
++                    "(no drawing bookkeeping) and the idle GPU thread sleeps instead of spinning")
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
++
+ REXCVAR_DEFINE_BOOL(skip_draws, false, "GPU",
+                     "Skip every draw and resolve (the emulated picture freezes / goes stale). "
+                     "For host renderers that draw the game themselves")
+@@ -253,7 +261,11 @@ void CommandProcessor::WorkerThreadMain() {
+       uint32_t loop_count = 0;
+       do {
+         // If we spin around too much, revert to a "low-power" state.
+-        if (loop_count > 500) {
++        // Mind over Recomp (patch 0021): with skip_draws on (+ the light
++        // stream), nothing here needs a fast wake-up: sleep on the event at
++        // once instead of 500 yields (~7% of a core in Native Only).
++        if (loop_count > 500 ||
++            (REXCVAR_GET(skip_draws) && REXCVAR_GET(skip_draws_light_stream))) {
+           const int wait_time_ms = 5;
+           rex::thread::Wait(write_ptr_index_event_.get(), true,
+                             std::chrono::milliseconds(wait_time_ms));
+@@ -373,7 +385,56 @@ uint32_t CommandProcessor::ReadRegisterValue(uint32_t index) const {
+   return it != extended_register_values_.end() ? it->second : 0;
+ }
+ 
++bool CommandProcessor::RegisterHasSideEffects(uint32_t index) {
++  // Exactly the registers WriteRegister below does more than store (+ the
++  // ones outside the register file, kept in extended_register_values_).
++  return index >= RegisterFile::kRegisterCount ||
++         (index >= XE_GPU_REG_SCRATCH_REG0 && index <= XE_GPU_REG_SCRATCH_REG7) ||
++         index == XE_GPU_REG_COHER_STATUS_HOST || index == XE_GPU_REG_DC_LUT_RW_INDEX ||
++         index == XE_GPU_REG_DC_LUT_SEQ_COLOR || index == XE_GPU_REG_DC_LUT_PWL_DATA ||
++         index == XE_GPU_REG_DC_LUT_30_COLOR;
++}
++
++bool CommandProcessor::LightRegisterWrite(uint32_t index, uint32_t value) {
++  if (RegisterHasSideEffects(index)) {
++    return false;
++  }
++  // Volatile like the full path (the WAIT_REG_MEM loop reads it).
++  const_cast<volatile uint32_t&>(register_file_->values[index]) = value;
++  light_writes_pending_ = true;
++  return true;
++}
++
++bool CommandProcessor::LightRegisterRange(uint32_t start_index, const uint32_t* base,
++                                          uint32_t num_registers) {
++  if (!num_registers) {
++    return true;
++  }
++  const uint32_t end_index = start_index + num_registers - 1;
++  if (end_index >= RegisterFile::kRegisterCount) {
++    return false;
++  }
++  // Any range touching a side-effect register takes the per-register way
++  // (checked against the few of them, not per register).
++  if (start_index <= XE_GPU_REG_SCRATCH_REG7 && end_index >= XE_GPU_REG_SCRATCH_REG0) {
++    return false;
++  }
++  for (uint32_t special : {uint32_t(XE_GPU_REG_COHER_STATUS_HOST), uint32_t(XE_GPU_REG_DC_LUT_RW_INDEX),
++                           uint32_t(XE_GPU_REG_DC_LUT_SEQ_COLOR), uint32_t(XE_GPU_REG_DC_LUT_PWL_DATA),
++                           uint32_t(XE_GPU_REG_DC_LUT_30_COLOR)}) {
++    if (special >= start_index && special <= end_index) {
++      return false;
++    }
++  }
++  memory::copy_and_swap(register_file_->values + start_index, base, num_registers);
++  light_writes_pending_ = true;
++  return true;
++}
++
+ void CommandProcessor::WriteRegister(uint32_t index, uint32_t value) {
++  if (light_stream_ && LightRegisterWrite(index, value)) {
++    return;
++  }
+   RegisterFile& regs = *register_file_;
+   if (index >= RegisterFile::kRegisterCount) {
+     auto [it, inserted] = extended_register_values_.insert_or_assign(index, value);
+@@ -526,6 +587,9 @@ void CommandProcessor::WriteRegister(uint32_t index, uint32_t value) {
+ 
+ void CommandProcessor::WriteRegistersFromMem(uint32_t start_index, uint32_t* base,
+                                              uint32_t num_registers) {
++  if (light_stream_ && LightRegisterRange(start_index, base, num_registers)) {
++    return;
++  }
+   for (uint32_t i = 0; i < num_registers; ++i) {
+     uint32_t data = memory::load_and_swap<uint32_t>(base + i);
+     WriteRegister(start_index + i, data);
+@@ -650,6 +714,10 @@ uint32_t CommandProcessor::ExecutePrimaryBuffer(uint32_t read_index, uint32_t wr
+ 
+   // Execute commands!
+   memory::RingBuffer reader(memory_->TranslatePhysical(primary_buffer_ptr_), primary_buffer_size_);
++  // Mind over Recomp (patch 0021): the light stream for this whole buffer
++  // (indirect buffers included) while nothing here is drawn. Not for frames
++  // skipped by draw_every_nth_frame: the next drawn frame needs their state.
++  light_stream_ = REXCVAR_GET(skip_draws) && REXCVAR_GET(skip_draws_light_stream);
+   reader.set_read_offset(read_index * sizeof(uint32_t));
+   reader.set_write_offset(write_index * sizeof(uint32_t));
+   do {
+@@ -735,6 +803,12 @@ bool CommandProcessor::ExecutePacketType0(memory::RingBuffer* reader, uint32_t p
+ 
+   uint32_t base_index = (packet & 0x7FFF);
+   uint32_t write_one_reg = (packet >> 15) & 0x1;
++  if (light_stream_ && !write_one_reg) {
++    // Mind over Recomp (patch 0021): the whole run of registers in one go
++    // (stored only, or per register when a side-effect register is in it).
++    WriteRegisterRangeFromRing(reader, base_index, count);
++    return true;
++  }
+   for (uint32_t m = 0; m < count; m++) {
+     uint32_t reg_data = reader->ReadAndSwap<uint32_t>();
+     uint32_t target_index = write_one_reg ? base_index : base_index + m;
+@@ -1423,6 +1497,12 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
+         // Nothing drawn, nothing resolved; the packet itself is consumed.
+         return true;
+       }
++      if (light_writes_pending_) {
++        // Drawing again after the light stream (patch 0021): rebuild first.
++        light_stream_ = false;
++        light_writes_pending_ = false;
++        InvalidateStateAfterLightWrites();
++      }
+       draw_succeeded = IssueDraw(vgt_draw_initiator.prim_type, vgt_draw_initiator.num_indices,
+                                  is_indexed ? &index_buffer_info : nullptr, major_mode_explicit);
+       if (!draw_succeeded) {
+diff --git a/src/graphics/vulkan/command_processor.cpp b/src/graphics/vulkan/command_processor.cpp
+index 3e7b74e..eb1d3ec 100644
+--- a/src/graphics/vulkan/command_processor.cpp
++++ b/src/graphics/vulkan/command_processor.cpp
+@@ -619,6 +619,18 @@ void VulkanCommandProcessor::InvalidateAllVertexBufferResidency() {
+   }
+ }
+ 
++// Mind over Recomp (patch 0021): everything WriteRegister / WriteRegistersFromMem
++// derive from register values, rebuilt after the light stream stored them
++// plainly: all constant buffers out of date, every texture fetch constant
++// "written", every vertex buffer out of sync.
++void VulkanCommandProcessor::InvalidateStateAfterLightWrites() {
++  current_constant_buffers_up_to_date_ = 0;
++  if (texture_cache_) {
++    texture_cache_->TextureFetchConstantsWritten(0, 31);
++  }
++  InvalidateVertexBufferResidencyRange(0, uint32_t(vertex_buffer_states_.size()) - 1);
++}
++
+ void VulkanCommandProcessor::InvalidateVertexBufferResidency(uint32_t vfetch_index) {
+   if (vfetch_index >= vertex_buffer_states_.size()) {
+     return;
+@@ -2124,6 +2136,10 @@ void VulkanCommandProcessor::ShutdownContext() {
+ }
+ 
+ void VulkanCommandProcessor::WriteRegister(uint32_t index, uint32_t value) {
++  // Mind over Recomp (patch 0021): the light stream stores and returns.
++  if (light_stream_ && LightRegisterWrite(index, value)) {
++    return;
++  }
+   CommandProcessor::WriteRegister(index, value);
+ 
+   if (index >= XE_GPU_REG_SHADER_CONSTANT_000_X && index <= XE_GPU_REG_SHADER_CONSTANT_511_W) {
+@@ -2165,6 +2181,9 @@ void VulkanCommandProcessor::WriteRegistersFromMem(uint32_t start_index, uint32_
+   if (!num_registers) {
+     return;
+   }
++  if (light_stream_ && LightRegisterRange(start_index, base, num_registers)) {
++    return;  // Mind over Recomp (patch 0021): stored only
++  }
+   uint32_t end_index = start_index + num_registers - 1;
+ 
+   auto range_has_any_constant_usage = [](const uint64_t* usage_map, uint32_t first_constant,
