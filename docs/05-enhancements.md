@@ -14,12 +14,12 @@ Status: ✅ done · 🧪 in testing · 🔧 in progress · 📋 planned
 
 | Enhancement | Original game | This port | Status |
 |---|---|---|---|
-| [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load / Save Game screen; rename and delete | 🧪 in testing |
-| [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC | 🔧 in progress |
+| [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load / Save Game screen; rename and delete | ✅ done |
+| [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC: Players screen, outfits, HUD, a camera that frames everyone | 🧪 in testing |
 
 ## More saves, with names
 
-🧪 Built, in testing ([findings/24](findings/24-save-system.md) section 6).
+✅ Done, in every release ([findings/24](findings/24-save-system.md) section 6).
 
 The original Load Game / Save Game screen shows three slots, and a save's
 name (shown at the top of its slot) is the name typed when starting a New
@@ -71,27 +71,27 @@ Off: `--save_library=false` (the game's own three slots).
 
 ## Up to four players
 
-🔧 In progress: research done, a first experiment
-([findings/26](findings/26-more-local-players.md)).
+🧪 Playable, in testing: four players play together on one PC
+([findings/26](findings/26-more-local-players.md)); the co-op camera is the
+experimental part ([findings/28](findings/28-coop-camera.md)).
 
 The original has drop-in co-op for two: a second player presses START to
 join, as the mask floating next to Crash, and leaves again from their pause
-menu (Drop Out; in the port: Back / Select in the pause menu, for any
-player). The goal is four players together on one PC.
+menu. In the port, up to four players do the same: a press on a free
+controller joins as the next player, and **Back** in the pause menu drops
+that player out. The **Players** screen (pause menu, or **Extras** in the
+main menu) shows who plays with what, moves a controller to another player
+and picks each player's button pictures. There are no profiles or sign-in:
+who plays is simply which controllers play
+([findings/32](findings/32-native-saves-and-profiles.md) section 4).
 
-What's already in place: the Controls menu (**F1** → Controls, Players tab) decides
-which device plays as which player, and players 2-4 share player 1's
-profile ([findings/23](findings/23-keyboard-and-mouse.md) section 5).
-
-What's known now: the game keeps each player's state and controller in
-small tables built for exactly two, read in a few dozen places (joining,
-the mask, spawning, the HUD, gameplay). An experiment spawned a third player
-character into a level, drawn and stable, but not yet answering to a
-controller. Since then the co-op tables have room for four players, and
-`--local_players=3` (or 4) gives every level a third (and fourth) player,
-who joins with START like player 2. Three players can already run around
-together on foot ([findings/26](findings/26-more-local-players.md) section
-11). Masks work for more than two: a player turning into a mask rides the
+How it works: the game keeps each player's state and controller in small
+tables built for exactly two, read in a few dozen places (joining, the mask,
+spawning, the HUD, gameplay). The port gives those tables room for four
+players, and every level gets a third and fourth player (`--local_players`,
+default 4; 2 = the original's two), who join like player 2. Players 3-4 run,
+fight and jack titans like the first two
+([findings/26](findings/26-more-local-players.md) section 11). Masks work for more than two: a player turning into a mask rides the
 nearest Crash on foot, and one Crash carries up to three masks (section
 12). Level changes work with four players; masks follow their host when it
 turns into a mask, return to the same player in the next level, and any
@@ -115,11 +115,11 @@ of following one player; with three or four players it leans toward the
 biggest group while still keeping the others in view (experimental, needs
 extensive testing: [findings/28](findings/28-coop-camera.md)). Any player can drop out and join again, player 1 included,
 as long as someone else stays in game (sections 30-31). A player whose
-controller disconnects (or is moved to another player in the Controls menu) no longer
+controller disconnects (or is moved to another player on the Players screen) no longer
 leaves a pause menu only that controller could close: the game pauses and
 its own question box says so; any player can drop that player out, and once
-the controller is back that player presses a button to resume (section 33). Next: more camera testing (fights, titans, bosses, tight
-spaces) and the game's off-screen catch-up for players 3-4.
+the controller is back that player presses a button to resume (section 33). Still being tested: the camera in fights, titans, bosses and
+tight spaces.
 
 Every player has their own outfit (findings/46): the chest in Crash's house
 offers all of them to everyone (Crash's outfits, Carbon Crash, Coco and her

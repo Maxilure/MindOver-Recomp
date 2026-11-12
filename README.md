@@ -42,7 +42,7 @@ It isn't an emulator: the game's Xbox 360 program is [translated into C++ ahead 
 <td width="50%" valign="top">
 
 ### 🎨 Its own renderer
-A native Vulkan renderer that matches the original's look, runs much lighter than emulating the Xbox's GPU, and goes up to 4K.
+A native Vulkan renderer that matches the original's look, runs much lighter than emulating the Xbox's GPU, and goes up to 4K and, in 0.3.0, wider than 16:9 (up to 32:9).
 
 </td>
 <td width="50%" valign="top">
@@ -137,7 +137,7 @@ It needs a **Vulkan** graphics card (only NVIDIA tested so far) and **16 GB RAM*
 | Move / walk | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / hold <kbd>Ctrl</kbd> | left stick |
 | Jump | <kbd>Space</kbd> | <kbd>A</kbd> |
 | Light / heavy attack | left / right mouse button | <kbd>X</kbd> / <kbd>Y</kbd> |
-| Spin | <kbd>Q</kbd> or middle mouse button | rotate the left stick |
+| Spin | <kbd>Q</kbd> or middle mouse button, with **Simple Spinning** on (Options → Gameplay) | rotate the left stick (or <kbd>LB</kbd> with Simple Spinning) |
 | Block | <kbd>Shift</kbd> | <kbd>RT</kbd> |
 | Jack a titan / use a save totem | <kbd>E</kbd> | <kbd>B</kbd> |
 | Titan special / pocket a titan | <kbd>F</kbd> / <kbd>R</kbd> | <kbd>LT</kbd> / <kbd>RB</kbd> |
@@ -226,6 +226,7 @@ crash_mom_manifest.toml    recompiler config: every analysis fix and hook, comme
 CMakeLists.txt             builds the port (generated code + ReXGlue + src/)
 src/                       the port's own native code
   pddi/, native/           the game's renderer calls, and the port's Vulkan renderer
+  decomp/                  game functions rewritten in plain C++ (faster, checked against the original)
   effects/                 graphics settings (motion blur, depth of field...)
   input/                   keyboard, mouse, controllers, button prompts
   players/                 up to four players, the Players screen, the co-op camera

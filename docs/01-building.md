@@ -1,8 +1,9 @@
 # Building the port
 
 Step-by-step, from a disc image to a native executable. **Players don't
-need this page**: the launcher's Setup tab runs these steps by itself (see
-the [README](../README.md#-download-and-play)). The steps below are written
+need this page**: the Windows release comes ready-built (see the
+[README](../README.md#-download-and-play)); on Linux, the launcher's Setup
+tab can run these steps by itself ([The launcher](#the-launcher)). The steps below are written
 for Linux (verified with Clang 22); Windows uses the same commands with a
 few differences, listed in [Building on Windows](#building-on-windows).
 Problems: [Troubleshooting](06-troubleshooting.md).
@@ -164,16 +165,17 @@ is rejected. Useful extras:
   on screen as `.ppm` screenshots (all-black frames are only logged). Keep
   the folder out of the repo, the pictures are game content.
 * `--fps_cap=60`: lifts the game's 30 fps pacing
-  ([findings/07](findings/07-frame-rate.md)). Default 30 = original.
+  ([findings/07](findings/07-frame-rate.md)). Default 60; 30 = the original's.
   Values above 60 (e.g. `144`, or `0` for no cap) are **work in progress**:
   they run, but aren't confirmed stable yet. The log gets the frame rate
   every 5 s (`--debug_log_fps`, on by default).
-* `--renderer=native`: start on the native renderer's picture (F9 switches
-  while playing; [04-native-renderer.md](04-native-renderer.md)).
-  `--native_only` (ON by default): the emulated GPU skips its drawing while
-  the native picture is shown (much less GPU work); `--native_only=false`
-  keeps both drawing (the emulated picture one F9 away). `--native_window`: both pictures,
-  in two windows (F8).
+* `--native_only` (ON by default): the game starts on the native renderer's
+  picture ([04-native-renderer.md](04-native-renderer.md)) and the emulated
+  GPU skips its drawing while that picture is shown (much less GPU work).
+  `--native_only=false --renderer=native` keeps both drawing, the emulated
+  picture one switch away (**F1** Tools → switch the picture);
+  `--renderer=emulated --native_only=false` starts on the emulated one.
+  `--native_window`: both pictures, in two windows (Tools → second window).
 * `--debug_input_script="8000:start,9500:start,30000:lsright:2000"`: a fake
   controller that presses inputs at those milliseconds after launch (held
   150 ms, or the optional third field). The first two taps skip intro movies.
@@ -200,7 +202,7 @@ debugging cycles (findings/20). Each is still a key bind setting with no
 key (`bind_photo`, `bind_renderer`, `bind_settings`...): give one a key in
 `user/settings.toml` (e.g. `bind_photo = "F10"`) to have it back on a key.
 
-For the current state, see the Status table in the [README](../README.md).
+For the current state, see the [README](../README.md)'s features and "Going native" progress.
 
 ### Your files: saves, settings, controls
 
@@ -210,9 +212,9 @@ included ([`src/game_folder.h`](../src/game_folder.h)):
 
 ```
 user/saves/        saves: CrashMOM GameSlot N.sav (Backups/, Deleted saves/ beside them), achievements
-user/settings.toml every changed setting (F4 saves here)
-user/controls.toml keyboard + mouse keys, which device is which player (F6)
-user/photos/       F10 photos
+user/settings.toml every changed setting (Options and the Tools menu save here)
+user/controls.toml keyboard + mouse keys, which device is which player (Options → Controls, Players screen)
+user/photos/       photos (Tools → photo)
 user/logs/         a log per session (oldest deleted past 300 MB)
 user/reports/      the launcher's "Report a problem" .zip files
 user/markers/      your own player 3/4 marker pictures (optional)
@@ -253,7 +255,7 @@ file), and the launcher appends a last line saying how it ended.
 **Report a problem...** (launcher/report.h) packs chosen sessions' logs,
 Windows crash reports, `settings.toml` + `controls.toml`, a `summary.txt`
 (version, system, CPU/RAM, graphics card + driver, changed settings: read
-from the log's `Session:` header), optionally that session's F10 photos and
+from the log's `Session:` header), optionally that session's photos and
 one save (its `.sav` file, the same path as under `user/saves/`, so it drops
 into a test copy for `--load_save`) into
 `user/reports/report-<date>_<time>.zip` (or a folder picked with Change...,
@@ -295,8 +297,8 @@ game right away (a desktop shortcut); `--screenshot=<file.png>
 [--screenshot_after=<seconds>]` saves a picture of the window and quits;
 `--tab=settings` / `--tab=log` opens on that tab.
 
-The **Settings** tab edits `user/settings.toml` (the same file the game's F4
-menu writes; saved at once, applied at the next start): the main settings
+The **Settings** tab edits `user/settings.toml` (the same file the game's
+Options and Tools → all settings write; saved at once, applied at the next start): the main settings
 with plain names (frame rate cap, renderer, window mode, monitor, players, co-op
 camera, keyboard and mouse, sound, log extras; the save list has no
 switch there: it stays on), and under "All
@@ -310,7 +312,7 @@ writes them all (name, type, default, allowed values, range, description)
 and quits before any window opens ([`src/settings_list.h`](../src/settings_list.h));
 the launcher keeps it in `cache/launcher/` and asks again after each build.
 It also removes `load_save` and `log_file` from the file before each start:
-they're per-session flags, but F4 saves command-line flags too.
+they're per-session flags, but the SDK's settings save writes command-line flags too.
 
 **Setup** tab (the launcher opens on it while the game can't be played
 yet) walks through the steps above, each with a check:

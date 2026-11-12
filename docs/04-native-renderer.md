@@ -113,10 +113,11 @@ textures for effects, render-to-texture for post-processing).
   (`[[entrypoint.midasm_hook]]`), both shown in `src/frame_rate.cpp`.
 * Test on a **copy** of the save data (`--user_data_root`), so a test run
   can never overwrite real saves.
-* Comparing the two renderers (added along the way): **F9** switches the
-  window's picture, **F10** saves both pictures of one frame as PNG
+* Comparing the two renderers (added along the way; these were F9, F10 and
+  F8, all in the **F1** Tools menu since findings/52): switching the
+  window's picture, a photo of both pictures of one frame as PNG
   (`src/native/ab_capture.*`), and **dual mode** (`--native_window`,
-  `tools/play.sh --dual`, or **F8** while playing) shows them side by side
+  `tools/play.sh --dual`, or Tools → second window) shows them side by side
   live: the emulated picture in the main window, ours in a second window
   with its own presenter on the same Vulkan device
   (`src/native/native_window.*`). Closing the second window doesn't quit
@@ -154,7 +155,7 @@ textures for effects, render-to-texture for post-processing).
      image (that image can be drawn into but not copied into). Submits on
      graphics queue 0 through `AcquireQueue`, 3 command buffers in flight
      tracked by the SDK's `VulkanSubmissionTracker`.
-   * **F9** (`bind_renderer`, rebindable in F4) switches the window between
+   * `bind_renderer` (F9 at the time; now a Tools menu button, F1) switches the window between
      the emulated and the native picture; `--renderer=native` starts on the
      native one. SDK patch `0004-external-guest-output` makes the emulated
      GPU skip refreshing the window while ours is shown. The game keeps
