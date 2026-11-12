@@ -70,8 +70,8 @@ PIECES = [
      "PC behaviour (the port's own messages); gone once profiles and saves are native",
      ["XamShowMessageBoxUIEx", "XamShowDirtyDiscErrorUI", "XamNotifyCreateListener",
       "XNotifyGetNext", "XNotifyPositionUI"]),
-    ("System messages (achievements, ...)",
-     "the port's own handlers",
+    ("System messages",
+     "no dashboard music player, no friends-list status: the port answers itself",
      ["XMsgInProcessCall", "XMsgStartIORequest", "XMsgStartIORequestEx"]),
     ("Console settings",
      "the port's own answers (one fixed TV mode for the game; language from the port's setting)",
@@ -190,6 +190,16 @@ DONE = {
     "XGetGameRegion": "language.cpp: sub_82262980 replaced (the only way to sub_82300398 and "
                       "sub_8235B860 -> sub_82474258)",
     "XamGetExecutionId": "who_plays.cpp: sub_82322960 (the only caller of sub_82300FF0)",
+    # System messages (2026-11-12, src/system/system_messages.cpp,
+    # findings/32 s.7): every XMsg* the game sends = the dashboard music
+    # player (status poll every frame, take / give back the music around
+    # movies) or rich presence. The four Microsoft wrappers answer "idle" /
+    # success without a message. Meter: 0 calls (switch off: they're back).
+    "XMsgInProcessCall": "system_messages.cpp: sub_82300130 (XMPGetStatus), sub_82300140 "
+                         "(the only caller of sub_82300080)",
+    "XMsgStartIORequestEx": "system_messages.cpp: sub_82300140 + sub_82300218 "
+                            "(the only callers of sub_822FFFD8)",
+    "XMsgStartIORequest": "system_messages.cpp: sub_823006E8 (XUserSetContextEx)",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

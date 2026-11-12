@@ -317,3 +317,94 @@ calls for all eight imports in play (with the switch off: the old callers
 and counts come back: video mode 2, dashboard version 3, privilege, cable,
 config 1 each); gameplay pictures in the native and the emulated renderer
 look as before; 0 errors.
+
+## 7. System messages (XMsg*): the music player and rich presence (study)
+
+The meter's three `XMsg*` imports looked like a big job (about 65,000
+calls in a five-minute session). They are not: every one of them comes
+from two small Microsoft helpers, and neither is about achievements any
+more (the achievement writer sub_82292938, the old user of message
+0x000B0008, is already replaced: `src/achievements/`).
+
+`XMsgInProcessCall(app, message, buffer, ...)` / `XMsgStartIORequest(Ex)`
+send a numbered message to a system "app". The numbers, read from the
+`lis`/`ori` pairs before each call and matched against the SDK's app
+handlers (`src/kernel/xam/apps/xmp_app.cpp`, `xgi_app.cpp`):
+
+| Import | Wrapper | App | Message | Meaning |
+|---|---|---|---|---|
+| `XMsgInProcessCall` | sub_822FFF70 (via sub_82300130) | 0xFA XMP | 0x00070009 | XMPGetStatus: is the player's own music playing? |
+| `XMsgInProcessCall` | sub_82300080 | 0xFA XMP | 0x0007001B | XMPGetPlaybackController |
+| `XMsgStartIORequestEx` | sub_822FFFD8 | 0xFA XMP | 0x0007001A | XMPSetPlaybackController (take / give back the music) |
+| `XMsgStartIORequest` | sub_823006E8 (via sub_82300770) | 0xFB XGI | 0x000B0006 | XUserSetContext: rich presence |
+
+### 7.1 The music player ("custom soundtracks")
+
+The Xbox 360 lets a player run their own music from the dashboard over
+any game; a game must then mute its own music, and must take the music
+back while it plays a movie or a cutscene track. Radical's music code does
+exactly that:
+
+* sub_822DE3C8 = "player music on?" (XMPGetStatus, answer = state != 0).
+* sub_822DE270 (start, from sub_822D60D0) and sub_822DE338 (EVERY FRAME,
+  from the music player's update sub_822D6798, a vtable slot) keep bit 0x80
+  of a flags byte; when the answer changes, the game's music is muted
+  (sub_822D8338) or brought back (sub_822D83A8) through the object at
+  0x825A75AC. This per-frame poll is the 65,000 calls.
+* sub_822DE2D8 / sub_822DE320 = a counted "take the music" / "give it back"
+  (count at +4; only the first take and the last give-back reach
+  sub_82300140 / sub_82300218 = XMPOverrideBackgroundMusic /
+  XMPRestoreBackgroundMusic, which ask and set the playback controller).
+  Callers: CMoviePlayer slot 4 sub_822C4190 (play) and its stop
+  sub_822C4A00, CCinematicSoundTrackAction slots 4/6 sub_82240EB0 /
+  sub_82241150, and the music player itself (sub_822DD740 / sub_822DD7C8).
+  On a dashboard version 0x8A100 or newer (XamGetSystemVersion) they only
+  send XMPSetPlaybackController; older ones first ask (GetPlaybackController)
+  and keep their own state at 0x82520C80 / 0x82520C84 (critical section
+  0x824DE8A4). Our dashboard version is 0 (section 6), so the old path runs
+  here: that is the XMPGetPlaybackController caller in the meter.
+
+A PC has no dashboard music: the native answer is "no player music,
+nothing to take": sub_822DE3C8 returns 0, sub_82300140 / sub_82300218
+return 0 (success) without a message. The game's own counting and muting
+code stays as it is.
+
+### 7.2 Rich presence
+
+sub_8227B3B8 (from the per-pass subsystem update sub_8227CE08 in the main
+loop) runs over the four players: for each one in `uber +364` (players
+with a controller) it sets two contexts through sub_82300770:
+
+* context 1 = what the player is doing, from the game mode at `this+8`
+  (jump table at 0x8227B424): 2 / 4, 3 while front-end flag
+  `fe+8594` bit 0x10, 1 or 14 by sub_82263608, or the byte at `this+376`;
+* context 0x8001 (`X_CONTEXT_PRESENCE`) = 0.
+
+On the 360 these fill the friends list's "what is Crash doing" line. The
+SDK only logs them. Native answer: nothing to send (the wrapper returns
+success). The values themselves could feed a PC rich presence later
+(Discord), which is why they are written down here.
+
+### 7.3 Replaced
+
+`src/system/system_messages.cpp` overrides the four Microsoft wrappers:
+
+* sub_82300130 (XMPGetStatus): writes 0 = idle, returns 0. sub_822DE3C8
+  turns "idle" into "the game may play its own music", as before.
+* sub_82300140 / sub_82300218 (take / give back the music): return 0
+  without a message (their dashboard-version midasm hooks of section 6
+  only run with the switch off now).
+* sub_823006E8 (XUserSetContextEx, the only target of sub_82300770):
+  returns 0 without a message.
+
+Also gone: the SDK's XMPGetStatus slept 1 ms whenever it was asked from a
+thread other than the main one. `--system_messages_native=false` lets the
+SDK answer again.
+
+Tests (installed-style copy, `--load_save=last`, 40 s of play): the four
+answers logged once each ("System messages: ... answered by the port"), the
+meter shows 0 calls for all three `XMsg*` imports; with the switch off the
+same run gives 34,674 `XMsgStartIORequest` (presence, sub_823006E8+0x44),
+1,353 `XMsgInProcessCall` and 2 `XMsgStartIORequestEx` (how the counts split
+between the two kinds depends on the session). The level's music streams
+load the same in both runs; 0 errors.

@@ -108,6 +108,10 @@ and put back when an update fails).
   TV mode, video settings and start-up checks the game asks an Xbox 360 for
   now come from the port, always the same: an old display setting in a
   settings file can no longer change what the game is told.
+- **No more Xbox system messages.** The game's checks for the Xbox
+  dashboard's own music player (asked every frame) and its friends-list
+  status are answered by the port: nothing changes in play, hundreds of
+  emulated Xbox calls a second fewer.
 - **Button styles named after their controllers.** In **Options → Controls
   → Controller Icons** and on the **Players** screen: **DualSense**
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**
