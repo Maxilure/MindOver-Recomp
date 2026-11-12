@@ -259,6 +259,10 @@ EOF
 {
   echo "# The update feed of Mind over Recomp (launcher/update.h)."
   echo "version = \"$version\""
+  # The self-update's promise (launcher/update.h kUpdaterVersion): raise it
+  # only when a release changes what an installed Mind over Recomp must do to
+  # update itself; older ones then send players to the manual download.
+  echo "updater = 1"
   echo "date = \"$(date -u +%Y-%m-%d)\""
   cat "$out"/feed-*.toml
 } > "$out/release.toml"

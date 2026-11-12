@@ -110,25 +110,22 @@ The game's 48 achievements, kept by the port, with their own screen and pop-up.
 
 </div>
 
-| | Windows | Linux |
-|---|---|---|
-| **System** | Windows 10 / 11, 64-bit | x86-64, glibc 2.39+ (Ubuntu 24.04, Fedora 40, Arch or newer) |
-| **Download** | `MindOverRecomp-…-windows-x86_64.zip` | `MindOverRecomp-…-linux-x86_64.tar.gz` |
-| **Free space** | ~15 GB, on an NTFS drive (not OneDrive) | ~25 GB |
+| | Windows |
+|---|---|
+| **System** | Windows 10 / 11, 64-bit |
+| **Download** | `MindOverRecomp-…-windows-x86_64.zip` |
+| **Free space** | ~8 GB, on an NTFS drive (not OneDrive) |
 
-Both need a **Vulkan** graphics card (only NVIDIA tested so far), **16 GB RAM** recommended, and internet for the first setup.
+It needs a **Vulkan** graphics card (only NVIDIA tested so far) and **16 GB RAM** recommended. The release comes ready-built: only your own disc supplies the game's files.
 
 **Windows**
 1. Unpack the `.zip` and start **Mind over Recomp.exe**, the installer. If Windows warns about an unknown program: **More info → Run anyway**.
-2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. It gets the build tools it needs and builds the game; the first time takes a while (leave heavy programs closed meanwhile).
+2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. It takes a minute or two.
 3. Play **Crash Mind over Mutant** from the Start menu.
 
-**Updating (Windows):** download the new release's `.zip`, start its **Mind over Recomp.exe**, choose **Update an installed game** and pick the game's folder and your `.iso` (the game's disc files are checked against it). Saves, settings and the earlier build are kept, so only what changed is built again. Uninstall from **Mind over Recomp** in the Start menu or Windows' *Installed apps*.
+**Updating (Windows):** open **Mind over Recomp** from the Start menu and press **Update now** when it shows a new version. Saves and settings stay; the version it replaces is kept and put back by itself if the update fails. Installs older than 0.3.0 update the manual way once: the new release's **Mind over Recomp.exe** → **Update an installed game**. Uninstall from **Mind over Recomp** or Windows' *Installed apps*.
 
-**Linux**
-1. Unpack the archive and start the launcher, **Mind over Recomp**.
-2. In **Setup**, install the tools it lists, pick your `.iso` and press **Set up everything**; the first build takes a while.
-3. Press **Play**. Next time, **Continue** goes straight into your last save.
+**Linux:** no ready-built release yet (it comes later). Build it from source: [Building](docs/01-building.md).
 
 > [!TIP]
 > Problems? See **[Troubleshooting](docs/06-troubleshooting.md)** and the [known issues](docs/06-troubleshooting.md#known-issues). Found a bug? Fill in the [bug form](https://github.com/Maxilure/MindOver-Recomp/issues/new/choose) and attach the `user/logs` folder from the game's folder.
@@ -190,7 +187,7 @@ Not counted: 89 kernel basics (threads, locks, memory, files), already thin tran
 
 ## 🛠️ Building from source
 
-Players don't need this: the installer (Windows) and the launcher (Linux) do it for them. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`. The full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
+Players don't need this: the Windows release comes ready-built. Linux needs clang 20+, CMake 3.25+, Ninja, Python 3, Git and `glslc`. The full walkthrough, Windows included, is in **[Building](docs/01-building.md)**.
 
 <details>
 <summary><b>Build commands</b></summary>

@@ -35,9 +35,9 @@ Activision or the game's other owners.
 > ⚠️ **Alpha:** playable, but expect bugs, crashes and rough edges. Keep a
 > copy of your `user\saves` folder.
 >
-> **You need your own disc.** The installer builds the game on your PC from
-> an `.iso` of your own Xbox 360 disc of *Crash: Mind over Mutant* (USA).
-> No game files are included.
+> **You need your own disc.** The game's files come from an `.iso` of your
+> own Xbox 360 disc of *Crash: Mind over Mutant* (USA): the installer
+> extracts them. No game files are included.
 >
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
@@ -99,12 +99,18 @@ Git step can't start its helpers).
   minutes on a mid-range PC, and an update a few minutes.
   - **Two choices at the start: Install the game or Update an installed
     game.** To update, download the new release, start its
-    **Mind over Recomp.exe**, pick the installed game's folder and your
-    `.iso`. It shows the installed version and the new one. Your saves,
-    settings and the earlier build are kept, and only what changed is built
-    again. Picking the same version repairs the install.
-  - **The update checks the game's disc files against your `.iso`** and
-    copies again only the missing or damaged ones.
+    **Mind over Recomp.exe**: it finds the installed game by itself and shows
+    the installed version and the new one. Your saves and settings are kept.
+    Picking the same version repairs the install.
+  - **Given your `.iso`, the update checks the game's disc files against
+    it** and copies again only the missing or damaged ones (the `.iso` is
+    needed only when the `game` folder is gone).
+  - **Updates from inside the installed copy.** Mind over Recomp (Start
+    menu) looks for a new version and installs it with **Update now**: the
+    download is checked, the new version's own installer does the swap, and
+    the version it replaces is kept. A failed update puts it back by itself;
+    **Go back to <version>** does it by hand. Installs older than 0.3.0
+    update the manual way this once (the new release's installer).
   - **The game comes ready-built.** Like other recompilation projects,
     the release now holds the finished game program. The installer only
     copies it in, extracts your `.iso`, checks it and adds the shortcuts:
@@ -124,10 +130,9 @@ Git step can't start its helpers).
     [#17](https://github.com/Maxilure/MindOver-Recomp/issues/17),
     [#18](https://github.com/Maxilure/MindOver-Recomp/issues/18) and
     [#20](https://github.com/Maxilure/MindOver-Recomp/issues/20).
-  - **The Update button in the installed Mind over Recomp is gone:** it
-    didn't work reliably. Each release's installer does the update instead.
-  - **The installer downloads nothing itself.** It uses the files from its
-    own `.zip`: unpack the whole `.zip` before starting it, or it says so.
+  - **The installer uses the files from its own `.zip`:** unpack the whole
+    `.zip` before starting it, or it says so. (Only the installed copy's
+    **Update now** downloads, and it checks the download first.)
 - **Button styles named after their controllers.** In **Options → Controls
   → Controller Icons** and on the **Players** screen: **DualSense**
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**
@@ -146,13 +151,14 @@ Git step can't start its helpers).
 - **New install:** unpack the `.zip` anywhere and start
   **Mind over Recomp.exe** (if Windows warns about an unknown program:
   **More info → Run anyway**). Choose **Install the game**, pick your
-  `.iso` and a folder (**~15 GB free**, an NTFS drive, not OneDrive), then
-  **Next: install**. The first build takes a while. Then start
+  `.iso` and a folder (**~8 GB free**, an NTFS drive, not OneDrive), then
+  **Next: install**. It takes a minute or two. Then start
   **Crash Mind over Mutant** from the Start menu.
-- **Already installed (0.1.0 or later):** unpack the new `.zip`, start its
-  **Mind over Recomp.exe** and choose **Update an installed game**. Pick
-  the game's folder and your `.iso`. Close the game first. Don't use the
-  **Update** button of an older version's launcher.
+- **Already installed (0.1.0 to 0.2.2):** unpack the new `.zip`, start its
+  **Mind over Recomp.exe** and choose **Update an installed game** (it finds
+  the game by itself). Close the game first. This is the last update done
+  this way: from 0.3.0 on, **Mind over Recomp** in the Start menu shows
+  **Update now** when a new version is out.
 
 **Download:** `MindOverRecomp-0.3.0-alpha-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` only tells older versions that an update exists;

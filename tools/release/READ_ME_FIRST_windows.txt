@@ -5,8 +5,8 @@
 
 An unofficial, fan-made native PC port of the Xbox 360 game Crash: Mind
 over Mutant, not affiliated with or endorsed by Activision or the game's
-other owners. It does NOT contain the game: it is built on your computer
-from YOUR OWN copy of the disc.
+other owners. It does NOT contain the game's files: they come from YOUR OWN
+copy of the disc.
 THIS IS AN ALPHA: an early test version. Expect bugs, crashes and rough
 edges, and keep a copy of your saves.
 
@@ -19,20 +19,23 @@ How to install (Windows 10 / 11)
 2. Double-click "Mind over Recomp.exe" in this folder.
    (Windows may warn about an unknown program: "More info", then "Run anyway".)
 
-3. Pick your .iso and where the game goes (a short path on your PC's own
-   drive, e.g. C:\Games; about 15 GB free). Then "Next".
+3. Choose "Install the game", pick your .iso and where the game goes (a
+   short path on your PC's own drive, e.g. C:\Games; about 8 GB free).
+   Then "Next".
 
-4. Missing build tools: press "Install the missing tools" (winget, Windows'
-   own installer, does it; Windows may ask for permission). Then "Next".
+4. If something is missing (Microsoft's Visual C++ runtime, rarely
+   Vulkan): press "Install the missing tools". Then "Next: install".
 
-5. Let it work: the first install takes a while (often 20-60 minutes).
-   When it's done, "Crash Mind over Mutant" is in your Start menu.
+5. It takes a minute or two. When it's done, "Crash Mind over Mutant" is
+   in your Start menu.
 
-Updates: download the new release, start its "Mind over Recomp.exe" and
-choose "Update an installed game", then pick the game's folder and your
-disc image (.iso): the game's disc files are checked against it. Your
-saves, settings and the earlier build are kept, so only what changed is
-built again.
+Updates: open "Mind over Recomp" from the Start menu. It looks for a new
+version by itself: press "Update now". Your saves and settings stay, and
+the version it replaces is kept: if the update fails it's put back by
+itself ("Go back to ..." does it by hand).
+The manual way (an install older than 0.3.0, or when "Update now" can't):
+download the new release, start its "Mind over Recomp.exe" and choose
+"Update an installed game"; it finds the installed game by itself.
 Uninstalling: "Mind over Recomp" in the Start menu, or Windows' "Installed
 apps". Uninstalling can keep your saves, settings and logs.
 
@@ -47,8 +50,8 @@ Português (Brasil)
 ==================
 
 Um port nativo para PC, não oficial e feito por fãs, do jogo de Xbox 360
-Crash: Mind over Mutant, sem ligação com a Activision. Ele NÃO contém o
-jogo: o jogo é compilado no seu computador a partir da SUA cópia do disco.
+Crash: Mind over Mutant, sem ligação com a Activision. Ele NÃO contém os
+arquivos do jogo: eles vêm da SUA cópia do disco.
 ISTO É UMA VERSÃO ALPHA: espere bugs e travamentos, e guarde uma cópia dos
 seus saves.
 
@@ -63,21 +66,24 @@ Como instalar (Windows 10 / 11)
    depois "Executar assim mesmo".) O instalador abre em português quando o
    Windows está em português; o idioma também pode ser trocado no canto.
 
-3. Escolha o seu .iso e onde o jogo vai ficar (um caminho curto no disco do
-   PC, por exemplo C:\Games; cerca de 15 GB livres). Depois "Avançar".
+3. Escolha "Instalar o jogo", o seu .iso e onde o jogo vai ficar (um
+   caminho curto no disco do PC, por exemplo C:\Games; cerca de 8 GB
+   livres). Depois "Avançar".
 
-4. Faltam ferramentas de compilação: clique em "Instalar as ferramentas que
-   faltam" (o winget, o instalador do Windows, faz isso; o Windows pode pedir
-   permissão). Depois "Avançar".
+4. Se faltar algo (o Visual C++ da Microsoft, raramente o Vulkan): clique
+   em "Instalar as ferramentas que faltam". Depois "Avançar".
 
-5. Deixe trabalhar: a primeira instalação demora (geralmente 20 a 60
-   minutos). No fim, "Crash Mind over Mutant" fica no menu Iniciar.
+5. Leva um ou dois minutos. No fim, "Crash Mind over Mutant" fica no menu
+   Iniciar.
 
-Atualizar: baixe a nova versão, abra o "Mind over Recomp.exe" dela e
-escolha "Atualizar um jogo instalado", depois escolha a pasta do jogo e a
-sua imagem de disco (.iso): os arquivos do disco do jogo são conferidos com
-ela. Seus saves, configurações e a compilação anterior são mantidos, então
-só o que mudou é compilado de novo.
+Atualizar: abra o "Mind over Recomp" no menu Iniciar. Ele procura uma
+versão nova sozinho: clique em "Atualizar agora". Seus saves e
+configurações ficam, e a versão substituída é guardada: se a atualização
+falhar, ela volta sozinha.
+O jeito manual (uma instalação anterior à 0.3.0, ou quando "Atualizar
+agora" não dá): baixe a nova versão, abra o "Mind over Recomp.exe" dela e
+escolha "Atualizar um jogo instalado"; ele encontra o jogo instalado
+sozinho.
 Desinstalar: "Mind over Recomp" no menu Iniciar, ou em "Aplicativos
 instalados" do Windows. A desinstalação pode manter seus saves,
 configurações e logs.

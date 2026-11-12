@@ -122,9 +122,10 @@ fix the 0.2.0 files by hand instead, on Windows:
 
 ### Not enough free space
 
-The disc's files need about 6.5 GB, and the whole folder grows to roughly
-25 GB after the first build (on Windows the installer asks for about 15 GB
-free; a finished install is about 9 GB). Your `.iso` can be deleted
+The disc's files need about 6.5 GB. On Windows (0.3.0 and later, ready-built)
+the installer asks for about 8 GB free; a finished install is about 6.5 GB,
+plus ~0.2 GB for the previous version an update keeps. Building from source
+(Linux, older Windows versions) grows the folder to roughly 25 GB. Your `.iso` can be deleted
 afterwards.
 
 * **Linux:** moving the whole folder to a bigger drive is fine. The
@@ -167,9 +168,10 @@ Still stuck? [Report it](#reporting-a-bug) with that log.
 ## Windows
 
 The game is installed by **Mind over Recomp.exe**, the installer. It
-installs the build tools, builds the game, adds **Crash Mind over Mutant**
+copies the ready-built game in, extracts your `.iso`, adds **Crash Mind over Mutant**
 to the Start menu and *Installed apps*, and later uninstalls it. Each new
-release comes with a new installer, which also updates an installed game.
+release can be installed from **Mind over Recomp** in the Start menu
+(**Update now**), or with the new release's installer.
 The game's settings are in the game itself (**Options**).
 
 Since 0.3.0 the release comes READY-BUILT: the installer copies the
@@ -196,7 +198,7 @@ It refuses folders the build can't work in. Pick another place, such as
 | **OneDrive folders** (Documents, Desktop and Pictures often are) | It would upload many GB, and syncing can lock files mid-build |
 | **exFAT / FAT32 drives** (most USB sticks, SD cards) | Only NTFS (or ReFS) drives work |
 | **Very long paths** | Some build files already have long names |
-| A folder that isn't empty, or too little free space (~15 GB) | A folder with a game set up before is fine: see below |
+| A folder that isn't empty, or too little free space (~8 GB) | A folder with a game set up before is fine: see below |
 
 ### Installing over a game folder I kept
 
@@ -355,8 +357,9 @@ Mutant) → Uninstall**, or **Uninstall** in Mind over Recomp itself.
 
 * **Keep my saves, settings and logs** (on by default) keeps the `user`
   folder. Everything else in the game's folder is removed.
-* Your `.iso` and the build tools stay. Other programs may use the tools;
-  remove them from *Installed apps* if you want.
+* Your `.iso` stays, and so do programs installed for the game (the Visual
+  C++ runtime; an older version's build tools). Other programs may use
+  them; remove them from *Installed apps* if you want.
 
 ### The build is very slow
 
@@ -563,21 +566,27 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 
 ### Updating
 
-* **Windows:** download the new release's `.zip`, unpack it, start its
-  **Mind over Recomp.exe** and choose **Update an installed game**. Pick the
-  game's folder (the installer finds one listed in *Installed apps* by
-  itself) and your disc image; it shows the installed version and the new
-  one. The game's extracted disc files (`game` folder) are checked against
-  the disc image: only missing or damaged ones are copied again (all of them
-  if the folder is gone). Your `user` folder and
-  the earlier build stay, so only what changed is built again: usually
-  minutes, not the first install's hour. (The old **Update** button in the
-  installed copy's **Mind over Recomp** was removed: it didn't work reliably.)
+* **Windows, 0.3.0 and later:** open **Mind over Recomp** from the Start
+  menu. It looks for a new version by itself; press **Update now**. It
+  downloads the new release, checks that the download isn't damaged, and the
+  new version's installer takes over and swaps the files in (seconds). Your
+  `user` folder (saves, settings) and `game` folder (the disc's files) stay.
+  The version it replaces is kept in the game folder's `previous` folder: if
+  the update fails, it's put back by itself, and **Go back to <version>**
+  puts it back by hand (for an update that installed fine but plays badly).
+* **Windows, the manual way** (installs older than 0.3.0, or when **Update
+  now** can't): download the new release's `.zip`, unpack it, start its
+  **Mind over Recomp.exe** and choose **Update an installed game**. It finds
+  the install listed in *Installed apps* by itself. The disc image is only
+  needed when the `game` folder is gone; given anyway, the game's files are
+  checked against it and only missing or damaged ones are copied again.
 * **Linux:** the launcher's **Setup** tab does the same.
 
 ### The update failed
 
-* **Windows:** download the newest release and install it into a **new**
+* **Windows:** a failed update puts the earlier version back by itself (the
+  message says so), so the game plays as before. Try again later, or the
+  manual way above. If that fails too, download the newest release and install it into a **new**
   folder, ticking **Copy saves and settings from an older version** (pick
   the old folder).
 * **Linux:** unpack it into a new folder, copy your `user/` folder (and
@@ -586,7 +595,9 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 
 ### The install is very slow (hours)
 
-A first install is usually 20-60 minutes. When it takes much longer:
+Since 0.3.0 an install takes a minute or two (nothing is built). This entry
+is for building from source and older installers. A first build is usually
+20-60 minutes. When it takes much longer:
 
 * **Something heavy runs at the same time** (a game, video editing, many
   browser tabs, a big download): the build competes with it. Close what you

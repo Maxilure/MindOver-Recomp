@@ -45,6 +45,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -62,8 +63,18 @@ constexpr const char* kDefaultFeed =
 constexpr const char* kNotesAtTag = "https://raw.githubusercontent.com/Maxilure/MindOver-Recomp/";
 constexpr const char* kReleasePages = "https://github.com/Maxilure/MindOver-Recomp/releases/tag/";
 
+// THE UPDATER'S PROMISE (2026-11-12): what an installed Mind over Recomp
+// needs from a release to update itself (SelfUpdateJob below). Version 1:
+// the release .zip has one top folder holding "Mind over Recomp.exe", which
+// takes --update_window=<install> (an update with a window) and --update
+// --game_folder=<install> (without one). A release that changes that writes
+// a higher `updater = N` into its release.toml; an older updater then sends
+// the player to the manual download instead of guessing.
+constexpr int kUpdaterVersion = 1;
+
 struct Release {
   std::string version, archive, sha256, date;
+  int updater = 1;          // release.toml "updater" (missing = 1)
   std::string archive_url;  // archive resolved against the feed's folder
   std::string notes;        // "What's new" of that version, plain text ("" = couldn't get it)
 };
@@ -94,6 +105,38 @@ std::vector<task_runner::Command> FreshInstallJob(const Release& release,
 // only what changed). user/, game/ and program/ aren't touched.
 std::vector<task_runner::Command> LocalUpdateJob(const std::filesystem::path& new_source,
                                                  const std::filesystem::path& root);
+
+// THE SELF-UPDATE (2026-11-12, the installed Mind over Recomp's "Update
+// now"): the old program does as little as possible, so a bug in the update
+// code is fixed by the NEXT release's code, which is what runs:
+//   1. download the release's .zip into <root>/.download, check its SHA-256
+//   2. unpack it there
+//   3. find the new "Mind over Recomp.exe" in it -> *new_installer
+// The caller then starts that exe with --update_window=<root> and quits;
+// the new installer swaps the files in (LocalUpdateJob + the program copy)
+// and copies itself into the game folder. <root>/.download is removed the
+// next time the installed Mind over Recomp starts.
+std::vector<task_runner::Command> SelfUpdateJob(const Release& release, const std::filesystem::path& root,
+                                                std::shared_ptr<std::filesystem::path> new_installer);
+constexpr const char* kDownloadFolder = ".download";
+
+// THE PREVIOUS VERSION (2026-11-12): an update first keeps what it replaces
+// in <root>/previous: program/, source/, "Mind over Recomp.exe" and
+// version.txt (that version). If the update fails, Rollback() puts it back
+// at once; the Manage page also offers "Go back to <version>" for an update
+// that installed fine but plays badly. One version is kept (the next update
+// replaces it).
+constexpr const char* kPreviousFolder = "previous";
+// Starts a fresh <root>/previous (the old one removed) with the installer
+// and version.txt; program/ and source/ are moved in by the update's steps.
+bool StartBackup(const std::filesystem::path& root, const std::string& version, std::string* message);
+// The version kept in <root>/previous ("" = none kept, or incomplete).
+std::string PreviousVersion(const std::filesystem::path& root);
+// Puts <root>/previous back in place of program/, source/ and the installer.
+// What's put back aside is removed after. False + message if it couldn't;
+// then nothing is half done where it could be helped (each part is swapped
+// with renames and put back on a failure).
+bool Rollback(const std::filesystem::path& root, std::string* message);
 
 // a newer than b? (see the header)
 bool Newer(const std::string& a, const std::string& b);
