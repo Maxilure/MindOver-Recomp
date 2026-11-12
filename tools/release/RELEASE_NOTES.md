@@ -135,6 +135,11 @@ and put back when an update fails).
   **Crash Mind over Mutant** from the Start menu.
 - **Already installed (0.2.2-alpha.5 or later):** open **Mind over Recomp**
   from the Start menu and press **Update now**. Older installs: the
+- **A clear message when a game file can't be read.** The Xbox 360's
+  "disc is unreadable" box is now a PC message: one of the files in the
+  `game` folder may be missing or damaged, and the installer can repair
+  them. The game's last Xbox notification setting and its network start-up
+  (the game has no online features) are answered by the port too.
   **Update to …** button there, or the new release's installer (**Update an
   installed game**). Close the game first.
 

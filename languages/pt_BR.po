@@ -114,6 +114,17 @@ msgstr "OU {0}"
 msgid "Press Any Button"
 msgstr "Aperte qualquer botão"
 
+#: src/system/system_popups.cpp:134
+#, fuzzy
+msgid ""
+"The game couldn't read one of its files.\n"
+"\n"
+"The game files in the \"game\" folder may be missing or damaged. Open Mind over Recomp (the installer) and update or repair the game, then start it again."
+msgstr ""
+"O jogo não conseguiu ler um dos seus arquivos.\n"
+"\n"
+"Os arquivos do jogo na pasta \"game\" podem estar faltando ou danificados. Abra o Mind over Recomp (o instalador) e atualize ou repare o jogo, depois inicie-o novamente."
+
 #: src/saves/save_library.cpp:763
 #, fuzzy
 msgid "Create New Save"

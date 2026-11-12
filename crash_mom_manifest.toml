@@ -418,6 +418,20 @@ name = "CrashMomConsoleSystemVersion"
 registers = ["r3"]
 jump_address_on_true = 0x82322AB4
 
+# SYSTEM POP-UPS ANSWERED BY THE PORT (src/system/system_popups.cpp,
+# docs/findings/32 s.8). XNotifyPositionUI's only call: the game's start-up
+# object set-up sub_8227AC58 tells the dashboard where to show its toasts
+# (`li r3,1` at 0x8227AE10, `bl 0x824BB96C` here). No dashboard on a PC:
+# jump over the call (the next instruction `mr r3,r27` overwrites r3).
+# Found 2026-11-13: Xbox calls meter "first XNotifyPositionUI from
+# sub_8227AC58+0x1C0" + xexdis. (WSAStartup sub_82322B38 and the disc error
+# box sub_823002E0 are overridden as whole functions.)
+[[entrypoint.midasm_hook]]
+address = 0x8227AE14
+name = "CrashMomNotifyPosition"
+registers = ["r3"]
+jump_address_on_true = 0x8227AE18
+
 [[entrypoint.midasm_hook]]
 address = 0x82311BE8
 name = "CrashMomConsoleVideoFlags"

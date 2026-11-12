@@ -159,6 +159,12 @@ DONE = {
     # Notifications: both listeners (sign-in, storage) are gone.
     "XamNotifyCreateListener": "who_plays.cpp: sub_8227CE70; pc_save_drive.cpp: sub_823007D0",
     "XNotifyGetNext": "who_plays.cpp: sub_8227B1D8 (and the save drive's device check, unused)",
+    # The last pop-ups + the network start-up (2026-11-13,
+    # src/system/system_popups.cpp, findings/32 s.8): one caller each.
+    "XNotifyPositionUI": "system_popups.cpp: 0x8227AE14 (skipped: no dashboard toasts)",
+    "XamShowDirtyDiscErrorUI": "system_popups.cpp: sub_823002E0 (PC box + quit)",
+    "XamShowMessageBoxUIEx": "console_settings.cpp: sub_823009B8 (only caller of sub_82300878)",
+    "NetDll_WSAStartup": "system_popups.cpp: sub_82322B38 (0 = success, no sockets)",
     # Title lifecycle (findings/58): the game imports are answered directly
     # by native host handlers; launch-to-dashboard, terminate-title and the
     # observed firmware reboot all close this single PC process. Callback

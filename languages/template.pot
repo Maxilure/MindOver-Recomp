@@ -95,6 +95,13 @@ msgstr ""
 msgid "Press Any Button"
 msgstr ""
 
+#: src/system/system_popups.cpp:134
+msgid ""
+"The game couldn't read one of its files.\n"
+"\n"
+"The game files in the \"game\" folder may be missing or damaged. Open Mind over Recomp (the installer) and update or repair the game, then start it again."
+msgstr ""
+
 #: src/saves/save_library.cpp:763
 msgid "Create New Save"
 msgstr ""

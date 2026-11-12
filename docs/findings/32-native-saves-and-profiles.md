@@ -408,3 +408,29 @@ same run gives 34,674 `XMsgStartIORequest` (presence, sub_823006E8+0x44),
 1,353 `XMsgInProcessCall` and 2 `XMsgStartIORequestEx` (how the counts split
 between the two kinds depends on the session). The level's music streams
 load the same in both runs; 0 errors.
+
+## 8. The last system pop-ups and the network start-up
+
+Four services were still answered by the SDK after sections 3-7. Each has
+exactly one caller (Xbox calls meter "first X from sub_Y+off" lines, a grep
+of the generated code for each import, `tools/callgraph.py` for the callers'
+callers, every site read with xexdis). `src/system/system_popups.cpp`
+answers them; `--system_popups_native=false` lets the SDK answer again.
+
+| Service | Caller | 360 behaviour | PC behaviour |
+|---|---|---|---|
+| XNotifyPositionUI | 0x8227AE14 in the start-up object set-up sub_8227AC58 (`li r3,1` before it), once per boot | where the dashboard shows its notification toasts | skipped (midasm hook jumps over the `bl`; the next instruction `mr r3,r27` overwrites r3) |
+| NetDll_WSAStartup | sub_8225F8A0 -> sub_82322950 (a Microsoft network library's start-up, config 0x824E5D2C) -> sub_823228C8 -> WSAStartup sub_82322B38 -> dispatcher sub_82322A90, once per boot | starts the console's socket library | sub_82322B38 returns 0 (success): sub_823228C8 only checks r3 == 0 before laying out its memory block; the WSADATA is a stack buffer nobody reads. No sockets: the game has no online features |
+| XamShowDirtyDiscErrorUI | sub_823002E0, called only by Radical's error thread sub_8235B400 (section 4) when the file layer reports a failed read | "the disc is unreadable" box, then back to the dashboard (sub_82300DB0, never returns) | a message box (the files in the `game` folder may be missing or damaged; the installer repairs them), log line, exit. The box opens on the UI thread; the game thread waits for the exit |
+| XamShowMessageBoxUIEx | sub_82300878, whose only caller is the start-up cable check sub_823009B8 | the PAL / standard-definition cable message | already gone: sub_823009B8 is replaced as a whole (section 6) |
+
+With WSAStartup answered, the dispatcher sub_82322A90 (and its
+dashboard-version hook of section 6) is no longer reached.
+
+Tests (copy of the saves, `--load_save=last`, Native Only, 30 fps): both
+"System pop-ups: ... answered by the port" lines logged once, console `xbox`
+shows 0 calls for all four services, the level loads, 0 errors. The disc
+error box was never seen in a real session; `--debug_disc_error_box` shows it
+at start-up (on the once-per-boot notification call): the box window opened
+(title "Mind over Recomp"). Closing it with OK (exit afterwards) was not
+tested.

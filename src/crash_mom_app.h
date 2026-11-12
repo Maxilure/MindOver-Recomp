@@ -58,6 +58,7 @@
 #include "ui/font_letters.h"
 #include "ui/imgui_fonts.h"
 #include "ui/window_mode.h"
+#include "system/system_popups.h"
 #include "game_folder.h"
 #include "saves/save_files.h"
 #include "settings_list.h"
@@ -332,6 +333,8 @@ class CrashMomApp : public rex::ReXApp {
     window_mode::Install([this](std::function<void()> job) { app_context().CallInUIThread(std::move(job)); },
                          [] { frame_rate::UpdateDisplayRefresh(); },
                          window() ? std::string(window()->GetTitle()) : std::string());
+    // The disc error box opens on the UI thread (system/system_popups.h).
+    system_popups::Install([this](std::function<void()> job) { app_context().CallInUIThread(std::move(job)); });
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).
