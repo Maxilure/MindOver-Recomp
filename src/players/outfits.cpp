@@ -51,6 +51,7 @@
 //    outfit's package, lets go of the old one), which lands in our setter.
 // =============================================================================
 
+#include "../decomp/simple_setup.h"
 #include "outfits.h"
 #include "../input/prompt_icons.h"
 
@@ -1191,10 +1192,10 @@ void HairSetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
     // Stays until the frame ends (prompt_icons WorldButtonRestore): the native
     // renderer reads the material's texture at the draw, after this set-up.
     if (coin_to != coin_from) Write32(shader + kSimpleTexture, coin_to);
-    original(ctx, base);
+    decomp_simple::SetupDraw(ctx, base, original);  // the set-up itself: our C++ (decomp/simple_setup.h)
     return;
   }
-  original(ctx, base);
+  decomp_simple::SetupDraw(ctx, base, original);
 }
 }  // namespace
 

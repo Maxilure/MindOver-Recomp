@@ -31,11 +31,15 @@ namespace decomp {
 
 struct Range {
   uint32_t address, bytes;
+  // false = only put back before ours runs, never compared: the guest stack
+  // below the caller's frame, whose leftover words a function may read (the
+  // original's own run changes them; simple_setup.cpp).
+  bool compare = true;
 };
-// At most two ranges per function; a fixed array (no allocation per call:
+// At most six ranges per function; a fixed array (no allocation per call:
 // the overrides run ~200,000 times a second).
 struct Ranges {
-  Range r[2];
+  Range r[6];
   size_t n;
   size_t size() const { return n; }
   const Range& operator[](size_t i) const { return r[i]; }
@@ -88,6 +92,7 @@ void Checked(Stats& st, PPCContext& ctx, uint8_t* base, PPCFunc* original, const
   bool same = !handled || mine.r3.u64 == answer.r3.u64;
   std::string what = same ? "" : fmt::format("r3 original {:X} ours {:X}", answer.r3.u64, mine.r3.u64);
   for (size_t i = 0; handled && i < ranges.size(); ++i) {
+    if (!ranges[i].compare) continue;
     const uint8_t* p = GuestPtr(base, ranges[i].address);
     if (std::memcmp(p, theirs[i].data(), ranges[i].bytes) == 0) continue;
     uint32_t at = 0;

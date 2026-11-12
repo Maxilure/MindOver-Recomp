@@ -207,3 +207,93 @@ blend, alpha, depth bias, shadow spheres), the simple set-up's own code
 Next (option 1 continued): the material set-ups as WHOLE native functions
 with their D3D leaves inlined (slot 14, the simple material first: 1.8%
 inclusive with its common state and leaves), then the tint and light writer.
+
+## 10. The simple material's set-up (src/decomp/simple_setup.cpp)
+
+xnSimpleShader::SetupDraw (sub_82441EA8, 377 instructions, slot 14 of the
+simple material: most of the world, the HUD, the menus) now runs as C++,
+written from xexdis next to Ghidra's pseudo-C. It is reached through the one
+PDDI handler that function already had (players/outfits.cpp, the hair and
+floating-button texture swaps), which now calls it instead of the original.
+
+What it writes, in the original's order: the state cache reset, the sampler 0
+texture, the vertex and pixel shaders (table 0x82597010, by the +56 byte and
+"palettized" = texture +276 == 1), PS bools b80 / b81 (+24 == 2 / 3), PS
+c66-c69 (the four ARGB colour words / 255), c70 (+80..+92 raw), c4 (x =
+context +364 x +88), c22 (x = +-1 by the texture), c52 (the camera
+position), sampler 0's filter and address mode, the common material state
+(sub_8242DA28), then for palettized textures the palette in sampler 8 and
+c124 = (width, height, 0, 0), else sampler 8 cleared. Inlined: the
+palettized test, the texture pick of sub_8243AD80 / sub_8243AE20, D3D's
+SetPixelShaderConstantB, the camera copy sub_824339A0, the filter setter
+sub_8242D760 and the three virtual getters (context slot 99 = the float at
++364, texture slots 5 / 6 = +288 / +292; any other function there = the
+original runs). Still the game's code, called: D3D's SetTexture,
+SetVertexShader, SetPixelShader, the address-mode setter sub_8242D810 and
+the common state.
+
+### 10.1 Stack leftovers, all the way down
+
+Being byte-for-byte exact meant reproducing more than the visible results:
+
+* the original reads words of its own frame it never writes (r1+100/104/108
+  into PS c4.yzw / c22.y, r1+172 into c52.w), like UpdateTransforms' c8.w:
+  read from the same guest addresses;
+* the common state copies eight rows from ITS stack frame into PS
+  c201-c208: past the active shadow spheres those rows are leftovers, and
+  they include the registers the earlier helpers SAVED there (r27-r31 of the
+  set-up and the return address). So each helper is called with the
+  registers the original had at that point (r27 = 1, r28 = 0, r29 =
+  palettized, r30 = the caller's, then 0xFFFFFFFF82597010 (lis + addi,
+  sign-extended), then (+68 >> 8) & 0xFF, r31 = the shader, lr = the
+  address after the original's `bl`), with r1 = the original's frame;
+* the original's own frame writes (its prologue's saved registers and back
+  chain, its integer-to-float temporaries) are written as it leaves them, so
+  later code at that depth finds the same leftovers.
+
+None of these words is read by a shader that the picture depends on, but the
+check found each of them.
+
+Registers: r1, r27-r31 and lr are put back as the epilogue does; scratch
+registers aren't reproduced (all 36 slot-14 virtual call sites in
+0x823F0000-0x82460000 were scanned: none reads one after the call before
+writing it).
+
+### 10.2 Checking a function that calls D3D
+
+The shared checker (decomp/check.h) runs the original, puts the compared
+memory back, runs ours and compares. With D3D calls inside, three things had
+to change:
+
+* the stack below the caller's frame is put back too, without being compared
+  (`Range::compare = false`): the original's run changes the leftovers ours
+  reads;
+* D3D's device has a window, +10896..+11600, that other threads and the GPU
+  side change while the function runs (+10904 = the lock of D3D's allocator,
+  sub_82308798; +10988; +11540 a counter; +11556 a pointer moving megabytes
+  ahead). Putting a snapshot of it back froze the game: the main thread then
+  waited in D3D's swap (sub_82310DA8 -> sub_8230A158) for a fence that never
+  came. The window is left out; the set-up only reads there;
+* a setter that replaces an object the GPU still uses writes a fence into
+  D3D's command ring and may kick it (sub_82307D08, allocations outside the
+  device). Running that twice is unsafe, so such calls aren't checked (the
+  same "+10908 == 0 and +10912 & object" test the setters make, done up
+  front); none occurred in the runs below.
+
+Up to six ranges per check now.
+
+Results: `--debug_native_simple_check`, Wumpa Island, 30 fps and uncapped,
+walking, attacking, the pause menu: 0 differences in 504,074 calls (uncapped
+run) and 44,525 (capped run). Positive control: one flipped bit of PS c4.x
+made every call report a difference.
+
+### 10.3 Measured
+
+Uncapped, Native Only, three pairs of 8 s profiles with the switch flipped
+live: the set-up's inclusive share of the main thread 2.11 / 2.01 / 2.27% ->
+1.80 / 1.71 / 1.69%; game time per frame within noise (4.37-4.60 ms either
+way). A first version that copied the whole register context for each helper
+call (vector registers included) cost as much as it saved; helpers are now
+called on the live context. The real gain needs the remaining helpers
+inlined (SetTexture / SetVertexShader / SetPixelShader without their ring
+paths, sub_8242D810, the common state): the next step.
