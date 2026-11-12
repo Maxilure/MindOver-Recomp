@@ -56,6 +56,8 @@ allow_dirty=0
 out_base=out/release
 system_override=""
 launcher_file=""
+program_dir=""  # --program: a Windows game build folder (READY-BUILT release, below)
+python_dir=""   # --python: Python's embeddable package (with --program)
 kit_dir=""   # --kit: the Windows build kit (release workflow, job windows-sdk)
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -64,6 +66,8 @@ while [ $# -gt 0 ]; do
     --system) system_override=$2; shift ;;
     --launcher) launcher_file=$2; shift ;;
     --kit) kit_dir=$2; shift ;;
+    --program) program_dir=$2; shift ;;
+    --python) python_dir=$2; shift ;;
     *) echo "unknown option $1"; exit 1 ;;
   esac
   shift
@@ -178,6 +182,37 @@ if [ -n "$kit_dir" ]; then
 The build kit of Mind over Recomp $version: the SDK ($sdk_tag + our patches) is
 ready-built in thirdparty/rexglue-install, and this folder holds the CMake,
 Ninja, glslc and Python every build step uses. Made by GitHub Actions.
+EOF
+fi
+
+# 2c. READY-BUILT (Windows, launcher/setup.cpp "READY-BUILT"; what Unleashed
+#     Recompiled and Zelda 64: Recompiled do): program/ = the game already
+#     built (on a PC with the disc: the build needs default.xex, which never
+#     goes online), next to the installer. Only the build's OWN files: the
+#     exe (installed name), the SDK's DLLs, the exe's .pdb (crash reports),
+#     assets/ and languages/. Never the icon (crash_mom.ico/.png are made
+#     from the player's disc) and never anything from game/.
+if [ -n "$program_dir" ]; then
+  [ -n "$python_dir" ] && [ -f "$python_dir/python.exe" ] || { echo "--program needs --python <embeddable Python folder>"; exit 1; }
+  [ -f "$program_dir/crash_mom.exe" ] || { echo "$program_dir has no crash_mom.exe"; exit 1; }
+  echo "== Adding the ready-built game from $program_dir"
+  p="$stage/program"
+  mkdir -p "$p"
+  cp "$program_dir/crash_mom.exe" "$p/Crash Mind over Mutant.exe"
+  cp "$program_dir/crash_mom.pdb" "$p/"
+  for f in "$program_dir"/*.dll; do cp "$f" "$p/"; done
+  cp -r "$program_dir/assets" "$p/assets"
+  [ -d "$program_dir/languages" ] && cp -r "$program_dir/languages" "$p/languages"
+  if find "$p" -iname '*.ico' -o -iname 'crash_mom.png' -o -iname '*.xex' -o -iname '*.rcf' | grep -q .; then
+    echo "program/ holds game-derived files: refused"; exit 1
+  fi
+  mkdir -p "$stage/source/buildtools"
+  cp -r "$python_dir" "$stage/source/buildtools/python"
+  cp tools/release/BUILDTOOLS_LICENSES.txt "$stage/source/buildtools/LICENSES.txt"
+  cat > "$stage/source/buildtools/prebuilt.txt" <<EOF
+Mind over Recomp $version comes READY-BUILT: program/ next to the installer
+is the game already built, and the installer copies it in. Nothing is
+compiled on this PC. python/ runs the disc tools (tools/xiso_extract.py).
 EOF
 fi
 

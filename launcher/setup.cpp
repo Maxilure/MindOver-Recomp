@@ -189,8 +189,19 @@ const std::vector<std::string> kSdkOptions = {};
 //
 // A developer clone (no buildtools/kit.txt) works as before: SDK from the
 // submodule, tools from PATH.
+//
+// READY-BUILT (2026-11-12, after the same reports): what the established
+// recompilation projects do (Unleashed Recompiled, Zelda 64: Recompiled
+// ship their game program ready to run; only the player's own disc / ROM
+// supplies the game's files). A release with buildtools/prebuilt.txt brings
+// program/ already built (next to the installer, copied in by it): nothing
+// is compiled on the player's PC at all. Steps 2, 4 and 5 are then "included",
+// the tools are only Python (included, for the disc tools), the Visual C++
+// runtime and the Vulkan loader; the game step only makes the icon from the
+// player's disc.
 struct Kit {
   bool present = false;           // buildtools/kit.txt is there
+  bool prebuilt = false;          // buildtools/prebuilt.txt: program/ comes ready-built
   fs::path cmake, ninja, glslc, python;
   fs::path sdk_marker;            // the shipped SDK's own note (prebuilt.txt)
 };
@@ -199,6 +210,7 @@ Kit KitIn(const fs::path& source) {
   Kit kit;
   const fs::path tools = source / "buildtools";
   kit.present = Exists(tools / "kit.txt");
+  kit.prebuilt = Exists(tools / "prebuilt.txt");
   kit.cmake = tools / "cmake" / "bin" / platform::ExeName("cmake");
   kit.ninja = tools / "ninja" / platform::ExeName("ninja");
   kit.glslc = tools / "glslc" / platform::ExeName("glslc");
@@ -210,6 +222,7 @@ Kit KitIn(const fs::path& source) {
 // Every file of the kit, for the check (a missing one = the release folder
 // was damaged: an antivirus, a half-copied folder).
 std::vector<fs::path> KitFiles(const Kit& kit) {
+  if (kit.prebuilt) return {kit.python};  // only the disc tools run
   return {kit.cmake, kit.ninja, kit.glslc, kit.python, kit.sdk_marker};
 }
 
@@ -783,6 +796,31 @@ void CheckTools(Status* s, const Kit& kit) {
   bool ok = false;
   std::string version;
 
+  // The VC++ runtime + Vulkan loader: the game needs both to START, built
+  // here or not.
+  auto runtime_checks = [&]() {
+    const fs::path system32 = fs::path(platform::GetEnv("SystemRoot")) / "System32";
+    const bool runtime = Exists(system32 / "msvcp140.dll") && Exists(system32 / "vcruntime140_1.dll");
+    add("Visual C++ runtime (x64)", "Visual C++ Redistributable", runtime,
+        runtime ? "msvcp140.dll" : trs("not found"), "Microsoft.VCRedist.2015+.x64");
+    const bool vulkan = platform::LibraryAvailable("", "vulkan-1.dll");
+    add("Vulkan loader", "your graphics card's driver", vulkan,
+        vulkan ? "vulkan-1.dll" : trs("not found: update your graphics card's driver"));
+  };
+  if (kit.prebuilt) {
+    // Ready-built game (Kit): no compiler, no Visual Studio, no build tools.
+    add("Python (included)", "Mind over Recomp", Exists(kit.python),
+        Exists(kit.python) ? std::string(trs("included in this release"))
+                           : std::string(trs("missing from the release folder: run the installer's Update (same "
+                                             "version = repair), and check your antivirus")));
+    {
+      std::lock_guard lock(g_found_mutex);
+      g_found.python = kit.python.string();
+    }
+    runtime_checks();
+    return;
+  }
+
   // Visual Studio first: its C++ tools also carry CMake and Ninja (below).
   // vswhere = Microsoft's own finder, installed with every Visual Studio.
   const fs::path vs_installer = fs::path(program_files_x86) / "Microsoft Visual Studio" / "Installer";
@@ -936,15 +974,7 @@ void CheckTools(Status* s, const Kit& kit) {
   }
   // The Visual C++ runtime: what the BUILT GAME loads at start (the launcher
   // has it built in; the game, built with Visual Studio's libraries, doesn't).
-  {
-    const fs::path system32 = fs::path(platform::GetEnv("SystemRoot")) / "System32";
-    const bool runtime = Exists(system32 / "msvcp140.dll") && Exists(system32 / "vcruntime140_1.dll");
-    add("Visual C++ runtime (x64)", "Visual C++ Redistributable", runtime,
-        runtime ? "msvcp140.dll" : trs("not found"), "Microsoft.VCRedist.2015+.x64");
-  }
-  const bool vulkan = platform::LibraryAvailable("", "vulkan-1.dll");
-  add("Vulkan loader", "your graphics card's driver", vulkan,
-      vulkan ? "vulkan-1.dll" : trs("not found: update your graphics card's driver"));
+  runtime_checks();
 
   if (Exists(vcvars)) {
     if (kit.present) {
@@ -1233,10 +1263,10 @@ Status Setup::RunChecks() {
 
   // 2. Source parts. With the build kit (Kit) there are none to download:
   // the SDK comes ready-built in the release (steps 2 and 4 = "included").
-  bool source_ok = kit.present || (Exists(sdk / "CMakeLists.txt") &&
+  bool source_ok = kit.present || kit.prebuilt || (Exists(sdk / "CMakeLists.txt") &&
                                    Exists(sdk / "thirdparty" / "fmt" / "CMakeLists.txt") &&
                                    Exists(sdk / "thirdparty" / "sdl3" / "CMakeLists.txt"));
-  if (source_ok && !kit.present) {
+  if (source_ok && !kit.present && !kit.prebuilt) {
     // Every one of the SDK's own libraries checked out, at the commit the SDK
     // records? A download stopped halfway leaves some empty. (git_parts, not
     // `git submodule status`: that one is a shell script, and Git's shell
@@ -1246,13 +1276,13 @@ Status Setup::RunChecks() {
     source_ok = ok && all_ok;
   }
   s.source_state = source_ok ? StepState::kDone : StepState::kMissing;
-  s.source_detail = kit.present ? trs("included in this release")
+  s.source_detail = kit.present || kit.prebuilt ? trs("included in this release")
                     : source_ok ? trs("the ReXGlue SDK and its libraries are there")
                               : folders_.release ? trs("the ReXGlue SDK isn't downloaded yet")
                                                  : trs("the ReXGlue SDK submodule isn't downloaded yet");
   // A release names the exact SDK version (source/RELEASE.toml): another
   // one in the folder (an update moved to a newer SDK) = download again.
-  if (source_ok && folders_.release && !kit.present && !pin.commit.empty()) {
+  if (source_ok && folders_.release && !kit.present && !kit.prebuilt && !pin.commit.empty()) {
     bool ok = false;
     std::string head = task_runner::Capture({"git", "rev-parse", "HEAD"}, &ok, sdk);
     head = head.substr(0, head.find('\n'));
@@ -1287,7 +1317,7 @@ Status Setup::RunChecks() {
   // set fails both ways (forward on a clean tree, reverse on a patched one),
   // so CheckPatchStack compares the files themselves.
   bool all_applied = false, none_applied = false;
-  if (source_ok && !kit.present && !patches.empty()) {
+  if (source_ok && !kit.present && !kit.prebuilt && !patches.empty()) {
     // The scratch folder must be OUTSIDE any git repository: `git apply`
     // inside one takes the paths as relative to that repository's root and
     // silently skips them (the game folder is one when built from source).
@@ -1310,7 +1340,11 @@ Status Setup::RunChecks() {
     std::ifstream in(install / kFingerprintFile);
     std::getline(in, built_with);
   }
-  if (kit.present) {
+  if (kit.prebuilt) {
+    s.patches_applied = s.patches_total;
+    s.sdk_state = StepState::kDone;
+    s.sdk_detail = trs("not needed: the game comes ready-built");
+  } else if (kit.present) {
     // Built by GitHub Actions with our patches (the release workflow); its
     // files can only be missing if something deleted them (an antivirus).
     s.patches_applied = s.patches_total;
@@ -1353,7 +1387,22 @@ Status Setup::RunChecks() {
 
   // 5. The game (a release then plays a copy in program/).
   const fs::path built = folders_.BuiltExe();
-  if (!Exists(built)) {
+  if (kit.prebuilt) {
+    // Ready-built: program/ came from the release (the installer copies it).
+    // Only the icon is made here, from the player's disc (GameJob).
+    if (!Exists(folders_.exe)) {
+      s.game_state = StepState::kBlocked;
+      s.game_detail = trs("the ready-built game is missing from program\: run the installer's Update (same "
+                          "version = repair), and check your antivirus");
+    } else if (folders_.DiscExists() && !Exists(folders_.exe.parent_path() / "crash_mom.ico") &&
+               !Exists(folders_.exe.parent_path() / "icon-tried.txt")) {
+      s.game_state = StepState::kOutdated;
+      s.game_detail = trs("ready-built; its icon is made from your disc next");
+    } else {
+      s.game_state = StepState::kDone;
+      s.game_detail = trf(trs("ready-built: {0}"), {folders::Pretty(folders_.exe)});
+    }
+  } else if (!Exists(built)) {
     s.game_state = StepState::kMissing;
     s.game_detail = trs("not built yet");
   } else if (folders_.release && TimeOf(folders_.exe) < TimeOf(built)) {
@@ -1605,6 +1654,20 @@ bool Setup::SdkJob(std::vector<Command>* out, std::string* error) {
 
 std::vector<Command> Setup::GameJob() {
   const fs::path root = folders_.source;
+  if (folders_.release && KitIn(root).prebuilt) {
+    // Nothing to build (Kit, READY-BUILT): only the icon. "Tried" is noted
+    // either way, so a disc without the picture doesn't repeat the step.
+    std::vector<Command> commands = IconJob(folders_);
+    const fs::path note = folders_.exe.parent_path() / "icon-tried.txt";
+    Command tried;
+    tried.title = trs("Noting the icon step");
+    tried.function = [note](std::string*) {
+      std::ofstream(note, std::ios::trunc) << "the icon step ran\n";
+      return true;
+    };
+    commands.push_back(std::move(tried));
+    return commands;
+  }
   std::vector<Command> commands;
   if (folders_.release) {
     // The manifest reads the disc at <source>/game/default.xex; a release

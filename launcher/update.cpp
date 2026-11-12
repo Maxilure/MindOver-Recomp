@@ -374,8 +374,15 @@ static bool SwapSource(const fs::path& root, const fs::path& work, const fs::pat
     // new one. The game's build folder still moves (only what changed builds
     // again; its configure is fresh anyway).
     const bool new_has_kit = fs::exists(new_src / "buildtools" / "kit.txt", ec);
-    std::vector<const char*> parts = {"out", "generated/default"};
-    if (!new_has_kit) {
+    // READY-BUILT (buildtools/prebuilt.txt): the new version builds nothing,
+    // so no build state moves at all; the old source with its build (several
+    // GB) is deleted once the swap is done.
+    const bool new_prebuilt = fs::exists(new_src / "buildtools" / "prebuilt.txt", ec);
+    std::vector<const char*> parts;
+    if (!new_prebuilt) parts = {"out", "generated/default"};
+    if (new_prebuilt) {
+      *message += "the new version comes ready-built: the old build isn't kept.\n";
+    } else if (!new_has_kit) {
       parts.push_back("thirdparty/rexglue-sdk");
       parts.push_back("thirdparty/rexglue-install");
     } else if (fs::exists(old_src / "thirdparty" / "rexglue-install", ec)) {
@@ -403,6 +410,7 @@ static bool SwapSource(const fs::path& root, const fs::path& work, const fs::pat
       *message += "couldn't put the new source/ in place";
       return false;
     }
+    if (new_prebuilt) fs::remove_all(retired, ec);  // its build is of no use any more
     return true;
   }
 }
@@ -474,7 +482,7 @@ std::vector<Command> LocalUpdateJob(const fs::path& new_source, const fs::path& 
   };
   commands.push_back(std::move(copy));
   Command swap;
-  swap.title = trs("Swapping in the new version (your build is kept)");
+  swap.title = trs("Swapping in the new version");
   swap.function = [root, work](std::string* message) {
     if (!SwapSource(root, work, work / "source", message)) return false;
     std::error_code ec;

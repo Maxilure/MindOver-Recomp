@@ -105,8 +105,14 @@ Git step can't start its helpers).
     again. Picking the same version repairs the install.
   - **The update checks the game's disc files against your `.iso`** and
     copies again only the missing or damaged ones.
-  - **The SDK comes ready-built, and the release brings its own build
-    tools.** The ReXGlue SDK is now built once by GitHub, with the port's
+  - **The game comes ready-built.** Like other recompilation projects,
+    the release now holds the finished game program. The installer only
+    copies it in, extracts your `.iso`, checks it and adds the shortcuts:
+    an install takes a minute or two and an update seconds, with nothing to
+    compile and no Visual Studio, LLVM, CMake, Git or Python needed. Only
+    your disc supplies the game's files, as before.
+  - **Building from source got sturdier too: the SDK comes ready-built, and the
+    release brings its own build tools.** The ReXGlue SDK is now built once by GitHub, with the port's
     fixes, and shipped in the `.zip`, together with the CMake, Ninja, glslc
     and Python the build uses. Your PC only needs LLVM and Visual Studio's
     C++ tools (the installer gets both), and it builds only the game. Every

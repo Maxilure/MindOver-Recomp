@@ -172,12 +172,12 @@ to the Start menu and *Installed apps*, and later uninstalls it. Each new
 release comes with a new installer, which also updates an installed game.
 The game's settings are in the game itself (**Options**).
 
-Since 0.3.0 the release brings the ReXGlue SDK ready-built and its own
-CMake, Ninja, glslc and Python (`source\buildtools\`), and every build step
-runs with only those, LLVM and Visual Studio on its PATH. Most entries below
-about CMake, Git, Python or the SDK step are for older installers: the
-simplest fix there is the newest release's installer (**Update** keeps your
-game, saves and settings).
+Since 0.3.0 the release comes READY-BUILT: the installer copies the
+finished game in, extracts your `.iso` and adds the shortcuts. Nothing is
+compiled on your PC, so no build tools are needed. Entries below about
+CMake, Git, Python, Visual Studio or the SDK step are for older installers:
+the fix there is the newest release's installer (**Update** keeps your saves
+and settings).
 
 ### "Windows protected your PC"
 

@@ -381,7 +381,25 @@ out/release/<version>/
   release.toml                    the update feed: version, archive, SHA-256
 ```
 
-**The Windows build kit** (since 0.3.0; `launcher/setup.cpp` "THE BUILD
+**Ready-built Windows releases** (since 0.3.0; `launcher/setup.cpp`
+"READY-BUILT"; what Unleashed Recompiled and Zelda 64: Recompiled do). The
+`.zip` holds `program/` with the game already built, next to the installer,
+plus `source/buildtools/python/` (Python's embeddable package, for the disc
+tools) and `source/buildtools/prebuilt.txt`. The installer copies
+`program/` in, extracts the player's `.iso` into `game/`, checks
+`default.xex`, makes the icon from the disc and adds the shortcuts: nothing
+is compiled on the player's PC, and the tools page asks only for the Visual
+C++ runtime and the Vulkan loader. An update swaps `source/` and `program/`
+and deletes the old build. The game is built on a PC with the disc (the
+build reads `default.xex`, which never goes online), then packed with
+`tools/make_release.sh --system windows --launcher <installer.exe>
+--program <build folder> --python <embeddable Python>`; the packer takes
+only the build's own files (exe, `.pdb`, SDK DLLs, `assets/`, `languages/`)
+and refuses icons, `.xex` or `.rcf` files. The release is then uploaded
+with `gh release create`: the workflow can't make this `.zip` (no disc on
+GitHub's machines).
+
+**The Windows build kit** (since 0.3.0, for building from source; `launcher/setup.cpp` "THE BUILD
 KIT"). The release workflow's `windows-sdk` job builds the SDK and collects
 the tools; `make_release.sh --kit <folder>` packs them into `source/`. With
 `buildtools/kit.txt` there, the setup skips the source download and the SDK

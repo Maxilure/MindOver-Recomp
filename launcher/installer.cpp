@@ -72,6 +72,7 @@
 #include <ctime>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -175,6 +176,45 @@ fs::path SourceNextToMe() {
   std::error_code ec;
   const fs::path here = platform::SelfPath().parent_path() / "source";
   return fs::is_regular_file(here / "RELEASE.toml", ec) ? here : fs::path();
+}
+
+// A READY-BUILT release (launcher/setup.cpp Kit, READY-BUILT): the game's
+// program\ folder comes next to this exe. Empty = this release builds it.
+fs::path ProgramNextToMe() {
+  std::error_code ec;
+  const fs::path here = platform::SelfPath().parent_path() / "program";
+  return fs::is_regular_file(here / folders::InstalledExeName(), ec) ? here : fs::path();
+}
+
+// Puts that program\ into the install (fresh, update and repair alike):
+// copied into program.new, then swapped in, so a failed copy never leaves
+// half a game. The icon made from the player's disc goes with the old
+// folder; Setup makes it again (its game step).
+std::optional<Command> ProgramCopyCommand(const fs::path& root) {
+  const fs::path from = ProgramNextToMe();
+  if (from.empty()) return std::nullopt;
+  const fs::path to = root / "program";
+  Command copy;
+  copy.title = trs("Copying the game into program\\");
+  copy.function = [from, to](std::string* message) {
+    std::error_code ec;
+    const fs::path fresh = to.string() + ".new";
+    fs::remove_all(fresh, ec);
+    fs::copy(from, fresh, fs::copy_options::recursive, ec);
+    if (ec) {
+      *message = "couldn't copy " + from.string() + ": " + ec.message();
+      return false;
+    }
+    fs::remove_all(to, ec);
+    if (ec) {
+      *message = "couldn't replace " + to.string() + " (is the game still running?): " + ec.message();
+      return false;
+    }
+    fs::rename(fresh, to, ec);
+    *message = ec ? "couldn't put program\\ in place: " + ec.message() : "program\\ copied.";
+    return !ec;
+  };
+  return copy;
 }
 
 const char* MissingFilesText() {
@@ -914,6 +954,7 @@ void App::StartFiles() {
     };
     commands.push_back(std::move(copy));
   }
+  if (auto program = ProgramCopyCommand(root)) commands.push_back(std::move(*program));
   if (updating && !update_needs_disc && !iso.empty()) {
     // The update's disc check (after the swap: the new source's extractor).
     // With game\ gone, Setup's disc step extracts it all instead.
@@ -1474,6 +1515,9 @@ int HeadlessInstall(const fs::path& parent, const fs::path& iso, const std::stri
     std::printf("refused: no source\\ next to this installer (unpack the release .zip)\n");
     return 1;
   }
+  if (auto program = ProgramCopyCommand(root)) {
+    if (!RunPrinted("program", {std::move(*program)}, root / "user" / "logs" / ("install-" + Stamp() + ".log"))) return 1;
+  }
   fs::copy_file(platform::SelfPath(), root / install::kInstallerName,
                 fs::copy_options::overwrite_existing, ec);
   const folders::Folders folders = folders::Find(root);
@@ -1614,6 +1658,9 @@ int main(int argc, char** argv) {
         std::_Exit(1);
       }
       if (!RunPrinted("update", update::LocalUpdateJob(here, found.root), log)) std::_Exit(1);
+    }
+    if (auto program = ProgramCopyCommand(found.root)) {
+      if (!RunPrinted("program", {std::move(*program)}, log)) std::_Exit(1);
     }
     std::error_code ec;
     if (!fs::equivalent(self, found.root / install::kInstallerName, ec)) {
