@@ -32,6 +32,11 @@ engineering, testing, bug reports, corrections, art. See
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
 
+### Codex (OpenAI): Xbox title lifecycle
+
+- Replaced the game's title lifecycle imports with native PC process behavior
+  and documented the investigation ([finding 58](docs/findings/58-native-title-lifecycle.md)).
+
 ### YWZsaXRv: Windows setup script
 
 - Contributed a script that installs the Windows build tools with winget

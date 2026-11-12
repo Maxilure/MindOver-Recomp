@@ -57,6 +57,7 @@ set(CRASHMOM_SOURCES
     src/ui/menu_pictures.cpp     # pictures of our own as the menu pages' sprites (palette TGA)
     src/achievements/achievements.cpp  # the Xbox 360 achievements: our own record + the notification (findings/51)
     src/ui/quit_game.cpp         # main menu "Quit Game": the game's own question, then the game closes
+    src/native/quit_launch.cpp   # PC implementations of Xbox title-lifecycle imports (findings/58)
     src/ui/main_menu_extras.cpp  # main menu "Extras": Players and Credits as a second set of items
     src/ui/window_mode.cpp       # Window Mode (windowed / borderless / fullscreen) + Monitor rows (Options -> Display)
     src/fps_overlay.cpp          # our own frame-rate counter over the picture, game font (Options -> Display)
