@@ -97,6 +97,10 @@ struct ChildOptions {
   std::filesystem::path work_folder;   // empty = the launcher's
   bool die_with_launcher = false;      // build steps (see the header)
   const Environment* environment = nullptr;  // the WHOLE environment, or null = inherit
+  // WINDOWS: the process and everything it starts run at "below normal"
+  // priority (the installer's "use fewer resources": the PC stays usable,
+  // the build takes the CPU time nothing else wants). Linux: ignored.
+  bool low_priority = false;
 };
 
 // WINDOWS: tells Windows never to slow THIS process down to save power.

@@ -19,6 +19,8 @@
 //     was minimized. Every process in a build step's job is told to opt out
 //     (FullSpeed below), the new ones as they appear (a watcher thread per
 //     step, once a second).
+//   - low_priority: BELOW_NORMAL_PRIORITY_CLASS for the step and, through the
+//     job's priority limit, for everything it starts.
 // Text: the launcher works in UTF-8; Windows calls get UTF-16 (wide).
 // =============================================================================
 #include "platform.h"
@@ -539,7 +541,8 @@ bool Child::Start(const ChildOptions& options, std::string* error) {
   const BOOL ok = CreateProcessW(
       application.c_str(), line.data(), nullptr, nullptr, TRUE,
       CREATE_SUSPENDED | CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT |
-          EXTENDED_STARTUPINFO_PRESENT | CREATE_NEW_PROCESS_GROUP,
+          EXTENDED_STARTUPINFO_PRESENT | CREATE_NEW_PROCESS_GROUP |
+          (options.low_priority ? BELOW_NORMAL_PRIORITY_CLASS : 0),
       options.environment ? env_block.data() : nullptr, work.empty() ? nullptr : work.c_str(),
       &startup.StartupInfo, &info);
   DeleteProcThreadAttributeList(attrs);
@@ -553,9 +556,14 @@ bool Child::Start(const ChildOptions& options, std::string* error) {
   }
   // The job (see the header), then let it run.
   state_->job = CreateJobObjectW(nullptr, nullptr);
-  if (state_->job && options.die_with_launcher) {
+  if (state_->job && (options.die_with_launcher || options.low_priority)) {
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
-    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (options.die_with_launcher) limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    if (options.low_priority) {
+      // Everything the step starts stays below normal too.
+      limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_PRIORITY_CLASS;
+      limits.BasicLimitInformation.PriorityClass = BELOW_NORMAL_PRIORITY_CLASS;
+    }
     SetInformationJobObject(state_->job, JobObjectExtendedLimitInformation, &limits, sizeof(limits));
   }
   if (state_->job) AssignProcessToJobObject(state_->job, info.hProcess);

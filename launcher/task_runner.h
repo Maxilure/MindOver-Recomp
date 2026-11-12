@@ -53,6 +53,8 @@ struct Command {
   // Optional: exit codes that count as success too (winget answers
   // "already installed" with 0x8A15002B instead of 0).
   std::vector<int> also_ok;
+  // Run at low priority (platform.h ChildOptions::low_priority).
+  bool low_priority = false;
   // Optional: more commands, known only once this one has finished well
   // (the SDK's libraries: their list arrives with the download). They run
   // right after it, before the rest of the list (git_parts.cpp).

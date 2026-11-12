@@ -219,7 +219,7 @@ bool Runner::RunOne(const Command& command, size_t index, size_t count, std::ofs
   platform::Child child;
   std::string start_error;
   platform::ChildOptions options{command.argv, command.work_folder, /*die_with_launcher=*/true,
-                                 command.environment.get()};
+                                 command.environment.get(), command.low_priority};
   if (!child.Start(options, &start_error)) {
     std::lock_guard lock(mutex_);
     state_.error = start_error;

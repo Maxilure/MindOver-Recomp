@@ -23,50 +23,64 @@ Activision or the game's other owners.
 > ⚠️ **Alpha:** playable, but expect bugs, crashes and rough edges. Keep a
 > copy of your `user\saves` folder.
 >
-> **You need your own disc.** The installer builds the game on your PC from
-> an `.iso` of your own Xbox 360 disc of *Crash: Mind over Mutant* (USA).
-> No game files are included.
+> **You need your own disc.** The game's files come from an `.iso` of your
+> own Xbox 360 disc of *Crash: Mind over Mutant* (USA): the installer
+> extracts them. No game files are included.
 >
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).
 
-### What's new in 0.2.2-alpha.4
+### What's new in 0.2.2-alpha.5
 
-One installer fix on top of 0.2.2-alpha.3.
+A new installer: the game is the same as in 0.2.2-alpha.4.
 
-- **The SDK's libraries download without Git's shell.** On some PCs the
-  step **"Finishing the SDK's libraries"** (or the SDK download before it)
-  stopped with **"fork: Resource temporarily unavailable"** and **exit
-  code 254**, even with no antivirus installed. The tool Git uses for
-  submodules is a script that runs in Git for Windows' own shell, and on
-  those PCs Windows stopped every program that shell tried to start. The
-  installer now fetches each of the SDK's libraries with plain Git
-  commands that don't need that shell. A download that was stopped goes on
-  where it stopped. Thanks to **[lionessbzzz](https://github.com/lionessbzzz)**
-  for the logs in [#14](https://github.com/Maxilure/MindOver-Recomp/issues/14).
-- **If another Git step ever meets that error,** the installer's message
-  says what usually causes it and what to try.
+- **The game comes ready-built.** Like other recompilation projects, the
+  release now holds the finished game program. The installer copies it in,
+  extracts your `.iso`, checks it and adds the shortcuts: an install takes a
+  minute or two, with nothing to compile and no Visual Studio, LLVM, CMake,
+  Git or Python needed (only Microsoft's Visual C++ runtime, which most PCs
+  have). Only your disc supplies the game's files, as before. This ends the
+  build failures of
+  [#17](https://github.com/Maxilure/MindOver-Recomp/issues/17),
+  [#18](https://github.com/Maxilure/MindOver-Recomp/issues/18) and
+  [#20](https://github.com/Maxilure/MindOver-Recomp/issues/20) and every
+  earlier one: nothing is built on your PC any more.
+- **Updates from inside the installed copy.** **Mind over Recomp** in the
+  Start menu looks for a new version and installs it with **Update now**:
+  the download is checked, the new version's own installer swaps the files
+  in (seconds), and your saves, settings and the disc's files stay.
+- **The previous version is kept.** An update keeps the version it replaces
+  in the game folder's `previous` folder (about 0.2 GB, one version). If an
+  update fails it's put back by itself; **Go back to …** puts it back by
+  hand.
+- **An install that was built on your PC loses its build.** The old build
+  (several GB in `source`) isn't needed any more and is removed by the
+  update.
+- **The installer finds an installed game by itself** and asks for your
+  `.iso` only when the game's disc files are missing (given anyway, they're
+  checked against it).
+- **About 8 GB free** is enough for a new install (was 15 GB).
 
 ### Install or update
 
 - **New install:** unpack the `.zip` anywhere and start
   **Mind over Recomp.exe** (if Windows warns about an unknown program:
-  **More info → Run anyway**). Pick your `.iso` and a folder (**~15 GB
-  free**, an NTFS drive, not OneDrive), then **Next: install**. The first
-  build takes a while. Then start **Crash Mind over Mutant** from the Start
+  **More info → Run anyway**). Choose **Install the game**, pick your
+  `.iso` and a folder (**~8 GB free**, an NTFS drive, not OneDrive), then
+  **Next: install**. Then start **Crash Mind over Mutant** from the Start
   menu.
-- **Already on 0.2.0, 0.2.1 or 0.2.2:** open **Mind over Recomp** from the Start
-  menu. It offers the update.
-- **Your install stopped at "Couldn't find cmake", "file INSTALL cannot
-  find", "Python was not found" or "fork: Resource temporarily
-  unavailable"?** Start this version's
-  **Mind over Recomp.exe** and install into the same folder: it carries on
-  where it stopped.
+- **Already on 0.2.0 to 0.2.2-alpha.4:** open **Mind over Recomp** from the
+  Start menu and press **Update to 0.2.2-alpha.5**. When it restarts, it
+  finishes the update by itself (it downloads the game once more). Or:
+  unpack the new `.zip`, start its **Mind over Recomp.exe** and choose
+  **Update an installed game**. Close the game first.
+- **An install that stopped partway** (any earlier error): start this
+  version's **Mind over Recomp.exe** and install into the same folder.
 - **Coming from 0.1.0:** don't use the old launcher's **Update** button.
   Follow [Updating from 0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.0-alpha#updating-from-010-alpha)
   on the 0.2.0 page.
 
-**Download:** `MindOverRecomp-0.2.2-alpha.4-windows-x86_64.zip` (Windows 10 / 11,
+**Download:** `MindOverRecomp-0.2.2-alpha.5-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` is only for the update check; you don't need it.
 
 ### Help and bug reports
@@ -80,6 +94,8 @@ One installer fix on top of 0.2.2-alpha.3.
 
 ### Changelog
 
+- [0.2.2-alpha.4](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.4):
+  the SDK's libraries download without Git's shell.
 - [0.2.2-alpha.3](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.3):
   the SDK step no longer picks Windows' Microsoft Store shortcut for Python.
 - [0.2.2-alpha.2](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.2):

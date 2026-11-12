@@ -5,8 +5,11 @@
 #include "texts.h"
 
 #include "sha256.h"
+#include "install.h"
 
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <chrono>
 #include <fstream>
 #include <sstream>
@@ -215,6 +218,9 @@ void Updater::Check() {
     }
 #endif
     release.date = Value(text, "date");
+    if (const std::string updater = Value(text, "updater"); !updater.empty()) {
+      release.updater = std::max(1, std::atoi(updater.c_str()));
+    }
     // The new version's "What's new" (see update.h), only when it is newer.
     if (!release.version.empty() && Newer(release.version, installed_)) {
       std::string notes_url = Value(text, "notes_url");
@@ -336,22 +342,13 @@ std::vector<Command> FreshInstallJob(const Release& release, const fs::path& roo
   return commands;
 }
 
-std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
-  const fs::path root = folders_.root;
-  const fs::path work = root / ".update";
-  std::vector<Command> commands;
-  AddDownload(release, root, work, &commands);
-
-  Command swap;
-  swap.title = trs("Swapping in the new version");
-  swap.function = [root, work, launcher](std::string* message) {
-    const fs::path fresh = UnpackedRelease(work);
+// THE SWAP (see the header, step 3), shared by the launcher's download and
+// the installer's update (LocalUpdateJob): `new_src` (a complete new source/)
+// takes the place of <root>/source, keeping the build state; the old one is
+// moved to <work>/old-source. Appends to *message; false = nothing swapped.
+static bool SwapSource(const fs::path& root, const fs::path& work, const fs::path& new_src, std::string* message) {
+  {
     std::error_code ec;
-    if (fresh.empty()) {
-      *message = "The download isn't a release of this port (no source/RELEASE.toml).";
-      return false;
-    }
-    const fs::path new_src = fresh / "source";
     const fs::path old_src = root / "source";
 
     // Dates: unchanged files keep the old date, changed / new ones get now.
@@ -376,10 +373,29 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     *message = std::to_string(changed) + " files changed or new, " + std::to_string(same) +
                " unchanged.\n";
 
-    // The build state moves into the new source tree.
+    // The build state moves into the new source tree. A new version WITH the
+    // build kit (buildtools/kit.txt: the SDK ships ready-built, launcher/
+    // setup.cpp "THE BUILD KIT") brings its own SDK: the old self-built one
+    // (and its download) stays behind with the old source, never over the
+    // new one. The game's build folder still moves (only what changed builds
+    // again; its configure is fresh anyway).
+    const bool new_has_kit = fs::exists(new_src / "buildtools" / "kit.txt", ec);
+    // READY-BUILT (buildtools/prebuilt.txt): the new version builds nothing,
+    // so no build state moves at all; the old source with its build (several
+    // GB) is deleted once the swap is done.
+    const bool new_prebuilt = fs::exists(new_src / "buildtools" / "prebuilt.txt", ec);
+    std::vector<const char*> parts;
+    if (!new_prebuilt) parts = {"out", "generated/default"};
+    if (new_prebuilt) {
+      *message += "the new version comes ready-built: the old build isn't kept.\n";
+    } else if (!new_has_kit) {
+      parts.push_back("thirdparty/rexglue-sdk");
+      parts.push_back("thirdparty/rexglue-install");
+    } else if (fs::exists(old_src / "thirdparty" / "rexglue-install", ec)) {
+      *message += "the new version brings its own ready-built SDK: the old one isn't kept.\n";
+    }
     bool ok = true;
-    for (const char* part : {"out", "generated/default", "thirdparty/rexglue-sdk",
-                             "thirdparty/rexglue-install"}) {
+    for (const char* part : parts) {
       ok = MoveIfThere(old_src / part, new_src / part, message) && ok;
     }
     if (!ok) {
@@ -387,6 +403,8 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
     }
     // Old out, new in.
     const fs::path retired = work / "old-source";
+    fs::remove_all(retired, ec);
+    ec.clear();
     fs::rename(old_src, retired, ec);
     if (ec) {
       *message += "couldn't move the old source/ away: " + ec.message();
@@ -398,6 +416,28 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
       *message += "couldn't put the new source/ in place";
       return false;
     }
+    // (The old source in `retired` is the caller's: LocalUpdateJob keeps it
+    // as the previous version, the others delete it with `work`.)
+    return true;
+  }
+}
+
+std::vector<Command> Updater::Job(const Release& release, const fs::path& launcher) {
+  const fs::path root = folders_.root;
+  const fs::path work = root / ".update";
+  std::vector<Command> commands;
+  AddDownload(release, root, work, &commands);
+
+  Command swap;
+  swap.title = trs("Swapping in the new version");
+  swap.function = [root, work, launcher](std::string* message) {
+    const fs::path fresh = UnpackedRelease(work);
+    std::error_code ec;
+    if (fresh.empty()) {
+      *message = "The download isn't a release of this port (no source/RELEASE.toml).";
+      return false;
+    }
+    if (!SwapSource(root, work, fresh / "source", message)) return false;
     // The launcher (replacing the running file is fine: rename) and the readme.
     for (const auto& entry : fs::directory_iterator(fresh, ec)) {
       if (!entry.is_regular_file(ec)) {
@@ -431,6 +471,178 @@ std::vector<Command> Updater::Job(const Release& release, const fs::path& launch
   };
   commands.push_back(std::move(swap));
   return commands;
+}
+
+std::vector<Command> LocalUpdateJob(const fs::path& new_source, const fs::path& root) {
+  const fs::path work = root / ".update";
+  std::vector<Command> commands;
+  Command copy;
+  copy.title = trs("Copying the new version's files");
+  copy.function = [new_source, work](std::string* message) {
+    std::error_code ec;
+    fs::remove_all(work, ec);
+    ec.clear();
+    fs::create_directories(work, ec);
+    fs::copy(new_source, work / "source", fs::copy_options::recursive, ec);
+    *message = ec ? "couldn't copy " + new_source.string() + ": " + ec.message() : "";
+    return !ec;
+  };
+  commands.push_back(std::move(copy));
+  Command swap;
+  swap.title = trs("Swapping in the new version");
+  swap.function = [root, work](std::string* message) {
+    if (!SwapSource(root, work, work / "source", message)) return false;
+    std::error_code ec;
+    // The old source/: kept as the previous version when the update keeps
+    // one (StartBackup made <root>/previous), else removed with `work`.
+    const fs::path previous = root / kPreviousFolder;
+    if (fs::is_regular_file(previous / "version.txt", ec)) {
+      fs::remove_all(previous / "source", ec);
+      ec.clear();
+      fs::rename(work / "old-source", previous / "source", ec);
+      if (ec) *message += "(the old version's files couldn't be kept: " + ec.message() + ")\n";
+    }
+    fs::remove_all(work, ec);
+    *message += "The new version's files are in place.";
+    return true;
+  };
+  commands.push_back(std::move(swap));
+  return commands;
+}
+
+// --- the self-update and the previous version (update.h) ---------------------
+
+std::vector<Command> SelfUpdateJob(const Release& release, const fs::path& root,
+                                   std::shared_ptr<fs::path> new_installer) {
+  const fs::path work = root / kDownloadFolder;
+  std::vector<Command> commands;
+  AddDownload(release, root, work, &commands);
+  Command find;
+  find.title = trs("Starting the new version's installer");
+  find.function = [work, new_installer](std::string* message) {
+    const fs::path fresh = UnpackedRelease(work);
+    std::error_code ec;
+    const fs::path exe = fresh / install::kInstallerName;
+    if (fresh.empty() || !fs::is_regular_file(exe, ec)) {
+      *message = "The download has no Mind over Recomp.exe (not a release of this port?).";
+      return false;
+    }
+    *new_installer = exe;
+    *message = exe.string();
+    // The .zip itself isn't needed any more (64 MB): only what's unpacked.
+    for (const auto& entry : fs::directory_iterator(work, ec)) {
+      if (entry.is_regular_file(ec)) fs::remove(entry.path(), ec);
+    }
+    return true;
+  };
+  commands.push_back(std::move(find));
+  return commands;
+}
+
+std::string ProgramVersion(const fs::path& root) {
+  std::string version = ReadFile(root / "program" / "version.txt");
+  while (!version.empty() && std::isspace(static_cast<unsigned char>(version.back()))) version.pop_back();
+  return version;
+}
+
+bool UnfinishedUpdate(const folders::Folders& folders) {
+  std::error_code ec;
+  if (folders.root.empty() || folders.source.empty() ||
+      !fs::is_regular_file(folders.source / "buildtools" / "prebuilt.txt", ec)) {
+    return false;
+  }
+  return ProgramVersion(folders.root) != InstalledVersion(folders);
+}
+
+bool StartBackup(const fs::path& root, const std::string& version, std::string* message) {
+  const fs::path previous = root / kPreviousFolder;
+  std::error_code ec;
+  fs::remove_all(previous, ec);
+  ec.clear();
+  fs::create_directories(previous, ec);
+  if (!ec && fs::is_regular_file(root / install::kInstallerName, ec)) {
+    fs::copy_file(root / install::kInstallerName, previous / install::kInstallerName,
+                  fs::copy_options::overwrite_existing, ec);
+  }
+  if (ec) {
+    *message = "couldn't keep the current version in " + previous.string() + ": " + ec.message();
+    fs::remove_all(previous, ec);
+    return false;
+  }
+  // version.txt LAST: its presence says "a previous version is being kept".
+  std::ofstream(previous / "version.txt") << version << "\n";
+  *message = "version " + version + " kept in " + previous.string();
+  return true;
+}
+
+std::string PreviousVersion(const fs::path& root) {
+  const fs::path previous = root / kPreviousFolder;
+  std::error_code ec;
+  if (!fs::is_directory(previous / "program", ec)) return {};
+  std::string version = ReadFile(previous / "version.txt");
+  while (!version.empty() && std::isspace(static_cast<unsigned char>(version.back()))) version.pop_back();
+  return version;
+}
+
+bool Rollback(const fs::path& root, std::string* message) {
+  const fs::path previous = root / kPreviousFolder;
+  const std::string version = PreviousVersion(root);
+  if (version.empty()) {
+    *message = "no previous version is kept";
+    return false;
+  }
+  std::error_code ec;
+  // Each part: the current one aside (<part>.bad), the kept one in; on a
+  // failure the current one goes back. source/ is optional (an update that
+  // failed before swapping it left the current one, which is still the old).
+  std::vector<std::string> swapped;
+  auto swap_in = [&](const char* part) {
+    const fs::path kept = previous / part, live = root / part, bad = root / (std::string(part) + ".bad");
+    if (!fs::exists(kept, ec)) return true;
+    fs::remove_all(bad, ec);
+    ec.clear();
+    if (fs::exists(live, ec)) fs::rename(live, bad, ec);
+    if (ec) {
+      *message += "couldn't move " + live.string() + " aside: " + ec.message() + "\n";
+      return false;
+    }
+    fs::rename(kept, live, ec);
+    if (ec) {
+      *message += "couldn't put " + kept.string() + " back: " + ec.message() + "\n";
+      std::error_code back;
+      fs::rename(bad, live, back);
+      return false;
+    }
+    swapped.push_back(part);
+    return true;
+  };
+  if (!swap_in("program") || !swap_in("source")) {
+    // Undo the parts already swapped: the install stays as it was.
+    for (const std::string& part : swapped) {
+      std::error_code undo;
+      fs::rename(root / part, previous / part, undo);
+      fs::rename(root / (part + ".bad"), root / part, undo);
+    }
+    return false;
+  }
+  // The installer: Windows can't overwrite a running exe but can rename it
+  // (this may be the running one): the current one goes to <name>.old
+  // (deleted at the next start), the kept one is copied in.
+  const fs::path exe = root / install::kInstallerName;
+  if (fs::is_regular_file(previous / install::kInstallerName, ec)) {
+    fs::path aside = exe;
+    aside += ".old";
+    fs::remove(aside, ec);
+    ec.clear();
+    if (fs::exists(exe, ec)) fs::rename(exe, aside, ec);
+    ec.clear();
+    fs::copy_file(previous / install::kInstallerName, exe, fs::copy_options::overwrite_existing, ec);
+    if (ec) *message += "couldn't put the old Mind over Recomp.exe back: " + ec.message() + "\n";
+  }
+  for (const std::string& part : swapped) fs::remove_all(root / (part + ".bad"), ec);
+  fs::remove_all(previous, ec);
+  *message += "version " + version + " is back in place.";
+  return true;
 }
 
 }  // namespace update

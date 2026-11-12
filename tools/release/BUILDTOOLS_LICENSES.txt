@@ -1,0 +1,22 @@
+Build tools that come with Mind over Recomp's Windows release
+=============================================================
+
+The installer builds the game on your PC from your own disc. To make that
+work the same way on every PC, the release brings the tools the build runs
+(source/buildtools/) and the ReXGlue SDK already built
+(source/thirdparty/rexglue-install/). Each one is used unchanged, under its
+own licence:
+
+  cmake/    CMake, Kitware            BSD 3-Clause         https://cmake.org
+  ninja/    Ninja                     Apache 2.0           https://ninja-build.org
+  glslc/    glslc (shaderc), from     Apache 2.0           https://github.com/google/shaderc
+            LunarG's Vulkan SDK                            https://vulkan.lunarg.com
+  python/   Python (embeddable        PSF License 2.0      https://www.python.org
+            package)
+  ../thirdparty/rexglue-install/
+            ReXGlue SDK + its         BSD 3-Clause (SDK);  https://github.com/rexglue/rexglue-sdk
+            libraries, built with     each library its own
+            Mind over Recomp's        licence (see its
+            patches                   share/ folders)
+
+Licence texts: cmake/doc/, python/LICENSE.txt, and on each project's site.

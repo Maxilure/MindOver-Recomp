@@ -126,6 +126,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(tr -d '[:space:]' < VERSION.txt)
+          # Since 0.2.2-alpha.5 releases come READY-BUILT: packed by hand (the
+          # game is built on a PC with the disc; this workflow can't) and
+          # published with `gh release create`, which also makes the tag.
+          # Then there's nothing to draft: never a second release.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "A release for ${GITHUB_REF_NAME} exists (the ready-built one): no draft."
+            exit 0
+          fi
           # NOT marked "pre-release" even for -alpha versions: GitHub's
           # releases/latest link (the launchers' update feed) skips those.
           gh release create "${GITHUB_REF_NAME}" --draft \

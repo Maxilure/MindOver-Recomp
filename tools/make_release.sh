@@ -56,12 +56,18 @@ allow_dirty=0
 out_base=out/release
 system_override=""
 launcher_file=""
+program_dir=""  # --program: a Windows game build folder (READY-BUILT release, below)
+python_dir=""   # --python: Python's embeddable package (with --program)
+kit_dir=""   # --kit: the Windows build kit (release workflow, job windows-sdk)
 while [ $# -gt 0 ]; do
   case "$1" in
     --allow-dirty) allow_dirty=1 ;;
     --out) out_base=$2; shift ;;
     --system) system_override=$2; shift ;;
     --launcher) launcher_file=$2; shift ;;
+    --kit) kit_dir=$2; shift ;;
+    --program) program_dir=$2; shift ;;
+    --python) python_dir=$2; shift ;;
     *) echo "unknown option $1"; exit 1 ;;
   esac
   shift
@@ -158,6 +164,62 @@ sdk_tag = "$sdk_tag"
 sdk_commit = "$sdk_commit"
 EOF
 
+# 2b. THE BUILD KIT (Windows, launcher/setup.cpp "THE BUILD KIT"): the SDK
+#     already built + patched by GitHub Actions (thirdparty/rexglue-install,
+#     with share/mindoverrecomp/prebuilt.txt and sdk-headers/) and our pinned
+#     tools (buildtools/cmake, ninja, glslc, python). The player's PC then
+#     builds only the game, with nothing taken from its own PATH.
+if [ -n "$kit_dir" ]; then
+  for need in rexglue-install/share/mindoverrecomp/prebuilt.txt buildtools/cmake/bin/cmake.exe \
+              buildtools/ninja/ninja.exe buildtools/glslc/glslc.exe buildtools/python/python.exe; do
+    [ -f "$kit_dir/$need" ] || { echo "The kit has no $need"; exit 1; }
+  done
+  echo "== Adding the build kit ($(du -sh "$kit_dir" | cut -f1))"
+  mkdir -p "$stage/source/thirdparty"
+  cp -a "$kit_dir/rexglue-install" "$stage/source/thirdparty/rexglue-install"
+  cp -a "$kit_dir/buildtools" "$stage/source/buildtools"
+  cat > "$stage/source/buildtools/kit.txt" <<EOF
+The build kit of Mind over Recomp $version: the SDK ($sdk_tag + our patches) is
+ready-built in thirdparty/rexglue-install, and this folder holds the CMake,
+Ninja, glslc and Python every build step uses. Made by GitHub Actions.
+EOF
+fi
+
+# 2c. READY-BUILT (Windows, launcher/setup.cpp "READY-BUILT"; what Unleashed
+#     Recompiled and Zelda 64: Recompiled do): program/ = the game already
+#     built (on a PC with the disc: the build needs default.xex, which never
+#     goes online), next to the installer. Only the build's OWN files: the
+#     exe (installed name), the SDK's DLLs, the exe's .pdb (crash reports),
+#     assets/ and languages/. Never the icon (crash_mom.ico/.png are made
+#     from the player's disc) and never anything from game/.
+if [ -n "$program_dir" ]; then
+  [ -n "$python_dir" ] && [ -f "$python_dir/python.exe" ] || { echo "--program needs --python <embeddable Python folder>"; exit 1; }
+  [ -f "$program_dir/crash_mom.exe" ] || { echo "$program_dir has no crash_mom.exe"; exit 1; }
+  echo "== Adding the ready-built game from $program_dir"
+  p="$stage/program"
+  mkdir -p "$p"
+  cp "$program_dir/crash_mom.exe" "$p/Crash Mind over Mutant.exe"
+  cp "$program_dir/crash_mom.pdb" "$p/"
+  for f in "$program_dir"/*.dll; do cp "$f" "$p/"; done
+  cp -r "$program_dir/assets" "$p/assets"
+  [ -d "$program_dir/languages" ] && cp -r "$program_dir/languages" "$p/languages"
+  # The game's own version: the installed Mind over Recomp compares it with
+  # source/RELEASE.toml and finishes an update an older updater left half
+  # done (launcher/update.h UnfinishedUpdate).
+  echo "$version" > "$p/version.txt"
+  if find "$p" -iname '*.ico' -o -iname 'crash_mom.png' -o -iname '*.xex' -o -iname '*.rcf' | grep -q .; then
+    echo "program/ holds game-derived files: refused"; exit 1
+  fi
+  mkdir -p "$stage/source/buildtools"
+  cp -r "$python_dir" "$stage/source/buildtools/python"
+  cp tools/release/BUILDTOOLS_LICENSES.txt "$stage/source/buildtools/LICENSES.txt"
+  cat > "$stage/source/buildtools/prebuilt.txt" <<EOF
+Mind over Recomp $version comes READY-BUILT: program/ next to the installer
+is the game already built, and the installer copies it in. Nothing is
+compiled on this PC. python/ runs the disc tools (tools/xiso_extract.py).
+EOF
+fi
+
 # 3. The readme, with the version filled in.
 readme=tools/release/READ_ME_FIRST.txt
 [ $system = windows ] && readme=tools/release/READ_ME_FIRST_windows.txt
@@ -201,6 +263,10 @@ EOF
 {
   echo "# The update feed of Mind over Recomp (launcher/update.h)."
   echo "version = \"$version\""
+  # The self-update's promise (launcher/update.h kUpdaterVersion): raise it
+  # only when a release changes what an installed Mind over Recomp must do to
+  # update itself; older ones then send players to the manual download.
+  echo "updater = 1"
   echo "date = \"$(date -u +%Y-%m-%d)\""
   cat "$out"/feed-*.toml
 } > "$out/release.toml"

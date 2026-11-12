@@ -22,13 +22,19 @@
 //   4. ReXGlue SDK   our patches applied to the submodule, checked as a stack
 //                    (git apply --check, all reversed / all forward; 0013
 //                    builds on 0009): all or none, a partly patched tree is
-//                    reported, not touched; then
-//                    configured and installed (Release + RelWithDebInfo) into
+//                    reported, not touched (a release's own download with
+//                    an OLDER set, after an update, gets the new set written
+//                    into only the files whose content changes:
+//                    RefreshPatchedFiles); then configured and installed
+//                    (RelWithDebInfo only since 2026-11-08: SDK patch 0019
+//                    installs the recompiler from it too; it used to be a
+//                    whole second Release build) into
 //                    thirdparty/rexglue-install; "out of date" when a patch
 //                    is newer than the installed runtime
 //   5. The game      configure, recompile (codegen), configure again (first
 //                    time), compile with -j from the RAM FREE at the start
-//                    (2.5 GB per job; the SDK 1 GB per job);
+//                    (2.5 GB per job, at most cores - 1; "use fewer
+//                    resources": half the cores, low priority; the SDK 1 GB per job);
 //                    "out of date" when src/, the manifest or the SDK is newer
 //                    than the exe. Refused while the game runs (the build
 //                    replaces the libraries a running game has loaded).
@@ -109,6 +115,19 @@ struct Status {
   std::shared_ptr<const platform::Environment> build_env;
 };
 
+// THE INSTALLER'S CHOICE (2026-11-08): "use fewer resources while
+// building": half the cores, low priority (the PC stays usable, the build is
+// slower). Off = as fast as the PC allows with one core left free. Read when
+// a build step is made (JobsFor in setup.cpp, UseBuildEnvironment).
+void SetLimitedResources(bool limited);
+bool LimitedResources();
+
+// The update's disc check: game\ (`disc`) compared with the player's .iso,
+// missing or wrong-sized files copied again (setup.cpp). `source` = the
+// install's source\ folder (its tools/xiso_extract.py).
+task_runner::Command DiscRepairCommand(const std::filesystem::path& iso, const std::filesystem::path& source,
+                                       const std::filesystem::path& disc);
+
 class Setup {
  public:
   // `feed` = the update feed ("" = GitHub's, update.h); `launcher` = this
@@ -158,7 +177,8 @@ class Setup {
   static std::vector<task_runner::Command> ToolsJob(const Status& status);
   // Step 1 alone (no game folder needed: the installer's first page). Slow
   // (a few tool calls): run it off the UI thread.
-  static Status CheckToolsOnly();
+  // `release_source` = a release's source/ folder (its build kit, setup.cpp Kit).
+  static Status CheckToolsOnly(const std::filesystem::path& release_source = {});
   // The game's icon from the player's disc into program/ (+ into the exe on
   // Windows): part of GameJob, and run by the installer for a folder whose
   // game was built before the icon existed. Never fails.

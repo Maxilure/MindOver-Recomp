@@ -124,6 +124,13 @@ void CopyOldFile(const fs::path& old_file, const fs::path& new_file) {
 void Configure(rex::PathConfig& paths) {
   g_root = FindGameFolder();
   g_user = g_root / "user";
+  // A finished self-update's download (launcher/update.h SelfUpdateJob):
+  // the installer ran from it, so it couldn't remove it itself. Ours only
+  // (the name), and nothing in it is needed once the game runs.
+  {
+    std::error_code ec;
+    if (fs::is_directory(g_root / ".download", ec)) fs::remove_all(g_root / ".download", ec);
+  }
 
   if (!Writable(g_user)) {
     // No quiet fallback (game_folder.h). Logging isn't up yet, so a real
