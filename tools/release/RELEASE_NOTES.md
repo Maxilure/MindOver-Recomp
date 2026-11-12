@@ -68,14 +68,6 @@ Activision or the game's other owners.
   shows its own doll. The counter ("1/13") sits on the card's right, and
   long messages scroll. **Options → Display → HUD → Messages: Original**
   brings back the game's wide bar.
-- **Installer: "Use fewer resources while building".** It uses half the
-  processor at low priority so the PC stays usable, but the build is
-  slower. Unchecked, the build uses all cores but one, and no more at once
-  than the free memory allows.
-- **Installer: time shown.** The window shows the installer's version, how
-  long the install has been running and, at the end, how long it took. If
-  it runs longer than usual, a note suggests closing heavy programs
-  meanwhile.
 
 **Also in this version:** every fix of
 [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha)
@@ -91,48 +83,14 @@ installer's title) and of
 installer's check found) and of
 [0.2.2-alpha.4](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.4)
 (the SDK's libraries download without Git's shell, with advice if another
-Git step can't start its helpers).
+Git step can't start its helpers) and the new installer of
+[0.2.2-alpha.5](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.5)
+(the game comes ready-built: installs in a minute or two, updates from
+inside the installed copy with **Update now**, the previous version kept
+and put back when an update fails).
 
 **Changes**
 
-- **A faster, simpler installer.** A fresh install now takes about 20
-  minutes on a mid-range PC, and an update a few minutes.
-  - **Two choices at the start: Install the game or Update an installed
-    game.** To update, download the new release, start its
-    **Mind over Recomp.exe**: it finds the installed game by itself and shows
-    the installed version and the new one. Your saves and settings are kept.
-    Picking the same version repairs the install.
-  - **Given your `.iso`, the update checks the game's disc files against
-    it** and copies again only the missing or damaged ones (the `.iso` is
-    needed only when the `game` folder is gone).
-  - **Updates from inside the installed copy.** Mind over Recomp (Start
-    menu) looks for a new version and installs it with **Update now**: the
-    download is checked, the new version's own installer does the swap, and
-    the version it replaces is kept. A failed update puts it back by itself;
-    **Go back to <version>** does it by hand. Installs older than 0.3.0
-    update the manual way this once (the new release's installer).
-  - **The game comes ready-built.** Like other recompilation projects,
-    the release now holds the finished game program. The installer only
-    copies it in, extracts your `.iso`, checks it and adds the shortcuts:
-    an install takes a minute or two and an update seconds, with nothing to
-    compile and no Visual Studio, LLVM, CMake, Git or Python needed. Only
-    your disc supplies the game's files, as before.
-  - **Building from source got sturdier too: the SDK comes ready-built, and the
-    release brings its own build tools.** The ReXGlue SDK is now built once by GitHub, with the port's
-    fixes, and shipped in the `.zip`, together with the CMake, Ninja, glslc
-    and Python the build uses. Your PC only needs LLVM and Visual Studio's
-    C++ tools (the installer gets both), and it builds only the game. Every
-    build step runs with only those tools on its PATH, so other programs on
-    the PC (devkitPro, MSYS2, the Microsoft Store's Python shortcut, other
-    CMake or Git copies) can't get in the way any more, and a failed try
-    leaves nothing behind that breaks the next one. This fixes the SDK step
-    failures in
-    [#17](https://github.com/Maxilure/MindOver-Recomp/issues/17),
-    [#18](https://github.com/Maxilure/MindOver-Recomp/issues/18) and
-    [#20](https://github.com/Maxilure/MindOver-Recomp/issues/20).
-  - **The installer uses the files from its own `.zip`:** unpack the whole
-    `.zip` before starting it, or it says so. (Only the installed copy's
-    **Update now** downloads, and it checks the download first.)
 - **Button styles named after their controllers.** In **Options → Controls
   → Controller Icons** and on the **Players** screen: **DualSense**
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**
@@ -154,11 +112,10 @@ Git step can't start its helpers).
   `.iso` and a folder (**~8 GB free**, an NTFS drive, not OneDrive), then
   **Next: install**. It takes a minute or two. Then start
   **Crash Mind over Mutant** from the Start menu.
-- **Already installed (0.1.0 to 0.2.2):** unpack the new `.zip`, start its
-  **Mind over Recomp.exe** and choose **Update an installed game** (it finds
-  the game by itself). Close the game first. This is the last update done
-  this way: from 0.3.0 on, **Mind over Recomp** in the Start menu shows
-  **Update now** when a new version is out.
+- **Already installed (0.2.2-alpha.5 or later):** open **Mind over Recomp**
+  from the Start menu and press **Update now**. Older installs: the
+  **Update to …** button there, or the new release's installer (**Update an
+  installed game**). Close the game first.
 
 **Download:** `MindOverRecomp-0.3.0-alpha-windows-x86_64.zip` (Windows 10 / 11,
 64-bit). `release.toml` only tells older versions that an update exists;
@@ -175,6 +132,9 @@ you don't need it.
 
 ### Changelog
 
+- [0.2.2-alpha.5](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.5):
+  the game comes ready-built (installs in a minute or two), updates from
+  inside the installed copy, the previous version kept.
 - [0.2.2-alpha.4](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha.4):
   installer fix (the SDK's libraries download without Git's shell, which
   can't start programs on some PCs).

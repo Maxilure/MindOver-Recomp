@@ -203,6 +203,10 @@ if [ -n "$program_dir" ]; then
   for f in "$program_dir"/*.dll; do cp "$f" "$p/"; done
   cp -r "$program_dir/assets" "$p/assets"
   [ -d "$program_dir/languages" ] && cp -r "$program_dir/languages" "$p/languages"
+  # The game's own version: the installed Mind over Recomp compares it with
+  # source/RELEASE.toml and finishes an update an older updater left half
+  # done (launcher/update.h UnfinishedUpdate).
+  echo "$version" > "$p/version.txt"
   if find "$p" -iname '*.ico' -o -iname 'crash_mom.png' -o -iname '*.xex' -o -iname '*.rcf' | grep -q .; then
     echo "program/ holds game-derived files: refused"; exit 1
   fi

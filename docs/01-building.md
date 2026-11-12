@@ -381,7 +381,7 @@ out/release/<version>/
   release.toml                    the update feed: version, archive, SHA-256
 ```
 
-**Ready-built Windows releases** (since 0.3.0; `launcher/setup.cpp`
+**Ready-built Windows releases** (since 0.2.2-alpha.5; `launcher/setup.cpp`
 "READY-BUILT"; what Unleashed Recompiled and Zelda 64: Recompiled do). The
 `.zip` holds `program/` with the game already built, next to the installer,
 plus `source/buildtools/python/` (Python's embeddable package, for the disc

@@ -122,7 +122,7 @@ fix the 0.2.0 files by hand instead, on Windows:
 
 ### Not enough free space
 
-The disc's files need about 6.5 GB. On Windows (0.3.0 and later, ready-built)
+The disc's files need about 6.5 GB. On Windows (0.2.2-alpha.5 and later, ready-built)
 the installer asks for about 8 GB free; a finished install is about 6.5 GB,
 plus ~0.2 GB for the previous version an update keeps. Building from source
 (Linux, older Windows versions) grows the folder to roughly 25 GB. Your `.iso` can be deleted
@@ -174,7 +174,7 @@ release can be installed from **Mind over Recomp** in the Start menu
 (**Update now**), or with the new release's installer.
 The game's settings are in the game itself (**Options**).
 
-Since 0.3.0 the release comes READY-BUILT: the installer copies the
+Since 0.2.2-alpha.5 the release comes READY-BUILT: the installer copies the
 finished game in, extracts your `.iso` and adds the shortcuts. Nothing is
 compiled on your PC, so no build tools are needed. Entries below about
 CMake, Git, Python, Visual Studio or the SDK step are for older installers:
@@ -288,7 +288,7 @@ Try these in order, and run the step again after each:
    (Mandatory ASLR)** is **On by default**, set it to **Off by default**
    (Git's shell can't run with it forced on), restart, and try again.
 
-Installers from 0.3.0-alpha on no longer use Git's shell to download the
+Installers from 0.2.2-alpha.4 on no longer use Git's shell to download the
 SDK's libraries (each one is fetched with plain Git commands), so this error
 should not come back there. Older installers: the steps above.
 
@@ -566,7 +566,7 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 
 ### Updating
 
-* **Windows, 0.3.0 and later:** open **Mind over Recomp** from the Start
+* **Windows, 0.2.2-alpha.5 and later:** open **Mind over Recomp** from the Start
   menu. It looks for a new version by itself; press **Update now**. It
   downloads the new release, checks that the download isn't damaged, and the
   new version's installer takes over and swaps the files in (seconds). Your
@@ -574,8 +574,11 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
   The version it replaces is kept in the game folder's `previous` folder: if
   the update fails, it's put back by itself, and **Go back to <version>**
   puts it back by hand (for an update that installed fine but plays badly).
-* **Windows, the manual way** (installs older than 0.3.0, or when **Update
-  now** can't): download the new release's `.zip`, unpack it, start its
+* **Windows, 0.2.0 to 0.2.2-alpha.4:** the same place shows **Update to …**.
+  It installs the new version's files, then the new Mind over Recomp sees
+  that the game itself is still the old one and finishes the update by
+  itself (a second download), removing the old build (several GB).
+* **Windows, the manual way** (when the buttons can't): download the new release's `.zip`, unpack it, start its
   **Mind over Recomp.exe** and choose **Update an installed game**. It finds
   the install listed in *Installed apps* by itself. The disc image is only
   needed when the `game` folder is gone; given anyway, the game's files are
@@ -595,7 +598,7 @@ were, as a backup. Delete the old folders once you're happy with the new ones.
 
 ### The install is very slow (hours)
 
-Since 0.3.0 an install takes a minute or two (nothing is built). This entry
+Since 0.2.2-alpha.5 an install takes a minute or two (nothing is built). This entry
 is for building from source and older installers. A first build is usually
 20-60 minutes. When it takes much longer:
 

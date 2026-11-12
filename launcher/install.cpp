@@ -394,7 +394,8 @@ bool RemoveInstall(const fs::path& root, bool keep_user,
   }
   // ONLY what the installer, the build and the game make (install.h).
   std::vector<std::wstring> parts = {L"source", L"program", L"game", L"cache", L".update",
-                                     L".install", L"program.new", L"READ ME FIRST.txt", Wide(kMarkerName),
+                                     L".install", L"program.new", L"previous", L".download",
+                                     L"program.bad", L"source.bad", L"READ ME FIRST.txt", Wide(kMarkerName),
                                      Wide(kInstallerName), Wide(kInstallerName) + L".old"};
   if (!keep_user) parts.push_back(L"user");
   const std::wstring base = LongPath(root);
@@ -410,6 +411,14 @@ bool RemoveInstall(const fs::path& root, bool keep_user,
     *error = trf(trs("Some files couldn't be removed (is the game still running?), e.g. {0}"),
                  {fs::path(failed.starts_with(L"\\\\?\\") ? failed.substr(4) : failed).string()});
   }
+  return ok;
+}
+
+bool RemovePath(const fs::path& path, std::string* failed) {
+  uint64_t files = 0;
+  std::wstring stayed;
+  const bool ok = RemoveTree(LongPath(path), &files, {}, &stayed);
+  if (!ok && failed) *failed = fs::path(stayed.starts_with(L"\\\\?\\") ? stayed.substr(4) : stayed).string();
   return ok;
 }
 
@@ -520,6 +529,12 @@ void ForgetCMakePackages(const fs::path&) {}
 bool RelaunchFromTemp(const std::vector<std::string>&) { return false; }
 bool RunningFromTemp() { return false; }
 void DeleteSelfAfterExit() {}
+bool RemovePath(const fs::path& path, std::string* failed) {
+  std::error_code ec;
+  fs::remove_all(path, ec);
+  if (ec && failed) *failed = path.string();
+  return !ec;
+}
 bool StartDetached(const fs::path&, const fs::path&) { return false; }
 
 }  // namespace install

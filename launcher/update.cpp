@@ -539,6 +539,21 @@ std::vector<Command> SelfUpdateJob(const Release& release, const fs::path& root,
   return commands;
 }
 
+std::string ProgramVersion(const fs::path& root) {
+  std::string version = ReadFile(root / "program" / "version.txt");
+  while (!version.empty() && std::isspace(static_cast<unsigned char>(version.back()))) version.pop_back();
+  return version;
+}
+
+bool UnfinishedUpdate(const folders::Folders& folders) {
+  std::error_code ec;
+  if (folders.root.empty() || folders.source.empty() ||
+      !fs::is_regular_file(folders.source / "buildtools" / "prebuilt.txt", ec)) {
+    return false;
+  }
+  return ProgramVersion(folders.root) != InstalledVersion(folders);
+}
+
 bool StartBackup(const fs::path& root, const std::string& version, std::string* message) {
   const fs::path previous = root / kPreviousFolder;
   std::error_code ec;

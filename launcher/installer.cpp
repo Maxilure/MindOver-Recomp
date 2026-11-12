@@ -257,6 +257,36 @@ std::optional<Command> ProgramCopyCommand(const fs::path& root) {
   return copy;
 }
 
+// A READY-BUILT install keeps no build: an install that was built on this PC
+// (0.2.x) still has its build in source\ (several GB: out\, the recompiled
+// code, the SDK and its download), and an update keeps the old source\ as
+// the previous version. Both are pruned. Only those folders, and only when
+// the installed port's files are a ready-built release.
+Command PruneOldBuildCommand(const fs::path& root) {
+  Command prune;
+  prune.title = trs("Removing the old build (not needed any more)");
+  prune.function = [root](std::string* message) {
+    std::error_code ec;
+    if (!fs::is_regular_file(root / "source" / "buildtools" / "prebuilt.txt", ec)) return true;
+    int removed = 0;
+    for (const fs::path base : {root / "source", root / update::kPreviousFolder / "source"}) {
+      for (const char* part : {"out", "generated", "thirdparty/rexglue-sdk", "thirdparty/rexglue-install"}) {
+        const fs::path path = base / part;
+        if (!fs::exists(path, ec)) continue;
+        std::string failed;
+        if (install::RemovePath(path, &failed)) {
+          ++removed;
+        } else {
+          *message += "couldn't remove all of " + path.string() + " (" + failed + ")\n";
+        }
+      }
+    }
+    *message += std::to_string(removed) + " old build folders removed.";
+    return true;  // leftovers only cost space
+  };
+  return prune;
+}
+
 // Puts this exe into the game folder as "Mind over Recomp.exe". The one
 // there may be RUNNING (the self-update's old Mind over Recomp, still waiting
 // for this one): Windows can't overwrite a running exe but can rename it, so
@@ -506,6 +536,9 @@ struct App {
   bool show_notes = false;
   // "Go back to <previous version>" asks first.
   bool confirm_go_back = false;
+  // Started by an old updater (--after_update): an unfinished update is
+  // finished without a press.
+  bool finish_on_start = false;
 
   // --- UNINSTALL -----------------------------------------------------------------
   bool keep_user = true;
@@ -1077,7 +1110,10 @@ void App::StartFiles() {
     };
     commands.push_back(std::move(copy));
   }
-  if (auto program = ProgramCopyCommand(root)) commands.push_back(std::move(*program));
+  if (auto program = ProgramCopyCommand(root)) {
+    commands.push_back(std::move(*program));
+    commands.push_back(PruneOldBuildCommand(root));
+  }
   if (updating && !update_needs_disc && !iso.empty()) {
     // The update's disc check (after the swap: the new source's extractor).
     // With game\ gone, Setup's disc step extracts it all instead.
@@ -1464,6 +1500,29 @@ void App::DrawManageUpdates(bool busy) {
     if (ImGui::Button(trs("Open the releases page"))) SDL_OpenURL(kReleases);
   };
   self_update_runner.Copy(self_update_job);
+  update::Release latest;
+  bool available = false;
+  std::string error;
+  const bool known = updater && updater->Latest(&latest, &available, &error);
+  const std::string installed = update::InstalledVersion(folders);
+  // AN UNFINISHED UPDATE (update.h): finished like an update, from the
+  // newest release (the same version, or a newer one). Right away when this
+  // program was just put in by an old updater (--after_update).
+  const bool unfinished = update::UnfinishedUpdate(folders);
+  const bool can_finish = unfinished && known && !update::Newer(installed, latest.version) &&
+                          latest.updater <= update::kUpdaterVersion;
+  auto start_download = [&] {
+    *new_installer = fs::path();
+    self_update_runner.Forget();
+    self_update_runner.Start(trf(trs("Downloading version {0}"), {latest.version}),
+                             update::SelfUpdateJob(latest, folders.root, new_installer),
+                             folders.root / "user" / "logs" / ("self-update-" + Stamp() + ".log"));
+  };
+  if (can_finish && finish_on_start && self_update_job.state == State::kIdle && !busy && !GameRunning()) {
+    finish_on_start = false;
+    start_download();
+    self_update_runner.Copy(self_update_job);
+  }
   // Downloaded and unpacked: the new installer takes over (this one quits).
   if (self_update_job.state == State::kDone && !new_installer->empty()) {
     std::vector<std::string> args = {"--update_window=" + folders.root.string()};
@@ -1487,10 +1546,28 @@ void App::DrawManageUpdates(bool busy) {
     manual();
     return;
   }
-  update::Release latest;
-  bool available = false;
-  std::string error;
-  const bool known = updater && updater->Latest(&latest, &available, &error);
+  if (unfinished) {
+    ImGui::PushFont(fonts.bold, 0.0f);
+    ImGui::TextColored(kWarn, "%s", trs("The update isn't finished: the game itself is still the earlier version."));
+    ImGui::PopFont();
+    if (can_finish) {
+      MutedText(trs("It gets the rest from GitHub. Saves and settings stay."));
+      ImGui::BeginDisabled(busy || GameRunning());
+      if (AccentButton(trs("Finish the update"))) start_download();
+      ImGui::EndDisabled();
+      if (GameRunning()) {
+        ImGui::SameLine();
+        ImGui::TextColored(kWarn, "%s", trs("(close the game first)"));
+      }
+      return;
+    }
+    if (!updater || updater->checking()) {
+      ImGui::TextDisabled("%s", trs("Looking for a new version..."));
+      return;
+    }
+    manual();
+    return;
+  }
   if (!updater || updater->checking()) {
     ImGui::TextDisabled("%s", trs("Looking for a new version..."));
   } else if (!known) {
@@ -1515,13 +1592,7 @@ void App::DrawManageUpdates(bool busy) {
     MutedText(trs("Your saves, settings and the disc's files stay. The current version is kept: if the "
                   "update fails it's put back by itself."));
     ImGui::BeginDisabled(busy || GameRunning());
-    if (AccentButton(trs("Update now"))) {
-      *new_installer = fs::path();
-      self_update_runner.Forget();
-      self_update_runner.Start(trf(trs("Downloading version {0}"), {latest.version}),
-                               update::SelfUpdateJob(latest, folders.root, new_installer),
-                               folders.root / "user" / "logs" / ("self-update-" + Stamp() + ".log"));
-    }
+    if (AccentButton(trs("Update now"))) start_download();
     ImGui::EndDisabled();
     if (GameRunning()) {
       ImGui::SameLine();
@@ -1900,7 +1971,9 @@ int main(int argc, char** argv) {
     }
     std::printf("== installed %s, newest %s (updater %d, ours %d)\n", check.installed().c_str(),
                 latest.version.c_str(), latest.updater, update::kUpdaterVersion);
-    if (!available) std::_Exit(0);
+    const bool unfinished = update::UnfinishedUpdate(found);
+    if (unfinished) std::printf("== unfinished update: the game is %s\n", update::ProgramVersion(found.root).c_str());
+    if (!available && !(unfinished && !update::Newer(check.installed(), latest.version))) std::_Exit(0);
     if (latest.updater > update::kUpdaterVersion) {
       std::printf("self_update: that release needs the manual way\n");
       std::_Exit(2);
@@ -1959,6 +2032,7 @@ int main(int argc, char** argv) {
     }
     if (auto program = ProgramCopyCommand(found.root)) {
       if (!RunPrinted("program", {std::move(*program)}, log)) failed();
+      RunPrinted("prune", {PruneOldBuildCommand(found.root)}, log);
     }
     if (std::string error; !CopySelfInto(found.root, &error)) std::printf("== %s\n", error.c_str());
     std::error_code ec;
@@ -2063,6 +2137,7 @@ int main(int argc, char** argv) {
     app->setup = std::make_unique<setup::Setup>(found, feed, found.root / install::kInstallerName,
                                                 after_update);
     app->was_setting_up = after_update;
+    app->finish_on_start = after_update;
     app->desktop = false;  // a refresh never adds a desktop shortcut the player didn't keep
     // A finished self-update's download (its installer has quit by now, or
     // it's still open: then what's in use stays until the next start).

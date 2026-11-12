@@ -321,7 +321,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(tr -d '[:space:]' < VERSION.txt)
-          # Releases come READY-BUILT since 0.3.0: that .zip is packed by
+          # Releases come READY-BUILT since 0.2.2-alpha.5: that .zip is packed by
           # hand (the game is built on a PC with the disc; this workflow
           # can't) and published with `gh release create`, which also makes
           # the tag. Then this job has nothing to do: never a second release.

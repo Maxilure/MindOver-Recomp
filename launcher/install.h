@@ -109,6 +109,12 @@ void MarkInstalled(const std::filesystem::path& root);
 bool RemoveInstall(const std::filesystem::path& root, bool keep_user,
                    const std::function<void(uint64_t)>& progress, std::string* error);
 
+// Removes one file or folder tree the way RemoveInstall does (links as
+// links, read-only files, long paths: an old build's SDK download has
+// read-only Git files that std::filesystem::remove_all can't delete).
+// False + the first path that stayed in *failed.
+bool RemovePath(const std::filesystem::path& path, std::string* failed);
+
 // The SDK's build registers itself in CMake's per-user package list
 // (HKCU\Software\Kitware\CMake\Packages\rexglue); entries pointing into
 // `root` are removed.

@@ -138,6 +138,18 @@ std::string PreviousVersion(const std::filesystem::path& root);
 // with renames and put back on a failure).
 bool Rollback(const std::filesystem::path& root, std::string* message);
 
+// THE GAME'S OWN VERSION (ready-built releases): program/version.txt,
+// written by tools/make_release.sh --program ("" = none: a game built on
+// this PC, or one from before 0.2.2-alpha.5).
+std::string ProgramVersion(const std::filesystem::path& root);
+// AN UNFINISHED UPDATE: the port's files are a ready-built release
+// (source/buildtools/prebuilt.txt) but program/ isn't that version's game.
+// It happens when a 0.2.x install's OLD in-app updater installs a ready-built
+// release: that updater only knew source/ and the installer, so the new
+// program/ was left in its download folder and deleted. The installed Mind
+// over Recomp then finishes it (the self-update, same version: a repair).
+bool UnfinishedUpdate(const folders::Folders& folders);
+
 // a newer than b? (see the header)
 bool Newer(const std::string& a, const std::string& b);
 

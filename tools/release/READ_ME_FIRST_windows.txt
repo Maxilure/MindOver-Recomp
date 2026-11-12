@@ -33,7 +33,7 @@ Updates: open "Mind over Recomp" from the Start menu. It looks for a new
 version by itself: press "Update now". Your saves and settings stay, and
 the version it replaces is kept: if the update fails it's put back by
 itself ("Go back to ..." does it by hand).
-The manual way (an install older than 0.3.0, or when "Update now" can't):
+The manual way (when the buttons can't):
 download the new release, start its "Mind over Recomp.exe" and choose
 "Update an installed game"; it finds the installed game by itself.
 Uninstalling: "Mind over Recomp" in the Start menu, or Windows' "Installed
@@ -80,8 +80,7 @@ Atualizar: abra o "Mind over Recomp" no menu Iniciar. Ele procura uma
 versão nova sozinho: clique em "Atualizar agora". Seus saves e
 configurações ficam, e a versão substituída é guardada: se a atualização
 falhar, ela volta sozinha.
-O jeito manual (uma instalação anterior à 0.3.0, ou quando "Atualizar
-agora" não dá): baixe a nova versão, abra o "Mind over Recomp.exe" dela e
+O jeito manual (quando os botões não dão): baixe a nova versão, abra o "Mind over Recomp.exe" dela e
 escolha "Atualizar um jogo instalado"; ele encontra o jogo instalado
 sozinho.
 Desinstalar: "Mind over Recomp" no menu Iniciar, ou em "Aplicativos

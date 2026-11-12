@@ -123,7 +123,7 @@ It needs a **Vulkan** graphics card (only NVIDIA tested so far) and **16 GB RAM*
 2. Choose **Install the game**, pick your `.iso` and a folder, then **Next: install**. It takes a minute or two.
 3. Play **Crash Mind over Mutant** from the Start menu.
 
-**Updating (Windows):** open **Mind over Recomp** from the Start menu and press **Update now** when it shows a new version. Saves and settings stay; the version it replaces is kept and put back by itself if the update fails. Installs older than 0.3.0 update the manual way once: the new release's **Mind over Recomp.exe** → **Update an installed game**. Uninstall from **Mind over Recomp** or Windows' *Installed apps*.
+**Updating (Windows):** open **Mind over Recomp** from the Start menu and press **Update now** when it shows a new version. Saves and settings stay; the version it replaces is kept and put back by itself if the update fails. On 0.2.0 to 0.2.2-alpha.4 it's the **Update to …** button there; it finishes by itself (it downloads the game a second time). The manual way also works: the new release's **Mind over Recomp.exe** → **Update an installed game**. Uninstall from **Mind over Recomp** or Windows' *Installed apps*.
 
 **Linux:** no ready-built release yet (it comes later). Build it from source: [Building](docs/01-building.md).
 
