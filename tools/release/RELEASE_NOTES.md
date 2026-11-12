@@ -102,6 +102,8 @@ and put back when an update fails).
   and the emulated GPU no longer works through them: about 10% more frames
   per second when uncapped, and most of a CPU core freed, which helps most on
   processors with few cores.
+- **Half a CPU core freed on Linux.** A background sound thread kept a core
+  half busy while it only waited for work; it now sleeps while it waits.
 - **The port answers the game's questions about the console itself.** The
   TV mode, video settings and start-up checks the game asks an Xbox 360 for
   now come from the port, always the same: an old display setting in a

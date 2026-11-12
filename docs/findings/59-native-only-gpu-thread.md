@@ -157,5 +157,39 @@ no commands sent. 0 errors.
   so that no Xbox D3D runs at all in Native Only.
 * Switching to the emulated picture shows one black-world frame and one
   stale frame (older; see section 3).
-* "Audio Worker" uses ~49% of a core at any frame rate (seen in the same
-  measurements; not looked into yet).
+* (Solved, section 6: the "Audio Worker" thread's ~49% of a core.)
+
+## 6. The Audio Worker's half core (SDK patch 0022)
+
+The SDK's "Audio Worker" thread used ~49% of a core at any frame rate
+(per-thread CPU from `/proc/<pid>/task/*/stat`, Wumpa Island, 30 fps), even
+though the port plays sound through its own output (findings/54) and no
+sound client is registered with it: it only waits.
+
+The sampler on that thread (console `profile 5 <file> Audio Worker`) put
+every sample in the SDK's `AudioSystem::WorkerThreadMain`: half in its
+500 ms sleep after a timed-out wait, half in the wait itself
+(`PosixConditionBase::WaitMultiple`: `pthread_mutex_trylock`,
+`clock_gettime`, `malloc`).
+
+The wait is alertable with a 500 ms timeout. Alertable waits on POSIX are
+done in 1 ms slices, and each slice polls its handles with
+`sleep_for(min(remaining, 1 ms))` between polls, where `remaining` was cast
+DOWN to whole milliseconds: 0.99 ms left became 0 ms, `sleep_for(0)`
+returned at once, and the slice spun. So the worker spun for 500 ms, slept
+for 500 ms, and so on. The alertable loop around it had the same cut in the
+last part of a millisecond before a deadline.
+
+Patch 0022 sleeps the remaining time in microseconds and rounds the
+alertable slice up. Every timed multi-object wait on Linux benefits, the
+game's own `KeWaitForMultipleObjects` calls included.
+
+| Audio Worker | CPU of one core |
+|---|---|
+| before | 49.3% |
+| after, the port's sound output | 0.2% |
+| after, the SDK's sound output (`--sound_out_native=false`, the worker runs the game's mixer) | 0.5% |
+
+No gaps of silence in a minute of play (11,252 blocks), 0 errors. Windows
+uses its own wait code (not affected).
+

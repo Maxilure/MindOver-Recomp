@@ -1,0 +1,67 @@
+Fix: timed multi-object waits sleep instead of spinning (Linux / POSIX)
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk)
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0022-timed-multi-wait-no-spin.patch
+Status:     upstream CPU-waste bug (report to rexglue-sdk)
+
+WHAT BROKE
+  The SDK's "Audio Worker" thread used ~49% of a CPU core at any frame rate,
+  even with no sound client registered to it (the port plays sound through
+  its own output since findings/54, so the worker only waits).
+
+WHY
+  PosixConditionBase::WaitMultiple (src/core/threading_posix.cpp) polls its
+  handles and sleeps min(remaining, 1 ms) between polls, but `remaining` was
+  cast DOWN to whole milliseconds. Alertable waits call it in 1 ms slices
+  (kAlertablePollSlice), so right after the start remaining = 0.99 ms -> 0 ms
+  -> sleep_for(0) returns at once -> the loop spun (trylock every handle,
+  allocate a vector, read the clock) for the whole slice. The Audio Worker's
+  WaitAny(..., alertable, 500 ms) then spun for 500 ms, slept 500 ms (no
+  client) and repeated: half a core. ComputeAlertableWaitTimeout had the same
+  cut: in the last part of a millisecond before a deadline it asked for a
+  0 ms wait, so the alertable loop spun until the deadline.
+
+FIX
+  WaitMultiple sleeps min(remaining in MICROseconds, 1000 us);
+  ComputeAlertableWaitTimeout rounds the remaining time UP (std::chrono::ceil).
+  A wait may now end up to ~1 ms after its deadline instead of spinning to it.
+
+HOW FOUND
+  Per-thread CPU from /proc/<pid>/task/*/stat (Audio Worker 49.3%), then the
+  port's sampler on that thread (console `profile 5 <file> Audio Worker`):
+  every sample inside AudioSystem::WorkerThreadMain -> WaitMultiple /
+  pthread_mutex_trylock / clock_gettime. After the fix: 0.2% (port's sound
+  output) and 0.5% (SDK sound output, --sound_out_native=false), 0 gaps.
+
+diff --git a/src/core/threading_posix.cpp b/src/core/threading_posix.cpp
+index 9ac8d15..b19b179 100644
+--- a/src/core/threading_posix.cpp
++++ b/src/core/threading_posix.cpp
+@@ -414,8 +414,14 @@ class PosixConditionBase {
+       if (timeout == std::chrono::milliseconds::max()) {
+         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+       } else {
+-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - now);
+-        auto sleep_time = std::min(remaining, std::chrono::milliseconds(1));
++        // Remaining time in MICROseconds: cut down to whole milliseconds it
++        // was 0 for the whole of a 1 ms wait (end - now = 0.99 ms -> 0 ms),
++        // so sleep_for(0) returned at once and this loop SPUN until the
++        // deadline. Alertable waits ask in 1 ms slices, so every alertable
++        // multi-wait with a timeout (the SDK's Audio Worker: ~49% of a core)
++        // burnt a core while it waited.
++        auto remaining = std::chrono::duration_cast<std::chrono::microseconds>(end_time - now);
++        auto sleep_time = std::min(remaining, std::chrono::microseconds(1000));
+         std::this_thread::sleep_for(sleep_time);
+       }
+     }
+@@ -1106,7 +1112,9 @@ std::chrono::milliseconds ComputeAlertableWaitTimeout(
+   if (deadline == std::chrono::steady_clock::time_point::max()) {
+     return kAlertablePollSlice;
+   }
+-  auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
++  // Rounded UP: cut down, the last part of a millisecond before the deadline
++  // became a 0 ms wait = the caller's loop spun until the deadline.
++  auto remaining = std::chrono::ceil<std::chrono::milliseconds>(
+       deadline - std::chrono::steady_clock::now());
+   if (remaining <= std::chrono::milliseconds::zero()) {
+     return std::chrono::milliseconds::zero();
