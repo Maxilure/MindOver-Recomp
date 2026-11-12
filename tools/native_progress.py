@@ -74,7 +74,7 @@ PIECES = [
      "the port's own handlers",
      ["XMsgInProcessCall", "XMsgStartIORequest", "XMsgStartIORequestEx"]),
     ("Console settings",
-     "the port's settings (language, region, video mode)",
+     "the port's own answers (one fixed TV mode for the game; language from the port's setting)",
      ["XGetAVPack", "XGetGameRegion", "XGetLanguage", "XGetVideoMode", "ExGetXConfigSetting",
       "XamGetSystemVersion", "XamGetExecutionId", "XexCheckExecutablePrivilege"]),
     ("Quit and launch",
@@ -173,6 +173,23 @@ DONE = {
     "XamInputGetState": "saves/save_library.cpp: sub_824742F0 -> input/native_controllers.cpp",
     "XamInputGetCapabilities": "input/native_controllers.cpp: sub_824742E8",
     "XamInputSetState": "input/native_controllers.cpp: sub_82474300",
+    # Console settings (2026-11-12, src/system/console_settings.cpp,
+    # findings/32 s.6): every call site the game reaches answers itself
+    # (fixed TV 1280x720 16:9 60 Hz NTSC, video flags, dashboard version 0);
+    # the start-up cable check sub_823009B8 (from the entry point) returns
+    # "nothing to say". Language / region / execution id: their callers were
+    # replaced earlier (language.cpp, who_plays.cpp). Meter: 0 calls.
+    "XGetVideoMode": "console_settings.cpp: 0x82433B20, 0x8227A698, 0x82316D10, 0x82318B44",
+    "XamGetSystemVersion": "console_settings.cpp: 0x8230014C, 0x82300224, 0x82322AB0",
+    "ExGetXConfigSetting": "console_settings.cpp: 0x82311BE8 + sub_823009B8 "
+                           "(sub_82300398 / sub_82474258 only called from language.cpp's replaced "
+                           "sub_82262980; sub_824769B0 never reached)",
+    "XGetAVPack": "console_settings.cpp: sub_823009B8 (its only caller)",
+    "XexCheckExecutablePrivilege": "console_settings.cpp: sub_823009B8 (its only caller)",
+    "XGetLanguage": "console_settings.cpp: sub_823009B8 (its only caller)",
+    "XGetGameRegion": "language.cpp: sub_82262980 replaced (the only way to sub_82300398 and "
+                      "sub_8235B860 -> sub_82474258)",
+    "XamGetExecutionId": "who_plays.cpp: sub_82322960 (the only caller of sub_82300FF0)",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

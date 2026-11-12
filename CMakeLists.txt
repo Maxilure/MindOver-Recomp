@@ -50,6 +50,7 @@ set(CRASHMOM_SOURCES
     src/audio/sound_out.cpp      # the game's mixed 5.1 sound played by our own SDL output (findings/54)
     src/audio/xma_native.cpp     # the game's XMA sounds unpacked by our own decoder, no emulated chip (findings/54)
     src/audio/xma_stream.cpp     # the decoder core: XMA2 blocks -> 16-bit PCM per stream (FFmpeg frame decoder)
+    src/system/console_settings.cpp  # the console's TV mode / video flags / dashboard version answered by the port
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures

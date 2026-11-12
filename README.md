@@ -166,7 +166,7 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
-**Xbox services replaced: 31 of 66 (47%)** `▰▰▰▰▰▱▱▱▱▱`
+**Xbox services replaced: 39 of 66 (59%)** `▰▰▰▰▰▰▱▱▱▱`
 
 | Xbox piece | Replaced | Becomes |
 |---|---|---|
@@ -178,7 +178,7 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 | XMA sound decoder | `▰▰▰▰▰▰▰▰▰▰` 2 / 2 | a software decoder instead of the emulated sound chip |
 | System pop-ups and notifications | `▰▰▰▰▱▱▱▱▱▱` 2 / 5 | PC behaviour (the port's own messages); gone once profiles and saves are native |
 | System messages (achievements, ...) | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the port's own handlers |
-| Console settings | `▱▱▱▱▱▱▱▱▱▱` 0 / 8 | the port's settings (language, region, video mode) |
+| Console settings | `▰▰▰▰▰▰▰▰▰▰` 8 / 8 | the port's own answers (one fixed TV mode for the game; language from the port's setting) |
 | Quit and launch | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | quit the program cleanly |
 | Network | `▱▱▱▱▱▱▱▱▱▱` 0 / 1 | not needed (no online features) |
 

@@ -269,3 +269,51 @@ Not tested yet: Windows (the code is portable; `std::filesystem::rename`
 replaces an existing file there too), a disk-full save, a save whose
 header doesn't match (read-only path: reported as corrupt, the file left
 alone).
+
+## 6. Console settings (TV mode, video flags, dashboard version)
+
+The last "Console settings" imports in the meter were questions about the
+console itself, asked once at start-up. A scan of every `bl` to the eight
+import thunks (`XGetVideoMode` 0x824BB94C, `XGetAVPack` 0x824BBA4C,
+`XexCheckExecutablePrivilege` 0x824BBB0C, `ExGetXConfigSetting` 0x824BBADC,
+`XamGetSystemVersion` 0x824BB99C, `XGetGameRegion` 0x824BB9EC, `XGetLanguage`
+0x824BBA3C, `XamGetExecutionId` 0x824BBA7C) found 26 call sites; Ghidra on
+each caller showed what the answers are used for:
+
+| Question | Asked by | Used for |
+|---|---|---|
+| `XGetVideoMode` (48-byte `X_VIDEO_MODE`) | PDDI display set-up sub_82433B00 | widescreen -> xnDisplay +0x678 bit 0x40; hi-def -> 1280x720 back buffers (else 640x480) |
+| | the game's start-up sub_8227A620 | video standard 3 (PAL) -> byte 13 of the movie object sub_822C8C18 |
+| | D3D sub_82316C48 / sub_82318A50 | the display scaler (re-set when the mode changes; 4:3 or 16:9 filter ratios) |
+| `XamGetSystemVersion` | Microsoft library code sub_82300140 / sub_82300218 / sub_82322A90 | old or new dashboard features (by build number) |
+| `ExGetXConfigSetting(3, 10)` | D3D device creation sub_82311B70 | user video flags -> device +0x414C |
+| privilege 10, `XGetAVPack`, `ExGetXConfigSetting(2,2)` + `(3,10)`, `XGetLanguage` | sub_823009B8, called from the program's entry point 0x82300BA0 | a start-up check for a standard-definition cable on a PAL console: shows a system message box (text by language) and returns 1, and the entry point then ends the program |
+| `ExGetXConfigSetting(3, 14)` (country), `XGetGameRegion` | sub_82300398 / sub_82474258 (via sub_8235B860) | the language letter: only called from sub_82262980, replaced by `language.cpp` |
+| `XamGetExecutionId` | sub_82300FF0 | only called from sub_82322960, replaced by `who_plays.cpp` |
+| 8 x `ExGetXConfigSetting` | sub_824769B0 | a Microsoft helper never reached in play |
+
+The emulated Xbox answered the TV mode from the SDK's `video_mode_width` /
+`video_mode_height` / `video_mode_refresh_rate` flags, so what the game heard
+depended on whatever a settings file held (any size and refresh rate a saved
+settings file once wrote). The port now answers every reached site itself
+(`src/system/console_settings.cpp`; midasm hooks "CONSOLE SETTINGS" in the
+manifest, each one filling the answer and jumping over the call):
+
+* TV mode: always 1280 x 720, progressive, widescreen, hi-def, 60 Hz, NTSC:
+  the picture the game was made for. The port draws that picture at any
+  size and shape itself (render resolution, widescreen, the presenter).
+* User video flags: 0x00040000 and dashboard version: 0, the values every
+  session had so far.
+* The start-up check returns 0 ("nothing to tell the player") without
+  asking anything: a PC has no video cable. The SDK's answer (cable 6, VGA)
+  gave the same result.
+
+`--console_settings_native=false` lets the SDK answer again (comparison
+switch).
+
+Tests (installed-style copy, `--load_save=last`): the four answers logged
+once each ("Console settings: ... answered by the port"); the meter shows 0
+calls for all eight imports in play (with the switch off: the old callers
+and counts come back: video mode 2, dashboard version 3, privilege, cable,
+config 1 each); gameplay pictures in the native and the emulated renderer
+look as before; 0 errors.

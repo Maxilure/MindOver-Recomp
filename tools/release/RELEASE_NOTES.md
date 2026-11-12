@@ -97,6 +97,10 @@ and put back when an update fails).
 
 **Changes**
 
+- **The port answers the game's questions about the console itself.** The
+  TV mode, video settings and start-up checks the game asks an Xbox 360 for
+  now come from the port, always the same: an old display setting in a
+  settings file can no longer change what the game is told.
 - **Button styles named after their controllers.** In **Options → Controls
   → Controller Icons** and on the **Players** screen: **DualSense**
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**

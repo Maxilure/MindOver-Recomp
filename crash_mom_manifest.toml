@@ -358,6 +358,72 @@ name = "CrashMomSoundCategoryVolume"
 registers = ["r3", "r4"]
 jump_address_on_true = 0x8247F0F4
 
+# CONSOLE SETTINGS ANSWERED BY THE PORT (src/system/console_settings.cpp,
+# docs/findings/32 s.6). The game and Microsoft's libraries ask the console
+# about itself; each question is one `bl` to an import thunk, answered here
+# without the SDK's fake Xbox (the hook fills the answer, then jumps over
+# the call). Found 2026-11-12: Xbox calls meter (who called) + a scan of
+# every `bl` to the thunks; each site checked with xexdis (the argument
+# register is set right before the call):
+#   XGetVideoMode (0x824BB94C), r3 = the 48-byte X_VIDEO_MODE to fill:
+#     0x82433B20 PDDI display set-up (addi r3,r1,208 before it)
+#     0x8227A698 the game's start-up (addi r3,r1,128; reads +24 after)
+#     0x82316D10 D3D scaler (addi r3,r1,160)
+#     0x82318B44 D3D scaler ratios (addi r3,r1,208)
+#   XamGetSystemVersion (0x824BB99C), answer in r3:
+#     0x8230014C, 0x82300224, 0x82322AB0 (Microsoft library version checks)
+#   ExGetXConfigSetting (0x824BBADC) at 0x82311BE8: D3D device creation asks
+#     category 3 setting 10 (li r4,10 / li r3,3 before; result checked by
+#     cmpwi r3,0 at 0x82311BEC)
+# (The start-up cable check sub_823009B8 is overridden as a whole function.)
+[[entrypoint.midasm_hook]]
+address = 0x82433B20
+name = "CrashMomConsoleVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x82433B24
+
+[[entrypoint.midasm_hook]]
+address = 0x8227A698
+name = "CrashMomConsoleVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x8227A69C
+
+[[entrypoint.midasm_hook]]
+address = 0x82316D10
+name = "CrashMomConsoleVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x82316D14
+
+[[entrypoint.midasm_hook]]
+address = 0x82318B44
+name = "CrashMomConsoleVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x82318B48
+
+[[entrypoint.midasm_hook]]
+address = 0x8230014C
+name = "CrashMomConsoleSystemVersion"
+registers = ["r3"]
+jump_address_on_true = 0x82300150
+
+[[entrypoint.midasm_hook]]
+address = 0x82300224
+name = "CrashMomConsoleSystemVersion"
+registers = ["r3"]
+jump_address_on_true = 0x82300228
+
+[[entrypoint.midasm_hook]]
+address = 0x82322AB0
+name = "CrashMomConsoleSystemVersion"
+registers = ["r3"]
+jump_address_on_true = 0x82322AB4
+
+[[entrypoint.midasm_hook]]
+address = 0x82311BE8
+name = "CrashMomConsoleVideoFlags"
+registers = ["r3", "r4", "r5", "r6", "r7"]
+jump_address_on_true = 0x82311BEC
+
 # XMA DECODED BY THE PORT (src/audio/xma_native.cpp, docs/findings/54 s.5).
 # Radical's audio::hal::hw::XmaDecoder (the only user of the Xbox's XMA chip
 # in this game) creates its chip context in its constructor sub_8234BE88:
