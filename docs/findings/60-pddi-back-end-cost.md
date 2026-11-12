@@ -297,3 +297,42 @@ call (vector registers included) cost as much as it saved; helpers are now
 called on the live context. The real gain needs the remaining helpers
 inlined (SetTexture / SetVertexShader / SetPixelShader without their ring
 paths, sub_8242D810, the common state): the next step.
+
+## 11. The set-up's helpers inlined
+
+The rest of what the simple set-up calls is now C++ in the same file: D3D's
+SetTexture, SetVertexShader and SetPixelShader (their constant blocks:
+copies through memcpy and and / or patches into the device's fetch
+constants), the address-mode setter sub_8242D810 with D3D's two sampler
+leaves (sub_8230C338 / sub_8230C4E0: same code, other bit fields), and the
+common material state sub_8242DA28: blend (sub_8242D8C8 and D3D's
+sub_8230AAC8 / AB58 / ABE8 / AC78, which fold the blend word into four
+render-target words), alpha test (sub_8242D980, sub_8230AA90 / AF50 / AEF0),
+the +84 word (sub_8230AA30 / sub_82430970), the eight shadow-sphere records
+(sub_8237F378) and SetPixelShaderConstantF (sub_82312A78, an unaligned
+vector copy of 8 rows). About 20 functions, ~1,000 instructions,
+transliterated with rlwinm / rlwimi helpers (wrapped masks included) and the
+recompiled code's `fctidz` (NaN -> 0x8000000000000000, overflow clamped).
+
+Only one path still runs the game's code: a setter that replaces an object
+the GPU still uses (device +10908 == 0 and +10912 & the object's first word)
+writes a fence into D3D's command ring and may kick it; such a call goes to
+the game's function, decided up front with the setter's own test.
+
+Each inlined helper also writes what it leaves on the guest stack, in the
+original's order: savegpr's registers (r20-r31 for SetTexture, r28-r31 for
+most, r29-r31 for the leaves) and return address, the back chain, memcpy's
+`std r3,-8(r1)`, SetAlphaRef's `std r11,-16(r1)`, the common state's own
+temporaries and sphere copies, SetPixelShaderConstantF's `std r31,-8(r1)`.
+That is what PS c202-c210 are copied from.
+
+Checked with `--debug_native_simple_check`: 557,324 calls uncapped, 0
+differences. New `--debug_native_simple_check_stack` compares the 4 KB of
+guest stack below the caller's frame too: 31,435 calls, 0 differences, so
+every saved register, return address and temporary matches. Positive
+control: one changed back-chain word made every call differ.
+
+Measured (uncapped, Native Only, three pairs of 8 s profiles, the switch
+flipped live): the set-up's inclusive share of the main thread 2.57 / 2.21 /
+2.40% (original) -> 1.14 / 1.07 / 1.08% (C++). Frame rate 187-197 fps with
+the original, 194-197 with ours: within the run-to-run noise at this size.

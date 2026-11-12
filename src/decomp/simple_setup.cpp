@@ -61,10 +61,16 @@
 //       |= 1<<35. Not palettized: sampler 8 cleared (SetTexture(device, 8,
 //       null, 1<<23)).
 //
-// WHAT IS STILL THE GAME'S CODE: D3D's SetTexture / SetVertexShader /
-//   SetPixelShader, sub_8242D810 and the common state sub_8242DA28 are called
-//   through their usual entries (the PDDI intercept wrappers where they have
-//   one): next steps of findings/60 s.10.
+// WHAT IS STILL THE GAME'S CODE: only the rare COMMAND-RING path of D3D's
+//   SetTexture / SetVertexShader / SetPixelShader (the object they replace
+//   still in use by the GPU: Busy()); those calls run the game's function.
+//   Everything else is inlined below (2026-11-13, findings/60 s.11): the three
+//   setters, the address-mode setter sub_8242D810 with D3D's two sampler
+//   leaves sub_8230C338 / sub_8230C4E0, and the common material state
+//   sub_8242DA28 with its blend (sub_8242D8C8 + sub_8230AAC8 / AB58 / ABE8 /
+//   AC78), alpha (sub_8242D980 + sub_8230AA90 / AF50 / AEF0), the +84 word
+//   (sub_8230AA30 / sub_82430970), the shadow spheres (sub_8237F378) and
+//   SetPixelShaderConstantF (sub_82312A78).
 //
 // EXACTNESS
 //   * Floats: a byte / 255 is fcfid + frsp (exact) and fmuls (one rounding):
@@ -98,6 +104,8 @@
 #include "simple_setup.h"
 
 #include <cstdint>
+#include <cmath>
+#include <climits>
 #include <cstring>
 
 #include <rex/cvar.h>
@@ -126,6 +134,9 @@ extern "C" REX_FUNC(sub_8242DA28);  // xnShader: the common material state
 REXCVAR_DEFINE_BOOL(native_simple_setup, true, "CrashMoM",
                     "The simple material's draw set-up (xnSimpleShader::SetupDraw) runs as our C++ (same "
                     "results); false = the recompiled original");
+REXCVAR_DEFINE_BOOL(debug_native_simple_check_stack, false, "CrashMoM",
+                    "Debug: with debug_native_simple_check, compare the guest stack below the caller's frame too "
+                    "(every saved register, return address and temporary the original and its helpers leave)");
 REXCVAR_DEFINE_BOOL(debug_native_simple_check, false, "CrashMoM",
                     "Debug: run the original simple-material set-up AND ours on every call and compare what they "
                     "write byte for byte (slow; log lines \"Native check:\")");
@@ -275,6 +286,469 @@ void SetFilter0(uint8_t* base, uint32_t cache, uint32_t filter) {
   }
 }
 
+// --- the helpers, inlined (2026-11-13, findings/60 s.11) ---------------------------
+// Each one below is the game's function written out: what it stores, in its
+// order, INCLUDING what it leaves on the guest stack (its saved registers,
+// return address, back chain and temporaries), because the common state
+// copies leftover stack words into PS constants. `r1` = the stack pointer
+// the original had when it called the helper.
+
+inline uint64_t L64(uint8_t* base, uint32_t a) {
+  uint64_t v;
+  std::memcpy(&v, GuestPtr(base, a), 8);
+  return __builtin_bswap64(v);
+}
+inline uint8_t LB(uint8_t* base, uint32_t a) { return *GuestPtr(base, a); }
+inline void SB(uint8_t* base, uint32_t a, uint8_t v) { *GuestPtr(base, a) = v; }
+inline uint16_t LH(uint8_t* base, uint32_t a) {
+  const uint8_t* p = GuestPtr(base, a);
+  return uint16_t(p[0] << 8 | p[1]);
+}
+// rlwinm / rlwimi masks, IBM bit numbers; mb > me = the wrapped mask.
+constexpr uint32_t MaskW(int mb, int me) { return mb <= me ? Mask(mb, me) : (Mask(mb, 31) | Mask(0, me)); }
+inline uint32_t Rlwinm(uint32_t rs, int sh, int mb, int me) { return Rotl(rs, sh) & MaskW(mb, me); }
+inline uint32_t Rlwimi(uint32_t ra, uint32_t rs, int sh, int mb, int me) {
+  const uint32_t m = MaskW(mb, me);
+  return (Rotl(rs, sh) & m) | (ra & ~m);
+}
+// A word moved with lfs + stfs (MoveFloatWord), from a value.
+inline uint32_t RoundTrip(uint32_t bits) {
+  float f;
+  std::memcpy(&f, &bits, 4);
+  volatile double d = f;
+  const float g = float(d);
+  uint32_t out;
+  std::memcpy(&out, &g, 4);
+  return out;
+}
+// savegpr from register `first` (0x8245C108 + 4 x (first - 20)): r_k at
+// r1 - 8 x (32 - k) - 8 ... r31 at r1 - 16, then the return address at r1 - 8.
+// `regs` = the values of r_first..r31.
+void SaveGprs(uint8_t* base, uint32_t r1, int first, const uint64_t* regs, uint32_t lr) {
+  for (int k = first; k <= 31; ++k) S64(base, r1 - 8 * (32 - k) - 8, regs[k - first]);
+  S(base, r1 - 8, lr);
+}
+
+// The set-up's registers r20-r31 at a call (r20-r26 = its caller's: it
+// doesn't use them).
+struct Regs {
+  uint64_t r[12];
+};
+Regs SetupRegs(const PPCContext& c, const Saved& saved) {
+  return Regs{{c.r20.u64, c.r21.u64, c.r22.u64, c.r23.u64, c.r24.u64, c.r25.u64, c.r26.u64, 1, 0, saved.r29,
+               saved.r30, saved.r31}};
+}
+
+// Would this D3D setter take its command-ring path (the object it replaces
+// still in use by the GPU)? Then the game's own function runs (see
+// TakesRingPath below).
+bool Busy(uint8_t* base, uint32_t dev, uint32_t old) {
+  return old && L(base, dev + 10908) == 0 && (L(base, dev + 10912) & L(base, old)) != 0;
+}
+
+// D3D SetTexture sub_823066D0(dev, sampler, texture, dirty), the path
+// without the ring (a busy old texture: Busy). Returns its r3.
+uint64_t SetTexture(uint8_t* base, const Regs& regs, uint32_t r1, uint32_t lr, uint32_t dev, uint32_t smp,
+                    uint32_t tex, uint64_t dirty) {
+  SaveGprs(base, r1, 20, regs.r, lr);  // bl 0x8245c108
+  S(base, r1 - 192, r1);               // stwu r1,-192(r1)
+  uint64_t r3 = dev;
+  const uint32_t slot = 4 * (smp + 3136);
+  const uint32_t old = L(base, dev + slot);
+  if (tex) {
+    uint32_t r27 = L(base, tex + 48);
+    uint32_t r7 = L(base, tex + 32);
+    uint32_t r9 = Rlwinm(r27, 12, 20, 31);
+    const uint32_t r26 = L(base, tex + 44);
+    const uint32_t r11 = dev + 24 * (smp + 48);
+    uint32_t r25 = L(base, tex + 28);
+    const uint32_t r24 = L(base, tex + 36);
+    uint32_t r23 = L(base, tex + 40);
+    uint32_t r10 = Rlwinm(r7, 12, 20, 31);
+    r9 += 512;
+    r10 += 512;
+    const uint32_t r30 = r7 & 0x1FFFFFFF;
+    uint32_t r8 = Rlwinm(r9, 0, 19, 19);
+    uint32_t r3w = Rlwinm(r10, 0, 19, 19);
+    const uint32_t r22 = L(base, r11 + 0);
+    const uint32_t r9a = dev + smp;
+    const uint32_t r4 = L(base, r11 + 16);
+    r7 = Rlwinm(r27, 0, 3, 22);
+    r27 = L(base, r11 + 4);
+    r10 = r26;
+    const uint32_t r21 = L(base, r11 + 12);
+    const uint32_t r20 = L(base, r11 + 20);
+    r7 = r8 + r7;
+    r3w = r3w + r30;
+    S(base, r11 + 8, r24);
+    r10 = Rlwimi(r10, r4, 0, 30, 21);
+    r8 = LB(base, r9a + 11950);
+    r25 = Rlwimi(r25, r22, 0, 10, 21);
+    r3w = Rlwimi(r3w, r27, 0, 20, 20);
+    S(base, r11 + 16, r10);
+    r23 = Rlwimi(r23, r21, 0, 1, 12);
+    S(base, r11 + 0, r25);
+    r7 = Rlwimi(r7, r20, 0, 23, 31);
+    S(base, r11 + 4, r3w);
+    const uint32_t r4b = Rlwinm(r26, 30, 28, 31);
+    S(base, r11 + 12, r23);
+    S(base, r11 + 20, r7);
+    if (r4b > r8) r8 = Rlwinm(r26, 30, 28, 31);
+    r7 = L(base, tex + 44);
+    r10 = Rlwimi(r10, r8, 2, 26, 29);
+    uint32_t r9b = LB(base, r9a + 11976);
+    r8 = Rlwinm(r7, 26, 28, 31);
+    S(base, r11 + 16, r10);
+    if (r8 < r9b) r9b = r8;
+    const uint64_t d = L64(base, dev + 24);
+    r10 = Rlwimi(r10, r9b, 6, 22, 25);
+    S(base, r11 + 16, r10);
+    S64(base, dev + 24, d | dirty);
+    r3 = r3w;
+  }
+  S(base, dev + slot, tex);
+  if (old) {
+    const uint32_t done = L(base, dev + 10908);
+    if (done) S(base, old + 8, done);
+    // (+10912 & the old object's word: the ring path, never reached here.)
+  }
+  return r3;
+}
+
+// The two D3D shader setters' constant blocks (SetVertexShader from
+// 0x82312F68, SetPixelShader from 0x82312CA0): copies (memcpy sub_8245C1A0,
+// whose `std r3,-8(r1)` leaves the destination below the setter's frame) and
+// and / or patches into the device's fetch constants (+1152).
+void ShaderBlocks(uint8_t* base, uint32_t dev, uint32_t block, uint32_t setter_r1) {
+  uint32_t r31 = block + 20;
+  const uint32_t r28 = dev + 1152;
+  const uint32_t end = L(base, block + 16) + r31;
+  // Skip the first entries (count word != 0 = 8 bytes each) up to an empty one.
+  bool found = false;
+  while (r31 < end) {
+    const uint16_t n = LH(base, r31 + 2);
+    r31 += 4;
+    if (n == 0) {
+      found = true;
+      break;
+    }
+    r31 += 4;
+  }
+  (void)found;
+  if (r31 >= end) return;
+  // Copies: (offset, count words), then the words.
+  for (;;) {
+    const uint16_t n = LH(base, r31 + 2);
+    const uint16_t off = LH(base, r31);
+    r31 += 4;
+    if (n == 0) break;
+    const uint32_t bytes = uint32_t(n) << 2;
+    const uint32_t to = off + r28;
+    S64(base, setter_r1 - 8, to);  // memcpy's std r3,-8(r1)
+    std::memmove(GuestPtr(base, to), GuestPtr(base, r31), bytes);
+    r31 += bytes;
+    if (r31 >= end) break;
+  }
+  // Patches: (offset, count), then (and, or) pairs; the count steps by 2.
+  while (r31 < end) {
+    const uint16_t n0 = LH(base, r31 + 2);
+    const uint16_t off = LH(base, r31);
+    r31 += 4;
+    if (n0 == 0) return;
+    uint32_t p = off + r28;
+    uint32_t n = n0;
+    do {
+      const uint32_t w = L(base, p);
+      n = (n + 0x10000 - 2) & 0xFFFF;
+      const uint32_t a = L(base, r31), o = L(base, r31 + 4);
+      r31 += 8;
+      S(base, p, (w & a) | o);
+      p += 4;
+    } while (n != 0);
+  }
+}
+
+// D3D SetVertexShader sub_82312E70(dev, shader), without the ring path.
+void SetVertexShader(uint8_t* base, const Regs& regs, uint32_t r1, uint32_t lr, uint32_t dev, uint32_t vs) {
+  SaveGprs(base, r1, 28, regs.r + 8, lr);  // bl 0x8245c128
+  S(base, r1 - 128, r1);
+  if (vs) Or64(base, dev + 16, 0x80000);
+  S(base, dev + 12696, vs);
+  SB(base, dev + 10942, LB(base, dev + 10942) & 0x7F);
+  if (!vs) return;
+  const uint32_t r11 = vs + 872;
+  if (r11 == 0) return;
+  const uint32_t r10 = L(base, r11 + 20);
+  if (r10 == 0) return;
+  const uint32_t block = r10 + r11;
+  S64(base, dev + 0, L64(base, dev + 0) & ~L64(base, block + 0));
+  if (L64(base, block + 8) != 0) Or64(base, dev + 32, uint64_t(1) << 56);
+  ShaderBlocks(base, dev, block, r1 - 128);
+}
+
+// D3D SetPixelShader sub_82312BB8(dev, shader), without the ring path.
+void SetPixelShader(uint8_t* base, const Regs& regs, uint32_t r1, uint32_t lr, uint32_t dev, uint32_t ps) {
+  SaveGprs(base, r1, 28, regs.r + 8, lr);
+  S(base, r1 - 128, r1);
+  S(base, dev + 12692, ps);
+  Or64(base, dev + 16, 0x100000);
+  Or64(base, dev + 16, 0x20000);
+  if (!ps) return;
+  const uint32_t r10 = L(base, ps + 60);
+  if (r10 == 0) return;
+  const uint32_t block = r10 + ps + 40;
+  S64(base, dev + 8, L64(base, dev + 8) & ~L64(base, block + 0));
+  if (L64(base, block + 8) != 0) Or64(base, dev + 32, uint64_t(1) << 56);
+  ShaderBlocks(base, dev, block, r1 - 128);
+}
+
+// D3D's two sampler leaves under sub_8242D810: sub_8230C338 (`second` =
+// false) and sub_8230C4E0 (true). Same code, other bit fields. They save
+// the address-mode setter's r29-r31 + lr below its stack pointer `r1`.
+void SamplerLeaf(uint8_t* base, bool second, uint32_t r1, uint32_t lr, const uint64_t* r29_31, uint32_t dev,
+                 uint32_t smp, uint32_t v) {
+  SaveGprs(base, r1, 29, r29_31, lr);  // bl 0x8245c12c (no frame of its own)
+  const uint32_t r11 = dev + 24 * (smp + 48);
+  const uint32_t r10a = dev + smp;
+  uint32_t r9 = uint32_t(LB(base, r10a + 11924)) << 2;
+  const uint32_t r7 = Rlwinm(v, 30, 2, 31);
+  uint32_t r6 = L(base, r11 + 16);
+  uint32_t r31 = L(base, r11 + 12);
+  uint32_t r29 = r6;
+  r6 = second ? Rlwinm(r6, 21, 31, 31) : Rlwinm(r6, 22, 31, 31);
+  const uint32_t r8a = L(base, 0x82001500 + r9);
+  r29 = second ? Rlwimi(r29, r7, 10, 21, 21) : Rlwimi(r29, r7, 11, 20, 20);
+  r9 = r6 | r7;
+  S(base, r11 + 16, r29);
+  r9 = r9 - 1;
+  r9 = r8a & ~r9;
+  const uint64_t dirty = (uint64_t(1) << 63) >> (smp + 32);
+  r9 = second ? Rlwinm(r9, 6, 0, 25) : Rlwinm(r9, 4, 0, 27);
+  r9 |= r7;
+  r9 |= v;
+  if (second) {
+    r31 = Rlwimi(r31, r9, 19, 11, 12);
+    r31 = Rlwimi(r31, r9, 19, 4, 6);
+  } else {
+    r31 = Rlwimi(r31, r9, 21, 9, 10);
+    r31 = Rlwimi(r31, r9, 21, 4, 6);
+  }
+  S(base, r11 + 12, r31);
+  uint32_t r9b = LB(base, r10a + 12002);
+  uint32_t r6b = r31;
+  const uint32_t r7b = r31;
+  uint32_t r10 = Rlwinm(r9b, 30, 2, 31);
+  r6b = Rlwimi(r6b, r7b, 31, 13, 31);
+  r10 = r10 - 1;
+  r6b = Rlwimi(r6b, r7b, 31, 1, 11);
+  r9b = r9b & ~r10;
+  const uint32_t r7c = Rlwinm(r6b, 13, 20, 31);
+  r10 = r7c & r10;
+  r10 = r10 + r9b;
+  r10 = Rlwimi(r10, r29, 0, 0, 29);
+  S(base, r11 + 16, r10);
+  Or64(base, dev + 24, dirty);
+}
+
+// sub_8242D810(cache, sampler, address mode). `regs` = the caller's r28-r31.
+// Returns its r3.
+uint64_t SetAddressMode(uint8_t* base, const uint64_t* r28_31, uint32_t r1, uint32_t lr, uint32_t cache,
+                        uint32_t smp, uint32_t v) {
+  SaveGprs(base, r1, 28, r28_31, lr);
+  S(base, r1 - 128, r1);
+  const uint32_t at = cache + 4 * (smp + 35);
+  if (L(base, at) == v) return cache;
+  S(base, at, v);
+  constexpr uint32_t kTable = 0x824EE71C;
+  const uint32_t row = kTable + 12 * v;
+  const uint64_t own[3] = {0xFFFFFFFF824EE71Cull, cache, smp};  // its r29 (lis + addi), r30, r31
+  SamplerLeaf(base, false, r1 - 128, 0x8242D85C, own, L(base, cache + 4), smp, L(base, row));
+  SamplerLeaf(base, true, r1 - 128, 0x8242D870, own, L(base, cache + 4), smp, L(base, row + 4));
+  const uint32_t dev = L(base, cache + 4);
+  const uint32_t r11 = dev + 24 * smp;
+  S(base, r11 + 1164, Rlwimi(L(base, r11 + 1164), L(base, row + 8), 23, 7, 8));
+  const uint64_t old = L64(base, dev + 24);
+  S64(base, dev + 24, ((uint64_t(1) << 63) >> (smp + 32)) | old);
+  return old;
+}
+
+// D3D's blend / alpha leaves under the common state.
+uint32_t Fold(uint32_t r11) {
+  uint32_t r10 = r11 & 0x1010;
+  const uint32_t r9 = Rlwinm(r11, 4, 12, 27);
+  r11 &= 0xFFFF;
+  r10 |= r9;
+  r10 = Rlwinm(r10, 12, 0, 15);
+  r10 = Rlwinm(r10, 0, 12, 10);
+  r10 = Rlwinm(r10, 0, 4, 2);
+  return r10 | r11;
+}
+void WriteBlend(uint8_t* base, uint32_t dev, uint32_t v) {
+  S(base, dev + 10588, v);
+  S(base, dev + 10552, v);
+  S(base, dev + 10584, v);
+  S(base, dev + 10592, v);
+  Or64(base, dev + 16, 0x407);
+}
+void BlendEnable(uint8_t* base, uint32_t dev, uint32_t on) {  // sub_8230AAC8
+  const uint32_t w = Rlwimi(L(base, dev + 11852), on, 31, 0, 0);
+  S(base, dev + 11852, w);
+  uint32_t r11 = L(base, dev + 11848);
+  if (!(w & 0x40000000)) r11 = Fold(r11);
+  if (int32_t(on) == 0) r11 = 0x00010001;
+  WriteBlend(base, dev, r11);
+}
+// sub_8230AB58 (5, 24, 26) / sub_8230ABE8 (0, 27, 31) / sub_8230AC78 (8, 19, 23).
+void BlendField(uint8_t* base, uint32_t dev, uint32_t v, int sh, int mb, int me) {
+  const uint32_t r10 = Rlwimi(L(base, dev + 11848), v, sh, mb, me);
+  const uint32_t r11 = L(base, dev + 11852);
+  S(base, dev + 11848, r10);
+  if (!(r11 & 0x80000000)) return;
+  uint32_t w = L(base, dev + 11848);
+  if (!(r11 & 0x40000000)) w = Fold(w);
+  WriteBlend(base, dev, w);
+}
+void SetAlphaRef(uint8_t* base, uint32_t r1, uint32_t dev, uint32_t v) {  // sub_8230AEF0
+  S64(base, r1 - 16, v);  // std r11,-16(r1) (the zero-extended value)
+  volatile double d = double(uint64_t(v));
+  const float f = float(d) * LF(base, kOneOver255);
+  SF(base, dev + 10500, f);
+  Or64(base, dev + 16, 0x08000000);
+}
+void SetWord10568(uint8_t* base, uint32_t dev, uint32_t v) {  // sub_8230AA30
+  S(base, dev + 10568, Rlwimi(v, L(base, dev + 10568), 0, 0, 28));
+  Or64(base, dev + 16, 64);
+}
+// The PPC fctidz as the recompiled code computes it.
+int64_t Fctidz(double x) {
+  if (std::isnan(x)) return int64_t(0x8000000000000000ull);
+  if (x > double(LLONG_MAX)) return LLONG_MAX;
+  if (x < -9223372036854775808.0) return int64_t(0x8000000000000000ull);
+  return int64_t(x);
+}
+
+// xnShader's common material state sub_8242DA28(shader), called by the set-up
+// at r1 = its frame (`frame`). Returns its r3 (the device).
+uint64_t CommonState(uint8_t* base, uint32_t frame, const Saved& saved, uint32_t sh) {
+  const uint64_t r28_31[4] = {0, saved.r29, saved.r30, saved.r31};
+  SaveGprs(base, frame, 28, r28_31, 0x824423A0);
+  const uint32_t r1 = frame - 240;
+  S(base, r1, frame);
+  const uint32_t context = L(base, sh + 16);
+  const float f13 = LF(base, sh + 88) * LF(base, context + 364);  // slot 99 (checked in Setup)
+  const int32_t mode = int32_t(L(base, sh + 24));
+  constexpr uint32_t kRows = 0x824EE758;
+  // bge after fcmpu: taken unless f13 < 1.0 (a NaN takes it too).
+  const uint32_t row = (!(f13 < LF(base, kPlusOne)) || mode == 2 || mode == 3) ? kRows + (uint32_t(mode) << 4)
+                                                                                 : kRows + 16;
+  const uint32_t a4 = LB(base, row), a5 = L(base, row + 4), a6 = L(base, row + 8), a7 = L(base, row + 12);
+  // Its r28-r31 while it calls: the set-up's r28 / r29, r30 = the shader, r31
+  // = the set-up's r31 (the shader too).
+  const uint64_t c28_31[4] = {0, saved.r29, sh, saved.r31};
+  // sub_8242D8C8(cache, a4..a7): blend.
+  {
+    const uint32_t cache = L(base, sh + 20);
+    SaveGprs(base, r1, 28, c28_31, 0x8242DAC8);
+    S(base, r1 - 128, r1);
+    const uint32_t b = a4 & 0xFF;
+    if (LB(base, cache + 204) != b) {
+      SB(base, cache + 204, uint8_t(a4));
+      BlendEnable(base, L(base, cache + 4), b);
+    }
+    if (LB(base, cache + 204)) {
+      constexpr uint32_t kBlend = 0x824EE7D8;
+      if (L(base, cache + 208) != a5) {
+        S(base, cache + 208, a5);
+        BlendField(base, L(base, cache + 4), a5, 5, 24, 26);
+      }
+      if (int32_t(a6) != int32_t(L(base, cache + 212))) {
+        S(base, cache + 212, a6);
+        BlendField(base, L(base, cache + 4), L(base, kBlend + 4 * a6), 0, 27, 31);
+      }
+      if (int32_t(a7) != int32_t(L(base, cache + 216))) {
+        S(base, cache + 216, a7);
+        BlendField(base, L(base, cache + 4), L(base, kBlend + 4 * a7), 8, 19, 23);
+      }
+    }
+  }
+  // sub_8242D980(cache, +36 byte, +40, 0): alpha test.
+  {
+    const uint32_t cache = L(base, sh + 20);
+    const uint32_t b = LB(base, sh + 36);
+    const uint32_t v5 = L(base, sh + 40);
+    SaveGprs(base, r1, 29, c28_31 + 1, 0x8242DADC);
+    const uint32_t d_r1 = r1 - 112;
+    S(base, d_r1, r1);
+    if (LB(base, cache + 220) != b) {
+      SB(base, cache + 220, uint8_t(b));
+      const uint32_t dev = L(base, cache + 4);  // sub_8230AA90
+      S(base, dev + 10556, Rlwimi(L(base, dev + 10556), b, 3, 28, 28));
+      Or64(base, dev + 16, 512);
+      Or64(base, dev + 16, 0x40000);
+    }
+    if (LB(base, cache + 220) && int32_t(L(base, cache + 224)) != int32_t(v5)) {
+      S(base, cache + 224, v5);
+      const uint32_t dev = L(base, cache + 4);  // sub_8230AF50
+      S(base, dev + 10556, Rlwimi(L(base, 0x824EE80C + 4 * v5), L(base, dev + 10556), 0, 0, 28));
+      Or64(base, dev + 16, 512);
+    }
+    if (LB(base, cache + 220) && L(base, cache + 228) != 0) {
+      S(base, cache + 228, 0);
+      SetAlphaRef(base, d_r1, L(base, cache + 4), 0);
+    }
+  }
+  // Depth bias? (+44 x 1/255 -> an integer) -> sub_8230AEF0 on the camera's object.
+  {
+    const float f12 = LF(base, sh + 44) * LF(base, 0x82001550);
+    const int64_t i = Fctidz(f12);
+    S64(base, r1 + 88, uint64_t(i));
+    SetAlphaRef(base, r1, L(base, L(base, context + 384) + 16), uint32_t(uint64_t(i)));
+  }
+  // +84 byte -> cache +232: sub_8230AA30(dev, 0) or sub_82430970(cache +0).
+  {
+    const uint32_t cache = L(base, sh + 20);
+    const uint8_t v = LB(base, sh + 84);
+    if (LB(base, cache + 232) != v) {
+      SB(base, cache + 232, v);
+      if (v) {
+        SetWord10568(base, L(base, cache + 4), 0);
+      } else {
+        const uint32_t obj = L(base, cache + 0);
+        const uint32_t r11 = L(base, obj + 140);
+        SetWord10568(base, L(base, obj + 400), L(base, 0x824EDCA0 + 4 * L(base, r11 + 4)));
+      }
+    }
+  }
+  // The shadow spheres: up to 8 records (0x82572068 + 32 i, on if byte +25),
+  // their +8..+16 packed into its stack from r1+96, then PS c202 = (count,
+  // three stack words) and 8 rows from r1+96 -> PS c203-c210 (sub_82312A78).
+  uint32_t r31 = r1 + 104;
+  int32_t count = 0;
+  for (uint32_t k = 0; k < 8; ++k) {
+    const uint32_t rec = 0x82572068 + 32 * k;
+    if (!LB(base, rec + 25)) continue;
+    ++count;
+    S(base, r31 - 8, RoundTrip(L(base, rec + 8)));
+    S(base, r31 - 4, RoundTrip(L(base, rec + 12)));
+    S(base, r31 + 0, RoundTrip(L(base, rec + 16)));
+    r31 += 12;
+  }
+  S64(base, r1 + 88, uint64_t(int64_t(count)));
+  const uint32_t dev = L(base, context + 400);
+  {
+    volatile double d = double(int64_t(count));
+    S(base, dev + 9228, RoundTrip(L(base, r1 + 92)));
+    S(base, dev + 9220, RoundTrip(L(base, r1 + 84)));
+    S(base, dev + 9224, RoundTrip(L(base, r1 + 88)));
+    SF(base, dev + 9216, float(d));
+    Or64(base, dev + 8, 8192);
+  }
+  S64(base, r1 - 8, r31);  // sub_82312A78's std r31,-8(r1)
+  std::memmove(GuestPtr(base, dev + (201 + 376) * 16), GuestPtr(base, r1 + 96), 8 * 16);
+  Or64(base, dev + 8, 14336);
+  return dev;
+}
+
 // The whole set-up. False = not handled (the original runs; nothing written).
 bool Setup(PPCContext& ctx, uint8_t* base) {
   if (pddi::trace::Recording()) return false;
@@ -315,8 +789,12 @@ bool Setup(PPCContext& ctx, uint8_t* base) {
     if (!d3d) d3d = L(base, tex + 92);
     if (!d3d) d3d = L(base, tex + 16);
     if (d3d) {
-      r3 = Call(sub_823066D0, ctx, base, frame, 0x82441F40, saved, L(base, L(base, tex + 12) + 400), 0, d3d,
-                uint64_t(1) << 31);
+      const uint32_t tdev = L(base, L(base, tex + 12) + 400);
+      if (Busy(base, tdev, L(base, tdev + 4 * 3136))) {
+        r3 = Call(sub_823066D0, ctx, base, frame, 0x82441F40, saved, tdev, 0, d3d, uint64_t(1) << 31);
+      } else {
+        r3 = SetTexture(base, SetupRegs(ctx, saved), frame, 0x82441F40, tdev, 0, d3d, uint64_t(1) << 31);
+      }
     }
   }
   // 4.
@@ -324,13 +802,27 @@ bool Setup(PPCContext& ctx, uint8_t* base) {
   cache = L(base, sh + 20);
   S(base, cache + 240, shader);
   saved.r30 = 0xFFFFFFFF82597010ull;  // lis + addi: sign-extended in the 64-bit register
-  Call(sub_82312E70, ctx, base, frame, 0x82441F70, saved, L(base, cache + 4), shader);
+  {
+    const uint32_t d = L(base, cache + 4);
+    if (Busy(base, d, L(base, d + 12696))) {
+      Call(sub_82312E70, ctx, base, frame, 0x82441F70, saved, d, shader);
+    } else {
+      SetVertexShader(base, SetupRegs(ctx, saved), frame, 0x82441F70, d, shader);
+    }
+  }
   // 5.
   const bool b56 = *GuestPtr(base, sh + 56) != 0;
   shader = L(base, kShaderTables + (palettized ? (b56 ? 20 : 24) : (b56 ? 8 : 12)));
   cache = L(base, sh + 20);
   S(base, cache + 236, shader);
-  Call(sub_82312BB8, ctx, base, frame, 0x82441FBC, saved, L(base, cache + 4), shader);
+  {
+    const uint32_t d = L(base, cache + 4);
+    if (Busy(base, d, L(base, d + 12692))) {
+      Call(sub_82312BB8, ctx, base, frame, 0x82441FBC, saved, d, shader);
+    } else {
+      SetPixelShader(base, SetupRegs(ctx, saved), frame, 0x82441FBC, d, shader);
+    }
+  }
   saved.r30 = (L(base, sh + 68) >> 8) & 0xFF;  // rlwinm r30,r11,24,24,31 at 0x82441FF8
   // 6.
   const uint32_t dev = L(base, context + 400);
@@ -371,17 +863,22 @@ bool Setup(PPCContext& ctx, uint8_t* base) {
   Or64(base, dev + 8, uint64_t(1) << 51);
   // 11.
   SetFilter0(base, L(base, sh + 20), L(base, sh + 48));
-  r3 = Call(sub_8242D810, ctx, base, frame, 0x82442398, saved, L(base, sh + 20), 0, L(base, sh + 52));
+  const uint64_t r28_31[4] = {0, saved.r29, saved.r30, saved.r31};
+  r3 = SetAddressMode(base, r28_31, frame, 0x82442398, L(base, sh + 20), 0, L(base, sh + 52));
   // 12.
-  r3 = Call(sub_8242DA28, ctx, base, frame, 0x824423A0, saved, sh, 0);
+  r3 = CommonState(base, frame, saved, sh);
   // 13.
   if (palettized) {
     tex = L(base, sh + 92);
     const uint32_t palette = L(base, tex + 4 * (L(base, tex + 88) + 6));
-    Call(sub_823066D0, ctx, base, frame, 0x824423B4, saved, L(base, L(base, tex + 12) + 400), 8, palette,
-         uint64_t(1) << 23);
-    Call(sub_8242D810, ctx, base, frame, 0x824423C4, saved, L(base, sh + 20), 0, 0);
-    Call(sub_8242D810, ctx, base, frame, 0x824423D4, saved, L(base, sh + 20), 8, 0);
+    const uint32_t tdev = L(base, L(base, tex + 12) + 400);
+    if (Busy(base, tdev, L(base, tdev + 4 * (3136 + 8)))) {
+      Call(sub_823066D0, ctx, base, frame, 0x824423B4, saved, tdev, 8, palette, uint64_t(1) << 23);
+    } else {
+      SetTexture(base, SetupRegs(ctx, saved), frame, 0x824423B4, tdev, 8, palette, uint64_t(1) << 23);
+    }
+    SetAddressMode(base, r28_31, frame, 0x824423C4, L(base, sh + 20), 0, 0);
+    SetAddressMode(base, r28_31, frame, 0x824423D4, L(base, sh + 20), 8, 0);
     tex = L(base, sh + 92);
     const int32_t height = int32_t(L(base, tex + 292));
     const int32_t width = int32_t(L(base, tex + 288));
@@ -393,7 +890,11 @@ bool Setup(PPCContext& ctx, uint8_t* base) {
     Or64(base, dev + 8, uint64_t(1) << 35);
     r3 = dev;
   } else {
-    r3 = Call(sub_823066D0, ctx, base, frame, 0x8244247C, saved, dev, 8, 0, 0x00800000);
+    if (Busy(base, dev, L(base, dev + 4 * (3136 + 8)))) {
+      r3 = Call(sub_823066D0, ctx, base, frame, 0x8244247C, saved, dev, 8, 0, 0x00800000);
+    } else {
+      r3 = SetTexture(base, SetupRegs(ctx, saved), frame, 0x8244247C, dev, 8, 0, 0x00800000);
+    }
   }
   // The original's own stack temporaries, as it leaves them (later code at
   // this depth reads leftovers: see the header): the 64-bit integers it
@@ -475,7 +976,7 @@ void SetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
     ranges = decomp::Ranges{{{dev, kGpuFrom},
                              {dev + kGpuTo, kDeviceBytes - kGpuTo},
                              {cache, kCacheBytes},
-                             {ctx.r1.u32 - kStackBytes, kStackBytes, false}},
+                             {ctx.r1.u32 - kStackBytes, kStackBytes, REXCVAR_GET(debug_native_simple_check_stack)}},
                             4};
   }
   decomp::Run(REXCVAR_GET(native_simple_setup), checking, g_stats, ctx, base,
