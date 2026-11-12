@@ -22,6 +22,10 @@ project(crash_mom LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Small transport-independent tests run without launching the game or
+# recompiling the user's game files. Opt in with CRASHMOM_BUILD_TESTS=ON.
+option(CRASHMOM_BUILD_TESTS "Build transport-independent unit tests" OFF)
+
 include(generated/rexglue.cmake)
 
 # Our own source files. Add new hook / fix / feature files here.
@@ -64,6 +68,8 @@ set(CRASHMOM_SOURCES
     src/input/bindings.cpp       # keyboard + mouse: the actions, their keys, controls.toml
     src/input/keyboard_mouse.cpp # keyboard + mouse -> a virtual 360 controller (Spin = stick circles)
     src/input/players.cpp        # which device plays as which player (local co-op)
+    src/network/remote_input.cpp # validated remote pad states at the XInput boundary
+    src/network/protocol.cpp     # bounded transport-neutral packet codec
     src/input/controls_menu.cpp  # F6: the Controls menu (rebind keys, players)
     src/input/prompt_icons.cpp   # key / mouse pictures in the game's button prompts (Xelu's CC0 prompts)
     src/input/name_typing.cpp       # typing a name on the keyboard, the mouse on the on-screen keys
@@ -381,3 +387,18 @@ target_link_libraries(xexdis PRIVATE rex::runtime rex::disasm)
 add_executable(xma_test tools/xma_test/xma_test.cpp src/audio/xma_stream.cpp)
 target_include_directories(xma_test PRIVATE src ${CRASHMOM_SDK_HEADERS}/FFmpeg)
 target_link_libraries(xma_test PRIVATE rex::libavcodec rex::libavutil)
+
+if(CRASHMOM_BUILD_TESTS)
+    enable_testing()
+    add_executable(network_protocol_tests
+        tests/network_protocol_test.cpp
+        src/network/protocol.cpp)
+    target_include_directories(network_protocol_tests PRIVATE src)
+    add_test(NAME network_protocol_tests COMMAND network_protocol_tests)
+
+    add_executable(network_remote_input_tests
+        tests/remote_input_test.cpp
+        src/network/remote_input.cpp)
+    target_include_directories(network_remote_input_tests PRIVATE src)
+    add_test(NAME network_remote_input_tests COMMAND network_remote_input_tests)
+endif()

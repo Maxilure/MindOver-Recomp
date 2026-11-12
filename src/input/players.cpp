@@ -10,6 +10,7 @@
 #include <rex/runtime.h>
 
 #include "../players/who_plays.h"
+#include "../network/remote_input.h"
 
 using rex::input::DeviceId;
 using rex::input::DeviceInfo;
@@ -98,6 +99,11 @@ uint32_t PlayerAssignment::PresentMask() const {
       const int player = PlayerOf(d);
       if (player >= 0) mask |= 1u << player;
     }
+  }
+  // A remote peer is a connected player for the game's sign-in/player-count
+  // logic even though it has no local SDL device.
+  for (uint32_t user = 0; user < 4; ++user) {
+    if (network::remote_input::OwnsSlot(user)) mask |= 1u << user;
   }
   return mask;
 }

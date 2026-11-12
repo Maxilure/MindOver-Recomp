@@ -50,6 +50,9 @@ engineering, testing, bug reports, corrections, art. See
   the help of Codex (OpenAI)
   ([#21](https://github.com/Maxilure/MindOver-Recomp/pull/21),
   [finding 58](docs/findings/58-native-title-lifecycle.md)).
+- Added the first transport-neutral co-op packet codec and remote controller
+  handoff, with Codex (OpenAI); LAN and Steam transports remain to be
+  implemented ([finding 59](docs/findings/59-network-coop-foundation.md)).
 
 ### Bug reports
 

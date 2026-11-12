@@ -43,6 +43,7 @@
 #include "../input/players.h"
 #include "../input/title_any_button.h"
 #include "../input/name_typing.h"
+#include "../network/remote_input.h"
 #include "../overlay_banner.h"
 #include "../gameplay/game_mods.h"
 #include "../players/lost_controller.h"
@@ -1793,10 +1794,14 @@ extern "C" REX_FUNC(sub_824742F0) {
   using namespace save_library;
   const uint32_t user = ctx.r3.u32, state = ctx.r4.u32;
   __imp__sub_824742F0(ctx, base);
+  uint32_t result = ctx.r3.u32;
+  const bool remote_input = state && network::remote_input::Apply(
+      user, GuestPtr(base, state), result);
+  if (remote_input) ctx.r3.u64 = result;
   // The keyboard and mouse, straight into the game's state for the sockets
   // the keyboard answers on (input/keyboard_mouse.h MergeInto: no pretend
   // controller in the SDK's input system).
-  if (state && ctx.r3.u32 == 0) {
+  if (state && !remote_input && ctx.r3.u32 == 0) {
     auto* kbm_driver = kbm::KeyboardMouseDriver::Get();
     auto* assignment = kbm::PlayerAssignment::Get();
     if (kbm_driver && assignment && assignment->KeyboardAnswersFor(user)) {
@@ -1805,7 +1810,7 @@ extern "C" REX_FUNC(sub_824742F0) {
   }
   // A replay of recorded presses replaces what the device said (input_record.h).
   if (state) {
-    uint32_t result = ctx.r3.u32;
+    result = ctx.r3.u32;
     input_record::BeforeFilters(user, GuestPtr(base, state + 4), result, base);
     ctx.r3.u64 = result;
   }
