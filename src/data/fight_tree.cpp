@@ -3,6 +3,7 @@
 // =============================================================================
 #include <cstdlib>
 #include "fight_tree.h"
+#include "../gameplay/game_state.h"
 #include "../guest_memory.h"
 
 #include <algorithm>
@@ -27,6 +28,7 @@ namespace {
 uint32_t Be32(const uint8_t* p) {
   return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
 }
+
 void PutBe32(uint8_t* p, uint32_t v) {
   p[0] = uint8_t(v >> 24);
   p[1] = uint8_t(v >> 16);
@@ -235,6 +237,7 @@ extern "C" REX_FUNC(sub_8211AF40) {
   if (node) {
     const uint8_t* p = GuestPtr(base, node + 30);
     const int32_t number = int16_t(uint16_t(p[0]) << 8 | p[1]);
+    game_state::Capture(ctx, base, number);
     Decision decision;
     {
       std::lock_guard lock(g_mutex);

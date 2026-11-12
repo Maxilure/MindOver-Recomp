@@ -46,6 +46,7 @@ set(CRASHMOM_SOURCES
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)
+    src/discord_presence.cpp
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/audio/sound_out.cpp      # the game's mixed 5.1 sound played by our own SDL output (findings/54)
     src/audio/xma_native.cpp     # the game's XMA sounds unpacked by our own decoder, no emulated chip (findings/54)
@@ -87,6 +88,7 @@ set(CRASHMOM_SOURCES
     src/players/more_players_loading.cpp  # players 3-4's paw prints on the loading screen (findings/26)
     src/players/more_players_markers.cpp  # players 3-4's own marker pictures (findings/26)
     src/gameplay/game_mods.cpp   # Options -> Gameplay: friendly fire, combos on a partner's hit, simple spinning
+    src/gameplay/game_state.cpp  # native snapshot of the game's activity
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
     src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups
     src/cheats/free_camera.cpp   # the cheat menu's free camera (fly the view with keys + mouse)

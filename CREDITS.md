@@ -32,6 +32,10 @@ engineering, testing, bug reports, corrections, art. See
   See [Development approach](README.md#development-approach): this work has
   not been reviewed by domain experts.
 
+### Codex (OpenAI): AI assistant
+
+- Added the native game activity snapshot and the Windows Discord Rich Presence integration.
+
 ### YWZsaXRv: Windows setup script
 
 - Contributed a script that installs the Windows build tools with winget
