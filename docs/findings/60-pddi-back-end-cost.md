@@ -336,3 +336,53 @@ Measured (uncapped, Native Only, three pairs of 8 s profiles, the switch
 flipped live): the set-up's inclusive share of the main thread 2.57 / 2.21 /
 2.40% (original) -> 1.14 / 1.07 / 1.08% (C++). Frame rate 187-197 fps with
 the original, 194-197 with ours: within the run-to-run noise at this size.
+
+## 12. The tint and light writer (src/decomp/light_constants.cpp)
+
+Before every draw (BeginPrims sub_82430780, BeginIndexedPrims sub_824307F8,
+DrawPrimBuffer sub_82430878), xnContext calls sub_8242FF88 (414
+instructions): the largest piece of the back end's own code left after
+section 11. It is now C++ as well, written from xexdis. Its five virtual
+calls all land in one-to-three-instruction leaves (read from the vtables of
+xnContext 0x82016744 and xnExtUnLitColourTint 0x8201672C), so they are
+inlined, each behind a check that the slot still holds that function; so is
+SetPixelShaderConstantB (sub_82312B58, no frame of its own).
+
+What it writes:
+
+| Constant | From |
+|---|---|
+| VS c100 | the unlit tint: xnExtUnLitColourTint (context slot 91 with 263 = *(ctx +1208)), when enabled (byte +12) its ARGB word +8 x 1/128, else (1, 1, 1); w = a never-written word of its own frame (r1+364) |
+| PS c8 | ambient: *( *(ctx +144) +996) / 255 |
+| PS b0-b7, c9-c24 | eight directional light slots: records *(ctx +144) + 124 i, one "changed" byte each at ctx +944 + i |
+| PS c30-c41 | up to four point lights (record type 3): position, colour / 255, four parameters |
+| PS c29 | (point light count, three never-written frame words r1+132..140) |
+
+The lights part runs only when the "lights changed" byte ctx +952 is set
+(about a third of the calls on Wumpa Island). Two details of the original,
+kept as they are: only CHANGED directional slots are visited, and they are
+numbered in the order visited (a slot that didn't change doesn't move the
+numbering on); the point lights are gathered from all eight records,
+changed or not.
+
+Exactness follows section 10: byte / 255 and / 128 as one float multiply,
+words moved with lfs / stfs through double, the prologue's saves (r17-r31,
+f27-f31, the return address, the back chain) and every temporary written to
+the frame as the original leaves them, r3 as it leaves it (six different
+endings, by path).
+
+Checked with `--debug_native_light_check` (original + ours, compared: the
+device's first 10,136 bytes, the context's nine "changed" bytes, the whole
+544-byte frame): Wumpa Island, the ice courtyard on a titan, a jacked
+Ratcicle: 900,000+ calls, 0 differences. No scene reached in testing had a
+point light on, so a temporary test switch turned 0-7 records into point
+lights with random contents (and random "changed" bytes) before each checked
+call: 131,072 calls, 400,265 point lights written, 0 differences (switch
+removed). Positive control: 1.0 added to PS c8.x made every lights call
+differ. The check also logs what it covered ("covered N calls, N with lights
+changed, N directional, N point").
+
+Measured (uncapped, Native Only, Wumpa Island, three pairs of 8 s profiles,
+the switch `native_light_constants` flipped live): its inclusive share of
+the main thread 1.14 / 0.95 / 0.79% (original) -> 0.38 / 0.33 / 0.36% (C++).
+Frame rate 226-247 fps either way: within the noise at this size.
