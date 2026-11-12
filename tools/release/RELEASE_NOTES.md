@@ -68,6 +68,12 @@ Activision or the game's other owners.
   shows its own doll. The counter ("1/13") sits on the card's right, and
   long messages scroll. **Options → Display → HUD → Messages: Original**
   brings back the game's wide bar.
+- **Controllers read by the port itself.** Controller buttons, sticks and
+  vibration now go straight through SDL instead of the emulated Xbox input
+  service (contributed by zanettevini). `--native_controller_state=false`
+  brings back the old path.
+- **Vibration strength.** **Options → Controls → Vibration**: Off, Low (the
+  original's, the default) or High (twice as strong).
 
 **Also in this version:** every fix of
 [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha)

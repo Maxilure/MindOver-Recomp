@@ -27,6 +27,25 @@ REXCVAR_DEFINE_BOOL(native_controller_state, true, "CrashMoM",
     .lifecycle(rex::cvar::Lifecycle::kInitOnly);
 REXCVAR_DECLARE(bool, guide_button);
 
+// VIBRATION STRENGTH (Options -> Controls -> Vibration). The game itself only
+// knows on / off (its front end's flags +8593 bit 7, which who_plays.cpp turns
+// on at start and leaves on). The port scales the two motor speeds the game
+// sends, in the rumble wrapper below, on BOTH input paths (this backend and the
+// SDK's): 0 = off (every command becomes "stop"), 1 = low (the game's own
+// speeds, the original's feel: the default), 2 = high (twice the game's,
+// up to the motors' full speed). Playtest 2026-11-12: a first version had
+// low = half and high = the game's; half vs full felt the same, and the
+// game's own strength was wanted as the default with a stronger choice.
+// What makes this game rumble at all (2026-11-12, found while testing): no
+// hit or death does (a test that hurt and killed Crash sent no command); it's
+// mostly the actor templates' CProximityVibrationEmitterBehaviour (pulses that
+// get stronger and faster near the emitter: script fields
+// lowest/highest_intensity_pulse_strength, _pulse_time, _vibration_time) and
+// the scripts' SetControllerRumble.
+REXCVAR_DEFINE_INT32(vibration, 1, "CrashMoM",
+                     "Controller vibration: 0 = off, 1 = low (the original's), 2 = high (twice as strong)")
+    .range(0, 2);
+
 extern "C" REX_FUNC(__imp__sub_824742E8);
 extern "C" REX_FUNC(__imp__sub_82474300);
 
@@ -275,9 +294,26 @@ X_RESULT Vibrate(uint32_t user, const X_INPUT_VIBRATION& vibration) {
   return !physical || sent ? X_ERROR_SUCCESS : X_ERROR_FUNCTION_FAILED;
 }
 
+// One motor speed (0..65535) after the Vibration setting.
+uint16_t Scaled(uint16_t speed) {
+  switch (std::clamp(int(REXCVAR_GET(vibration)), 0, 2)) {
+    case 0: return 0;
+    case 2: return uint16_t(std::min(65535, int(speed) * 2));
+    default: return speed;
+  }
+}
+
 }  // namespace
 
 bool Enabled() { return REXCVAR_GET(native_controller_state); }
+
+void StopRumble() {
+  // Only this backend: the SDK path's motors stop with the game's next
+  // command (the game re-sends whenever a motor value changes).
+  if (!Enabled()) return;
+  std::lock_guard lock(g_mutex);
+  for (auto& [id, pad] : g_pads) SDL_RumbleGamepad(pad.handle.get(), 0, 0, 0);
+}
 
 void Start(std::unique_ptr<kbm::PlayerAssignment> assignment, std::unique_ptr<InputDriver> keyboard,
            std::unique_ptr<InputDriver> scripted) {
@@ -377,16 +413,42 @@ extern "C" REX_FUNC(sub_824742E8) {
 extern "C" REX_FUNC(sub_82474300) {
   using namespace rex;
   using namespace native_controllers;
-  if (!Enabled()) {
-    __imp__sub_82474300(ctx, base);
-    return;
-  }
   const uint32_t address = ctx.r4.u32;
   rex::input::X_INPUT_VIBRATION vibration{};
   if (GuestAccess(address, sizeof(vibration)) == memory::PageAccess::kNoAccess) {
+    if (!Enabled()) {
+      __imp__sub_82474300(ctx, base);  // the original answers a bad pointer itself
+      return;
+    }
     ctx.r3.u64 = X_ERROR_BAD_ARGUMENTS;
     return;
   }
+  // The speeds as the game asked (big-endian in its record), then the
+  // Vibration setting applied (Scaled above).
   std::memcpy(&vibration, GuestPtr(base, address), sizeof(vibration));
+  const rex::input::X_INPUT_VIBRATION asked = vibration;
+  vibration.left_motor_speed = Scaled(uint16_t(asked.left_motor_speed));
+  vibration.right_motor_speed = Scaled(uint16_t(asked.right_motor_speed));
+  // Every command in the log: the game sends few (only when a motor value
+  // changes), and the speeds it uses were unknown (to tune Low / High by).
+  REXLOG_INFO("Vibration: player {} asked {} / {} -> sent {} / {} (setting {})", ctx.r3.u32 + 1,
+              uint16_t(asked.left_motor_speed), uint16_t(asked.right_motor_speed),
+              uint16_t(vibration.left_motor_speed), uint16_t(vibration.right_motor_speed),
+              int(REXCVAR_GET(vibration)));
+  if (!Enabled()) {
+    // The SDK path reads the speeds from the game's record: the scaled ones
+    // go in for the call only, then the game's own values come back (its
+    // input manager keeps them there and compares against them every frame
+    // to decide when to send again: 0x8235D2E4). A record we can't write
+    // (never seen) goes through unscaled.
+    if (!Writable(address, sizeof(vibration))) {
+      __imp__sub_82474300(ctx, base);
+      return;
+    }
+    std::memcpy(GuestPtr(base, address), &vibration, sizeof(vibration));
+    __imp__sub_82474300(ctx, base);
+    std::memcpy(GuestPtr(base, address), &asked, sizeof(asked));
+    return;
+  }
   ctx.r3.u64 = Vibrate(ctx.r3.u32, vibration);
 }

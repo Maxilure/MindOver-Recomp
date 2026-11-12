@@ -166,14 +166,14 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
-**Xbox services replaced: 28 of 66 (42%)** `▰▰▰▰▱▱▱▱▱▱`
+**Xbox services replaced: 31 of 66 (47%)** `▰▰▰▰▰▱▱▱▱▱`
 
 | Xbox piece | Replaced | Becomes |
 |---|---|---|
 | Graphics driver | `▱▱▱▱▱▱▱▱▱▱` 0 / 20 | the port's own Vulkan renderer, then the emulated GPU off |
 | Profiles and sign-in | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | no profiles at all: who plays = which controllers play |
 | Saves and storage | `▰▰▰▰▰▰▰▰▰▰` 11 / 11 | plain save files in one folder: no storage devices, no content packages |
-| Controllers | `▱▱▱▱▱▱▱▱▱▱` 0 / 3 | the input manager fed directly (keyboard and mouse, any SDL controller, rumble) |
+| Controllers | `▰▰▰▰▰▰▰▰▰▰` 3 / 3 | the input manager fed directly (keyboard and mouse, any SDL controller, rumble) |
 | Sound output | `▰▰▰▰▰▰▰▰▰▰` 5 / 5 | each mixed frame straight to the PC's audio |
 | XMA sound decoder | `▰▰▰▰▰▰▰▰▰▰` 2 / 2 | a software decoder instead of the emulated sound chip |
 | System pop-ups and notifications | `▰▰▰▰▱▱▱▱▱▱` 2 / 5 | PC behaviour (the port's own messages); gone once profiles and saves are native |
@@ -278,7 +278,7 @@ Contributions of any kind are welcome: code, reverse engineering, testing, bug r
 
 - **Maxilure**: project lead, direction, playtesting, art
 - **[YWZsaXRv](https://github.com/YWZsaXRv)**: the Windows setup script the installer builds on
-- **[zanettevini](https://github.com/zanettevini)**: Brazilian Portuguese translation, native quit and launch code (with Codex)
+- **[zanettevini](https://github.com/zanettevini)**: Brazilian Portuguese translation, native quit and launch code, native controller code (with Codex)
 - **[ReXGlue](https://github.com/rexglue/rexglue-sdk)** and **[Xenia](https://github.com/xenia-project/xenia)**: the recompiler and runtime this port is built on
 - **[Xelu's Free Controller & Key Prompts](https://thoseawesomeguys.com/prompts/)** by Nicolae "Xelu" Berbece: the button prompt pictures
 - **[Icons8](https://icons8.com)**: the Windows installer's icon

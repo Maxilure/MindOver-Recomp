@@ -17,6 +17,8 @@ void Start(std::unique_ptr<kbm::PlayerAssignment> assignment,
            std::unique_ptr<rex::input::InputDriver> scripted);
 void Stop();
 void SetActiveCheck(std::function<bool()> check);
+// Stops every controller's motors now (the Vibration setting turned to Off).
+void StopRumble();
 rex::X_RESULT Read(uint32_t user, rex::input::X_INPUT_STATE* state);
 bool ReadDevice(rex::input::DeviceId id, rex::input::X_INPUT_STATE* state);
 

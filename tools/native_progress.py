@@ -167,6 +167,12 @@ DONE = {
     "XamLoaderTerminateTitle": "native/quit_launch.cpp: 0x824BBA5C",
     "HalReturnToFirmware": "native/quit_launch.cpp: 0x824BBC6C",
     "ExRegisterTitleTerminateNotification": "native/quit_launch.cpp: 0x824BBE1C",
+    # Controllers (findings/38 s.8): the game's three input wrappers are
+    # answered by the port's own SDL code (input/native_controllers.cpp);
+    # --native_controller_state=false brings back the SDK path.
+    "XamInputGetState": "saves/save_library.cpp: sub_824742F0 -> input/native_controllers.cpp",
+    "XamInputGetCapabilities": "input/native_controllers.cpp: sub_824742E8",
+    "XamInputSetState": "input/native_controllers.cpp: sub_82474300",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

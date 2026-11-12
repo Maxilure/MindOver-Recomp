@@ -30,6 +30,7 @@
 #include "../input/bindings.h"
 #include "../input/keyboard_mouse.h"
 #include "../input/background_input.h"
+#include "../input/native_controllers.h"
 #include "../input/prompt_icons.h"
 #include "../ui/scrooby.h"
 #include "../ui/window_mode.h"
@@ -1062,6 +1063,24 @@ Row CursorFadeRow() {
   return r;
 }
 
+// VIBRATION (input/native_controllers.cpp, 2026-11-12): the controllers' rumble
+// off, at the game's strength (Low, the default), or twice it (High). The
+// original only had on / off (its own Vibration option, gone with the port's
+// Options page).
+Row VibrationRow() {
+  Row r = LevelRow(tr(u"Vibration"), "vibration", {tr(u"Off"), tr(u"Low"), tr(u"High")},
+                   {tr(u"Controllers never vibrate."),
+                    tr(u"Controllers vibrate like the original game."),
+                    tr(u"Controllers vibrate twice as strongly as the original game.")});
+  const auto set = r.set;
+  // Off stops a rumble that is running right now, not at the game's next one.
+  r.set = [set](Env& e, int i) {
+    set(e, i);
+    if (i == 0) native_controllers::StopRumble();
+  };
+  return r;
+}
+
 // IN THE BACKGROUND (input/background_input.h, 2026-10-30): what a controller
 // does while the game window isn't focused: keep playing, or the game pauses
 // itself the moment the window loses the focus.
@@ -1080,7 +1099,7 @@ Row BackgroundInputRow() {
 }
 
 std::vector<Row> ControlsRows() {
-  std::vector<Row> rows{InvertAxisRow(), MouseAimingRow(), CursorFadeRow(), BackgroundInputRow(), Heading(tr(u"Button Pictures")), KeyboardIconsRow(),
+  std::vector<Row> rows{InvertAxisRow(), VibrationRow(), MouseAimingRow(), CursorFadeRow(), BackgroundInputRow(), Heading(tr(u"Button Pictures")), KeyboardIconsRow(),
                         ControllerIconsRow()};
   // The keys start under a heading of their own.
   rows.push_back(Heading(tr(u"Keyboard and Mouse Keys")));

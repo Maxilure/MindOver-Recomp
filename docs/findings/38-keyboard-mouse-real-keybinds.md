@@ -289,3 +289,29 @@ left with Back, rejoined with Start and sent stick input again. The
 game logged the state sequence `2 0 0 0 → 2 1 0 0 → 2 1 1 0 →
 2 1 1 1 → 2 1 1 0 → 2 1 1 1`. Co-op with multiple physical controllers
 and Linux remain untested.
+
+## 9. Vibration strength
+
+The original game only switches vibration on or off: the front end's flags
+byte at `+8593`, bit 7. The port sets that bit at start (findings/32) and
+leaves it on. The new **Vibration** setting (Options → Controls; flag
+`vibration`, 0 off / 1 low / 2 high, default 1) scales the two motor speeds
+in the rumble wrapper `sub_82474300` instead: zero for Off, unchanged for
+Low (the original's strength), doubled up to the motors' maximum for High.
+A first version made Low half strength and High the original's; on a pad,
+half and full felt the same. Every command is logged ("Vibration: player N
+asked L / R -> sent L / R") to see the speeds the game uses. On the SDK path the scaled speeds are written into the
+game's record for the call only and the game's own values put back after,
+because its input manager compares against them every frame to decide when
+to send a new command (the loop before the call at `0x8235D2E4`). Turning
+the setting to Off stops running motors at once on the port's backend.
+
+What makes this game vibrate at all is narrower than expected. A test that
+hurt and then killed Crash with the debug console's cheats sent no rumble
+command (the SDK's call meter: one `XamInputSetState` at load, none after).
+The data names one main source, the actor templates'
+`CProximityVibrationEmitterBehaviour`: pulses that grow stronger and more
+frequent near the emitter (script fields
+`lowest/highest_intensity_pulse_strength`, `_pulse_time` and
+`_vibration_time`), plus the scripts' `SetControllerRumble`. Which objects
+carry the emitter: (name TBD).

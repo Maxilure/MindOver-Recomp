@@ -50,6 +50,11 @@ engineering, testing, bug reports, corrections, art. See
   the help of Codex (OpenAI)
   ([#21](https://github.com/Maxilure/MindOver-Recomp/pull/21),
   [finding 58](docs/findings/58-native-title-lifecycle.md)).
+- Replaced the game's Xbox controller calls (state, capabilities,
+  vibration) with the port's own SDL controller code, with the help of Codex
+  (OpenAI)
+  ([#15](https://github.com/Maxilure/MindOver-Recomp/pull/15),
+  [finding 38, section 8](docs/findings/38-keyboard-mouse-real-keybinds.md#8-port-owned-sdl-controller-backend)).
 
 ### Bug reports
 
