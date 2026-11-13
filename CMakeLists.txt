@@ -148,6 +148,9 @@ set(CRASHMOM_SOURCES
     src/decomp/simple_setup.cpp # the simple material's draw set-up (sub_82441EA8) as C++ (findings/60 s.10), bit-identical
     src/decomp/light_constants.cpp # the renderer's tint and light writer (sub_8242FF88) as C++ (findings/60 s.12), bit-identical
     src/decomp/vertex_streams.cpp # the prim stream's pos/normal/binormal/tangent/uv writer (sub_82439A48) as C++ (findings/60 s.13), bit-identical
+    src/decomp/frustum_test.cpp # the visibility code's box-against-planes test (sub_822ED0C8 + sub_82426498) as C++ (findings/60 s.14), bit-identical
+    src/decomp/zone_fade.cpp # the per-frame fade of a zone's objects by distance (sub_822F4268) as C++ (findings/60 s.15), bit-identical
+    src/decomp/shadow_caps.cpp # a shadow volume's caps streamed as triangles (sub_82393120) as C++ (findings/60 s.16), bit-identical
     src/decomp/matrices.cpp # Radical's matrix helpers + the renderer's UpdateTransforms as C++ (findings/60), bit-identical
     src/decomp/skinning.cpp # characters' CPU skinning (sub_823ED688) as C++: same results, no maths-library calls
     src/native/native_window.cpp    # F8 / --native_window: a 2nd window with the native picture

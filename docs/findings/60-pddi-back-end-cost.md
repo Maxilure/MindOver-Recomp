@@ -435,3 +435,130 @@ Measured (uncapped, Native Only, three pairs of 8 s profiles, the switch
 `native_vertex_streams` flipped live): 2.80 / 3.04 / 2.79% (original) ->
 1.78 / 1.60 / 1.86% (C++). A first version that checked each float for a
 signalling NaN with a branch saved only a third as much (2.2 / 1.8 / 2.8%).
+
+## 14. The visibility code's box test (src/decomp/frustum_test.cpp)
+
+After section 13 the largest single game function in the same profile was
+sub_82426498 (~1.1% of the main thread uncapped, Wumpa Island): a plane
+against a bounding box, 30 instructions. Its only caller is sub_822ED0C8
+(another ~0.5%), which the visibility code calls from 13 places (the zone
+and draw-list walkers around 0x822B2268 and 0x822F2248): "is this box on the
+inner side of every plane of a list?" The list is a vector of planes (+0
+first, +4 one past the last; a plane = normal x y z, then d), walked from the
+last plane to the first, stopping at the first plane the box is fully
+outside of. The box: min x y z, then max x y z.
+
+The plane test takes, per axis, the box corner furthest against the normal
+(the normal's component compared with the constant at 0x82001868, 0.0: below
+it the box's max, else its min), then
+
+    dot = nx*x + (nz*z + ny*y)    (fmuls, then two fmadds)
+    inside = not (dot > -d)       (a NaN counts as inside)
+
+As section 9 found, a leaf that small is mostly its call, so the leaf alone
+was not rewritten: the loop is, with the test inlined (same roundings:
+float(a*b), float(fma(a, b, c)) in double; an FMA build and a plain one
+picked once, like the matrix helpers). With 13 callers, every register is
+left as the original leaves it (the last plane test's f0 and f6-f13, r9-r12,
+cr0 and the carry from `srawi.`, cr6 from the caller's last integer
+compare), plus the stack words the prologue writes (back chain, r28-r31 and
+the return address). A list whose end is before its begin, or memory across
+0xE0000000, goes to the original.
+
+Checked with `--debug_native_frustum_check` (memory below r1, every
+register): Wumpa Island ~500,000 calls and the titan save ~90,000 calls, 0
+differences.
+
+Measured (uncapped, Native Only, two pairs of 8 s profiles, the switch
+`native_frustum_test` flipped live): loop + test 1.60 / 1.71% of the main
+thread (original) -> 1.02 / 0.98% (C++).
+
+## 15. The zone objects' distance fade (src/decomp/zone_fade.cpp)
+
+With section 14 in, the material set-ups still left (the character set-up
+sub_8242CD10, the particle set-up sub_82448158) don't make the list of the
+largest game functions on Wumpa Island. The largest one by its own
+instructions is outside the renderer: sub_822F4268, ~1.3-1.45% of the main
+thread uncapped. Its one caller, sub_822B4B08, runs once a frame over every
+loaded zone (from the zone manager) with f1 = the frame's time step and r4 =
+a point at +216 of an object found at +444 (the camera's position, judging by
+the result: name TBD).
+
+A zone holds a list of objects (+184 first, +188 one past the last) and,
+parallel to it, pairs at +200 (a fade value, then a speed). For each object:
+
+    d      = |object +44/+48/+52 - point| - object +56   (centre, radius)
+    speed  = +|speed| when d < object +84, else -|speed|
+    fade   = clamp(fade + speed * dt, 0, 1)
+
+(0 and 1 = the constants at 0x82046720 and 0x8201EE28.) So objects fade in
+while the point is within their range and fade out after it leaves. The
+"|speed|" goes through two words below the stack pointer (stfs / lwz /
+clear the sign / stw), which the C++ writes the same way.
+
+The C++ follows the recompiled lines one for one, with locals instead of the
+register file: every guest load and store happens at the original's moment
+(the point is re-read for each object), so even overlapping arrays get the
+original's answer; FMA and plain builds as before. The caller calls
+sub_822F4CE0 right after it, so every register is left as the original
+leaves it (r7-r11, cr0 / cr6, the carry, f0 and f2-f13 of the last object).
+A list whose end is before its begin goes to the original.
+
+Checked with `--debug_native_zone_check` (the pair array and the red zone,
+every register): Wumpa Island ~15,600 calls and the titan save ~9,600, 0
+differences.
+
+Measured (uncapped, Native Only, two pairs of 8 s profiles, the switch
+`native_zone_fade` flipped live): 1.30 / 1.39% (original) -> 0.65 / 0.81%
+(C++).
+
+## 16. A shadow volume's caps (src/decomp/shadow_caps.cpp)
+
+Next by own time (Wumpa Island, uncapped): two siblings called one after the
+other from sub_823949A0, which draws a stencil shadow volume (findings/12): sub_82393120 (~0.7%) and sub_823936B0 (~0.6%).
+The first streams the volume's CAPS as immediate geometry through the PDDI
+context at [0x82571B7C]:
+
+- BeginPrims (context vtable +124, xnContext::BeginPrims 0x82430780) with
+  the material at [0x825758F4]+16, prim type 0, vertex format 0x2020 and 6N
+  vertices, N = the u32 at 0x8257223C;
+- per triangle (three s16 indices at 0x82572240, 6 bytes each) six
+  vertices: A[i2] A[i1] A[i0] from the shape's own vertex table
+  (*(*(object +72) +16), 12 bytes each) and B[i0] B[i1] B[i2] from a second
+  table at 0x825758F8 (presumably the pushed-away copy: name TBD); each
+  vertex = the colour word at 0x824EA558 (0x00FF0000) into the stream's
+  colour column and x y z into its position column, then the stream's count
+  (+28) and every non-null column (+4 always, +8..+24) moved on by the
+  stride;
+- EndPrims (vtable +128, 0x82430870).
+
+The C++ is that loop; the two virtual calls go to the game's own functions
+(through the PDDI intercept, so the recorder still sees the draw) with
+exactly the register file the original gives them, and the return leaves
+what the original's epilogue leaves (including the sign-extended `lis`
+values in r3, r5, r25-r31, and the 64-bit adds). A context whose two vtable
+slots aren't BeginPrims / EndPrims goes to the original.
+
+**A checker for functions that draw.** check.h runs the original and then
+ours; for a function that calls BeginPrims that means two draws and two
+different vertex buffers, so every address afterwards would differ. The
+check here (TapedCheck) TAPES the original's calls instead: while it runs,
+the SDK's indirect-call table entries for BeginPrims and EndPrims (8-byte
+host pointers per guest instruction after the image, REX_LOOKUP_FUNC) point
+at recording functions that keep the register file going in and coming out,
+plus the stream object and the vertex bytes right after BeginPrims and right
+before EndPrims. Ours then runs with REPLAY functions: the register file it
+hands each call is compared with the original's (at EndPrims that is every
+register the loop leaves), the stream object and every vertex byte are
+compared at EndPrims, and the recorded output is handed back. The game draws
+once, the original's draw. Positive controls: one register changed before
+EndPrims, or one vertex bit flipped, made every call differ (removed after).
+
+Checked with `--debug_native_shadow_check`: Wumpa Island ~1,000 calls and
+the titan save ~3,100, 0 differences.
+
+Measured (uncapped, Native Only, two pairs of 8 s profiles, the switch
+`native_shadow_caps` flipped live): 0.76 / 0.68% (original) -> 0.45 / 0.36%
+(C++). The sibling sub_823936B0 (the volume's sides: edge pairs, plus a
+material parameter set through the material's vtable +32) is the same
+shape and can reuse the taped check.
