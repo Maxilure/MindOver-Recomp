@@ -2717,3 +2717,21 @@ Now:
 
 Checked with a `controls.toml` saying `player.keyboard = 2`: log "Keyboard and
 mouse = player 1 (automatic)", fake controller 2 = player 2.
+
+## 66. The level-up screen after player 1 dropped out
+
+The level-up screen is answered by every playing player (section 21: each one
+asked as the menu's owner, `menu_input.cpp`). "Playing" counted player 1
+always, also after player 1 dropped out. The game's IsButtonPressed
+(`sub_822652B0`) then reads player 1's controller (`sub_82266130` = -1) and
+that controller's entry in the input manager's list (`[[0x8259B190]+56]+8`,
+4 bytes each) with no check: a read of `0x14` at `0x8226537C`, about a second
+after the screen opened. Found from a player's crash reports (twice: player 1
+dropped out, player 3 levelled up, once by the cheat "max level").
+
+`menu_input::CanAskAs(p)` now checks both (controller >= 0, list entry not
+null) before a player is asked, and the owner safety net (`KeepOwnerInGame`)
+uses the same test. Reproduced with fake pads (player 3 joins, player 1 drops
+out with Back in the pause menu, `cheat maxlevel 3`): the log says "player 1
+has no controller entry, not asked" at the moment of the old crash, player 3
+answers the screens and max level runs to the end.

@@ -151,6 +151,17 @@ now undefines it for the game's two targets (`crash_mom` and the generated
 code's `crash_mom_recomp`). The only SDK header whose class LAYOUT depends on
 the switch is `ui/overlay/debug_overlay.h`, which the port never includes.
 
+**But the SDK's `share/rexglue/rex_app.cpp` does** (fixed 2026-11-12): the SDK
+ships ReXApp's source and `rexglue_setup_target` compiles it into the game's
+exe, where it creates the `DebugOverlayDialog`. Undefined there, the object
+was allocated in the small layout, while the SDK library's `OnDraw` (built
+with the counters) wrote the frame-time history past its end: **Tools →
+Debug overlay** crashed at once (a write in `debug_overlay.cpp:48`, from a
+player's crash report on Windows). That one file gets the switch back
+(`set_source_files_properties(... COMPILE_OPTIONS -D...)`, same "not Release"
+rule; source options come after the target's `-U`). Checked in
+`compile_commands.json` (`-D -U -D`) and by toggling the overlay in a run.
+
 ## 8. Results so far
 
 Wumpa Island, uncapped, V-sync off, same spot:

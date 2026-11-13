@@ -83,12 +83,15 @@
 #include <sstream>
 #include <string>
 
+#include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
 #include "outfits.h"
+
+REXCVAR_DECLARE(bool, zone_list_growth);  // world/zone_lists.cpp
 
 REXCVAR_DEFINE_STRING(debug_outfit_previews, "", "CrashMoM",
                       "Debug: at the chest, one 3D preview per listed outfit, e.g. \"0,11,9,4\" (outfit "
@@ -198,6 +201,9 @@ struct State {
 
 // Room for every preview in the zone's character list (see the header).
 void GrowZoneList() {
+  // world/zone_lists.cpp grows every full zone list itself (with the game's
+  // own `new`, which the zone can free): nothing to do here then.
+  if (REXCVAR_GET(zone_list_growth)) return;
   const uint32_t game = Read32(0x8259B190);
   const uint32_t inv = game ? Read32(game + kInventoryOf) : 0;
   const uint32_t zone = inv ? Read32(inv + kCurrentZone) : 0;

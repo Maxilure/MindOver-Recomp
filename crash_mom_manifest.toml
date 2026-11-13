@@ -2243,3 +2243,19 @@ registers = ["r4"]
 address = 0x822C433C
 name = "MovieDialogueLanguage"
 registers = ["r7"]
+# D3D RING SIZE (src/world/zone_lists.cpp, docs/findings/27 s.9.2): the device
+# set-up sub_824337E0's caller builds D3DPRESENT_PARAMETERS at r1+80 and puts
+# RingBufferParameters.SecondarySize (params +0x54 = r1+164) = 6 MB:
+#   0x82433BE8  lis r5,96        ; r5 = 0x600000
+#   0x82433BEC  lwz r3,16(r31)   ; (r5 only used by the stw below)
+#   0x82433C1C  stw r5,164(r1)
+# then Reset (0x8230A430) or CreateDevice (0x8230A668) reads it. Every inline
+# draw (BeginVertices: skinned characters, particles) comes out of that ring,
+# and a tiled frame's data must all fit; past it, sub_82308B60 returns 0 and
+# BeginIndexedVertices hands back a NULL index pointer the game writes to
+# (crash in sub_823F2DC0's memcpy). The hook makes r5 bigger. Verified with
+# xexdis 0x82433B90-0x82433C60.
+[[entrypoint.midasm_hook]]
+address = 0x82433BEC
+name = "D3DRingSecondarySize"
+registers = ["r5"]

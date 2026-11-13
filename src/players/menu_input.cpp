@@ -269,16 +269,36 @@ bool MenuOnScreen() {
 // a controller entry; player 1 normally). Players screen: players_setup.cpp
 // hands it over before the drop out; this is the safety net for any route.
 extern "C" REX_FUNC(sub_82266130);  // front end: controller of player r4 (-1 = not in game; four: more_players.cpp)
+bool CanAskAs(PPCContext& ctx, uint8_t* base, uint32_t fe, int p);  // below
 void KeepOwnerInGame(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   const int32_t owner = int32_t(Read32(fe + kOwner));
-  auto controller = [&](uint32_t p) { return int32_t(CallGame(sub_82266130, ctx, base, fe, p)); };
-  if (owner < 0 || owner >= 4 || controller(uint32_t(owner)) >= 0) return;
+  // (CanAskAs also checks the controller's list entry, which the original
+  // reads right after the controller number.)
+  if (owner < 0 || owner >= 4 || CanAskAs(ctx, base, fe, owner)) return;
   for (uint32_t p = 0; p < 4; ++p) {
-    if (controller(p) < 0) continue;
+    if (!CanAskAs(ctx, base, fe, int(p))) continue;
     Write32(fe + kOwner, p);
     REXLOG_INFO("Menu input: the menu's owner (player {}) left the game: it's player {}'s now", owner + 1, p + 1);
     return;
   }
+}
+
+// May IsButtonPressed be asked AS player p? Its owner check (0x82265364..7C)
+// reads the controller of +8536 (sub_82266130) and then that controller's
+// entry in the input manager's list ([[0x8259B190]+56]+8, 4 bytes each) with
+// no check: a player with no controller (-1) or an empty entry = a read of
+// 0x14. The level-up loop below asks every PLAYING player as the owner, and
+// "playing" (co-op state, Plays) can be true while the controller is gone:
+// 2026-11-12, a player's crash reports (twice): players 1 + 3 in, player 3
+// used the cheat "max level" (and once a plain level-up), and the screen's
+// first question crashed at 0x8226537C. Such a player simply isn't asked.
+bool CanAskAs(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
+  const int32_t controller = int32_t(CallGame(sub_82266130, ctx, base, fe, uint32_t(p)));
+  if (controller < 0 || controller >= 4) return false;
+  const uint32_t uber = Read32(kGameGlobal);
+  const uint32_t manager = uber ? Read32(uber + 56) : 0;
+  const uint32_t list = manager ? Read32(manager + 8) : 0;
+  return list && Read32(list + 4 * uint32_t(controller)) != 0;
 }
 
 extern "C" REX_FUNC(sub_822652B0) {
@@ -312,6 +332,14 @@ extern "C" REX_FUNC(sub_822652B0) {
     bool heard = false;
     for (int p = 0; p < more_players::LocalPlayerCount() && !heard; ++p) {
       if (!Plays(p)) continue;
+      ctx = saved;
+      if (!CanAskAs(ctx, base, fe, p)) {
+        static int skipped_logged = 0;  // a few lines per session: it's asked every frame
+        if (skipped_logged < 3 && ++skipped_logged)
+          REXLOG_INFO("Menu input: level-up screen: player {} has no controller entry, not asked", p + 1);
+        ctx = saved;
+        continue;
+      }
       ctx = saved;
       ctx.r6.u64 = uint32_t(p);
       Write32(fe + kOwner, uint32_t(p));

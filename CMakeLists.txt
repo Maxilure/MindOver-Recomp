@@ -57,6 +57,7 @@ set(CRASHMOM_SOURCES
     src/system/command_ring.cpp      # the GPU command ring read by the port (graphics driver step 4, launch setting)
     src/system/system_messages.cpp   # XMsg*: dashboard music player + rich presence answered by the port
     src/system/system_popups.cpp     # last pop-ups (notification position, disc error box) + WSAStartup answered by the port
+    src/world/zone_lists.cpp     # every character in an area drawn: the zones' 32-character lists grow
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
@@ -144,10 +145,10 @@ set(CRASHMOM_SOURCES
     src/native/ab_capture.cpp       # F10 photos + debug: the same frame from both renderers
     src/native/translucent_sort.cpp # see-through objects: a draw order that does not flicker
     src/decomp/memory_copy.cpp # the game's memcpy (sub_8245C1A0) as a host copy when the buffers don't overlap (findings/60)
-    src/decomp/matrices.cpp # Radical's matrix helpers + the renderer's UpdateTransforms as C++ (findings/60), bit-identical
     src/decomp/simple_setup.cpp # the simple material's draw set-up (sub_82441EA8) as C++ (findings/60 s.10), bit-identical
     src/decomp/light_constants.cpp # the renderer's tint and light writer (sub_8242FF88) as C++ (findings/60 s.12), bit-identical
     src/decomp/vertex_streams.cpp # the prim stream's pos/normal/binormal/tangent/uv writer (sub_82439A48) as C++ (findings/60 s.13), bit-identical
+    src/decomp/matrices.cpp # Radical's matrix helpers + the renderer's UpdateTransforms as C++ (findings/60), bit-identical
     src/decomp/skinning.cpp # characters' CPU skinning (sub_823ED688) as C++: same results, no maths-library calls
     src/native/native_window.cpp    # F8 / --native_window: a 2nd window with the native picture
     src/native/spotter.cpp          # loud log banners when a hunted material (bump) shows up
@@ -244,6 +245,21 @@ foreach(_target crash_mom crash_mom_recomp)
         target_compile_options(${_target} PRIVATE ${_no_perf_counters})
     endif()
 endforeach()
+# EXCEPT rex_app.cpp: the SDK ships ReXApp's source (share/rexglue/rex_app.cpp)
+# and rexglue_setup_target compiles it INTO OUR EXE, and it does
+# make_unique<DebugOverlayDialog>. With the switch undefined there, the object
+# was allocated in the SMALL layout while the SDK library's OnDraw (built with
+# the counters) wrote the big one: frame_time_history_ past the end = a heap
+# overflow. Found 2026-11-12 from a player's crash report: Tools -> "Debug
+# overlay" crashed at once in DebugOverlayDialog::OnDraw (debug_overlay.cpp:48,
+# a WRITE). Same rule as the SDK's own (on for every config but Release).
+# Source-level options come after the target's on the command line, so this
+# -D undoes the -U for that one file.
+if(TARGET crash_mom AND DEFINED REXGLUE_SHARE_DIR)
+    set_source_files_properties("${REXGLUE_SHARE_DIR}/rex_app.cpp"
+        TARGET_DIRECTORY crash_mom
+        PROPERTIES COMPILE_OPTIONS "$<$<NOT:$<CONFIG:Release>>:-DREXGLUE_ENABLE_PERF_COUNTERS>")
+endif()
 
 # The port's version (VERSION.txt, e.g. 0.1.0-alpha) for the first line of
 # every log (session_log.cpp). Re-read at the next build when the file changes.

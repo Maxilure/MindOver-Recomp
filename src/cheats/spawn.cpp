@@ -9,7 +9,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <map>
 #include <mutex>
+#include <string>
 
 #include <fmt/format.h>
 #include <rex/logging.h>
@@ -223,6 +225,32 @@ bool PoolHasFree(const std::string& template_name) {
   return false;
 }
 
+// THE GAME'S HANDLE TABLE (2026-11-12, a player's crash report: ~200
+// Characters:Chiratta spawned 10 at a time in a few seconds, then a read of
+// 0x12 in sub_824542D8 under the creation's scripts): the manager at
+// [0x825973D0] hands out 24-byte entries (named handles: the scripts, sounds
+// and behaviours of every actor take some) from ONE fixed free list at
+// +0x1138 (+0 head, +4 tail, +8 count; pop = sub_823534D0, entries from +0x1144,
+// ~6,200 of them, 14-bit handles). sub_824542D8 pops one and uses it WITHOUT a
+// null check: the table full = the crash. The levels never come close; a
+// spawn cheat in a loop does, and enemies take far more entries than a
+// titan. So the spawn checks the free count first and stops while there's
+// still room for the level itself (kHandleReserve) and for one more actor of
+// this kind (its cost measured at the previous spawn of it; a first spawn
+// guesses kHandleFirstGuess).
+constexpr uint32_t kHandleManagerGlobal = 0x825973D0;
+constexpr uint32_t kHandleFreeCount = 0x1140;
+constexpr uint32_t kHandleReserve = 800;
+constexpr uint32_t kHandleFirstGuess = 300;
+std::map<std::string, uint32_t> g_handle_cost;  // template -> entries one spawn took (most seen)
+
+// The table's free entries, or -1 if the manager isn't there.
+int64_t FreeHandles() {
+  const uint32_t manager = Read32(kHandleManagerGlobal);
+  if (!manager || !Readable(manager + kHandleFreeCount, 4)) return -1;
+  return int64_t(Read32(manager + kHandleFreeCount));
+}
+
 // One request: `count` actors in a row in front of the player.
 //
 // THE NAME MATTERS: the creation picks the inventory section holding the new
@@ -260,6 +288,7 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
           CallGame(__imp__sub_82357020, ctx, base, g_scratch + kScratchTemplate, 0));
   const uint32_t inventory = Read32(kInventoryManager);
   int made = 0;
+  bool full = false;  // stopped by the handle table (above)
   uint32_t last_actor = 0;  // for the log (console tests: `who` on it)
   for (int i = 0; i < request.count; ++i) {
     // The creation's own test (sub_821686C0): the section exists AND is
@@ -294,6 +323,15 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
       return;
     }
     if (!ready && !pooled) break;
+    const int64_t free_before = FreeHandles();
+    const auto cost_it = g_handle_cost.find(request.template_name);
+    const uint32_t cost = cost_it != g_handle_cost.end() ? cost_it->second : kHandleFirstGuess;
+    if (free_before >= 0 && free_before < int64_t(kHandleReserve + 2 * cost)) {
+      REXLOG_WARN("Cheats: spawn: the game's handle table is almost full ({} free, one {} takes ~{}): stopped",
+                  free_before, request.template_name, cost);
+      full = true;
+      break;
+    }
     const float side = (float(i) - float(request.count - 1) * 0.5f) * spacing;
     for (int k = 0; k < 3; ++k) {
       WriteFloat(g_scratch + kScratchPosition + 4 * k,
@@ -320,13 +358,22 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
       CallGame(__imp__sub_8213E6D0, ctx, base, g_scratch + kScratchStartState);
     }
     if (!actor) break;
+    const int64_t free_after = FreeHandles();
+    if (free_before >= 0 && free_after >= 0 && free_after < free_before) {
+      uint32_t& seen = g_handle_cost[request.template_name];
+      seen = std::max(seen, uint32_t(free_before - free_after));
+    }
     ++made;
     last_actor = actor;
     // (The start state does it now; the meter route below stays for a
     // template without a start state.)
     if (request.knocked_out && start_state.empty()) g_to_stun.push_back({actor, 0, 0});
   }
-  if (!made) {
+  if (full) {
+    SetResult(made ? fmt::format("{} x {} spawned, then stopped: too many things in the level (the game's "
+                                 "table is almost full; kill some first)", made, request.template_name)
+                   : std::string("too many things in the level (the game's table is almost full): kill some first"));
+  } else if (!made) {
     SetResult(fmt::format("{} can't be spawned here (not in the game's packages, or it didn't load)",
                           request.template_name));
   } else {

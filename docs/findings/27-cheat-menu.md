@@ -427,6 +427,107 @@ hand.
 
 Spawning and free jack count as progress cheats (achievements off).
 
+### 9.1 Many at once: the game's handle table
+
+Spawning enemies quickly (a player's crash report: ~200 Chirattas, 10 at a
+time) crashed with a read of `0x12` in `sub_824542D8`, under the new actor's
+scripts. That function takes a 24-byte entry from a manager at `[0x825973D0]`
+(named handles used by actors' scripts, sounds and behaviours): ONE fixed free
+list at `+0x1138` (`+0` head, `+4` tail, `+8` free count; pop `sub_823534D0`),
+about 6,200 entries, and it uses the entry without a null check. The levels
+never get close; a spawn loop does. A Chiratta takes ~31 entries. Dead
+enemies give theirs back only after a while.
+
+`spawn.cpp` reads the free count before each actor and stops while
+`800 + 2 x cost` entries are left (cost = the most one spawn of that kind
+took, 300 before the first). The result line says "too many things in the
+level ... kill some first". Tested on Wumpa Island: 65 Chirattas at once,
+then 161 over three spawn / fight / kill-all rounds with titans mixed in, no
+crash.
+
+**Bodies missing, props shown.** With many enemies around, some were drawn
+without their body: only the coconut they carry (a separate prop) showed. The
+same in BOTH pictures and with `--native_skinning=false`: the game's own limit,
+fixed in 9.2.
+
+### 9.2 Every character drawn: the zones' lists and D3D's ring buffer
+
+The level is cut into zones (zone manager `[[0x8259B190]+100]`, zones at
+`+20..+24`). Each zone lists the render objects inside it; `sub_822F1CF8`
+(zone r3, render object r4) adds one: list `+0x6C` for characters (flag bit 2
+at object `+0x10`), `+0x5C` kind 0, `+0x4C` other kinds, plus `+0x7C` for flag
+0x1000. Each list is begin / end / capacity end, an array from the game's
+`new` (`sub_8227E9C8`; the character list gets 128 bytes = 32 entries). The
+push happens only while end < capacity (`0x822F1DD8`, `0x822F1E10`): a full
+list DROPS the object silently. Every frame the render manager walks each
+zone's lists (`sub_822B4B08` -> `sub_822F4CE0` -> `sub_822F4760`) and fades
+every object in or out by its distance from the camera against its limit
+(`+0x16C`) into object `+0x170`; the draw (`sub_822B6FB8`) skips a fade of 0. A
+character that didn't fit is in no list: fade 0 forever, never drawn.
+
+How it was found (Wumpa Island, save 2): a temporary counter on the skin draw
+`sub_823F2DC0` grew with each 10 spawned, then stayed at ~35 per frame past 30
+enemies; the opaque / translucent queues (`sub_823AE290` / `sub_823AD538`, 384
+and 512 entries) never dropped anything; 50 Chirattas spawned one at a time,
+then their render objects read: 16 at fade 1, the 5 newest checked at 0; the
+console's `who` on a drawn one's `+0x170` named `sub_822F4760`; the zones'
+lists read back: the character list of the zone full at 32, the 16 drawn ones
+in it, the hidden ones in none. (The outfit chest met the same limit in 2026-10
+on its own zone, `players/outfit_previews.cpp`.)
+
+**The fix** (`src/world/zone_lists.cpp`, `--zone_list_growth`, default on):
+`sub_822F1CF8` is wrapped; before the original runs, a full list 0-3 gets an
+array twice as big (at least 64), from the game's `new` IN THE HEAP OF THE
+ZONE'S OWN ARRAY (region lookup `sub_82357128`, heap id at `0x8256D1B4 + 8 x
+region`, current heap `0x825711EC`), entries copied. The zone frees it like its
+own. Two earlier versions were wrong: our own memory (`SystemHeapAlloc`) and the
+current heap. The chest's zone array is in heap 3 while heap 8 is current.
+
+**The second limit, D3D's ring buffer.** Skinned bodies are written into D3D's
+secondary ring (BeginIndexedVertices `sub_82477248` -> `sub_82308B60` ->
+`sub_82308960`). A frame drawn in tiles must fit in it whole. The game asks for
+6 MB (`lis r5,96` at `0x82433BE8`, `RingBufferParameters.SecondarySize`). With
+every body drawn, 64 Chirattas dying at once overflowed it: the allocator gave
+0, BeginIndexedVertices returned a NULL index pointer (E_OUTOFMEMORY) and the
+game copied indices to it (crash in `sub_823F2DC0`'s memcpy to `0xFFFFFFF8`).
+A mid-function hook at `0x82433BEC` makes it 24 MB with the fix on (18 MB more
+of the guest's physical memory).
+
+Normal play is unchanged: the lists only grow once full, which the levels'
+own fights never reach (the chest's previews do: 2 -> 64, tested with 4
+players, chest closed, Quit Game, load).
+
+Tested: 237 Chirattas over three spawn / fight / kill-all rounds with every body
+drawn (photo pairs: native = emulated), lists grown to 128 (characters) and 512
+(`+0x7C`), no crash; Quit Game and load after 50 spawned: clean.
+
+**Reloading after a massacre** (found while testing; it happens with the
+growth off too). After hundreds of enemies were killed (mojo pickups
+everywhere) and "Quit Game", loading a save could crash while the new level was
+built (front end 486 -> 488): `CCollisionManager` (slot 10) still updates a
+`Collectable` (slot 5 `sub_821984A0`). Its position update `sub_8217E850` asks
+"which zone holds this point" with `sub_822E6AA0(zone manager, point, actor
++40)`, and `actor +40` is still the OLD level's zone, already freed: garbage
+neighbour / volume lists (reads of 0, 0x10, 0x17C, 0xBF). It crashed in 6 of 6
+heavy runs with growth on and 1 of 3 with it off. Null checks only moved the
+crash (the pointers are stale, not null).
+
+Fix (same file): `sub_822E6AA0` rewritten with one rule added. The original
+tries the hint zone, then its neighbours (`+0x198..+0x19C`), then every zone of
+the manager (`+0x14..+0x18`). Now the hint and its neighbours are used only if
+they are in the manager's CURRENT list; otherwise the search goes straight to
+the current zones (log "an object still points at zone X, not one of this
+level's"). Tested: the heavy run (287-290 spawned, kill-all rounds, two Quit +
+load) 3 of 3 clean, the warning seen at each reload; a lighter run (50 spawned,
+Quit, load) clean.
+
+**Mojo in waves after a mass kill (original behaviour, left as is).** Dropped
+mojo comes from the level's pool of ready-made actors (`0x82597C70`, count at
+`0x825AAD54`; Wumpa Island: one pool, `Collectables:c_mojoS`, 50 actors). 60
+Chirattas killed at once filled it in half a second; the rest of the mojo
+appears as collected mojo goes back to the pool, so it pops out in waves. None
+is lost, and the game's own fights (about 16 enemies) fit in 50.
+
 ## 10. Unlocks (outfits, concept art, enemy info, tutorials)
 
 The game keeps four "unlocked" lists as plain globals. Each is a run of ids
