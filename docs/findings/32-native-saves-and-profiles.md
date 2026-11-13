@@ -434,3 +434,87 @@ error box was never seen in a real session; `--debug_disc_error_box` shows it
 at start-up (on the once-per-boot notification call): the box window opened
 (title "Mind over Recomp"). Closing it with OK (exit afterwards) was not
 tested.
+
+## 9. The graphics driver, step 1: the simple answers
+
+Direct3D (linked into the game, code 0x82305000-0x82323000) is the only
+caller of the console's graphics driver, 20 `Vd*` kernel calls. Six of them
+are the emulated GPU itself and stay with the SDK for now: the vertical-blank
+interrupt (`VdSetGraphicsInterruptCallback`), the swap (`VdSwap`,
+`VdGetSystemCommandBuffer`, `VdPersistDisplay`) and the command ring
+(`VdInitializeRingBuffer`, `VdEnableRingBufferRPtrWriteBack`). The other 14
+are questions or no-ops. `src/system/graphics_driver.cpp` answers them at all
+21 call sites (manifest "GRAPHICS DRIVER", one midasm hook per `bl`, found by
+a search of the generated code for each import; every site read with xexdis);
+`--graphics_driver_native=false` lets the SDK answer again.
+
+| Call | Callers | Answer |
+|---|---|---|
+| VdQueryVideoMode | D3D device set-up sub_82311640, display reset sub_8231B8D0 | the console's TV of section 6 (1280x720, 16:9, 60 Hz), shared code |
+| VdQueryVideoFlags | scaler size sub_8231A2E0 | 3 (widescreen, at least 1024 wide) |
+| VdGetCurrentDisplayInformation | sub_82311978, sub_8231E1F0, sub_8231D4C0 | the same TV, laid out like the SDK's answer |
+| VdGetCurrentDisplayGamma | gamma-ramp set-up sub_823136B8 | type 2 (BT.709), power 2.2222223: the SDK's values, so the ramp both renderers apply is unchanged |
+| VdInitializeScalerCommandBuffer | sub_8231BDF8 (buffer and word count are stack arguments 10-11, [r1+0x64] / [r1+0x6C]) | the buffer filled with GPU no-op packets, result = word count (the SDK's answer; the PC has no display scaler) |
+| VdRetrainEDRAM | sub_8231C050, every frame | 0 (the second call site runs only after a non-zero first answer) |
+| VdRetrainEDRAMWorker, VdSetDisplayMode, VdEnableDisableClockGating, VdCallGraphicsNotificationRoutines | D3D set-up | 0 |
+| VdIsHSIOTrainingSucceeded, VdInitializeEngines | device creation sub_82311B70, engine start sub_82311A80 | 1 |
+| VdShutdownEngines, VdSetSystemCommandBufferGpuIdentifierAddress | D3D set-up / shutdown | nothing |
+
+One answer differs from before: D3D used to hear the SDK's `video_mode_*`
+flags in VdQueryVideoMode, which a saved settings file could set to any size
+and refresh rate (1920x1080 at 180 Hz was seen), while the game itself already
+heard the fixed TV (section 6) and the virtual screen ticks at 60 Hz. D3D keeps
+the refresh at device +0x5434 and its flip function sub_82310728 uses it to
+tell how far into a vertical blank a flip arrives; it now hears 60 Hz, the
+real tick rate.
+
+Tests (copy of the saves, `--load_save=last`, 30 fps): Native Only, 70 s of
+play: the 14 calls show 0 in the Xbox calls meter, only the 6 above remain,
+0 errors. Emulated renderer, same save, with and without the switch: 30.0 fps
+with the same 1% lows (29.3) in both, and a frozen frame's HUD region is
+identical to the pixel (gamma unchanged; whole frame 0.08/255 from the idle
+animation).
+
+## 10. The graphics driver, step 2: the vertical blank
+
+A TV redraws its picture 60 times a second; between two pictures comes the
+VERTICAL BLANK. The console's graphics driver reports each one by calling an
+interrupt callback the game registers with `VdSetGraphicsInterruptCallback`:
+D3D's engine start sub_82311A80 registers 0x82308798 with the D3D device as
+its argument (site 0x82311AEC), its shutdown sub_82311E58 clears it (site
+0x82311F54, r3 = 0). The callback is called with a SOURCE:
+
+| Source | Who raises it | What the game does |
+|---|---|---|
+| 0 | the vertical blank (SDK: its "GPU VSync" thread, MarkVblank) | vblank handler 0x82310628: the vblank count PDDI waits on (0x8258E460, via 0x82433380) and the flip queue sub_82310728 |
+| 1 | the GPU command stream (PM4 INTERRUPT packet) | D3D's fences and callbacks (`cmplwi r3,1` at 0x823087A8) |
+
+Source 0 is the original game's frame clock: at 30 fps PDDI waits for two of
+them per frame (findings/07). `src/system/vblank.cpp` now delivers it: both
+registration sites are answered (midasm hooks), and a "VBlank" thread of the
+port's (an SDK XHostThread, so game code can run on it) calls the callback
+with source 0 at 60 Hz on an absolute schedule (start + k / 60 s, sleep_until;
+the SDK's thread polled every 1 ms). It runs the callback the way the SDK
+did: through ExecuteInterrupt (global lock held, TLS pointer 0) on "CPU 2", so
+it never overlaps a source-1 interrupt. A late tick is still delivered; more
+than 4 behind restarts the schedule instead of firing a burst.
+`guest_refresh_hz` (SDK patch 0010) still overrides the rate.
+
+Source 1 still comes from the emulated GPU, which keeps running until its
+command ring is replaced: the port passes the callback's address on to it.
+SDK patch 0023 adds the GPU flag `guest_vblank_interrupt`; the port sets it to
+false, so the SDK's vblank thread keeps counting vblanks for its own command
+processor but no longer calls the game. `--vblank_native=false` brings the
+SDK's ticks back.
+
+Tests (copy of the saves, `--load_save=last`; "1% low" = the slowest 1% of
+frames):
+
+| Run | Result |
+|---|---|
+| Native Only, 30 fps cap, 75 s | 3,600 ticks in the minute, 0 late, 0 restarts; 30.0 fps, 1% low 29.5; 0 errors |
+| Emulated, 30 fps, port's ticks / SDK's ticks | 30.0 fps both, 1% low 29.7 / 29.2; frozen frames identical (HUD 0.0, frame 0.07/255) |
+| Native Only, 60 fps cap / uncapped | 60.0 fps / ~233 fps (unchanged) |
+| Boot through the intro movies to the attract movie | movies play, 0 errors |
+
+The meter shows 0 calls of `VdSetGraphicsInterruptCallback`.

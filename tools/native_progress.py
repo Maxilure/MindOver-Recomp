@@ -206,6 +206,29 @@ DONE = {
     "XMsgStartIORequestEx": "system_messages.cpp: sub_82300140 + sub_82300218 "
                             "(the only callers of sub_822FFFD8)",
     "XMsgStartIORequest": "system_messages.cpp: sub_823006E8 (XUserSetContextEx)",
+    # Graphics driver, STEP 1 (2026-11-13, src/system/graphics_driver.cpp,
+    # findings/32 s.9): the 14 calls that are only questions or no-ops,
+    # answered at every call site (manifest "GRAPHICS DRIVER"). Meter: 0 calls.
+    # Left: the interrupt (vertical blank), the swap, the command ring.
+    "VdQueryVideoMode": "graphics_driver.cpp: 0x82311708, 0x8231B908 (the console's TV)",
+    "VdQueryVideoFlags": "graphics_driver.cpp: 0x8231A39C",
+    "VdGetCurrentDisplayInformation": "graphics_driver.cpp: 0x823119F0, 0x8231E540, 0x8231D690",
+    "VdGetCurrentDisplayGamma": "graphics_driver.cpp: 0x823136E4 (BT.709, the SDK's)",
+    "VdInitializeScalerCommandBuffer": "graphics_driver.cpp: 0x8231BF78 (no-op packets)",
+    "VdRetrainEDRAM": "graphics_driver.cpp: 0x8231C0AC, 0x8231C0F4 (every frame)",
+    "VdRetrainEDRAMWorker": "graphics_driver.cpp: 0x8231C084",
+    "VdSetDisplayMode": "graphics_driver.cpp: 0x823119E8",
+    "VdIsHSIOTrainingSucceeded": "graphics_driver.cpp: 0x82311D2C",
+    "VdInitializeEngines": "graphics_driver.cpp: 0x82311AB4",
+    "VdShutdownEngines": "graphics_driver.cpp: 0x823113C4, 0x82311F90",
+    "VdEnableDisableClockGating": "graphics_driver.cpp: 0x82313CC0",
+    "VdCallGraphicsNotificationRoutines": "graphics_driver.cpp: 0x8231A4D4",
+    "VdSetSystemCommandBufferGpuIdentifierAddress": "graphics_driver.cpp: 0x82309CEC, 0x82309F10, "
+                                                   "0x82311EE4",
+    # Graphics driver, STEP 2 (2026-11-13, src/system/vblank.cpp, findings/32
+    # s.10): the vertical blank ticked by the port's own "VBlank" thread; the
+    # registration answered at both sites (SDK patch 0023 silences the SDK's).
+    "VdSetGraphicsInterruptCallback": "vblank.cpp: 0x82311AEC, 0x82311F54",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

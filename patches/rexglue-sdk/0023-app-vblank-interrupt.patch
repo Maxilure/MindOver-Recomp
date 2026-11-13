@@ -1,0 +1,56 @@
+Mind over Recomp: the app can deliver the guest's vblank interrupts itself
+
+Applies to: rexglue-sdk nightly-20260921-923c1a59 (thirdparty/rexglue-sdk), after 0010
+Apply with: git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/0023-app-vblank-interrupt.patch
+Status:     port-specific (not an upstream bug)
+
+WHAT IT IS FOR
+  Making the Xbox graphics driver the port's own (docs/findings/32 s.10,
+  "graphics driver step 2"): the game registers ONE interrupt callback with
+  VdSetGraphicsInterruptCallback; the SDK calls it with source 0 at every
+  guest vblank (its "GPU VSync" thread, MarkVblank) and with source 1 when
+  the command stream asks for an interrupt (PM4 INTERRUPT). The port now runs
+  its own vblank timer (src/system/vblank.cpp) and calls the game's callback
+  with source 0 itself; the SDK must stop doing the same, or every vblank
+  would arrive twice.
+
+CHANGE
+  New GPU flag guest_vblank_interrupt (default true = unchanged behaviour,
+  hot-reload): false = MarkVblank still bumps the command processor's vblank
+  counter (written to memory by EVENT_WRITE with initiator bit 31) but skips
+  DispatchInterruptCallback(0, 2). Source 1 is untouched.
+
+HOW FOUND
+  Reading graphics_system.cpp (vsync worker -> MarkVblank -> dispatch) and
+  command_processor.cpp (ExecutePacketType3_INTERRUPT -> source 1).
+
+--- a/src/graphics/graphics_system.cpp
++++ b/src/graphics/graphics_system.cpp
+@@ -46,6 +46,15 @@
+                      "games that wait for vblank run faster")
+     .range(0, 1000)
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
++// Mind over Recomp (patch 0023): false = the vblank thread keeps counting
++// vblanks for the command processor but no longer calls the game's
++// interrupt callback with source 0; the game's own vblank timer does that
++// (src/system/vblank.cpp). Command-stream interrupts (source 1) are not
++// affected. Read at every vblank.
++REXCVAR_DEFINE_BOOL(guest_vblank_interrupt, true, "GPU",
++                    "Call the game's interrupt callback at each guest vblank (false = the "
++                    "embedding app delivers vblank interrupts itself)")
++    .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ REXCVAR_DEFINE_BOOL(store_shaders, true, "GPU",
+                     "Store shaders persistently and load them when loading games to avoid "
+                     "runtime spikes and freezes when playing the game not for the first time.");
+@@ -342,7 +351,10 @@
+   // TODO(benvanik): we shouldn't need to do the dispatch here, but there's
+   //     something wrong and the CP will block waiting for code that
+   //     needs to be run in the interrupt.
+-  DispatchInterruptCallback(0, 2);
++  // Mind over Recomp (patch 0023): skipped when the app runs its own vblanks.
++  if (REXCVAR_GET(guest_vblank_interrupt)) {
++    DispatchInterruptCallback(0, 2);
++  }
+ }
+ 
+ void GraphicsSystem::ClearCaches() {

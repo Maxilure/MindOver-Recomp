@@ -72,6 +72,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../guest_memory.h"
+#include "console_settings.h"
 
 // The original start-up check (the generated code), for the A/B switch.
 extern "C" REX_FUNC(__imp__sub_823009B8);
@@ -84,9 +85,9 @@ REXCVAR_DEFINE_BOOL(console_settings_native, true, "CrashMoM",
 namespace {
 
 // The TV the game hears (see the header).
-constexpr uint32_t kTvWidth = 1280;
-constexpr uint32_t kTvHeight = 720;
-constexpr float kTvRefreshHz = 60.0f;
+using console_settings::kTvWidth;
+using console_settings::kTvHeight;
+using console_settings::kTvRefreshHz;
 constexpr uint32_t kVideoStandardNtsc = 1;  // 1 NTSC-M, 2 NTSC-J, 3 PAL
 
 // XCONFIG user video flags (category 3, setting 10): the value the SDK gave.
@@ -127,8 +128,14 @@ bool CrashMomConsoleVideoMode(PPCRegister& r3) {
   if (!REXCVAR_GET(console_settings_native)) return false;
   static bool said = false;
   Note("TV mode (1280x720, 16:9, 60 Hz, NTSC)", said);
+  console_settings::WriteTvMode(r3.u32);
+  return true;  // jump over the call (it returns nothing)
+}
+
+// The TV answer itself, shared with graphics_driver.cpp (D3D asks the same
+// question through the graphics driver's VdQueryVideoMode).
+void console_settings::WriteTvMode(uint32_t mode) {
   uint8_t* base = Membase();
-  const uint32_t mode = r3.u32;
   std::memset(GuestPtr(base, mode), 0, 48);
   Store32(base, mode + 0, kTvWidth);
   Store32(base, mode + 4, kTvHeight);
@@ -142,7 +149,6 @@ bool CrashMomConsoleVideoMode(PPCRegister& r3) {
   // Two words nobody here reads; the values the SDK (Xenia) puts there.
   Store32(base, mode + 28, 0x4A);
   Store32(base, mode + 32, 0x01);
-  return true;  // jump over the call (it returns nothing)
 }
 
 // -----------------------------------------------------------------------------

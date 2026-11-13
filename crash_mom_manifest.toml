@@ -438,6 +438,181 @@ name = "CrashMomConsoleVideoFlags"
 registers = ["r3", "r4", "r5", "r6", "r7"]
 jump_address_on_true = 0x82311BEC
 
+# GRAPHICS DRIVER, STEP 1: THE SIMPLE ANSWERS (src/system/graphics_driver.cpp,
+# docs/findings/32 s.9). D3D asks the console's graphics driver (Vd* kernel
+# calls) 14 things that are only questions or no-ops; each `bl` to an import
+# thunk is answered here (the hook fills the answer, then jumps over the call).
+# Found 2026-11-13: Xbox calls meter (who called) + a search of every `bl` to
+# the 20 Vd thunks (0x824BBD6C..0x824BBEFC) in the generated code; every site
+# read with xexdis (argument set-up before, result use after). The other 6
+# (interrupt, swap, ring buffer) are the emulated GPU itself: later steps.
+# VdQueryVideoMode: D3D device set-up sub_82311640 (addi r3,r1,80)
+[[entrypoint.midasm_hook]]
+address = 0x82311708
+name = "CrashMomDriverVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x8231170C
+
+# VdQueryVideoMode: display reset sub_8231B8D0 (r3 set earlier)
+[[entrypoint.midasm_hook]]
+address = 0x8231B908
+name = "CrashMomDriverVideoMode"
+registers = ["r3"]
+jump_address_on_true = 0x8231B90C
+
+# VdQueryVideoFlags: scaler size sub_8231A2E0 (clrlwi. r11,r3,31 after)
+[[entrypoint.midasm_hook]]
+address = 0x8231A39C
+name = "CrashMomDriverVideoFlags"
+registers = ["r3"]
+jump_address_on_true = 0x8231A3A0
+
+# VdGetCurrentDisplayInformation: sub_82311978 (addi r3,r1,80)
+[[entrypoint.midasm_hook]]
+address = 0x823119F0
+name = "CrashMomDriverDisplayInfo"
+registers = ["r3"]
+jump_address_on_true = 0x823119F4
+
+# VdGetCurrentDisplayInformation: sub_8231E1F0 (addi r3,r1,384)
+[[entrypoint.midasm_hook]]
+address = 0x8231E540
+name = "CrashMomDriverDisplayInfo"
+registers = ["r3"]
+jump_address_on_true = 0x8231E544
+
+# VdGetCurrentDisplayInformation: sub_8231D4C0 (addi r3,r1,96)
+[[entrypoint.midasm_hook]]
+address = 0x8231D690
+name = "CrashMomDriverDisplayInfo"
+registers = ["r3"]
+jump_address_on_true = 0x8231D694
+
+# VdGetCurrentDisplayGamma: gamma ramp sub_823136B8 (r3 = r1+84 type; r4 power)
+[[entrypoint.midasm_hook]]
+address = 0x823136E4
+name = "CrashMomDriverDisplayGamma"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x823136E8
+
+# VdInitializeScalerCommandBuffer: sub_8231BDF8 (buffer [r1+0x64], count [r1+0x6C])
+[[entrypoint.midasm_hook]]
+address = 0x8231BF78
+name = "CrashMomDriverScalerCommands"
+registers = ["r1", "r3"]
+jump_address_on_true = 0x8231BF7C
+
+# VdRetrainEDRAM: sub_8231C050, EVERY FRAME (cmpwi r3,0 / beq after)
+[[entrypoint.midasm_hook]]
+address = 0x8231C0AC
+name = "CrashMomDriverRetrainEdram"
+registers = ["r3"]
+jump_address_on_true = 0x8231C0B0
+
+# VdRetrainEDRAM: sub_8231C050 2nd try (only after a non-zero 1st answer)
+[[entrypoint.midasm_hook]]
+address = 0x8231C0F4
+name = "CrashMomDriverRetrainEdram"
+registers = ["r3"]
+jump_address_on_true = 0x8231C0F8
+
+# VdRetrainEDRAMWorker: sub_8231C050 (li r3,0 before)
+[[entrypoint.midasm_hook]]
+address = 0x8231C084
+name = "CrashMomDriverRetrainEdramWorker"
+registers = ["r3"]
+jump_address_on_true = 0x8231C088
+
+# VdSetDisplayMode: sub_82311978 (r3 = flags)
+[[entrypoint.midasm_hook]]
+address = 0x823119E8
+name = "CrashMomDriverSetDisplayMode"
+registers = ["r3"]
+jump_address_on_true = 0x823119EC
+
+# VdIsHSIOTrainingSucceeded: device creation sub_82311B70
+[[entrypoint.midasm_hook]]
+address = 0x82311D2C
+name = "CrashMomDriverHsioTraining"
+registers = ["r3"]
+jump_address_on_true = 0x82311D30
+
+# VdInitializeEngines: sub_82311A80 (lis r3,6995 = 0x1B530000 before)
+[[entrypoint.midasm_hook]]
+address = 0x82311AB4
+name = "CrashMomDriverInitializeEngines"
+registers = ["r3"]
+jump_address_on_true = 0x82311AB8
+
+# VdShutdownEngines: sub_823113B0
+[[entrypoint.midasm_hook]]
+address = 0x823113C4
+name = "CrashMomDriverShutdownEngines"
+registers = ["r3"]
+jump_address_on_true = 0x823113C8
+
+# VdShutdownEngines: sub_82311E58
+[[entrypoint.midasm_hook]]
+address = 0x82311F90
+name = "CrashMomDriverShutdownEngines"
+registers = ["r3"]
+jump_address_on_true = 0x82311F94
+
+# VdEnableDisableClockGating: sub_82313C88
+[[entrypoint.midasm_hook]]
+address = 0x82313CC0
+name = "CrashMomDriverClockGating"
+registers = ["r3"]
+jump_address_on_true = 0x82313CC4
+
+# VdCallGraphicsNotificationRoutines: sub_8231A480 (li r3,1)
+[[entrypoint.midasm_hook]]
+address = 0x8231A4D4
+name = "CrashMomDriverNotificationRoutines"
+registers = ["r3"]
+jump_address_on_true = 0x8231A4D8
+
+# VdSetSystemCommandBufferGpuIdentifierAddress: sub_82309C20
+[[entrypoint.midasm_hook]]
+address = 0x82309CEC
+name = "CrashMomDriverGpuIdentifierAddress"
+registers = ["r3"]
+jump_address_on_true = 0x82309CF0
+
+# VdSetSystemCommandBufferGpuIdentifierAddress: sub_82309C20 (addi r3,r11,8)
+[[entrypoint.midasm_hook]]
+address = 0x82309F10
+name = "CrashMomDriverGpuIdentifierAddress"
+registers = ["r3"]
+jump_address_on_true = 0x82309F14
+
+# VdSetSystemCommandBufferGpuIdentifierAddress: sub_82311E58 (li r3,0)
+[[entrypoint.midasm_hook]]
+address = 0x82311EE4
+name = "CrashMomDriverGpuIdentifierAddress"
+registers = ["r3"]
+jump_address_on_true = 0x82311EE8
+
+# GRAPHICS DRIVER STEP 2: THE VERTICAL BLANK (src/system/vblank.cpp, docs/
+# findings/32 s.10). VdSetGraphicsInterruptCallback answered at both sites;
+# the port's own "VBlank" thread then calls the game's callback with source 0
+# at 60 Hz (SDK patch 0023 stops the SDK's vblank thread doing the same).
+# Found 2026-11-13 with the Xbox calls meter + xexdis:
+#   0x82311AEC D3D engine start sub_82311A80: addi r3,r10,-30824 (= callback
+#              0x82308798), mr r4,r31 (the D3D device) before it
+#   0x82311F54 D3D shutdown sub_82311E58: li r3,0 (callback removed)
+[[entrypoint.midasm_hook]]
+address = 0x82311AEC
+name = "CrashMomDriverInterruptCallback"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x82311AF0
+
+[[entrypoint.midasm_hook]]
+address = 0x82311F54
+name = "CrashMomDriverInterruptCallback"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x82311F58
+
 # XMA DECODED BY THE PORT (src/audio/xma_native.cpp, docs/findings/54 s.5).
 # Radical's audio::hal::hw::XmaDecoder (the only user of the Xbox's XMA chip
 # in this game) creates its chip context in its constructor sub_8234BE88:
