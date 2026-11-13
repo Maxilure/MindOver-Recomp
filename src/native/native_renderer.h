@@ -102,8 +102,11 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -202,10 +205,30 @@ class NativeRenderer {
   static void FrameEndThunk(void* self) { static_cast<NativeRenderer*>(self)->OnFrameEnd(); }
   void OnFrameEnd();
 
-  // The presenter's callback: record the game's frame + the present pass, submit.
+  // RECORD THREAD (2026-11-13, findings/57 s.10): a frame is recorded in two
+  // halves. PrepareFrame (game thread): the frame slot, the caches (they read
+  // GUEST memory: textures, mesh buffers), uploads, descriptor sets,
+  // pipelines = PrepareScene. Then the rest (RecordPasses: the render passes
+  // and draws, the present pass, the submit) runs on the "Native Record"
+  // thread inside the presenter's refresh, while the game goes on with its
+  // next frame; it reads only our own copies (pass_frame_, prepared_). The
+  // next OnFrameEnd waits for it first (FinishRecordedFrame). Switch
+  // native_record_thread (false = both halves on the game thread, as before).
+  bool PrepareFrame();
+  void PrepareScene(VkCommandBuffer cmd, uint64_t submission, VkDescriptorPool descriptor_pool);
+  // The presenter's callback (record thread): passes + present + submit.
   bool RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshContext& context);
-  // Draws frame_ into our image (inside the scene render pass).
-  void RecordScene(VkCommandBuffer cmd, uint64_t submission, VkDescriptorPool descriptor_pool);
+  // The game's commands in order, from pass_frame_ (inside render passes).
+  void RecordPasses(VkCommandBuffer cmd);
+  // Ends and submits the prepared commands without a present (the presenter
+  // didn't call RecordAndSubmit: its uploads must still reach the GPU).
+  void SubmitPrepared();
+  // The refresh + RecordAndSubmit for `target` (either thread).
+  void RefreshAndSubmit(VulkanPresenter* target);
+  // Waits for the record thread's frame, then what follows it on the game
+  // thread: native gaps it saw, the cost line, F10 photos (AfterPresent).
+  void FinishRecordedFrame();
+  void RecordThreadMain();
   // A framebuffer for one of the presenter's guest-output images (cached:
   // the presenter rotates between a few images, each with its own version).
   VkFramebuffer GetPresentFramebuffer(uint64_t image_version, VkImageView image_view);
@@ -281,7 +304,30 @@ class NativeRenderer {
   // present framebuffers belong to the other presenter.
   VulkanPresenter* last_target_ = nullptr;
   native::Frame frame_;  // the frame the game just finished (main thread)
-
+  // The frame the record thread draws (swapped with frame_ once prepared):
+  // the recorder refills frame_'s storage meanwhile, never this one.
+  native::Frame pass_frame_;
+  // Between PrepareScene and RecordPasses (both halves of one frame).
+  struct SceneState {
+    VkCommandBuffer cmd = VK_NULL_HANDLE;
+    uint64_t submission = 0;
+    VkBuffer vertex_buffer = VK_NULL_HANDLE, index_buffer = VK_NULL_HANDLE;
+    VkDeviceSize vertex_base = 0, index_base = 0;
+    VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;  // the slot's (draw sets)
+    bool submitted = false;  // RecordAndSubmit (or SubmitPrepared) ran
+  } scene_;
+  // The record thread and its one job (a frame for `job_target_`).
+  std::thread record_thread_;
+  std::mutex record_mutex_;
+  std::condition_variable record_cv_;
+  bool record_job_ = false;      // a frame is handed over and not finished
+  bool record_quit_ = false;
+  VulkanPresenter* job_target_ = nullptr;
+  bool job_deferred_ = false;    // a frame went to the thread: finish it next time
+  double job_main_ms_ = 0;       // the game thread's half of that frame
+  double job_thread_ms_ = 0;     // the record thread's half (under record_mutex_)
+  // Native gaps (scan.h) RecordPasses met: reported on the game thread.
+  std::vector<std::string> pass_gaps_;
   // Our frame image: the finished picture (copied from the surface the game
   // resolves into its frontbuffer), sampled by the present pass.
   VkImage frame_image_ = VK_NULL_HANDLE;
@@ -323,6 +369,7 @@ class NativeRenderer {
 
   // Per draw of the current frame, prepared before the render pass (texture
   // uploads can't happen inside one). Reused between frames.
+  static constexpr uint32_t kDrawTextures = 9;  // = kTexturesPerDraw (.cpp)
   struct PreparedDraw {
     VkPipeline pipeline = VK_NULL_HANDLE;  // null = skip this draw
     VkDescriptorSet set = VK_NULL_HANDLE;
@@ -332,6 +379,11 @@ class NativeRenderer {
     bool has_depth = true;  // the game has a depth surface bound
     VkBuffer vertex_buffer = VK_NULL_HANDLE;
     VkBuffer index_buffer = VK_NULL_HANDLE;
+    // What its descriptor set holds: allocated and written by RecordPasses
+    // (the record thread: vkUpdateDescriptorSets per draw was most of the
+    // driver's time on the game thread).
+    VkDescriptorImageInfo images[kDrawTextures];
+    VkDescriptorBufferInfo block_info{};
   };
   std::vector<PreparedDraw> prepared_;
 
@@ -375,6 +427,8 @@ class NativeRenderer {
   };
   std::array<FrameSlot, kFramesInFlight> slots_;
   size_t slot_index_ = 0;
+  // Ends the slot's command buffer, flushes the uploads, submits.
+  bool SubmitCommands(FrameSlot& slot, uint64_t submission);
 
   // Stats for the periodic log line.
   uint64_t frames_drawn_ = 0;
@@ -391,12 +445,14 @@ class NativeRenderer {
   // the texture cache and the buffer cache (hashing guest memory, uploads).
   struct Cost {
     double total_ms = 0, gpu_wait_ms = 0, textures_ms = 0, buffers_ms = 0, worst_ms = 0;
+    double thread_ms = 0;  // the record thread's half (not on the game thread)
     uint32_t frames = 0;
   };
   static constexpr uint32_t kCostFrames = 300;  // ~5 s at 60 fps
   Cost cost_;
-  // Adds one frame's OnFrameEnd time; logs and restarts every kCostFrames.
-  void LogCost(double frame_ms);
+  // Adds one frame's OnFrameEnd time (and the record thread's); logs and
+  // restarts every kCostFrames.
+  void LogCost(double frame_ms, double thread_ms = 0);
   // Textures a draw needed but we couldn't have (unsupported format, memory
   // not readable...), each (material, binding, format) logged once: the
   // draw is skipped, or for optional ones drawn with white instead.

@@ -189,3 +189,77 @@ roughly 4-5 ms less per frame in the same kind of scene.
   the SDK has native CRT hooks for it (`[entrypoint.rexcrt]`).
 - Recording our Vulkan commands (~6% including the driver) could move to
   another thread: the frame is already captured before it's drawn.
+
+## 10. Recording our Vulkan commands on a thread of its own
+
+After the native back-end rewrites (findings/60), the largest piece of the
+main thread uncapped on Wumpa Island was our own renderer's frame end,
+`NativeRenderer::OnFrameEnd`: ~20%, almost all of it recording the frame's
+Vulkan commands (~7% inside the GPU driver).
+
+That recording has two halves. The first resolves what each draw needs:
+textures and mesh buffers from the caches (they hash and upload GUEST
+memory, which the game changes during its next frame), uploads, pipelines.
+The second records the render passes and draws, the present pass and the
+submit, and reads only what the first half left: our copy of the frame's
+command list, the prepared draws, the render targets. So the first half
+stays on the game thread (`PrepareFrame`), and the second runs on a thread
+of its own ("Native Record") inside the presenter's refresh, while the
+game goes on with its next frame. The next frame end waits for it first.
+
+- One Vulkan command buffer is recorded by both threads, one after the
+  other (the hand-over is a mutex + condition variable).
+- The frame is double-buffered: `pass_frame_` is the one the record thread
+  draws, while the recorder refills the other one's storage.
+- The per-draw descriptor sets (`vkAllocateDescriptorSets` +
+  `vkUpdateDescriptorSets`) moved to the second half too: with only the
+  passes moved, the record thread had 0.2 ms a frame and most of the
+  driver's time was still on the game thread.
+- When the presenter skips its callback (no active output, a failed
+  refresh), the first half's commands are still submitted, so the caches'
+  uploads are real.
+- Native gaps the second half meets are collected and reported on the game
+  thread; an F10 photo or an A/B capture runs that frame on the game thread
+  (`ab_capture::NeedsSameFrame`), as before.
+- Switch: `native_record_thread` (on by default; live).
+
+Checked: frozen-game screen captures with the switch on, off and on again
+differ only where the game itself moves (water, idle animation, a HUD card
+leaving); F9 back and forth, the dual window opened and closed, photos and
+quitting, all with the thread on, no errors.
+
+Measured (uncapped, Native Only, the switch flipped live, two pairs):
+`OnFrameEnd` 20.57 / 20.16% of the main thread -> 13.51 / 13.01%; 221 /
+216 fps -> 247 / 236 fps. What stays on the game thread is mostly the
+texture and buffer caches (they must: guest memory).
+
+## 11. Skinning four vertices at once
+
+The skinning loop (section 4) was still ~13% of the main thread. The SIMD
+version (`SkinSimd`, switch `native_skinning_simd`, live) does the same
+operations in the same order on four vertices, each in a 64-bit lane of a
+256-bit register holding a float value as a double:
+
+- fmadds = `_mm256_fmadd_pd` (per lane exactly std::fma), then the round to
+  float (`cvtpd_ps` + `cvtps_pd`), as the recompiled code does;
+- fmuls / fadds / fsubs in double, then the round (for two float values the
+  same as the float operation: double has more than 2 x 24 + 2 bits);
+- bone matrices loaded a row at a time, byte-swapped by `pshufb`,
+  transposed into lanes; each group's 48 bytes of positions (and weights)
+  loaded at once and split into x y z by blends and shuffles;
+- blended vertices (w0 != 1, NaN included) take bones 1-3 per lane, the
+  other lanes' results thrown away;
+- the bounding box still grows vertex by vertex (with +0 / -0 the order
+  decides which one stays), and a call whose outputs overlap any input runs
+  the scalar loop (the original re-reads inputs after each store).
+
+Checked with `--debug_native_skin_check`: ~45 million vertices on Wumpa
+Island and the titan save (enemies spawned), 0 differences. Positive
+control: a change in the blended-vertex branch only differed on the first
+call (removed after).
+
+Measured (two runs of two pairs, switch flipped live): one vertex at a time
+12.64 / 13.19 / 13.47 / 13.94% -> four at once 9.69 / 10.64 / 11.61 /
+10.95%: about a fifth faster. Run-to-run noise is large here (270-307 fps
+for the same setting). What limits it is the round to float after every
+single operation, which staying bit-identical requires.

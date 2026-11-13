@@ -8,6 +8,9 @@
 
 
 #include <algorithm>
+#if defined(__linux__)
+#include <pthread.h>
+#endif
 #include <cstdlib>
 #include <string>
 #include <chrono>
@@ -63,6 +66,9 @@ REXCVAR_DEFINE_BOOL(emulated_only, false, "CrashMoM",
 // MOVIE BACKDROP (2026-11-09, prototype): in a picture wider than 16:9 the
 // movies (16:9 videos) leave the sides black; this fills them with the same
 // movie zoomed in, blurred and darkened (shaders/bink.*).
+REXCVAR_DEFINE_BOOL(native_record_thread, true, "CrashMoM",
+                    "Native renderer: record the render passes, the present and the submit on a thread of their "
+                    "own while the game goes on with its next frame (false = all on the game's main thread)");
 REXCVAR_DEFINE_BOOL(movie_backdrop, true, "CrashMoM",
                     "Widescreen: movies fill the sides with a blurred, darkened, zoomed copy of themselves "
                     "(false = black sides)");
@@ -481,6 +487,16 @@ NativeRenderer::~NativeRenderer() {
   native::spotter::Uninstall();
   native::ab_capture::SetNativeShownCheck(nullptr, nullptr);
   pddi::RemoveFrameEndListener(&FrameEndThunk, this);
+  // The record thread: its last frame finished, then the thread itself.
+  if (record_thread_.joinable()) {
+    {
+      std::unique_lock<std::mutex> lock(record_mutex_);
+      record_cv_.wait(lock, [this] { return !record_job_; });
+      record_quit_ = true;
+    }
+    record_cv_.notify_all();
+    record_thread_.join();
+  }
   native::recorder::Uninstall();
   rex::ui::UnregisterBind("bind_renderer");
   presenter_->SetGuestOutputExternal(false);
@@ -779,6 +795,9 @@ bool NativeRenderer::Initialize() {
   }
   SetShowNative(!emulated_only() && (start == "native" || REXCVAR_GET(native_only)));
   native::recorder::Install();
+  // The record thread (native_renderer.h, RECORD THREAD), before the first
+  // frame can be handed to it.
+  record_thread_ = std::thread([this] { RecordThreadMain(); });
   pddi::AddFrameEndListener(&FrameEndThunk, this);
   // Loud log lines when a material we're hunting shows up (spotter.h).
   native::spotter::Install(
@@ -1381,7 +1400,7 @@ bool NativeRenderer::CreateFrameImage(uint32_t width, uint32_t height) {
   }
   frame_width_ = width;
   frame_height_ = height;
-  frame_layout_ = VK_IMAGE_LAYOUT_UNDEFINED;  // starts black (RecordScene)
+  frame_layout_ = VK_IMAGE_LAYOUT_UNDEFINED;  // starts black (RecordPasses)
   return true;
 }
 
@@ -1593,6 +1612,10 @@ void NativeRenderer::SetWindowPresenter(rex::ui::Presenter* presenter) {
 }
 
 void NativeRenderer::OnFrameEnd() {
+  // RECORD THREAD (native_renderer.h): the previous frame's second half must
+  // be done before anything it reads changes (sizes, scale, framebuffers,
+  // the caches' next frame).
+  FinishRecordedFrame();
   // Where our picture goes this frame (native_renderer.h, DUAL MODE): the
   // native window, else the main window if F9 chose ours, else nowhere.
   VulkanPresenter* target = window_presenter_.load(std::memory_order_relaxed);
@@ -1626,22 +1649,94 @@ void NativeRenderer::OnFrameEnd() {
   frame_wide_ = widescreen::Update(wide_allowed) / widescreen::kGameAspect;
   out_width_ = uint32_t(native::ScaleSize(int32_t(kWidth), frame_scale_ * frame_wide_));
   out_height_ = uint32_t(native::ScaleSize(int32_t(kHeight), frame_scale_));
+  // 1st half, here: everything that reads guest memory (PrepareFrame).
+  if (!PrepareFrame()) {
+    LogCost(MsSince(start));
+    return;
+  }
+  // From here on the second half reads pass_frame_; the recorder refills
+  // frame_'s storage (the frame before last) during the game's next frame.
+  std::swap(frame_, pass_frame_);
+  // 2nd half: on the record thread, unless switched off or an F10 photo /
+  // A/B capture wants this very frame right after its present (ab_capture.h).
+  if (!REXCVAR_GET(native_record_thread) || native::ab_capture::NeedsSameFrame()) {
+    RefreshAndSubmit(target);
+    LogCost(MsSince(start));
+    // F10 photos and the debug --debug_native_ab_ms: this frame from both
+    // renderers (ours captured from whichever presenter got it).
+    native::ab_capture::AfterPresent(target, *texture_cache_, gamma_ramp_, pass_frame_,
+                                     &MaterialName);
+    for (const std::string& gap : pass_gaps_) native::scan::NewGap(gap);
+    pass_gaps_.clear();
+    return;
+  }
+  job_target_ = target;
+  job_main_ms_ = MsSince(start);
+  job_deferred_ = true;
+  {
+    std::lock_guard<std::mutex> lock(record_mutex_);
+    record_job_ = true;
+  }
+  record_cv_.notify_all();
+}
+
+void NativeRenderer::RefreshAndSubmit(VulkanPresenter* target) {
   // The presenter picks one of its guest-output images (of that size) and
-  // calls us back right away, on this thread; we must submit our work
-  // before returning.
+  // calls us back right away, on this thread; we must submit before
+  // returning. It may skip the callback (no active output, a failed
+  // refresh): the prepared uploads still go to the GPU (SubmitPrepared).
   target->RefreshGuestOutput(
       out_width_, out_height_, out_width_, out_height_, [this](rex::ui::Presenter::GuestOutputRefreshContext& context) {
         return RecordAndSubmit(
             static_cast<VulkanPresenter::VulkanGuestOutputRefreshContext&>(context));
       });
-  LogCost(MsSince(start));
-  // F10 photos and the debug --debug_native_ab_ms: this frame from both
-  // renderers (ours captured from whichever presenter got it).
-  native::ab_capture::AfterPresent(target, *texture_cache_, gamma_ramp_, frame_, &MaterialName);
+  if (!scene_.submitted) {
+    SubmitPrepared();
+  }
 }
 
-void NativeRenderer::LogCost(double frame_ms) {
+void NativeRenderer::RecordThreadMain() {
+#if defined(__linux__)
+  pthread_setname_np(pthread_self(), "Native Record");  // (15 letters at most)
+#endif
+  std::unique_lock<std::mutex> lock(record_mutex_);
+  for (;;) {
+    record_cv_.wait(lock, [this] { return record_job_ || record_quit_; });
+    if (record_quit_ && !record_job_) {
+      return;
+    }
+    lock.unlock();
+    const CostClock::time_point start = CostClock::now();
+    RefreshAndSubmit(job_target_);
+    const double ms = MsSince(start);
+    lock.lock();
+    job_thread_ms_ = ms;
+    record_job_ = false;
+    record_cv_.notify_all();
+  }
+}
+
+void NativeRenderer::FinishRecordedFrame() {
+  if (!job_deferred_) {
+    return;
+  }
+  double thread_ms;
+  {
+    std::unique_lock<std::mutex> lock(record_mutex_);
+    record_cv_.wait(lock, [this] { return !record_job_; });
+    thread_ms = job_thread_ms_;
+  }
+  job_deferred_ = false;
+  LogCost(job_main_ms_, thread_ms);
+  native::ab_capture::AfterPresent(job_target_, *texture_cache_, gamma_ramp_, pass_frame_,
+                                   &MaterialName);
+  for (const std::string& gap : pass_gaps_) native::scan::NewGap(gap);
+  pass_gaps_.clear();
+}
+
+void NativeRenderer::LogCost(double frame_ms, double thread_ms) {
   cost_.total_ms += frame_ms;
+  cost_.thread_ms += thread_ms;
   cost_.worst_ms = std::max(cost_.worst_ms, frame_ms);
   if (++cost_.frames < kCostFrames) {
     return;
@@ -1651,9 +1746,9 @@ void NativeRenderer::LogCost(double frame_ms) {
       cost_.total_ms - cost_.gpu_wait_ms - cost_.textures_ms - cost_.buffers_ms;
   REXLOG_INFO("NativeRenderer: last {} frames, on the game's main thread: {:.2f} ms per frame "
               "(waiting for the GPU {:.2f}, textures {:.2f}, mesh buffers {:.2f}, the rest "
-              "{:.2f}), worst frame {:.1f} ms",
+              "{:.2f}), worst frame {:.1f} ms; on the record thread {:.2f} ms per frame",
               cost_.frames, cost_.total_ms / n, cost_.gpu_wait_ms / n, cost_.textures_ms / n,
-              cost_.buffers_ms / n, rest / n, cost_.worst_ms);
+              cost_.buffers_ms / n, rest / n, cost_.worst_ms, cost_.thread_ms / n);
   // How the texture checks went (texture_cache.h, "when it re-uploads"):
   // "unchanged" ones cost no hash thanks to the write watch.
   const native::TextureCache::CheckStats checks = texture_cache_->TakeCheckStats();
@@ -1699,8 +1794,8 @@ bool NativeRenderer::CoversGameScreen(const native::DrawCommand& d) const {
   return x0 <= -half && x1 >= half && y0 <= -0.98f && y1 >= 0.98f;
 }
 
-void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
-                                 VkDescriptorPool descriptor_pool) {
+void NativeRenderer::PrepareScene(VkCommandBuffer cmd, uint64_t submission,
+                                  VkDescriptorPool descriptor_pool) {
 
   const VulkanDevice::Functions& dfn = device_->functions();
   const VkDevice device = device_->device();
@@ -2017,37 +2112,15 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     }
     p.texture_width = texture_size[0];
     p.texture_height = texture_size[1];
-    VkDescriptorSetAllocateInfo alloc_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-    alloc_info.descriptorPool = descriptor_pool;
-    alloc_info.descriptorSetCount = 1;
-    alloc_info.pSetLayouts = &draw_set_layout_;
-    if (dfn.vkAllocateDescriptorSets(device, &alloc_info, &p.set) != VK_SUCCESS) {
-      skipped(d, "more draws than descriptor sets this frame (kMaxDrawsPerFrame)");
-      continue;
-    }
-    VkDescriptorImageInfo images[kTexturesPerDraw];
+    // The descriptor set's contents (allocated + written by RecordPasses).
+    static_assert(kTexturesPerDraw == kDrawTextures);
     for (uint32_t t = 0; t < kTexturesPerDraw; ++t) {
-      images[t] = {samplers[t], views[t], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+      p.images[t] = {samplers[t], views[t], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
     }
     // The draw's MaterialBlock, or the zeroed one after the last.
-    const VkDescriptorBufferInfo block_info{
-        block_buffer,
-        block_base + (block ? d.block : block_count) * sizeof(native::MaterialBlock),
-        sizeof(native::MaterialBlock)};
-    VkWriteDescriptorSet writes[2]{};
-    writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[0].dstSet = p.set;
-    writes[0].dstBinding = 0;
-    writes[0].descriptorCount = kTexturesPerDraw;
-    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    writes[0].pImageInfo = images;
-    writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writes[1].dstSet = p.set;
-    writes[1].dstBinding = kBlockBinding;
-    writes[1].descriptorCount = 1;
-    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    writes[1].pBufferInfo = &block_info;
-    dfn.vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
+    p.block_info = {block_buffer,
+                    block_base + (block ? d.block : block_count) * sizeof(native::MaterialBlock),
+                    sizeof(native::MaterialBlock)};
     p.pipeline =
         GetPipeline(d, p.has_depth, render_targets_->SurfaceSamples(d.targets.colour));
     if (!p.pipeline) {
@@ -2059,6 +2132,36 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   }
   // The mesh uploads recorded above, visible to the vertex stage.
   buffer_cache_->FinishUploads(cmd);
+  scene_.vertex_buffer = vertex_buffer;
+  scene_.index_buffer = index_buffer;
+  scene_.vertex_base = vertex_base;
+  scene_.index_base = index_base;
+  scene_.descriptor_pool = descriptor_pool;
+
+  // A line every ~10 s (at 30 fps) so logs show what the native path covers.
+  if (++frames_drawn_ % 300 == 1) {
+    REXLOG_INFO(
+        "NativeRenderer: game frame {}: {} of {} draws ({} meshes, {} with a material block), {} clears, {} vertex bytes; "
+        "{} mesh buffers cached, {} KiB uploaded so far",
+        frame_.number, drawn, frame_.draws.size(), meshes, block_drawn, frame_.clears.size(),
+        frame_.vertex_data.size() * 4, buffer_cache_->buffer_count(),
+        buffer_cache_->bytes_uploaded() / 1024);
+  }
+}
+
+// The second half (RECORD THREAD, native_renderer.h): only pass_frame_,
+// prepared_, scene_, the render targets and our images; no guest memory.
+void NativeRenderer::RecordPasses(VkCommandBuffer cmd) {
+  const VulkanDevice::Functions& dfn = device_->functions();
+  const VkDevice device = device_->device();
+  const native::Frame& frame = pass_frame_;
+  const VkBuffer vertex_buffer = scene_.vertex_buffer, index_buffer = scene_.index_buffer;
+  const VkDeviceSize vertex_base = scene_.vertex_base, index_base = scene_.index_base;
+  // A gap (scan.h) is reported on the game thread (FinishRecordedFrame).
+  auto skipped = [this](const native::DrawCommand& draw, const char* reason) {
+    pass_gaps_.push_back(std::string("skipped draw: ") + MaterialName(draw.material) +
+                         (draw.mesh ? " mesh: " : ": ") + reason);
+  };
 
   // 4. The game's commands in order: draws and clears go into a render pass
   //    on their surfaces (RenderTargets opens a new one when the surfaces
@@ -2107,9 +2210,9 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     }
     return out;
   };
-  for (const native::Command& command : frame_.commands) {
+  for (const native::Command& command : frame.commands) {
     if (command.type == native::Command::Type::kResolve) {
-      render_targets_->Resolve(frame_.resolves[command.index], cmd);
+      render_targets_->Resolve(frame.resolves[command.index], cmd);
       in_pass = false;
       // A resolve may run a pass of its own (the multisampled depth copy)
       // with its own pipeline bound: the next draw binds its pipeline again
@@ -2118,7 +2221,7 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       continue;
     }
     if (command.type == native::Command::Type::kClear) {
-      const native::ClearCommand& c = frame_.clears[command.index];
+      const native::ClearCommand& c = frame.clears[command.index];
       if (!enter_pass(c.targets)) {
         continue;
       }
@@ -2159,11 +2262,35 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       }
       continue;
     }
-    const native::DrawCommand& d = frame_.draws[command.index];
+    const native::DrawCommand& d = frame.draws[command.index];
     const PreparedDraw& p = prepared_[command.index];
     if (!p.pipeline) {
       continue;  // reported above (or a skipped draw)
     }
+    // Its descriptor set (the textures + MaterialBlock PrepareScene found).
+    PreparedDraw& pd = prepared_[command.index];
+    VkDescriptorSetAllocateInfo alloc_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    alloc_info.descriptorPool = scene_.descriptor_pool;
+    alloc_info.descriptorSetCount = 1;
+    alloc_info.pSetLayouts = &draw_set_layout_;
+    if (dfn.vkAllocateDescriptorSets(device, &alloc_info, &pd.set) != VK_SUCCESS) {
+      skipped(d, "more draws than descriptor sets this frame (kMaxDrawsPerFrame)");
+      continue;
+    }
+    VkWriteDescriptorSet writes[2]{};
+    writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[0].dstSet = pd.set;
+    writes[0].dstBinding = 0;
+    writes[0].descriptorCount = kTexturesPerDraw;
+    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    writes[0].pImageInfo = pd.images;
+    writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writes[1].dstSet = pd.set;
+    writes[1].dstBinding = kBlockBinding;
+    writes[1].descriptorCount = 1;
+    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writes[1].pBufferInfo = &pd.block_info;
+    dfn.vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
     if (!enter_pass(d.targets)) {
       skipped(d, "its render pass couldn't be opened (surfaces)");
       continue;
@@ -2284,7 +2411,7 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
   //    clears it right after the copy (findings/11). A frame without a
   //    frontbuffer resolve keeps the previous picture.
   native::GuestTexture frontbuffer;
-  for (const native::ResolveCommand& r : frame_.resolves) {
+  for (const native::ResolveCommand& r : frame.resolves) {
     if (r.frontbuffer) {
       frontbuffer = r.dest;
     }
@@ -2317,20 +2444,12 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
     frame_layout_ = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   }
 
-  // A line every ~10 s (at 30 fps) so logs show what the native path covers.
-  if (++frames_drawn_ % 300 == 1) {
-    REXLOG_INFO(
-        "NativeRenderer: game frame {}: {} of {} draws ({} meshes, {} with a material block), {} clears, {} vertex bytes; "
-        "{} mesh buffers cached, {} KiB uploaded so far",
-        frame_.number, drawn, frame_.draws.size(), meshes, block_drawn, frame_.clears.size(),
-        frame_.vertex_data.size() * 4, buffer_cache_->buffer_count(),
-        buffer_cache_->bytes_uploaded() / 1024);
-  }
 }
 
-bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshContext& context) {
+bool NativeRenderer::PrepareFrame() {
   const VulkanDevice::Functions& dfn = device_->functions();
   const VkDevice device = device_->device();
+  scene_ = SceneState{};
 
   // Reuse the oldest slot, once the GPU is done with it.
   slot_index_ = (slot_index_ + 1) % kFramesInFlight;
@@ -2361,15 +2480,11 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   // The tracker's current index is the one this submission's fence completes.
   const uint64_t submission = tracker_->GetCurrentSubmission();
 
-  VkFramebuffer present_framebuffer = GetPresentFramebuffer(context.image_version(),
-                                                            context.image_view());
-  if (!present_framebuffer) {
-    return false;
-  }
-
   VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
   begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   dfn.vkBeginCommandBuffer(slot.cmd, &begin);
+  scene_.cmd = slot.cmd;
+  scene_.submission = submission;
 
   // First frame only: fill the 1x1 white texture.
   if (!white_ready_) {
@@ -2400,8 +2515,24 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   // The game's display gamma, for the present pass.
   UpdateGammaRamp(slot.cmd, submission);
 
-  // 1. Our frame: what the game drew.
-  RecordScene(slot.cmd, submission, slot.descriptor_pool);
+  // 1. Our frame, first half: uploads, descriptor sets, pipelines.
+  PrepareScene(slot.cmd, submission, slot.descriptor_pool);
+  return true;
+}
+
+bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshContext& context) {
+  const VulkanDevice::Functions& dfn = device_->functions();
+  FrameSlot& slot = slots_[slot_index_];
+  const uint64_t submission = scene_.submission;
+
+  VkFramebuffer present_framebuffer = GetPresentFramebuffer(context.image_version(),
+                                                            context.image_view());
+  if (!present_framebuffer) {
+    return false;  // (RefreshAndSubmit then submits the prepared half alone)
+  }
+
+  // 1. Our frame, second half: the game's commands in order.
+  RecordPasses(slot.cmd);
 
   // 2. Present: sample our frame into the presenter's image.
   const VkViewport viewport{0.0f, 0.0f, float(out_width_), float(out_height_), 0.0f, 1.0f};
@@ -2425,6 +2556,28 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   dfn.vkCmdDraw(slot.cmd, 3, 1, 0, 0);
   dfn.vkCmdEndRenderPass(slot.cmd);
 
+  // Submit (the prepared half and this one: one command buffer).
+  if (!(scene_.submitted = true, SubmitCommands(slot, submission))) {
+    return false;
+  }
+  for (PresentFramebuffer& fb : present_framebuffers_) {
+    if (fb.framebuffer == present_framebuffer) {
+      fb.last_submission = submission;
+    }
+  }
+  context.SetIs8bpc(true);  // our frame is 8 bits per channel
+  return true;
+}
+
+void NativeRenderer::SubmitPrepared() {
+  // The passes aren't recorded (nothing to present into), but the uploads
+  // the first half recorded are: the caches count them as done.
+  scene_.submitted = true;
+  SubmitCommands(slots_[slot_index_], scene_.submission);
+}
+
+bool NativeRenderer::SubmitCommands(FrameSlot& slot, uint64_t submission) {
+  const VulkanDevice::Functions& dfn = device_->functions();
   if (dfn.vkEndCommandBuffer(slot.cmd) != VK_SUCCESS) {
     return false;
   }
@@ -2448,11 +2601,5 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
     }
   }
   slot.submission = submission;
-  for (PresentFramebuffer& fb : present_framebuffers_) {
-    if (fb.framebuffer == present_framebuffer) {
-      fb.last_submission = submission;
-    }
-  }
-  context.SetIs8bpc(true);  // our frame is 8 bits per channel
   return true;
 }

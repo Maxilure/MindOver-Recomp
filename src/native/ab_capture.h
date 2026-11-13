@@ -128,6 +128,10 @@ PhotoRecord LastPhoto();
 // A capture is between its two frames (the emulated GPU must draw every
 // frame meanwhile: NativeRenderer::UpdateEmulatedFrameRate).
 bool CaptureUnderway();
+// Does a photo (F10) or A/B capture want THIS frame's AfterPresent right
+// after its present? Then the native renderer records the frame on the game
+// thread (no record thread: native_renderer.h, RECORD THREAD).
+bool NeedsSameFrame();
 
 // Main thread, at every frame end while the EMULATED picture is on screen
 // (AfterPresent doesn't run then): takes a pending photo of the screen, and

@@ -681,6 +681,12 @@ PhotoRecord LastPhoto() {
   return g_last_photo;
 }
 
+bool NeedsSameFrame() {
+  // A pending request, a capture under way, or a debug capture listed /
+  // triggered (Active() parses --debug_native_ab_ms once).
+  return g_photo_request.load() != 0 || g.stage != Stage::kIdle || Active();
+}
+
 void WhileEmulatedShown(rex::ui::Presenter* presenter) {
   // A two-picture photo under way can't finish without our picture.
   if (g.photo && g.stage != Stage::kIdle) {
