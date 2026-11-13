@@ -229,6 +229,13 @@ DONE = {
     # s.10): the vertical blank ticked by the port's own "VBlank" thread; the
     # registration answered at both sites (SDK patch 0023 silences the SDK's).
     "VdSetGraphicsInterruptCallback": "vblank.cpp: 0x82311AEC, 0x82311F54",
+    # Graphics driver, STEP 3 (2026-11-13, src/system/display_swap.cpp,
+    # findings/32 s.11): the swap's three calls answered (VdSwap writes the
+    # SDK's exact 64 ring words), and the native renderer's gamma ramp copied
+    # from D3D's writer sub_82313960 instead of the emulated GPU.
+    "VdGetSystemCommandBuffer": "display_swap.cpp: 0x82310F90",
+    "VdSwap": "display_swap.cpp: 0x82310FF4",
+    "VdPersistDisplay": "display_swap.cpp: 0x823112B0 (0 = nothing kept, nothing to free)",
 }
 
 BEGIN = "<!-- native-progress:begin -->"

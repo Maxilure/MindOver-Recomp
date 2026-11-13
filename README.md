@@ -166,11 +166,11 @@ The game's code already runs natively. What's still emulated is the **Xbox 360 a
 
 <!-- native-progress:begin -->
 <!-- Written by tools/native_progress.py --readme: edit the tool, not this block. -->
-**Xbox services replaced: 61 of 66 (92%)** `▰▰▰▰▰▰▰▰▰▱`
+**Xbox services replaced: 64 of 66 (97%)** `▰▰▰▰▰▰▰▰▰▱`
 
 | Xbox piece | Replaced | Becomes |
 |---|---|---|
-| Graphics driver | `▰▰▰▰▰▰▰▰▱▱` 15 / 20 | the port's own Vulkan renderer, then the emulated GPU off |
+| Graphics driver | `▰▰▰▰▰▰▰▰▰▱` 18 / 20 | the port's own Vulkan renderer, then the emulated GPU off |
 | Profiles and sign-in | `▰▰▰▰▰▰▰▰▰▰` 4 / 4 | no profiles at all: who plays = which controllers play |
 | Saves and storage | `▰▰▰▰▰▰▰▰▰▰` 11 / 11 | plain save files in one folder: no storage devices, no content packages |
 | Controllers | `▰▰▰▰▰▰▰▰▰▰` 3 / 3 | the input manager fed directly (keyboard and mouse, any SDL controller, rumble) |

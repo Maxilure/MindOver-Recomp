@@ -613,6 +613,36 @@ name = "CrashMomDriverInterruptCallback"
 registers = ["r3", "r4"]
 jump_address_on_true = 0x82311F58
 
+# GRAPHICS DRIVER STEP 3: THE SWAP (src/system/display_swap.cpp, docs/
+# findings/32 s.11). D3D's swap sub_82310DA8 asks the driver three things;
+# each site read with xexdis 2026-11-13:
+#   0x82310F90 VdGetSystemCommandBuffer: addi r3,r1,208 (0x94-byte block),
+#              addi r4,r1,116 (word); both passed back to VdSwap only
+#   0x82310FF4 VdSwap: r3 = r30+4 (64 ring words reserved by sub_82309AE8),
+#              r4 = r1+128 (frontbuffer fetch constant), r8 = r1+108
+#              (&frontbuffer), width / height pointers stored at [r1+84] /
+#              [r1+92] (stack arguments 9-10)
+#   0x823112B0 VdPersistDisplay: r3 = r1+184, r4 = r1+160; a non-zero answer
+#              only leads to MmFreePhysicalMemory of [r1+160] (0x823112C4)
+# (D3D's gamma ramp writer sub_82313960 is wrapped as a whole function.)
+[[entrypoint.midasm_hook]]
+address = 0x82310F90
+name = "CrashMomDriverSystemCommandBuffer"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x82310F94
+
+[[entrypoint.midasm_hook]]
+address = 0x82310FF4
+name = "CrashMomDriverSwap"
+registers = ["r1", "r3", "r4", "r8"]
+jump_address_on_true = 0x82310FF8
+
+[[entrypoint.midasm_hook]]
+address = 0x823112B0
+name = "CrashMomDriverPersistDisplay"
+registers = ["r3"]
+jump_address_on_true = 0x823112B4
+
 # XMA DECODED BY THE PORT (src/audio/xma_native.cpp, docs/findings/54 s.5).
 # Radical's audio::hal::hw::XmaDecoder (the only user of the Xbox's XMA chip
 # in this game) creates its chip context in its constructor sub_8234BE88:

@@ -22,6 +22,7 @@
 
 #include "../pddi/intercept.h"
 #include "../pddi/trace.h"
+#include "../system/display_swap.h"
 #include "ab_capture.h"
 #include "guest.h"
 #include "recorder.h"
@@ -85,6 +86,11 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "each resolve back into guest memory)");
 // The sharpening filter's strength (present pass, docs/findings/41).
 REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
+// Graphics driver step 3 (src/system/display_swap.cpp): compare D3D's display
+// gamma ramp, which the present pass now uses, with the emulated GPU's copy.
+REXCVAR_DEFINE_BOOL(debug_gamma_check, false, "CrashMoM",
+                    "Log whether D3D's display gamma ramp (used by the native renderer) and "
+                    "the emulated GPU's copy agree, each time the game sends a new one");
 REXCVAR_DECLARE(int32_t, smooth_cutouts);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
@@ -827,7 +833,30 @@ void NativeRenderer::UpdateGammaRamp(VkCommandBuffer cmd, uint64_t submission) {
   // from the main thread while the GPU thread may write it: a torn read only
   // ever mixes two ramps for one frame. Without an emulated GPU: identity.
   std::array<uint32_t, 256> ramp;
-  if (gpu_) {
+  // Graphics driver step 3 (src/system/display_swap.cpp): D3D's own ramp,
+  // copied when D3D writes it, in the same layout. Falls back to the emulated
+  // GPU's copy before D3D sent one (boot) or with --display_swap_native=false.
+  uint32_t d3d_version = 0;
+  if (display_swap::GammaRamp(ramp, &d3d_version)) {
+    // --debug_gamma_check: after each new ramp from D3D, compare with the
+    // emulated GPU's copy once it has caught up (it reads the ring later; up
+    // to 60 frames allowed). They must agree entry for entry.
+    static uint32_t checked_version = 0;
+    static uint32_t frames_waited = 0;
+    if (gpu_ && REXCVAR_GET(debug_gamma_check) && d3d_version != checked_version) {
+      std::array<uint32_t, 256> emulated;
+      std::memcpy(emulated.data(), GammaRampReader::Table(gpu_), sizeof(emulated));
+      if (emulated == ramp || ++frames_waited > 60) {
+        uint32_t differ = 0;
+        for (uint32_t i = 0; i < 256; ++i) differ += emulated[i] != ramp[i];
+        REXLOG_INFO("Gamma check: D3D's ramp #{} vs the emulated GPU's: {} of 256 entries differ "
+                    "(waited {} frames)",
+                    d3d_version, differ, frames_waited);
+        checked_version = d3d_version;
+        frames_waited = 0;
+      }
+    }
+  } else if (gpu_) {
     std::memcpy(ramp.data(), GammaRampReader::Table(gpu_), sizeof(ramp));
   } else {
     for (uint32_t i = 0; i < 256; ++i) {

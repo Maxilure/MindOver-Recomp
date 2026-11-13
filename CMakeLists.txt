@@ -53,6 +53,7 @@ set(CRASHMOM_SOURCES
     src/system/console_settings.cpp  # the console's TV mode / video flags / dashboard version answered by the port
     src/system/graphics_driver.cpp   # the graphics driver's simple questions (TV mode, gamma, scaler, EDRAM) answered by the port
     src/system/vblank.cpp            # the virtual TV's 60 Hz vertical blank, ticked by the port (graphics driver step 2)
+    src/system/display_swap.cpp      # the graphics driver's swap + D3D's gamma ramp read by the port (graphics driver step 3)
     src/system/system_messages.cpp   # XMsg*: dashboard music player + rich presence answered by the port
     src/system/system_popups.cpp     # last pop-ups (notification position, disc error box) + WSAStartup answered by the port
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace

@@ -518,3 +518,38 @@ frames):
 | Boot through the intro movies to the attract movie | movies play, 0 errors |
 
 The meter shows 0 calls of `VdSetGraphicsInterruptCallback`.
+
+## 11. The graphics driver, step 3: the swap and the gamma ramp
+
+When a frame is finished, D3D's swap sub_82310DA8 makes three driver calls.
+`src/system/display_swap.cpp` answers them at their sites;
+`--display_swap_native=false` lets the SDK answer again.
+
+| Call | Site and arguments | Answer |
+|---|---|---|
+| VdGetSystemCommandBuffer | 0x82310F90: r3 = 0x94-byte block, r4 = a word | block zeroed, tokens 0xBEEF0000 / 0xBEEF0001 (the SDK's); D3D only hands them back to VdSwap |
+| VdSwap | 0x82310FF4: r3 = 64 ring words D3D reserved (sub_82309AE8), r4 = the frontbuffer's D3D fetch constant, r8 = &frontbuffer, width / height pointers as stack arguments 9-10 ([r1+0x54] / [r1+0x5C]) | the SDK's exact 64 words: a type-0 packet loading the fetch constant (base address turned from virtual into physical) into SHADER_CONSTANT_FETCH_00, a type-3 XE_SWAP packet ('SWAP', physical address, width, height), type-2 no-ops. The emulated GPU shows the emulated picture from them |
+| VdPersistDisplay | 0x823112B0: r3 = r1+184, r4 = r1+160 | 0. A non-zero answer only made D3D free the block the SDK had allocated (MmFreePhysicalMemory at 0x823112C4); a PC keeps no picture across title switches |
+
+**The gamma ramp.** D3D builds the TV's ramp itself: the game's gamma ramp
+corrected by the TV's gamma (`VdGetCurrentDisplayGamma`, section 9), stored as
+3 x 256 u16 with the value in bits 6-15 (red, green at +512, blue at +1024).
+Its writer sub_82313960(r3 = device, r4 = table) turns each entry into one
+DC_LUT_30_COLOR display-register write in the command ring (red << 20 |
+green << 10 | blue). The emulated GPU collected those, and the native renderer
+used to read the result from the emulated GPU (findings/09). The writer is now
+wrapped: the original still runs (the emulated GPU needs its packets), and the
+port keeps its own copy in the same layout for the native renderer's present
+pass. D3D's piecewise-linear writer sub_82313A58 (only from sub_823105B8) was
+never used by the native renderer and is not copied.
+
+Tests (copy of the saves, `--load_save=last`, 30 fps unless noted):
+
+| Run | Result |
+|---|---|
+| Both pictures, `--debug_gamma_check` | D3D's ramp vs the emulated GPU's: 0 of 256 entries differ; native and emulated photos agree (frame means 106.47 / 106.46); Brightness changed live: both pictures follow (106 -> 132) |
+| Emulated alone, switch on / off | 30.0 fps both, 1% low 29.6-29.7; frozen frames identical (HUD 0.000, frame 0.08/255 from the idle animation) |
+| Native Only, 60 fps cap | 60.0 fps, 0 errors |
+
+The Xbox calls meter shows only the command ring's two calls left
+(`VdInitializeRingBuffer`, `VdEnableRingBufferRPtrWriteBack`).

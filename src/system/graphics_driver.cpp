@@ -15,7 +15,8 @@
 //   Left for later steps (they are the emulated GPU itself):
 //     VdSetGraphicsInterruptCallback  the vertical-blank tick: DONE in step 2
 //                                     (src/system/vblank.cpp)
-//     VdSwap, VdGetSystemCommandBuffer, VdPersistDisplay  the swap (step 3)
+//     VdSwap, VdGetSystemCommandBuffer, VdPersistDisplay  the swap: DONE in
+//                                     step 3 (src/system/display_swap.cpp)
 //     VdInitializeRingBuffer, VdEnableRingBufferRPtrWriteBack  the command
 //                                     ring + its progress reports (step 4)
 //
