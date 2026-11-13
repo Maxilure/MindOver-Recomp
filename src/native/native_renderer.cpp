@@ -22,6 +22,7 @@
 
 #include "../pddi/intercept.h"
 #include "../pddi/trace.h"
+#include "../system/command_ring.h"
 #include "../system/display_swap.h"
 #include "ab_capture.h"
 #include "guest.h"
@@ -80,17 +81,17 @@ REXCVAR_DEFINE_INT32(emulated_draw_every, 2, "CrashMoM",
 // emulated GPU's own resolves (the scene it rendered) fed into our later
 // passes, our picture matched the emulated one exactly, which pinned the
 // difference on our 3D pass (a stencil-masked quad drawn without stencil).
+// Graphics driver step 3 (src/system/display_swap.cpp): compare D3D's display
+// gamma ramp, which the present pass now uses, with the emulated GPU's copy.
+REXCVAR_DEFINE_BOOL(debug_gamma_check, false, "CrashMoM",
+                    "Log whether D3D's display gamma ramp (used by the native renderer) and "
+                    "the emulated GPU's copy agree, each time the game sends a new one");
 REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "Debug: the native renderer samples the emulated GPU's resolved textures "
                     "instead of its own. Needs --readback_resolve=full (the emulator then copies "
                     "each resolve back into guest memory)");
 // The sharpening filter's strength (present pass, docs/findings/41).
 REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
-// Graphics driver step 3 (src/system/display_swap.cpp): compare D3D's display
-// gamma ramp, which the present pass now uses, with the emulated GPU's copy.
-REXCVAR_DEFINE_BOOL(debug_gamma_check, false, "CrashMoM",
-                    "Log whether D3D's display gamma ramp (used by the native renderer) and "
-                    "the emulated GPU's copy agree, each time the game sends a new one");
 REXCVAR_DECLARE(int32_t, smooth_cutouts);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
@@ -726,6 +727,14 @@ bool NativeRenderer::Initialize() {
                                                  "No switching with --emulated_only");
                             return;
                           }
+                          // Graphics driver step 4: the port reads the GPU
+                          // commands, the emulated GPU gets none: no picture
+                          // of its own to switch to (system/command_ring.h).
+                          if (command_ring::Wanted()) {
+                            overlay_banner::Show("NATIVE ONLY",
+                                                 "No emulated picture with --command_ring_native");
+                            return;
+                          }
                           // Dual mode: each window already shows one picture.
                           if (window_presenter_.load(std::memory_order_relaxed)) {
                             overlay_banner::Show("DUAL MODE",
@@ -756,6 +765,11 @@ bool NativeRenderer::Initialize() {
   }
   if (REXCVAR_GET(native_only) && emulated_only()) {
     REXLOG_WARN("NativeRenderer: --native_only and --emulated_only together: emulated only wins");
+  }
+  // --command_ring_native (graphics driver step 4): Native Only all session.
+  if (command_ring::Wanted() && !REXCVAR_GET(native_only)) {
+    rex::cvar::SetFlagByName("native_only", "true");
+    REXLOG_INFO("NativeRenderer: --command_ring_native: Native Only for the whole session");
   }
   SetShowNative(!emulated_only() && (start == "native" || REXCVAR_GET(native_only)));
   native::recorder::Install();
@@ -1480,6 +1494,11 @@ void NativeRenderer::AnnouncePicture() {
     const std::string key = rex::cvar::GetFlagByName("bind_renderer");
     const std::string switches = key.empty() ? "   F1 Tools switches" : "   " + key + " or F1 Tools switches";
     if (show_native()) {
+      if (command_ring::Wanted()) {
+        overlay_banner::Show("NATIVE ONLY (Vulkan)",
+                             "the port reads the GPU commands itself: no emulated GPU this session");
+        return;
+      }
       overlay_banner::Show("NATIVE (Vulkan)",
                            std::string(REXCVAR_GET(native_only)
                                            ? "native only: the emulated GPU is off"

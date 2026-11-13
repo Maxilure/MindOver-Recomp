@@ -553,3 +553,96 @@ Tests (copy of the saves, `--load_save=last`, 30 fps unless noted):
 
 The Xbox calls meter shows only the command ring's two calls left
 (`VdInitializeRingBuffer`, `VdEnableRingBufferRPtrWriteBack`).
+
+## 12. The graphics driver, step 4 (study): what the command ring holds
+
+After steps 1-3, two driver calls are left: `VdInitializeRingBuffer` and
+`VdEnableRingBufferRPtrWriteBack` (both once, in D3D's device set-up
+sub_82309C20). They hand the GPU the COMMAND RING: D3D writes commands into
+it, writes the new end (the write pointer, register 0x01C5 CP_RB_WPTR) to the
+GPU's registers in sub_82308898, and the GPU reports how far it has read back
+into memory. In Native Only mode the emulated GPU draws nothing (patch 0009),
+and since patch 0021 it only stores register writes, but it still runs
+everything D3D waits on. Answering these two calls means running that part
+in the port.
+
+A packet census (debug patch `patches/rexglue-sdk/debug/0101-packet-census.patch`)
+counted the stream in Native Only play at 30 fps (Wumpa Island, 10 s = 313
+frames):
+
+| Per frame | Packet | What it is for |
+|---|---|---|
+| 1 | XE_SWAP (0x64) | the frontbuffer (section 11) |
+| ~44 | INDIRECT_BUFFER (0x3F) | D3D's command buffers, called from the ring (~18,000 words a frame) |
+| ~3,200 | type-0 register writes | drawing state (0x2000-0x23FF, fetch constants 0x4800, ALU constants 0x5000) = nothing to do without drawing |
+| ~158 | WAIT_REG_MEM (0x3C) | GPU-side waits: half on memory, half on the coherency register COHER_STATUS_HOST (0x0A31), each after a COHER_SIZE/BASE/STATUS write (resolve copies made visible to the CPU) |
+| ~67 | EVENT_WRITE (0x46) | events, initiators 6 (most) and 25 |
+| ~6 | EVENT_WRITE_SHD (0x58) | "shaders done" with a value written to memory: D3D's fences |
+| ~20 | INTERRUPT (0x54) | with CALLBACK_ADDRESS / CALLBACK_CONTEXT (0x057C/0x057D), SCRATCH_REG0 and CALLBACK_ACK (0x045E) written before it: D3D's GPU callbacks, run by the game's interrupt handler with source 1 |
+| ~1,400 | SET_CONSTANT, IM_LOAD_IMMEDIATE, INVALIDATE_STATE, DRAW_INDX_2, SET_BIN_* | drawing / predicated tiling: nothing to do without drawing |
+
+So a port-own "command ring" only has to: follow the ring and the indirect
+buffers, keep the register file, write the fence / event values to memory,
+satisfy the waits, raise the source-1 interrupts (the callback of step 2),
+report the read position, and ignore the rest. D3D's other hardware register
+writes are few: the write pointer (sub_82308898), the flip address 0x1844
+(sub_82310628 / sub_82310728) and set-up writes in sub_82308C48, sub_8230FD70
+and sub_82311390.
+
+The catch: the same ring is what the emulated GPU draws from. Once the port
+consumes it, the emulated picture is gone for that session (no Emulated
+renderer, no dual window, no F9 back), which is step 5's decision.
+
+## 13. The graphics driver, step 4: the port reads the command ring (launch setting)
+
+`src/system/command_ring.cpp` reads D3D's command ring itself when the launch
+setting `--command_ring_native=true` is on (OFF by default). It answers the two
+ring calls of section 12 and catches D3D's kick, the `stw r29,1812(r11)` into
+CP_RB_WPTR at 0x82308DD8 (r11 = 0x7FC80000, r29 = the new end in words), the
+only write of that register. A "Command Ring" thread (an SDK XHostThread, so
+interrupts can run game code) then reads from the last position to the new
+end, wrapping around the ring, and follows the indirect buffers. Each packet
+does what the SDK's command processor does, minus drawing:
+
+| Packet | The port |
+|---|---|
+| type-0 / type-1 register writes | stored; SCRATCH_REG0-7 written to SCRATCH_ADDR + 4n (big-endian) when their SCRATCH_UMSK bit is set (fences); COHER_STATUS_HOST gets its dirty bit 31 |
+| WAIT_REG_MEM | waits until the test passes; on COHER_STATUS_HOST the status is cleared first (nothing is drawn, so nothing is out of date) |
+| MEM_WRITE, REG_TO_MEM, REG_RMW, COND_WRITE | as the SDK |
+| EVENT_WRITE / _SHD / _EXT / _ZPD | the event number; the fence value (or the frame counter) to memory; the SDK's stand-in extents and occlusion answers |
+| INTERRUPT | the game's interrupt callback with source 1, once per CPU bit (the callback of section 10) |
+| XE_SWAP | the frame counter + 1 (the counter also counts vertical blanks) |
+| SET_BIN_* and the predicate bit | kept, so predicated packets run exactly when the SDK runs them |
+| everything else (draws, shader code, constants, state) | skipped |
+
+Memory values go through the packet's endian code, then are stored in the
+host's order, as the SDK does. After each run the read position is written
+back to the address D3D gave.
+
+The emulated GPU then never receives a command, so that session has no
+emulated picture: Native Only is forced at start, and the Tools renderer
+switch and the second window refuse with a banner. The Options Renderer row
+offers only "Native Only" and says why. Off, every hook returns false and the
+SDK reads the ring as before.
+
+Tests (copy of the saves, `--load_save=last`):
+
+| Run | Result |
+|---|---|
+| Ring on, 30 fps, 75 s of play | 30.0 fps, 1% low 29.4-29.5, 0 errors; in the minute 1,950 swaps, ~158,000 fences, ~193,000 waits, ~10,200 interrupts; the Xbox calls meter shows 0 calls for all 20 graphics driver services |
+| Ring off / on, uncapped, 20 s | ~232 fps both; the SDK's "GPU Commands" thread 6.9% of a core vs the port's "Command Ring" 4.0% (+ the SDK's thread idling at 0.5%) |
+| Ring on, boot without a save | intro movies, title, main menu, Options (Renderer = Native Only + its card) |
+| Ring on, 60 fps | 60.0 fps; renderer switch and second window refused |
+| Ring off (default), emulated renderer | unchanged: same frozen frame as before (HUD identical), 0 errors |
+
+More tests with the ring on:
+
+| Run | Result |
+|---|---|
+| Pause -> Quit Game -> Yes, then Load Game and a save | back to the title, the save list, the level loads; 0 errors; the ring set up once (D3D keeps its device) |
+| Save "N.Gin After Mail", walk into the N. Gin lab cutscene | the in-engine cutscene plays and play resumes; 0 errors |
+| 5 minutes of running, jumping and attacks at 60 fps | 60.0 fps throughout (1% low 55-58); every minute exactly 3,600 swaps and 3,600 vertical blanks, ~356,000 fences, ~390,000 waits, ~21,600 interrupts; 0 errors; memory +33 MB, the same as the identical run with the ring off (+34 MB) |
+
+Not tested yet: Windows, and other areas than Wumpa Island. The README
+progress bar keeps counting the two ring calls as the SDK's until the setting
+is on by default (step 5).

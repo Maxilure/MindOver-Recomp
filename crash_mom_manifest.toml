@@ -643,6 +643,35 @@ name = "CrashMomDriverPersistDisplay"
 registers = ["r3"]
 jump_address_on_true = 0x823112B4
 
+# GRAPHICS DRIVER STEP 4: THE COMMAND RING (src/system/command_ring.cpp,
+# docs/findings/32 s.12-13), only with the launch setting
+# --command_ring_native (off: every hook returns false = original path).
+# Sites read with xexdis 2026-11-13:
+#   0x82309E20 VdInitializeRingBuffer in D3D's device set-up sub_82309C20:
+#              r3 = ring (physical, from MmGetPhysicalAddress), r4 = log2 size
+#   0x82309E58 VdEnableRingBufferRPtrWriteBack: r3 = read-position report
+#              address (physical), r4 = log2 block size
+#   0x82308DD8 `stw r29,1812(r11)`, r11 = 0x7FC80000: D3D's kick sub_82308C48
+#              writing CP_RB_WPTR (r29 = new end, in words); its only write
+#              of that register
+[[entrypoint.midasm_hook]]
+address = 0x82309E20
+name = "CrashMomDriverRingBuffer"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x82309E24
+
+[[entrypoint.midasm_hook]]
+address = 0x82309E58
+name = "CrashMomDriverRPtrWriteBack"
+registers = ["r3", "r4"]
+jump_address_on_true = 0x82309E5C
+
+[[entrypoint.midasm_hook]]
+address = 0x82308DD8
+name = "CrashMomRingKick"
+registers = ["r29"]
+jump_address_on_true = 0x82308DDC
+
 # XMA DECODED BY THE PORT (src/audio/xma_native.cpp, docs/findings/54 s.5).
 # Radical's audio::hal::hw::XmaDecoder (the only user of the Xbox's XMA chip
 # in this game) creates its chip context in its constructor sub_8234BE88:

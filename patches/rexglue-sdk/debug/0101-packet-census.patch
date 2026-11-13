@@ -1,0 +1,82 @@
+DEBUG (not applied by default): PACKET CENSUS of the GPU command stream
+
+Apply:  git -C thirdparty/rexglue-sdk apply ../../patches/rexglue-sdk/debug/0101-packet-census.patch
+        then rebuild the SDK (RelWithDebInfo install) and the game; remove with apply -R + rebuild.
+What:   every 10 s the log gets "Packet census (10 s)": type-0/1/2 packet counts, every type-3
+        opcode, WAIT_REG_MEM on memory vs on a register, EVENT_WRITE* initiators, indirect-buffer
+        words, register writes (each index below 0x2000, the rest per 0x100 block).
+Used:   docs/findings/32 s.12 (what the command ring holds in Native Only play, graphics driver step 4).
+
+--- a/src/graphics/command_processor.cpp
++++ b/src/graphics/command_processor.cpp
+@@ -763,9 +763,70 @@
+   } while (reader.read_count());
+ }
+ 
++// DEBUG CENSUS (patches/rexglue-sdk/debug/0101-packet-census.patch, never in
++// a normal build): what the game's command stream contains, per 10 s.
++namespace census {
++std::atomic<uint64_t> type3[128];
++std::atomic<uint64_t> type0_regs[0x8000];
++std::atomic<uint64_t> type0_packets, type1_packets, type2_packets, zero_words;
++std::atomic<uint64_t> wait_mem, wait_reg, event_initiator[64], indirect_words;
++std::atomic<uint64_t> last_log_ms;
++void Count(uint32_t packet, memory::RingBuffer* reader) {
++  const uint32_t type = packet >> 30;
++  if (packet == 0) { zero_words++; return; }
++  if (type == 0) {
++    type0_packets++;
++    const uint32_t count = ((packet >> 16) & 0x3FFF) + 1, base = packet & 0x7FFF;
++    const bool one = (packet >> 15) & 1;
++    for (uint32_t m = 0; m < count; ++m) type0_regs[(one ? base : base + m) & 0x7FFF]++;
++  } else if (type == 1) {
++    type1_packets++;
++    type0_regs[packet & 0x7FF]++;
++    type0_regs[(packet >> 11) & 0x7FF]++;
++  } else if (type == 2) {
++    type2_packets++;
++  } else {
++    const uint32_t opcode = (packet >> 8) & 0x7F;
++    type3[opcode]++;
++    // Peek the first data word (big-endian) without moving the reader.
++    const uint32_t first = memory::load_and_swap<uint32_t>(reader->buffer() + reader->read_offset());
++    if (opcode == 0x3C) {  // WAIT_REG_MEM: bit 4 = poll memory (else a register)
++      (first & 0x10) ? wait_mem++ : wait_reg++;
++    } else if (opcode == 0x46 || opcode == 0x58 || opcode == 0x5A || opcode == 0x5B) {
++      event_initiator[first & 0x3F]++;  // EVENT_WRITE(_SHD/_EXT/_ZPD)
++    } else if (opcode == 0x3F || opcode == 0x37) {  // INDIRECT_BUFFER(_PFD)
++      const uint32_t size = memory::load_and_swap<uint32_t>(reader->buffer() + ((reader->read_offset() + 4) % reader->capacity()));
++      indirect_words += size & 0xFFFFF;
++    }
++  }
++  const uint64_t now = rex::chrono::Clock::QueryHostUptimeMillis();
++  uint64_t last = last_log_ms.load();
++  if (last == 0) { last_log_ms = now; return; }
++  if (now - last < 10000 || !last_log_ms.compare_exchange_strong(last, now)) return;
++  std::string text = fmt::format("Packet census (10 s): type0 {} type1 {} type2 {} zero words {} indirect words {}\n",
++                                 type0_packets.exchange(0), type1_packets.exchange(0), type2_packets.exchange(0),
++                                 zero_words.exchange(0), indirect_words.exchange(0));
++  for (uint32_t i = 0; i < 128; ++i)
++    if (uint64_t c = type3[i].exchange(0)) text += fmt::format("  type3 opcode 0x{:02X}: {}\n", i, c);
++  text += fmt::format("  WAIT_REG_MEM on memory {} on a register {}\n", wait_mem.exchange(0), wait_reg.exchange(0));
++  for (uint32_t i = 0; i < 64; ++i)
++    if (uint64_t c = event_initiator[i].exchange(0)) text += fmt::format("  event initiator {}: {}\n", i, c);
++  // Registers: every index below 0x2000 on its own (control), the rest per 0x100 block.
++  for (uint32_t i = 0; i < 0x2000; ++i)
++    if (uint64_t c = type0_regs[i].exchange(0)) text += fmt::format("  reg 0x{:04X}: {}\n", i, c);
++  for (uint32_t b = 0x2000; b < 0x8000; b += 0x100) {
++    uint64_t c = 0;
++    for (uint32_t i = b; i < b + 0x100; ++i) c += type0_regs[i].exchange(0);
++    if (c) text += fmt::format("  regs 0x{:04X}-0x{:04X}: {}\n", b, b + 0xFF, c);
++  }
++  REXGPU_INFO("{}", text);
++}
++}  // namespace census
++
+ bool CommandProcessor::ExecutePacket(memory::RingBuffer* reader) {
+   const uint32_t packet = reader->ReadAndSwap<uint32_t>();
+   const uint32_t packet_type = packet >> 30;
++  census::Count(packet, reader);
+   if (packet == 0) {
+     return true;
+   }

@@ -40,6 +40,7 @@
 #include "../language/texts.h"
 #include "global_options.h"
 #include "options_menu.h"
+#include "../system/command_ring.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);
 REXCVAR_DECLARE(bool, native_only);
@@ -218,18 +219,23 @@ Row RendererRow() {
   r.label = tr(u"Renderer");
   // Without a native renderer (not Vulkan) there is one value.
   auto none = [] { return !g_hooks.native_shown; };
-  r.values = [none](Env&) {
+  // --command_ring_native (graphics driver step 4, system/command_ring.h):
+  // the emulated GPU gets no commands this session: one value, Native Only.
+  // (Index 0 then; Dual Mode's X is only offered on Emulated / Native.)
+  auto ring = [] { return command_ring::Wanted(); };
+  r.values = [none, ring](Env&) {
+    if (ring()) return std::vector<std::u16string>{tr(u"Native Only")};
     if (none()) return std::vector<std::u16string>{tr(u"Emulated")};
     return std::vector<std::u16string>{tr(u"Emulated Only"), tr(u"Emulated"), tr(u"Native"), tr(u"Native Only")};
   };
-  r.get = [none](Env&) {
-    if (none()) return 0;
+  r.get = [none, ring](Env&) {
+    if (none() || ring()) return 0;
     if (g_hooks.emulated_only && g_hooks.emulated_only()) return int(kEmulatedOnly);
     if (!g_hooks.native_shown()) return int(kEmulated);
     return int(REXCVAR_GET(native_only) ? kNativeOnly : kNative);
   };
-  r.set = [none](Env&, int i) {
-    if (none()) return;
+  r.set = [none, ring](Env&, int i) {
+    if (none() || ring()) return;
     // The flags first: showing a picture also turns the emulated GPU's
     // drawing on / off by them (NativeRenderer::UpdateEmulatedDrawing).
     SetFlag("emulated_only", i == kEmulatedOnly ? "true" : "false");
@@ -237,7 +243,12 @@ Row RendererRow() {
     g_hooks.show_native(i == kNative || i == kNativeOnly);
     if (g_hooks.emulated_drawing) g_hooks.emulated_drawing();
   };
-  r.describe = [none](Env&, int i) -> std::u16string {
+  r.describe = [none, ring](Env&, int i) -> std::u16string {
+    if (ring()) {
+      // (No flag name here: the game font has no underscore glyph.)
+      return tr(u"The port reads the game's graphics commands itself this session (a launch "
+                u"setting): only its own renderer can show the picture.");
+    }
     // The Tools menu (F1 -> Switch renderer) switches the picture between the
     // two renderers (not with Emulated Only: the port's renderer is off then).
     // Was F9 until 2026-10-29 (ui/tools_menu.h).
@@ -259,7 +270,8 @@ Row RendererRow() {
       default: return tr(u"The port's own renderer alone: the lightest on your PC.");
     }
   };
-  r.warn = [none](Env&, int i) {
+  r.warn = [none, ring](Env&, int i) {
+    if (ring()) return std::u16string(tr(u"Still being finished: an effect may look wrong."));
     return !none() && (i == kNative || i == kNativeOnly)
                ? std::u16string(tr(u"Still being finished: an effect may look wrong."))
                : std::u16string();

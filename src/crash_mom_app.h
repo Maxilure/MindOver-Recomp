@@ -97,6 +97,7 @@
 #include "players/outfit_picker.h"
 #include "players/spin_colours.h"
 #include "players/more_players_hud.h"
+#include "system/command_ring.h"
 
 class CrashMomApp : public rex::ReXApp {
  public:
@@ -471,6 +472,12 @@ class CrashMomApp : public rex::ReXApp {
     // --emulated_only: our renderer never draws, so no window for it.
     if (native_renderer_->emulated_only()) {
       overlay_banner::Show("EMULATED ONLY", "No second window with --emulated_only");
+      return;
+    }
+    // --command_ring_native (graphics driver step 4): no emulated picture to
+    // put in the main window (system/command_ring.h).
+    if (command_ring::Wanted()) {
+      overlay_banner::Show("NATIVE ONLY", "No second window with --command_ring_native");
       return;
     }
     if (!native_window_) {

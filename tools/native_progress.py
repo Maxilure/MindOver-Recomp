@@ -236,6 +236,10 @@ DONE = {
     "VdGetSystemCommandBuffer": "display_swap.cpp: 0x82310F90",
     "VdSwap": "display_swap.cpp: 0x82310FF4",
     "VdPersistDisplay": "display_swap.cpp: 0x823112B0 (0 = nothing kept, nothing to free)",
+    # Graphics driver STEP 4 (2026-11-13, src/system/command_ring.cpp,
+    # findings/32 s.13): VdInitializeRingBuffer + VdEnableRingBufferRPtrWriteBack
+    # are answered ONLY with the launch setting --command_ring_native (off by
+    # default): not counted here until it's on by default (step 5).
 }
 
 BEGIN = "<!-- native-progress:begin -->"

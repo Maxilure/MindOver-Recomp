@@ -63,6 +63,9 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xthread.h>
 
+#include "command_ring.h"
+#include "vblank.h"
+
 REXCVAR_DEFINE_BOOL(vblank_native, true, "CrashMoM",
                     "The port ticks the virtual TV's vertical blank (the game's 60 Hz frame "
                     "clock) itself; false = the SDK's emulated Xbox does (for comparisons)");
@@ -133,6 +136,8 @@ int ThreadMain() {
       uint64_t args[] = {kSourceVblank, g.argument.load(std::memory_order_relaxed)};
       dispatcher->ExecuteInterrupt(self->thread_state(), callback, args, 2);
       g.ticks.fetch_add(1, std::memory_order_relaxed);
+      // The GPU's frame counter (fence packets can write it; step 4).
+      command_ring::OnVblank();
     }
 
     // The rate can change while running (guest_refresh_hz is hot-reload).
@@ -160,6 +165,13 @@ int ThreadMain() {
 }
 
 }  // namespace
+
+bool vblank::GameCallback(uint32_t& callback, uint32_t& argument) {
+  if (!REXCVAR_GET(vblank_native)) return false;
+  callback = g.callback.load(std::memory_order_acquire);
+  argument = g.argument.load(std::memory_order_relaxed);
+  return callback != 0;
+}
 
 // -----------------------------------------------------------------------------
 // VdSetGraphicsInterruptCallback call sites (manifest "GRAPHICS DRIVER STEP
