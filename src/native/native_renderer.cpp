@@ -60,6 +60,12 @@ REXCVAR_DEFINE_BOOL(native_only, true, "CrashMoM",
 REXCVAR_DEFINE_BOOL(emulated_only, false, "CrashMoM",
                     "Only the emulated GPU's picture: renderer switch and second window locked, the native renderer never "
                     "draws. The baseline to compare --native_only with");
+// MOVIE BACKDROP (2026-11-09, prototype): in a picture wider than 16:9 the
+// movies (16:9 videos) leave the sides black; this fills them with the same
+// movie zoomed in, blurred and darkened (shaders/bink.*).
+REXCVAR_DEFINE_BOOL(movie_backdrop, true, "CrashMoM",
+                    "Widescreen: movies fill the sides with a blurred, darkened, zoomed copy of themselves "
+                    "(false = black sides)");
 // EMULATED EVERY NTH FRAME (2026-10-03): with both renderers drawing (dual
 // mode, or our picture in the main window without --native_only), the host
 // GPU was ~97% busy at 60 fps in a quiet spot of the Ice Prison and busier
@@ -2204,6 +2210,21 @@ void NativeRenderer::RecordScene(VkCommandBuffer cmd, uint64_t submission,
       bink.screen_size[0] = float(kWidth);
       bink.screen_size[1] = float(kHeight);
       bink.screen_size[2] = frame_wide_;  // widescreen: the movie's height back to full (bink.vert)
+      // MOVIE BACKDROP (flag movie_backdrop): in a wide picture, the same
+      // frame first, zoomed over the whole picture, blurred and darkened
+      // (bink.vert / bink.frag, screen_size.w = 1); the movie on top.
+      if (frame_wide_ > 1.01f && REXCVAR_GET(movie_backdrop)) {
+        bink.screen_size[3] = 1.0f;
+        dfn.vkCmdPushConstants(cmd, draw_layout_,
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                               sizeof(bink), &bink);
+        if (indices) {
+          dfn.vkCmdDrawIndexed(cmd, d.index_count, 1, d.mesh ? 0 : d.first_index, 0, 0);
+        } else {
+          dfn.vkCmdDraw(cmd, d.vertex_count, 1, 0, 0);
+        }
+        bink.screen_size[3] = 0.0f;
+      }
       dfn.vkCmdPushConstants(cmd, draw_layout_,
                              VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                              sizeof(bink), &bink);

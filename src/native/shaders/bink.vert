@@ -8,7 +8,7 @@
 // viewport transform for such "pretransformed" vertices. Vulkan has no such
 // switch, so we do that step here: pixels -> clip space (-1..1, y down).
 // Pixel centres: no half-pixel shift, as for the simple material.
-// In a WIDER picture (widescreen): see main().
+// In a WIDER picture (widescreen): see main(), also for the blurred backdrop.
 // =============================================================================
 
 #version 450
@@ -17,13 +17,14 @@
 layout(push_constant) uniform BinkParams {
   vec4 c[4];
   vec4 screen_size;  // xy: the game's screen in pixels (1280x720); z: WIDESCREEN's
-                     // aspect / 16:9 (1 at 16:9)
+                     // aspect / 16:9 (1 at 16:9); w: 1 = the BACKDROP draw (below)
 } params;
 
 layout(location = 0) in vec3 in_position;
 layout(location = 2) in vec2 in_uv;
 
 layout(location = 0) out vec2 out_uv;
+layout(location = 1) out float out_clip_x;  // -1..1 across the whole picture (backdrop framing)
 
 void main() {
   vec2 clip = in_position.xy / params.screen_size.xy * 2.0 - 1.0;
@@ -35,6 +36,16 @@ void main() {
   // the movie fills the picture's height, in the middle 16:9, bars at the
   // sides.
   clip.y *= params.screen_size.z;
-  gl_Position = vec4(clip, in_position.z, 1.0);
   out_uv = in_uv;
+  // MOVIE BACKDROP (2026-11-09, flag movie_backdrop): in a wide picture the
+  // movie is drawn once more BEFORE itself, over the whole picture: the
+  // movie's corners (its uv 0..1) go to the picture's corners, and the uv is
+  // cropped top and bottom by the wide factor so nothing is stretched (the
+  // movie zoomed in until it covers the width). bink.frag blurs and darkens it.
+  if (params.screen_size.w > 0.5) {
+    clip = in_uv * 2.0 - 1.0;
+    out_uv = vec2(in_uv.x, 0.5 + (in_uv.y - 0.5) / params.screen_size.z);
+  }
+  out_clip_x = clip.x;
+  gl_Position = vec4(clip, in_position.z, 1.0);
 }
