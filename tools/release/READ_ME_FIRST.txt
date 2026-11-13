@@ -14,7 +14,8 @@ How to start (Linux)
 --------------------
 
 1. Have your disc image ready: an .iso dumped from your own Xbox 360 disc
-   of Crash: Mind over Mutant (USA). Putting it in this folder saves a click.
+   of Crash: Mind over Mutant. Putting it in this folder saves a click.
+   USA VERSION ONLY: the European (PAL) release is not supported.
    Keep this folder on a drive with ~25 GB free.
 
 2. Double-click "Mind over Recomp" in this folder.

@@ -28,6 +28,8 @@
 
 > [!IMPORTANT]
 > **No game files are included.** You need your own Xbox 360 disc of *Crash: Mind over Mutant* (USA), dumped to an `.iso`. The game is built on your computer from it.
+>
+> **USA version only.** The European (PAL) release and other regions are not supported: their game files differ.
 
 ## 📖 About
 
@@ -203,7 +205,7 @@ cmake -S launcher -B out/build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release \
 cmake --build out/build/launcher && out/build/launcher/crash_mom_launcher
 
 # or by hand: unpack the disc, build the SDK with our patches, then the game
-python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
+python3 tools/xiso_extract.py /path/to/your-game.iso game/
 (cd thirdparty/rexglue-sdk && git apply ../../patches/rexglue-sdk/*.patch \
   && cmake --preset linux-amd64 -DCMAKE_INSTALL_PREFIX=$PWD/../rexglue-install \
   && cmake --build out/build/linux-amd64 --config Release --target install \

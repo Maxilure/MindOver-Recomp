@@ -8,7 +8,7 @@ any of it yourself.
 
 | Property | Value | How we know |
 |---|---|---|
-| File | `Crash - Mind over Mutant (USA).iso`, 7,835,492,352 bytes | That size is a full dual-layer 360 dump |
+| File | `.iso` dump of the USA disc, 7,835,492,352 bytes | That size is a full dual-layer 360 dump |
 | Disc format | **XGD2** | `xiso_extract.py` found the XDVDFS magic at `0xFD90000` |
 | Game data | 83 files, 3 folders, 6.0 GB | `xiso_extract.py --list` |
 

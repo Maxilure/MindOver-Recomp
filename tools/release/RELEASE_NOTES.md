@@ -36,8 +36,9 @@ Activision or the game's other owners.
 > copy of your `user\saves` folder.
 >
 > **You need your own disc.** The game's files come from an `.iso` of your
-> own Xbox 360 disc of *Crash: Mind over Mutant* (USA): the installer
-> extracts them. No game files are included.
+> own Xbox 360 disc of *Crash: Mind over Mutant*: the installer
+> extracts them. No game files are included. **USA version only**: the
+> European (PAL) release is not supported.
 >
 > **Windows only** for now. Linux comes later; until then, Linux players
 > stay on [0.1.0-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.1.0-alpha).

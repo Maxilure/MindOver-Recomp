@@ -65,9 +65,10 @@ x86). This is the opposite of the game code itself (PowerPC = big-endian).
 
 USAGE
 -----
-    python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
-    python3 tools/xiso_extract.py --list "Crash - Mind over Mutant (USA).iso"
-    python3 tools/xiso_extract.py --repair "Crash - Mind over Mutant (USA).iso" game/
+The disc must be the USA release (PAL / other regions are not supported).
+    python3 tools/xiso_extract.py /path/to/your-game.iso game/
+    python3 tools/xiso_extract.py --list /path/to/your-game.iso
+    python3 tools/xiso_extract.py --repair /path/to/your-game.iso game/
 
 --repair (the installer's update, 2026-11-08): compare an earlier extraction
 with the disc and copy again ONLY the files that are missing or have another

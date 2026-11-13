@@ -14,7 +14,8 @@ How to install (Windows 10 / 11)
 --------------------------------
 
 1. Have your disc image ready: an .iso dumped from your own Xbox 360 disc
-   of Crash: Mind over Mutant (USA).
+   of Crash: Mind over Mutant.
+   USA VERSION ONLY: the European (PAL) release is not supported.
 
 2. Double-click "Mind over Recomp.exe" in this folder.
    (Windows may warn about an unknown program: "More info", then "Run anyway".)
@@ -59,7 +60,8 @@ Como instalar (Windows 10 / 11)
 -------------------------------
 
 1. Tenha a imagem do seu disco pronta: um .iso do seu próprio disco de
-   Xbox 360 de Crash: Mind over Mutant (USA).
+   Xbox 360 de Crash: Mind over Mutant.
+   SOMENTE A VERSÃO AMERICANA (USA): a versão europeia (PAL) não é suportada.
 
 2. Clique duas vezes em "Mind over Recomp.exe" nesta pasta.
    (O Windows pode avisar sobre um programa desconhecido: "Mais informações",

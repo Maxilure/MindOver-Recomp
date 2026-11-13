@@ -27,12 +27,16 @@ Debian/Ubuntu: `sudo apt install clang-20 cmake ninja-build libgtk-3-dev libvulk
 (Optional, for renderer work: the Vulkan validation layer, `vulkan-validation-layers`.)
 
 You also need **your own dump** of the Xbox 360 disc as an `.iso` (a full
-XGD2 dump is 7,835,492,352 bytes). Put it in the repo root.
+XGD2 dump is 7,835,492,352 bytes). Any name and folder works; the
+command below takes its path.
+
+> **USA version only** (title ID `565507FA`). The European (PAL) release and
+> other regions are not supported: their game files differ.
 
 ## 1. Extract the disc
 
 ```bash
-python3 tools/xiso_extract.py "Crash - Mind over Mutant (USA).iso" game/
+python3 tools/xiso_extract.py /path/to/your-game.iso game/
 ```
 
 This writes 83 files (6.0 GB) to `game/`. It takes seconds on an SSD.

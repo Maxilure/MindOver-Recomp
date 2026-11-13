@@ -138,7 +138,8 @@ afterwards.
 ### "default.xex isn't Crash: Mind over Mutant"
 
 The `.iso` is another game or another region. The port is built for the
-**USA** release (title ID 565507FA). The image must be a full dump of the
+**USA** release only (title ID 565507FA); the European (PAL) release and
+other regions are not supported. The image must be a full dump of the
 disc (about 7.8 GB).
 
 ### The build fails or the computer freezes
