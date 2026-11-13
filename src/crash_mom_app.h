@@ -86,6 +86,7 @@
 #include "options/options_menu.h"
 #include "options/options_settings.h"
 #include "saves/rename_screen.h"
+#include "game_bugs/game_bugs.h"
 #include "saves/save_library.h"
 #include "saves/save_screen_waits.h"
 #include "native/native_window.h"
@@ -313,6 +314,8 @@ class CrashMomApp : public rex::ReXApp {
     prompt_icons::Register();
     // Ã ã for the font (empty glyphs on the disc; ui/font_letters.h): after the button glyphs.
     font_letters::Register();
+    // Bugs of the original game fixed in its data (game_bugs/game_bugs.h).
+    game_bugs::Register();
     data_patcher::Install();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();

@@ -118,6 +118,11 @@ and put back when an update fails).
   mojo left behind), loading a save after **Quit Game** could crash. Leftover
   pickups still pointed at the old level's areas; they now find their place
   in the new one.
+- **Spike's jacking sound plays once.** Jacking Spike (or Spike in the Hero
+  levels) played the jacking sound twice; every other titan plays it once.
+  The Xbox 360 game does the same: Spike's move data lists the sound twice.
+  The port now plays it once (**fix_spike_jack_sound** in `settings.toml`
+  brings the original back).
 
 **Changes**
 
