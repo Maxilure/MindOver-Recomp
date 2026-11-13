@@ -386,3 +386,52 @@ Measured (uncapped, Native Only, Wumpa Island, three pairs of 8 s profiles,
 the switch `native_light_constants` flipped live): its inclusive share of
 the main thread 1.14 / 0.95 / 0.79% (original) -> 0.38 / 0.33 / 0.36% (C++).
 Frame rate 226-247 fps either way: within the noise at this size.
+
+## 13. The vertex stream writer (src/decomp/vertex_streams.cpp)
+
+A function-by-function profile after section 12 put the largest piece of
+the renderer's own code left at sub_82439A48: ~3% of the main thread
+uncapped on Wumpa Island, all of it its own loop. It is one of a family of
+xnPrimBufferStream writers (0x824398E8, 0x82439A48, 0x82439B88,
+0x82439CC0: one per vertex format, picked by sub_823E1780 from which
+arrays exist) and the one used in the scenes profiled: position, normal,
+binormal and tangent (3 floats each) and a uv (2 floats) per vertex, about
+2,300 vertices a call, ~900 calls a second uncapped. The stream object:
++0 stride, +4 / +8 / +12 / +16 / +24 the next position / normal / binormal
+/ tangent / uv, +28 the count written. The original re-reads each column
+pointer from the stream before every one of the 14 stores of a vertex and
+moves all five on by the stride.
+
+The C++ copies the same words in the same order, with two decisions up
+front that send a call back to the original: a destination column that
+overlaps a source array or the stream object (then the original's re-reads
+would see its own stores), or a range that wraps or crosses 0xE0000000
+(the Windows host window shift). Destination columns overlapping each
+other (one interleaved vertex) are fine: stores keep the original's order.
+In all test runs no call needed the original.
+
+Each float goes through lfs / stfs, which in the recompiled code is float
+-> double -> float: every value survives except a signalling NaN, which
+comes out quiet. Copied as raw words with that bit set for any NaN (a
+quiet one already has it), branch-free over the vertex's 14 words.
+
+**Registers.** Its one caller tail-returns into a function reached through
+a vtable, so a scan can't show that no caller reads a scratch register
+afterwards (the argument used for the set-ups). So all of them are left as
+the original leaves them: the loop's walkers r5-r11, r12 and lr from
+restgpr, the last vertex's 14 floats in f0-f13 (as lfs loaded them), cr0,
+cr6 and the carry. decomp/check.h gained `Ranges::registers`: the check
+then compares every guest-visible register (r0-r31, f0-f31, cr0-cr7, xer,
+lr, ctr), not only r3.
+
+Checked with `--debug_native_vertex_check` (memory: the stream object, the
+saved registers below r1 and the span the five columns cover; every
+register): Wumpa Island, the titan save, another level: ~12,400 calls, ~25
+million vertices, 0 differences, every call handled by ours ("covered" log
+line: handled / left to the original / vertices). Positive control: one
+changed word below r1 made every call differ.
+
+Measured (uncapped, Native Only, three pairs of 8 s profiles, the switch
+`native_vertex_streams` flipped live): 2.80 / 3.04 / 2.79% (original) ->
+1.78 / 1.60 / 1.86% (C++). A first version that checked each float for a
+signalling NaN with a branch saved only a third as much (2.2 / 1.8 / 2.8%).

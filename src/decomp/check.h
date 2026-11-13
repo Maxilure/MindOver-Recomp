@@ -41,6 +41,11 @@ struct Range {
 struct Ranges {
   Range r[6];
   size_t n;
+  // true = also compare EVERY register the guest can see (r0-r31, f0-f31,
+  // cr0-cr7, xer, lr, ctr), not only r3: for a rewrite that reproduces the
+  // scratch registers too because a caller can't be proven not to read them
+  // (vertex_streams.cpp).
+  bool registers = false;
   size_t size() const { return n; }
   const Range& operator[](size_t i) const { return r[i]; }
   const Range* begin() const { return r; }
@@ -67,6 +72,36 @@ inline void MaybeReport() {
   REXLOG_INFO("Native check: {}", line);
 }
 
+
+// Every guest-visible register of two contexts: "" when equal, else the
+// first difference (Ranges::registers).
+inline std::string RegistersDiffer(const PPCContext& a, const PPCContext& b) {
+#define DECOMP_REG(name)                                                                              \
+  if (a.name.u64 != b.name.u64)                                                                       \
+    return fmt::format(#name " original {:X} ours {:X}", a.name.u64, b.name.u64);
+  DECOMP_REG(r0) DECOMP_REG(r1) DECOMP_REG(r2) DECOMP_REG(r3) DECOMP_REG(r4) DECOMP_REG(r5) DECOMP_REG(r6)
+  DECOMP_REG(r7) DECOMP_REG(r8) DECOMP_REG(r9) DECOMP_REG(r10) DECOMP_REG(r11) DECOMP_REG(r12) DECOMP_REG(r13)
+  DECOMP_REG(r14) DECOMP_REG(r15) DECOMP_REG(r16) DECOMP_REG(r17) DECOMP_REG(r18) DECOMP_REG(r19) DECOMP_REG(r20)
+  DECOMP_REG(r21) DECOMP_REG(r22) DECOMP_REG(r23) DECOMP_REG(r24) DECOMP_REG(r25) DECOMP_REG(r26) DECOMP_REG(r27)
+  DECOMP_REG(r28) DECOMP_REG(r29) DECOMP_REG(r30) DECOMP_REG(r31) DECOMP_REG(ctr)
+  DECOMP_REG(f0) DECOMP_REG(f1) DECOMP_REG(f2) DECOMP_REG(f3) DECOMP_REG(f4) DECOMP_REG(f5) DECOMP_REG(f6)
+  DECOMP_REG(f7) DECOMP_REG(f8) DECOMP_REG(f9) DECOMP_REG(f10) DECOMP_REG(f11) DECOMP_REG(f12) DECOMP_REG(f13)
+  DECOMP_REG(f14) DECOMP_REG(f15) DECOMP_REG(f16) DECOMP_REG(f17) DECOMP_REG(f18) DECOMP_REG(f19) DECOMP_REG(f20)
+  DECOMP_REG(f21) DECOMP_REG(f22) DECOMP_REG(f23) DECOMP_REG(f24) DECOMP_REG(f25) DECOMP_REG(f26) DECOMP_REG(f27)
+  DECOMP_REG(f28) DECOMP_REG(f29) DECOMP_REG(f30) DECOMP_REG(f31)
+#undef DECOMP_REG
+  if (a.lr != b.lr) return fmt::format("lr original {:X} ours {:X}", a.lr, b.lr);
+  const PPCCRRegister* ca[8] = {&a.cr0, &a.cr1, &a.cr2, &a.cr3, &a.cr4, &a.cr5, &a.cr6, &a.cr7};
+  const PPCCRRegister* cb[8] = {&b.cr0, &b.cr1, &b.cr2, &b.cr3, &b.cr4, &b.cr5, &b.cr6, &b.cr7};
+  for (int i = 0; i < 8; ++i) {
+    if (ca[i]->raw() != cb[i]->raw()) return fmt::format("cr{} original {:X} ours {:X}", i, ca[i]->raw(), cb[i]->raw());
+  }
+  if (a.xer.so != b.xer.so || a.xer.ov != b.xer.ov || a.xer.ca != b.xer.ca) {
+    return fmt::format("xer original {}{}{} ours {}{}{}", a.xer.so, a.xer.ov, a.xer.ca, b.xer.so, b.xer.ov, b.xer.ca);
+  }
+  return "";
+}
+
 // Runs the original on a copy of the registers, keeps what it wrote, runs
 // ours on the same input, compares; the original's results stay (memory and
 // registers: the answer key wins).
@@ -91,6 +126,10 @@ void Checked(Stats& st, PPCContext& ctx, uint8_t* base, PPCFunc* original, const
   ++st.calls;
   bool same = !handled || mine.r3.u64 == answer.r3.u64;
   std::string what = same ? "" : fmt::format("r3 original {:X} ours {:X}", answer.r3.u64, mine.r3.u64);
+  if (handled && same && ranges.registers) {
+    what = RegistersDiffer(answer, mine);
+    same = what.empty();
+  }
   for (size_t i = 0; handled && i < ranges.size(); ++i) {
     if (!ranges[i].compare) continue;
     const uint8_t* p = GuestPtr(base, ranges[i].address);
