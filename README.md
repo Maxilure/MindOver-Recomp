@@ -272,6 +272,8 @@ user/                      YOUR files: saves, settings, controls, photos, logs
 
 Contributions of any kind are welcome: code, reverse engineering, testing, bug reports, corrections. **Speak another language?** The port's own texts are machine-translated into 11 languages and need checking: see [languages/](languages/README.md), no programming needed. Every human contribution is credited in [CREDITS.md](CREDITS.md).
 
+Before a pull request, read **[CONTRIBUTING.md](CONTRIBUTING.md)**. Working with an AI coding agent? Point it at **[AGENTS.md](AGENTS.md)**: the project's rules for agents (no game data, findings for everything learned, heavy comments, how to test).
+
 > [!NOTE]
 > **Developed with extensive AI assistance** (Claude, via Claude Code). The code, reverse-engineering notes and documentation were largely written by the AI; the maintainer sets the direction, tests every change on the real game and reviews the results. Findings are checked against the running game, not by experts: treat them as working notes, and please report errors.
 

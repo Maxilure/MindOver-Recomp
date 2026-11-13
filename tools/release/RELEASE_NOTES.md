@@ -95,6 +95,29 @@ Git step can't start its helpers) and the new installer of
 inside the installed copy with **Update now**, the previous version kept
 and put back when an update fails).
 
+**Fixes**
+
+- **Controllers keep playing under the pointer.** With the mouse pointer over
+  a tool window (Tools, Cheats...), every controller stopped until the
+  pointer left the window. Controllers now always play; the keyboard and
+  mouse still pause while a tool window uses them.
+- **Level-up screen with player 1 dropped out.** When player 1 had dropped
+  out and another player levelled up (or used the cheat **Max level**), the
+  game crashed as the level-up screen opened. The players still in now
+  answer it.
+- **Spawning many enemies.** The spawn cheat stops with "too many things in
+  the level" before the game's object table is full, instead of crashing
+  after a hundred or so enemies.
+- **Debug overlay.** **Tools → Debug overlay** crashed the game as it opened.
+- **Every enemy is drawn.** With more than about 16 characters in one area,
+  the extra ones were invisible (only what they carried showed, like a
+  coconut). The game's per-area lists now grow when full, and the graphics
+  buffer they draw from is bigger. Normal fights never reached the limit.
+- **Loading after quitting a busy level.** With many enemies defeated (their
+  mojo left behind), loading a save after **Quit Game** could crash. Leftover
+  pickups still pointed at the old level's areas; they now find their place
+  in the new one.
+
 **Changes**
 
 - **Native Only is faster and uses less CPU.** While the port's own renderer
@@ -112,6 +135,11 @@ and put back when an update fails).
   dashboard's own music player (asked every frame) and its friends-list
   status are answered by the port: nothing changes in play, hundreds of
   emulated Xbox calls a second fewer.
+- **A clear message when a game file can't be read.** The Xbox 360's
+  "disc is unreadable" box is now a PC message: one of the files in the
+  `game` folder may be missing or damaged, and the installer can repair
+  them. The game's last Xbox notification setting and its network start-up
+  (the game has no online features) are answered by the port too.
 - **Button styles named after their controllers.** In **Options → Controls
   → Controller Icons** and on the **Players** screen: **DualSense**
   (was PlayStation 5), **DualShock** (was PlayStation 4) and **Joy-Con**
@@ -121,9 +149,13 @@ and put back when an update fails).
   text (widescreen, resolutions, Cursor Fades, the message card, the
   installer) is translated by a person, month names in the save dates start
   with a capital letter, and the Renderer choices read **Apenas Nativo** /
-  **Apenas Emulado**. Thanks to
-  [zanettevini](https://github.com/zanettevini)
-  ([#9](https://github.com/Maxilure/MindOver-Recomp/issues/9)).
+  **Apenas Emulado**. Older texts are corrected too: a missing verb in the
+  Players screen's "moving" line, the **Sharpest** / **Softest** choices,
+  the HUD and voodoo doll descriptions, and the same words everywhere
+  (**anti-aliasing**, **port**, **Aumento de nitidez** for Sharpening).
+  Thanks to [zanettevini](https://github.com/zanettevini)
+  ([#9](https://github.com/Maxilure/MindOver-Recomp/issues/9),
+  [#22](https://github.com/Maxilure/MindOver-Recomp/pull/22)).
 
 ### Install or update
 
@@ -135,11 +167,6 @@ and put back when an update fails).
   **Crash Mind over Mutant** from the Start menu.
 - **Already installed (0.2.2-alpha.5 or later):** open **Mind over Recomp**
   from the Start menu and press **Update now**. Older installs: the
-- **A clear message when a game file can't be read.** The Xbox 360's
-  "disc is unreadable" box is now a PC message: one of the files in the
-  `game` folder may be missing or damaged, and the installer can repair
-  them. The game's last Xbox notification setting and its network start-up
-  (the game has no online features) are answered by the port too.
   **Update to …** button there, or the new release's installer (**Update an
   installed game**). Close the game first.
 
