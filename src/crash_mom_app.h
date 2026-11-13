@@ -534,10 +534,8 @@ class CrashMomApp : public rex::ReXApp {
   // focused (ReXApp::ConstructRuntime's "active" check). With two windows,
   // clicking (or just moving) the native one would freeze Crash. So once the
   // native window exists, the check accepts either window.
-  // The SDK's check also pauses input while an overlay (F3/F4/console/F7)
-  // is open and ImGui wants the mouse. Which overlays are open is private to
-  // ReXApp, so this asks ImGui directly: the same, except that hovering the
-  // mouse over the achievement pop-up while it shows pauses input too.
+  // The SDK's check also paused input while an overlay was open and ImGui
+  // wanted the mouse; ours doesn't (see below: controllers don't use it).
   // Keyboard-as-controller (--mnk_mode) keeps its own focus check on the
   // main window.
   //
@@ -550,9 +548,17 @@ class CrashMomApp : public rex::ReXApp {
         // Unfocused: the ImGui overlays can't be in use, so only the setting decides.
         return background_input::Allowed();
       }
-      rex::ui::ImGuiDrawer* drawer = imgui_drawer();
-      return !drawer || !drawer->GetIO().WantCaptureMouse;
+      // Focused: controllers always play. (Until 2026-11-12 they paused
+      // while ImGui wanted the mouse, the SDK's rule, meant for its own
+      // keyboard-as-controller mode: hovering the pointer over the Cheats or
+      // Tools window stopped every controller until it left the window, a
+      // player's report. A controller doesn't use the mouse; our keyboard +
+      // mouse driver has its own pause for ImGui wanting the keys / mouse,
+      // KeyboardMouseDriver paused_check_, and never reads this callback.)
+      return true;
     };
+    // The port's SDL controllers (input/native_controllers.h, the default)
+    // ask this check themselves; on the SDK path every SDK driver gets it.
     if (native_controllers::Enabled()) {
       native_controllers::SetActiveCheck(active);
     } else if (auto* input = static_cast<rex::input::InputSystem*>(runtime()->input_system())) {
