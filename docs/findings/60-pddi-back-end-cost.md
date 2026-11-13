@@ -512,7 +512,7 @@ Measured (uncapped, Native Only, two pairs of 8 s profiles, the switch
 `native_zone_fade` flipped live): 1.30 / 1.39% (original) -> 0.65 / 0.81%
 (C++).
 
-## 16. A shadow volume's caps (src/decomp/shadow_caps.cpp)
+## 16. A shadow volume's caps (src/decomp/shadow_volume.cpp)
 
 Next by own time (Wumpa Island, uncapped): two siblings called one after the
 other from sub_823949A0, which draws a stencil shadow volume (findings/12): sub_82393120 (~0.7%) and sub_823936B0 (~0.6%).
@@ -559,6 +559,33 @@ the titan save ~3,100, 0 differences.
 
 Measured (uncapped, Native Only, two pairs of 8 s profiles, the switch
 `native_shadow_caps` flipped live): 0.76 / 0.68% (original) -> 0.45 / 0.36%
-(C++). The sibling sub_823936B0 (the volume's sides: edge pairs, plus a
-material parameter set through the material's vtable +32) is the same
-shape and can reuse the taped check.
+(C++).
+
+## 17. The same volume's sides
+
+sub_823936B0, called right before the caps, streams the volume's SIDES. It
+first calls the material's vtable +32 (0x8243BD08 in the scenes checked)
+with 0x46464944 and the colour word, presumably setting the colour
+parameter (name TBD); then BeginPrims with 6E vertices, E = the u32 at
+0x82572238 edges (two s16 indices each at 0x825739B0); per edge a quad as
+two triangles, A[e0] B[e0] A[e1] and A[e1] B[e0] B[e1], each vertex written
+exactly like a cap vertex; then EndPrims. Unlike the caps it opens and
+closes the draw even with no edges.
+
+Both functions now live in src/decomp/shadow_volume.cpp, and every virtual
+call goes through the SDK's indirect-call table, as the original's `bctrl`
+does (the target exists in the table, else the original runs). The taped
+check takes up to three calls of three kinds (plain, BeginPrims, EndPrims).
+One trap while writing it: the SDK's PPCContext names its registers but
+doesn't keep them in number order (r3 sits elsewhere), so indexing from &r0
+restored the wrong registers; the check caught it on every call ("at the
+return: r26 ..."), and the registers are now named one by one.
+
+Checked with `--debug_native_shadow_check`: Wumpa Island ~1,050 calls and
+the titan save ~3,100, caps and sides, 0 differences. Positive controls: one
+register changed before the material call, or before EndPrims, made every
+call differ (removed after).
+
+Measured (uncapped, Native Only, `native_shadow_sides` flipped live; small
+sample counts, so three pairs): 0.46 / 0.72 / 0.49% (original) -> 0.39 /
+0.44 / 0.37% (C++).
