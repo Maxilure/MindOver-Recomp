@@ -143,6 +143,12 @@ and put back when an update fails).
   The Xbox 360 game does the same: Spike's move data lists the sound twice.
   The port now plays it once (**fix_spike_jack_sound** in `settings.toml`
   brings the original back).
+- **The level-up screen shows your outfit, in the area's light.** Carbon
+  Crash, the coloured Crashes and the coloured looks appeared as plain orange
+  Crash on the level-up screen, and the character there (titans too) looked
+  dimmer than in play. It now wears the player's outfit and is lit like that
+  character in the world. In co-op it shows the player who collected the
+  mojo that brought the level-up, in their outfit (it was always player 1).
 
 **Changes**
 

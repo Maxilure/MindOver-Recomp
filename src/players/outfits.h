@@ -173,4 +173,18 @@ bool ChangesCharacter(int p, int outfit);
 void HoldRespawns(bool hold);
 bool RespawnHeldPicks(PPCContext& ctx, uint8_t* base);
 
+// THE LEVEL-UP SCREEN'S MODEL IN ITS PLAYER'S LIGHT (outfits.cpp section
+// 3c): called by the light writer (decomp/light_constants.cpp, sub_8242FF88)
+// around every write, `context` = the xnContext (its r3). While the model is
+// drawn, its light records hold the colours the character it copies got
+// this frame; After puts the records' own back.
+void BeforeLightWrite(uint32_t context);
+void AfterLightWrite();
+
+// A mojo collected by `player` reached the HUD (more_players_hud.cpp's
+// wrapper of the count pulse sub_8226AB78): the level-up screen that opens
+// next shows that player's character (outfits.cpp, before section 3a's
+// build).
+void NoteMojoCollector(int player);
+
 }  // namespace outfits

@@ -599,6 +599,83 @@ School = both worn at the close, one respawn, both back as Coco; four players
 B and changed to a Crash look) = portraits Coco, Crash, Crash, Coco; one
 player Crash -> Coco and back.
 
+## 3m. The level-up screen wears the outfit, in the area's light
+
+![In play and on the level-up screen: the same Sapphire Crash in the same light](../images/level-up-screen-outfit-and-light.jpg)
+
+The level-up screen (CUpgradeScreenAction, vtable 0x82025AA4) shows the
+character that levelled up turning in its panel. Its Enter (sub_820E5350)
+calls sub_820E57A0(screen, character), which builds a FRESH actor from the
+character's template and keeps it at screen +0x34 (the Exit, sub_820E5F20,
+destroys it). Read with Ghidra, then checked with logs in the port's hooks.
+Three things kept that copy from looking like its player:
+
+* **Nobody's outfit.** The outfit code dresses a character by its player;
+  the copy belongs to no player. The build is now wrapped
+  (`outfits.cpp` section 3a): the model at screen +0x34 wears the outfit of
+  the player whose character it copies (a titan's copy: left alone).
+* **No texture sets.** The copy's render behaviour has no texture-set names
+  (+0xBC set 1, +0x9C set 2 are empty; a player's Crash has them), so its
+  set-up (sub_82185E60) bound neither set and the mesh's own orange texture
+  was drawn whatever the outfit. The names (+0x9C..+0xDB, eight 8-byte keys)
+  are copied from the player's render behaviour before the set-up; the
+  set-up then binds and blends them like a player's.
+* **Never updated.** The render behaviour's per-frame Update (sub_821858C0)
+  never runs for the copy. Two things live there: the hair / fur colour's
+  record of the outfit (done once after the build), and the white HIT
+  FLASH's mix, object +0x1608 (1 = no flash), which the set-up leaves at 0.
+  Once the texture sets were bound, the copy drew as an all-white flash
+  (white fur, yellowish shoes); +0x1608 is now set to 1 after the build.
+
+**The dim look.** A photo's draw list (now printing all four directional
+lights of a character draw) showed the copy lit by the game's fallback: four
+plain grey lights at 0.50, no ambient. Crash in the world on Wumpa Island:
+the same four directions at 0.49 / 0.69 / 0.89 / 0.42, bluish. The copy
+isn't in the level's lit places. It is now drawn in its player's lights
+(section 3c): while the player's Crash is drawn (the same frame, before the
+screen), the light colours the light writer (sub_8242FF88, xnContext's tint
++ light writer, decomp/light_constants.cpp) is about to use are noted; while
+the copy is drawn, those colours go into the context's light records
+(*(context +144): slot i at +4 + 124 i, colour +116, type +112, ambient
++996) for each write and come back right after, with the "lights changed"
+bytes (+952, +944 + i) set so the device gets them, and again for the next
+draw. Both renderers see it (the constants are the game's own).
+
+The lights work for ANY character the screen copies: the copied character
+is found among every character's render behaviour (seen in its Update), not
+only players'. A titan's copy (Ratcicle, Ratcicle Kingdom) already has its
+own texture names and no flash problem: only its light changes (the area's
+icy blue instead of grey). Where the character itself has the fallback
+lights (inside Crash's house every character has the 0.50 greys), the copy
+has them too: the same light as in play.
+
+**Co-op: the collector is shown.** Crash's level-ups come from his level
+script watching the SHARED mojo count (stat 4 against the price at
+0x8259B1CC), so the game shows its own pick (*(*(0x8259B190) +0x74) +4,
+player 1's Crash in every test), whoever took the mojo. The collector is
+known when the mojo reaches the HUD: the collectable's flight (section 40 of
+findings/26) pulses that player's count (sub_8226AB78, r4 = the player).
+The pulse wrapper notes the player; when the level-up screen opens within
+5 s of that, and the collector is another player who plays on foot (co-op
+state 2: not a mask, no titan ridden), the build gets the collector's
+character instead (r4). The screen's other messages to the character it is
+given (on open) and its close (which reads the game's record) caused no
+trouble: after the screen everyone walks and plays on.
+
+Checked: player 1 in Sapphire Crash, plain Crash, Carbon Snipe (a mutant suit
+with a fur colour), Coco, a ridden Ratcicle; two players with player 2
+(Carbon) collecting the mojo that crossed the price; four players with player
+3 (Emerald) collecting it. Every time: the right character and outfit,
+lights equal to that character's in the draw list, no stray lights on other
+draws after the screen, 0 errors. The screen's close slide fades at the 16:9
+edge on a 21:9 picture.
+
+Testing tips: a spawned mojo (F5 spawn `Collectables:c_mojoXL <player>`)
+appears in front of that player and disappears soon: walk the player forward
+(stick up) right after the spawn. Set the count first (`write
+[[0x8259B190]+96]+436 u32 <price - 1>`). Mouse aiming
+(Crosshair) pulls mojo toward the pointer: pass `--mouse_reticle=0`.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a

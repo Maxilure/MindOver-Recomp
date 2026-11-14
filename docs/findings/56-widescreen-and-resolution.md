@@ -137,6 +137,16 @@ scale = height / 720.
   counter use `widescreen::Game()` (the middle 16:9 of the picture) or
   `Picture()`.
 
+**The Players screen's prompt row** (2026-11-14). The row under the
+Players cards ("Buttons", "Back", ...) is the port's own, not the game's
+FE_Buttons bar, so it didn't hide while the panel slid in or out: on a wide
+picture it stayed solid in the side room until the slide ended, while the
+panel faded. It now shows only while the screen takes input (front end
++8592 bit 0x40, read by the screen's Update each frame), like the game's bar
+and the Options tab keys. The screen redraws its cards only when something
+on them changes, so "takes input" is part of that check (without it the row
+kept the state it had when the screen opened: hidden).
+
 ## 4b. How the original handles 4:3 and 16:9 (research for the main menu frame)
 
 The 360 game supports both TV shapes. Everything hangs on ONE flag, and

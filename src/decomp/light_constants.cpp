@@ -78,6 +78,8 @@
 #include <cstdint>
 #include <cstring>
 
+#include "../players/outfits.h"
+
 #include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
@@ -361,8 +363,12 @@ extern "C" REX_FUNC(sub_8242FF88) {
     // original's frame (all of it compared: we write what it writes).
     ranges = decomp::Ranges{{{L(base, r31 + 400), kDeviceBytes}, {r31 + 944, 9}, {ctx.r1.u32 - kFrame, kFrame}}, 3};
   }
+  // The level-up screen's model in its player's light (players/outfits.h):
+  // the records changed around this write only.
+  outfits::BeforeLightWrite(ctx.r3.u32);
   decomp::Run(REXCVAR_GET(native_light_constants), checking, g_stats, ctx, base, &__imp__sub_8242FF88, ranges,
               [&](PPCContext& c) { return Write(c, base); });
+  outfits::AfterLightWrite();
   if (checking && (g_seen.calls & 0x1FFFF) == 0 && g_seen.calls) {
     REXLOG_INFO("Native check: light constants covered {} calls, {} with lights changed, {} directional, {} point",
                 g_seen.calls, g_seen.lights_changed, g_seen.directional, g_seen.point);

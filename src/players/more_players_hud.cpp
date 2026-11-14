@@ -42,6 +42,7 @@
 //      (section "Layout"), not hand-tuned offsets.
 // =============================================================================
 #include "more_players_hud.h"
+#include "outfits.h"
 #include "../ui/hud_hide.h"
 #include "more_players.h"
 #include "../ui/hud_scale.h"
@@ -519,6 +520,9 @@ extern "C" REX_FUNC(sub_8226AB18) {
 }
 extern "C" REX_FUNC(sub_8226AB78) {
   const uint32_t c = ctx.r3.u32; const int32_t p = int32_t(ctx.r4.u32);
+  // (The mojo count's pulse = a collected mojo arrived: who took it decides
+  // whose character the level-up screen shows, players/outfits.h.)
+  if (p >= 0) outfits::NoteMojoCollector(p);
   if (p < 2) __imp__sub_8226AB78(ctx, base);
   if (p == -1 || p >= 2) FlashExtra(c, p, __imp__sub_82269460, ctx, base);
 }

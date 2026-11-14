@@ -426,6 +426,20 @@ void WriteDrawList(const Frame& frame, const std::filesystem::path& path,
       std::fprintf(file, " | ambient %.3f %.3f %.3f light0 %.3f %.3f %.3f", l.ambient[0],
                    l.ambient[1], l.ambient[2], l.light_colour[0][0], l.light_colour[0][1],
                    l.light_colour[0][2]);
+      // Every light of a character (2026-11-14: the level-up screen's model
+      // looked dim): colour and the way it travels, per light (an off light
+      // is black), and the surface's own diffuse / ambient reaction.
+      if (d.material == Material::kCharacter) {
+        std::fprintf(file, " | lights");
+        for (int i = 0; i < 4; ++i) {
+          std::fprintf(file, " [%.2f %.2f %.2f dir %.2f %.2f %.2f]", l.light_colour[i][0], l.light_colour[i][1],
+                       l.light_colour[i][2], l.light_direction[i][0], l.light_direction[i][1],
+                       l.light_direction[i][2]);
+        }
+        std::fprintf(file, " surface diffuse %.2f %.2f %.2f ambient %.2f %.2f %.2f", l.surface_diffuse[0],
+                     l.surface_diffuse[1], l.surface_diffuse[2], l.surface_ambient[0], l.surface_ambient[1],
+                     l.surface_ambient[2]);
+      }
     }
     // The simple materials' proximity lights and Fx shadows (docs/findings/20):
     // count, then per light its colour, position and parameters (brightness,

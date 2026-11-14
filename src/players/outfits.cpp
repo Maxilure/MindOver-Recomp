@@ -1054,6 +1054,127 @@ extern "C" REX_FUNC(sub_8229F858) {
 
 // --- 3. The texture set, per frame ---------------------------------------------
 
+// --- 3a. The level-up screen's model (2026-11-14) ---------------------------------
+// THE GAME: the level-up screen (CUpgradeScreenAction, vtable 0x82025AA4)
+// shows the character that levelled up turning on its own: its Enter
+// (sub_820E5350) calls sub_820E57A0(screen r3, character r4 = the actor in
+// *(*(0x8259B190) +0x74) +4), which builds a FRESH actor from that
+// character's template (+0x10) and keeps it at screen +0x34 (the Exit,
+// sub_820E5F20, destroys it and clears +0x34). A fresh actor isn't any
+// player's, so it wore the template's own look: orange Crash for a Carbon or
+// coloured Crash (the texture set, the hair, a coloured look's fur all
+// follow the player, sections 3 and 3b). Read with Ghidra (tools/
+// ghidra_decompile.sh 0x820E5350 0x820E57A0 0x820E5F20).
+// OURS: the build is wrapped; the model at the screen's +0x34 wears the
+// outfit of the player whose character it copies (a titan's copy: no outfit,
+// its own textures; it already has its texture names and no flash, seen in a
+// log on a Ratcicle). Found with logs (2026-11-14):
+//   * the copy's render behaviour has NO texture-set names: +0xBC (set 1,
+//     "Crash_Player1.bmp") and +0x9C (set 2, Carbon's) are empty, so its
+//     set-up (slot 7, sub_82185E60) binds no sets (the object's +0x161C /
+//     +0x1618 stay 0) and it is drawn with the mesh's own orange texture
+//     whatever +0xE4 says. A player's Crash has them (Coco's and
+//     a titan's copies already have their own). So before the copy's set-up, its names (+0x9C..+0xDB, the same
+//     8-byte keys) are copied from the render behaviour of the character it
+//     copies (g_render_by_actor, seen in every character's Update), when the
+//     copy has none and that character has;
+//     the set-up then binds and blends them as for the player (+0xE4 from
+//     ChooseSkinSet, the colour's own set-2 name as for any Carbon).
+//   * its per-frame UPDATE (sub_821858C0) never runs (the screen draws the
+//     model as it is), and that's where our hair / fur colour learns the
+//     object's outfit (HairUpdate): done once, right after the build.
+namespace {
+uint32_t g_levelup_screen = 0;  // the level-up screen whose model we dress
+int g_levelup_outfit = -1;      // that model's outfit (-1: not a player's character, e.g. a titan)
+int g_levelup_player = -1;      // whose character it copies (-1: no player's)
+uint32_t g_levelup_render = 0;  // its CCharacterRenderBehaviour (seen in the set-up)
+uint32_t g_levelup_source = 0;  // the render behaviour of the character it copies (any character)
+// Every character's render behaviour, by actor, with when its Update last ran
+// (sub_821858C0): the level-up model's source is found here, players,
+// Coco, mutant suits and titans alike. An entry older than a moment is
+// ignored (the actor may be gone and its address used again).
+struct SeenRender {
+  uint32_t render = 0;
+  int64_t ms = 0;
+};
+std::unordered_map<uint32_t, SeenRender> g_render_by_actor;
+constexpr int64_t kRenderFreshMs = 2000;
+constexpr uint32_t kRenderSetNames = 0x9C, kRenderSetNamesBytes = 0x40;  // 8 name keys (set 2 first, set 1 at +0xBC)
+
+bool IsLevelUpModel(uint32_t actor) {
+  return actor && g_levelup_screen && Read32(g_levelup_screen + 0x34) == actor;
+}
+int LevelUpOutfit(uint32_t actor) { return IsLevelUpModel(actor) ? g_levelup_outfit : -1; }
+}  // namespace
+
+// THE PLAYER WHO COLLECTED THE LAST MOJO (2026-11-14). Crash's level-ups
+// come from his level script watching the SHARED mojo count (stat 4 against
+// the price 0x8259B1CC), so the game doesn't know who took the mojo that
+// crossed the line and shows its own pick (*(*(0x8259B190) +0x74) +4). The
+// collector IS known when a mojo reaches the HUD: the collectable's flight
+// (findings/26 s.40) pulses that player's count (sub_8226AB78, r4 = the
+// player; more_players_hud.cpp's wrapper calls NoteMojoCollector). The screen
+// now shows the last collector's character instead, when that is another
+// player who plays on foot (co-op state 2: not a mask, no titan ridden) and
+// the pickup was a moment ago. A titan's own level-up (its mojo goes to the
+// ridden titan) and anything else stay the game's.
+namespace {
+std::atomic<int> g_mojo_collector{-1};
+std::atomic<int64_t> g_mojo_collected_ms{0};
+constexpr int64_t kCollectorFreshMs = 5000;  // the screen opens within ~1 s of the count's change
+}  // namespace
+
+void outfits::NoteMojoCollector(int player) {
+  if (player < 0 || player >= kMaxPlayers) return;
+  g_mojo_collector = player;
+  g_mojo_collected_ms = NowMs();
+}
+
+extern "C" REX_FUNC(__imp__sub_820E57A0);
+extern "C" REX_FUNC(sub_820E57A0) {
+  const uint32_t screen = ctx.r3.u32;
+  uint32_t character = ctx.r4.u32;
+  int p = PlayerOfActor(character);
+  if (const int c = g_mojo_collector.load(); p >= 0 && c >= 0 && c != p &&
+                                              NowMs() - g_mojo_collected_ms.load() < kCollectorFreshMs) {
+    const uint32_t theirs = more_players::CharacterOfPlayer(c);
+    if (theirs && Read32(kCoOpState + 4 * uint32_t(c)) == 2 && !more_players::TitanOfPlayer(c)) {
+      REXLOG_INFO("Outfits: level-up screen: player {} collected the last mojo: their character shown "
+                  "(the game picked player {}'s)", c + 1, p + 1);
+      character = theirs;
+      ctx.r4.u64 = theirs;
+      p = c;
+    }
+  }
+  g_levelup_screen = screen;
+  g_levelup_player = p;
+  g_levelup_outfit = p >= 0 ? OutfitOf(p) : -1;
+  g_levelup_render = 0;
+  g_levelup_source = 0;
+  if (auto it = g_render_by_actor.find(character);
+      it != g_render_by_actor.end() && NowMs() - it->second.ms < kRenderFreshMs) {
+    g_levelup_source = it->second.render;
+  }
+  __imp__sub_820E57A0(ctx, base);
+  const uint32_t model = Read32(screen + 0x34);
+  const uint32_t render = g_levelup_render;
+  const uint32_t object = render ? Read32(render + kRenderObject) : 0;
+  REXLOG_INFO("Outfits: level-up screen shows {} (character {:08X}, outfit {}, its render {:08X}; model {:08X}, "
+              "object {:08X})", p >= 0 ? fmt::format("player {}'s character", p + 1) : std::string("a character"),
+              character, g_levelup_outfit, g_levelup_source, model, object);
+  if (!model || !object) return;
+  // NO FLASH: +0x1608 is the white hit flash's mix (1 = none, 0 = all
+  // white); the set-up leaves it 0 (sub_822AF070(0, object)) and the
+  // per-frame step the model never gets puts it back to 1 at once (the
+  // player's own: 1.0, seen side by side 2026-11-14). The model was drawn
+  // white (half-mixed with orange shoes) until this.
+  const float none = 1.0f;
+  uint32_t bits;
+  std::memcpy(&bits, &none, 4);
+  Write32(object + 0x1608, bits);
+  HairUpdate(render, model);
+}
+
 namespace {
 // Player / preview characters: the texture set of their outfit.
 void ChooseSkinSet(uint32_t render, uint32_t actor) {
@@ -1061,6 +1182,8 @@ void ChooseSkinSet(uint32_t render, uint32_t actor) {
   int outfit = -1;
   if (p >= 0) {
     outfit = OutfitOf(p);
+  } else if (const int o = LevelUpOutfit(actor); o >= 0) {
+    outfit = o;  // the level-up screen's model (section 3a)
   } else if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) {
     outfit = o;  // PER-PLAYER PREVIEWS (outfit_previews.h): that preview's outfit
   } else if (NowMs() - g_screen_ms.load() < 250 && ValidOutfit(int(Read32(kSelection)))) {
@@ -1100,6 +1223,7 @@ uint32_t CarbonKey(PPCContext& ctx, uint8_t* base, int outfit) {
 int OutfitForActor(uint32_t actor) {
   const int p = PlayerOfActor(actor);
   if (p >= 0) return OutfitOf(p);
+  if (const int o = LevelUpOutfit(actor); o >= 0) return o;  // the level-up screen's model (3a)
   // PER-PLAYER PREVIEWS (outfit_previews.h): each preview wears its own outfit.
   if (const int o = outfit_previews::OutfitForActor(actor); o >= 0) return o;
   if (NowMs() - g_screen_ms.load() < 250 && ValidOutfit(int(Read32(kSelection)))) {
@@ -1111,11 +1235,24 @@ int OutfitForActor(uint32_t actor) {
 
 extern "C" REX_FUNC(sub_82185E60) {
   const uint32_t render = ctx.r3.u32, actor = ctx.r4.u32;
+  // The level-up screen's model (section 3a): the texture-set names of the
+  // character it copies (only where the copy has none and the character has).
+  if (IsLevelUpModel(actor)) {
+    g_levelup_render = render;
+    const uint32_t own = g_levelup_source;
+    if (own && Read32(render + kRenderSetNames + 0x20) == 0 && Read32(own + kRenderSetNames + 0x20) != 0) {
+      std::memcpy(Guest(render + kRenderSetNames), Guest(own + kRenderSetNames), kRenderSetNamesBytes);
+    }
+  }
   ChooseSkinSet(render, actor);
   // Carbon's texture (set 2) is bound HERE, once: the outfit's (white or a
   // coloured copy; the copies only when the patch made them this session).
+  // (The level-up screen's model, section 3a: its names were copied from its
+  // player just above; should that player's render behaviour be unknown,
+  // +0x9C is empty, and the Carbon name still goes in.)
   const int outfit = OutfitForActor(actor);
-  if (IsCarbon(outfit) && g_colours_added && Read32(render + kRenderCarbonName) != 0) {
+  const bool levelup_model = LevelUpOutfit(actor) >= 0;
+  if (IsCarbon(outfit) && g_colours_added && (Read32(render + kRenderCarbonName) != 0 || levelup_model)) {
     if (const uint32_t key = CarbonKey(ctx, base, outfit)) {
       std::memcpy(Guest(render + kRenderCarbonName), Guest(key), 8);
     }
@@ -1127,6 +1264,13 @@ extern "C" REX_FUNC(sub_82185E60) {
 extern "C" REX_FUNC(sub_821858C0) {
   const int p = PlayerOfActor(ctx.r4.u32);
   if (p >= 0) g_render_of[p] = ctx.r3.u32;  // (Wear Skin: which Carbon it has bound)
+  {  // (the level-up model's source, section 3a)
+    const int64_t now = NowMs();
+    if (g_render_by_actor.size() > 1024) {  // old entries out now and then (characters come and go)
+      std::erase_if(g_render_by_actor, [now](const auto& e) { return now - e.second.ms >= kRenderFreshMs; });
+    }
+    g_render_by_actor[ctx.r4.u32] = {ctx.r3.u32, now};
+  }
   ChooseSkinSet(ctx.r3.u32, ctx.r4.u32);
   HairUpdate(ctx.r3.u32, ctx.r4.u32);
   __imp__sub_821858C0(ctx, base);
@@ -1203,6 +1347,104 @@ void outfits::HairUpdate(uint32_t render, uint32_t actor) {
   if (const uint32_t object = Read32(render + kRenderObject)) g_outfit_of[object] = OutfitForActor(actor);
 }
 
+// --- 3c. The level-up screen's model in its player's light (2026-11-14) ----------
+// The model (section 3a) isn't in the level's lit places: the game lights it
+// with its fallback, four plain grey lights at half strength (0x80 colour =
+// 0.50, no ambient; seen in a photo's draw list), so it looked dimmer than
+// the same character in the world (there: the area's lights, e.g. 0.49 /
+// 0.69 / 0.89 / 0.42 bluish on Wumpa Island, same four directions). Now it
+// is drawn in the lights of the character it copies (any: a player's Crash,
+// Coco, a mutant suit, a titan): while that character is drawn (the same
+// frame, before the screen), the light colours the writer will use are
+// noted; while the model is drawn, those colours are put in the context's
+// light records for each write and given back right after. (Where the
+// character itself has the fallback, e.g. inside Crash's house, so does the
+// model: the same light as in play.)
+// THE WRITER (xnContext's tint + light writer sub_8242FF88, ours in
+// decomp/light_constants.cpp) reads the records at *(context +144): slot i
+// = +4 + 124 i (+112 type, 0 = directional; +116 colour ARGB; +120 on),
+// ambient = +996; it only writes them when the context's "lights changed"
+// byte +952 is set, and only the slots whose own byte (+944 + i) is set:
+// both are set for the model's writes, and again for the first write after
+// it (the next draw gets its real lights back on the device).
+namespace {
+constexpr int kLightSlots = 8;
+uint32_t g_drawing_object = 0;  // the CCharacterObject being drawn (DrawWithHair)
+struct NotedLights {
+  bool valid = false;
+  uint32_t type[kLightSlots] = {}, colour[kLightSlots] = {};
+  uint32_t ambient = 0;
+};
+NotedLights g_player_lights;       // the copied character's, noted at its draw
+NotedLights g_saved_lights;        // the records' own while the model is drawn
+uint32_t g_saved_context = 0;      // (whose records they are; 0 = nothing swapped)
+bool g_rewrite_lights = false;     // the next write after the model's: all of them again
+
+uint32_t LightRecords(uint32_t context) { return Read32(context + 144); }
+uint32_t LightRecord(uint32_t records, int i) { return records + 124 * uint32_t(i) + 4; }
+NotedLights NoteLights(uint32_t records) {
+  NotedLights l;
+  l.valid = true;
+  for (int i = 0; i < kLightSlots; ++i) {
+    l.type[i] = Read32(LightRecord(records, i) + 112);
+    l.colour[i] = Read32(LightRecord(records, i) + 116);
+  }
+  l.ambient = Read32(records + 996);
+  return l;
+}
+void MarkLightsChanged(uint32_t context) {
+  Guest(context + 952)[0] = 1;
+  for (int i = 0; i < kLightSlots; ++i) Guest(context + 944 + uint32_t(i))[0] = 1;
+}
+// The level-up model's and its player's character objects (0 = none now).
+uint32_t LevelUpObject() {
+  if (!g_levelup_screen || !g_levelup_render) return 0;
+  if (!Read32(g_levelup_screen + 0x34)) return 0;  // screen closed (its Exit clears +0x34)
+  return Read32(g_levelup_render + kRenderObject);
+}
+uint32_t LevelUpSourceObject() {
+  return g_levelup_source ? Read32(g_levelup_source + kRenderObject) : 0;
+}
+}  // namespace
+
+void outfits::BeforeLightWrite(uint32_t context) {
+  if (!context) return;
+  if (g_rewrite_lights) {  // the first write after the model: every light again
+    MarkLightsChanged(context);
+    g_rewrite_lights = false;
+  }
+  const uint32_t object = g_drawing_object;
+  const uint32_t model = object ? LevelUpObject() : 0;
+  if (!model) return;
+  const uint32_t records = LightRecords(context);
+  if (!records) return;
+  if (object == LevelUpSourceObject()) {
+    g_player_lights = NoteLights(records);
+    return;
+  }
+  if (object != model || !g_player_lights.valid) return;
+  g_saved_lights = NoteLights(records);
+  g_saved_context = context;
+  for (int i = 0; i < kLightSlots; ++i) {
+    // Directional lights only (the model's four), each in its player's colour.
+    if (g_saved_lights.type[i] != 0 || g_player_lights.type[i] != 0) continue;
+    Write32(LightRecord(records, i) + 116, g_player_lights.colour[i]);
+  }
+  Write32(records + 996, g_player_lights.ambient);
+  MarkLightsChanged(context);
+  g_rewrite_lights = true;
+}
+
+void outfits::AfterLightWrite() {
+  if (!g_saved_context) return;
+  const uint32_t records = LightRecords(g_saved_context);
+  if (records) {
+    for (int i = 0; i < kLightSlots; ++i) Write32(LightRecord(records, i) + 116, g_saved_lights.colour[i]);
+    Write32(records + 996, g_saved_lights.ambient);
+  }
+  g_saved_context = 0;
+}
+
 namespace {
 void CharacterSetupDraw(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   SwapForThisCrash(ctx.r3.u32);
@@ -1272,7 +1514,9 @@ void DrawWithHair(PPCContext& ctx, uint8_t* base, void (*draw)(PPCContext&, uint
   // puts its own texture back on the device).
   const bool swapping = g_hair_to || g_body_to;
   if (swapping) Write32(kLastMaterialKey, 0xFFFFFFFFu);
+  g_drawing_object = object;  // (the level-up model's lights: section 3c)
   draw(ctx, base);
+  g_drawing_object = 0;
   if (swapping) Write32(kLastMaterialKey, 0xFFFFFFFFu);
   RestoreSwaps();
   --g_hair_depth;

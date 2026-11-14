@@ -267,6 +267,10 @@ bool ListMode() {
 bool OtherMode() { return g.achievements || g.players; }
 std::atomic<bool> g_open{false};
 std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
+// The Players screen takes input now (front end +8592 bit 0x40, read by its
+// Update each frame): its prompt row shows only then, like the game's own
+// prompt bar (hidden while a screen slides in or out).
+bool g_players_take_input = false;
 // The in-game screen's CInGameOptionsScreenAction while it's up (its +20
 // page and +32 glass layer: hidden under a question), 0 otherwise.
 uint32_t g_screen_action = 0;
@@ -1456,6 +1460,9 @@ void RefreshPlayers(Env& env) {
     // Every device (player 1's card names its controller even on keys).
     for (const players_setup::ShownDevice& m : boxes[size_t(k)].devices) drawn += m.key + ",";
   }
+  // The prompt row shows only while the screen takes input (below): a
+  // change of that is a change of the picture too.
+  drawn += g_players_take_input ? "input" : "sliding";
   if (drawn == g.ply_drawn) return;
   g.ply_drawn = drawn;
   // No rows, tabs or page texts: the cards are the screen.
@@ -1637,9 +1644,17 @@ void RefreshPlayers(Env& env) {
     total += widths[i] + (i ? 24.0f : 0.0f);
   }
   float left = 320.0f - total / 2;
+  // Shown only while the screen takes input (2026-11-14), like the game's own
+  // prompt bar (FE_Buttons) and the Options tab keys: while the panel slides
+  // in or out they hid nothing, and on a picture wider than 16:9 the row
+  // stayed in the side room, solid, until the slide ended (the panel itself
+  // fades there: ui/slide_fade.h).
+  // (Noted by UpdatePlayers, every frame of the screen, and part of the
+  // `drawn` key above: this refresh redraws only on a change.)
+  const bool takes_input = g_players_take_input;
   for (int i = 0; i < options_page::kPlyPrompts; ++i) {
     const uint32_t t = g.ply_prompt[size_t(i)];
-    scrooby::SetVisible(base, t, i < n);
+    scrooby::SetVisible(base, t, i < n && takes_input);
     g.ply_prompt_action[size_t(i)] = i < n ? prompts[size_t(i)].action : -1;
     if (i >= n) continue;
     scrooby::SetText(ctx, base, t, texts[size_t(i)]);
@@ -1714,6 +1729,7 @@ void PlayersAct(PPCContext& ctx, uint8_t* base, int action) {
 }
 
 void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
+  g_players_take_input = fe && (*GuestPtr(base, fe + kMenuFlags) & 0x40);  // (the prompt row: RefreshPlayers)
   scrooby::SetText(ctx, base, g.select_button, u"");
   scrooby::SetText(ctx, base, g.select_text, u"");
   ShowOptionsFurniture(ctx, base, false);
@@ -2434,6 +2450,7 @@ extern "C" REX_FUNC(sub_820D2828) {
   }
   scrooby::Select(ctx, base, g.menu, FirstSelectableOnScreen());
   Env env{ctx, base, owner};
+  g_players_take_input = false;  // (opening = sliding in: no prompt row yet)
   Refresh(env);
   g_open = true;
   REXLOG_INFO("{}: screen opened ({}) by player {} (tab {})",
