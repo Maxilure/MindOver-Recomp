@@ -2793,3 +2793,39 @@ frame): a player 3-4 not in the game whose Crash stays more than 6 units from
 its host for 0.5 s logs a WARN "Co-op: player N (not in game) is X units from
 its host ... left behind, maybe visible" with both positions, both zones and
 the focus player, and an info line when it is back.
+
+## 69. Any player starts the story
+
+Section 37 left the level scripts' story checks as the original made them:
+almost every "actor in trigger volume" objective (`CRequirementTriggerVolume`,
+`sub_822A6188`) and "use this" objective (`CRequirementInteraction`,
+`sub_822A2460`) waits for **the player the camera follows**
+(`EPlayer_CAMERA_FOCUSING_ON`, who = -4), which is player 1 while they're
+in game. On the Xbox the second player was usually a mask riding along, so
+this rarely showed. With every player on foot it decides who can play the
+story: a partner walking into the N. Gin's lab, a level exit or an arena
+start gets nothing, and in the final fight against Cortex
+([findings/28](28-coop-camera.md) section 12.4) the spinner steps check the
+camera's player's position in two zones.
+
+**The change** (`--coop_any_player_triggers`, on; false = the original):
+
+| check | hook | what -4 becomes |
+|---|---|---|
+| trigger volume, `sub_822A6188` | `MorePlayersTriggerAnyone` at `0x822A61C8` (`cmpwi r25,-4`, r25 = who) | -2, the original's own "any player in game" loop (four players since section 16) |
+| interaction, `sub_822A2460` | `MorePlayersInteractionAnyone` at `0x822A24D0` (`cmpwi r11,-4`) | the default range, players 1 to the last |
+
+A "NOT in the zone" condition then reads "no player in the zone".
+
+**Tested** with a fake second controller on Wumpa Island (the save by the
+lab's totem): player 1 stays at the totem, player 2 walks into the lab. On:
+the lab cutscene starts (front end 489 → 782, the scene's dialogue loads)
+and play goes on after it with both players. Off: nothing happens, as
+before.
+
+**Side effects to keep in mind:** level exits now fire for whoever walks in
+first, and the zones that switch camera groups (`DO_EnableCameraGroup`
+after a "camera's player" trigger) switch for a partner too, while the
+camera may still be following someone else: the camera rework
+([findings/28](28-coop-camera.md) section 13) has to keep its target inside
+the enabled volumes whoever switched them.

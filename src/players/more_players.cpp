@@ -58,6 +58,19 @@ REXCVAR_DEFINE_BOOL(coop_mask_from_anywhere, true, "CrashMoM",
                     "Co-op: B turns a player into a mask on their partner from any distance (false = the "
                     "original rule: only while the partner is on screen)");
 
+// ANY PLAYER COUNTS (2026-11-14, findings/26 s.69): the level scripts' story
+// checks say "the camera's player" (EPlayer_CAMERA_FOCUSING_ON) almost
+// everywhere: walking into a trigger zone (cutscenes, level exits, arena
+// starts, the Cortex fight's spinner steps) and using things. The focus is
+// player 1 while they're in game, so a partner who did the right thing got
+// nothing (the final fight's spinner steps check the camera's player's
+// position in two zones, one of them deciding when the spinner unwinds:
+// a partner doing the spinning didn't count). With this on, any player in game counts, through the original's
+// own "any player" path. false = the original: only the camera's player.
+REXCVAR_DEFINE_BOOL(coop_any_player_triggers, true, "CrashMoM",
+                    "Co-op: story triggers (walking into a story zone, using things) count ANY player in "
+                    "game (false = the original: only the player the camera follows)");
+
 // ON BY DEFAULT: one of the session log's event logs (session_log.h;
 // --event_logs=false turns them all off).
 REXCVAR_DEFINE_BOOL(debug_coop_trace, true, "CrashMoM",
@@ -1922,6 +1935,20 @@ void MorePlayersTriggerFocus(PPCRegister& r31, PPCRegister& r26) {
   if (int32_t(Read32(r26.u32 + 20)) != -4) return;
   const int32_t focus = int32_t(Read32(0x825B0008 + 40));
   if (focus >= 2 && focus < LocalPlayers()) r31.u64 = uint32_t(focus);
+}
+
+// ANY PLAYER COUNTS (coop_any_player_triggers, see the flag): sub_822A6188 at
+// 0x822A61C8 (cmpwi r25,-4; r25 = the trigger's "who") turns -4 ("the camera's
+// player") into -2, the original's own "any player in game" loop.
+void MorePlayersTriggerAnyone(PPCRegister& r25) {
+  if (REXCVAR_GET(coop_any_player_triggers) && int32_t(r25.u32) == -4) r25.u64 = uint32_t(-2);
+}
+
+// Same for CRequirementInteraction sub_822A2460 at 0x822A24D0 (cmpwi r11,-4;
+// r11 = "who"): any other value falls to the default range, players 0..last
+// (r10 = 0 and r29 = last are already set).
+void MorePlayersInteractionAnyone(PPCRegister& r11) {
+  if (REXCVAR_GET(coop_any_player_triggers) && int32_t(r11.u32) == -4) r11.u64 = 0x7FFFFFFF;
 }
 
 // sub_822A2460 at 0x822A24C0: the default loop's last player (r29 = 1, set

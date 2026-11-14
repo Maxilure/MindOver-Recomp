@@ -478,3 +478,190 @@ and forth for a few frames, and three parts reacted at once:
 
 The debug trace prints the wall's held and raw values and "(at the
 farthest)" when the reach cap is what stops the back-off.
+
+## 12. The original camera, read in full (research for the second rework)
+
+Sections 1-11 changed two inputs of the game's camera (where it looks, how
+far back it sits) without knowing how a camera volume turns a target into a
+view. Two problems in play showed that this matters: the camera leaving the
+level ("out of bounds"), and scripted camera moves that stop working with
+two players, the clearest being the final fight against Dr. Neo Cortex. This
+section reads the whole volume camera (Ghidra pseudo-C of the functions
+named below, the level scripts and `levels/L<n>/cameradata.p3d`).
+
+### 12.1 A camera volume is three boxes, not an angle
+
+`cameradata.p3d` (chunks `0x05432104` file → `0x05432106` **group** with a
+name → `0x05432103` **volume** with a number → three `0x0543210x` shapes)
+gives each volume three eight-cornered shapes, named after the volume's
+number:
+
+| shape | chunk | in the 424-byte record | meaning |
+|---|---|---|---|
+| `I_<n>` | `0x05432100` | +4 (8 corners) | where the **target** may be: the volume "contains" the target when it is inside all six faces (`sub_822E8710`) |
+| `C_<n>` | `0x05432101` | +0x68 | where the **camera** goes |
+| `L_<n>` | `0x05432102` | +0xD0 | where the camera **looks** |
+
+Per frame (`sub_82108780`, called from the volume behaviour's update
+`sub_82106C38` slot 4):
+
+1. The target's position inside `I` becomes eight weights, one per corner
+   (`sub_822E8A70`: mean-value coordinates over the shape's triangles, so it
+   works for any eight-cornered shape and changes smoothly).
+2. The same weights applied to the corners of `C` and `L` (`sub_822E9210`)
+   give a **camera point** and a **look point**. Near the edge of a volume
+   whose neighbour is listed in the record (+0x195 / +0x196), the camera point
+   is blended with the neighbour's (`sub_82109228`, `sub_821094F0`).
+3. The camera then sits on the line from the look point through the camera
+   point, at the distance that puts it **zoom** units (+0x128 = 296) from the
+   target, or farther if the target would otherwise be outside the field of
+   view (`d / tan(fov)`, d = the target's distance from that line).
+
+So the boxes decide the **direction** of the view and where it looks; the
+zoom only slides the camera along that line. A target moving up through a
+volume whose `C` box is taller than its `I` box makes the camera rise faster
+than the target; moving sideways through a ring of volumes swings the camera
+around. This is how the designers built camera moves without scripted
+shots.
+
+Other parts of the record: +0x184 minimum zoom (default 14), +0x188 maximum
+zoom (default 20), +0x18C field of view (`MinZoomValue`, `MaxZoomValue`,
+`SetCameraVolumeFOV` in `cameraoverrides.lua` address volumes by their
+number, the record's +400 bits 18-27), +400 bits 28-31 the **group**, +0x194
+flags (bit 7 combat data used, bit 6 lead camera off: `DisableLeadCamera`),
++0x198 a list of up to six neighbour volumes (searched first when the target
+leaves the current one, `sub_82107490`), +0x13C per interest size two
+"combat" values (`SetCombatCameraData`, smoothed in `sub_821079B8`).
+
+**Lead camera.** When the target moves faster than 4.5 units/s, the look
+point is taken from a point ahead of the target, mapped through the volume
+the same way (`sub_82108780`, smoothed vector at +0x1A4), and half of that
+lead is added.
+
+**A second camera type.** A record whose word at +100 is not zero carries a
+curve object: the camera then runs on a **rail** (`sub_82108E48`: the
+target's nearest point on the curve, followed with a speed limit, the camera
+and look points read from curves). The `cameradata.p3d` files hold only the
+three shapes per volume; what sets +100 (and whether any level uses a rail)
+is not known yet (name TBD).
+
+### 12.2 Groups: the scripts switch the designed cameras
+
+Volumes belong to named groups; a group can be switched on and off by the
+level scripts (`DO_EnableCameraGroup` / `DO_DisableCameraGroup`,
+`CActionEnableCameraGroup`; the containment test `sub_821075D8` skips volumes
+of a disabled group). Seven of the ten levels do it (`levels/L1`, `L2`,
+`L3`, `L4`, `L5`, `L8`, `L9` hold groups besides the default "cameras"):
+the camera of a place changes with the story, most often at arenas.
+
+### 12.3 What the target is in the original
+
+`sub_82107290`: the focus player's interest position, pulled toward every
+SECONDARY interest (enemies, a boss) closer than 20 units, by weight. The
+volume is then picked by THAT point (`sub_82107628`): the current volume if
+it still contains it, else its neighbours, else every volume in order.
+
+**When no volume contains the target** (+264 = -1), `sub_82106C38` skips the
+box mapping entirely: the camera and look points just move by however much
+the target moved. Nothing then keeps the camera where the designers allowed
+it, and the zoom no longer acts (it is only used inside the mapping). With
+one player this almost never happens: the `I` shapes cover where a player
+can stand.
+
+### 12.4 The final fight (Cortex, `levels/L8` room 5)
+
+The fight (described in player guides and read in `levels/L8/objectives.lua`):
+Cortex is fought in a round arena in stages; the last stage has the player
+jacking Cortex and using his special attack on a **spinner** in the middle
+of the arena (`L8_R5_Elevator1`, connected to its own path:
+`DO_ConnectBehaviours ... SPINNER ... PATH_POSITION`); spinning it raises the
+platform (`WAIT_Spinner_Spun`), an iris door opens, the self-destruct button
+appears (`CAM_l8_r5_selfdestruct_establish`) and pressing it ends the fight.
+Every trigger in this room waits for `EPlayer_CAMERA_FOCUSING_ON`.
+
+The room's camera is three groups, switched per stage:
+
+| group | when | volumes | design |
+|---|---|---|---|
+| `R5_Cam1` | arrival, stage 1 | 20 | a **ring** of wedge-shaped `I` shapes around the arena's middle; each `C` sits outside its wedge, so the camera circles the arena behind the player, looking in |
+| `R5_Cam2` | after stage 1 | 6 | **stacked layers**: `I` shapes covering the whole arena, each 10-14 units high, from the floor (y -4) to y 60; each layer's `C` and `L` sit higher, the upper layers' cameras above the target looking down |
+| `R5_Cam3` | after stage 3 (the spinner) | 3 | floor layer, one tall layer (y 10-50) and top layer: the platform's ride |
+
+In `R5_Cam3` the camera rises with whatever the target is: on the platform
+it follows it up through the tall layer. Minimum zoom there is 16 (maximum:
+the default 20); the ring has 12-16 or 12-18.
+
+### 12.5 Why the co-op camera breaks it
+
+**The spinner ride.** The port's target is the players' centre. With one
+player riding the platform and another on the floor, the centre is halfway
+up: the volume picked is a middle layer, so the camera stops at half height,
+and the distance fit then backs it off along that layer's line (up and
+behind). With the original, the target stays on the focus player: the camera
+rides up with them and the player left on the floor goes off screen (where
+B brings them back as a mask, section 4).
+
+**The ring.** Two players on opposite sides of the arena put the centre at
+the arena's middle, which no wedge's `I` shape contains (judged from their
+corners, the wedges leave a hole about 4 units across there). The camera then has **no volume** (section
+12.3): it drifts with the centre, the zoom fit stops having any effect, and
+nothing holds it inside the room.
+
+**Out of bounds in general**, from the code above:
+
+1. **No volume:** whenever the players' centre falls outside every `I`
+   shape (a gap between rooms, a drop between two ledges, over a wall, the
+   middle of a ring), the camera floats free. On Wumpa Island this did not
+   happen in a test with two players 85 units apart (its 161 volumes cover
+   the ground everywhere); arenas and rooms built from wedges and layers are
+   where it does.
+2. **Past the designed zoom:** the fit raises the zoom up to the volume's
+   maximum x 1.3 (section 11). The line from the look point through the
+   camera point keeps going past the `C` shape, into or behind scenery the
+   designers never meant to be seen. The wall ray (section 10) only catches
+   scenery that has collision.
+3. **Wider field of view** in pinned rooms (section 10): more of the room's
+   edges, by design limited to 1.4x.
+4. **Near focus** (section 7) moves the target off the middle of the
+   players, toward a point that may be in a different volume than either
+   player.
+
+## 13. The second rework: the plan
+
+The first rework treated the volume camera as "an angle and a distance".
+It is a designed mapping, so the second one starts from the volumes:
+
+1. **A leader for the camera only.** Story triggers no longer depend on it:
+   any player in game starts them ([findings/26](26-more-local-players.md)
+   section 69). The camera still needs one player to follow when the
+   players can't share a view; which one (the game's focus, the player who
+   last started something, a player inside an enabled volume) is decided
+   when the rework is built. A camera group switched by a partner can
+   leave the leader outside every enabled volume: then the leader moves to
+   a player who is inside one.
+2. **Partners framed only where the design allows it.** Each player's own
+   volume is known (the game's own search, `sub_82107490`, called for their
+   position). A partner counts for the framing when the point between the
+   leader and them is still inside an enabled volume whose view looks the
+   same way (direction within a set angle of the leader's) and the zoom that
+   fits them stays within the designed range. The target then slides from
+   the leader toward the framed partners (the centre of section 2, item 1,
+   but never into a gap or another layer). A partner who doesn't fit fades
+   out of the framing and is left to the original's rules: off screen, then
+   B = become a mask on a partner.
+3. **No volume = never.** The target is kept inside the volumes: a slide
+   stops at the last point that is still contained.
+4. **Zoom within the design.** The farthest zoom is the volume's own
+   maximum (perhaps a little more, measured per area) and the camera point
+   must stay inside the volume's `C` shape grown by a small margin (the same
+   containment test on `C`): the designers' camera space is the limit, not a
+   fixed number of units.
+5. **Dropped:** near focus (section 7, iffy in play) and the 1.3x reach.
+   Kept: the jump hold (each player's own camera point), the cutscene /
+   level-change handling (sections 5, 8, 9), active zones (section 6),
+   pinned rooms (section 10), the wall ray (section 10), bump easing
+   (section 11).
+6. **Tests:** volume index per frame with the debug trace (never -1 while
+   players are in game), every group switch of `levels/L1` and `L8`, the
+   ring and the layered rooms. The Cortex arena needs a save in `levels/L8`
+   room 5.

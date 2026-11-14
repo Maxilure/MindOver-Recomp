@@ -2142,6 +2142,22 @@ registers = ["r11"]
 address = 0x822A620C
 name = "MorePlayersTriggerFocus"
 registers = ["r31", "r26"]
+# ANY PLAYER COUNTS (2026-11-14, findings/26 s.69, coop_any_player_triggers): the story's
+# "the camera's player" checks (EPlayer_CAMERA_FOCUSING_ON = -4) answered for every player in game.
+# CRequirementTriggerVolume sub_822A6188: r25 = who (lwz r25,20(r26) just before); at 0x822A61C8
+# (cmpwi cr6,r25,-4) -4 becomes -2 = the original's own "any player in game" loop (822A62C0, four
+# players since findings/26 s.16). Verified with xexdis: r25 is only read from here on.
+[[entrypoint.midasm_hook]]
+address = 0x822A61C8
+name = "MorePlayersTriggerAnyone"
+registers = ["r25"]
+# CRequirementInteraction sub_822A2460: r11 = who (+16 >> 28); at 0x822A24D0 (cmpwi cr6,r11,-4)
+# -4 becomes "none of 0 / 1 / -4" = the default range 0..last player (r10 = 0, r29 = last, set by
+# MorePlayersInteractionLast at 0x822A24C0 just before).
+[[entrypoint.midasm_hook]]
+address = 0x822A24D0
+name = "MorePlayersInteractionAnyone"
+registers = ["r11"]
 # CRequirementInteraction sub_822A2460: player loop 822A2504-822A2554 (r31 = p, r30 = 16 + 4p,
 # from p = first to r29 = last): the titan read (add r11,r30,r3 ; lwz r11,8(r11)) and the Crash
 # read (lwzx r11,r30,r3) behind "p < 2"; the default ("both") range ends at player 2 (li r29,1
