@@ -21,6 +21,7 @@
 #include "../guest_memory.h"
 #include "keyboard_mouse.h"
 #include "players.h"
+#include "../players/more_players.h"
 
 REXCVAR_DEFINE_BOOL(debug_key_events_check, false, "CrashMoM",
                     "Debug: work out every input map's events a second time through the game's own rules, on a "
@@ -356,7 +357,38 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_roo
   if (fed == last_update && fed != 0) return c.block;  // (this frame's values are in)
   fed = last_update;
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
-  const auto image = driver ? driver->LastEventImage() : kbm::KeyboardMouseDriver::EventImage{};
+  auto image = driver ? driver->LastEventImage() : kbm::KeyboardMouseDriver::EventImage{};
+  // WHEN THE PLAY KEYS ALSO COUNT FOR THE MENUS. Two moments where nothing
+  // of this player plays, so a play key can only mean a menu question:
+  // * A 3D CUTSCENE (the root controller LOCKED: +0x204 top byte > 0,
+  //   sub_82272D68): START shows the game's "Skip (A)" and the MENU map's
+  //   ACCEPT skips. Escape (Start) is a menu key too, so the prompt came up,
+  //   but Space / Enter were play keys there (no menu on screen): nothing
+  //   answered ACCEPT and keys couldn't skip.
+  // * THE PLAYER ISN'T IN THE GAME (dropped out, never joined) in a running
+  //   level: the join pick sub_82264988 asks MENU PAUSE (Start), ACCEPT (A),
+  //   CO_OP_JOIN (B) (findings/62 s.2). A pad's B is one button for every
+  //   map, so B joins; on keys Jack / Use (E) is a play action: only Escape
+  //   joined.
+  // A pad gives every map the same buttons, so this is what a controller
+  // does there. Only while no menu is up (keys in a menu are menu keys).
+  if (which == kMenuImage && !menu_input::MenuOnScreen()) {
+    uint32_t root = real_root;
+    for (int guard = 0; guard < 16; ++guard) {  // (the lock is the ROOT's)
+      const uint32_t parent = Read32(base, root + kParent);
+      if (!parent) break;
+      root = parent;
+    }
+    const bool locked = *GuestPtr(base, root + 0x204) > 0;
+    const int socket = SocketOf(base, real_root);
+    const bool out = socket >= 0 && more_players::InPlay() &&
+                     Read32(base, 0x8259B11C + 4 * uint32_t(socket)) == 0;  // co-op state 0 = not joined
+    if (locked || out) {
+      image.menu |= image.play;
+      image.menu_lt |= image.play_lt;
+      image.menu_rt |= image.play_rt;
+    }
+  }
   PPCContext call = ctx;
   __imp__sub_8235ABC8(call, base);
   const uint32_t now = call.r3.u32;
@@ -617,4 +649,5 @@ extern "C" REX_FUNC(sub_8235CAE8) {
                 left ? "left" : "right", x, y, int16_t(st[0] << 8 | st[1]), int16_t(st[2] << 8 | st[3]));
   }
 }
+
 

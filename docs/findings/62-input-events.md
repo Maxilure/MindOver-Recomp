@@ -375,3 +375,30 @@ Measured on a test copy (Wumpa Island, debug console, `pos` before / after):
 proves the route: "the keys' left stick goes into the movement values (0,
 32767); the controller state holds (0, 0)".
 
+
+## 9. When the play keys also answer the menus
+
+Two moments showed where the split into a menu image and a play image (s.7)
+differs from a controller, which gives every map the same buttons:
+
+* **Skipping a 3D cutscene.** On a controller, START during an in-engine
+  cutscene shows the game's "Skip (A)" prompt and A skips it: the MENU map's
+  PAUSE, then ACCEPT. On keys, Escape (Start) is in the menu image too, so the
+  prompt came up; but no menu is on screen during a cutscene, so Space and
+  Enter kept their play jobs and nothing answered ACCEPT.
+* **Joining back in.** The join pick (`sub_82264988`, s.2) asks MENU PAUSE,
+  ACCEPT and CO_OP_JOIN (B). A player who dropped out could join with Escape
+  but not with Jack / Use (E), a play action.
+
+In both, nothing of the player plays: during a cutscene the root controller
+is LOCKED (+0x204 top byte > 0, `sub_82272D68`), and a player who isn't in the
+game (co-op state 0 at `0x8259B11C + 4p`) has no play maps that listen. So
+while no menu is on screen and either holds, the keyboard's play image is
+also added to its menu image (`input/key_events.cpp`). Tested with the debug
+console: Escape in the N. Gin lab cutscene showed "Skip" with the Space
+picture and Space ended the cutscene 2.5 s in (7.5 s without); player 1
+dropped out (player 2 on a fake pad playing) and joined again with E.
+
+(A raw "any button held" reader, `sub_82274968`, looked like a skip check at
+first: its only caller, `sub_820E6CC8`, belongs to `CWiiWarningScreenAction`,
+the Wii build's warning screen.)
