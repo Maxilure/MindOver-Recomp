@@ -499,3 +499,12 @@ This prevents the reported invalid read. The log does not identify whether the
 malformed object reference came from the titan's upgrade member or the cached
 damageable map; reproducing the transition with pointer logging remains open.
 The fix has not yet been run against the game.
+
+Issue [#25](https://github.com/Maxilure/MindOver-Recomp/issues/25) reports a
+second occurrence from a different gameplay action: switching to the electric
+mutant after freeing it in the ice cave. Its stack has the same
+`ObjectWithVtable+0x64` and `Tick+0x282F` frames at these same source lines, and
+the host address being read is also not four-byte aligned. This confirms that
+the guard covers this report too; the gameplay transition that supplied the
+bad pointer is still unknown. The issue's log has not been reproduced with a
+build containing the fix.
