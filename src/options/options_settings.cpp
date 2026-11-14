@@ -45,7 +45,6 @@
 REXCVAR_DECLARE(int32_t, fps_cap);
 REXCVAR_DECLARE(bool, native_only);
 REXCVAR_DECLARE(bool, coop_camera);
-REXCVAR_DECLARE(bool, coop_camera_near_focus);
 
 // The game's own options (the original Options screen's code, CMenuAction
 // sub_820D2A00 / sub_820D2F80, traced 2026-10-10). The volumes and Invert
@@ -1222,9 +1221,6 @@ std::vector<Row> GameplayRows() {
           OnOffRow(tr(u"Co-op Camera"), "coop_camera", tr(u"Frame Everyone"), tr(u"Original"),
                    tr(u"The camera pulls back to keep every player on screen."),
                    tr(u"The camera of the original game.")),
-          OnOffRow(tr(u"Camera Follows"), "coop_camera_near_focus", tr(u"Nearest Player"), tr(u"Middle"),
-                   tr(u"Front to back, the camera stays with the player nearest to it."),
-                   tr(u"The camera aims at the middle of the group.")),
           Heading(tr(u"Spinning")),
           simple_spinning,
           keep_spinning};

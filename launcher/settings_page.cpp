@@ -517,16 +517,12 @@ void Page::DrawMain() {
           "off until everyone fits. Off = the original camera, which follows one player."));
     if (settings::AsBool(Value("coop_camera"))) {
       slider(trsn("   Farthest zoom-out"), "coop_camera_max_distance", 20, 80, "%.0f",
-             trsn("How far the co-op camera may back off to fit everyone (the original camera's "
-             "range is about 12-20). Past it, a player who runs off leaves the screen."));
+             trsn("The most the co-op camera may ever back off to fit everyone. Each area's own "
+             "camera design usually stops it sooner. Past it, a player who runs off leaves the screen."));
       slider(trsn("   Room around players"), "coop_camera_room", 0, 10, "%.1f",
              trsn("How much ground around each player stays in the picture (to their left, right and "
              "beyond them), so a player at the edge still sees a ledge or a drop. Crash is about "
              "2 tall. 0 = just the players themselves."));
-      check(trsn("   Stay with the nearest player"), "coop_camera_near_focus",
-            trsn("Front to back, the camera stays with the player nearest to it, so a player walking deep "
-            "into the picture doesn't pull the others off the bottom. Off = the camera aims at the "
-            "middle of the players (the old way)."));
       slider(trsn("   Group focus"), "coop_camera_group_focus", 0, 4, "%.1f",
              trsn("3-4 players: how much more a group of players counts than a player on their own "
              "when the camera picks its centre. 0 = everyone the same."));

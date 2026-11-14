@@ -22,7 +22,7 @@ fit.*
 
 Code: `src/players/coop_camera.*`, one mid-function hook in the manifest
 (`CoopCameraDistance`). `--coop_camera=false` gives back the original camera;
-`--coop_camera_reach` (default 1.3) caps how far it backs off relative to
+`--coop_camera_reach` (default 1.0 since section 14, was 1.3) caps how far it backs off relative to
 the area's own farthest camera distance, and `--coop_camera_max_distance`
 (default 30, was 45) is the absolute cap (section 11);
 `--coop_camera_group_focus` (default 2, 0 = everyone counts the same) sets
@@ -322,6 +322,8 @@ would for the focus player.
 
 
 ## 7. Front to back: the camera stays with the nearest player
+
+*Removed in the second rework (section 14).*
 
 ![Player 2 walks up a path away from the camera while player 1 stands still. Top: the camera aims at the middle of the players, follows player 2 up the path and loses player 1 off the bottom (then both). Bottom: the camera stays with player 1 and backs off; player 2 stays in view, smaller, near the top](../images/coop-camera-near-focus.jpg)
 
@@ -665,3 +667,133 @@ It is a designed mapping, so the second one starts from the volumes:
    players are in game), every group switch of `levels/L1` and `L8`, the
    ring and the layered rooms. The Cortex arena needs a save in `levels/L8`
    room 5.
+
+## 14. Second rework, part 1: the aim stays where a camera can work
+
+The first pieces of section 13, built and tested with fake controllers on
+Wumpa Island, the Ratcicle Kingdom courtyard and the desert.
+
+**Removed:** near focus (section 7, the setting, its Options row and the
+launcher's checkbox). `--coop_camera_reach` now defaults to 1.0: the
+camera never backs off past the volume's own designed maximum (20 on most of
+Wumpa Island).
+
+**The aim.** The point answered to the game for every player interest is no
+longer the plain centre. It is the centre only when all three of these hold,
+otherwise it slides from the **camera's player** (the game's focus, game
++40, else the first player in game) toward the centre and stops at the
+last point where they still hold (bisection, ten steps):
+
+1. **Inside a camera volume.** The game's own search (`sub_82107490`: the
+   current volume, its neighbours, then every volume of an enabled group)
+   finds one. A mid-function safety net reruns the volume pick
+   (`sub_82107628`) with the aim when the target, after the game's pull
+   toward enemies, still found none: the volume is never -1 while ours is
+   on.
+2. **It sees the camera's player** (the scenery ray `sub_8224C7F8` from one
+   point to the other, both 1.5 units up, hits nothing). Found on Wumpa
+   Island: one player on the cliff by Crash's house, one on the beach below.
+   Their middle was inside the cliff while still inside a volume (target
+   shapes are 20-25 units tall), and the camera, built around a point in
+   the rock, showed the inside of the ground.
+3. **The camera's player stays in the picture** with the camera at its
+   farthest distance. With the players 75 units apart the aim went 95% of
+   the way to the middle, the camera ended up in front of player 1 and both
+   players were off screen. When not everyone can fit, the original keeps
+   its player and lets the other walk off screen (B brings them back,
+   section 4); now ours does the same.
+
+**Line of sight.** The wall test of section 10 starts its ray where the
+game's own distance puts the camera, which misses scenery when that spot is
+already inside it. A second ray runs from the aim (1.5 units up) out toward
+the camera; a hit puts the camera 0.6 units before it, closer than the
+game's own distance if needed (3 units at the least). Not in pinned rooms
+(Crash's house: the table between the players and the camera).
+
+| Test (fake second player) | before | after |
+|---|---|---|
+| frames with no camera volume (all runs) | 0 on Wumpa Island, but the centre was over gaps the volume search did not check | 0, aim held back when needed |
+| Wumpa Island, player 2 runs 75+ units away (cliff and beach) | camera inside the cliff, then under the ground | camera stays with player 1 by the house, like the original camera on the same walk |
+| players 15-30 units apart (Wumpa Island, Ratcicle Kingdom) | both framed | both framed |
+| Ratcicle Kingdom path (players at two spots whose middle is in no volume) | the camera would have floated free | aim held in a volume (53 traced frames) |
+
+**Motion.** The first build of these rules looked right in still pictures
+but the camera lurched in motion. Measured from the trace (camera position
+every 0.1 s; a "reversal" = the camera's movement turning back, a "jump" =
+more than 2 units in 0.1 s), two causes:
+
+* the held-back aim was computed after the centre's smoothing and jumped up
+  to 7 units between frames when a rule flipped: it now glides to the
+  rules' answer with its own spring (0.3 s); a cut (teleport, level change,
+  take-over) still jumps;
+* the line of sight hit the slope right next to the aim and pulled the
+  camera from 20 to 3 units in one frame. A fourth rule for the aim: it must
+  see out to the game's own camera distance along the camera's line (else
+  it stays nearer the camera's player). The line of sight then never pulls
+  the camera closer than the game's own distance, and it eases in (about a
+  third of a second) instead of snapping.
+
+| Wumpa Island, player 2 runs 75+ units away | reversals | jumps | fastest move |
+|---|---|---|---|
+| first build of the rules | 12 | 6 | 18 units / 0.1 s |
+| aim spring + room behind the aim | 4 | 3 | 3.7 |
+| line of sight eased in slower | 4 | 1 | 2.2 |
+| (before the rework, a similar walk) | 1 | 0 | 1.2 |
+
+**Slow adjusting.** In play the camera still crept: after a short walk the
+zoom went out to 19.7 units and came back in to 18.1 over about 1.3 s. The
+aim's spring sat behind the centre's own spring (two in a row: ~0.5 s of
+lag while the players moved), so the fit backed off extra for the moving
+player and came back once the aim caught up. Now only the held-back part
+(the rules' answer minus the centre) has the spring; with nothing held back
+the aim is the centre itself. Same walk: settled in 0.4 s, no come-back.
+Also: a player who just joined counts neither in the centre nor in the
+distance for 1.2 s. A join pops them out of the mask in a jump about 4
+units up; their head in mid-air pushed the distance out, and their jump
+lifted the centre 2 units, so the camera backed off to keep player 1's feet
+in the picture (12 → 17 → 12 units over 2 s at every join; now it stays at
+12).
+
+**A replayed real session.** Play still showed "bumps, then readjusting".
+The session's own input recording ([findings/29](29-debug-console.md)) was
+replayed on a copy of the same save with the trace on every frame, and each
+bump listed with what was acting at that moment (scratch tools: a bump
+finder and a chart of distance, turning and the players' spacing). What it
+showed, and the changes:
+
+| Cause | Change |
+|---|---|
+| A joiner counted for the distance and the "leaving the picture" alarm before the aim had faded them in: the camera rushed out 12 → 20 and back | a player counts for the distance and the alarm only once fully faded in |
+| The alarm started at 85% of the way to the picture's edge and backed off at up to 10x: overshoot, then a slow come-back | the alarm starts AT the edge (0 anywhere inside the picture) |
+| The distance went out by our easing and came back by the game's slower smoother after a 0.6-unit dead zone: hold, then a sudden start | one spring for the distance both ways while ours is on (1 s; 0.15 s when someone is past the edge) |
+| Aim held back: the distance kept trying to fit a player who could not fit and rippled 18 ↔ 20 about once a second | while the aim is held back the distance sits at the area's farthest (what the original does with a large spread) |
+| Small needs (a partner stepping 5 units away) moved the distance out and back | at rest the distance ignores needs under 0.8 units out / 0.5 in (out at once when someone is past the edge) |
+| A rule flipping moved the held-back aim several units at once | the held-back part moves at most 6 units a second |
+| Our springs ran on the PC's clock, the game's camera on its own frame step | ours run on the step the game hands its camera (`--coop_camera_game_clock`, on) |
+
+Also the bottom margin went from 75% to 85% of the half-height. The trace
+now prints positions with three decimals (one decimal was coarse enough to
+look like jitter by itself) and the frame step. On the replay (about 50 s,
+uncapped): bumps 8 → 3, the remaining three each following a real change
+(a partner stepping out, the players meeting after being 20+ units apart, a
+tree between the aim and the camera); frame-to-frame wobble 0.003 units, no
+back-and-forth.
+
+`--debug_coop_camera_trace` prints "AIM HELD BACK (x y z, N% of the way)"
+(the rules' answer, before the spring) and "sight N" when these act.
+
+Not tested yet: Crash's house (pinned room) with the new aim rules, 3-4
+players, fights, the Cortex arena.
+
+**The Cortex fight, played (same day).** With the trace on in a real
+two-player session: player 1 riding Cortex up the spinner platform, the
+co-op camera rose with them (6 → 38 units), as the original camera did a
+minute earlier with player 2 as a mask. When player 2 rode it, the camera
+stayed on the floor with player 1: the aim's anchor was always the game's
+focus (player 1). The anchor is now **a player riding a titan** first (the
+focus if it rides one, else the first rider), then the focus. Tested on
+Wumpa Island: player 2 jacks a Ratcicle and is moved far away; the aim is
+held back on player 2's side. The trace's "volume -1" in that session came
+from places the level has no camera volume for at all (the original
+camera, one player, logged them at the same spots).
+

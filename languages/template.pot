@@ -46,7 +46,7 @@ msgstr ""
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1082 src/options/options_menu.cpp:2403 src/options/options_settings.cpp:1378
+#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1086 src/options/options_menu.cpp:2419 src/options/options_settings.cpp:1374
 msgid "Achievements"
 msgstr ""
 
@@ -102,23 +102,23 @@ msgid ""
 "The game files in the \"game\" folder may be missing or damaged. Open Mind over Recomp (the installer) and update or repair the game, then start it again."
 msgstr ""
 
-#: src/saves/save_library.cpp:763
+#: src/saves/save_library.cpp:764
 msgid "Create New Save"
 msgstr ""
 
-#: src/saves/save_library.cpp:847
+#: src/saves/save_library.cpp:848
 msgid "Delete"
 msgstr ""
 
-#: src/saves/save_library.cpp:849
+#: src/saves/save_library.cpp:850
 msgid "Rename"
 msgstr ""
 
-#: src/saves/save_library.cpp:1089
+#: src/saves/save_library.cpp:1090
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr ""
 
-#: src/saves/save_library.cpp:1880
+#: src/saves/save_library.cpp:1913
 msgid "Backspace"
 msgstr ""
 
@@ -153,7 +153,7 @@ msgstr ""
 msgid "No achievements while playing this save"
 msgstr ""
 
-#: src/players/lost_controller.cpp:281
+#: src/players/lost_controller.cpp:280
 msgid ""
 "Player 1's controller\n"
 "disconnected.\n"
@@ -162,7 +162,7 @@ msgid ""
 "Or {0} to drop out Player 1."
 msgstr ""
 
-#: src/players/lost_controller.cpp:288
+#: src/players/lost_controller.cpp:287
 msgid ""
 "Player 1's controller\n"
 "disconnected.\n"
@@ -171,40 +171,40 @@ msgid ""
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:296
+#: src/players/lost_controller.cpp:295
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it to continue."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:302
+#: src/players/lost_controller.cpp:301
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or Player {1}: press {2} to take over."
 msgstr ""
 
-#: src/players/lost_controller.cpp:306
+#: src/players/lost_controller.cpp:305
 msgid ""
 "Controller reconnected.\n"
 "Press any button to resume."
 msgstr ""
 
-#: src/players/lost_controller.cpp:307
+#: src/players/lost_controller.cpp:306
 msgid ""
 "Controller disconnected.\n"
 "Reconnect your controller to continue."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:311
+#: src/players/lost_controller.cpp:310
 msgid ""
 "Player {0}'s controller is back.\n"
 "Player {0}: press any button to resume."
 msgstr ""
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:318
+#: src/players/lost_controller.cpp:317
 msgid ""
 "Player {0}'s controller disconnected.\n"
 "Reconnect it, or press {1} to drop out Player {0}."
@@ -265,7 +265,7 @@ msgstr ""
 msgid "Crash"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1381 src/options/options_menu.cpp:1395 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
+#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1385 src/options/options_menu.cpp:1399 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
 msgid "Back"
 msgstr ""
 
@@ -354,1520 +354,1500 @@ msgstr ""
 msgid "Drop Out"
 msgstr ""
 
-#: src/options/options_menu.cpp:857 src/options/options_menu.cpp:908
+#: src/options/options_menu.cpp:861 src/options/options_menu.cpp:912
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:918
+#: src/options/options_menu.cpp:922
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:919
+#: src/options/options_menu.cpp:923
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:936
+#: src/options/options_menu.cpp:940
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:942
+#: src/options/options_menu.cpp:946
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1115
+#: src/options/options_menu.cpp:1119
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1380
+#: src/options/options_menu.cpp:1384
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1384
+#: src/options/options_menu.cpp:1388
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1384
+#: src/options/options_menu.cpp:1388
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1386 launcher/installer.cpp:1681 launcher/setup.cpp:2138
+#: src/options/options_menu.cpp:1390 launcher/installer.cpp:1681 launcher/setup.cpp:2138
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1389
+#: src/options/options_menu.cpp:1393
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1392
+#: src/options/options_menu.cpp:1396
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1393
+#: src/options/options_menu.cpp:1397
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1518
+#: src/options/options_menu.cpp:1525
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1522 src/options/options_menu.cpp:1530
+#: src/options/options_menu.cpp:1529 src/options/options_menu.cpp:1537
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1527
+#: src/options/options_menu.cpp:1534
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1527
+#: src/options/options_menu.cpp:1534
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1532
+#: src/options/options_menu.cpp:1539
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:1990
+#: src/options/options_menu.cpp:2006
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:1997
+#: src/options/options_menu.cpp:2013
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:2009
+#: src/options/options_menu.cpp:2025
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:2030
+#: src/options/options_menu.cpp:2046
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2038
+#: src/options/options_menu.cpp:2054
 msgid "{0} removed."
 msgstr ""
 
 #. {0} = a controller button's picture, {1} = a key's picture ("[LB] or [Q]").
-#: src/options/options_settings.cpp:179
+#: src/options/options_settings.cpp:178
 msgid "{0} or {1}"
 msgstr ""
 
-#: src/options/options_settings.cpp:184
+#: src/options/options_settings.cpp:183
 msgid "Frame-rate Cap"
 msgstr ""
 
-#: src/options/options_settings.cpp:188
+#: src/options/options_settings.cpp:187
 msgid "30 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:188 launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
+#: src/options/options_settings.cpp:187 launcher/settings_page.cpp:347 launcher/settings_page.cpp:355
 msgid "Unlimited"
 msgstr ""
 
-#: src/options/options_settings.cpp:201
+#: src/options/options_settings.cpp:200
 msgid "The most frames a second the game draws. The original runs at 30."
 msgstr ""
 
-#: src/options/options_settings.cpp:206
+#: src/options/options_settings.cpp:205
 msgid "Above 60, jumps and timings may feel different."
 msgstr ""
 
-#: src/options/options_settings.cpp:219 launcher/settings_page.cpp:392
+#: src/options/options_settings.cpp:218 launcher/settings_page.cpp:392
 msgid "Renderer"
 msgstr ""
 
-#: src/options/options_settings.cpp:227 src/options/options_settings.cpp:229
+#: src/options/options_settings.cpp:226 src/options/options_settings.cpp:228
 msgid "Native Only"
 msgstr ""
 
-#: src/options/options_settings.cpp:228 src/options/options_settings.cpp:229
+#: src/options/options_settings.cpp:227 src/options/options_settings.cpp:228
 msgid "Emulated"
 msgstr ""
 
-#: src/options/options_settings.cpp:229
+#: src/options/options_settings.cpp:228
 msgid "Emulated Only"
 msgstr ""
 
-#: src/options/options_settings.cpp:229
+#: src/options/options_settings.cpp:228
 msgid "Native"
 msgstr ""
 
-#: src/options/options_settings.cpp:249
+#: src/options/options_settings.cpp:248
 msgid "The port reads the game's graphics commands itself this session (a launch setting): only its own renderer can show the picture."
 msgstr ""
 
-#: src/options/options_settings.cpp:256
+#: src/options/options_settings.cpp:255
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original."
 msgstr ""
 
-#: src/options/options_settings.cpp:260
+#: src/options/options_settings.cpp:259
 msgid "Only the imitated Xbox 360 graphics chip: the port's own renderer stays off, and the {0} Tools menu doesn't switch."
 msgstr ""
 
-#: src/options/options_settings.cpp:264
+#: src/options/options_settings.cpp:263
 msgid "The Xbox 360's graphics chip, imitated step by step: looks like the original. The {0} Tools menu switches to the port's renderer."
 msgstr ""
 
-#: src/options/options_settings.cpp:268
+#: src/options/options_settings.cpp:267
 msgid "The port's own renderer, made for PC. The imitation keeps drawing behind it: the {0} Tools menu switches back at once."
 msgstr ""
 
-#: src/options/options_settings.cpp:270
+#: src/options/options_settings.cpp:269
 msgid "The port's own renderer alone: the lightest on your PC."
 msgstr ""
 
-#: src/options/options_settings.cpp:274 src/options/options_settings.cpp:276
+#: src/options/options_settings.cpp:273 src/options/options_settings.cpp:275
 msgid "Still being finished: an effect may look wrong."
 msgstr ""
 
-#: src/options/options_settings.cpp:287
+#: src/options/options_settings.cpp:286
 msgid "Dual Mode"
 msgstr ""
 
-#: src/options/options_settings.cpp:309
+#: src/options/options_settings.cpp:308
 msgid "Brightness"
 msgstr ""
 
-#: src/options/options_settings.cpp:314
+#: src/options/options_settings.cpp:313
 msgid "0 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:326
+#: src/options/options_settings.cpp:325
 msgid "Raise it until the darkest squares above can just be told apart."
 msgstr ""
 
-#: src/options/options_settings.cpp:335
+#: src/options/options_settings.cpp:334
 msgid "V-sync"
 msgstr ""
 
-#: src/options/options_settings.cpp:335 src/options/options_settings.cpp:420 src/options/options_settings.cpp:647 src/options/options_settings.cpp:876 src/options/options_settings.cpp:1171 src/options/options_settings.cpp:1182 src/options/options_settings.cpp:1342 src/options/options_settings.cpp:1347
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
 msgid "On"
 msgstr ""
 
-#: src/options/options_settings.cpp:335 src/options/options_settings.cpp:355 src/options/options_settings.cpp:420 src/options/options_settings.cpp:626 src/options/options_settings.cpp:694 src/options/options_settings.cpp:876 src/options/options_settings.cpp:1056 src/options/options_settings.cpp:1083 src/options/options_settings.cpp:1171 src/options/options_settings.cpp:1182 src/options/options_settings.cpp:1342 src/options/options_settings.cpp:1347
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
 msgid "Off"
 msgstr ""
 
-#: src/options/options_settings.cpp:336
+#: src/options/options_settings.cpp:335
 msgid "Matches your monitor: whole pictures only, no tearing, and the game runs at most at its refresh rate."
 msgstr ""
 
-#: src/options/options_settings.cpp:338
+#: src/options/options_settings.cpp:337
 msgid "Pictures show the moment they're ready: the least delay, but the picture can tear."
 msgstr ""
 
-#: src/options/options_settings.cpp:353
+#: src/options/options_settings.cpp:352
 msgid "FPS Counter"
 msgstr ""
 
-#: src/options/options_settings.cpp:355
+#: src/options/options_settings.cpp:354
 msgid "Simple"
 msgstr ""
 
-#: src/options/options_settings.cpp:355
+#: src/options/options_settings.cpp:354
 msgid "Average"
 msgstr ""
 
-#: src/options/options_settings.cpp:355
+#: src/options/options_settings.cpp:354
 msgid "Detailed"
 msgstr ""
 
-#: src/options/options_settings.cpp:361
+#: src/options/options_settings.cpp:360
 msgid "No frame-rate counter."
 msgstr ""
 
-#: src/options/options_settings.cpp:362
+#: src/options/options_settings.cpp:361
 msgid "The frame rate, in a corner of the screen (FPS Position)."
 msgstr ""
 
-#: src/options/options_settings.cpp:363
+#: src/options/options_settings.cpp:362
 msgid "The frame rate, its average and its slowest 1 % (the 1% low)."
 msgstr ""
 
-#: src/options/options_settings.cpp:364
+#: src/options/options_settings.cpp:363
 msgid "Also how long a frame takes, and how much of it the game works or waits."
 msgstr ""
 
-#: src/options/options_settings.cpp:372
+#: src/options/options_settings.cpp:371
 msgid "FPS Position"
 msgstr ""
 
-#: src/options/options_settings.cpp:374
+#: src/options/options_settings.cpp:373
 msgid "Top Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:374
+#: src/options/options_settings.cpp:373
 msgid "Top Centre"
 msgstr ""
 
-#: src/options/options_settings.cpp:374
+#: src/options/options_settings.cpp:373
 msgid "Top Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:374
+#: src/options/options_settings.cpp:373
 msgid "Bottom Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:375
+#: src/options/options_settings.cpp:374
 msgid "Bottom Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:382
+#: src/options/options_settings.cpp:381
 msgid "Where the frame-rate counter sits on the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:393
+#: src/options/options_settings.cpp:392
 msgid "HUD Size"
 msgstr ""
 
-#: src/options/options_settings.cpp:413
+#: src/options/options_settings.cpp:412
 msgid "The original size."
 msgstr ""
 
-#: src/options/options_settings.cpp:414
+#: src/options/options_settings.cpp:413
 msgid "The portraits, bars, counters and combo meters drawn smaller, each toward its own corner of the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:420
+#: src/options/options_settings.cpp:419
 msgid "Smaller for 3-4 Players"
 msgstr ""
 
-#: src/options/options_settings.cpp:421
+#: src/options/options_settings.cpp:420
 msgid "With a third or fourth player in the game, the HUD is at most 80% so four corners fit. A HUD Size of 80% or less stays as it is."
 msgstr ""
 
-#: src/options/options_settings.cpp:422
+#: src/options/options_settings.cpp:421
 msgid "The HUD keeps the HUD Size above with any number of players."
 msgstr ""
 
-#: src/options/options_settings.cpp:432
+#: src/options/options_settings.cpp:431
 msgid "Window Mode"
 msgstr ""
 
-#: src/options/options_settings.cpp:434 launcher/settings_page.cpp:455
+#: src/options/options_settings.cpp:433 launcher/settings_page.cpp:455
 msgid "Windowed"
 msgstr ""
 
-#: src/options/options_settings.cpp:434 launcher/settings_page.cpp:455
+#: src/options/options_settings.cpp:433 launcher/settings_page.cpp:455
 msgid "Fullscreen"
 msgstr ""
 
-#: src/options/options_settings.cpp:434
+#: src/options/options_settings.cpp:433
 msgid "Borderless Window"
 msgstr ""
 
-#: src/options/options_settings.cpp:444
+#: src/options/options_settings.cpp:443
 msgid "Plays in a window you can move and resize."
 msgstr ""
 
-#: src/options/options_settings.cpp:445
+#: src/options/options_settings.cpp:444
 msgid "Fills the whole monitor (the one picked under Monitor)."
 msgstr ""
 
-#: src/options/options_settings.cpp:446
+#: src/options/options_settings.cpp:445
 msgid "Fills the whole monitor as an ordinary window without a border. The system treats it like any other window: switching to other programs and overlays work as in Windowed."
 msgstr ""
 
-#: src/options/options_settings.cpp:460 src/options/options_settings.cpp:467 launcher/settings_page.cpp:471 launcher/settings_page.cpp:478
+#: src/options/options_settings.cpp:459 src/options/options_settings.cpp:466 launcher/settings_page.cpp:471 launcher/settings_page.cpp:478
 msgid "Monitor"
 msgstr ""
 
-#: src/options/options_settings.cpp:471 src/options/options_settings.cpp:840 src/options/options_settings.cpp:1011 launcher/settings_page.cpp:473
+#: src/options/options_settings.cpp:470 src/options/options_settings.cpp:839 src/options/options_settings.cpp:1010 launcher/settings_page.cpp:473
 msgid "Automatic"
 msgstr ""
 
 #. {0} = the monitor's number.
-#: src/options/options_settings.cpp:479
+#: src/options/options_settings.cpp:478
 msgid "{0}: Not Connected"
 msgstr ""
 
-#: src/options/options_settings.cpp:489
+#: src/options/options_settings.cpp:488
 msgid "Fullscreen fills the monitor the game is on."
 msgstr ""
 
-#: src/options/options_settings.cpp:491
+#: src/options/options_settings.cpp:490
 msgid "This monitor isn't connected: fullscreen fills the one the game is on."
 msgstr ""
 
-#: src/options/options_settings.cpp:493
+#: src/options/options_settings.cpp:492
 msgid "Fullscreen fills this monitor."
 msgstr ""
 
-#: src/options/options_settings.cpp:523
+#: src/options/options_settings.cpp:522
 msgid "Needs the port's renderer: set Renderer to Native on the Graphics tab."
 msgstr ""
 
-#: src/options/options_settings.cpp:535
+#: src/options/options_settings.cpp:534
 msgid "Needs Renderer: Native Only on the Graphics tab."
 msgstr ""
 
-#: src/options/options_settings.cpp:542
+#: src/options/options_settings.cpp:541
 msgid "Aspect Ratio"
 msgstr ""
 
-#: src/options/options_settings.cpp:543
+#: src/options/options_settings.cpp:542
 msgid "Match Window"
 msgstr ""
 
-#: src/options/options_settings.cpp:543
+#: src/options/options_settings.cpp:542
 msgid "16:9 (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:543
+#: src/options/options_settings.cpp:542
 msgid "21:9"
 msgstr ""
 
-#: src/options/options_settings.cpp:543
+#: src/options/options_settings.cpp:542
 msgid "32:9"
 msgstr ""
 
-#: src/options/options_settings.cpp:544
+#: src/options/options_settings.cpp:543
 msgid "The picture takes the window's shape: a wider window shows more of the world at the sides. Nothing is stretched."
 msgstr ""
 
-#: src/options/options_settings.cpp:545
+#: src/options/options_settings.cpp:544
 msgid "The game's own picture shape. A wider window gets black bars at the sides."
 msgstr ""
 
-#: src/options/options_settings.cpp:546
+#: src/options/options_settings.cpp:545
 msgid "Ultrawide: more of the world at the sides. Nothing is stretched."
 msgstr ""
 
-#: src/options/options_settings.cpp:547
+#: src/options/options_settings.cpp:546
 msgid "Super ultrawide, like two screens side by side: much more of the world at the sides."
 msgstr ""
 
-#: src/options/options_settings.cpp:553
+#: src/options/options_settings.cpp:552
 msgid "Widescreen HUD"
 msgstr ""
 
-#: src/options/options_settings.cpp:553
+#: src/options/options_settings.cpp:552
 msgid "In Place"
 msgstr ""
 
-#: src/options/options_settings.cpp:553
+#: src/options/options_settings.cpp:552
 msgid "Screen Edges"
 msgstr ""
 
-#: src/options/options_settings.cpp:554
+#: src/options/options_settings.cpp:553
 msgid "In a wide picture, the HUD stays where the 16:9 game has it."
 msgstr ""
 
-#: src/options/options_settings.cpp:555
+#: src/options/options_settings.cpp:554
 msgid "In a wide picture, the HUD's corner pieces move out to the corners of the screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:562
+#: src/options/options_settings.cpp:561
 msgid "Motion Blur"
 msgstr ""
 
-#: src/options/options_settings.cpp:562 src/options/options_settings.cpp:647 src/options/options_settings.cpp:682
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:646 src/options/options_settings.cpp:681
 msgid "Off (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:562 src/options/options_settings.cpp:682 src/options/options_settings.cpp:1083
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681 src/options/options_settings.cpp:1082
 msgid "Low"
 msgstr ""
 
-#: src/options/options_settings.cpp:562 src/options/options_settings.cpp:682
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681
 msgid "Medium"
 msgstr ""
 
-#: src/options/options_settings.cpp:562 src/options/options_settings.cpp:682 src/options/options_settings.cpp:1083
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681 src/options/options_settings.cpp:1082
 msgid "High"
 msgstr ""
 
-#: src/options/options_settings.cpp:563
+#: src/options/options_settings.cpp:562
 msgid "No motion blur, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:564
+#: src/options/options_settings.cpp:563
 msgid "A light smear of the scenery when the camera moves. The players stay sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:565
+#: src/options/options_settings.cpp:564
 msgid "The scenery smears more when the camera moves. The players stay sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:566
+#: src/options/options_settings.cpp:565
 msgid "A strong smear, as long as one frame of the original game's movement."
 msgstr ""
 
-#: src/options/options_settings.cpp:585
+#: src/options/options_settings.cpp:584
 msgid "Resolution"
 msgstr ""
 
-#: src/options/options_settings.cpp:590
+#: src/options/options_settings.cpp:589
 msgid "Match Window ({0})"
 msgstr ""
 
-#: src/options/options_settings.cpp:592
+#: src/options/options_settings.cpp:591
 msgid "{0} (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:612
+#: src/options/options_settings.cpp:611
 msgid "Drawn at the window's own size: the sharpest it can look on this screen. A big screen is heavy on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:613
+#: src/options/options_settings.cpp:612
 msgid "Drawn at the Xbox 360's size."
 msgstr ""
 
-#: src/options/options_settings.cpp:614
+#: src/options/options_settings.cpp:613
 msgid "Sharper than the original. Light on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:615
+#: src/options/options_settings.cpp:614
 msgid "Sharper still, heavier on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:616
+#: src/options/options_settings.cpp:615
 msgid "The sharpest picture, the heaviest on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:626
+#: src/options/options_settings.cpp:625
 msgid "Anti-aliasing"
 msgstr ""
 
-#: src/options/options_settings.cpp:626
+#: src/options/options_settings.cpp:625
 msgid "2x (original)"
 msgstr ""
 
-#: src/options/options_settings.cpp:626
+#: src/options/options_settings.cpp:625
 msgid "4x"
 msgstr ""
 
-#: src/options/options_settings.cpp:626
+#: src/options/options_settings.cpp:625
 msgid "8x"
 msgstr ""
 
-#: src/options/options_settings.cpp:627
+#: src/options/options_settings.cpp:626
 msgid "No smoothing: jagged, shimmering edges, the lightest on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:628
+#: src/options/options_settings.cpp:627
 msgid "Edges smoothed with 2 samples per pixel, like the Xbox 360."
 msgstr ""
 
-#: src/options/options_settings.cpp:629
+#: src/options/options_settings.cpp:628
 msgid "Smoother edges, 4 samples per pixel."
 msgstr ""
 
-#: src/options/options_settings.cpp:630
+#: src/options/options_settings.cpp:629
 msgid "The smoothest edges, 8 samples per pixel: the heaviest on your graphics card."
 msgstr ""
 
-#: src/options/options_settings.cpp:647
+#: src/options/options_settings.cpp:646
 msgid "Smooth Leaves"
 msgstr ""
 
-#: src/options/options_settings.cpp:648
+#: src/options/options_settings.cpp:647
 msgid "Leaves, fences and other cut-out shapes keep their hard, shimmering edges, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:650
+#: src/options/options_settings.cpp:649
 msgid "Smooths the edges of leaves, fences and other cut-out shapes. Needs Anti-aliasing on."
 msgstr ""
 
-#: src/options/options_settings.cpp:659
+#: src/options/options_settings.cpp:658
 msgid "Texture Sharpness"
 msgstr ""
 
-#: src/options/options_settings.cpp:659 src/options/options_settings.cpp:670 src/options/options_settings.cpp:694 src/options/options_settings.cpp:1200 src/options/options_settings.cpp:1222 src/options/options_settings.cpp:1359
+#: src/options/options_settings.cpp:658 src/options/options_settings.cpp:669 src/options/options_settings.cpp:693 src/options/options_settings.cpp:1199 src/options/options_settings.cpp:1221 src/options/options_settings.cpp:1355
 msgid "Original"
 msgstr ""
 
-#: src/options/options_settings.cpp:659 src/options/options_settings.cpp:670
+#: src/options/options_settings.cpp:658 src/options/options_settings.cpp:669
 msgid "Sharper"
 msgstr ""
 
-#: src/options/options_settings.cpp:659
+#: src/options/options_settings.cpp:658
 msgid "Sharpest"
 msgstr ""
 
-#: src/options/options_settings.cpp:660
+#: src/options/options_settings.cpp:659
 msgid "Textures soften in the distance like the Xbox 360's."
 msgstr ""
 
-#: src/options/options_settings.cpp:661
+#: src/options/options_settings.cpp:660
 msgid "Textures stay crisper in the distance and on slanted ground."
 msgstr ""
 
-#: src/options/options_settings.cpp:662
+#: src/options/options_settings.cpp:661
 msgid "The crispest distance, with a little more shimmer when moving."
 msgstr ""
 
-#: src/options/options_settings.cpp:670
+#: src/options/options_settings.cpp:669
 msgid "Shadow Softness"
 msgstr ""
 
-#: src/options/options_settings.cpp:670
+#: src/options/options_settings.cpp:669
 msgid "Softer"
 msgstr ""
 
-#: src/options/options_settings.cpp:670
+#: src/options/options_settings.cpp:669
 msgid "Softest"
 msgstr ""
 
-#: src/options/options_settings.cpp:671
+#: src/options/options_settings.cpp:670
 msgid "Shadows under the characters get a crisper edge."
 msgstr ""
 
-#: src/options/options_settings.cpp:672
+#: src/options/options_settings.cpp:671
 msgid "Shadows fade at their edge like the Xbox 360's."
 msgstr ""
 
-#: src/options/options_settings.cpp:673
+#: src/options/options_settings.cpp:672
 msgid "Shadows fade over a wider edge."
 msgstr ""
 
-#: src/options/options_settings.cpp:674
+#: src/options/options_settings.cpp:673
 msgid "The softest shadows, fading the widest."
 msgstr ""
 
-#: src/options/options_settings.cpp:682
+#: src/options/options_settings.cpp:681
 msgid "Sharpening"
 msgstr ""
 
-#: src/options/options_settings.cpp:683
+#: src/options/options_settings.cpp:682
 msgid "No sharpening, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:684
+#: src/options/options_settings.cpp:683
 msgid "Fine detail a little crisper. Hard edges stay clean."
 msgstr ""
 
-#: src/options/options_settings.cpp:685
+#: src/options/options_settings.cpp:684
 msgid "Crisper detail across the picture."
 msgstr ""
 
-#: src/options/options_settings.cpp:686
+#: src/options/options_settings.cpp:685
 msgid "The crispest picture: may look grainy in places."
 msgstr ""
 
-#: src/options/options_settings.cpp:694
+#: src/options/options_settings.cpp:693
 msgid "Depth of Field"
 msgstr ""
 
-#: src/options/options_settings.cpp:694
+#: src/options/options_settings.cpp:693
 msgid "Strong"
 msgstr ""
 
-#: src/options/options_settings.cpp:695
+#: src/options/options_settings.cpp:694
 msgid "The distance stays sharp."
 msgstr ""
 
-#: src/options/options_settings.cpp:696
+#: src/options/options_settings.cpp:695
 msgid "The distance is gently blurred, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:697
+#: src/options/options_settings.cpp:696
 msgid "The distance is blurred twice as much."
 msgstr ""
 
-#: src/options/options_settings.cpp:764
+#: src/options/options_settings.cpp:763
 msgid "Device"
 msgstr ""
 
-#: src/options/options_settings.cpp:789
+#: src/options/options_settings.cpp:788
 msgid "Output Device"
 msgstr ""
 
-#: src/options/options_settings.cpp:795
+#: src/options/options_settings.cpp:794
 msgid "System Default"
 msgstr ""
 
-#: src/options/options_settings.cpp:797
+#: src/options/options_settings.cpp:796
 msgid "Not Connected"
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:820
+#: src/options/options_settings.cpp:819
 msgid "Plays on the system's sound output, and follows it when you switch."
 msgstr ""
 
-#: src/options/options_settings.cpp:821
+#: src/options/options_settings.cpp:820
 msgid "Plays on the system's sound output (now: {0}), and follows it when you switch."
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:827
+#: src/options/options_settings.cpp:826
 msgid "{0} isn't connected: the system's sound output plays instead."
 msgstr ""
 
 #. {0} = the sound device's full name.
-#: src/options/options_settings.cpp:830
+#: src/options/options_settings.cpp:829
 msgid "Plays on {0} only."
 msgstr ""
 
-#: src/options/options_settings.cpp:838
+#: src/options/options_settings.cpp:837
 msgid "Speakers"
 msgstr ""
 
-#: src/options/options_settings.cpp:840
+#: src/options/options_settings.cpp:839
 msgid "Stereo"
 msgstr ""
 
-#: src/options/options_settings.cpp:840
+#: src/options/options_settings.cpp:839
 msgid "Headphones"
 msgstr ""
 
-#: src/options/options_settings.cpp:841
+#: src/options/options_settings.cpp:840
 msgid "5.1 Surround"
 msgstr ""
 
-#: src/options/options_settings.cpp:841
+#: src/options/options_settings.cpp:840
 msgid "7.1 Surround"
 msgstr ""
 
-#: src/options/options_settings.cpp:850
+#: src/options/options_settings.cpp:849
 msgid "Two speakers: the game's surround sound folded into left and right."
 msgstr ""
 
-#: src/options/options_settings.cpp:851
+#: src/options/options_settings.cpp:850
 msgid "Stereo for headphones: a little of each side reaches the other ear, like speakers in a room, so nothing sits inside one ear."
 msgstr ""
 
-#: src/options/options_settings.cpp:852
+#: src/options/options_settings.cpp:851
 msgid "Six speakers: front, centre, bass and the two behind you, as the game mixes them."
 msgstr ""
 
-#: src/options/options_settings.cpp:853
+#: src/options/options_settings.cpp:852
 msgid "Eight speakers: the surround pair plays on both the side and the back speakers."
 msgstr ""
 
-#: src/options/options_settings.cpp:854
+#: src/options/options_settings.cpp:853
 msgid "The game's surround sound goes to the device as it is, and your system fits it to your speakers."
 msgstr ""
 
-#: src/options/options_settings.cpp:875
+#: src/options/options_settings.cpp:874
 msgid "Invert Axis"
 msgstr ""
 
-#: src/options/options_settings.cpp:888
+#: src/options/options_settings.cpp:887
 msgid "Up and down are flipped when you aim the reticle."
 msgstr ""
 
-#: src/options/options_settings.cpp:889
+#: src/options/options_settings.cpp:888
 msgid "Aiming the reticle: up is up."
 msgstr ""
 
-#: src/options/options_settings.cpp:916
+#: src/options/options_settings.cpp:915
 msgid "Move up."
 msgstr ""
 
-#: src/options/options_settings.cpp:916
+#: src/options/options_settings.cpp:915
 msgid "{0} up."
 msgstr ""
 
-#: src/options/options_settings.cpp:917
+#: src/options/options_settings.cpp:916
 msgid "Move down."
 msgstr ""
 
-#: src/options/options_settings.cpp:917
+#: src/options/options_settings.cpp:916
 msgid "{0} down."
 msgstr ""
 
-#: src/options/options_settings.cpp:918
+#: src/options/options_settings.cpp:917
 msgid "Move left."
 msgstr ""
 
-#: src/options/options_settings.cpp:918
+#: src/options/options_settings.cpp:917
 msgid "{0} left."
 msgstr ""
 
-#: src/options/options_settings.cpp:919
+#: src/options/options_settings.cpp:918
 msgid "Move right."
 msgstr ""
 
-#: src/options/options_settings.cpp:919
+#: src/options/options_settings.cpp:918
 msgid "{0} right."
 msgstr ""
 
-#: src/options/options_settings.cpp:920
+#: src/options/options_settings.cpp:919
 msgid "Hold while moving to walk instead of run."
 msgstr ""
 
-#: src/options/options_settings.cpp:920
+#: src/options/options_settings.cpp:919
 msgid "lean {0} part of the way."
 msgstr ""
 
-#: src/options/options_settings.cpp:921
+#: src/options/options_settings.cpp:920
 msgid "The spin attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:922
+#: src/options/options_settings.cpp:921
 msgid "Jump. Press again in the air to double jump."
 msgstr ""
 
-#: src/options/options_settings.cpp:925
+#: src/options/options_settings.cpp:924
 msgid "Use a save totem, or jump on a stunned titan. Again to get off."
 msgstr ""
 
-#: src/options/options_settings.cpp:926
+#: src/options/options_settings.cpp:925
 msgid "A quick attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:927
+#: src/options/options_settings.cpp:926
 msgid "A strong attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:928
+#: src/options/options_settings.cpp:927
 msgid "Hold to block attacks."
 msgstr ""
 
-#: src/options/options_settings.cpp:929
+#: src/options/options_settings.cpp:928
 msgid "Your titan's special attack."
 msgstr ""
 
-#: src/options/options_settings.cpp:930
+#: src/options/options_settings.cpp:929
 msgid "Store your titan, and bring it back later."
 msgstr ""
 
-#: src/options/options_settings.cpp:931
+#: src/options/options_settings.cpp:930
 msgid "Open the map. In the pause menu: drop out (someone else stays in)."
 msgstr ""
 
-#: src/options/options_settings.cpp:954
+#: src/options/options_settings.cpp:953
 msgctxt "key name"
 msgid "Left Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:954
+#: src/options/options_settings.cpp:953
 msgctxt "key name"
 msgid "Right Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:955
+#: src/options/options_settings.cpp:954
 msgctxt "key name"
 msgid "Middle Mouse"
 msgstr ""
 
-#: src/options/options_settings.cpp:955
+#: src/options/options_settings.cpp:954
 msgctxt "key name"
 msgid "Mouse 4 (Back)"
 msgstr ""
 
-#: src/options/options_settings.cpp:956
+#: src/options/options_settings.cpp:955
 msgctxt "key name"
 msgid "Mouse 5 (Forward)"
 msgstr ""
 
-#: src/options/options_settings.cpp:956
+#: src/options/options_settings.cpp:955
 msgctxt "key name"
 msgid "Wheel Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:957
+#: src/options/options_settings.cpp:956
 msgctxt "key name"
 msgid "Wheel Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:957
+#: src/options/options_settings.cpp:956
 msgctxt "key name"
 msgid "Space"
 msgstr ""
 
-#: src/options/options_settings.cpp:958
+#: src/options/options_settings.cpp:957
 msgctxt "key name"
 msgid "Enter"
 msgstr ""
 
-#: src/options/options_settings.cpp:958
+#: src/options/options_settings.cpp:957
 msgctxt "key name"
 msgid "Backspace"
 msgstr ""
 
-#: src/options/options_settings.cpp:959
+#: src/options/options_settings.cpp:958
 msgctxt "key name"
 msgid "Caps Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:959
+#: src/options/options_settings.cpp:958
 msgctxt "key name"
 msgid "Up Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:960
+#: src/options/options_settings.cpp:959
 msgctxt "key name"
 msgid "Down Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:960
+#: src/options/options_settings.cpp:959
 msgctxt "key name"
 msgid "Left Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:961
+#: src/options/options_settings.cpp:960
 msgctxt "key name"
 msgid "Right Arrow"
 msgstr ""
 
-#: src/options/options_settings.cpp:961
+#: src/options/options_settings.cpp:960
 msgctxt "key name"
 msgid "Insert"
 msgstr ""
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:961
 msgctxt "key name"
 msgid "Delete"
 msgstr ""
 
-#: src/options/options_settings.cpp:962
+#: src/options/options_settings.cpp:961
 msgctxt "key name"
 msgid "Home"
 msgstr ""
 
-#: src/options/options_settings.cpp:963
+#: src/options/options_settings.cpp:962
 msgctxt "key name"
 msgid "End"
 msgstr ""
 
-#: src/options/options_settings.cpp:963
+#: src/options/options_settings.cpp:962
 msgctxt "key name"
 msgid "Page Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:964
+#: src/options/options_settings.cpp:963
 msgctxt "key name"
 msgid "Page Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:964
+#: src/options/options_settings.cpp:963
 msgctxt "key name"
 msgid "Pause"
 msgstr ""
 
-#: src/options/options_settings.cpp:965
+#: src/options/options_settings.cpp:964
 msgctxt "key name"
 msgid "Scroll Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:965
+#: src/options/options_settings.cpp:964
 msgctxt "key name"
 msgid "Num Lock"
 msgstr ""
 
-#: src/options/options_settings.cpp:966
+#: src/options/options_settings.cpp:965
 msgctxt "key name"
 msgid "Print Screen"
 msgstr ""
 
-#: src/options/options_settings.cpp:966
+#: src/options/options_settings.cpp:965
 msgctxt "key name"
 msgid "Menu Key"
 msgstr ""
 
-#: src/options/options_settings.cpp:979
+#: src/options/options_settings.cpp:978
 msgid "The keyboard and mouse are turned off."
 msgstr ""
 
-#: src/options/options_settings.cpp:987
+#: src/options/options_settings.cpp:986
 msgid "Keyboard Icons"
 msgstr ""
 
-#: src/options/options_settings.cpp:988
+#: src/options/options_settings.cpp:987
 msgid "Light"
 msgstr ""
 
-#: src/options/options_settings.cpp:988
+#: src/options/options_settings.cpp:987
 msgid "Dark"
 msgstr ""
 
-#: src/options/options_settings.cpp:995
+#: src/options/options_settings.cpp:994
 msgid "Dark keys in the button prompts."
 msgstr ""
 
-#: src/options/options_settings.cpp:995
+#: src/options/options_settings.cpp:994
 msgid "Light keys in the button prompts."
 msgstr ""
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:999
+#: src/options/options_settings.cpp:998
 msgid "Dark keys in the button prompts, like {0}"
 msgstr ""
 
 #. {0} = a key's picture (Jump's key), drawn in this style.
-#: src/options/options_settings.cpp:999
+#: src/options/options_settings.cpp:998
 msgid "Light keys in the button prompts, like {0}"
 msgstr ""
 
-#: src/options/options_settings.cpp:1007
+#: src/options/options_settings.cpp:1006
 msgid "Controller Icons"
 msgstr ""
 
-#: src/options/options_settings.cpp:1022
+#: src/options/options_settings.cpp:1021
 msgid "Matches player 1's controller."
 msgstr ""
 
-#: src/options/options_settings.cpp:1023
+#: src/options/options_settings.cpp:1022
 msgid "The game's own buttons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1024
+#: src/options/options_settings.cpp:1023
 msgid "Always these buttons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1032
+#: src/options/options_settings.cpp:1031
 msgid "Default Keys"
 msgstr ""
 
-#: src/options/options_settings.cpp:1035
+#: src/options/options_settings.cpp:1034
 msgid "Every keyboard and mouse key back as it came."
 msgstr ""
 
-#: src/options/options_settings.cpp:1038
+#: src/options/options_settings.cpp:1037
 msgid "Revert Keybinds to Defaults?"
 msgstr ""
 
-#: src/options/options_settings.cpp:1056
+#: src/options/options_settings.cpp:1055
 msgid "Mouse Aiming"
 msgstr ""
 
-#: src/options/options_settings.cpp:1056
+#: src/options/options_settings.cpp:1055
 msgid "Reticle"
 msgstr ""
 
-#: src/options/options_settings.cpp:1056
+#: src/options/options_settings.cpp:1055
 msgid "Crosshair"
 msgstr ""
 
-#: src/options/options_settings.cpp:1057
+#: src/options/options_settings.cpp:1056
 msgid "As a mask, the aiming reticle moves with the movement keys, like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1058
+#: src/options/options_settings.cpp:1057
 msgid "As a mask, the aiming reticle follows the mouse."
 msgstr ""
 
-#: src/options/options_settings.cpp:1059
+#: src/options/options_settings.cpp:1058
 msgid "Like the Wii version: your mouse pointer becomes the Wii cursor, a glowing bubble that grows over targets and pulls in mojo, and as a mask the reticle follows it."
 msgstr ""
 
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1068
 msgid "Cursor Fades"
 msgstr ""
 
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1068
 msgid "Never"
 msgstr ""
 
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1068
 msgid "After 1 s"
 msgstr ""
 
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1068
 msgid "After 3 s"
 msgstr ""
 
-#: src/options/options_settings.cpp:1069
+#: src/options/options_settings.cpp:1068
 msgid "After 5 s"
 msgstr ""
 
-#: src/options/options_settings.cpp:1070
+#: src/options/options_settings.cpp:1069
 msgid "The cursor stays on screen until a controller is used."
 msgstr ""
 
-#: src/options/options_settings.cpp:1071
+#: src/options/options_settings.cpp:1070
 msgid "The cursor fades out 1 second after the mouse stops. Move the mouse to bring it back."
 msgstr ""
 
-#: src/options/options_settings.cpp:1072
+#: src/options/options_settings.cpp:1071
 msgid "The cursor fades out 3 seconds after the mouse stops. Move the mouse to bring it back."
 msgstr ""
 
-#: src/options/options_settings.cpp:1073
+#: src/options/options_settings.cpp:1072
 msgid "The cursor fades out 5 seconds after the mouse stops. Move the mouse to bring it back."
 msgstr ""
 
-#: src/options/options_settings.cpp:1083
+#: src/options/options_settings.cpp:1082
 msgid "Vibration"
 msgstr ""
 
-#: src/options/options_settings.cpp:1084
+#: src/options/options_settings.cpp:1083
 msgid "Controllers never vibrate."
 msgstr ""
 
-#: src/options/options_settings.cpp:1085
+#: src/options/options_settings.cpp:1084
 msgid "Controllers vibrate like the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1086
+#: src/options/options_settings.cpp:1085
 msgid "Controllers vibrate twice as strongly as the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1099
 msgid "Window Not Focused"
 msgstr ""
 
-#: src/options/options_settings.cpp:1100
+#: src/options/options_settings.cpp:1099
 msgid "Keep Playing"
 msgstr ""
 
-#: src/options/options_settings.cpp:1100 src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1461
 msgid "Pause"
 msgstr ""
 
-#: src/options/options_settings.cpp:1101
+#: src/options/options_settings.cpp:1100
 msgid "Controllers keep playing while another window is in front. The keyboard and mouse stop until you click back into the game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1103
+#: src/options/options_settings.cpp:1102
 msgid "The game pauses by itself when its window loses the focus in a level."
 msgstr ""
 
-#: src/options/options_settings.cpp:1114
+#: src/options/options_settings.cpp:1113
 msgid "Button Pictures"
 msgstr ""
 
-#: src/options/options_settings.cpp:1117
+#: src/options/options_settings.cpp:1116
 msgid "Keyboard and Mouse Keys"
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1130
+#: src/options/options_settings.cpp:1129
 msgid "{0}, or circle {1}"
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1132
+#: src/options/options_settings.cpp:1131
 msgid "circle {0}"
 msgstr ""
 
 #. {0} = what the move does (a sentence above), {1} = how a controller does it, with its picture.
-#: src/options/options_settings.cpp:1138
+#: src/options/options_settings.cpp:1137
 msgid "{0} Controller: {1}"
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1151
+#: src/options/options_settings.cpp:1150
 msgid "To spin, circle a controller's {0}, or turn on Simple Spinning (Gameplay tab) to spin with this key."
 msgstr ""
 
-#: src/options/options_settings.cpp:1171
+#: src/options/options_settings.cpp:1170
 msgid "Friendly Fire"
 msgstr ""
 
-#: src/options/options_settings.cpp:1172
+#: src/options/options_settings.cpp:1171
 msgid "Players' attacks hurt each other, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1173
+#: src/options/options_settings.cpp:1172
 msgid "A partner's hits pass harmlessly: no damage, combos untouched."
 msgstr ""
 
-#: src/options/options_settings.cpp:1174
+#: src/options/options_settings.cpp:1173
 msgid "Partner Hits"
 msgstr ""
 
-#: src/options/options_settings.cpp:1174
+#: src/options/options_settings.cpp:1173
 msgid "End Combos"
 msgstr ""
 
-#: src/options/options_settings.cpp:1174
+#: src/options/options_settings.cpp:1173
 msgid "Keep Combos"
 msgstr ""
 
-#: src/options/options_settings.cpp:1175
+#: src/options/options_settings.cpp:1174
 msgid "Getting hit by a partner ends your hit combo, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1176
+#: src/options/options_settings.cpp:1175
 msgid "A partner's hit doesn't end your combo."
 msgstr ""
 
-#: src/options/options_settings.cpp:1180
+#: src/options/options_settings.cpp:1179
 msgid "Friendly Fire is off: partners can't hit you."
 msgstr ""
 
-#: src/options/options_settings.cpp:1182
+#: src/options/options_settings.cpp:1181
 msgid "Simple Spinning"
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1189
+#: src/options/options_settings.cpp:1188
 msgid "One button spins: {0} on a controller. Circling {1} still works."
 msgstr ""
 
 #. {0} = the LB button's picture, {1} = the Spin key's picture, {2} = the left stick's picture.
-#: src/options/options_settings.cpp:1192
+#: src/options/options_settings.cpp:1191
 msgid "One button spins: {0} on a controller, {1} on the keyboard. Circling {2} still works."
 msgstr ""
 
 #. {0} = the left stick's picture.
-#: src/options/options_settings.cpp:1196
+#: src/options/options_settings.cpp:1195
 msgid "Circle {0} to spin, as in the original game."
 msgstr ""
 
 #. {0} = the left stick's picture, {1} = the Spin key's picture.
-#: src/options/options_settings.cpp:1198
+#: src/options/options_settings.cpp:1197
 msgid "Circle {0} to spin, as in the original game. {1} does nothing."
 msgstr ""
 
-#: src/options/options_settings.cpp:1200
+#: src/options/options_settings.cpp:1199
 msgid "Keep Spinning"
 msgstr ""
 
-#: src/options/options_settings.cpp:1200
+#: src/options/options_settings.cpp:1199
 msgid "Hold to Spin"
 msgstr ""
 
 #. {0} = the spin button / key pictures ("[LB] or [Q]"), {1} = the left stick's picture.
-#: src/options/options_settings.cpp:1205
+#: src/options/options_settings.cpp:1204
 msgid "Hold {0} (or keep circling {1}) and Crash keeps spinning, until he gets dizzy."
 msgstr ""
 
 #. {0} = the light attack's button / key pictures ("[X] or [LMB]").
-#: src/options/options_settings.cpp:1209
+#: src/options/options_settings.cpp:1208
 msgid "Spin, then press {0} again and again to keep spinning, as in the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1215
+#: src/options/options_settings.cpp:1214
 msgid "Turn on Simple Spinning first."
 msgstr ""
 
-#: src/options/options_settings.cpp:1219 launcher/settings_page.cpp:499
+#: src/options/options_settings.cpp:1218 launcher/settings_page.cpp:499
 msgid "Co-op"
 msgstr ""
 
-#: src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:1221
 msgid "Co-op Camera"
 msgstr ""
 
-#: src/options/options_settings.cpp:1222
+#: src/options/options_settings.cpp:1221
 msgid "Frame Everyone"
 msgstr ""
 
-#: src/options/options_settings.cpp:1223
+#: src/options/options_settings.cpp:1222
 msgid "The camera pulls back to keep every player on screen."
 msgstr ""
 
-#: src/options/options_settings.cpp:1224
+#: src/options/options_settings.cpp:1223
 msgid "The camera of the original game."
 msgstr ""
 
-#: src/options/options_settings.cpp:1225
-msgid "Camera Follows"
-msgstr ""
-
-#: src/options/options_settings.cpp:1225
-msgid "Nearest Player"
-msgstr ""
-
-#: src/options/options_settings.cpp:1225
-msgid "Middle"
-msgstr ""
-
-#: src/options/options_settings.cpp:1226
-msgid "Front to back, the camera stays with the player nearest to it."
-msgstr ""
-
-#: src/options/options_settings.cpp:1227
-msgid "The camera aims at the middle of the group."
-msgstr ""
-
-#: src/options/options_settings.cpp:1228
+#: src/options/options_settings.cpp:1224
 msgid "Spinning"
 msgstr ""
 
-#: src/options/options_settings.cpp:1253
+#: src/options/options_settings.cpp:1249
 msgid "Takes effect when the game starts again: Restart Now, or next time you play."
 msgstr ""
 
-#: src/options/options_settings.cpp:1256
+#: src/options/options_settings.cpp:1252
 msgid "Restart Now"
 msgstr ""
 
-#: src/options/options_settings.cpp:1260
+#: src/options/options_settings.cpp:1256
 msgid "Restart now? Anything since your last save will be lost."
 msgstr ""
 
-#: src/options/options_settings.cpp:1273
+#: src/options/options_settings.cpp:1269
 msgid "Text"
 msgstr ""
 
-#: src/options/options_settings.cpp:1283
+#: src/options/options_settings.cpp:1279
 msgid "Menus, tutorials and messages in this language. The voices are chosen below."
 msgstr ""
 
-#: src/options/options_settings.cpp:1287
+#: src/options/options_settings.cpp:1283
 msgid "The port's own menus in this language. The game's own texts stay in English: the disc has no Portuguese."
 msgstr ""
 
-#: src/options/options_settings.cpp:1293
+#: src/options/options_settings.cpp:1289
 msgid "The port's own texts are a machine translation, not yet checked by a native speaker."
 msgstr ""
 
-#: src/options/options_settings.cpp:1303
+#: src/options/options_settings.cpp:1299
 msgid "Voices"
 msgstr ""
 
-#: src/options/options_settings.cpp:1306
+#: src/options/options_settings.cpp:1302
 msgid "Same as Text"
 msgstr ""
 
-#: src/options/options_settings.cpp:1328
+#: src/options/options_settings.cpp:1324
 msgid "The disc has no voices in the text's language: the characters speak English."
 msgstr ""
 
 #. {0} = the language's name in its own language ("Deutsch").
-#: src/options/options_settings.cpp:1331
+#: src/options/options_settings.cpp:1327
 msgid "The characters speak the text's language: {0}."
 msgstr ""
 
-#: src/options/options_settings.cpp:1333
+#: src/options/options_settings.cpp:1329
 msgid "The characters speak this language, whatever the text is."
 msgstr ""
 
-#: src/options/options_settings.cpp:1342
+#: src/options/options_settings.cpp:1338
 msgid "Notifications"
 msgstr ""
 
-#: src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:1339
 msgid "A card slides up at the bottom of the screen when you earn an achievement."
 msgstr ""
 
-#: src/options/options_settings.cpp:1344
+#: src/options/options_settings.cpp:1340
 msgid "No card: achievements are still earned and kept."
 msgstr ""
 
-#: src/options/options_settings.cpp:1347
+#: src/options/options_settings.cpp:1343
 msgid "Jingle"
 msgstr ""
 
-#: src/options/options_settings.cpp:1348
+#: src/options/options_settings.cpp:1344
 msgid "One of the game's own jingles plays with the card."
 msgstr ""
 
-#: src/options/options_settings.cpp:1348
+#: src/options/options_settings.cpp:1344
 msgid "The card shows without a sound."
 msgstr ""
 
-#: src/options/options_settings.cpp:1351
+#: src/options/options_settings.cpp:1347
 msgid "Notifications are off."
 msgstr ""
 
-#: src/options/options_settings.cpp:1359
+#: src/options/options_settings.cpp:1355
 msgid "Messages"
 msgstr ""
 
-#: src/options/options_settings.cpp:1359
+#: src/options/options_settings.cpp:1355
 msgid "Card"
 msgstr ""
 
-#: src/options/options_settings.cpp:1360
+#: src/options/options_settings.cpp:1356
 msgid "The game's messages at the bottom (voodoo dolls, missions) use the achievement card, with the voodoo doll turning on it."
 msgstr ""
 
-#: src/options/options_settings.cpp:1362
+#: src/options/options_settings.cpp:1358
 msgid "The game's own wide message bar."
 msgstr ""
 
-#: src/options/options_settings.cpp:1372
+#: src/options/options_settings.cpp:1368
 msgid "Display"
 msgstr ""
 
-#: src/options/options_settings.cpp:1375
+#: src/options/options_settings.cpp:1371
 msgid "HUD"
 msgstr ""
 
-#: src/options/options_settings.cpp:1376
+#: src/options/options_settings.cpp:1372
 msgid "Frame Counter"
 msgstr ""
 
-#: src/options/options_settings.cpp:1380
+#: src/options/options_settings.cpp:1376
 msgid "Graphics"
 msgstr ""
 
-#: src/options/options_settings.cpp:1381
+#: src/options/options_settings.cpp:1377
 msgid "Quality"
 msgstr ""
 
-#: src/options/options_settings.cpp:1382
+#: src/options/options_settings.cpp:1378
 msgid "Effects"
 msgstr ""
 
-#: src/options/options_settings.cpp:1385
+#: src/options/options_settings.cpp:1381
 msgid "Audio"
 msgstr ""
 
-#: src/options/options_settings.cpp:1386
+#: src/options/options_settings.cpp:1382
 msgid "Music"
 msgstr ""
 
-#: src/options/options_settings.cpp:1387
+#: src/options/options_settings.cpp:1383
 msgid "How loud the music plays."
 msgstr ""
 
-#: src/options/options_settings.cpp:1388
+#: src/options/options_settings.cpp:1384
 msgid "Dialogue"
 msgstr ""
 
-#: src/options/options_settings.cpp:1389
+#: src/options/options_settings.cpp:1385
 msgid "How loud the characters talk."
 msgstr ""
 
-#: src/options/options_settings.cpp:1390
+#: src/options/options_settings.cpp:1386
 msgid "SFX"
 msgstr ""
 
-#: src/options/options_settings.cpp:1391
+#: src/options/options_settings.cpp:1387
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr ""
 
-#: src/options/options_settings.cpp:1392
+#: src/options/options_settings.cpp:1388
 msgid "Movies"
 msgstr ""
 
-#: src/options/options_settings.cpp:1393
+#: src/options/options_settings.cpp:1389
 msgid "How loud the movies play: the intros and the story cartoons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1394
+#: src/options/options_settings.cpp:1390
 msgid "Output"
 msgstr ""
 
-#: src/options/options_settings.cpp:1395 launcher/settings_page.cpp:541
+#: src/options/options_settings.cpp:1391 launcher/settings_page.cpp:537
 msgid "Controls"
 msgstr ""
 
-#: src/options/options_settings.cpp:1396
+#: src/options/options_settings.cpp:1392
 msgid "Gameplay"
 msgstr ""
 
-#: src/options/options_settings.cpp:1397
+#: src/options/options_settings.cpp:1393
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1441 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1437 launcher/main.cpp:953
 msgid "None"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1459
 msgid "Move Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1459
 msgid "Move Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1459
 msgid "Move Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1459
 msgid "Move Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1459
 msgid "Walk (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1460
 msgid "Spin"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1460
 msgid "Jump"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1460
 msgid "Light Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1460
 msgid "Heavy Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1460
 msgid "Block (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1461
 msgid "Jack / Use"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1461
 msgid "Titan Special Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1461
 msgid "Pocket / Unpocket"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1461
 msgid "Map"
 msgstr ""
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1462
 msgid "Menu: Confirm"
 msgstr ""
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1462
 msgid "Menu: Back"
 msgstr ""
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1462
 msgid "Menu: Previous Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1462
 msgid "Menu: Next Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1463
 msgid "Menu: X Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1463
 msgid "Menu: Y Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1463
 msgid "D-pad Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1463
 msgid "D-pad Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1463
 msgid "D-pad Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1468
+#: src/options/options_settings.cpp:1464
 msgid "D-pad Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1468
+#: src/options/options_settings.cpp:1464
 msgid "Right Stick Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1468
+#: src/options/options_settings.cpp:1464
 msgid "Right Stick Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1468
+#: src/options/options_settings.cpp:1464
 msgid "Right Stick Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1469
+#: src/options/options_settings.cpp:1465
 msgid "Right Stick Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1469
+#: src/options/options_settings.cpp:1465
 msgid "Left Bumper"
 msgstr ""
 
-#: src/options/options_settings.cpp:1469
+#: src/options/options_settings.cpp:1465
 msgid "Left Stick Click"
 msgstr ""
 
-#: src/options/options_settings.cpp:1469
+#: src/options/options_settings.cpp:1465
 msgid "Right Stick Click"
 msgstr ""
 
@@ -3205,7 +3185,7 @@ msgstr ""
 msgid "Emulated only"
 msgstr ""
 
-#: launcher/settings_page.cpp:268 launcher/settings_page.cpp:436 launcher/settings_page.cpp:677
+#: launcher/settings_page.cpp:268 launcher/settings_page.cpp:436 launcher/settings_page.cpp:673
 msgid "Default"
 msgstr ""
 
@@ -3294,7 +3274,7 @@ msgid "   Farthest zoom-out"
 msgstr ""
 
 #: launcher/settings_page.cpp:520
-msgid "How far the co-op camera may back off to fit everyone (the original camera's range is about 12-20). Past it, a player who runs off leaves the screen."
+msgid "The most the co-op camera may ever back off to fit everyone. Each area's own camera design usually stops it sooner. Past it, a player who runs off leaves the screen."
 msgstr ""
 
 #: launcher/settings_page.cpp:522
@@ -3306,86 +3286,78 @@ msgid "How much ground around each player stays in the picture (to their left, r
 msgstr ""
 
 #: launcher/settings_page.cpp:526
-msgid "   Stay with the nearest player"
-msgstr ""
-
-#: launcher/settings_page.cpp:527
-msgid "Front to back, the camera stays with the player nearest to it, so a player walking deep into the picture doesn't pull the others off the bottom. Off = the camera aims at the middle of the players (the old way)."
-msgstr ""
-
-#: launcher/settings_page.cpp:530
 msgid "   Group focus"
 msgstr ""
 
-#: launcher/settings_page.cpp:531
+#: launcher/settings_page.cpp:527
 msgid "3-4 players: how much more a group of players counts than a player on their own when the camera picks its centre. 0 = everyone the same."
 msgstr ""
 
-#: launcher/settings_page.cpp:534
+#: launcher/settings_page.cpp:530
 msgid "Lost controller pause"
 msgstr ""
 
-#: launcher/settings_page.cpp:535
+#: launcher/settings_page.cpp:531
 msgid "When a player's controller disconnects in a level: pause with a question box, so another player can drop that player out, or reconnect it and resume."
 msgstr ""
 
-#: launcher/settings_page.cpp:543
+#: launcher/settings_page.cpp:539
 msgid "Keyboard and mouse"
 msgstr ""
 
-#: launcher/settings_page.cpp:544
+#: launcher/settings_page.cpp:540
 msgid "Play with keyboard and mouse (a controller keeps working too). The keys are changed in the game with F6."
 msgstr ""
 
-#: launcher/settings_page.cpp:550
+#: launcher/settings_page.cpp:546
 msgid "Sound and logging"
 msgstr ""
 
-#: launcher/settings_page.cpp:552
+#: launcher/settings_page.cpp:548
 msgid "Mute the sound"
 msgstr ""
 
-#: launcher/settings_page.cpp:553
+#: launcher/settings_page.cpp:549
 msgid "Event logs (for bug reports)"
 msgstr ""
 
-#: launcher/settings_page.cpp:554
+#: launcher/settings_page.cpp:550
 msgid "The session's log also records what the game does: frame rate every 5 s, the sounds it plays, co-op joins, which player a menu answers to, menu screens. A few MB per hour; it's what \"Report a problem\" sends. Off = only the basics."
 msgstr ""
 
-#: launcher/settings_page.cpp:623
+#: launcher/settings_page.cpp:619
 msgid "Every setting the game has, straight from the game. Most are for development or troubleshooting: change them only if you know what they do."
 msgstr ""
 
-#: launcher/settings_page.cpp:627
+#: launcher/settings_page.cpp:623
 msgid "Search names and descriptions..."
 msgstr ""
 
-#: launcher/settings_page.cpp:630
+#: launcher/settings_page.cpp:626
 msgid "Show developer settings (debug_...)"
 msgstr ""
 
-#: launcher/settings_page.cpp:692
+#: launcher/settings_page.cpp:688
 msgid "Default: %s%s"
 msgstr ""
 
-#: launcher/settings_page.cpp:693
+#: launcher/settings_page.cpp:689
 msgid "  (read at start only)"
 msgstr ""
 
-#: launcher/settings_page.cpp:704
+#: launcher/settings_page.cpp:700
 msgid "Asking the game for its settings..."
 msgstr ""
 
-#: launcher/settings_page.cpp:716
+#: launcher/settings_page.cpp:712
 msgid "The game is running: changes apply the next time it starts. (Its F4 menu writes the same file: use one or the other.)"
 msgstr ""
 
-#: launcher/settings_page.cpp:720
+#: launcher/settings_page.cpp:716
 msgid "Saved right away; they apply the next time the game starts. Hover a name for what it does, a triangle for why it's risky."
 msgstr ""
 
-#: launcher/settings_page.cpp:732
+#: launcher/settings_page.cpp:728
 msgid "All settings (advanced)"
 msgstr ""
 
