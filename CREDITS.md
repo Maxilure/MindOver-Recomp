@@ -57,8 +57,9 @@ engineering, testing, bug reports, corrections, art. See
   [finding 38, section 8](docs/findings/38-keyboard-mouse-real-keybinds.md#8-port-owned-sdl-controller-backend)).
 - Subtitles (in progress), with the help of Claude (Anthropic): the research
   into what the game says and how a subtitle can follow it, the voice
-  inventory tool (`tools/subtitles.py`) and the test runs on the real game
-  ([finding 63](docs/findings/63-subtitles-research.md)).
+  inventory tool (`tools/subtitles.py`), the voice trace
+  (`--debug_subtitle_trace`, `src/subtitles/`) and the test runs on the real
+  game ([finding 63](docs/findings/63-subtitles-research.md)).
 
 ### Bug reports
 

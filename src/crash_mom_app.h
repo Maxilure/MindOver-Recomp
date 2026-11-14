@@ -46,6 +46,7 @@
 #include <rex/ui/keybinds.h>
 
 #include "audio_trace.h"
+#include "subtitles/voice_trace.h"
 #include "cheats/cheat_menu.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
@@ -345,6 +346,8 @@ class CrashMomApp : public rex::ReXApp {
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).
     audio_trace::Start(game_data_root());
+    // When each voice really plays, only with --debug_subtitle_trace (findings/63).
+    voice_trace::Start();
   }
 
   // Last hook before the game's main thread starts running.

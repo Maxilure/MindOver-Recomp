@@ -68,6 +68,7 @@
 
 #include "audio/xma_stream.h"
 #include "guest_memory.h"
+#include "subtitles/voice_trace.h"
 
 #include <algorithm>
 #include <atomic>
@@ -215,6 +216,8 @@ extern "C" REX_FUNC(sub_8247D6F0) {
 
 // Destructor: forget our decoder, then the game frees its buffers.
 extern "C" REX_FUNC(sub_8234BC58) {
+  // The voice trace (findings/63) reads the object's last position first.
+  voice_trace::OnDecoderDestroyed(ctx.r3.u32, base);
   std::unique_ptr<Sound> gone;
   {
     std::lock_guard<std::mutex> lock(g_mutex);
