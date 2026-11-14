@@ -60,6 +60,7 @@ set(CRASHMOM_SOURCES
     src/world/zone_lists.cpp     # every character in an area drawn: the zones' 32-character lists grow
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
+    src/guest_memory.cpp         # guest_memory::Readable: committed pages only (issue #25)
     src/overlay_banner.cpp       # the short on-screen message when F9 / F8 switch pictures
     src/achievements/achievements_screen.cpp  # the Achievements screen: main / pause menu items, the pause decision
     src/ui/menu_pictures.cpp     # pictures of our own as the menu pages' sprites (palette TGA)

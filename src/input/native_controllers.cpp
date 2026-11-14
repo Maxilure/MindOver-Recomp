@@ -80,6 +80,9 @@ bool g_sdl = false;
 
 memory::PageAccess GuestAccess(uint32_t address, uint32_t size) {
   if (!address || !size) return memory::PageAccess::kNoAccess;
+  // Committed pages only: a reserved-only page reports its protection but has
+  // no memory behind it on Windows (GitHub issue #25; guest_memory.cpp).
+  if (!guest_memory::Readable(address, size)) return memory::PageAccess::kNoAccess;
   auto* runtime = Runtime::instance();
   auto* memory = runtime ? runtime->memory() : nullptr;
   auto* heap = memory ? memory->LookupHeap(address) : nullptr;

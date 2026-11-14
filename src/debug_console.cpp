@@ -48,6 +48,7 @@
 
 #include "cheats/cheats.h"
 #include "debug/guest_stack.h"
+#include "guest_memory.h"
 #include "debug/host_symbols.h"
 #include "debug/slow_load_sampler.h"
 #include "debug/write_watchpoints.h"
@@ -91,16 +92,9 @@ struct Error {
 // 1. Guest memory
 // -----------------------------------------------------------------------------
 
-// Is [address, address + size) committed guest memory? (Same check as the
-// cheats' Readable: cheats.cpp.)
-bool Readable(uint32_t address, uint32_t size) {
-  if (address < 0x1000 || size == 0 || address + (size - 1) < address) return false;
-  auto* memory = rex::system::kernel_memory();
-  if (!memory) return false;
-  auto* heap = memory->LookupHeap(address);
-  return heap &&
-         heap->QueryRangeAccess(address, address + size - 1) != rex::memory::PageAccess::kNoAccess;
-}
+// Is [address, address + size) committed guest memory? The shared check
+// (guest_memory.cpp: reserved-only pages crash Windows, GitHub issue #25).
+bool Readable(uint32_t address, uint32_t size) { return guest_memory::Readable(address, size); }
 
 uint8_t* Guest(uint32_t address, uint32_t size) {
   if (!Readable(address, size)) {

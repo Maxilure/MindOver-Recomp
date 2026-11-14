@@ -106,6 +106,13 @@ and put back when an update fails).
 
 **Fixes**
 
+- **Crash when switching to some titans (Windows).** Taking control of
+  certain titans, such as the electric one in the ice cave on the way to the
+  School of Evil, could crash the game on Windows
+  ([#25](https://github.com/Maxilure/MindOver-Recomp/issues/25)). The cheat
+  menu's background check of each player's titan read memory the game had
+  only set aside, not filled. All of the port's own memory checks now skip
+  such memory. The crash happened even with the cheat menu never opened.
 - **No stray attack after the "controller disconnected" box.** Closing it
   with a key (player 1 carrying on with the keyboard and mouse) or with Y to
   drop a player out made Crash do a heavy attack, or whatever the held key

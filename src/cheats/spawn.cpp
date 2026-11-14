@@ -80,11 +80,8 @@ void WriteFloat(uint32_t address, float f) {
   std::memcpy(&bits, &f, 4);
   Write32(address, bits);
 }
-bool Readable(uint32_t address, uint32_t size) {
-  if (address < 0x1000) return false;
-  auto* heap = rex::system::kernel_memory()->LookupHeap(address);
-  return heap && heap->QueryRangeAccess(address, address + size - 1) != rex::memory::PageAccess::kNoAccess;
-}
+// Committed pages only (GitHub issue #25: guest_memory.cpp).
+bool Readable(uint32_t address, uint32_t size) { return guest_memory::Readable(address, size); }
 
 using GuestFunction = void (*)(PPCContext&, uint8_t*);
 // Calls a game function from inside our per-frame hook (game's main thread),

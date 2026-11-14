@@ -579,3 +579,46 @@ findings/26 s.25), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `
 menu's numbers in the log), `menu` (opens / closes the window). The free
 camera flies with `key W 1000` and the like, but note that debug key taps also
 reach the game (they bypass the keyboard pause by design).
+
+## 12. Windows crash: a "readable" check that let a reserved page through
+
+GitHub issue #25 (0.2.2-alpha, Windows): the game crashed the moment a player
+switched to the electric titan in the ice cave on the way to the School of
+Evil, right after freeing it for the first time. The crash report:
+access violation in `ObjectWithVtable` (`Read32` of the object's first word),
+called from `Tick` at the per-frame menu snapshot (`Describe` ->
+`UpgradeableOf`), host address `0x141D26B0D` = guest `0x41D26B0D`. The
+snapshot runs every frame in a level whether or not the Cheats window was
+ever opened, so a player who never used cheats can hit it.
+
+Two things met:
+
+1. **A junk pointer.** `UpgradeableOf` reads the titan's actor `+0x180`
+   (the CUpgradeableBehaviour of the titans we tested). For this titan, at
+   that moment, the word there is not such a pointer (`0x41D26B0D`, odd).
+   The vtable compare in `ObjectWithVtable` is meant to throw such values
+   away, but only after the first word has been read.
+2. **A check that looked only at protection flags.** `Readable()` asked the
+   SDK's `BaseHeap::QueryRangeAccess`, which reads each page's
+   `current_protect` and never its state. A range the game only RESERVES
+   still carries its protection (`AllocFixed` writes `current_protect =
+   protect` for reserve and commit alike), so the answer was "read/write".
+   On Linux the whole guest space is one shared-memory mapping and the read
+   returns old bytes (the vtable compare then refuses it: no crash, which is
+   why Linux never showed this). On Windows the host page behind a
+   reserved-only guest page is reserved too, with no memory behind it, and
+   the read faults.
+
+**Fix:** one shared check, `guest_memory::Readable()` (src/guest_memory.cpp):
+the range must lie in one heap, pass the protection check, AND every page
+must be COMMITTED (`QueryRegionInfo` state bit `kMemoryAllocationCommit`).
+The cheats, spawn, debug console and native controller code all use it now
+(the console and controllers had copies of the same flag-only check).
+Rejecting misaligned pointers alone would have caught this one value by
+luck (x86 reads unaligned words fine); an aligned junk pointer into
+reserved memory would still crash.
+
+Checked on Linux: titan save, per-frame snapshot and Level up through the
+new check (level 1 -> 2), console `read 0x41D26B0D` refused, 0 errors. Not
+yet run on Windows. Still unknown: what this titan keeps at `+0x180` (the
+titan's name and type TBD from a save there).

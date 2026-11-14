@@ -20,6 +20,8 @@
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
+
+#include "../guest_memory.h"
 #include <rex/system/xmemory.h>
 
 #include "../achievements/achievements.h"
@@ -135,12 +137,9 @@ float ReadFloat(uint32_t address) {
 // Is [address, address + size) committed, readable guest memory? Pointers we
 // follow out of objects are checked first: a stray read of an unmapped page
 // kills the game (the SDK's fault handler can't recover it).
-bool Readable(uint32_t address, uint32_t size) {
-  if (address < 0x1000) return false;
-  auto* memory = rex::system::kernel_memory();
-  auto* heap = memory->LookupHeap(address);
-  return heap && heap->QueryRangeAccess(address, address + size - 1) != rex::memory::PageAccess::kNoAccess;
-}
+// Committed pages only: a reserved-only page passed the old protection check
+// and crashed Windows (GitHub issue #25; guest_memory.cpp, findings/27 s.12).
+bool Readable(uint32_t address, uint32_t size) { return guest_memory::Readable(address, size); }
 
 // The object at `address` if it is readable and has vtable `vtable`, else 0.
 uint32_t ObjectWithVtable(uint32_t address, uint32_t vtable, uint32_t size) {

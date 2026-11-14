@@ -41,6 +41,13 @@ constexpr uint32_t HostOffset(uint32_t address) {
 #endif
 }
 
+// Is [address, address + size) guest memory our C++ may read? Every page must
+// be COMMITTED and readable (a reserved-only page reads fine on Linux but
+// crashes on Windows: GitHub issue #25; guest_memory.cpp explains). Use it
+// before following any pointer read out of a game object. Game main thread or
+// any thread (it only asks the heap's page table, under the heap's lock).
+bool Readable(uint32_t address, uint32_t size);
+
 }  // namespace guest_memory
 
 // The host pointer of guest address `address` (`base` = the guest memory base).
