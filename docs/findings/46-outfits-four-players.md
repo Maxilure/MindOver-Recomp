@@ -676,6 +676,22 @@ appears in front of that player and disappears soon: walk the player forward
 [[0x8259B190]+96]+436 u32 <price - 1>`). Mouse aiming
 (Crosshair) pulls mojo toward the pointer: pass `--mouse_reticle=0`.
 
+## 3n. Enter on the chest emptied the screen
+
+With two players in the chest, player 1 confirming a pick with ENTER made
+the whole chest slide away, leaving the empty frame until player 2 was
+ready; with a controller's A it was fine. Since the native keyboard
+([findings/62](62-input-events.md) section 7) keys reach the game as its
+own input events, through shadow controllers fed in `key_events.cpp`. The
+picker hides every button from the game's chest screen while it is up
+(`FilterPad` on the controllers' state), but the keyboard's events went
+around that: the game's own chest screen heard Enter as "select" and
+started its exit, and the picker's cards follow that screen's slide. Now
+the keyboard's shadow controllers are fed nothing while the picker is open
+and for a second after it closes (the press that closed it). Tested with a
+fake second player: Enter = "Ready!", the chest stays up and closes when
+player 2 confirms.
+
 ## 4. Not done yet
 
 - HUD portraits: the game has four (Crash, Crash as a mask, Coco, Coco as a

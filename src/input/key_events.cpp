@@ -22,6 +22,7 @@
 #include "keyboard_mouse.h"
 #include "players.h"
 #include "../players/more_players.h"
+#include "../players/outfit_picker.h"
 
 REXCVAR_DEFINE_BOOL(debug_key_events_check, false, "CrashMoM",
                     "Debug: work out every input map's events a second time through the game's own rules, on a "
@@ -389,6 +390,16 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_roo
       image.menu_rt |= image.play_rt;
     }
   }
+  // THE CO-OP OUTFIT PICKER reads the keys itself (players/outfit_picker.h,
+  // from the driver), and hides everything from the game's chest screen while
+  // it's up: controllers through FilterPad. The keyboard's events came in
+  // here around that (found 2026-11-14 in play: player 1 confirmed with
+  // ENTER while player 2 was still choosing; the game's own chest screen took
+  // it as "select" and slid out, the frame stayed empty until player 2 was
+  // ready; a controller's A was fine). So the keys give the game nothing
+  // while the picker is open, nor in the second after it closes (the press
+  // that closed it).
+  if (outfit_picker::IsOpen() || outfit_picker::JustClosed()) image = {};
   PPCContext call = ctx;
   __imp__sub_8235ABC8(call, base);
   const uint32_t now = call.r3.u32;
