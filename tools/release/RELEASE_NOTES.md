@@ -56,6 +56,11 @@ Activision or the game's other owners.
 - **Sliding menus fade on wide screens.** The pause menu and other panels
   that slide in and out now fade as they slide, gone by the edge of the
   16:9 area, instead of staying visible at the sides and vanishing at once.
+- **The main menu's frame fills wide screens.** On a picture wider than
+  16:9 the main menu's purple frame, its cyan backdrop and the door that
+  opens onto it now reach the screen's edges, the way the game itself
+  rearranges the frame for 4:3 and 16:9 TVs, instead of stopping at the 16:9
+  area with black beyond.
 - **Window Mode: Borderless Window.** **Options → Display → Window Mode**
   gets a third choice: an ordinary window without a border that covers the
   whole monitor, treated by the system like any other window.

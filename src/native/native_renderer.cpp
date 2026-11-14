@@ -1769,13 +1769,18 @@ void NativeRenderer::LogCost(double frame_ms, double thread_ms) {
 // game's fades (found 2026-11-07: a 6-vertex untextured simple quad, x 318..962
 // of 1280 at 32:9 = the middle 16:9) and dimmers are; the movies' bars
 // (black outside, all ours) and the HUD aren't.
-bool NativeRenderer::CoversGameScreen(const native::DrawCommand& d) const {
+bool NativeRenderer::CoversGameScreen(const native::Frame& frame, const native::DrawCommand& d) const {
   if (d.material != native::Material::kSimple || d.textured || d.mesh || !d.layout.stride ||
       d.vertex_count == 0 || d.vertex_count > 6) {
     return false;
   }
-  const uint8_t* bytes = reinterpret_cast<const uint8_t*>(frame_.vertex_data.data());
-  const size_t size = frame_.vertex_data.size() * 4;
+  // The vertices of the frame being DRAWN (RecordPasses' pass_frame_ on the
+  // record thread). It read frame_ once: since the record thread
+  // (findings/57 s.10) that is the NEXT frame the game is filling, so the
+  // test looked at other vertices and failed now and then (the title's black
+  // background stayed 16:9 for a frame while the main menu came in at 32:9).
+  const uint8_t* bytes = reinterpret_cast<const uint8_t*>(frame.vertex_data.data());
+  const size_t size = frame.vertex_data.size() * 4;
   float x0 = 1e9f, y0 = 1e9f, x1 = -1e9f, y1 = -1e9f;
   for (uint32_t v = 0; v < d.vertex_count; ++v) {
     const size_t at = size_t(d.vertex_offset) + size_t(v) * d.layout.stride;
@@ -2361,7 +2366,7 @@ void NativeRenderer::RecordPasses(VkCommandBuffer cmd) {
       // WIDESCREEN: a flat full-screen quad (fades to / from black, dimmed
       // backgrounds) is laid out for the game's 16:9 only: stretched to the
       // whole wide picture (CoversGameScreen).
-      if (frame_wide_ > 1.001f && CoversGameScreen(d)) {
+      if (frame_wide_ > 1.001f && CoversGameScreen(frame, d)) {
         params.mvp[0] *= frame_wide_;
         params.mvp[4] *= frame_wide_;
         params.mvp[8] *= frame_wide_;

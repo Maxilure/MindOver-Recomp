@@ -16,6 +16,7 @@
 #include "../input/prompt_icons.h"
 #include "../guest_memory.h"
 #include "../ui/marquee.h"
+#include "../ui/menu_frame_wide.h"
 #include "../debug/guest_stack.h"
 #include "spotter.h"
 
@@ -1214,6 +1215,8 @@ void BeginImmediate(PPCContext& ctx, uint8_t* base, PPCFunc* original, bool inde
   --g.inside_recorded_call;
   // Scrolling menu texts (ui/marquee.h): whatever renderer shows the picture.
   if (!indexed) marquee::OnBeginPrims(base, xn_context, prim_type);
+  // The main menu frame's bars on a wide picture (ui/menu_frame_wide.h).
+  if (!indexed) menu_frame_wide::OnBeginPrims(base, xn_context);
   if (!g.recording) {
     return;
   }
@@ -1289,6 +1292,7 @@ void OnEndPrims(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   // Scrolling menu texts (ui/marquee.h): their glyphs moved / cut / faded in
   // the game's own data first, so both pictures (and the copy below) get it.
   marquee::OnEndPrims(base);
+  menu_frame_wide::OnEndPrims(base);
   if (g.recording && g.pending) {
     DrawCommand& d = g.pending_draw;
     // F12's "erase" experiments (spotter.h): zero this particle draw's vertex

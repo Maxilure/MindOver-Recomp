@@ -56,6 +56,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../achievements/achievements.h"
+#include "menu_frame_wide.h"
 #include "../guest_memory.h"
 #include "../players/more_players.h"
 
@@ -366,5 +367,15 @@ extern "C" REX_FUNC(sub_82374098) {
     if (Scratch()) DrawDoll(ctx, base, doll);
     return;
   }
-  __imp__sub_82374098(ctx, base);
+  // The main menu frame's bars and the N. V. door on a wide picture
+  // (ui/menu_frame_wide.h): their tiles are edited while they draw; a door
+  // strip is drawn several times (its copies), with the same registers.
+  const int passes = menu_frame_wide::BeginSpriteDraw(base, ctx.r3.u32);
+  const PPCContext saved = ctx;
+  for (int pass = 0; pass < passes; ++pass) {
+    if (pass) ctx = saved;
+    menu_frame_wide::SetPass(pass);
+    __imp__sub_82374098(ctx, base);
+  }
+  menu_frame_wide::EndSpriteDraw();
 }
