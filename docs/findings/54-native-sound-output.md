@@ -249,3 +249,30 @@ name that doesn't exist (warning, then the default; Headphones for a minute:
 11,256 blocks, 0 gaps). The layouts' sound itself still needs ears: on
 headphones, Headphones should keep hard-panned sounds from sitting inside
 one ear.
+
+## 8. Movie volume
+
+The Bink movies (the boot intros, the story cartoons) never followed the
+Music, Dialogue or SFX volume: they don't play through Radical's buses.
+Radical's movie player `PlayerBink` (vtable `0x8201609C`, found with
+`tools/rtti_vtables.py`) gives Bink its own volume:
+
+| Slot | Function | What it does |
+|---|---|---|
+| 6 | `sub_82428E58` | open: picks the audio tracks (count `+0xD8`, ids `+0xDC`), then calls slot 11 with `+32` |
+| 8 | `sub_82428FA8` | close: `BinkClose` of the handle at `+0x1C`, which becomes 0 |
+| 11 | `sub_82428908` | SetVolume(f1): stores f1 at `+32`, then `BinkSetVolume(handle, track, int(f1 x f1 x 65536))` (`sub_824BE190`, called from here only) for each track |
+
+The movie screen calls slot 11 every frame while a movie plays (0.9 in the
+boot movies, measured), always with the designer's value.
+
+The port (`options/global_options.cpp`, setting `volume_movies`, **Options ->
+Audio -> Movies**, 0-5 stars, default 3 like the others): a handler on slot 11
+(the renderer interceptor already wraps every `PlayerBink` method) multiplies
+f1 by the square root of stars x 0.2, so the sound itself (f1 squared) ends
+at stars x 0.2 of the original. The player keeps the game's own value at
+`+32`, so the next call isn't scaled twice. A change in Options reaches a
+playing movie at once (slot 11 is called again for the last player, unless
+it was closed). Log: "Movies: volume 0.697 (the game's 0.900, 3 stars)" when
+the value changes. Checked by the log on the boot movies; the loudness itself
+by ear.

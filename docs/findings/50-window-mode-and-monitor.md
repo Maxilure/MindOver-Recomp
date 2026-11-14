@@ -70,6 +70,17 @@ size still freezes. Not seen on Windows yet; on Wayland only the size
 applies (the compositor places windows). F11 from Borderless Window goes
 to Windowed.
 
+A first report from Windows: the mode stayed an ordinary window there. Not
+reproduced (no Windows machine at hand); ApplyBorderless now covers the
+likely causes: a maximized window ignores a new place and size until it's
+restored (restored first); the border and resizable frame are taken off on
+every pass, not only the first (leaving Fullscreen puts the old window back
+in steps); `SDL_SyncWindow` waits for the system to apply them; and at start
+it runs again at 0.5, 1.5, 3 and 6 s (the window can come after the first
+pass). When the window isn't what was asked, the log says so: "Window:
+borderless window asked WxH at x,y, the window is ... (and still has its
+border)". Linux: no such line.
+
 ## 3. The monitor list
 
 SDL's display calls belong on the UI thread; the Options rows run on the

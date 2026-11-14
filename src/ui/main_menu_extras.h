@@ -54,6 +54,14 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 // pick of Extras (or B in the Extras set) back and swaps the sets.
 void AfterScreenUpdate(PPCContext& ctx, uint8_t* base, uint32_t screen, uint32_t before);
 
+// The sets' swap transition is running (kSwapTime after a swap). The main
+// menu screen's Update is skipped meanwhile (ui/quit_game.cpp): the press
+// that picked Extras is still "new" to the game for a few frames (its pad
+// poll is slower than the frames: at 1,000+ fps the same mouse click picked
+// Extras, then the Players item the swap had just selected, 2026-11-13
+// playtest log), so the list doesn't listen until the new set is in.
+bool Swapping();
+
 // The front end's sound player (sub_82261800, saves/save_library.cpp): true =
 // don't play this one (the main menu screen's B sound while the Extras set
 // shows; `return_address` = the player's caller).

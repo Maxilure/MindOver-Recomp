@@ -157,6 +157,17 @@ bool g_stepin_keyboard = false;  // ... about player 1's controller (they still 
 std::chrono::steady_clock::time_point g_stepin_until;
 // The buttons each socket held at its last read: only a NEW press counts.
 std::array<uint16_t, kMaxPlayers> g_held{};
+// THE PRESS THAT CLOSES THE BOX STAYS IN THE BOX (2026-11-13, playtest: after
+// "any key = carry on with the keyboard", or Y to drop someone out, Crash did
+// a heavy attack: the key or button that closed the box was still held when
+// play went on). CONTROLLERS: when the box closes and the game goes on, every
+// button held then is hidden from the game until it's let go (FilterPad).
+// Not the take-over's joiner: their held START is meant to reach the game
+// (TAKING OVER above). THE KEYBOARD no longer needs this (2026-11-14,
+// findings/62 s.7): its keys reach the game as input-map EVENTS, a key keeps
+// the job it had when it went down, so a key pressed in the box is a menu key
+// and never a play button.
+std::array<std::atomic<uint16_t>, kMaxPlayers> g_muted{};
 
 // Game's main thread only.
 uint32_t g_text = 0;          // our UTF-16 text in guest memory
@@ -530,6 +541,10 @@ void Finish(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
   g_want_takeover = false;
   if (g_we_paused) CallGame(__imp__sub_8227C8E8, ctx, base, Read32(kGameGlobal), 0);
   g_we_paused = false;
+  // The press that closed the box doesn't go on into play (g_muted above).
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    if (p != g_handover_joiner) g_muted[p] = g_held[p];
+  }
 }
 
 // Once per game frame in a level (the frame function's call of the game's
@@ -675,8 +690,18 @@ bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why) {
 
 void FilterPad(int user, uint8_t* gamepad, bool connected) {
   const int phase = g_phase.load();
-  if (phase == kNone || user < 0 || user >= kMaxPlayers || !gamepad) return;
+  if (user < 0 || user >= kMaxPlayers || !gamepad) return;
   const uint16_t buttons = connected ? uint16_t(gamepad[0] << 8 | gamepad[1]) : 0;
+  if (phase == kNone) {
+    // After the box: the buttons held when it closed stay hidden until let go.
+    if (const uint16_t muted = uint16_t(g_muted[user].load() & buttons); muted || g_muted[user].load()) {
+      g_muted[user] = muted;
+      const uint16_t shown = uint16_t(buttons & ~muted);
+      gamepad[0] = uint8_t(shown >> 8);
+      gamepad[1] = uint8_t(shown);
+    }
+    return;
+  }
   const uint16_t pressed = Listening() ? uint16_t(buttons & ~g_held[user]) : 0;  // (the first second: ignored)
   g_held[user] = buttons;
   if (phase == kLost && (pressed & kButtonY)) {  // anyone (stepping in: who pressed counts)

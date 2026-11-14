@@ -176,6 +176,8 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   ShowSet(ctx, base, menu);
 }
 
+bool Swapping() { return g_swap_start != Clock::time_point{}; }
+
 bool DropSound(uint32_t return_address) {
   if (!g_extras || return_address != kBackSoundReturn) return false;
   REXLOG_INFO("Main menu: B's closing sound dropped (Extras: B only goes back)");

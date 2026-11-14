@@ -644,6 +644,44 @@ void KeyboardMouseDriver::MergeInto(uint8_t* gamepad) {
   }
   if (pulse_now_ && !paused) pad.buttons = uint16_t(uint16_t(pad.buttons) | pulse_now_);
 
+  // The same keys split by map (LastEventImage, findings/62 s.7). Each
+  // action's key already obeys its context (ActionPressOrder: a key keeps the
+  // job it had when it went down).
+  EventImage image;
+  if (!paused) {
+    if (text_mode_.load()) {
+      image.menu = uint16_t(pad.buttons);  // (typing: only the menu keys)
+    } else {
+      for (int a = 0; a < kActionCount; ++a) {
+        const ActionInfo& info = Info(Action(a));
+        if ((info.output != Output::kButton && info.output != Output::kLeftTrigger &&
+             info.output != Output::kRightTrigger) ||
+            !ActionHeld(Action(a))) {
+          continue;
+        }
+        // Menus: the menu actions, the D-pad keys (both), and the play
+        // actions on Start / Back: the MENU map's PAUSE and MAP events are
+        // how the game hears "pause" and "map" in play.
+        const bool on_start_back = info.output == Output::kButton &&
+                                   (info.button & (X_INPUT_GAMEPAD_START | X_INPUT_GAMEPAD_BACK));
+        const bool to_menu = info.context != Context::kPlay || on_start_back;
+        const bool to_play = info.context != Context::kMenu;
+        if (info.output == Output::kButton) {
+          if (to_menu) image.menu |= info.button;
+          if (to_play) image.play |= info.button;
+        } else {
+          const bool left = info.output == Output::kLeftTrigger;
+          if (to_menu) (left ? image.menu_lt : image.menu_rt) = true;
+          if (to_play) (left ? image.play_lt : image.play_rt) = true;
+        }
+      }
+    }
+    // The mouse's pulses (a click's A, a right click's B, a notch's D-pad)
+    // are for menus.
+    image.menu |= pulse_now_;
+  }
+  event_image_ = image;
+
   if (std::memcmp(&pad, &last_pad_, sizeof(pad)) != 0) {
     if (REXCVAR_GET(debug_kbm_trace)) {
       REXLOG_INFO("KBM: buttons {:04X} LT {} RT {} left ({}, {}) right ({}, {})",
@@ -791,6 +829,11 @@ bool KeyboardMouseDriver::TakeSpinCircle() {
 
 bool KeyboardMouseDriver::MenuOnScreen() const {
   return menu_check_ && menu_check_();
+}
+
+KeyboardMouseDriver::EventImage KeyboardMouseDriver::LastEventImage() const {
+  std::lock_guard<std::mutex> lock(mutex_);
+  return event_image_;
 }
 
 void KeyboardMouseDriver::SetMenuCheck(std::function<bool()> check) {

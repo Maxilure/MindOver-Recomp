@@ -75,6 +75,9 @@ Activision or the game's other owners.
   brings back the old path.
 - **Vibration strength.** **Options → Controls → Vibration**: Off, Low (the
   original's, the default) or High (twice as strong).
+- **Movie volume.** **Options → Audio → Movies** sets how loud the movies
+  play (the intros and the story cartoons). The game never applied its
+  volumes to them; they start at 3 stars like the other volumes.
 
 **Also in this version:** every fix of
 [0.2.2-alpha](https://github.com/Maxilure/MindOver-Recomp/releases/tag/v0.2.2-alpha)
@@ -98,6 +101,18 @@ and put back when an update fails).
 
 **Fixes**
 
+- **No stray attack after the "controller disconnected" box.** Closing it
+  with a key (player 1 carrying on with the keyboard and mouse) or with Y to
+  drop a player out made Crash do a heavy attack, or whatever the held key
+  does in play. A controller's button that closes the box now does nothing
+  more until it's let go. The keyboard no longer pretends to be a
+  controller at all: its keys reach the game as the game's own actions
+  (jump, heavy attack, menu confirm...) and movement values, and a key
+  pressed in a menu is only ever a menu key. `keyboard_events = false` in `settings.toml`
+  brings the old way back.
+- **Extras in the main menu with the mouse.** A click on **Extras** could
+  also open **Players** right after, mostly at high frame rates. The list
+  now waits until the Extras items have slid in.
 - **Controllers keep playing under the pointer.** With the mouse pointer over
   a tool window (Tools, Cheats...), every controller stopped until the
   pointer left the window. Controllers now always play; the keyboard and

@@ -1389,6 +1389,8 @@ std::vector<Tab> Build() {
                   tr(u"How loud the characters talk."), false),
         VolumeRow(tr(u"SFX"), {global_options::Volume::kSfx, kSoundSfxBank, kSoundSfx},
                   tr(u"How loud hits, crates, footsteps and the rest are."), false),
+        VolumeRow(tr(u"Movies"), {global_options::Volume::kMovies, 0, 0},
+                  tr(u"How loud the movies play: the intros and the story cartoons."), false),
         Heading(tr(u"Output")), OutputDeviceRow(), SpeakersRow()}});
   tabs.push_back({tr(u"Controls"), ControlsRows()});
   tabs.push_back({tr(u"Gameplay"), GameplayRows()});

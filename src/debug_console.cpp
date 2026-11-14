@@ -758,6 +758,92 @@ std::string PosCommand(const std::vector<std::string_view>& w) {
 // `interactables`: every thing a player can use that we've seen (a totem,
 // the TV...), with its object's position (object +44 = its world matrix,
 // position at +48), nearest to player 1 first: where to `goto` to use it.
+// inputmaps <socket 1-4 | 0xADDRESS> [all]: the game's INPUT MAPS of one
+// controller socket (findings/62): every map (type), every event (id, name,
+// enabled, happened this frame) with its inputs (went down / went up / held
+// down / held up + the controller value, PlayStation names as in the game's
+// script). Without "all", events with no inputs are left out.
+// WHERE (read 2026-11-14 with Ghidra, findings/62 s.1-2): the front end's
+// IsButtonPressed asks sub_82272338 about *(*(uber+0x38)+8)[socket] = the
+// socket's INPUT CONTROLLER; its maps are the list +0x198..+0x19C (a map's
+// type at +0x18); a map's event table is a vector *(map+0x1C) = {begin, end}
+// of 28-byte entries: +0 event, +4 pointer to the inputs, +0xD high nibble =
+// how many, +0x14 bit 0x80 = happened, +0x18 != 0 = removed (the lookup
+// sub_82276AF0 treats such an entry as missing). An input = 12 bytes:
+// u32 +0 = controller value (top 16 bits, signed) and kind (bits 12-15:
+// 0 down, 1 up, 2 held down, 3 held up; sub_822760D0 / sub_822752E0), +4 a
+// flag byte (0x80 = a held kind, written by sub_822760D0; 0x40 = a global
+// flag at that moment; 0x20 = met so far: the sequence rules of
+// sub_82275768). Read from the console thread: a dump taken while the game
+// updates may show one frame's bits half-written.
+std::string InputMapsCommand(const std::vector<std::string_view>& w) {
+  if (w.size() < 2) throw Error{"inputmaps <socket 1-4 | 0xADDRESS> [all]"};
+  const bool all = w.size() >= 3 && w[2] == "all";
+  static const char* const kTypes[] = {"CAMERA", "MENU",   "MOVIE", "CHEAT",
+                                       "GENERAL", "PLAYER", "ENEMY", "PROJECTILE"};
+  // In the order of the game's enum strings (0x8203B838.., 0x8203B5D0..).
+  static const char* const kEvents[] = {
+      "GAME_PAUSE", "ACCEPT", "ACTION", "ATTACK_COMBO1", "ATTACK_COMBO2", "ATTACK_COMBO3",
+      "ATTACK_COMBO4", "ATTACK_HEAVY", "ATTACK_LIGHT", "ATTACK_LIGHT_CHARGED", "ATTACK_SPECIAL",
+      "ATTACK_SHOVE", "BACK", "BLOCK", "CHEER", "DETACH", "DOWN", "DOWN_HELD", "FINISHMOVE",
+      "FIRE_WEAPON_FROM_MASK_BUTTON1", "FIRE_WEAPON_FROM_MASK_BUTTON2", "FIRE_WEAPON_FROM_MASK_BUTTON3",
+      "GROUND_SLIDE", "JACK", "JUMP", "JUMP_HOLD", "JUMP_ATTACK", "LEFT", "LEFT_HELD",
+      "LIGHT_LIGHT_HEAVY", "LIGHT_HEAVY_LIGHT", "LIGHT_HEAVY_HEAVY", "MAP", "NEXT",
+      "OBJECTIVE_TRIGGER_1", "OBJECTIVE_TRIGGER_2", "PAUSE", "POCKET", "PREVIOUS", "PROJECTILE_FIRE",
+      "RIGHT", "RIGHT_HELD", "SPECIAL", "SPIN", "STAND", "UP", "UP_HELD", "WII_SPECIAL_PROJECTILE",
+      "PROJECTILE_HARPOON", "CO_OP_JOIN", "GOD_MODE"};
+  static const char* const kValues[] = {"MOVEX", "MOVEY", "CAMERAX", "CAMERAY", "DPADLEFT", "DPADRIGHT",
+                                        "DPADUP", "DPADDOWN", "X", "CIRCLE", "TRIANGLE", "SQUARE",
+                                        "R1", "L1", "R2", "L2", "START", "SELECT"};
+  static const char* const kKinds[] = {"down", "up", "held-down", "held-up"};
+  auto name = [](const char* const* table, size_t n, int i) {
+    return i >= 0 && size_t(i) < n ? std::string(table[i]) : fmt::format("#{}", i);
+  };
+  uint32_t controller = 0;
+  const std::string arg(w[1]);
+  if (arg.rfind("0x", 0) == 0) {
+    controller = uint32_t(std::strtoul(arg.c_str(), nullptr, 16));
+  } else {
+    const int socket = std::atoi(arg.c_str());
+    if (socket < 1 || socket > 4) throw Error{"socket 1-4"};
+    const uint32_t uber = ReadBE(0x8259B190, 4);
+    const uint32_t table = ReadBE(ReadBE(uber + 0x38, 4) + 8, 4);
+    controller = ReadBE(table + 4 * uint32_t(socket - 1), 4);
+  }
+  if (!controller) throw Error{"no input controller there"};
+  std::string out = fmt::format("controller 0x{:08X}, parent 0x{:08X}, lock byte {}\n", controller,
+                                ReadBE(controller + 0x24, 4), ReadBE(controller + 0x204, 1));
+  const uint32_t maps_begin = ReadBE(controller + 0x198, 4), maps_end = ReadBE(controller + 0x19C, 4);
+  if (maps_end < maps_begin || maps_end - maps_begin > 4 * 32) throw Error{"map list looks wrong"};
+  for (uint32_t m = maps_begin; m < maps_end; m += 4) {
+    const uint32_t map = ReadBE(m, 4);
+    const int type = int(int32_t(ReadBE(map + 0x18, 4)));
+    const uint32_t vec = ReadBE(map + 0x1C, 4);
+    const uint32_t begin = ReadBE(vec, 4), end = ReadBE(vec + 4, 4);
+    const uint32_t count = end >= begin ? (end - begin) / 28 : 0;
+    out += fmt::format("map 0x{:08X} {} ({}), {} events\n", map, name(kTypes, std::size(kTypes), type), type,
+                       count);
+    for (uint32_t e = begin; e + 28 <= end && e < begin + 28 * 128; e += 28) {
+      const int id = int(int32_t(ReadBE(e, 4)));
+      const uint32_t inputs = ReadBE(e + 4, 4);
+      const uint32_t n = ReadBE(e + 0xD, 1) >> 4;
+      if (!n && !all) continue;
+      std::string line = fmt::format("  {:2} {:<28}{}{}", id, name(kEvents, std::size(kEvents), id),
+                                     ReadBE(e + 0x18, 1) ? " (removed)" : "",
+                                     (ReadBE(e + 0x14, 1) & 0x80) ? " HAPPENED" : "");
+      for (uint32_t i = 0; i < n && i < 15 && inputs; ++i) {
+        const uint32_t word = ReadBE(inputs + 12 * i, 4);
+        const int value = int(int16_t(word >> 16));
+        const int kind = int(word >> 12 & 0xF);
+        line += fmt::format("{} {} {}", i ? " then" : " :", name(kKinds, std::size(kKinds), kind),
+                            name(kValues, std::size(kValues), value));
+      }
+      out += line + "\n";
+    }
+  }
+  return out;
+}
+
 std::string InteractablesCommand() {
   constexpr uint32_t kVtable = 0x8202EA6C;  // CInteractableBehaviour
   std::string out;
@@ -1017,6 +1103,7 @@ const char kHelp[] =
     "wait level [ms] | wait <expr> <type> <op> <value> [ms] | photo | fkey <Key> | tool <bind> |\n"
     "snap <name> <expr> <bytes> | diff <name> [update] [> file] | replay <file> [from] [to] | replay stop |\n"
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | interactables |\n"
+    "inputmaps <socket 1-4 | 0xADDR> [all] |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
     "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"
     "profile <seconds> [file] [thread] | wait profile [ms] |\n"
@@ -1046,6 +1133,7 @@ std::string Run(std::string_view line) {
   if (verb == "who") return WhoCommand(w);
   if (verb == "goto") return GotoCommand(w);
   if (verb == "interactables") return InteractablesCommand();
+  if (verb == "inputmaps") return InputMapsCommand(w);
   if (verb == "snap") return SnapCommand(w);
   if (verb == "diff") return DiffCommand(w);
   if (verb == "fkey") return FKey(w);

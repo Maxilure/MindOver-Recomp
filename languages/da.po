@@ -184,7 +184,7 @@ msgstr "Gemt med snydekoder"
 msgid "No achievements while playing this save"
 msgstr "Ingen præstationer med dette gemte spil"
 
-#: src/players/lost_controller.cpp:269
+#: src/players/lost_controller.cpp:281
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -199,7 +199,7 @@ msgstr ""
 "tast for at bruge tastaturet.\n"
 "Eller {0} for at fjerne spiller 1."
 
-#: src/players/lost_controller.cpp:276
+#: src/players/lost_controller.cpp:288
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -213,7 +213,7 @@ msgstr ""
 "tast for at bruge tastaturet."
 
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:284
+#: src/players/lost_controller.cpp:296
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -223,7 +223,7 @@ msgstr ""
 "Tilslut din controller igen for at fortsætte."
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:290
+#: src/players/lost_controller.cpp:302
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -232,7 +232,7 @@ msgstr ""
 "Spiller {0}s controller er afbrudt.\n"
 "Tilslut den igen, eller spiller {1}: tryk på {2} for at tage over."
 
-#: src/players/lost_controller.cpp:294
+#: src/players/lost_controller.cpp:306
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -241,7 +241,7 @@ msgstr ""
 "Controller tilsluttet igen.\n"
 "Tryk på en knap for at fortsætte."
 
-#: src/players/lost_controller.cpp:295
+#: src/players/lost_controller.cpp:307
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -251,7 +251,7 @@ msgstr ""
 "Tilslut din controller igen for at fortsætte."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:299
+#: src/players/lost_controller.cpp:311
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -261,7 +261,7 @@ msgstr ""
 "Spiller {0}: tryk på en knap for at fortsætte."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:306
+#: src/players/lost_controller.cpp:318
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1718,7 +1718,7 @@ msgstr "Vindue i baggrunden"
 msgid "Keep Playing"
 msgstr "Bliv ved med at spille"
 
-#: src/options/options_settings.cpp:1100 src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1100 src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Pause"
 msgstr "Pause"
@@ -2101,181 +2101,189 @@ msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Hvor høje slag, kasser, fodtrin og resten er."
 
 #: src/options/options_settings.cpp:1392
+msgid "Movies"
+msgstr ""
+
+#: src/options/options_settings.cpp:1393
+msgid "How loud the movies play: the intros and the story cartoons."
+msgstr ""
+
+#: src/options/options_settings.cpp:1394
 #, fuzzy
 msgid "Output"
 msgstr "Output"
 
-#: src/options/options_settings.cpp:1393 launcher/settings_page.cpp:541
+#: src/options/options_settings.cpp:1395 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Styring"
 
-#: src/options/options_settings.cpp:1394
+#: src/options/options_settings.cpp:1396
 #, fuzzy
 msgid "Gameplay"
 msgstr "Gameplay"
 
-#: src/options/options_settings.cpp:1395
+#: src/options/options_settings.cpp:1397
 #, fuzzy
 msgid "Language"
 msgstr "Sprog"
 
-#: src/options/options_settings.cpp:1439 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1441 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Ingen"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Up"
 msgstr "Op"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Down"
 msgstr "Ned"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Left"
 msgstr "Venstre"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Right"
 msgstr "Højre"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Gå (hold)"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Spin"
 msgstr "Snurre"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Jump"
 msgstr "Hop"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Light Attack"
 msgstr "Let angreb"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Kraftigt angreb"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Bloker (hold)"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Styr / Brug"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Titanens specialangreb"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "I lommen / Frem"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Map"
 msgstr "Kort"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: bekræft"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: tilbage"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: forrige fane"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: næste fane"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: X-handling"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: Y-handling"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Retningsknap op"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Retningsknap ned"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Retningsknap venstre"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Retningsknap højre"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Højre styrepind op"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Højre styrepind ned"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Højre styrepind venstre"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Højre styrepind højre"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Venstre skulderknap"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Tryk venstre styrepind"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Tryk højre styrepind"

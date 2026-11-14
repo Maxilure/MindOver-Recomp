@@ -181,12 +181,27 @@ void ApplyBorderless() {
   const bool want = !rex::cvar::Query<bool>("fullscreen") &&
                     rex::cvar::Query<bool>("borderless_window");
   if (want) {
+    // WINDOWS (2026-11-13 playtest: the mode stayed an ordinary window there;
+    // fine on Linux). Made sturdier for what Windows does differently, not
+    // seen on Windows yet:
+    //  * a MAXIMIZED window ignores a new size / place until it's restored
+    //    (and a window maximized before is restored as maximized): restored
+    //    first;
+    //  * leaving Fullscreen puts the old window back in steps, some after our
+    //    first pass: the border and the resizable frame are taken off on
+    //    every pass (not just the first), and SDL_SyncWindow waits for the
+    //    system to apply what was asked;
+    //  * at start the window can come after our first pass: Install checks
+    //    again for a few seconds.
+    // What the window really got is logged when it isn't what was asked.
+    const SDL_WindowFlags flags = SDL_GetWindowFlags(window);
+    if (flags & (SDL_WINDOW_MAXIMIZED | SDL_WINDOW_MINIMIZED)) SDL_RestoreWindow(window);
     if (!g_borderless_applied) {
       SDL_GetWindowSize(window, &g_windowed_w, &g_windowed_h);  // put back when leaving
-      SDL_SetWindowResizable(window, false);
-      SDL_SetWindowBordered(window, false);
       g_borderless_applied = true;
     }
+    if (flags & SDL_WINDOW_RESIZABLE) SDL_SetWindowResizable(window, false);
+    if (!(flags & SDL_WINDOW_BORDERLESS)) SDL_SetWindowBordered(window, false);
     // Placed again every time: the SDK centres the window on a Monitor change.
     SDL_Rect bounds{};
     if (!SDL_GetDisplayBounds(TargetDisplay(window), &bounds)) return;
@@ -194,10 +209,25 @@ void ApplyBorderless() {
     const SDL_Rect want_rect{bounds.x, bounds.y, bounds.w, std::max(1, bounds.h - gap)};
     SDL_SetWindowPosition(window, want_rect.x, want_rect.y);
     SDL_SetWindowSize(window, want_rect.w, want_rect.h);
+    SDL_SyncWindow(window);  // (waits up to SDL's own limit; Wayland may still move it later)
     if (!SDL_RectsEqual(&want_rect, &g_borderless_rect)) {  // logged once per change
       g_borderless_rect = want_rect;
       REXLOG_INFO("Window: borderless window {}x{} at {},{}", want_rect.w, want_rect.h, want_rect.x,
                   want_rect.y);
+    }
+    SDL_Rect got{};
+    SDL_GetWindowPosition(window, &got.x, &got.y);
+    SDL_GetWindowSize(window, &got.w, &got.h);
+    const bool bordered = !(SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS);
+    static SDL_Rect s_last_got{};
+    static bool s_last_bordered = false;
+    if ((!SDL_RectsEqual(&got, &want_rect) || bordered) &&
+        (!SDL_RectsEqual(&got, &s_last_got) || bordered != s_last_bordered)) {
+      s_last_got = got;
+      s_last_bordered = bordered;
+      REXLOG_WARN("Window: borderless window asked {}x{} at {},{}, the window is {}x{} at {},{}{}", want_rect.w,
+                  want_rect.h, want_rect.x, want_rect.y, got.w, got.h, got.x, got.y,
+                  bordered ? " and still has its border" : "");
     }
   } else if (g_borderless_applied) {
     g_borderless_applied = false;
@@ -228,6 +258,15 @@ void Install(std::function<void(std::function<void()>)> post_to_ui, std::functio
     g_main_title = title;
     ApplyBorderless();  // a settings file with the mode on
   });
+  // ... and again while the window settles at start (it may not exist yet
+  // at the first pass, or the SDK sizes it after us). Only does anything
+  // with the mode on.
+  std::thread([] {
+    for (int ms : {500, 1000, 1500, 3000}) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+      if (g_post) g_post([] { ApplyBorderless(); });
+    }
+  }).detach();
   // A hand-edited / console change of the flag moves the window too.
   rex::cvar::RegisterChangeCallback("borderless_window",
                                     [](std::string_view, std::string_view) { AfterChange(); });

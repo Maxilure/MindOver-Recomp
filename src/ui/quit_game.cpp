@@ -191,6 +191,12 @@ uint32_t ScreenState(const uint8_t* base, uint32_t screen) { return Read32(base,
 extern "C" REX_FUNC(sub_820CEB58) {
   const uint32_t screen = ctx.r3.u32;
   const uint32_t before = quit_game::ScreenState(base, screen);
+  // The Extras swap's slide: the list doesn't listen (ui/main_menu_extras.h
+  // Swapping: the press that picked Extras could pick again).
+  if (main_menu_extras::Swapping()) {
+    ctx.r3.u64 = 1;  // (what the original answers)
+    return;
+  }
   __imp__sub_820CEB58(ctx, base);
   const uint64_t result = ctx.r3.u64;  // (the original always answers 1)
   main_menu_extras::AfterScreenUpdate(ctx, base, screen, before);  // (Extras / Back first: ui/main_menu_extras.h)

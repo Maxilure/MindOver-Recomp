@@ -138,6 +138,19 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // "Is one of the game's menus on screen?" (the front end, or the pause /
   // totem / save menus in a level): asked when a key goes down. Any thread.
   void SetMenuCheck(std::function<bool()> check);
+  // WHAT THE KEYS MEAN, BY MAP (findings/62 s.7, the native keyboard): the
+  // keys' buttons and triggers at the last MergeInto, split the way the
+  // game's input maps are: `menu` = the menu actions (and the D-pad keys,
+  // the mouse's pulses, Pause and Map: the MENU map's PAUSE / MAP events),
+  // `play` = the play actions (and the D-pad keys). Each key keeps the job it
+  // had when it went down (PLAY AND MENUS), so a key pressed in a menu is
+  // never a play button. input/key_events.cpp feeds them to the game's
+  // event rules; the game itself no longer gets the keyboard's buttons.
+  struct EventImage {
+    uint16_t menu = 0, play = 0;  // X_INPUT_GAMEPAD_* bits
+    bool menu_lt = false, menu_rt = false, play_lt = false, play_rt = false;
+  };
+  EventImage LastEventImage() const;
 
   // The game's XInputGetState for a socket the keyboard answers on (players.h
   // KeyboardAnswersFor): adds the keys' state to `gamepad` (guest
@@ -306,6 +319,7 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   uint16_t pulse_now_ = 0;
   // Per input: pressed while a menu was on screen (its context, bindings.h).
   std::array<bool, kInputCount> in_menu_{};
+  EventImage event_image_{};  // (LastEventImage)
   // Spin: held at the last poll, when the next circle is due, circles waiting.
   bool spin_held_ = false;
   Clock::time_point next_spin_{};

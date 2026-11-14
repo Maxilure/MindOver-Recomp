@@ -2735,3 +2735,30 @@ uses the same test. Reproduced with fake pads (player 3 joins, player 1 drops
 out with Back in the pause menu, `cheat maxlevel 3`): the log says "player 1
 has no controller entry, not asked" at the moment of the old crash, player 3
 answers the screens and max level runs to the end.
+
+## 67. The press that closes the "controller disconnected" box
+
+The box (section 62) closes on any key when player 1 carries on with the
+keyboard, or on Y when someone drops a player out. The key was still held as
+play went on: with the keyboard, Backspace (the menus' Y) gave the game a Y =
+a heavy attack, and every other key its own job. Measured with the input
+recording: Y reached the game 0.4 s after the box closed. The box's own
+fade-out still counts as a menu on screen, so the key kept its menu job.
+
+Two rules (2026-11-13; the keyboard's half replaced on 2026-11-14 by the native
+keyboard, [findings/62](62-input-events.md) s.7: its keys reach the game as input-map events,
+a key pressed in the box is a menu key and can't be a play button):
+
+- The box's close mutes every key and mouse button held at that moment until
+  it's let go (`KeyboardMouseDriver::MuteHeldKeys`: the press number is
+  remembered, a new press has a new number), and every controller's held
+  buttons the same way (`lost_controller.cpp` FilterPad), except the take-over
+  joiner's START (meant to reach the game, section 58).
+- In general, a key pressed while a menu was on screen does nothing once no
+  menu is on screen, until it's let go (`keyboard_mouse.cpp`
+  ActionPressOrder): a key that closes the pause menu doesn't carry on into
+  play either.
+
+Tested with the debug console (player 1 = keyboard + fake pad 1, `p1.unplug`,
+then `key Backspace 1200` / `key Space 1200`, `--debug_kbm_trace`): the held
+key gives the game nothing after the box; a fresh Space right after jumps.

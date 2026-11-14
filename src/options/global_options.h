@@ -36,7 +36,13 @@
 
 namespace global_options {
 
-enum class Volume { kMusic, kDialogue, kSfx };
+// kMovies = the Bink movies (their own volume, not a bus: global_options.cpp
+// MOVIE VOLUME).
+enum class Volume { kMusic, kDialogue, kSfx, kMovies };
+
+// The movie volume's handlers on Radical's movie player (at start-up, with
+// the other renderer-interceptor handlers).
+void Install();
 
 // The setting, in stars (0-5; one star = 0.2 of full volume).
 int Stars(Volume v);
@@ -47,7 +53,8 @@ const char* VolumeFlag(Volume v);
 bool InvertAxis(int slot);
 const char* InvertAxisFlag(int slot);
 
-// Puts the settings into the game: the three volumes (the audio object
+// Puts the settings into the game: the movie volume (a movie playing now),
+// the three bus volumes (the audio object
 // *(0x8259B23C) must exist: skipped if not) / the 4 Invert Axis bytes of
 // front end `fe`.
 void ApplyVolumes(PPCContext& ctx, uint8_t* base);

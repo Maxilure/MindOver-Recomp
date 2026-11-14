@@ -82,6 +82,7 @@
 #include "effects/post_effects.h"
 #include "language/game_text_banks.h"
 #include "language/language.h"
+#include "options/global_options.h"
 #include "data/data_patcher.h"
 #include "options/options_menu.h"
 #include "options/options_settings.h"
@@ -330,6 +331,7 @@ class CrashMomApp : public rex::ReXApp {
     widescreen::Install();  // the world's projection as wide as the picture (native/widescreen.h)
     decomp_matrices::Install();  // UpdateTransforms as C++, bit-identical (decomp/matrices.h, findings/60)
     language::Install();
+    global_options::Install();  // movie volume (options/global_options.h)
     // The monitor's refresh rate (V-sync paces to it; SDL, on the UI thread).
     app_context().CallInUIThread([] { frame_rate::UpdateDisplayRefresh(); });
     // Window Mode + Monitor rows (ui/window_mode.h): the monitor list, read on

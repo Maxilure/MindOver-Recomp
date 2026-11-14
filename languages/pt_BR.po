@@ -188,7 +188,7 @@ msgstr "Jogo salvo com trapaças"
 msgid "No achievements while playing this save"
 msgstr "Sem conquistas jogando este jogo salvo"
 
-#: src/players/lost_controller.cpp:269
+#: src/players/lost_controller.cpp:281
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -203,7 +203,7 @@ msgstr ""
 "uma tecla para usar o teclado.\n"
 "Ou {0} para tirar o jogador 1."
 
-#: src/players/lost_controller.cpp:276
+#: src/players/lost_controller.cpp:288
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -217,7 +217,7 @@ msgstr ""
 "uma tecla para usar o teclado."
 
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:284
+#: src/players/lost_controller.cpp:296
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -227,7 +227,7 @@ msgstr ""
 "Conecte o controle de novo para continuar."
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:290
+#: src/players/lost_controller.cpp:302
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -236,7 +236,7 @@ msgstr ""
 "O controle do jogador {0} desconectou.\n"
 "Conecte-o de novo, ou jogador {1}: aperte {2} para assumir."
 
-#: src/players/lost_controller.cpp:294
+#: src/players/lost_controller.cpp:306
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -245,7 +245,7 @@ msgstr ""
 "Controle conectado de novo.\n"
 "Aperte qualquer botão para continuar."
 
-#: src/players/lost_controller.cpp:295
+#: src/players/lost_controller.cpp:307
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -255,7 +255,7 @@ msgstr ""
 "Conecte o controle de novo para continuar."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:299
+#: src/players/lost_controller.cpp:311
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -265,7 +265,7 @@ msgstr ""
 "Jogador {0}: aperte qualquer botão para continuar."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:306
+#: src/players/lost_controller.cpp:318
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -1725,7 +1725,7 @@ msgstr "Janela em segundo plano"
 msgid "Keep Playing"
 msgstr "Continuar jogando"
 
-#: src/options/options_settings.cpp:1100 src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1100 src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Pause"
 msgstr "Pausa"
@@ -2109,180 +2109,190 @@ msgstr "O volume de golpes, caixas, passos e todo o resto."
 
 #: src/options/options_settings.cpp:1392
 #, fuzzy
+msgid "Movies"
+msgstr "Filmes"
+
+#: src/options/options_settings.cpp:1393
+#, fuzzy
+msgid "How loud the movies play: the intros and the story cartoons."
+msgstr "O volume dos filmes: as introduções e os desenhos da história."
+
+#: src/options/options_settings.cpp:1394
+#, fuzzy
 msgid "Output"
 msgstr "Saída"
 
-#: src/options/options_settings.cpp:1393 launcher/settings_page.cpp:541
+#: src/options/options_settings.cpp:1395 launcher/settings_page.cpp:541
 #, fuzzy
 msgid "Controls"
 msgstr "Controles"
 
-#: src/options/options_settings.cpp:1394
+#: src/options/options_settings.cpp:1396
 #, fuzzy
 msgid "Gameplay"
 msgstr "Jogabilidade"
 
-#: src/options/options_settings.cpp:1395
+#: src/options/options_settings.cpp:1397
 #, fuzzy
 msgid "Language"
 msgstr "Idioma"
 
-#: src/options/options_settings.cpp:1439 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1441 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Nenhuma"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Up"
 msgstr "Para cima"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Down"
 msgstr "Para baixo"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Left"
 msgstr "Para a esquerda"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Move Right"
 msgstr "Para a direita"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Andar (segurar)"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Spin"
 msgstr "Girar"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Jump"
 msgstr "Pular"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Light Attack"
 msgstr "Ataque leve"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Ataque pesado"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Bloquear (segurar)"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Dominar / Usar"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Ataque especial do titã"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Guardar / Tirar"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1465
 #, fuzzy
 msgid "Map"
 msgstr "Mapa"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: confirmar"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: voltar"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: aba anterior"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1466
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: próxima aba"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: ação X"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: ação Y"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Direcional para cima"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Direcional para baixo"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Direcional para a esquerda"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Direcional para a direita"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Analógico direito para cima"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Analógico direito para baixo"
 
-#: src/options/options_settings.cpp:1466
+#: src/options/options_settings.cpp:1468
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Analógico direito para a esquerda"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Analógico direito para a direita"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Botão superior esquerdo"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clicar analógico esquerdo"
 
-#: src/options/options_settings.cpp:1467
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clicar analógico direito"

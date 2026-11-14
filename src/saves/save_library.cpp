@@ -45,6 +45,7 @@
 #include "../overlay_banner.h"
 #include "../gameplay/game_mods.h"
 #include "../players/lost_controller.h"
+#include "../input/key_events.h"
 #include "../players/more_players.h"
 #include "../players/outfit_picker.h"
 #include "../cheats/cheats.h"
@@ -1801,11 +1802,20 @@ extern "C" REX_FUNC(sub_824742F0) {
   // The keyboard and mouse, straight into the game's state for the sockets
   // the keyboard answers on (input/keyboard_mouse.h MergeInto: no pretend
   // controller in the SDK's input system).
+  // KEYBOARD AS EVENTS (findings/62 s.7): what the keys added is noted
+  // (before / after the merge) and taken back out at the end, after every
+  // port filter: the game hears the keyboard through its input maps' events
+  // (input/key_events.h); the port's own readers below still see it.
+  uint8_t kb_before[12] = {}, kb_after[12] = {};
+  bool kb_merged = false;
   if (state && ctx.r3.u32 == 0) {
     auto* kbm_driver = kbm::KeyboardMouseDriver::Get();
     auto* assignment = kbm::PlayerAssignment::Get();
     if (kbm_driver && assignment && assignment->KeyboardAnswersFor(user)) {
+      std::memcpy(kb_before, GuestPtr(base, state + 4), 12);
       kbm_driver->MergeInto(GuestPtr(base, state + 4));
+      std::memcpy(kb_after, GuestPtr(base, state + 4), 12);
+      kb_merged = key_events::Active();
     }
   }
   // A replay of recorded presses replaces what the device said (input_record.h).
@@ -1838,6 +1848,29 @@ extern "C" REX_FUNC(sub_824742F0) {
   // flip to buttons) and after the recording (a replay goes through this
   // filter again: recorded presses would come in twice).
   if (state) game_mods::FilterPad(user, GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  // The keyboard's buttons and triggers out again (KEYBOARD AS EVENTS above):
+  // only what the merge added and no filter added itself (the title's
+  // "any button = START" is the port's own press and stays). A replay
+  // replaces the whole state: left alone.
+  if (kb_merged && !input_record::ReplayRunning()) {
+    uint8_t* gp = GuestPtr(base, state + 4);
+    const uint16_t before = uint16_t(kb_before[0] << 8 | kb_before[1]);
+    const uint16_t after = uint16_t(kb_after[0] << 8 | kb_after[1]);
+    const uint16_t added = uint16_t(after & ~before & ~our_buttons);
+    const uint16_t now = uint16_t((gp[0] << 8 | gp[1]) & ~added);
+    gp[0] = uint8_t(now >> 8);
+    gp[1] = uint8_t(now);
+    for (int t = 2; t < 4; ++t) {
+      if (kb_after[t] > kb_before[t] && gp[t] == kb_after[t]) gp[t] = kb_before[t];
+    }
+    // The sticks too (findings/62 s.8): the keys reach the game's movement
+    // values through Radical's input objects (key_events.cpp sub_8235CAE8).
+    for (int at = 4; at < 12; at += 4) {
+      if (std::memcmp(kb_after + at, kb_before + at, 4) != 0 && std::memcmp(gp + at, kb_after + at, 4) == 0) {
+        std::memcpy(gp + at, kb_before + at, 4);
+      }
+    }
+  }
 }
 
 // The overwrite question's decision for slot 1 (the one the delete jump

@@ -465,3 +465,16 @@ Tested with the debug console on a test copy, window unfocused: setting off =
 pause menu 1.1 s after the level started (exit 516, state 868); B = back in
 play, no second pause; a scripted START also takes exit 516. Setting on = no
 pause. A real controller in the background is not tested yet.
+
+## 8. Extras: one click picked twice
+
+A click on **Extras** in the main menu (`ui/main_menu_extras.*`) could open
+**Players** right after. In a log at about 1,100 fps the main menu screen's
+A check (`sub_820CEE40`, from `0x820CEEFC`) answered "pressed" in the frame of
+the pick AND in the next one: the game's controller poll runs slower than the
+frames, so the press stays "new" for a few frames. The swap had just put the
+cursor on Players and the screen back in its open state, so the second answer
+picked Players. The main menu screen's Update (`sub_820CEB58`, wrapped in
+`ui/quit_game.cpp`) is now skipped while the swap's slide runs (0.22 s,
+`main_menu_extras::Swapping`). Tested by console, uncapped: six clicks on
+Extras stayed in the Extras list; Enter right after still opens Players.
