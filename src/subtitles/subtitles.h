@@ -23,8 +23,8 @@
 // the NPC / story lines (`ingameNN_...`), Cortex's loudspeaker lines and the
 // in-engine cutscene tracks. Combat lines are not subtitled.
 //
-// THE TEXT: `<user folder>/subtitles/<code>.tsv` (<code> = the text
-// language's code, "en-us", "pt-br"..., then "en" as a fallback), TAB-separated:
+// THE TEXT: `<user folder>/subtitles/en.tsv`, then `<code>.tsv` (<code> = the
+// text language's code, "pt-br"...) over it key by key, TAB-separated:
 //   <16 hex digits of a sound ID>  <text>            a sound's whole line
 //   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
 // <key> = a movie's file name (Crash_02_51: its lines follow the movie's

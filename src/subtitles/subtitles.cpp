@@ -169,6 +169,10 @@ bool ReadTexts(const std::string& code) {
   if (!in) return false;
   std::string line;
   size_t whole = 0, cues = 0, skipped = 0;
+  // A key's timed lines in THIS file replace those an earlier file gave it
+  // (the language's file over English), so its first line here clears them.
+  std::unordered_map<std::string, bool> movie_seen;
+  std::unordered_map<uint64_t, bool> sound_seen;
   while (std::getline(in, line)) {
     if (!line.empty() && line.back() == '\r') line.pop_back();  // files written on Windows
     if (line.empty() || line[0] == '#') continue;
@@ -191,8 +195,14 @@ bool ReadTexts(const std::string& code) {
       cue.speaker = Utf16(f[3]);
       cue.text = TextOf(f[4]);
       if (cue.start < 0 || cue.end <= cue.start) { ++skipped; continue; }
-      if (is_id) g_sound_cues[id].push_back(std::move(cue));
-      else g_movie_cues[MovieKey(f[0])].push_back(std::move(cue));
+      if (is_id) {
+        if (!sound_seen[id]) { g_sound_cues[id].clear(); sound_seen[id] = true; }
+        g_sound_cues[id].push_back(std::move(cue));
+      } else {
+        const std::string key = MovieKey(f[0]);
+        if (!movie_seen[key]) { g_movie_cues[key].clear(); movie_seen[key] = true; }
+        g_movie_cues[key].push_back(std::move(cue));
+      }
       ++cues;
     } else {
       ++skipped;
@@ -277,12 +287,16 @@ bool On() { return g_on; }
 void Start() {
   g_on = REXCVAR_GET(subtitles) != 0;
   if (!g_on) return;
-  // The text language's code ("pt-br"), then plain English.
+  // The text language's code ("pt-br").
   const auto& langs = language::TextLanguages();
   const int running = language::RunningText();
   const std::string code =
       running >= 0 && running < int(langs.size()) ? langs[size_t(running)].key : "en-us";
-  if (!ReadTexts(code) && !ReadTexts("en")) {
+  // English first, then the language's own file over it (its lines replace
+  // English ones key by key; what it doesn't have stays English).
+  const bool english = ReadTexts("en");
+  const bool own = code != "en" && ReadTexts(code);
+  if (!english && !own) {
     REXLOG_INFO("Subtitles: on, no text file in {} ({}.tsv or en.tsv){}",
                 (game_folder::UserFolder() / "subtitles").string(), code,
                 REXCVAR_GET(subtitles_placeholders) ? "; placeholders shown" : "");

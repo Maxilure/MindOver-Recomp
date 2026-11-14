@@ -735,3 +735,30 @@ panel while a menu is up, or hide it there.
 
 Not tested: a movie paused mid-line, a cutscene track cut off with lines to
 come, two lines at once, sizes, ultrawide, Linux.
+
+## 19. English first, the language's file over it; extracting the sources
+
+* The subtitles now read `<user folder>/subtitles/en.tsv`, then the text
+  language's file (`pt-br.tsv`...) over it **key by key**: a sound's whole
+  line or a movie's / sound's set of timed lines in the language's file
+  replaces the English one; anything it lacks stays English. Checked on
+  Windows with the text language Brazilian Portuguese: a cartoon's timed
+  lines from `en.tsv` (none for it in `pt-br.tsv`) shown at their times.
+* `tools/subtitles.py extract-movies <movie1.rcf> <movie2.rcf> <out>
+  [--only Crash_]` copies the Bink movies out of the movie archives
+  (standard library only, so it runs on a player's PC: run on Windows,
+  17 story cartoons, `Crash_01`-`Crash_19` without 09 and 12, 47-343 MB
+  each). A cartoon's English dialogue is its audio stream 2 (track 1 of
+  s.5 of findings/49; stream 1 is track 0, the front stereo), mono 48 kHz,
+  Bink audio (DCT): `ffmpeg -map 0:2`.
+* `tools/subtitles.py extract-voices <voice.rcf> <out>` decodes every
+  in-scope clip (540 for English) to 16 kHz mono WAV with ffmpeg (each
+  `.rsd`'s XMA data in an XMA2 RIFF; the six 5.1 cutscene tracks with three
+  streams and channel mask 0x3F decode whole, the speech in their centre
+  channel), for speech recognition on the player's own machine.
+* Timed lines a pause shorter than 0.5 s apart are joined (the first runs on
+  to the next one's start), so a subtitle doesn't blink between two lines
+  of one speaker.
+
+The text itself (a transcription of the player's own disc) stays in the
+player's user folder; nothing of it is in the repository (AGENTS.md s.2).

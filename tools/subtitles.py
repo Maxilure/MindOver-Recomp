@@ -34,11 +34,20 @@
 #     (findings/54 s.5): H+1 stream count, H+4 lead-in samples, H+8 end
 #     sample, H+0x0C rate (big-endian). Length = end sample / rate.
 #
-# USAGE
-#   python3 -I tools/subtitles.py inventory <voice.rcf> <out dir> [--logs <play-*.log> ...]
-#   -> <out dir>/voice_inventory.csv   one row per clip
-#      <out dir>/voice_summary.txt     counts per family and speaker folder
-#   (python -I: the archive is untrusted data; nothing is imported from its folder.)
+# USAGE (python -I: the archives are untrusted data; nothing is imported from
+# their folder). Every output goes to a folder of the player's choice, normally
+# <game folder>/user/subtitles/, NEVER into the repository.
+#
+#   inventory <voice.rcf> <out dir> [--logs <play-*.log> ...]
+#       -> voice_inventory.csv (one row per clip), voice_summary.txt (counts)
+#   extract-movies <movie1.rcf> [<movie2.rcf> ...] <out dir> [--only Crash_]
+#       the Bink movies (.bik) out of the movie archives, as they are. Python's
+#       standard library only, so it runs on any player's PC.
+#   extract-voices <voice.rcf> <out dir>
+#       every in-scope clip (findings/63 s.11) as <sound ID>.wav, 16 kHz mono
+#       (for speech recognition), + voices.csv; needs the `ffmpeg` program
+#       (its XMA2 decoder: the clip's data wrapped in an XMA2WAVEFORMATEX RIFF,
+#       findings/19 s.7).
 # =============================================================================
 
 import argparse
@@ -129,6 +138,109 @@ def speaker_folder(name):
     return parts[-2] if len(parts) >= 2 else ""
 
 
+def read_rcf_files(f):
+    """[(name, data_offset, size)] of every file in an open RCF archive (any kind)."""
+    f.seek(0)
+    header = f.read(0x3C)
+    if header[:23] != b"ATG CORE CEMENT LIBRARY":
+        raise ValueError("not an RCF archive")
+    dir_off, _dir_size, names_off, names_size, _zero, count = struct.unpack(">6I", header[0x24:0x3C])
+    f.seek(dir_off)
+    directory = f.read(count * 12)
+    # (offset, size) in data order = the order of the names.
+    entries = sorted(struct.unpack_from(">2I", directory, i * 12 + 4) for i in range(count))
+    f.seek(names_off)
+    names = f.read(names_size)
+    out = []
+    p = 8
+    for i in range(count):
+        if p + 16 > len(names):
+            break
+        p += 12
+        (length,) = struct.unpack_from("<I", names, p)
+        p += 4
+        name = names[p:p + length - 1].decode("latin-1")
+        p += length + 3
+        out.append((name, entries[i][0], entries[i][1]))
+    return out
+
+
+def extract_movies(args):
+    os.makedirs(args.out, exist_ok=True)
+    n = 0
+    for archive in args.archives:
+        with open(archive, "rb") as f:
+            for name, offset, size in read_rcf_files(f):
+                base = re.split(r"[\\/]", name)[-1]
+                if not base.lower().endswith(".bik") or not base.startswith(args.only):
+                    continue
+                f.seek(offset)
+                with open(os.path.join(args.out, base), "wb") as out:
+                    left = size
+                    while left:
+                        chunk = f.read(min(left, 1 << 22))
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                        left -= len(chunk)
+                print(f"{base}  {size / 1e6:.1f} MB")
+                n += 1
+    print(f"{n} movie(s) -> {args.out}")
+
+
+def xma2_riff(f, offset):
+    """The .rsd at `offset` as an XMA2 WAV file (bytes) ffmpeg can decode, + seconds."""
+    f.seek(offset)
+    head = f.read(0x900)
+    h_size, table_size, data_size = struct.unpack_from(">3I", head, 0x800)
+    h = head[0x80C:0x80C + h_size]
+    streams = h[1]
+    end, rate, block = struct.unpack_from(">I", h, 8)[0], struct.unpack_from(">I", h, 12)[0], struct.unpack_from(">I", h, 0x18)[0]
+    channels = sum(h[0x28 + 4 * k] for k in range(streams))
+    mask = {1: 0x4, 2: 0x3, 6: 0x3F}.get(channels, 0)
+    f.seek(offset + 0x80C + h_size + table_size)
+    data = f.read(data_size)
+    blocks = (data_size + block - 1) // block
+    fmt = struct.pack("<HHIIHHH", 0x166, channels, rate, rate * 2 * channels, 2048, 16, 34)
+    fmt += struct.pack("<HIIIIIIIBBH", streams, mask, end, block, 0, end, 0, 0, 0, 4, blocks)
+    body = b"WAVE" + b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(data)) + data
+    return b"RIFF" + struct.pack("<I", len(body)) + body, end / rate if rate else 0.0
+
+
+def extract_voices(args):
+    import subprocess
+    import tempfile
+    os.makedirs(args.out, exist_ok=True)
+    rows = []
+    with open(args.archive, "rb") as f:
+        for sid, offset in read_rcf_index(f):
+            info = read_rsd(f, offset)
+            if not info:
+                continue
+            name, channels, _rate, seconds = info
+            fam = family_of(name)
+            if fam in ("combat", "credits"):
+                continue
+            riff, seconds = xma2_riff(f, offset)
+            wav = os.path.join(args.out, f"{sid:016x}.wav")
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as t:
+                t.write(riff)
+            r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", t.name, "-ac", "1", "-ar", "16000", wav],
+                               capture_output=True, text=True)
+            os.unlink(t.name)
+            if r.returncode != 0:
+                print(f"can't decode {name}: {r.stderr.strip()[:200]}")
+                continue
+            rows.append({"sound_id": f"{sid:016x}", "family": fam, "speaker_folder": speaker_folder(name),
+                         "designer_name": name, "channels": channels, "seconds": f"{seconds:.2f}"})
+    rows.sort(key=lambda r: r["designer_name"].lower())
+    with open(os.path.join(args.out, "voices.csv"), "w", newline="", encoding="utf-8") as out:
+        w = csv.DictWriter(out, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+    print(f"{len(rows)} clips -> {args.out}")
+
+
 # "Audio: <kind> <designer name> (<16 hex>)" -- audio_trace.cpp's line.
 TRACE = re.compile(r"Audio: (\w+) (.+?) \(([0-9a-f]{16})\)")
 
@@ -203,9 +315,22 @@ def main():
     inv.add_argument("archive")
     inv.add_argument("out")
     inv.add_argument("--logs", nargs="*")
+    mov = sub.add_parser("extract-movies", help="the Bink movies out of the movie archives")
+    mov.add_argument("archives", nargs="+", help="movie1.rcf movie2.rcf ... then the out dir")
+    mov.add_argument("--only", default="", help="only movies whose name starts with this (e.g. Crash_)")
+    voc = sub.add_parser("extract-voices", help="in-scope clips as 16 kHz WAV files (needs ffmpeg)")
+    voc.add_argument("archive")
+    voc.add_argument("out")
     args = p.parse_args()
     if args.cmd == "inventory":
         inventory(args)
+    elif args.cmd == "extract-movies":
+        if len(args.archives) < 2:
+            p.error("give at least one archive and the out dir")
+        args.out = args.archives.pop()
+        extract_movies(args)
+    elif args.cmd == "extract-voices":
+        extract_voices(args)
 
 
 if __name__ == "__main__":
