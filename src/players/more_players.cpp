@@ -1104,6 +1104,41 @@ void more_players::ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base) {
   const bool active = LocalPlayers() > 2 && InPlay() && !Loading();
   for (int p = 0; p < kMaxPlayers; ++p) {
     const uint32_t crash = p < LocalPlayers() ? CharacterOf(p) : 0;
+    // WATCH FOR STRAYS (2026-11-14, GitHub issue #2: hidden players 3-4 seen
+    // standing on the ground, Ice Kingdom gate). A not-in-game player 3-4 is
+    // a hidden rider: always within a step of its host. Far from its host for
+    // half a second = it was left behind (and may be visible): one WARN line
+    // with what it looks like, so the next sighting's log names the moment.
+    {
+      static StrayClock::time_point far_since[kMaxPlayers];
+      static bool reported[kMaxPlayers];
+      float me[3], at[3];
+      const auto it = crash ? g_host_of.find(crash) : g_host_of.end();
+      const uint32_t host = it != g_host_of.end() ? Read32(it->second + kHolderOwner) : 0;
+      bool far = false;
+      float d = 0.0f;
+      if (active && p >= 2 && crash && host && Read32(kState + 4 * p) == 0 && PositionOf(crash, me) &&
+          PositionOf(host, at)) {
+        d = std::sqrt((at[0] - me[0]) * (at[0] - me[0]) + (at[1] - me[1]) * (at[1] - me[1]) +
+                      (at[2] - me[2]) * (at[2] - me[2]));
+        far = d > 6.0f;
+      }
+      if (!far) {
+        if (reported[p]) REXLOG_INFO("Co-op: player {}'s hidden Crash is back with its host", p + 1);
+        far_since[p] = {};
+        reported[p] = false;
+      } else if (!reported[p]) {
+        if (far_since[p] == StrayClock::time_point{}) far_since[p] = now;
+        if (std::chrono::duration<float>(now - far_since[p]).count() >= 0.5f) {
+          reported[p] = true;
+          REXLOG_WARN("Co-op: player {} (not in game) is {:.1f} units from its host (player {}): left behind, "
+                      "maybe visible: at ({:.1f}, {:.1f}, {:.1f}), host at ({:.1f}, {:.1f}, {:.1f}), zone {:08X}, "
+                      "host's zone {:08X}, focus player {}",
+                      p + 1, d, PlayerOf(host) + 1, me[0], me[1], me[2], at[0], at[1], at[2],
+                      Read32(crash + 40), Read32(host + 40), int32_t(Read32(0x825B0008 + 40)) + 1);
+        }
+      }
+    }
     // Only Crashes nobody plays (state 0: not joined, dropped out, dead) that ride nobody.
     if (!active || !crash || Read32(kState + 4 * p) != 0 || g_host_of.count(crash)) {
       stray_since[p] = {};

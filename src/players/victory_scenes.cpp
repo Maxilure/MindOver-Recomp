@@ -249,6 +249,27 @@ extern "C" REX_FUNC(sub_8229E3C8) {
     ++moved;
     REXLOG_INFO("Victory scenes: player {} placed at ({:.1f} {:.1f} {:.1f})", p + 1, at.x, at.y, at.z);
   }
+  // HIDDEN PLAYERS 3-4 COME ALONG TOO (2026-11-14, GitHub issue #2 again:
+  // players 3 and 4 found standing at the Ice Kingdom gate, nobody joined).
+  // The original's teleport (above) moves the focus player to the first spot
+  // and "the other one" (player 1 or 2) to the second, WITHOUT a join check:
+  // a player 2 who hasn't joined is a hidden Crash riding the host, and it
+  // is moved along with them, so it never stays behind in a part of the level
+  // that goes to sleep when the camera leaves. Players 3-4 who haven't joined
+  // are hidden riders the same way, and the loop above moved only joined
+  // ones: the hidden ones stayed where the cutscene began. Moved here to the
+  // FIRST spot (the focus player's, their host's), like player 2 to its spot;
+  // their mask update puts them back on the shoulder, hidden.
+  const int focus = int(int32_t(Read32(kGameObject + 0x28)));
+  for (int p = 2; p < kMaxPlayers; ++p) {
+    if (InGame(p) || p == focus) continue;
+    const uint32_t body = BodyOf(ctx, base, p);
+    if (!body) continue;
+    const Vec at = a + Vec{0, 0.25f, 0};
+    Teleport(ctx, base, action, first, body, at);
+    REXLOG_INFO("Victory scenes: player {} (not in game, a hidden rider) moved along to ({:.1f} {:.1f} {:.1f})",
+                p + 1, at.x, at.y, at.z);
+  }
   if (moved) {
     g_armed_ms = NowMs();
     g_in_shot = false;

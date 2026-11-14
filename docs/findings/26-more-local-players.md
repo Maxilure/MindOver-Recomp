@@ -2762,3 +2762,34 @@ a key pressed in the box is a menu key and can't be a play button):
 Tested with the debug console (player 1 = keyboard + fake pad 1, `p1.unplug`,
 then `key Backspace 1200` / `key Space 1200`, `--debug_kbm_trace`): the held
 key gives the game nothing after the box; a fresh Space right after jumps.
+
+## 68. Hidden players 3-4 left at a cutscene teleport (how player 2 avoids it)
+
+**The symptom.** Players 3 and 4, who had not joined, stood visible on the
+ground at the Ice Kingdom gate next to player 1 (a report with a screenshot;
+GitHub issue #2 again). Not reproduced on purpose.
+
+**How the original keeps player 2.** The cutscene teleport `sub_8229E3C8`
+(DO_TeleportPlayer, section 39) moves the focus player (game object +0x28) to
+the first spot and "the other one" (focus == 0 ? 1 : 0) to the second, with
+no check of the co-op state. A player 2 who has not joined is a hidden Crash
+riding the host, and it is moved along every time, so it never stays in a
+zone that goes to sleep once the camera leaves.
+
+**The gap.** Section 39 added the same move for players 3-4, but only for
+those IN the game. Hidden ones stayed where the cutscene began; section 42's
+re-zoning only runs while the host's holder sends its per-frame messages.
+
+**The change** (`victory_scenes.cpp`). After the original, every player 3-4
+who is not in the game (and not the focus player) gets the same teleport
+message, to the first spot: their host's. Their mask update then puts them
+back on the shoulder, hidden. Seen in play: a teleport logged "player 3 / 4
+(not in game, a hidden rider) moved along", and afterwards all three hidden
+Crashes sat 1.5 units above player 1. Whether it covers the Ice Kingdom gate
+itself is not confirmed.
+
+**A watch for next time** (`more_players.cpp`, ReparkHiddenCrashes, every
+frame): a player 3-4 not in the game whose Crash stays more than 6 units from
+its host for 0.5 s logs a WARN "Co-op: player N (not in game) is X units from
+its host ... left behind, maybe visible" with both positions, both zones and
+the focus player, and an info line when it is back.
