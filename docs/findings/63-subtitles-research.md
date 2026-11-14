@@ -689,3 +689,49 @@ the purpose (not the game's words) and placeholders for the rest:
 
 Not checked yet: an Aku Aku line on screen (the speaker name), a cutscene
 cut, two lines at once, the sizes, ultrawide windows, Linux.
+
+## 18. Timed lines: story cartoons and multi-line sounds
+
+The story cartoons (family A) have no sound of their own per line: the
+dialogue is a track inside the Bink file. The six in-engine cutscene tracks
+(family B) hold several lines in one sound. Both now take **timed lines**
+from the same text file, five TAB-separated fields:
+
+`<key>  <start>  <end>  <speaker>  <text>`
+
+* `<key>` a movie's file name (`Crash_02_51`, case and `.bik` ignored) or a
+  sound ID; `<start>` / `<end>` seconds from the start of that movie / sound
+  (`mm:ss.cc` or `ss.cc`); `<speaker>` may be empty.
+* A movie's lines follow **its own clock**: voice_trace's frame-end watcher
+  (now on whenever the subtitles are, not only with the trace) reads the Bink
+  handle each frame, (current frame - 1) x divisor / rate (s.15.1), and hands
+  it to the subtitles with the movie's name; a pause of the movie stops the
+  clock and its line stays. When the player's handle becomes 0 (skip or end)
+  the movie's lines go at once.
+* A sound's lines are scheduled when the sound starts (s.16.2), each never
+  past the sound's length; a cut removes the one on screen and the ones not
+  yet shown.
+* With `--subtitles_placeholders`, a movie without a line at the moment shows
+  `[<name>] mm:ss.t`, its clock: a check of the timing, and a way to note down
+  the times of its lines.
+
+Tested on Windows (one player) with test lines written for the purpose
+(not the game's words), from a screen recording of a new game:
+
+* Crash_02_51 played to the end: the placeholder clock ran from 00:00,
+  the line timed 0:02-0:05 (speaker "TESTE" in yellow) and the one timed
+  0:08-0:12 (no speaker) appeared and left on time, the clock came back in
+  between and after; nothing was left on screen after the movie's close.
+  Crash_04_51's clock started with it.
+* the nvmail cutscene track: its two timed lines over its two stretches of
+  speech (0:00-0:06.3, 7.5-9.7 s, findings/19 s.3), nothing in the gap.
+* s.17's open points: "posição" / "ação, não" drawn with the composed ã;
+  "Aku Aku:" in yellow before an Aku Aku line.
+
+**Open: subtitles over the pause menu.** The voices go on under the pause
+menu (s.16.3), so does their subtitle, and it is drawn over the menu's
+lower part (its Back / Select prompts). To decide: move it above the menu's
+panel while a menu is up, or hide it there.
+
+Not tested: a movie paused mid-line, a cutscene track cut off with lines to
+come, two lines at once, sizes, ultrawide, Linux.

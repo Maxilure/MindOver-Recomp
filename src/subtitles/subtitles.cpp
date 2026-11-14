@@ -5,7 +5,9 @@
 // See subtitles.h for what the player sees and where the timing comes from.
 // This file holds:
 //   1. the settings (REXCVARs, kept in user/settings.toml like the others);
-//   2. the text file (user/subtitles/<code>.tsv, read once at start-up);
+//   2. the text file (user/subtitles/<code>.tsv, read once at start-up):
+//      whole lines of a sound, and timed lines (cues) inside a Bink movie or
+//      inside a sound that holds several lines (an in-engine cutscene track);
 //   3. the lines on screen: a short list fed by voice_trace.cpp (audio
 //      thread) and read by the drawing (UI thread), under one mutex;
 //   4. the drawing: an ImGui "dialog" with no window, like fps_overlay.cpp:
@@ -21,6 +23,7 @@
 #include "subtitles/subtitles.h"
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -34,6 +37,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <fmt/format.h>
 #include <imgui.h>
 #include <rex/cvar.h>
 #include <rex/logging.h>
@@ -75,7 +79,16 @@ bool g_on = false;
 // ---------------------------------------------------------------------------
 // 2. The text file
 // ---------------------------------------------------------------------------
-std::unordered_map<uint64_t, std::u16string> g_texts;  // sound ID -> text (read-only after Start)
+// A timed line: from `start` to `end` seconds of its movie / sound.
+struct Cue {
+  double start = 0, end = 0;
+  std::u16string speaker;  // "" = none
+  std::u16string text;
+};
+// Read-only after Start.
+std::unordered_map<uint64_t, std::u16string> g_texts;     // sound ID -> its whole line
+std::unordered_map<uint64_t, std::vector<Cue>> g_sound_cues;  // sound ID -> its lines
+std::unordered_map<std::string, std::vector<Cue>> g_movie_cues;  // movie name (lower case) -> its lines
 
 // UTF-8 -> UTF-16 (the font's characters are all in the BMP).
 std::u16string Utf16(std::string_view s) {
@@ -93,39 +106,100 @@ std::u16string Utf16(std::string_view s) {
   return out;
 }
 
+std::string Lower(std::string_view s) {
+  std::string out(s);
+  for (char& c : out) c = char(std::tolower(static_cast<unsigned char>(c)));
+  return out;
+}
+
+// A movie's key: its file name without folder and ".bik", lower case
+// ("d:\movies\Crash_02_51.bik" -> "crash_02_51").
+std::string MovieKey(std::string_view name) {
+  if (const size_t slash = name.find_last_of("\\/"); slash != std::string_view::npos) {
+    name.remove_prefix(slash + 1);
+  }
+  if (name.size() > 4 && Lower(name.substr(name.size() - 4)) == ".bik") name.remove_suffix(4);
+  return Lower(name);
+}
+
+// 16 hex digits -> a sound ID.
+bool ParseId(std::string_view s, uint64_t* id) {
+  if (s.size() != 16) return false;
+  uint64_t v = 0;
+  for (char c : s) {
+    const int d = c >= '0' && c <= '9' ? c - '0'
+                  : c >= 'a' && c <= 'f' ? c - 'a' + 10
+                  : c >= 'A' && c <= 'F' ? c - 'A' + 10
+                                         : -1;
+    if (d < 0) return false;
+    v = (v << 4) | uint64_t(d);
+  }
+  *id = v;
+  return true;
+}
+
+// "mm:ss.cc" or "ss.cc" -> seconds (-1 if it isn't a time).
+double ParseTime(std::string_view s) {
+  double minutes = 0;
+  if (const size_t colon = s.find(':'); colon != std::string_view::npos) {
+    try { minutes = std::stod(std::string(s.substr(0, colon))); } catch (...) { return -1; }
+    s.remove_prefix(colon + 1);
+  }
+  try { return minutes * 60.0 + std::stod(std::string(s)); } catch (...) { return -1; }
+}
+
+// "\n" written as two characters breaks the line.
+std::u16string TextOf(std::string text) {
+  for (size_t p = text.find("\\n"); p != std::string::npos; p = text.find("\\n", p + 1)) {
+    text.replace(p, 2, "\n");
+  }
+  return Utf16(text);
+}
+
 // Reads `<user>/subtitles/<code>.tsv`; false if there is no such file.
+// A line is TAB-separated, one of:
+//   <sound ID>  <text>                               a sound's whole line
+//   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
+// where <key> = a sound ID (a sound holding several lines) or a movie's file
+// name (Crash_02_51), the times are seconds from the start of that sound /
+// movie ("mm:ss.cc" or "ss.cc"), <speaker> may be empty. # starts a comment.
 bool ReadTexts(const std::string& code) {
   const std::filesystem::path path = game_folder::UserFolder() / "subtitles" / (code + ".tsv");
   std::ifstream in(path, std::ios::binary);
   if (!in) return false;
   std::string line;
-  size_t count = 0;
+  size_t whole = 0, cues = 0, skipped = 0;
   while (std::getline(in, line)) {
     if (!line.empty() && line.back() == '\r') line.pop_back();  // files written on Windows
     if (line.empty() || line[0] == '#') continue;
-    const size_t tab = line.find('\t');
-    if (tab != 16) continue;  // 16 hex digits, then the text
+    std::vector<std::string> f;
+    for (size_t p = 0;;) {
+      const size_t tab = line.find('\t', p);
+      f.push_back(line.substr(p, tab == std::string::npos ? std::string::npos : tab - p));
+      if (tab == std::string::npos) break;
+      p = tab + 1;
+    }
     uint64_t id = 0;
-    bool ok = true;
-    for (size_t i = 0; i < 16; ++i) {
-      const char c = line[i];
-      const int v = c >= '0' && c <= '9' ? c - '0'
-                    : c >= 'a' && c <= 'f' ? c - 'a' + 10
-                    : c >= 'A' && c <= 'F' ? c - 'A' + 10
-                                           : -1;
-      if (v < 0) { ok = false; break; }
-      id = (id << 4) | uint64_t(v);
+    const bool is_id = ParseId(f[0], &id);
+    if (f.size() == 2 && is_id) {
+      g_texts[id] = TextOf(f[1]);
+      ++whole;
+    } else if (f.size() == 5) {
+      Cue cue;
+      cue.start = ParseTime(f[1]);
+      cue.end = ParseTime(f[2]);
+      cue.speaker = Utf16(f[3]);
+      cue.text = TextOf(f[4]);
+      if (cue.start < 0 || cue.end <= cue.start) { ++skipped; continue; }
+      if (is_id) g_sound_cues[id].push_back(std::move(cue));
+      else g_movie_cues[MovieKey(f[0])].push_back(std::move(cue));
+      ++cues;
+    } else {
+      ++skipped;
     }
-    if (!ok) continue;
-    std::string text = line.substr(tab + 1);
-    // "\n" written as two characters breaks the line.
-    for (size_t p = text.find("\\n"); p != std::string::npos; p = text.find("\\n", p + 1)) {
-      text.replace(p, 2, "\n");
-    }
-    g_texts[id] = Utf16(text);
-    ++count;
   }
-  REXLOG_INFO("Subtitles: {} line(s) from {}", count, path.string());
+  REXLOG_INFO("Subtitles: {} whole line(s), {} timed line(s) from {}{}", whole, cues,
+              path.string(), skipped ? fmt::format(" ({} line(s) not understood)", skipped) : "");
   return true;
 }
 
@@ -185,7 +259,16 @@ struct Line {
   Clock::time_point end;  // moved earlier by a cut
 };
 std::mutex g_mutex;
-std::vector<Line> g_lines;  // oldest first
+std::vector<Line> g_lines;  // oldest first; a cue's line may start in the future
+
+// The Bink movie playing now (voice_trace.cpp's frame-end watcher, main
+// thread): its key and its clock (seconds from its first frame).
+std::string g_movie;  // "" = none
+double g_movie_time = 0;
+
+Clock::time_point After(Clock::time_point t, double seconds) {
+  return t + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(seconds));
+}
 
 }  // namespace
 
@@ -210,31 +293,63 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
   if (!g_on) return;
   const Kind k = KindOf(name);
   if (!k.in_scope) return;
-  Line line;
-  line.id = id;
-  const auto it = g_texts.find(id);
-  if (it != g_texts.end()) {
-    line.text = it->second;
-    if (REXCVAR_GET(subtitles_speakers)) line.speaker = SpeakerOf(k);
-  } else if (REXCVAR_GET(subtitles_placeholders)) {
-    // Test text: no words of the game, only where the line comes from.
-    line.text = Utf16("[" + k.folder + "] " + k.file);
+  const Clock::time_point now = Clock::now();
+  const bool speakers = REXCVAR_GET(subtitles_speakers);
+  std::vector<Line> add;
+  if (const auto cues = g_sound_cues.find(id); cues != g_sound_cues.end()) {
+    // A sound with several lines (an in-engine cutscene track): each at its
+    // time inside the sound, never past the sound's end.
+    for (const Cue& c : cues->second) {
+      Line line;
+      line.id = id;
+      line.text = c.text;
+      if (speakers) line.speaker = c.speaker;
+      line.start = After(now, c.start);
+      line.end = After(now, std::min(c.end, seconds + kHoldSeconds));
+      if (line.end > line.start) add.push_back(std::move(line));
+    }
   } else {
-    return;  // nothing to show (never an invented line)
+    Line line;
+    line.id = id;
+    if (const auto it = g_texts.find(id); it != g_texts.end()) {
+      line.text = it->second;
+      if (speakers) line.speaker = SpeakerOf(k);
+    } else if (REXCVAR_GET(subtitles_placeholders)) {
+      // Test text: no words of the game, only where the line comes from.
+      line.text = Utf16("[" + k.folder + "] " + k.file);
+    } else {
+      return;  // nothing to show (never an invented line)
+    }
+    line.start = now;
+    line.end = After(now, seconds + kHoldSeconds);
+    add.push_back(std::move(line));
   }
-  line.start = Clock::now();
-  line.end = line.start + std::chrono::duration_cast<Clock::duration>(
-                              std::chrono::duration<double>(seconds + kHoldSeconds));
   std::lock_guard<std::mutex> lock(g_mutex);
-  g_lines.push_back(std::move(line));
+  for (Line& l : add) g_lines.push_back(std::move(l));
 }
 
 void OnVoiceCut(uint64_t id) {
   if (!g_on) return;
+  const Clock::time_point now = Clock::now();
   std::lock_guard<std::mutex> lock(g_mutex);
+  // The line on screen ends now; its later cues never come.
+  std::erase_if(g_lines, [&](const Line& l) { return l.id == id && l.start > now; });
   for (Line& l : g_lines) {
-    if (l.id == id) l.end = std::min(l.end, Clock::now());
+    if (l.id == id) l.end = std::min(l.end, now);
   }
+}
+
+void OnMovie(const std::string& name, double seconds) {
+  if (!g_on) return;
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_movie = MovieKey(name);
+  g_movie_time = seconds;
+}
+
+void OnMovieEnd() {
+  if (!g_on) return;
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_movie.clear();  // skipped or played out: its lines go at once
 }
 
 // ---------------------------------------------------------------------------
@@ -273,9 +388,32 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     {
       const Clock::time_point now = Clock::now();
       std::lock_guard<std::mutex> lock(g_mutex);
+      // A movie's lines at its own clock (it stops when the movie pauses).
+      if (!g_movie.empty()) {
+        const auto cues = g_movie_cues.find(g_movie);
+        if (cues != g_movie_cues.end()) {
+          for (const Cue& c : cues->second) {
+            if (g_movie_time < c.start || g_movie_time >= c.end) continue;
+            Line line;
+            line.text = c.text;
+            if (REXCVAR_GET(subtitles_speakers)) line.speaker = c.speaker;
+            shown.push_back(std::move(line));
+          }
+        }
+        if (shown.empty() && REXCVAR_GET(subtitles_placeholders)) {
+          // Test text: the movie's name and clock, for checking (and for
+          // noting down the times of its lines).
+          const int tenths = int(g_movie_time * 10.0);
+          shown.push_back({0, u"", Utf16(fmt::format("[{}] {:02d}:{:02d}.{}", g_movie, tenths / 600,
+                                                     (tenths / 10) % 60, tenths % 10)),
+                           now, now});
+        }
+      }
       std::erase_if(g_lines, [&](const Line& l) { return l.end <= now; });
-      const size_t first = g_lines.size() > kMaxLines ? g_lines.size() - kMaxLines : 0;
-      shown.assign(g_lines.begin() + std::ptrdiff_t(first), g_lines.end());
+      for (const Line& l : g_lines) {
+        if (l.start <= now) shown.push_back(l);
+      }
+      if (shown.size() > kMaxLines) shown.erase(shown.begin(), shown.end() - std::ptrdiff_t(kMaxLines));
     }
     if (shown.empty()) return;
 

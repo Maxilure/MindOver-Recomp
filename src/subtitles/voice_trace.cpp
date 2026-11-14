@@ -171,8 +171,9 @@ void Start() {
   if (!log && !subtitles::On()) return;
   g_log.store(log, std::memory_order_relaxed);
   g_on.store(true, std::memory_order_release);
-  if (!log) return;  // the movie watcher below only logs
+  // The movie watcher: the subtitles follow a movie's clock, the log its words.
   pddi::AddFrameEndListener(&OnFrameEnd, nullptr);
+  if (!log) return;
   REXLOG_INFO("Voice trace: on (findings/63 milestone 1){}",
               audio_trace::Indexed() ? ""
                                      : "; WARNING: --debug_audio_trace is off, so sound names "
@@ -212,10 +213,11 @@ void OnDecoderDestroyed(uint32_t object, uint8_t* base) {
 }
 
 void OnMovieOpen(uint32_t player, const std::string& name, uint8_t* base) {
-  if (!Log()) return;
+  if (!On()) return;
   g_movie = player;
   g_movie_name = name;
   g_movie_logged = -1;
+  if (!Log()) return;
   const uint32_t handle = R32(base, player + 0x1C);
   REXLOG_INFO("Movie trace: open {} (player {:08x}, Bink handle {:08x}) at {:.2f} s{}", name,
               player, handle, Now(), Dump());
@@ -233,17 +235,26 @@ void LogMovieWords(uint8_t* base, uint32_t handle, double now) {
   REXLOG_INFO("Movie trace: {} at {:.2f} s, handle words:{}", g_movie_name, now, words);
 }
 
-// Main thread, right after each SwapBuffers (pddi/intercept.h).
+// Main thread, right after each SwapBuffers (pddi/intercept.h). The Bink
+// handle (findings/63 s.15.1): +0x08 frame count, +0x0C the current frame
+// (1-based), +0x14 / +0x18 the frame rate and its divisor (2997 / 100).
 void OnFrameEnd(void*) {
   if (!g_movie) return;
   uint8_t* base = rex::system::kernel_memory()->virtual_membase();
   const double now = Now();
   const uint32_t handle = R32(base, g_movie + 0x1C);
   if (!handle) {  // BinkClose ran (PlayerBink slot 8): the movie ended or was skipped
-    REXLOG_INFO("Movie trace: close {} at {:.2f} s{}", g_movie_name, now, Dump());
+    subtitles::OnMovieEnd();
+    if (Log()) REXLOG_INFO("Movie trace: close {} at {:.2f} s{}", g_movie_name, now, Dump());
     g_movie = 0;
     return;
   }
+  const uint32_t frame = R32(base, handle + 0x0C);
+  const uint32_t rate = R32(base, handle + 0x14), divisor = R32(base, handle + 0x18);
+  if (rate && divisor && frame) {
+    subtitles::OnMovie(g_movie_name, double(frame - 1) * double(divisor) / double(rate));
+  }
+  if (!Log()) return;
   if (g_movie_logged >= 0 && now - g_movie_logged < 1.0) return;
   g_movie_logged = now;
   LogMovieWords(base, handle, now);

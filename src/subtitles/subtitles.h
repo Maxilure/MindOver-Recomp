@@ -23,13 +23,18 @@
 // the NPC / story lines (`ingameNN_...`), Cortex's loudspeaker lines and the
 // in-engine cutscene tracks. Combat lines are not subtitled.
 //
-// THE TEXT (this milestone): `<user folder>/subtitles/<code>.tsv`, one line
-// per sound: `<16 hex digits of the sound ID> TAB <text>` ("\n" in the text
-// breaks the line; lines starting with # are comments). <code> is the text
-// language's code ("en-us", "pt-br", ...), then "en" as a fallback. The
-// player's own file: nothing of the game's script is shipped by this
-// milestone. With --subtitles_placeholders, a line without text shows its
-// speaker folder and file name instead (for checking the timing).
+// THE TEXT: `<user folder>/subtitles/<code>.tsv` (<code> = the text
+// language's code, "en-us", "pt-br"..., then "en" as a fallback), TAB-separated:
+//   <16 hex digits of a sound ID>  <text>            a sound's whole line
+//   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
+// <key> = a movie's file name (Crash_02_51: its lines follow the movie's
+// own clock, findings/63 s.15.1) or a sound ID (a sound with several lines:
+// an in-engine cutscene track, timed from its start); times "mm:ss.cc" or
+// seconds; the speaker may be empty. "\n" in a text breaks the line; # starts
+// a comment. The player's own file: nothing of the game's script is
+// shipped. With --subtitles_placeholders, a line without text shows its
+// speaker folder and file name, and a movie without lines its name and
+// clock (for checking the timing and noting down the times of lines).
 //
 // Drawn by us on the layer over the finished picture (an ImGui foreground
 // draw list textured with the font's pages, like fps_overlay.h): it shows in
@@ -62,6 +67,12 @@ void Start();
 // length.
 void OnVoiceStart(uint64_t id, const std::string& name, double seconds);
 void OnVoiceCut(uint64_t id);
+
+// From voice_trace.cpp's frame-end watcher (the main thread): the Bink movie
+// playing (its file name, d:\movies\Crash_02_51.bik) and its clock in seconds
+// (the current frame / frame rate, findings/63 s.15.1); then its close.
+void OnMovie(const std::string& name, double seconds);
+void OnMovieEnd();
 
 // The drawing (CrashMomApp::OnCreateDialogs, UI thread).
 void Create(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate);
