@@ -65,6 +65,7 @@
 #include "audio_trace.h"
 #include "guest_memory.h"
 #include "pddi/intercept.h"
+#include "subtitles/subtitles.h"
 
 #include <algorithm>
 #include <array>
@@ -91,7 +92,11 @@ REXCVAR_DEFINE_BOOL(debug_subtitle_trace, false, "CrashMoM",
 namespace voice_trace {
 namespace {
 
+// g_on: the voices are followed (the trace or the subtitles want them);
+// g_log: the trace's log lines are written (--debug_subtitle_trace).
 std::atomic<bool> g_on{false};
+std::atomic<bool> g_log{false};
+bool Log() { return g_log.load(std::memory_order_relaxed); }
 
 using Clock = std::chrono::steady_clock;
 const Clock::time_point g_t0 = Clock::now();
@@ -162,8 +167,11 @@ void LogMovieWords(uint8_t* base, uint32_t handle, double now);
 bool On() { return g_on.load(std::memory_order_acquire); }
 
 void Start() {
-  if (!REXCVAR_GET(debug_subtitle_trace)) return;
+  const bool log = REXCVAR_GET(debug_subtitle_trace);
+  if (!log && !subtitles::On()) return;
+  g_log.store(log, std::memory_order_relaxed);
   g_on.store(true, std::memory_order_release);
+  if (!log) return;  // the movie watcher below only logs
   pddi::AddFrameEndListener(&OnFrameEnd, nullptr);
   REXLOG_INFO("Voice trace: on (findings/63 milestone 1){}",
               audio_trace::Indexed() ? ""
@@ -192,6 +200,10 @@ void OnDecoderDestroyed(uint32_t object, uint8_t* base) {
   }
   if (!v.voice) return;
   const uint32_t pos = R32(base, object + 0x40);
+  // Destroyed before all of it was decoded: the line was cut off (a skipped
+  // cutscene), findings/63 s.16.2. The subtitle goes with it.
+  if (v.started && !v.ended) subtitles::OnVoiceCut(v.id);
+  if (!Log()) return;
   const char* reason = v.ended          ? "all decoded (still playing from the mixer's buffer)"
                        : !v.started     ? "never started (loaded, not played?)"
                                         : "cut off before the end (skip / interruption)";
@@ -200,7 +212,7 @@ void OnDecoderDestroyed(uint32_t object, uint8_t* base) {
 }
 
 void OnMovieOpen(uint32_t player, const std::string& name, uint8_t* base) {
-  if (!On()) return;
+  if (!Log()) return;
   g_movie = player;
   g_movie_name = name;
   g_movie_logged = -1;
@@ -292,7 +304,7 @@ extern "C" REX_FUNC(sub_8234BE88) {
     if (!v.voice && g_other_count++ < 20) log_it = true;  // a sample of the others
     g_voices[object] = v;
   }
-  if (log_it) {
+  if (log_it && Log()) {
     REXLOG_INFO("Voice: new {:08x} = {} ({:016x}), {:.2f} s, {} stream(s), asked {:.0f} ms "
                 "before (from 0x{:08X}), {}{}",
                 object, v.name.empty() ? "?" : v.name, v.id, Seconds(v, Playable(v)),
@@ -317,6 +329,8 @@ extern "C" REX_FUNC(sub_8234C8A8) {
     if (v.voice) {
       if (!v.started && pos > 0) {
         v.started = true;
+        // The line's first samples go to the mixer now: its subtitle starts.
+        subtitles::OnVoiceStart(v.id, v.name, Seconds(v, Playable(v)));
         line = fmt::format("Voice: start {:08x} {} after {:.0f} ms", object, v.name,
                            (now - v.created) * 1000.0);
       } else if (v.started && !v.ended && v.last_read >= 0 && now - v.last_read > kStallSeconds) {
@@ -333,5 +347,5 @@ extern "C" REX_FUNC(sub_8234C8A8) {
     v.last_read = now;
     v.last_pos = pos;
   }
-  if (!line.empty()) REXLOG_INFO("{}{}", line, Dump());
+  if (!line.empty() && Log()) REXLOG_INFO("{}{}", line, Dump());
 }

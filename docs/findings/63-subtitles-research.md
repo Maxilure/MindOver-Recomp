@@ -623,3 +623,69 @@ long clips and cutscene skips, pauses (nothing to do), movies (the Bink
 frame). Next: milestone 2, the first subtitle on screen: a line from a
 local file shown on a Scrooby page added to the in-game project, for
 the voice families above.
+
+## 17. Milestone 2: the first subtitles on screen
+
+`src/subtitles/subtitles.{h,cpp}`, `--subtitles=1` (off by default).
+
+### 17.1 How they are drawn, and why not on a Scrooby page
+
+s.7 planned a Scrooby page of the port's own in the in-game project. The
+port's frame-rate counter went that way first and was moved off it
+(`fps_overlay.h`, history): the game hides its pages during every menu
+transition and between screens, so a text on them blinks out. A subtitle
+must stay up across those moments and during movies, so it is drawn the
+counter's way instead: textured quads of the game's own font (Titans_Small,
+read from the disc by `ui/game_font.h`, its dark outline layer under the
+letters) on ImGui's foreground draw list, over the finished picture, in
+both renderers. Not in F10 photos (they are the guest picture only).
+
+* Centred on the game's 16:9 picture fitted into the window, the lowest
+  row's bottom 11 % above the picture's bottom, rows wrapped at 70 % of its
+  width by words; at most two lines (the newest at the bottom).
+* A dark translucent box behind (`subtitles_background`), the speaker's name
+  in the menus' yellow when the folder names the character for sure
+  (`subtitles_speakers`; Aku Aku, Coco, Crunch, Cortex, Uka Uka, Nina; the
+  NPCs are still (name TBD), the tutorial voice and the cutscene tracks get
+  none), three sizes (`subtitles_size`: a capital 15 / 19 / 24 pixels tall at
+  720p).
+* **Ã and ã**: listed in the font but empty on the disc (findings/49 s.8.3).
+  The port composes them for its menus in the loaded font (a data patch);
+  this overlay reads the disc's font, so it composes them while drawing: the
+  base letter, then the top rows of õ / Õ down to the first inked row of o /
+  O (read from the font page's letter layer: 25 of 58 rows for õ), centred
+  over the base. Checked by drawing "posição, NÃO, ação, pães" from the
+  real font outside the game.
+
+### 17.2 What is shown
+
+The lines of s.11's scope (by the designer's name: the `nis`, `akuaku` and
+`tutorial` folders, files starting `ingame` or `loudspeaker`), from the start
+reported by voice_trace (the decoder's first Read) for the clip's length +
+0.3 s, or until the line is cut (s.16.2). The text comes from
+`<user folder>/subtitles/<text language code>.tsv` (then `en.tsv`): one line
+per sound, its 16-digit ID, a tab, the text. With
+`--subtitles_placeholders`, a line without text shows its speaker folder and
+file name, for checking the timing without any of the game's words.
+
+### 17.3 Measured on Windows
+
+A recording of a new game (1080p, 30 fps) with two test lines written for
+the purpose (not the game's words) and placeholders for the rest:
+
+* the long test line on the first tutorial clip (8.22 s): wrapped into three
+  rows, centred, box behind; on screen from **video 143.30 s**, gone between
+  151.5 and 152.8 s;
+* the clip's own sound, decoded from the disc and matched against the
+  recording's audio by loudness envelope (20 ms steps, correlation 0.967),
+  starts at **143.52 s**: the subtitle appears **0.22 s before** the voice
+  and leaves about 0.1 s after it ends. The difference is the sound's way
+  out (the port's 8-block queue, XAudio, the device) plus the recorder's
+  own audio offset, which this measurement can't separate. Leading the
+  voice slightly is usual for subtitles; no delay was added.
+* placeholders came and went with the tutorial lines; "ã" was missing in
+  the test line (drawn as a gap): fixed by 17.1's composition, **not yet
+  checked in the game**.
+
+Not checked yet: an Aku Aku line on screen (the speaker name), a cutscene
+cut, two lines at once, the sizes, ultrawide windows, Linux.

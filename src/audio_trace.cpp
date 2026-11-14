@@ -146,7 +146,8 @@ struct Index {
   std::unordered_map<uint64_t, RsdFile> files;  // key: the sound's 64-bit ID
 };
 Index g_index;
-std::atomic<bool> g_on{false};
+std::atomic<bool> g_on{false};       // the "Audio:" log lines
+std::atomic<bool> g_indexed{false};  // the archives' index is built
 
 // Adds an archive's .rsd files to the index (see the header comment for the
 // format). False if it isn't a readable RCF.
@@ -300,7 +301,7 @@ constexpr uint32_t kFromLoadWrapper = 0x823365FC;
 
 }  // namespace
 
-void Start(const std::filesystem::path& game_data_root) {
+void Start(const std::filesystem::path& game_data_root, bool for_subtitles) {
   if (const std::string& dump = REXCVAR_GET(debug_audio_dump); !dump.empty()) {
     g_dump = std::fopen(dump.c_str(), "wb");
     if (g_dump) {
@@ -310,7 +311,8 @@ void Start(const std::filesystem::path& game_data_root) {
       REXLOG_WARN("Audio dump: can't write {}", dump);
     }
   }
-  if (!REXCVAR_GET(debug_audio_trace)) {
+  const bool trace = REXCVAR_GET(debug_audio_trace);
+  if (!trace && !for_subtitles) {
     return;
   }
   // The voices: the archive this session mounts (language.h: voice_language,
@@ -321,12 +323,18 @@ void Start(const std::filesystem::path& game_data_root) {
       REXLOG_WARN("Audio trace: can't read the file list of {}", archive);
     }
   }
+  g_indexed.store(true, std::memory_order_release);
+  if (!trace) {
+    REXLOG_INFO("Audio trace: {} sounds indexed for the subtitles (no log lines)",
+                g_index.files.size());
+    return;
+  }
   REXLOG_INFO("Audio trace: {} sounds indexed; logging every sound the game asks for",
               g_index.files.size());
   g_on.store(true, std::memory_order_release);
 }
 
-bool Indexed() { return g_on.load(std::memory_order_acquire); }
+bool Indexed() { return g_indexed.load(std::memory_order_acquire); }
 
 std::string SoundName(uint64_t id) {
   if (!Indexed()) return {};

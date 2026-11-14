@@ -48,6 +48,7 @@ set(CRASHMOM_SOURCES
     src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
     src/subtitles/voice_trace.cpp  # --debug_subtitle_trace: when each voice line really plays (findings/63)
+    src/subtitles/subtitles.cpp  # --subtitles: the spoken lines as text over the picture (findings/63)
     src/audio/sound_out.cpp      # the game's mixed 5.1 sound played by our own SDL output (findings/54)
     src/audio/xma_native.cpp     # the game's XMA sounds unpacked by our own decoder, no emulated chip (findings/54)
     src/audio/xma_stream.cpp     # the decoder core: XMA2 blocks -> 16-bit PCM per stream (FFmpeg frame decoder)

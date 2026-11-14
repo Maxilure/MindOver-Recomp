@@ -23,11 +23,13 @@ namespace audio_trace {
 // With --debug_audio_trace: reads the sound archives' file lists under
 // `game_data_root` and starts logging. Once, before the game's code runs.
 // Without the flag: nothing (the wrapped functions just call the originals).
-void Start(const std::filesystem::path& game_data_root);
+// `for_subtitles`: index the archives even with the trace off (the
+// subtitles need the sounds' names and lengths; no log lines then).
+void Start(const std::filesystem::path& game_data_root, bool for_subtitles = false);
 
 // For the voice trace (subtitles/voice_trace.*, findings/63). All of these
 // need the archive index, i.e. --debug_audio_trace (on by default).
-bool Indexed();                       // the index was built
+bool Indexed();                       // the index was built (trace or subtitles)
 std::string SoundName(uint64_t id);   // the designer's file name, or a "(...)" note
 
 // The XMA header the sound's .rsd file carries at 0x80C (big-endian; the

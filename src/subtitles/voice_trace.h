@@ -27,10 +27,11 @@
 
 namespace voice_trace {
 
-// Is --debug_subtitle_trace on? (Read once at Start.)
+// Are the voices followed (--debug_subtitle_trace or --subtitles)? Read at Start.
 bool On();
 
-// Once at start-up, after audio_trace::Start (which indexes the archives).
+// Once at start-up, after audio_trace::Start (which indexes the archives)
+// and subtitles::Start.
 void Start();
 
 // A sound ID was turned into its .rsd path (audio_trace.cpp's wrapper of

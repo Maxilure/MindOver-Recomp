@@ -58,8 +58,9 @@ engineering, testing, bug reports, corrections, art. See
 - Subtitles (in progress), with the help of Claude (Anthropic): the research
   into what the game says and how a subtitle can follow it, the voice
   inventory tool (`tools/subtitles.py`), the voice trace
-  (`--debug_subtitle_trace`, `src/subtitles/`) and the test runs on the real
-  game ([finding 63](docs/findings/63-subtitles-research.md)).
+  (`--debug_subtitle_trace`), the first on-screen subtitles (`--subtitles`,
+  `src/subtitles/`) and the test runs on the real game
+  ([finding 63](docs/findings/63-subtitles-research.md)).
 
 ### Bug reports
 
