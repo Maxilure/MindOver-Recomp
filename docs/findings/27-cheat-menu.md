@@ -478,3 +478,24 @@ findings/26 s.25), `spawn <template> [player] [count] [ko]`, `freecam on|off`, `
 menu's numbers in the log), `menu` (opens / closes the window). The free
 camera flies with `key W 1000` and the like, but note that debug key taps also
 reach the game (they bypass the keyboard pause by design).
+
+## 12. Rejecting a malformed object pointer in the per-frame snapshot
+
+An access violation occurred while the game was running, shortly after player
+1 jacked a titan. The call stack entered `cheats::Tick` at the per-frame
+player snapshot (`Describe`), not through a cheat command. The snapshot reads
+a titan's upgrade object and a player's damageable object so the Tools menu
+can display their status even when it is closed.
+
+The faulting read was the first word of an object passed to
+`ObjectWithVtable`. The guest address was not divisible by four, so it cannot
+be a valid 32-bit PowerPC C++ object pointer. The heap-page readability check
+alone did not reject it before the vtable read. `ObjectWithVtable` now rejects
+misaligned addresses before reading, and the shared span check rejects empty
+or 32-bit-wrapping ranges. `UpgradeableOf` also rejects overflow when adding
+the actor member offset.
+
+This prevents the reported invalid read. The log does not identify whether the
+malformed object reference came from the titan's upgrade member or the cached
+damageable map; reproducing the transition with pointer logging remains open.
+The fix has not yet been run against the game.
