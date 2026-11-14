@@ -136,7 +136,8 @@ float ReadFloat(uint32_t address) {
 // follow out of objects are checked first: a stray read of an unmapped page
 // kills the game (the SDK's fault handler can't recover it).
 bool Readable(uint32_t address, uint32_t size) {
-  if (address < 0x1000) return false;
+  // Reject empty or wrapping spans before asking a heap to check their pages.
+  if (address < 0x1000 || !size || size - 1 > UINT32_MAX - address) return false;
   auto* memory = rex::system::kernel_memory();
   auto* heap = memory->LookupHeap(address);
   return heap && heap->QueryRangeAccess(address, address + size - 1) != rex::memory::PageAccess::kNoAccess;
@@ -144,6 +145,11 @@ bool Readable(uint32_t address, uint32_t size) {
 
 // The object at `address` if it is readable and has vtable `vtable`, else 0.
 uint32_t ObjectWithVtable(uint32_t address, uint32_t vtable, uint32_t size) {
+  // Guest C++ objects use the 32-bit PowerPC ABI and are word-aligned. A stale
+  // or damaged pointer can still land in a heap range, so reject a misaligned
+  // object before Read32 tries to touch its vtable (the crash after jack used
+  // guest address 0x43E98FAE here; findings/27 s.12).
+  if (address & 3u) return 0;
   return address && Readable(address, size) && Read32(address) == vtable ? address : 0;
 }
 
@@ -296,7 +302,10 @@ namespace {
 
 // Player p's titan's upgrade object (0 when on foot / none).
 uint32_t UpgradeableOf(uint32_t titan) {
-  if (!titan || !Readable(titan + kActorUpgradeable, 4)) return 0;
+  if (!titan || titan > UINT32_MAX - kActorUpgradeable ||
+      !Readable(titan + kActorUpgradeable, 4)) {
+    return 0;
+  }
   return ObjectWithVtable(Read32(titan + kActorUpgradeable), kUpgradeableVtable, 160);
 }
 uint32_t DamageableOf(uint32_t actor) {
