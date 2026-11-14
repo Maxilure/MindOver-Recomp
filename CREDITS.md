@@ -55,6 +55,10 @@ engineering, testing, bug reports, corrections, art. See
   (OpenAI)
   ([#15](https://github.com/Maxilure/MindOver-Recomp/pull/15),
   [finding 38, section 8](docs/findings/38-keyboard-mouse-real-keybinds.md#8-port-owned-sdl-controller-backend)).
+- Subtitles (in progress), with the help of Claude (Anthropic): the research
+  into what the game says and how a subtitle can follow it, the voice
+  inventory tool (`tools/subtitles.py`) and the test runs on the real game
+  ([finding 63](docs/findings/63-subtitles-research.md)).
 
 ### Bug reports
 
