@@ -92,8 +92,9 @@ msgid "Are you sure you want to quit the game?"
 msgstr "Er du sikker på, du vil afslutte spillet?"
 
 #: src/subtitles/subtitles.cpp:475
+#, fuzzy
 msgid "This is how the subtitles look."
-msgstr ""
+msgstr "Sådan ser undertekster ud."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -2015,64 +2016,79 @@ msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1373
+#, fuzzy
 msgid "Show Subtitles"
-msgstr ""
+msgstr "Vis undertekster"
 
 #: src/options/options_settings.cpp:1474
+#, fuzzy
 msgid "Subtitles"
-msgstr ""
+msgstr "Undertekster"
 
 #: src/options/options_settings.cpp:1378
+#, fuzzy
 msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
-msgstr ""
+msgstr "Replikkerne som tekst nederst på skærmen: historiens tegnefilm, mellemsekvenser, figurer og Aku Aku."
 
 #: src/options/options_settings.cpp:1380
+#, fuzzy
 msgid "No subtitles. The voices play as always."
-msgstr ""
+msgstr "Ingen undertekster. Stemmerne lyder som altid."
 
 #: src/options/options_settings.cpp:1387
+#, fuzzy
 msgid "Subtitle Size"
-msgstr ""
+msgstr "Tekststørrelse"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Small"
-msgstr ""
+msgstr "Lille"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Large"
-msgstr ""
+msgstr "Stor"
 
 #: src/options/options_settings.cpp:1394
+#, fuzzy
 msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
-msgstr ""
+msgstr "Hvor store underteksternes bogstaver er. Lange replikker fortsætter på en anden linje."
 
 #: src/options/options_settings.cpp:1406
+#, fuzzy
 msgid "Subtitle Background"
-msgstr ""
+msgstr "Tekstbaggrund"
 
 #: src/options/options_settings.cpp:1425
+#, fuzzy
 msgid "No box behind the subtitles: only the letters and their dark outline."
-msgstr ""
+msgstr "Ingen boks bag underteksterne: kun bogstaverne og deres mørke kant."
 
 #: src/options/options_settings.cpp:1426
+#, fuzzy
 msgid "A solid black box behind the subtitles."
-msgstr ""
+msgstr "En helt sort boks bag underteksterne."
 
 #: src/options/options_settings.cpp:1427
+#, fuzzy
 msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
-msgstr ""
+msgstr "En mørk boks bag underteksterne; jo højere, jo mindre af billedet ses igennem."
 
 #: src/options/options_settings.cpp:1433
+#, fuzzy
 msgid "Speaker Names"
-msgstr ""
+msgstr "Navn på den, der taler"
 
 #: src/options/options_settings.cpp:1434
+#, fuzzy
 msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr ""
+msgstr "Hvem der taler, med gult, foran replikken (når det vides)."
 
 #: src/options/options_settings.cpp:1435
+#, fuzzy
 msgid "Only the spoken words."
-msgstr ""
+msgstr "Kun de talte ord."
 
 #: src/options/options_settings.cpp:1445
 #, fuzzy
@@ -2168,8 +2184,9 @@ msgid "Language"
 msgstr "Sprog"
 
 #: src/options/options_settings.cpp:1473
+#, fuzzy
 msgid "Accessibility"
-msgstr ""
+msgstr "Tilgængelighed"
 
 #: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 #, fuzzy

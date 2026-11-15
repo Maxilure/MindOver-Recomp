@@ -92,8 +92,9 @@ msgid "Are you sure you want to quit the game?"
 msgstr "¿Seguro que quieres abandonar la partida?"
 
 #: src/subtitles/subtitles.cpp:475
+#, fuzzy
 msgid "This is how the subtitles look."
-msgstr ""
+msgstr "Así se ven los subtítulos."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -2015,64 +2016,79 @@ msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1373
+#, fuzzy
 msgid "Show Subtitles"
-msgstr ""
+msgstr "Mostrar subtítulos"
 
 #: src/options/options_settings.cpp:1474
+#, fuzzy
 msgid "Subtitles"
-msgstr ""
+msgstr "Subtítulos"
 
 #: src/options/options_settings.cpp:1378
+#, fuzzy
 msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
-msgstr ""
+msgstr "Los diálogos como texto en la parte inferior de la pantalla: los dibujos animados de la historia, las cinemáticas, los personajes y Aku Aku."
 
 #: src/options/options_settings.cpp:1380
+#, fuzzy
 msgid "No subtitles. The voices play as always."
-msgstr ""
+msgstr "Sin subtítulos. Las voces suenan como siempre."
 
 #: src/options/options_settings.cpp:1387
+#, fuzzy
 msgid "Subtitle Size"
-msgstr ""
+msgstr "Tamaño de subtítulos"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Small"
-msgstr ""
+msgstr "Pequeño"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Large"
-msgstr ""
+msgstr "Grande"
 
 #: src/options/options_settings.cpp:1394
+#, fuzzy
 msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
-msgstr ""
+msgstr "El tamaño de las letras de los subtítulos. Las frases largas siguen en una segunda línea."
 
 #: src/options/options_settings.cpp:1406
+#, fuzzy
 msgid "Subtitle Background"
-msgstr ""
+msgstr "Fondo de subtítulos"
 
 #: src/options/options_settings.cpp:1425
+#, fuzzy
 msgid "No box behind the subtitles: only the letters and their dark outline."
-msgstr ""
+msgstr "Sin recuadro detrás de los subtítulos: solo las letras y su contorno oscuro."
 
 #: src/options/options_settings.cpp:1426
+#, fuzzy
 msgid "A solid black box behind the subtitles."
-msgstr ""
+msgstr "Un recuadro negro opaco detrás de los subtítulos."
 
 #: src/options/options_settings.cpp:1427
+#, fuzzy
 msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
-msgstr ""
+msgstr "Un recuadro oscuro detrás de los subtítulos; cuanto más alto, menos se ve la imagen a través de él."
 
 #: src/options/options_settings.cpp:1433
+#, fuzzy
 msgid "Speaker Names"
-msgstr ""
+msgstr "Nombre de quien habla"
 
 #: src/options/options_settings.cpp:1434
+#, fuzzy
 msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr ""
+msgstr "Quién habla, en amarillo, delante de la frase (cuando se sabe)."
 
 #: src/options/options_settings.cpp:1435
+#, fuzzy
 msgid "Only the spoken words."
-msgstr ""
+msgstr "Solo las palabras habladas."
 
 #: src/options/options_settings.cpp:1445
 #, fuzzy
@@ -2168,8 +2184,9 @@ msgid "Language"
 msgstr "Idioma"
 
 #: src/options/options_settings.cpp:1473
+#, fuzzy
 msgid "Accessibility"
-msgstr ""
+msgstr "Accesibilidad"
 
 #: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 #, fuzzy

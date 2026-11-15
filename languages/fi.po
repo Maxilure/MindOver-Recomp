@@ -92,8 +92,9 @@ msgid "Are you sure you want to quit the game?"
 msgstr "Haluatko varmasti lopettaa pelin?"
 
 #: src/subtitles/subtitles.cpp:475
+#, fuzzy
 msgid "This is how the subtitles look."
-msgstr ""
+msgstr "Tältä tekstitykset näyttävät."
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -2015,64 +2016,79 @@ msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1373
+#, fuzzy
 msgid "Show Subtitles"
-msgstr ""
+msgstr "Näytä tekstitykset"
 
 #: src/options/options_settings.cpp:1474
+#, fuzzy
 msgid "Subtitles"
-msgstr ""
+msgstr "Tekstitykset"
 
 #: src/options/options_settings.cpp:1378
+#, fuzzy
 msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
-msgstr ""
+msgstr "Repliikit tekstinä ruudun alareunassa: tarinan piirretyt, välianimaatiot, hahmot ja Aku Aku."
 
 #: src/options/options_settings.cpp:1380
+#, fuzzy
 msgid "No subtitles. The voices play as always."
-msgstr ""
+msgstr "Ei tekstityksiä. Äänet kuuluvat kuten aina."
 
 #: src/options/options_settings.cpp:1387
+#, fuzzy
 msgid "Subtitle Size"
-msgstr ""
+msgstr "Tekstityksen koko"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Small"
-msgstr ""
+msgstr "Pieni"
 
 #: src/options/options_settings.cpp:1389
+#, fuzzy
 msgid "Large"
-msgstr ""
+msgstr "Suuri"
 
 #: src/options/options_settings.cpp:1394
+#, fuzzy
 msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
-msgstr ""
+msgstr "Kuinka suuria tekstityksen kirjaimet ovat. Pitkät repliikit jatkuvat toiselle riville."
 
 #: src/options/options_settings.cpp:1406
+#, fuzzy
 msgid "Subtitle Background"
-msgstr ""
+msgstr "Tekstityksen tausta"
 
 #: src/options/options_settings.cpp:1425
+#, fuzzy
 msgid "No box behind the subtitles: only the letters and their dark outline."
-msgstr ""
+msgstr "Ei laatikkoa tekstityksen takana: vain kirjaimet ja niiden tumma reunus."
 
 #: src/options/options_settings.cpp:1426
+#, fuzzy
 msgid "A solid black box behind the subtitles."
-msgstr ""
+msgstr "Täysin musta laatikko tekstityksen takana."
 
 #: src/options/options_settings.cpp:1427
+#, fuzzy
 msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
-msgstr ""
+msgstr "Tumma laatikko tekstityksen takana; mitä suurempi arvo, sitä vähemmän kuva näkyy sen läpi."
 
 #: src/options/options_settings.cpp:1433
+#, fuzzy
 msgid "Speaker Names"
-msgstr ""
+msgstr "Puhujan nimi"
 
 #: src/options/options_settings.cpp:1434
+#, fuzzy
 msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr ""
+msgstr "Kuka puhuu, keltaisella, repliikin edessä (kun se tiedetään)."
 
 #: src/options/options_settings.cpp:1435
+#, fuzzy
 msgid "Only the spoken words."
-msgstr ""
+msgstr "Vain puhutut sanat."
 
 #: src/options/options_settings.cpp:1445
 #, fuzzy
@@ -2168,8 +2184,9 @@ msgid "Language"
 msgstr "Kieli"
 
 #: src/options/options_settings.cpp:1473
+#, fuzzy
 msgid "Accessibility"
-msgstr ""
+msgstr "Saavutettavuus"
 
 #: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 #, fuzzy
