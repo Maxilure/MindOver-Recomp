@@ -5,7 +5,8 @@
 // See subtitles.h for what the player sees and where the timing comes from.
 // This file holds:
 //   1. the settings (REXCVARs, kept in user/settings.toml like the others);
-//   2. the text file (user/subtitles/<code>.tsv, read once at start-up):
+//   2. the text file (user/subtitles/<code>.tsv, else the shipped
+//      subtitles/<code>.tsv next to the exe; read once at start-up):
 //      whole lines of a sound, and timed lines (cues) inside a Bink movie or
 //      inside a sound that holds several lines (an in-engine cutscene track);
 //   3. the lines on screen: a short list fed by voice_trace.cpp (audio
@@ -40,6 +41,7 @@
 #include <fmt/format.h>
 #include <imgui.h>
 #include <rex/cvar.h>
+#include <rex/filesystem.h>
 #include <rex/logging.h>
 #include <rex/runtime.h>
 #include <rex/ui/imgui_dialog.h>
@@ -156,7 +158,10 @@ std::u16string TextOf(std::string text) {
   return Utf16(text);
 }
 
-// Reads `<user>/subtitles/<code>.tsv`; false if there is no such file.
+// Reads `<user>/subtitles/<code>.tsv`, or, when the player has none, the one
+// shipped next to the exe (`subtitles/<code>.tsv`, copied there from the
+// repository's subtitles/ folder by the build, like languages/*.po in
+// texts.cpp); false if there is neither.
 // A line is TAB-separated, one of:
 //   <sound ID>  <text>                               a sound's whole line
 //   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
@@ -164,7 +169,13 @@ std::u16string TextOf(std::string text) {
 // name (Crash_02_51), the times are seconds from the start of that sound /
 // movie ("mm:ss.cc" or "ss.cc"), <speaker> may be empty. # starts a comment.
 bool ReadTexts(const std::string& code) {
-  const std::filesystem::path path = game_folder::UserFolder() / "subtitles" / (code + ".tsv");
+  // The player's own file wins whole (not line by line): it is usually the
+  // shipped one copied and edited.
+  const std::filesystem::path own = game_folder::UserFolder() / "subtitles" / (code + ".tsv");
+  const std::filesystem::path shipped =
+      rex::filesystem::GetExecutableFolder() / "subtitles" / (code + ".tsv");
+  std::error_code ec;
+  const std::filesystem::path path = std::filesystem::is_regular_file(own, ec) ? own : shipped;
   std::ifstream in(path, std::ios::binary);
   if (!in) return false;
   std::string line;
@@ -297,7 +308,7 @@ void Start() {
   const bool english = ReadTexts("en");
   const bool own = code != "en" && ReadTexts(code);
   if (!english && !own) {
-    REXLOG_INFO("Subtitles: on, no text file in {} ({}.tsv or en.tsv){}",
+    REXLOG_INFO("Subtitles: on, no text file in {} or next to the exe ({}.tsv or en.tsv){}",
                 (game_folder::UserFolder() / "subtitles").string(), code,
                 REXCVAR_GET(subtitles_placeholders) ? "; placeholders shown" : "");
   }

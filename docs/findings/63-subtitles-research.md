@@ -762,3 +762,41 @@ come, two lines at once, sizes, ultrawide, Linux.
 
 The text itself (a transcription of the player's own disc) stays in the
 player's user folder; nothing of it is in the repository (AGENTS.md s.2).
+(Superseded by s.20: the maintainer approved shipping the English file.)
+
+## 20. The English text shipped: the story cartoons
+
+The maintainer approved option 2 of s.11 (English in the repository) for
+the subtitles. `subtitles/en.tsv` holds the timed lines of the 16 story
+cartoons with dialogue (`Crash_02_51`-`Crash_19_51` without 09 and 12;
+`Crash_01_51` has music only): 372 lines, each with its speaker.
+
+How the lines were made:
+
+* Text: speech recognition of each cartoon's English track (s.19;
+  `faster-whisper` with the `distil-small.en` model, run outside the
+  repository), two passes (with and without voice-activity filtering),
+  then each line checked. Stretches the recogniser garbled were run again
+  on their own. Misheard names and words, and who says each line, were
+  checked against a fan-written script of the game (the Crash Bandicoot
+  wiki's Mind over Mutant script page), which was used as a check only;
+  the lines are what the dialogue track says.
+* Times: the recogniser's word times, a line shown no longer than its text
+  needs (about 12 characters a second plus 2 s), at least 1.2 s.
+* Left out: grunts, laughs and shouts with no words, and a few lines that
+  could not be made out with confidence (written down in the PR, to be
+  checked by ear).
+* Checking by watching: the lines can be played over the extracted movies
+  as `.srt` files in a video player (same clock: the movie's own; a frame
+  of `Crash_03_51` checked so); in the game, only `Crash_02_51` so far
+  (s.17-18). A full watch-through of every cartoon is still to do.
+
+The build copies `subtitles/` next to the exe, like `languages/`. A
+player's own `<user folder>/subtitles/<code>.tsv` is read instead of the
+shipped file of the same name (whole file, not line by line), so a player
+can correct lines without waiting for a release. A translation is a
+`<code>.tsv` with the same keys and times and its own speaker and text
+columns.
+
+Not covered yet: the six in-engine cutscene tracks, Aku Aku, the tutorial
+voice and the NPC lines (sound-ID keys, s.13).

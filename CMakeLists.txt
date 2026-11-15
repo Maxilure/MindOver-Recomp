@@ -400,6 +400,9 @@ add_custom_target(crash_mom_stage_assets ALL
     # The translations of the port's own texts (src/language/texts.h).
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/languages $<TARGET_FILE_DIR:crash_mom>/languages
+    # The subtitles' text (subtitles/en.tsv: the spoken lines, transcribed; src/subtitles/subtitles.cpp).
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/subtitles $<TARGET_FILE_DIR:crash_mom>/subtitles
     VERBATIM)
 add_dependencies(crash_mom_stage_assets crash_mom)  # the exe's folder exists by then
 

@@ -59,7 +59,8 @@ engineering, testing, bug reports, corrections, art. See
   into what the game says and how a subtitle can follow it, the voice
   inventory tool (`tools/subtitles.py`), the voice trace
   (`--debug_subtitle_trace`), the first on-screen subtitles (`--subtitles`,
-  `src/subtitles/`) and the test runs on the real game
+  `src/subtitles/`), the English lines of the story cartoons
+  (`subtitles/en.tsv`) and the test runs on the real game
   ([finding 63](docs/findings/63-subtitles-research.md)).
 
 ### Bug reports

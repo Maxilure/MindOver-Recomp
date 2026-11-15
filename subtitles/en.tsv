@@ -1,0 +1,470 @@
+# ============================================================================
+# English subtitles - Crash: Mind over Mutant (Recomp)
+# Shipped with the port (copied next to the exe). A player's own
+# <user folder>/subtitles/en.tsv, if present, is read instead of this one.
+# Transcribed from each cartoon's English dialogue track (speech recognition,
+# then checked: misheard words, speakers). Published with the maintainer's approval.
+#
+# Format (columns separated by TAB):
+#   Timed line:  <movie or sound ID> TAB <start mm:ss.cc> TAB <end mm:ss.cc> TAB <speaker> TAB <text>
+#   Whole line:  <sound ID> TAB <text>
+# Lines starting with # and empty lines are ignored by the game.
+# To translate: copy this file as <code>.tsv (pt-br.tsv...) and change the
+# speaker and text columns; keys and times stay as they are.
+#
+# Contents (cartoon cutscenes, in story order):
+#   Crash_02_51  Worst Contact                   19 lines
+#   Crash_03_51  N Faux Mercial                  39 lines
+#   Crash_04_51  N Coming Message                12 lines
+#   Crash_05_51  N Trapment                      24 lines
+#   Crash_06_51  N Is for Evil                   22 lines
+#   Crash_07_51  Clepto-Braniac                  19 lines
+#   Crash_08_51  The Big Twist!                  39 lines
+#   Crash_10_51  Evil School and You             11 lines
+#   Crash_11_51  Forbidden Love                  29 lines
+#   Crash_13_51  Abuse, Misuse, Recycle          24 lines
+#   Crash_14_51  Super Number One Bandicoot!      7 lines
+#   Crash_15_51  Crunch Get!                     29 lines
+#   Crash_16_51  I'm Not Your Buddy, Guy         37 lines
+#   Crash_17_51  I'm Not Your Guy Friend         26 lines
+#   Crash_18_51  Fists of Orange Fury            19 lines
+#   Crash_19_51  Home Pun                        16 lines
+#   (Crash_01_51 has no dialogue; Crash_09 and Crash_12 do not exist.)
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# Crash_02_51  -  "Worst Contact"  (19 lines)
+# ----------------------------------------------------------------------------
+Crash_02_51	00:06.35	00:08.05	Coco	Oh, stupid thing, work!
+Crash_02_51	00:10.35	00:12.08	Crunch	Wow, we should clean this place up, childrens!
+Crash_02_51	00:12.11	00:13.47	Crunch	It's been like a metric year!
+Crash_02_51	00:13.50	00:15.23	Coco	Who's gonna make us, you?
+Crash_02_51	00:15.26	00:16.46	Coco	I don't think so.
+Crash_02_51	00:17.40	00:19.71	Crunch	Okay, guess I'll just say some catchphrases.
+Crash_02_51	00:19.74	00:20.94	Crunch	Drink lemonade, vitamin C!
+Crash_02_51	00:22.82	00:24.29	Coco	Hot!
+Crash_02_51	00:24.32	00:25.52	Crunch	I gotcha!
+Crash_02_51	00:32.00	00:37.47	Coco	If I get this Doominator eye working, we'll have the best entertainment system of all time.
+Crash_02_51	00:37.50	00:40.67	Coco	It'll play games, watch movies, and dispense butter.
+Crash_02_51	00:40.70	00:43.47	Coco	It'll be the mother of all TiVos!
+Crash_02_51	00:43.50	00:44.85	Crash	Ah-hoo!
+Crash_02_51	00:44.88	00:46.22	Crunch	That does sound good!
+Crash_02_51	00:47.62	00:49.95	Crunch	Butter? And where'd I get this? Short-term memory loss.
+Crash_02_51	00:49.98	00:50.87	Crunch	Confused!
+Crash_02_51	00:50.90	00:52.65	Crunch	And where'd I get this? Crash!
+Crash_02_51	00:52.68	00:55.01	Coco	To get this thing working, I'll need a bunch of parts.
+Crash_02_51	00:55.04	00:57.70	Coco	Here's a list. First up is the capacitron by my house.
+
+# ----------------------------------------------------------------------------
+# Crash_03_51  -  "N Faux Mercial"  (39 lines, 2:00 long)
+# ----------------------------------------------------------------------------
+Crash_03_51	00:02.40	00:06.40	Narrator	Are you tired of having too many gadgets cluttering your life?
+Crash_03_51	00:07.00	00:08.90	N. Brio	There's got to be a simpler solution.
+Crash_03_51	00:09.90	00:11.10	Cortex	And now there is!
+Crash_03_51	00:11.60	00:13.10	Cortex	Ladies and gentle mutants!
+Crash_03_51	00:13.60	00:16.30	Cortex	I present to you... the NV!
+Crash_03_51	00:17.00	00:18.70	Cortex	Access any file!
+Crash_03_51	00:18.80	00:20.50	Cortex	Talk to your disgusting friends!
+Crash_03_51	00:20.60	00:24.50	Cortex	Watch pay-per-view! And julienne fries!
+Crash_03_51	00:26.40	00:29.90	Cortex	Ew, waxy!
+Crash_03_51	00:30.90	00:34.30	Cortex	And it's certainly not an evil plan.
+Crash_03_51	00:34.90	00:36.40	Cortex	What do you think of that, audience?
+Crash_03_51	00:39.00	00:40.30	Cortex	Bad credit?
+Crash_03_51	00:40.40	00:41.10	Cortex	No credit?
+Crash_03_51	00:41.20	00:43.10	Cortex	Disgusting personal habits?
+Crash_03_51	00:43.60	00:45.30	Cortex	Just put on the helmet already!
+Crash_03_51	00:45.40	00:49.00	N. Brio	Yes! Now I have more time to devote to my hobbies,
+Crash_03_51	00:49.00	00:52.00	N. Brio	like falconry and classical cheeses.
+Crash_03_51	00:52.40	00:57.00	N. Brio	Thank you, NV, for giving me technological bliss!
+Crash_03_51	00:57.20	00:59.60	Cortex	But wait, you revolting peons! There's more!
+Crash_03_51	01:00.00	01:03.40	Cortex	I just can't think of it right now.
+Crash_03_51	01:04.10	01:05.50	Cortex	Now how much would you expect to pay
+Crash_03_51	01:05.50	01:08.00	Cortex	for this technological superiority?
+Crash_03_51	01:08.60	01:10.20	Cortex	Let's hear some guesses, sheeple!
+Crash_03_51	01:10.90	01:13.60	Znu	Eleventy-thousand dineros!
+Crash_03_51	01:14.10	01:18.00	Ratnician	Twenty to the square root of itself in currency... or more!
+Crash_03_51	01:18.70	01:22.50	Ratnician	Uh, sir, begging your pardon, but I think I have a defective card,
+Crash_03_51	01:22.60	01:24.10	Ratnician	because, uh, it says nothing!
+Crash_03_51	01:25.10	01:30.00	Cortex	It's my great pleasure to announce that this handsome product will arrive
+Crash_03_51	01:30.00	01:33.70	Cortex	at the doors of Wumpa Island inhabitants free of charge!
+Crash_03_51	01:35.00	01:38.00	Narrator	From the people that brought you the electric spoon
+Crash_03_51	01:38.20	01:40.80	Narrator	and I Can't Believe It's Not Tolstoy!
+Crash_03_51	01:40.90	01:43.70	Narrator	Call now and you'll also receive Neckbeard-in-a-Can!
+Crash_03_51	01:43.90	01:44.70	Narrator	Got a problem?
+Crash_03_51	01:44.80	01:46.30	Narrator	Spray some hair on it!
+Crash_03_51	01:50.10	01:52.00	Narrator	Stare into the dancing lights!
+Crash_03_51	01:52.40	01:53.50	Narrator	Stare and dream!
+Crash_03_51	01:54.00	01:55.40	Narrator	Stare and dream!
+Crash_03_51	01:55.70	01:57.00	Narrator	Get your NV today!
+Crash_03_51	01:57.10	01:58.60	Narrator	Soon to be available everywhere but Arkansas.
+
+# ----------------------------------------------------------------------------
+# Crash_04_51  -  "N Coming Message"  (12 lines, 1:05 long)
+# ----------------------------------------------------------------------------
+Crash_04_51	00:03.30	00:06.50	Coco	This is ultra-cool. I'm sending Crunch a text message.
+Crash_04_51	00:06.60	00:09.60	Crunch	I just got a text message from Coco. I'mma reply.
+Crash_04_51	00:13.60	00:17.30	Aku Aku	I... guess it doesn't like you, Crash?
+Crash_04_51	00:24.30	00:28.00	Aku Aku	I'll be honest, guys. I don't see what the big deal is.
+Crash_04_51	00:28.30	00:32.20	Coco	Oh, oh! Now I'm receiving 400 text messages a minute from ordained clergy!
+Crash_04_51	00:38.00	00:40.60	N. Gin	I... I forgot what I was going to say!
+Crash_04_51	00:41.30	00:42.90	N. Gin	Wait! I got it!
+Crash_04_51	00:43.00	00:47.00	N. Gin	Kill the bandicoots with violence! And new holes!
+Crash_04_51	00:51.00	00:54.20	Aku Aku	Come on, everyone! We've got company!
+Crash_04_51	00:54.30	00:55.60	Crunch	Can't talk, watching monkeys!
+Crash_04_51	00:55.70	00:58.10	Crunch	Look at the monkey! Oh, right in his own mouth!
+Crash_04_51	00:59.10	01:01.30	Aku Aku	Looks like it's just you and me, Crash!
+
+# ----------------------------------------------------------------------------
+# Crash_05_51  -  "N Trapment"  (24 lines, 1:25 long)
+# ----------------------------------------------------------------------------
+Crash_05_51	00:11.90	00:13.50	N. Gin	What are you doing here?
+Crash_05_51	00:14.00	00:16.20	N. Gin	Get out of my special place!
+Crash_05_51	00:16.40	00:18.60	N. Gin	I haven't cleaned... or shaved!
+Crash_05_51	00:19.40	00:21.70	N. Gin	You weren't supposed to see it like this!
+Crash_05_51	00:22.40	00:23.60	Aku Aku	N. Gin!
+Crash_05_51	00:24.30	00:26.30	Aku Aku	What are you even doing there?
+Crash_05_51	00:26.90	00:30.40	N. Gin	When Dr. Cortex escaped, he left me here.
+Crash_05_51	00:30.50	00:32.50	N. Gin	But I have brains! And desires!
+Crash_05_51	00:33.20	00:34.70	N. Gin	I will not be ignored!
+Crash_05_51	00:35.40	00:38.80	N. Gin	I have been watching you and your delicious sister!
+Crash_05_51	00:39.90	00:40.90	Aku Aku	Delicious?
+Crash_05_51	00:41.00	00:42.80	N. Gin	Precious! I meant precious!
+Crash_05_51	00:42.90	00:43.70	N. Gin	(I'm gonna eat her.)
+Crash_05_51	00:43.80	00:46.80	N. Gin	Watch the bandicoots! And collect information!
+Crash_05_51	00:46.90	00:49.00	Aku Aku	Oh, you've gotta be kidding me!
+Crash_05_51	00:49.10	00:51.70	N. Gin	And when Cortex is triumphant, I will be rewarded!
+Crash_05_51	00:52.30	00:54.20	N. Gin	With glories and showers of presents!
+Crash_05_51	00:54.20	00:56.30	N. Gin	Like a million Kwanzaas!
+Crash_05_51	00:57.30	01:01.80	N. Gin	And I, N. Gin, will be made king of Wumpa Island!
+Crash_05_51	01:02.70	01:04.70	N. Gin	I'mma be like Serpentor!
+Crash_05_51	01:05.20	01:07.00	Aku Aku	Ugh. You're totally nuts.
+Crash_05_51	01:07.60	01:08.90	Aku Aku	Punch him in the throat.
+Crash_05_51	01:10.00	01:12.90	N. Gin	Not my throat! I need that for swallowing!
+Crash_05_51	01:16.00	01:16.80	N. Gin	Guards!
+
+# ----------------------------------------------------------------------------
+# Crash_06_51  -  "N Is for Evil"  (22 lines, 1:16 long)
+# ----------------------------------------------------------------------------
+Crash_06_51	00:00.00	00:03.10	Aku Aku	We've gotta stop meeting like this, N. Gin.
+Crash_06_51	00:03.20	00:04.90	N. Gin	Wait, stop! Leave me alone!
+Crash_06_51	00:05.20	00:07.10	N. Gin	I am too pretty to be throat-punched!
+Crash_06_51	00:07.40	00:10.50	N. Gin	For I have been watching and studying you for a lonely year now,
+Crash_06_51	00:11.00	00:13.40	N. Gin	with only these idiot rats as company!
+Crash_06_51	00:13.90	00:15.80	Ratnician	That's not very nice, boss.
+Crash_06_51	00:16.30	00:18.90	N. Gin	Quiet, Tina! Or I shall give you the back of my missile!
+Crash_06_51	00:19.10	00:21.30	Aku Aku	I'm only going to say this once,
+Crash_06_51	00:21.40	00:24.40	Aku Aku	get off our island.
+Crash_06_51	00:24.80	00:30.00	N. Gin	I'm sorry, I'm not here to take your message right now.
+Crash_06_51	00:30.60	00:31.80	N. Gin	Beep!
+Crash_06_51	00:32.70	00:36.00	N. Gin	I'm going, I'm going. It was worth a shot.
+Crash_06_51	00:36.00	00:38.40	Aku Aku	Let's see what Crunch and Coco are up to.
+Crash_06_51	00:39.30	00:41.60	Aku Aku	Probably still stuck in their idiotic headsets.
+Crash_06_51	00:42.60	00:44.30	Crunch	This is increditasticular!
+Crash_06_51	00:44.30	00:46.30	Crunch	I'm getting up-to-the-minute weather reports.
+Crash_06_51	00:46.40	00:46.90	Crunch	It's hot.
+Crash_06_51	00:46.90	00:51.00	Coco	And I'm attending a symposium on the effect of Hungry Hungry Hippos on children.
+Crash_06_51	00:52.10	00:53.80	Crunch	Uh, are they supposed to be doing that?
+Crash_06_51	00:53.80	00:56.80	Coco	Ugh, probably a feature. Don't worry about it.
+Crash_06_51	00:57.10	00:59.20	Crunch	I feel funny. Not "ha-ha" funny neither.
+Crash_06_51	00:59.60	01:01.60	Crunch	Foooold your laundry!
+
+# ----------------------------------------------------------------------------
+# Crash_07_51  -  "Clepto-Braniac"  (19 lines, 0:56 long)
+# ----------------------------------------------------------------------------
+Crash_07_51	00:04.60	00:09.00	Aku Aku	Coco! You're back to normal!
+Crash_07_51	00:10.90	00:14.10	Aku Aku	The NV loaded you up with some sort of dark mojo.
+Crash_07_51	00:14.10	00:16.70	Aku Aku	I could feel my brother's influence pervading you.
+Crash_07_51	00:16.70	00:18.10	Coco	Aw, but it was so cool!
+Crash_07_51	00:19.10	00:21.00	Coco	Are you sure it wasn't a feature?
+Crash_07_51	00:21.00	00:23.80	Aku Aku	Oh yeah. You practically grew horns.
+Crash_07_51	00:26.00	00:30.80	Coco	Aw, fudge! Well, now I'm mad! The best gizmo in ages is evil!
+Crash_07_51	00:30.80	00:32.90	Aku Aku	Crunch is still under the NV's control.
+Crash_07_51	00:33.50	00:35.40	Aku Aku	We need to find where he's going.
+Crash_07_51	00:35.40	00:37.40	Coco	Relax, boys. I've got a plan.
+Crash_07_51	00:37.40	00:40.20	Coco	I'll use the eye to hack into the villains' network.
+Crash_07_51	00:40.20	00:41.10	Coco	Just give me a second.
+Crash_07_51	00:41.20	00:44.90	Coco	I think I've got something. There's a video posted on Cortex's blog.
+Crash_07_51	00:44.90	00:46.50	Aku Aku	Cortex has a blog?
+Crash_07_51	00:46.60	00:48.20	Coco	Oh yeah. All the cool kids do it now.
+Crash_07_51	00:48.30	00:50.60	Coco	Well, they did two years ago, anyway.
+Crash_07_51	00:50.60	00:52.60	Aku Aku	Really? I never heard of that.
+Crash_07_51	00:52.70	00:54.10	Coco	Yeah, big shock.
+Crash_07_51	00:54.10	00:55.30	Coco	Watch this...
+
+# ----------------------------------------------------------------------------
+# Crash_08_51  -  "The Big Twist!"  (39 lines, 3:01 long)
+# ----------------------------------------------------------------------------
+Crash_08_51	00:01.00	00:04.10	Cortex	Ugh! There was a piece of lettuce in the urinal.
+Crash_08_51	00:04.70	00:06.90	Cortex	Who eats a sandwich while going to the bathroom?
+Crash_08_51	00:07.60	00:12.00	Cortex	Seriously. Anywho, minions, I stand before you reborn,
+Crash_08_51	00:12.90	00:15.20	Cortex	renewed, recommitted to evil!
+Crash_08_51	00:18.10	00:21.00	Cortex	And I've made up with an old colleague.
+Crash_08_51	00:21.40	00:24.40	Cortex	Join me in welcoming Nitrus Brio!
+Crash_08_51	00:27.20	00:29.50	N. Brio	Yes, it is I, N. Brio!
+Crash_08_51	00:30.00	00:31.60	N. Brio	My name sounds like a fetus.
+Crash_08_51	00:32.70	00:37.10	N. Brio	No doubt you all remember me as the creator of the Evolvo-Ray.
+Crash_08_51	00:37.50	00:40.70	Uka Uka	That was him? I thought Cortex did that.
+Crash_08_51	00:41.10	00:45.70	N. Brio	Of course it was me! I invented the Evolvo-Ray and mutagenetic techniques
+Crash_08_51	00:45.70	00:49.50	N. Brio	still used by that treacherous Cortex today.
+Crash_08_51	00:49.50	00:52.10	N. Brio	I was in the first game!
+Crash_08_51	00:53.30	01:00.40	N. Brio	Mm. Lovely mutagen. So good. And I'm very happy to be back.
+Crash_08_51	01:00.50	01:04.70	Uka Uka	Yes. It's been forever since we've done some old-school evil.
+Crash_08_51	01:05.30	01:08.50	Cortex	Oh, and I've got some old-school evil in mind.
+Crash_08_51	01:08.50	01:11.60	Cortex	Allow me to present... the NV!
+Crash_08_51	01:14.80	01:18.70	N. Brio	That looks totally awesome. I designed it, and I want four of them.
+Crash_08_51	01:20.50	01:24.80	Cortex	Best of all, with it I can create the most powerful mutants ever!
+Crash_08_51	01:25.50	01:28.40	Cortex	And once totally under my control... watch.
+Crash_08_51	01:36.70	01:39.00	Cortex	Totally cool, n'est-ce pas?
+Crash_08_51	01:48.70	01:51.80	Uka Uka	What is the meaning of this? Release me immediately!
+Crash_08_51	01:52.30	01:57.00	Cortex	I used to run this operation. And it's time I did again.
+Crash_08_51	01:57.00	02:01.00	N. Brio	Yes, go for it, Dr. Cortex! Eye of the tiger!
+Crash_08_51	02:01.50	02:02.80	N. Brio	Hadoken!
+Crash_08_51	02:02.90	02:05.60	N. Brio	Paper covers rock! But paper can't stop rocks!
+Crash_08_51	02:05.90	02:07.30	N. Brio	It makes no sense!
+Crash_08_51	02:08.80	02:14.00	Uka Uka	I will destroy you for this, Cortex! Your life is forfeit!
+Crash_08_51	02:14.00	02:18.00	Cortex	Oh my. Talk about a two-dimensional bad guy.
+Crash_08_51	02:18.00	02:20.40	N. Brio	Yes. I wrote that line earlier.
+Crash_08_51	02:21.40	02:23.50	Cortex	Look, it's nothing personal.
+Crash_08_51	02:24.20	02:27.40	Cortex	I simply need a source of bad mojo to fuel the NV.
+Crash_08_51	02:28.00	02:29.20	Cortex	And you're it.
+Crash_08_51	02:29.30	02:32.50	Cortex	N. Brio, I need you to keep the bandicoots busy.
+Crash_08_51	02:33.20	02:35.40	Cortex	Use our secret plan.
+Crash_08_51	02:36.00	02:40.00	N. Brio	Yes. So secret, it's not been invented yet.
+Crash_08_51	02:41.60	02:45.60	N. Brio	But wait, Cortex, how will we get these devices onto mutant heads?
+Crash_08_51	02:46.20	02:48.60	Cortex	Oh, that's the easy part.
+Crash_08_51	02:49.10	02:50.50	Cortex	We'll give it to them!
+
+# ----------------------------------------------------------------------------
+# Crash_10_51  -  "Evil School and You"  (11 lines, 0:52 long)
+# ----------------------------------------------------------------------------
+Crash_10_51	00:05.70	00:10.40	Narrator	Welcome, boys and girls and as-yet-undetermined sexes, to Evil Public School!
+Crash_10_51	00:10.70	00:16.70	Narrator	Here at Evil Public School 101, you'll learn the basic evil principles that drive society,
+Crash_10_51	00:17.50	00:24.90	Narrator	like mad science, mad mathematics, gym class, and waterboarding.
+Crash_10_51	00:25.90	00:30.40	Narrator	At EPS 101, students learn the value of evil socialization.
+Crash_10_51	00:31.00	00:33.10	Narrator	Hey, look, everyone! A new student!
+Crash_10_51	00:33.10	00:36.80	Narrator	Welcome the new student, everyone.
+Crash_10_51	00:36.90	00:39.20	Narrator	Yes, the new student's life is ruined.
+Crash_10_51	00:39.20	00:41.50	Narrator	Laugh and point at the new girl.
+Crash_10_51	00:41.60	00:45.00	Narrator	Do you think you have what it takes to be a student in Evil Public School?
+Crash_10_51	00:45.70	00:46.90	Narrator	Well, you don't.
+Crash_10_51	00:46.90	00:48.90	Narrator	Classes are full and we hate new people.
+
+# ----------------------------------------------------------------------------
+# Crash_11_51  -  "Forbidden Love"  (29 lines, 1:45 long)
+# ----------------------------------------------------------------------------
+Crash_11_51	00:17.20	00:19.90	Nina	What are you doing here?
+Crash_11_51	00:20.40	00:21.60	Nina	Leave me alone!
+Crash_11_51	00:21.60	00:23.30	Nina	I hate you!
+Crash_11_51	00:23.30	00:25.10	Nina	You ruined my life!
+Crash_11_51	00:29.10	00:30.20	Aku Aku	So...
+Crash_11_51	00:31.00	00:32.50	Aku Aku	how's it going?
+Crash_11_51	00:35.00	00:36.30	Nina	How's it going?
+Crash_11_51	00:37.10	00:39.70	Nina	I'm stuck in Evil Public School now!
+Crash_11_51	00:40.40	00:44.40	Nina	I used to be the queen of Madame Amberley's private school.
+Crash_11_51	00:44.40	00:47.60	Nina	And now I'm stuck with the dregs of society.
+Crash_11_51	00:48.40	00:49.90	Nina	All because of you!
+Crash_11_51	00:49.90	00:53.10	Aku Aku	Yeah. So anyway, we need your help.
+Crash_11_51	00:53.20	00:54.10	Nina	What?
+Crash_11_51	00:54.10	00:58.50	Aku Aku	Your uncle has been using a new kind of evil mojo to control mutants.
+Crash_11_51	00:58.60	01:00.20	Aku Aku	And he's got Crunch.
+Crash_11_51	01:00.20	01:02.10	Aku Aku	We need to find him and help him.
+Crash_11_51	01:02.20	01:04.00	Nina	Oh, so you need my help?
+Crash_11_51	01:04.50	01:05.80	Nina	That's so cute.
+Crash_11_51	01:06.40	01:08.90	Nina	Don't hurt your butt on the way out the door!
+Crash_11_51	01:08.90	01:11.70	Aku Aku	Please, Nina! We'll do anything!
+Crash_11_51	01:12.90	01:14.60	Nina	Anything? Really?
+Crash_11_51	01:15.50	01:17.00	Aku Aku	Yes.
+Crash_11_51	01:17.20	01:18.40	Nina	Kiss.
+Crash_11_51	01:19.70	01:21.30	Aku Aku	What?
+Crash_11_51	01:21.50	01:24.10	Nina	Yeah, kiss.
+Crash_11_51	01:24.10	01:27.30	Nina	Right now. It will amuse me.
+Crash_11_51	01:33.90	01:35.00	Nina	Losers.
+Crash_11_51	01:35.20	01:40.00	Nina	Okay, I've got an evil science fair project to finish, and you two lovebirds
+Crash_11_51	01:40.00	01:41.20	Nina	can help me out.
+
+# ----------------------------------------------------------------------------
+# Crash_13_51  -  "Abuse, Misuse, Recycle"  (24 lines, 1:44 long)
+# ----------------------------------------------------------------------------
+Crash_13_51	00:04.20	00:06.60	N. Brio	Greetings, little peons, which I invented.
+Crash_13_51	00:07.00	00:12.70	N. Brio	You see before you a glorious history of evil devices that I, me, invented.
+Crash_13_51	00:13.60	00:17.10	N. Brio	Over time, the disgusting heroes of this world,
+Crash_13_51	00:17.10	00:20.90	N. Brio	which I invented, me, not Cortex, read your Bible, I wrote it,
+Crash_13_51	00:21.30	00:26.70	N. Brio	heroes like lazy bandicoots just leave these wonderful toys to rot where they fall.
+Crash_13_51	00:26.70	00:31.80	N. Brio	But Dr. Cortex, who says he invented many things, liar, says,
+Crash_13_51	00:32.10	00:35.00	N. Brio	"Hurry, build me a Space Head and many NV devices!"
+Crash_13_51	00:35.40	00:37.90	N. Brio	So I have invented...
+Crash_13_51	00:38.70	00:39.60	N. Brio	recycling!
+Crash_13_51	00:43.80	00:49.40	N. Brio	Remember the N. Brio patented phrase: reuse, recycle, revenge!
+Crash_13_51	00:50.30	00:51.90	N. Brio	I created Slinkies!
+Crash_13_51	00:52.10	00:53.50	N. Brio	Stop playing with them because I'm mine!
+Crash_13_51	00:53.90	00:58.10	N. Brio	You see before you an ocean of wrecked dreams. My dreams.
+Crash_13_51	00:59.10	01:04.30	N. Brio	But from this ocean, Dr. Cortex has asked me to harpoon the white whale of evil.
+Crash_13_51	01:05.40	01:07.80	N. Brio	Recycling shall destroy the world!
+Crash_13_51	01:08.00	01:11.30	N. Brio	And I, as its inventor, shall get the credit.
+Crash_13_51	01:12.10	01:15.50	N. Brio	Look, Lite-Brite. I didn't invent this, Burt Meyer did.
+Crash_13_51	01:15.80	01:17.30	N. Brio	It's not evil. Why is it in the pile?
+Crash_13_51	01:17.90	01:20.60	Cortex	Yes, that's right, you little fools.
+Crash_13_51	01:21.20	01:26.40	Cortex	Evil recycling gives me everything I need to build and distribute NVs.
+Crash_13_51	01:27.00	01:30.30	Cortex	Look, there's got to be a better picture of me.
+Crash_13_51	01:31.80	01:35.20	Cortex	Enter my recycling program, Crash!
+Crash_13_51	01:35.70	01:38.50	Cortex	The recycling program of doom!
+Crash_13_51	01:39.50	01:42.10	Cortex	Oh, that's good. I look butch.
+
+# ----------------------------------------------------------------------------
+# Crash_14_51  -  "Super Number One Bandicoot!"  (7 lines, 0:29 long)
+# ----------------------------------------------------------------------------
+Crash_14_51	00:05.10	00:08.40	Crunch	Crash! Stay away, little buddy! I can't control myself!
+Crash_14_51	00:08.90	00:10.70	Aku Aku	Just take the helmet off already!
+Crash_14_51	00:11.20	00:15.10	Crunch	You don't understand! So awesome! Monkeys!
+Crash_14_51	00:16.20	00:19.30	N. Brio	Yes! Fight your little buddy!
+Crash_14_51	00:19.90	00:21.50	N. Brio	Teach him who invented who!
+Crash_14_51	00:21.90	00:23.40	N. Brio	Strike him with your large man-hand!
+Crash_14_51	00:24.20	00:27.40	Crunch	I obey! Eat! Enough fiber!
+
+# ----------------------------------------------------------------------------
+# Crash_15_51  -  "Crunch Get!"  (29 lines, 1:39 long)
+# ----------------------------------------------------------------------------
+Crash_15_51	00:00.50	00:01.70	Crunch	Stop it, that's mine!
+Crash_15_51	00:06.10	00:07.70	N. Brio	Just swat him away, muscles!
+Crash_15_51	00:08.20	00:11.20	Crunch	Hey, I feel great!
+Crash_15_51	00:13.40	00:14.60	Crunch	Get the monkey off my back!
+Crash_15_51	00:14.70	00:16.00	Crunch	Thanks, little buddy!
+Crash_15_51	00:16.10	00:18.20	Crunch	No, really, I'm good now!
+Crash_15_51	00:19.30	00:21.40	Crunch	Stop it, please! Stop it, please!
+Crash_15_51	00:22.20	00:23.30	Crunch	Honestly, I'm much better.
+Crash_15_51	00:25.80	00:28.20	Aku Aku	Well! I didn't think we'd meet again.
+Crash_15_51	00:29.00	00:31.60	N. Brio	Well, you were wrong, and I was right.
+Crash_15_51	00:31.60	00:33.80	N. Brio	As right as Betamax.
+Crash_15_51	00:34.60	00:36.40	N. Brio	Why won't the world understand?
+Crash_15_51	00:36.70	00:39.70	N. Brio	We've got limitless bad mojo to power NVs.
+Crash_15_51	00:40.00	00:42.70	Aku Aku	Bad mojo? How are you getting that?
+Crash_15_51	00:43.50	00:47.50	Aku Aku	Start talking, mister.
+Crash_15_51	00:47.50	00:51.00	Aku Aku	Crash likes Crunch, and look what he's doing to him.
+Crash_15_51	00:58.10	01:01.00	N. Brio	Cortex and I are in charge now, little fool,
+Crash_15_51	01:01.00	01:04.40	N. Brio	and your island is trapped by a device that I...
+Crash_15_51	01:04.40	01:06.50	Aku Aku	That you invented, yeah, yeah, yeah.
+Crash_15_51	01:06.60	01:07.70	Aku Aku	Come on, Crash.
+Crash_15_51	01:07.80	01:10.20	Aku Aku	Looks like my brother is involved in this mess.
+Crash_15_51	01:10.30	01:11.50	Aku Aku	You go on home, Crunch.
+Crash_15_51	01:12.30	01:14.20	Crunch	Yeah. Think I'm leaking brain juice.
+Crash_15_51	01:14.30	01:15.60	Crunch	Gonna lay down a while.
+Crash_15_51	01:16.20	01:17.50	Crunch	Sleepy!
+Crash_15_51	01:18.00	01:21.60	Aku Aku	And you! You clear out! You're not welcome!
+Crash_15_51	01:22.00	01:24.60	Aku Aku	Come on, Crash! Let's go find my brother.
+Crash_15_51	01:24.80	01:28.00	N. Brio	This isn't the end! I invented endings!
+Crash_15_51	01:28.50	01:30.10	N. Brio	Why don't people take me seriously?
+
+# ----------------------------------------------------------------------------
+# Crash_16_51  -  "I'm Not Your Buddy, Guy"  (37 lines, 2:03 long)
+# ----------------------------------------------------------------------------
+Crash_16_51	00:11.30	00:15.80	Cortex	Thanks. Finally answers the phone. Very classy.
+Crash_16_51	00:16.40	00:18.00	Cortex	It's not like I have anything better to do.
+Crash_16_51	00:19.50	00:22.80	Cortex	Oh, thanks for asking.
+Crash_16_51	00:23.40	00:24.40	Cortex	I feel good.
+Crash_16_51	00:24.40	00:26.60	Cortex	All this evil agrees with me.
+Crash_16_51	00:27.30	00:29.70	Cortex	How's our little mojo battery doing?
+Crash_16_51	00:32.70	00:34.40	Uka Uka	Cortex, you miserable traitor!
+Crash_16_51	00:34.40	00:37.50	Uka Uka	I will have my reven...
+Crash_16_51	00:40.20	00:42.50	Cortex	Fabulous! He's never looked better.
+Crash_16_51	00:43.30	00:44.00	Cortex	Rubenesque, even.
+Crash_16_51	00:44.70	00:46.40	Cortex	I was so tired of that guy.
+Crash_16_51	00:46.70	00:48.70	Cortex	Felt like I married my mother.
+Crash_16_51	00:48.80	00:52.30	Cortex	Not that I... thought about that.
+Crash_16_51	00:52.80	00:55.70	Uka Uka	Stealing my mojo to power your NVs.
+Crash_16_51	00:56.30	00:57.90	Uka Uka	That's low, even for you.
+Crash_16_51	00:58.60	01:00.40	Uka Uka	But why do you keep feeding me cake?
+Crash_16_51	01:01.10	01:02.30	Cortex	Oh, that.
+Crash_16_51	01:03.20	01:04.50	Cortex	I just thought it would be mean.
+Crash_16_51	01:05.20	01:08.20	Cortex	Seriously, you're never going to be able to eat cake again.
+Crash_16_51	01:09.10	01:11.40	Cortex	Imagine that. Life without cake!
+Crash_16_51	01:12.60	01:13.80	Uka Uka	You fiend!
+Crash_16_51	01:13.80	01:16.10	Cortex	Gonna address the minions. Excuse me.
+Crash_16_51	01:16.60	01:18.40	Cortex	Listen up, Grimlies!
+Crash_16_51	01:18.40	01:20.60	Cortex	Crash Bandicoot is on his way.
+Crash_16_51	01:21.10	01:23.60	Cortex	No games, no foolishness.
+Crash_16_51	01:23.60	01:25.90	Cortex	Find him and destroy him.
+Crash_16_51	01:25.90	01:27.70	Cortex	Destroy him for real.
+Crash_16_51	01:27.70	01:30.30	Cortex	No death traps that take ten flipping hours.
+Crash_16_51	01:34.20	01:38.90	Uka Uka	Oh, oh, oh... that's... that's unsettling.
+Crash_16_51	01:40.10	01:42.00	Cortex	And guess what?
+Crash_16_51	01:42.10	01:44.90	Cortex	Little Uka there's looking hungry!
+Crash_16_51	01:45.60	01:48.20	Uka Uka	Ew, gross, it's dirty!
+Crash_16_51	01:48.40	01:51.20	Uka Uka	I'll get my revenge for this, Cortex!
+Crash_16_51	01:52.60	01:54.80	Cortex	Yes, yes, revenge.
+Crash_16_51	01:55.50	01:57.70	Cortex	I'm not the one in the milking machine!
+Crash_16_51	01:58.70	02:00.50	Cortex	Milky... magoo.
+Crash_16_51	02:01.00	02:02.00	Cortex	Cortex out!
+
+# ----------------------------------------------------------------------------
+# Crash_17_51  -  "I'm Not Your Guy Friend"  (26 lines, 1:39 long)
+# ----------------------------------------------------------------------------
+Crash_17_51	00:03.60	00:07.10	Uka Uka	Finally. Ugh! If I had nipples, they'd kill right now.
+Crash_17_51	00:08.30	00:11.40	Aku Aku	My brother! What did they do to you?
+Crash_17_51	00:11.90	00:15.50	Uka Uka	That treacherous dog Cortex stole my power!
+Crash_17_51	00:16.20	00:20.00	Uka Uka	All my bad mojo has been drained and put into NVs
+Crash_17_51	00:20.00	00:22.90	Uka Uka	that he sent all over the world!
+Crash_17_51	00:22.90	00:24.60	Aku Aku	All over the world?
+Crash_17_51	00:25.50	00:29.80	Uka Uka	That little weasel of a scientist actually had a good idea for a change.
+Crash_17_51	00:30.70	00:33.40	Uka Uka	However, I didn't realize it involved...
+Crash_17_51	00:33.40	00:34.60	Aku Aku	Milking you.
+Crash_17_51	00:35.20	00:36.60	Uka Uka	Yes, milking me!
+Crash_17_51	00:36.80	00:40.00	Uka Uka	Ha-ha! Everybody enjoys a laugh at the evil mask!
+Crash_17_51	00:40.60	00:42.90	Uka Uka	I will destroy Cortex for this,
+Crash_17_51	00:43.60	00:48.20	Uka Uka	and you two short-bus students will be the means of my vengeance.
+Crash_17_51	00:48.90	00:51.10	Aku Aku	Why should we help you? You're a jerk.
+Crash_17_51	00:51.80	00:54.40	Aku Aku	Remember Mom's birthday? You sent her socks!
+Crash_17_51	00:54.60	00:58.00	Aku Aku	Honestly, who sends socks to a magic mask with no feet?
+Crash_17_51	00:58.40	01:03.00	Uka Uka	You'll help me because if you restore my power,
+Crash_17_51	01:03.00	01:08.50	Uka Uka	I will give you the means to reach Cortex's lair and destroy his NVs forever!
+Crash_17_51	01:12.10	01:14.40	Aku Aku	Fine, we'll restore your powers.
+Crash_17_51	01:14.50	01:16.50	Aku Aku	Tell us what we have to do.
+Crash_17_51	01:16.60	01:21.90	Uka Uka	The voodoo bones of my mask have been stolen and given to the worst, most despicable
+Crash_17_51	01:21.90	01:23.20	Uka Uka	mutants on the island.
+Crash_17_51	01:23.80	01:26.30	Uka Uka	Get them back. Be my vengeance.
+Crash_17_51	01:27.10	01:29.80	Uka Uka	I will use my power to let you move around quickly.
+Crash_17_51	01:30.50	01:32.10	Uka Uka	You dummies probably walked everywhere.
+Crash_17_51	01:33.00	01:35.70	Uka Uka	And please, would you clean this cake off my face?
+
+# ----------------------------------------------------------------------------
+# Crash_18_51  -  "Fists of Orange Fury"  (19 lines, 2:09 long)
+# ----------------------------------------------------------------------------
+Crash_18_51	00:10.30	00:11.90	Aku Aku	Hello, Cortex.
+Crash_18_51	00:11.90	00:16.50	Cortex	I can't believe you dimwits are trying to ruin my plans again.
+Crash_18_51	00:17.40	00:19.50	Cortex	Seriously, don't you have lives?
+Crash_18_51	00:19.50	00:20.90	Cortex	Get a hobby.
+Crash_18_51	00:20.90	00:23.40	Cortex	Woodworking, crocheting, something.
+Crash_18_51	00:23.40	00:25.50	Aku Aku	You've got nothing left, Cortex.
+Crash_18_51	00:25.60	00:27.60	Aku Aku	It's just you versus Crash.
+Crash_18_51	00:31.10	00:35.10	Cortex	Good. I want to settle this, man to mutant.
+Crash_18_51	00:35.90	00:39.60	Cortex	I'm going to beat you, Crash, with my bare hands!
+Crash_18_51	00:48.90	00:52.70	Aku Aku	Oh no! Look out, Crash!
+Crash_18_51	00:52.90	00:55.00	Aku Aku	Mister Hungry Pound's going to get you!
+Crash_18_51	00:57.20	00:58.90	Cortex	Stop laughing!
+Crash_18_51	00:59.00	01:00.10	Cortex	I'm serious!
+Crash_18_51	01:00.80	01:03.50	Cortex	I'm going to slap some bandicoot!
+Crash_18_51	01:11.70	01:14.50	Aku Aku	Crash, love him up so we can go home.
+Crash_18_51	01:16.50	01:20.00	Cortex	Oh, did I forget to mention I was going to cheat?
+Crash_18_51	01:20.60	01:25.00	Cortex	I've got some of N. Brio's mutation formula here to even the odds.
+Crash_18_51	01:30.50	01:34.50	Cortex	Eugh! Oh, tastes like peppermint barf!
+Crash_18_51	01:35.50	01:39.10	Cortex	Oh, hm, there's a hint of...
+
+# ----------------------------------------------------------------------------
+# Crash_19_51  -  "Home Pun"  (16 lines, 1:34 long)
+# ----------------------------------------------------------------------------
+Crash_19_51	00:12.60	00:18.30	Cortex	It's not fair! It's not fair! I want to win!
+Crash_19_51	00:19.50	00:23.30	Cortex	I want to win! It's my turn!
+Crash_19_51	00:24.00	00:27.70	Cortex	My turn! Been trying for flipping years!
+Crash_19_51	00:28.50	00:31.20	Aku Aku	Uh-oh, Crash! I think he broke something!
+Crash_19_51	00:31.80	00:33.50	Cortex	Oh no.
+Crash_19_51	00:40.00	00:42.40	Cortex	What did I do? Where are my pants?
+Crash_19_51	00:47.00	00:50.10	Aku Aku	Brace yourself, Crash! I think we're going down!
+Crash_19_51	00:54.00	00:55.30	Cortex	It was you!
+Crash_19_51	00:56.60	00:58.50	Cortex	No time to deal with that now.
+Crash_19_51	00:59.00	01:00.30	Cortex	Disgusting freak!
+Crash_19_51	01:16.20	01:18.60	Aku Aku	I can't believe we're okay.
+Crash_19_51	01:19.20	01:20.70	Coco	Crash, down here!
+Crash_19_51	01:21.40	01:22.30	Coco	Great job, big brother!
+Crash_19_51	01:22.40	01:25.60	Crunch	Wow, we're really getting a lot of this evil junk all over the place.
+Crash_19_51	01:25.90	01:27.30	Coco	We're still not going to clean up.
+Crash_19_51	01:27.60	01:29.90	Aku Aku	I know, Coco, I know.

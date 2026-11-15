@@ -23,16 +23,18 @@
 // the NPC / story lines (`ingameNN_...`), Cortex's loudspeaker lines and the
 // in-engine cutscene tracks. Combat lines are not subtitled.
 //
-// THE TEXT: `<user folder>/subtitles/en.tsv`, then `<code>.tsv` (<code> = the
-// text language's code, "pt-br"...) over it key by key, TAB-separated:
+// THE TEXT: `en.tsv`, then `<code>.tsv` (<code> = the text language's code,
+// "pt-br"...) over it key by key. Each file is the player's own
+// `<user folder>/subtitles/<name>` if there is one, else the shipped copy
+// next to the exe (the repository's subtitles/ folder: the story cartoons'
+// lines in English, transcribed, findings/63 s.20). TAB-separated:
 //   <16 hex digits of a sound ID>  <text>            a sound's whole line
 //   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
 // <key> = a movie's file name (Crash_02_51: its lines follow the movie's
 // own clock, findings/63 s.15.1) or a sound ID (a sound with several lines:
 // an in-engine cutscene track, timed from its start); times "mm:ss.cc" or
 // seconds; the speaker may be empty. "\n" in a text breaks the line; # starts
-// a comment. The player's own file: nothing of the game's script is
-// shipped. With --subtitles_placeholders, a line without text shows its
+// a comment. With --subtitles_placeholders, a line without text shows its
 // speaker folder and file name, and a movie without lines its name and
 // clock (for checking the timing and noting down the times of lines).
 //
