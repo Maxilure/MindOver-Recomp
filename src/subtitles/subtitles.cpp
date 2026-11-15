@@ -6,7 +6,10 @@
 // This file holds:
 //   1. the settings (REXCVARs, kept in user/settings.toml like the others);
 //   2. the text file (user/subtitles/<code>.tsv, else the shipped
-//      subtitles/<code>.tsv next to the exe; read once at start-up):
+//      subtitles/<code>.tsv: next to the exe, or the repository's own
+//      subtitles/ when the exe was built in the source tree; read at
+//      start-up and AGAIN whenever one of the files changes on disk, so a
+//      line saved in tools/subtitle_editor shows the next time it plays):
 //      whole lines of a sound, and timed lines (cues) inside a Bink movie or
 //      inside a sound that holds several lines (an in-engine cutscene track);
 //   3. the lines on screen: a short list fed by voice_trace.cpp (audio
@@ -36,6 +39,7 @@
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -109,10 +113,46 @@ struct Cue {
   std::u16string speaker;  // "" = none
   std::u16string text;
 };
-// Read-only after Start.
-std::unordered_map<uint64_t, std::u16string> g_texts;     // sound ID -> its whole line
-std::unordered_map<uint64_t, std::vector<Cue>> g_sound_cues;  // sound ID -> its lines
-std::unordered_map<std::string, std::vector<Cue>> g_movie_cues;  // movie name (lower case) -> its lines
+// Everything the files say, read in one go. A reload builds a NEW set and
+// swaps the pointer under g_mutex (below); readers take the pointer under
+// it and keep their copy alive while they use it, so a set is never
+// changed once published.
+struct Texts {
+  std::unordered_map<uint64_t, std::u16string> texts;          // sound ID -> its whole line
+  std::unordered_map<uint64_t, std::vector<Cue>> sound_cues;   // sound ID -> its lines
+  std::unordered_map<std::string, std::vector<Cue>> movie_cues;  // movie name (lower case) -> its lines
+};
+std::shared_ptr<const Texts> g_data = std::make_shared<Texts>();  // under g_mutex
+
+// THE SHIPPED FOLDER: subtitles/ next to the exe (the build copies the
+// repository's folder there, an install has it in program/). An exe in the
+// source tree's BUILD folder (<repo>/out/build/<preset>/, the repo = the
+// folder with crash_mom_manifest.toml) reads the repository's subtitles/
+// itself instead, so what the subtitle editor saves "to the repository" is
+// what the game shows, without building again. Only out/build: an
+// installed-style test copy elsewhere under out/ keeps its own files.
+std::filesystem::path ShippedFolder() {
+  static const std::filesystem::path folder = [] {
+    const std::filesystem::path exe = rex::filesystem::GetExecutableFolder();
+    const std::filesystem::path build = exe.parent_path();  // out/build
+    const std::filesystem::path repo = build.parent_path().parent_path();
+    std::error_code ec;
+    if (build.filename() == "build" && build.parent_path().filename() == "out" &&
+        std::filesystem::is_regular_file(repo / "crash_mom_manifest.toml", ec) &&
+        std::filesystem::is_directory(repo / "subtitles", ec)) {
+      return repo / "subtitles";
+    }
+    return exe / "subtitles";
+  }();
+  return folder;
+}
+// The player's own copy of a file if there is one, else the shipped one
+// (`name` relative to a subtitles folder: "en.tsv", "timing/french.tsv").
+std::filesystem::path FileFor(const std::filesystem::path& name) {
+  const std::filesystem::path own = game_folder::UserFolder() / "subtitles" / name;
+  std::error_code ec;
+  return std::filesystem::is_regular_file(own, ec) ? own : ShippedFolder() / name;
+}
 
 // UTF-8 -> UTF-16 (the font's characters are all in the BMP).
 std::u16string Utf16(std::string_view s) {
@@ -180,24 +220,19 @@ std::u16string TextOf(std::string text) {
   return Utf16(text);
 }
 
-// Reads `<user>/subtitles/<code>.tsv`, or, when the player has none, the one
-// shipped next to the exe (`subtitles/<code>.tsv`, copied there from the
-// repository's subtitles/ folder by the build, like languages/*.po in
-// texts.cpp); false if there is neither.
+// Reads `<user>/subtitles/<code>.tsv`, or, when the player has none, the
+// shipped one (ShippedFolder: next to the exe, or the repository's in a
+// source-tree build) into `out`; false if there is neither.
 // A line is TAB-separated, one of:
 //   <sound ID>  <text>                               a sound's whole line
 //   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
 // where <key> = a sound ID (a sound holding several lines) or a movie's file
 // name (Crash_02_51), the times are seconds from the start of that sound /
 // movie ("mm:ss.cc" or "ss.cc"), <speaker> may be empty. # starts a comment.
-bool ReadTexts(const std::string& code) {
+bool ReadTexts(const std::string& code, Texts& out) {
   // The player's own file wins whole (not line by line): it is usually the
   // shipped one copied and edited.
-  const std::filesystem::path own = game_folder::UserFolder() / "subtitles" / (code + ".tsv");
-  const std::filesystem::path shipped =
-      rex::filesystem::GetExecutableFolder() / "subtitles" / (code + ".tsv");
-  std::error_code ec;
-  const std::filesystem::path path = std::filesystem::is_regular_file(own, ec) ? own : shipped;
+  const std::filesystem::path path = FileFor(code + ".tsv");
   std::ifstream in(path, std::ios::binary);
   if (!in) return false;
   std::string line;
@@ -219,7 +254,7 @@ bool ReadTexts(const std::string& code) {
     uint64_t id = 0;
     const bool is_id = ParseId(f[0], &id);
     if (f.size() == 2 && is_id) {
-      g_texts[id] = TextOf(f[1]);
+      out.texts[id] = TextOf(f[1]);
       ++whole;
     } else if (f.size() == 5) {
       Cue cue;
@@ -229,12 +264,12 @@ bool ReadTexts(const std::string& code) {
       cue.text = TextOf(f[4]);
       if (cue.start < 0 || cue.end <= cue.start) { ++skipped; continue; }
       if (is_id) {
-        if (!sound_seen[id]) { g_sound_cues[id].clear(); sound_seen[id] = true; }
-        g_sound_cues[id].push_back(std::move(cue));
+        if (!sound_seen[id]) { out.sound_cues[id].clear(); sound_seen[id] = true; }
+        out.sound_cues[id].push_back(std::move(cue));
       } else {
         const std::string key = MovieKey(f[0]);
-        if (!movie_seen[key]) { g_movie_cues[key].clear(); movie_seen[key] = true; }
-        g_movie_cues[key].push_back(std::move(cue));
+        if (!movie_seen[key]) { out.movie_cues[key].clear(); movie_seen[key] = true; }
+        out.movie_cues[key].push_back(std::move(cue));
       }
       ++cues;
     } else {
@@ -244,6 +279,83 @@ bool ReadTexts(const std::string& code) {
   REXLOG_INFO("Subtitles: {} whole line(s), {} timed line(s) from {}{}", whole, cues,
               path.string(), skipped ? fmt::format(" ({} line(s) not understood)", skipped) : "");
   return true;
+}
+
+// THE VOICE LANGUAGE'S OWN TIMES (findings/63 s.24): the text files' times
+// were made on the ENGLISH voices; a French line is not as long, nor are its
+// pauses in the same places. `subtitles/timing/<voice>.tsv` (voice = the
+// running voice language's key: french, german, norwegian...; the player's
+// own <user>/subtitles/timing/<voice>.tsv wins whole over the shipped one)
+// gives a sound's or a movie's pieces their times for that voice:
+//   <key>  <piece number, from 1>  <start>  <end>
+// It only changes WHEN pieces show, never which pieces there are: a key's
+// times are used only if they cover exactly the pieces the text gave that
+// key (same count), else that key keeps the text file's times (a text split
+// later, a translation cut differently). Made with tools/subtitle_editor.
+// The running voice language's key ("english", "french"...), "" if none.
+std::string VoiceKey() {
+  const auto& voices = language::VoiceLanguages();
+  const int running = language::RunningVoice();
+  return running >= 0 && running < int(voices.size()) ? voices[size_t(running)].key : std::string();
+}
+
+void ApplyVoiceTimes(Texts& out) {
+  const std::string voice = VoiceKey();
+  if (voice.empty()) return;
+  const std::filesystem::path path = FileFor(std::filesystem::path("timing") / (voice + ".tsv"));
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return;
+  // key (a sound ID's 16 hex digits in lower case, or a movie's key) ->
+  // piece number - 1 -> (start, end); (-1, -1) = not given.
+  std::unordered_map<std::string, std::vector<std::pair<double, double>>> times;
+  std::string line;
+  size_t skipped = 0;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty() || line[0] == '#') continue;
+    std::vector<std::string> f;
+    for (size_t p = 0;;) {
+      const size_t tab = line.find('\t', p);
+      f.push_back(line.substr(p, tab == std::string::npos ? std::string::npos : tab - p));
+      if (tab == std::string::npos) break;
+      p = tab + 1;
+    }
+    const int number = f.size() == 4 ? std::atoi(f[1].c_str()) : 0;
+    const double start = f.size() == 4 ? ParseTime(f[2]) : -1, end = f.size() == 4 ? ParseTime(f[3]) : -1;
+    if (number < 1 || number > 500 || start < 0 || end <= start) {
+      ++skipped;
+      continue;
+    }
+    uint64_t id = 0;
+    const std::string key = ParseId(f[0], &id) ? fmt::format("{:016x}", id) : MovieKey(f[0]);
+    auto& list = times[key];
+    if (list.size() < size_t(number)) list.resize(size_t(number), {-1.0, -1.0});
+    list[size_t(number - 1)] = {start, end};
+  }
+  // Onto the cues, key by key, only where every piece has its time.
+  size_t used = 0, not_matching = 0;
+  const auto apply = [&](const std::string& key, std::vector<Cue>& cues) {
+    const auto it = times.find(key);
+    if (it == times.end()) return;
+    const auto& list = it->second;
+    const bool complete = list.size() == cues.size() &&
+                          std::all_of(list.begin(), list.end(), [](const auto& t) { return t.first >= 0; });
+    if (!complete) {
+      ++not_matching;
+      return;
+    }
+    for (size_t i = 0; i < cues.size(); ++i) {
+      cues[i].start = list[i].first;
+      cues[i].end = list[i].second;
+    }
+    ++used;
+  };
+  for (auto& [id, cues] : out.sound_cues) apply(fmt::format("{:016x}", id), cues);
+  for (auto& [key, cues] : out.movie_cues) apply(key, cues);
+  REXLOG_INFO("Subtitles: {} voices' own times for {} sound(s) / movie(s) from {}{}{}", voice, used,
+              path.string(),
+              not_matching ? fmt::format("; {} kept the text's times (pieces differ)", not_matching) : "",
+              skipped ? fmt::format("; {} line(s) not understood", skipped) : "");
 }
 
 // ---------------------------------------------------------------------------
@@ -319,25 +431,91 @@ bool On() { return g_on; }
 
 void NoteMenuFrame() { g_menu_seen_ms.store(NowMs(), std::memory_order_relaxed); }
 
-void Start() {
-  // The text language's code ("pt-br"): the language the game runs in
-  // (Options -> Language -> Text, language.h RunningText). It is fixed for
-  // the session (a change there restarts the game), so the subtitles follow
-  // it from the next start; no separate subtitle language exists.
+namespace {
+
+// The text language's code ("pt-br"): the language the game runs in
+// (Options -> Language -> Text, language.h RunningText). It is fixed for
+// the session (a change there restarts the game), so the subtitles follow
+// it from the next start; no separate subtitle language exists.
+std::string TextCode() {
   const auto& langs = language::TextLanguages();
   const int running = language::RunningText();
-  const std::string code =
-      running >= 0 && running < int(langs.size()) ? langs[size_t(running)].key : "en-us";
+  return running >= 0 && running < int(langs.size()) ? langs[size_t(running)].key : "en-us";
+}
+
+// Reads every file into a new set and publishes it. `english` / `own` say
+// which text files were there.
+void Load(bool* english, bool* own) {
+  const std::string code = TextCode();
+  auto data = std::make_shared<Texts>();
   // English first, then the language's own file over it (its lines replace
   // English ones key by key; what it doesn't have stays English).
-  const bool english = ReadTexts("en");
-  const bool own = code != "en" && ReadTexts(code);
+  *english = ReadTexts("en", *data);
+  *own = code != "en" && ReadTexts(code, *data);
+  // Then the voice language's own times over theirs (timing/<voice>.tsv).
+  ApplyVoiceTimes(*data);
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_data = std::move(data);
+}
+
+// THE WATCHER: once a second, the files the subtitles come from (both
+// places of each: a player's own copy can appear or go too) are compared
+// with what was read; any newer, new or gone file = everything read again
+// (Load), so a line saved in the subtitle editor shows the next time it
+// plays, without restarting. Lines already on screen keep their words.
+// A stamp = the file's write time, or "none".
+std::vector<std::filesystem::path> WatchedFiles() {
+  std::vector<std::filesystem::path> names = {"en.tsv"};
+  if (const std::string code = TextCode(); code != "en") names.push_back(code + ".tsv");
+  if (const std::string voice = VoiceKey(); !voice.empty()) {
+    names.push_back(std::filesystem::path("timing") / (voice + ".tsv"));
+  }
+  std::vector<std::filesystem::path> files;
+  for (const auto& name : names) {
+    files.push_back(game_folder::UserFolder() / "subtitles" / name);
+    files.push_back(ShippedFolder() / name);
+  }
+  return files;
+}
+std::vector<std::filesystem::file_time_type> Stamps(const std::vector<std::filesystem::path>& files) {
+  std::vector<std::filesystem::file_time_type> out;
+  for (const auto& f : files) {
+    std::error_code ec;
+    const auto t = std::filesystem::last_write_time(f, ec);
+    out.push_back(ec ? std::filesystem::file_time_type::min() : t);
+  }
+  return out;
+}
+void Watch() {
+  const std::vector<std::filesystem::path> files = WatchedFiles();
+  auto seen = Stamps(files);
+  while (true) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto now = Stamps(files);
+    if (now == seen) continue;
+    // A file being saved (the editor writes a temporary file and renames
+    // it; another program may write in place): wait for it to settle.
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    now = Stamps(files);
+    seen = now;
+    bool english = false, own = false;
+    Load(&english, &own);
+    REXLOG_INFO("Subtitles: reloaded (a subtitle file changed)");
+  }
+}
+
+}  // namespace
+
+void Start() {
+  bool english = false, own = false;
+  Load(&english, &own);
+  const std::string code = TextCode();
   // A language without its own file shows English (the fallback); with
   // neither, nothing (never an empty box or a sound's name: the placeholders
   // are a developer option).
   if (!english && !own) {
-    REXLOG_INFO("Subtitles: no text file in {} or next to the exe ({}.tsv or en.tsv){}",
-                (game_folder::UserFolder() / "subtitles").string(), code,
+    REXLOG_INFO("Subtitles: no text file in {} or {} ({}.tsv or en.tsv){}",
+                (game_folder::UserFolder() / "subtitles").string(), ShippedFolder().string(), code,
                 REXCVAR_GET(subtitles_placeholders) ? "; placeholders shown" : "");
   } else if (!own && code != "en" && code != "en-us") {
     REXLOG_INFO("Subtitles: no {}.tsv, English lines shown", code);
@@ -345,6 +523,8 @@ void Start() {
   g_on = english || own || REXCVAR_GET(subtitles_placeholders) || REXCVAR_GET(debug_subtitle_clock);
   REXLOG_INFO("Subtitles: {} (shown: {})", g_on ? "following the voices and movies" : "nothing to show",
               REXCVAR_GET(subtitles) ? "on" : "off");
+  // Watched only when the voices are followed (decided here, at start-up).
+  if (g_on) std::thread(Watch).detach();
 }
 
 void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
@@ -353,8 +533,13 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
   if (!k.in_scope) return;
   const Clock::time_point now = Clock::now();
   const bool speakers = REXCVAR_GET(subtitles_speakers);
+  std::shared_ptr<const Texts> data;
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    data = g_data;
+  }
   std::vector<Line> add;
-  if (const auto cues = g_sound_cues.find(id); cues != g_sound_cues.end()) {
+  if (const auto cues = data->sound_cues.find(id); cues != data->sound_cues.end()) {
     // A sound with several lines (an in-engine cutscene track): each at its
     // time inside the sound, never past the sound's end.
     for (const Cue& c : cues->second) {
@@ -369,7 +554,7 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
   } else {
     Line line;
     line.id = id;
-    if (const auto it = g_texts.find(id); it != g_texts.end()) {
+    if (const auto it = data->texts.find(id); it != data->texts.end()) {
       line.text = it->second;
       if (speakers) line.speaker = SpeakerOf(k);
     } else if (REXCVAR_GET(subtitles_placeholders)) {
@@ -487,8 +672,8 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       movie_time = g_movie_time;
       // A movie's lines at its own clock (it stops when the movie pauses).
       if (!g_movie.empty()) {
-        const auto cues = g_movie_cues.find(g_movie);
-        if (cues != g_movie_cues.end()) {
+        const auto cues = g_data->movie_cues.find(g_movie);
+        if (cues != g_data->movie_cues.end()) {
           for (const Cue& c : cues->second) {
             if (g_movie_time < c.start || g_movie_time >= c.end) continue;
             Line line;

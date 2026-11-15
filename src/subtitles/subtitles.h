@@ -33,14 +33,21 @@
 // "pt-br"...) over it key by key. Each file is the player's own
 // `<user folder>/subtitles/<name>` if there is one, else the shipped copy
 // next to the exe (the repository's subtitles/ folder: the story cartoons'
-// lines in English, transcribed, findings/63 s.20). TAB-separated:
+// lines in English, transcribed, findings/63 s.20; an exe built in the
+// source tree reads that folder itself). The files are watched: a change on
+// disk is read again within about a second (log "Subtitles: reloaded"), so
+// lines saved in tools/subtitle_editor show without a restart. TAB-separated:
 //   <16 hex digits of a sound ID>  <text>            a sound's whole line
 //   <key>  <start>  <end>  <speaker>  <text>         a timed line (cue)
 // <key> = a movie's file name (Crash_02_51: its lines follow the movie's
 // own clock, findings/63 s.15.1) or a sound ID (a sound with several lines:
 // an in-engine cutscene track, timed from its start); times "mm:ss.cc" or
 // seconds; the speaker may be empty. "\n" in a text breaks the line; # starts
-// a comment. Developer options (never in the Options screen):
+// a comment. Those times are made on the ENGLISH voices; another voice
+// language's own times come from `timing/<voice>.tsv` (the same two places;
+// `<key> <piece number> <start> <end>`, used for a key only when they cover
+// exactly its pieces: findings/63 s.24; made with tools/subtitle_editor).
+// Developer options (never in the Options screen):
 // --subtitles_placeholders shows a voice line without text as its speaker
 // folder and file name; --debug_subtitle_clock shows the playing movie's
 // name and clock in the top left corner (for timing lines). Neither is ever

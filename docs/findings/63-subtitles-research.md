@@ -966,3 +966,151 @@ Tested: the file parsed (five fields, valid times, the same 519 keys as
 language Português (Brasil) (seen in the log with a test file); this file's
 lines not yet seen on screen.
 
+
+## 24. A subtitle editor, and each voice language's own times
+
+The times in the text files are made on the English voices. The other nine
+voice archives hold the same lines (same sound IDs) at other lengths and
+with their pauses elsewhere: Aku Aku's `tutorial08_263_all` is 5.26 s in
+English and 4.62 s in French, and a cutscene track's sentences fall at
+other times. Some sounds also hold two sentences that read better as two
+subtitles (that line: "I smell evil and lunacy on the wind." then "N. Gin
+must be up ahead somewhere!", with a pause at 2.85 s in English).
+
+**The format.** The pieces (how many, their words, their speaker) stay in
+the text files, one set per text language. Times for a voice language
+other than English go in `subtitles/timing/<voice>.tsv` (voice = the
+`voice_language` key: `french`, `german`, `norwegian`...), one line per
+piece:
+
+```
+<sound ID or movie name> TAB <piece number, from 1> TAB <start mm:ss.cc> TAB <end mm:ss.cc>
+```
+
+At start-up, after the text files, the game reads the running voice's
+file (the player's own `user/subtitles/timing/<voice>.tsv` wins whole over
+the shipped one, as for the texts) and gives a key's pieces these times
+**only when they cover exactly the pieces the text has for that key**
+(same count, every piece given). Otherwise the key keeps the text's times:
+a text split after the times were made, or a translation cut into other
+pieces, never gets times that belong to other pieces. The log says how
+many keys took their own times and how many kept the text's
+(`Subtitles: french voices' own times for N sound(s) / movie(s) ...; M kept
+the text's times (pieces differ)`). Tested with French voices and a test
+file: one matching key used, one with a different piece count kept.
+
+**The editor** (`tools/subtitle_editor/`, a program of its own beside the
+launcher, built from the SDK's SDL3 and ImGui sources with the port's XMA
+decoder core) lists every voice line of a voice archive of the player's
+disc (8,320 in each; 540 in the groups the game subtitles), plays it, draws
+its waveform and the pieces over it. Pieces are split (the text is cut at
+the sentence end nearest the cut, not after an initial such as "N."),
+added, merged, deleted, dragged by their edges, and their start, end,
+speaker and words typed. With the English voices a change goes to the text
+file; with another voice, times go to that voice's timing file (the whole
+line's list, starting from the times shown) and the pieces themselves
+can't be split, added, merged or deleted (they are shared by every voice).
+Saving writes the whole file: every line not edited, the comments and the
+movies' lines stay as they were; the file replaced is copied to
+`user/subtitles/backups/` first. It saves either to the repository's
+`subtitles/` (to share) or to the player's own `user/subtitles/`.
+
+**The story cartoons** are in the editor too (a "Cartoons" tab: the 21
+movies of `movie1.rcf` / `movie2.rcf`). Each Bink file has 14 audio tracks
+(findings/49 s.5); the editor plays the dialogue track of the picked voice
+language (1 English, 4 French, 5 Danish, 6 Dutch, 7 German, 8 Italian,
+9 Finnish, 10 Norwegian, 11 Spanish, 12 Swedish), optionally with the
+music and effects (front pair 0 and back pair 3 mixed in, LFE 2 left
+out). The SDK's FFmpeg is built without the Bink audio decoders, but
+everything they call (RDFT, DCT, the WMA critical frequencies) is in its
+`libavcodec`; the editor compiles FFmpeg's own `binkaudio.c` with its two
+`CONFIG_BINKAUDIO_*` switches turned on and reads the container itself
+(header, track list, per-frame offsets; per frame each track's packet,
+size first). A 61 s cartoon's dialogue decodes in about 0.1 s; its length
+matches the movie's (Crash_02_51: 61.4 s). Cartoon lines use the movie's
+name as their key, in the text files and the timing files alike, so a
+voice language's own cartoon times work the same way as a sound's. The
+waveform zooms (Ctrl+wheel around the pointer; the wheel or a bar
+scrolls) for these minute-long tracks.
+
+**A mixer.** The sound is decoded in its parts and mixed while listening:
+each part on or off and at its own volume (0-200 %), the choice kept from
+line to line by part name. A cartoon: its Dialogue track (on at first) and
+the music and effects tracks, Front, Bass (LFE) and Back (off at first;
+music and effects share these tracks: no track holds music alone). An
+in-engine 5.1 cutscene track: Front, Centre (the dialogue), Bass (LFE, off
+at first) and Back, at the game's fold-down levels (centre and back
+x 0.707). A plain voice line has one part.
+
+**Watching a cartoon with its subtitles.** A preview panel above the
+waveform shows the picture at the play head (or the cursor when stopped)
+with the subtitles over it as the game places them (the pieces under that
+moment, at most two, 70 % wide, outlined, speaker in yellow, dark box; in
+the desktop's font, not the game's). The picture comes from FFmpeg's Bink
+video decoder, also left out of the SDK's build: `bink.c` with its helpers
+`binkdsp.c`, `blockdsp.c` and `hpeldsp.c` are compiled with the editor
+through one shared settings header (`tools/subtitle_editor/ffmpeg/
+config_overrides.h`: the SDK's `config.h`, the Bink switches on, the
+CPU-specific paths off = plain C on every system). The decoder needs from
+the container only the file's tag (its version letter) and the 4 flag
+bytes at +36. Frames are decoded in order; a jump starts again at the key
+frame before it (frame index bit 0). Converted to RGB with the BT.601
+video-range matrix (the game sets its own at run time; close enough here).
+Playing a cartoon with its picture costs about 16 % of one CPU core.
+
+The panels (list | line; preview / waveform / pieces) are resized with
+dividers, and the waveform has zoom controls: - / + / Fit and a slider in
+seconds shown (time stretch), and a Height slider for quiet speech (also
+Ctrl+wheel zooms, the wheel scrolls, Shift+wheel changes the height).
+
+**To and from other subtitle programs.** Export writes the selected line
+as SubRip (`<name>.srt`, a speaker as "Name: " in front of its text) and
+its sound as heard in the mixer (`<name>.wav`, 16-bit stereo) into
+`user/subtitles/exchange/<voice>/` (`<name>` = the cartoon's name, or a
+voice line's file name and sound ID), so it can be timed in Aegisub,
+Subtitle Composer, Gaupol or Subtitle Edit, or drafted by Whisper. Import
+reads a `.srt` back (BOM, CRLF, "," or "." before the milliseconds;
+`<i>`-style tags and `{\...}` blocks dropped; a leading "Name: " becomes
+the speaker when it names a speaker already used). With the English voices
+the file's subtitles become the line's pieces; with another voice only its
+times are taken, into that voice's timing file, and only when it has as
+many subtitles as the line has pieces. Both go through Undo and are only
+written to disk by Save. Tested: export, an edited file (one subtitle split
+in two, a tag, CRLF) imported and saved = exactly that line changed in the
+text file; French times imported into `timing/french.tsv`; a file with a
+different count refused.
+
+**Checks by hand.** A line can be marked as checked: someone listened to
+it with a given voice language and found its pieces, times, speakers and
+words right. The mark goes in `subtitles/checked/<code>.tsv` (one per text
+language; never read by the game):
+
+```
+<sound ID or movie> TAB <voice listened to> TAB <who> TAB <date, UTC> TAB <fingerprint>
+```
+
+The fingerprint is a 64-bit FNV-1a hash of the line's pieces as shown for
+that voice (times in hundredths, speakers, words). When the line changes
+afterwards, the editor shows the check as changed since (to be checked
+again) instead of keeping it green. The list has a Checked column and an
+"only lines not checked" filter; the name is typed once per PC (kept in
+`user/subtitles/checker-name.txt`) and only leaves it inside the checks
+that are saved. Tested: a check saved, then the words changed = shown as
+changed.
+
+**Lines marked unused.** `subtitles/unused.tsv` (key, who, date; one file
+for every language, not read by the game) labels sounds and movies the game
+never plays. Such a line can still be checked; the list counts it apart
+(a second counter), and a filter hides them.
+
+**No rebuild, no restart.** The game reads the repository's `subtitles/`
+itself when its exe sits in the source tree's build folder
+(`<repo>/out/build/<preset>/`); elsewhere (an install, a test copy) the
+copy next to the exe. A watcher thread compares the files' write times once
+a second (each file in both places, so a player's own copy appearing counts
+too) and reads everything again on a change, swapping the whole set under
+the lines' mutex: a line saved in the editor shows the next time it plays.
+Tested: the file touched while the game ran = "Subtitles: reloaded" 1.3 s
+later.
+
+Not done yet: fetching the newest files from the repository.
