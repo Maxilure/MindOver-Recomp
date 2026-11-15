@@ -73,6 +73,14 @@ REXCVAR_DEFINE_INT32(subtitles_background_opacity, 70, "CrashMoM",
     .range(0, 100);
 REXCVAR_DEFINE_BOOL(subtitles_speakers, true, "CrashMoM",
                     "The speaker's name in front of a subtitle, when it is known");
+REXCVAR_DEFINE_INT32(subtitles_max_lines, 2, "CrashMoM",
+                     "How many subtitles may stand on screen at once (the newest at the bottom, older "
+                     "ones pushed up and dimmed; one more makes the oldest fade out)")
+    .range(1, 4);
+REXCVAR_DEFINE_INT32(subtitles_linger_ms, 2000, "CrashMoM",
+                     "How long a subtitle stays after its line has ended (its sound, or the end time "
+                     "its text file gives it), in milliseconds, before it fades out")
+    .range(0, 10000);
 REXCVAR_DEFINE_BOOL(subtitles_placeholders, false, "CrashMoM",
                     "Developer: where a voice line has no text yet, show its speaker folder and "
                     "sound file name instead (for checking subtitle timing)");
@@ -85,10 +93,13 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-// A line stays this long after its sound ends, so a short line can be read
-// (cut short if another line starts: at most kMaxLines are shown).
-constexpr double kHoldSeconds = 0.3;
-constexpr size_t kMaxLines = 2;
+// THE LINGER (subtitles_linger_ms, default 2 s): every line stays this long
+// AFTER its time is up -- after its sound ends, and after the end time its
+// text file gives it (a cutscene track's or a movie's timed line) -- so it
+// can be read to the end; then it fades out (kFadeOutSeconds below). A newer
+// line simply stacks under it meanwhile. A line the game cuts off (a skipped
+// cutscene) still goes at once.
+double LingerSeconds() { return std::clamp(int(REXCVAR_GET(subtitles_linger_ms)), 0, 10000) / 1000.0; }
 
 // The voices and movies are FOLLOWED (lines queued, movie clock kept) when
 // there is anything to show: a text file, or a developer option. Decided at
@@ -408,6 +419,10 @@ std::u16string SpeakerOf(const Kind& k) {
 // ---------------------------------------------------------------------------
 struct Line {
   uint64_t id = 0;
+  // Which subtitle this is, for the drawing's fades and slides (section 4):
+  // every queued line gets its own number (g_next_uid); a movie's timed line
+  // is named by the movie and its place in the file (MovieUid). 0 = a sample.
+  uint64_t uid = 0;
   std::u16string speaker;
   std::u16string text;
   Clock::time_point start;
@@ -415,6 +430,16 @@ struct Line {
 };
 std::mutex g_mutex;
 std::vector<Line> g_lines;  // oldest first; a cue's line may start in the future
+uint64_t g_next_uid = 1;    // under g_mutex; the next queued line's uid
+
+// A movie's n-th timed line's uid: the movie key's FNV-1a hash with the
+// number mixed in, top bit set (never equal to a queued line's counter).
+uint64_t MovieUid(const std::string& movie, size_t n) {
+  uint64_t h = 1469598103934665603ull;
+  for (char c : movie) h = (h ^ uint8_t(c)) * 1099511628211ull;
+  h = (h ^ uint64_t(n)) * 1099511628211ull;
+  return h | (1ull << 63);
+}
 
 // The Bink movie playing now (voice_trace.cpp's frame-end watcher, main
 // thread): its key and its clock (seconds from its first frame).
@@ -548,7 +573,7 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
       line.text = c.text;
       if (speakers) line.speaker = c.speaker;
       line.start = After(now, c.start);
-      line.end = After(now, std::min(c.end, seconds + kHoldSeconds));
+      line.end = After(now, std::min(c.end, seconds) + LingerSeconds());
       if (line.end > line.start) add.push_back(std::move(line));
     }
   } else {
@@ -564,11 +589,26 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
       return;  // nothing to show (never an invented line)
     }
     line.start = now;
-    line.end = After(now, seconds + kHoldSeconds);
+    line.end = After(now, seconds + LingerSeconds());
     add.push_back(std::move(line));
   }
   std::lock_guard<std::mutex> lock(g_mutex);
-  for (Line& l : add) g_lines.push_back(std::move(l));
+  for (Line& l : add) {
+    l.uid = g_next_uid++;
+    g_lines.push_back(std::move(l));
+  }
+}
+
+void DebugLine(double seconds, const std::string& text) {
+  Line line;
+  line.id = 0;  // no sound: never cut
+  line.text = TextOf(text);
+  line.start = Clock::now();
+  line.end = After(line.start, seconds + LingerSeconds());
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_on = true;  // a test line shows even without a text file
+  line.uid = g_next_uid++;
+  g_lines.push_back(std::move(line));
 }
 
 void OnVoiceCut(uint64_t id) {
@@ -617,6 +657,16 @@ constexpr ImU32 kOutlineColour = IM_COL32(0, 0, 0, 220);
 // over kLiftSeconds so the text doesn't jump.
 constexpr float kCardTop720 = 589.5f, kWideBarTop720 = 517.5f, kBarGap720 = 10.0f;
 constexpr float kLiftSeconds = 0.2f;
+// THE STACK (SubtitleDialog::StackLines): a line fades in over
+// kFadeInSeconds and out over kFadeOutSeconds (slower, so the eye can
+// finish it); blocks stand kStackGap720 (720p pixels) apart and slide to a
+// new place at kSlideRate (an exponential follow: 1 - e^(-12 t), 95 % in 0.25 s).
+constexpr float kFadeInSeconds = 0.15f, kFadeOutSeconds = 0.40f;
+constexpr float kStackGap720 = 6.0f;
+constexpr float kSlideRate = 12.0f;
+// Older lines (every one above the newest) are drawn at kOlderShare of their
+// opacity, box included, easing there over kDimSeconds.
+constexpr float kOlderShare = 0.6f, kDimSeconds = 0.25f;
 
 // One piece of a drawn row: a run of characters in one colour.
 struct Run {
@@ -674,9 +724,13 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       if (!g_movie.empty()) {
         const auto cues = g_data->movie_cues.find(g_movie);
         if (cues != g_data->movie_cues.end()) {
-          for (const Cue& c : cues->second) {
-            if (g_movie_time < c.start || g_movie_time >= c.end) continue;
+          for (size_t n = 0; n < cues->second.size(); ++n) {
+            const Cue& c = cues->second[n];
+            // Shown from its start until its end + the linger (the movie's
+            // own clock: it stops when the movie pauses).
+            if (g_movie_time < c.start || g_movie_time >= c.end + LingerSeconds()) continue;
             Line line;
+            line.uid = MovieUid(g_movie, n);
             line.text = c.text;
             if (REXCVAR_GET(subtitles_speakers)) line.speaker = c.speaker;
             shown.push_back(std::move(line));
@@ -687,7 +741,7 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       for (const Line& l : g_lines) {
         if (l.start <= now) shown.push_back(l);
       }
-      if (shown.size() > kMaxLines) shown.erase(shown.begin(), shown.end() - std::ptrdiff_t(kMaxLines));
+      // (How many stand at once is the drawing's business: StackLines.)
     }
 
     // THE DEVELOPER CLOCK (debug_subtitle_clock): the movie's name and time,
@@ -704,11 +758,115 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     // pause menu: its decision ran in the last 200 ms; the Options screen).
     // The lines keep their clocks meanwhile and reappear if still running.
     const bool menu = NowMs() - g_menu_seen_ms.load(std::memory_order_relaxed) < 200 || options_menu::Open();
-    if (!g_on || !REXCVAR_GET(subtitles) || menu || shown.empty()) {
+    if (!g_on || !REXCVAR_GET(subtitles) || menu) {
+      // Hidden at once (a menu opening is a cut, not a fade); lines still
+      // running when it closes fade in again.
+      lifted_ = 0;
+      stack_.clear();
+      return;
+    }
+    // A frame's time, never more than 0.1 s (a hitch would jump the fades).
+    const float dt = std::clamp(io.DeltaTime, 0.0f, 0.1f);
+    StackLines(shown, dt);
+    if (stack_.empty()) {
       lifted_ = 0;
       return;
     }
-    DrawLines(shown, list, LiftedBottom(io.DeltaTime));
+    DrawStack(list, LiftedBottom(dt), dt);
+  }
+
+  // THE STACK (what the player sees): every subtitle is its own little
+  // block with its own box. The newest stands at the bottom, appearing in
+  // place with a fade; when another line starts, the ones above it are
+  // PUSHED UP, sliding (not jumping) to their new place. A line fades in quickly (kFadeInSeconds) and fades out
+  // a little more slowly (kFadeOutSeconds) once its sound is over; while it
+  // fades out it keeps its place, and the lines above slide down only once
+  // it is gone. At most `subtitles_max_lines` (default 2) are wanted at once:
+  // a newer one makes the oldest start fading out early. Lines above the
+  // newest are dimmed (kOlderShare).
+  struct Entry {
+    Line line;
+    bool wanted = true;   // still to be shown (else fading out)
+    bool placed = false;  // `rise` set yet (the first frame starts it low)
+    float alpha = 0;      // 0..1, before easing (Eased)
+    float dim = 1;        // 1 = the newest line; older ones ease down to kOlderShare
+    float rise = 0;       // its bottom's height above the stack's bottom (screen px)
+  };
+
+  // Brings the stack up to date with the lines wanted this frame (oldest
+  // first, as gathered in OnDraw): new ones join at the bottom, gone ones
+  // are marked to fade out, the fades step on, faded-out ones leave.
+  void StackLines(const std::vector<Line>& shown, float dt) {
+    const size_t max_lines = size_t(std::clamp(int(REXCVAR_GET(subtitles_max_lines)), 1, 4));
+    const size_t first = shown.size() > max_lines ? shown.size() - max_lines : 0;
+    for (Entry& e : stack_) e.wanted = false;
+    for (size_t i = first; i < shown.size(); ++i) {
+      const Line& l = shown[i];
+      const auto it = std::find_if(stack_.begin(), stack_.end(),
+                                   [&](const Entry& e) { return e.line.uid == l.uid; });
+      if (it != stack_.end()) {
+        it->wanted = true;
+        it->line = l;  // the same line (a reload may have changed its words)
+      } else {
+        Entry e;
+        e.line = l;
+        stack_.push_back(std::move(e));  // the newest: at the bottom
+      }
+    }
+    // The newest line still wanted is shown whole; every older one is
+    // DIMMED (kOlderShare), easing there over kDimSeconds, so the eye goes
+    // to the line being spoken.
+    const Entry* newest = nullptr;
+    for (const Entry& e : stack_) {
+      if (e.wanted) newest = &e;
+    }
+    for (Entry& e : stack_) {
+      e.alpha = e.wanted ? std::min(1.0f, e.alpha + dt / kFadeInSeconds)
+                         : std::max(0.0f, e.alpha - dt / kFadeOutSeconds);
+      const float dim_target = &e == newest ? 1.0f : kOlderShare;
+      const float step = (1.0f - kOlderShare) * dt / kDimSeconds;
+      e.dim = e.dim < dim_target ? std::min(dim_target, e.dim + step) : std::max(dim_target, e.dim - step);
+    }
+    std::erase_if(stack_, [](const Entry& e) { return !e.wanted && e.alpha <= 0.0f; });
+  }
+
+  // A fade's 0..1 eased (smoothstep): starts and ends gently.
+  static float Eased(float a) { return a * a * (3.0f - 2.0f * a); }
+
+  // The stack drawn with its lowest block's bottom at `bottom`.
+  void DrawStack(ImDrawList* list, float bottom, float dt) {
+    SetScale();
+    const float max_width = pic_w_ * kWidthShare;
+    const float gap = kStackGap720 * unit_;
+    // Each block's rows and height first, then the targets from the bottom
+    // up (the newest = the last entry = lowest).
+    std::vector<std::vector<Row>> rows(stack_.size());
+    std::vector<float> heights(stack_.size());
+    for (size_t i = 0; i < stack_.size(); ++i) {
+      Wrap(stack_[i].line, max_width, rows[i]);
+      heights[i] = BlockHeight(rows[i]);
+    }
+    // How fast a block slides to its place: 1 - e^(-rate t) of the way per
+    // t seconds (about 95 % of a move within 0.25 s).
+    const float follow = 1.0f - std::exp(-kSlideRate * dt);
+    float above = 0;  // the room taken below the block being placed
+    for (size_t k = stack_.size(); k-- > 0;) {
+      Entry& e = stack_[k];
+      const float target = above;
+      if (!e.placed) {
+        // A new line appears IN its place (it only fades in; the lines above
+        // it are the ones that move up).
+        e.rise = target;
+        e.placed = true;
+      }
+      e.rise += (target - e.rise) * follow;
+      if (std::fabs(target - e.rise) < 0.25f) e.rise = target;
+      if (!rows[k].empty()) above += heights[k] + gap;
+    }
+    for (size_t k = 0; k < stack_.size(); ++k) {
+      if (rows[k].empty()) continue;
+      DrawBlock(rows[k], list, bottom - stack_[k].rise, Eased(stack_[k].alpha) * stack_[k].dim);
+    }
   }
 
   // The lowest row's bottom where nothing is in the way: 11 % above the
@@ -735,25 +893,34 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     return base - lifted_;
   }
 
-  // Lines (oldest first) as wrapped rows, their block's bottom at `bottom`:
-  // the box, then the outline layer, then the letters.
-  void DrawLines(const std::vector<Line>& shown, ImDrawList* list, float bottom) {
+  // The text's scale for the chosen size (sets scale_).
+  void SetScale() {
     const int size = std::clamp(int(REXCVAR_GET(subtitles_size)), 0, 2);
     scale_ = kCapHeights[size] * unit_ / font_.cap_height();
-    const float max_width = pic_w_ * kWidthShare;
-    const float row_height = font_.cell_height() * scale_ * 0.78f;  // the cell has room above / below
+  }
+  // Rows are this far apart (the font's cell has room above / below).
+  float RowHeight() const { return font_.cell_height() * scale_ * 0.78f; }
+  // A block of rows: RowHeight apart, the last one a whole glyph cell tall.
+  float BlockHeight(const std::vector<Row>& rows) const {
+    if (rows.empty()) return 0;
+    return RowHeight() * float(rows.size() - 1) + font_.cell_height() * scale_;
+  }
 
-    // Rows of every shown line, wrapped by words at kWidthShare of the
-    // picture (so the size never pushes a row past the picture's sides).
+  // Lines (oldest first) as ONE block of wrapped rows, its bottom at
+  // `bottom`, fully shown (the Options screen's sample).
+  void DrawLines(const std::vector<Line>& shown, ImDrawList* list, float bottom) {
+    SetScale();
     std::vector<Row> rows;
-    for (const Line& l : shown) Wrap(l, max_width, rows);
-    if (rows.empty()) return;
+    for (const Line& l : shown) Wrap(l, pic_w_ * kWidthShare, rows);
+    DrawBlock(rows, list, bottom, 1.0f);
+  }
 
-    // The block, bottom-up: rows are row_height apart, the last one a whole
-    // glyph cell tall. Never above the picture's top (a very long line at
-    // Large): then it starts at the top and runs down.
-    const float cell_h = font_.cell_height() * scale_;
-    const float block_h = row_height * float(rows.size() - 1) + cell_h;
+  // One block: the box, then the outline layer, then the letters, all at
+  // `alpha` (0..1, a fade). Never above the picture's top (a very long line
+  // at Large): then it starts at the top and runs down.
+  void DrawBlock(const std::vector<Row>& rows, ImDrawList* list, float bottom, float alpha) {
+    if (rows.empty() || alpha <= 0.0f) return;
+    const float block_h = BlockHeight(rows);
     const float top = std::max(pic_y_, bottom - block_h);
     bottom = top + block_h;
     const int opacity = REXCVAR_GET(subtitles_background)
@@ -764,15 +931,16 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       for (const Row& r : rows) widest = std::max(widest, RowWidth(r));
       const float pad_x = 14.0f * unit_;  // the cells' own blank space pads it above and below
       const float cx = pic_x_ + pic_w_ * 0.5f;
-      // Only the box's alpha changes; the letters stay solid.
-      const ImU32 box = IM_COL32(0, 0, 0, (opacity * 255 + 50) / 100);
-      list->AddRectFilled(ImVec2(cx - widest * 0.5f - pad_x, top), ImVec2(cx + widest * 0.5f + pad_x, bottom), box,
-                          6.0f * unit_);
+      // The box's own opacity (the setting) times the fade.
+      const int a = int(std::lround(float(opacity) * 2.55f * alpha));
+      list->AddRectFilled(ImVec2(cx - widest * 0.5f - pad_x, top), ImVec2(cx + widest * 0.5f + pad_x, bottom),
+                          IM_COL32(0, 0, 0, a), 6.0f * unit_);
     }
+    const float row_height = RowHeight();
     for (int layer = 0; layer < 2; ++layer) {
       float y = top;
       for (const Row& r : rows) {
-        DrawRow(list, r, std::round(pic_x_ + (pic_w_ - RowWidth(r)) * 0.5f), y, layer);
+        DrawRow(list, r, std::round(pic_x_ + (pic_w_ - RowWidth(r)) * 0.5f), y, layer, alpha);
         y += row_height;
       }
     }
@@ -788,10 +956,11 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   }
 
   // One row from `pen`, its top at `y`: layer 0 = the dark outline, 1 = the letters.
-  void DrawRow(ImDrawList* list, const Row& r, float pen, float y, int layer) {
+  // `alpha` (0..1) scales the colours' own alpha (a fade).
+  void DrawRow(ImDrawList* list, const Row& r, float pen, float y, int layer, float alpha = 1.0f) {
     for (const Run& run : r) {
       for (char16_t c : run.text) {
-        const ImU32 colour = layer == 0 ? kOutlineColour : run.colour;
+        const ImU32 colour = Faded(layer == 0 ? kOutlineColour : run.colour, alpha);
         const Composite k = CompositeOf(c);
         const game_font::Glyph* g = font_.Find(k.base ? k.base : c);
         if (!g) continue;
@@ -860,6 +1029,14 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       if (g) w += g->advance;
     }
     return w * scale_;
+  }
+
+  // A colour with its alpha scaled by `alpha` (0..1).
+  static ImU32 Faded(ImU32 colour, float alpha) {
+    if (alpha >= 1.0f) return colour;
+    const uint32_t a = (colour >> IM_COL32_A_SHIFT) & 0xFF;
+    const uint32_t faded = uint32_t(std::lround(float(a) * std::max(alpha, 0.0f)));
+    return (colour & ~IM_COL32_A_MASK) | (faded << IM_COL32_A_SHIFT);
   }
 
   // Ã and ã are listed in the game's font but EMPTY on the disc (zero width,
@@ -958,6 +1135,7 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   // The game's 16:9 picture in the window this frame, and 720p's pixel in it.
   float pic_x_ = 0, pic_y_ = 0, pic_w_ = 0, pic_h_ = 0, unit_ = 1.0f;
   float lifted_ = 0;  // how far up the subtitles stand now (screen pixels), LiftedBottom
+  std::vector<Entry> stack_;  // the subtitles on screen, oldest (top) first: StackLines
   std::map<std::pair<uint32_t, uint32_t>, float> ink_top_;  // InkTop's cache
 };
 

@@ -1114,3 +1114,45 @@ Tested: the file touched while the game ran = "Subtitles: reloaded" 1.3 s
 later.
 
 Not done yet: fetching the newest files from the repository.
+
+## 25. Subtitles that stack and fade
+
+Until now a new line replaced the old one at once (at most two lines,
+drawn as one block). Now every line is its own block with its own box
+(`SubtitleDialog::StackLines` / `DrawStack` in `src/subtitles/subtitles.cpp`):
+
+* the newest line stands at the bottom; a new one pushes the older ones
+  up. They SLIDE to their new place (an exponential follow, 95 % of the
+  way in 0.25 s); the new line itself does not move, it only fades in
+  where it stands;
+* a line fades in over 0.15 s and fades out over 0.4 s (a little slower,
+  so the eye can finish it) once its time is up; fades are eased
+  (smoothstep);
+* every line LINGERS `subtitles_linger_ms` (default 2000) after its time is
+  up before it fades: after its sound's end, and after the end time the
+  text file gives a timed line (a cutscene track's or a movie's). This
+  replaces the old 0.3 s hold. A cut (a skipped cutscene) still ends a line
+  at once. A line fading out keeps its place;
+  the lines above slide down once it is gone;
+* at most `subtitles_max_lines` (1-4, default 2; not in the Options screen)
+  are wanted at once: a newer line makes the oldest fade out early;
+* only the newest line is drawn whole: the ones above it dim to 60 % of
+  their opacity (box included) over 0.25 s, so the eye goes to the line
+  being spoken;
+* each line is known by a number (a queued voice line: a counter; a
+  movie's timed line: the movie's name and its place in the file), so a
+  line that stays shown keeps its block from frame to frame;
+* the pause menu and the Options screen still hide everything at once;
+  lines still running fade in again after.
+
+The console / FIFO command `subtitle <seconds> <text>` queues a test line
+(as if a voice of that length had started). Checked by a temporary trace
+of the stack (each block's fade and height above the bottom, every 50 ms):
+four test lines 1.2 s apart = each new line faded in within 0.15 s, the
+older ones moved up 60 px per new line, the fourth made the first fade out
+in 0.4 s, and when the lowest faded out the one above it slid down. The
+look itself (ImGui, not in photos) is still to be seen.
+
+Lines cut short by the game: a new Aku Aku hint no longer stops the line
+being spoken (findings/61 s.2), so its subtitle no longer stays next to the
+new one.

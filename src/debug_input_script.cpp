@@ -26,6 +26,7 @@
 #include "input/keyboard_mouse.h"
 #include "players/dummy_players.h"
 #include "players/players_setup.h"
+#include "subtitles/subtitles.h"
 
 REXCVAR_DEFINE_STRING(debug_input_script, "", "CrashMoM",
                       "Debug: timed input taps, e.g. \"8000:start,30000:lsright:2000\" "
@@ -270,6 +271,20 @@ bool ScriptedInputDriver::HandleLine(const std::string& line) {
       return true;
     }
     REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (dummy <2-4> follow|copy <1-4> / dummy <2-4> idle)", line);
+    return false;
+  }
+  // "subtitle <seconds> <text>": a test line on the subtitles' stack, as if a
+  // voice of that length had started (subtitles/subtitles.h DebugLine).
+  if (view.substr(0, 9) == "subtitle ") {
+    double seconds = 0;
+    int used = 0;
+    if (std::sscanf(line.c_str() + 9, "%lf %n", &seconds, &used) >= 1 && seconds > 0 &&
+        size_t(9 + used) < line.size()) {
+      subtitles::DebugLine(seconds, line.substr(size_t(9 + used)));
+      REXLOG_INFO("debug_input_fifo: t={} ms \"{}\"", NowMs(), line);
+      return ok;
+    }
+    REXLOG_WARN("debug_input_fifo: ignoring \"{}\" (subtitle <seconds> <text>)", line);
     return false;
   }
   // "achievement list|show <id>|unlock <id>" (achievements/achievements.h).

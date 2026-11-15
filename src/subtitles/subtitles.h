@@ -7,7 +7,11 @@
 // centred near the bottom of the picture, in the game's own font
 // (Titans_Small, ui/game_font.h) with its dark outline, over a dark box
 // (0-100 % opaque, default 70 %), with the speaker's name in front when it is
-// known for sure. At most two lines at once (the newest at the bottom).
+// known for sure. Each line is its own block with its own box; they STACK:
+// the newest at the bottom, a new line pushing the older ones up (they
+// slide and dim to 60 %; a new line only fades in where it stands), at most
+// `subtitles_max_lines` (default 2) at once. A line fades in
+// quickly (0.15 s) and out a little more slowly (0.4 s) once its sound is over.
 // Every setting takes effect at once (read each frame); the Accessibility
 // tab shows a sample line while it is open (options_menu.h SubtitlePreview).
 // Hidden while the pause menu or the Options screen is up. Moved up above
@@ -20,8 +24,9 @@
 //     for, the moment its samples go to the mixer),
 //   * a cut: the decoder destroyed before all of the line was decoded (a
 //     skipped cutscene; only visible for lines longer than 4.52 s).
-// A line then stays for its own length (the clip's end sample / rate) plus a
-// short hold, or until it is cut. The game's pause menu does not stop the
+// A line then stays for its own length (the clip's end sample / rate) plus
+// the linger (subtitles_linger_ms, default 2 s; timed lines from the text
+// files get it too), or until it is cut. The game's pause menu does not stop the
 // voices (findings/63 s.16.3), so the subtitle keeps its clock too.
 //
 // WHICH LINES (findings/63 s.11, s.13): the in-scope groups of the voice
@@ -96,6 +101,10 @@ void OnVoiceCut(uint64_t id);
 // (the current frame / frame rate, findings/63 s.15.1); then its close.
 void OnMovie(const std::string& name, double seconds);
 void OnMovieEnd();
+
+// Developer (console / FIFO "subtitle <seconds> <text>"): a test line, as if
+// a voice of that length had just started; shown even with no text file.
+void DebugLine(double seconds, const std::string& text);
 
 // The drawing (CrashMomApp::OnCreateDialogs, UI thread).
 void Create(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate);

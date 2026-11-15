@@ -10,6 +10,9 @@
 //   fix_spike_jack_sound   Spike (and Spike in the Hero levels) played the
 //                          jacking sound twice; every other titan plays it
 //                          once (spike_jack_sound.cpp, findings/61).
+//   fix_speech_cut_off     a new Aku Aku hint line stopped the one still
+//                          being spoken; now it waits for it to end
+//                          (speech_waits.cpp, findings/61 s.2).
 //
 // debug_sound_track_trace (off by default): one log line per sound a fight
 // tree starts ("Sound track: <cue> ..."), the tool that showed the double.

@@ -9,6 +9,7 @@ original behaviour can still be compared. Code: `src/game_bugs/`.
 | Bug | Setting | Section |
 |-----|---------|---------|
 | Spike's jacking sound plays twice | `fix_spike_jack_sound` | 1 |
+| A new hint line cuts off the one being spoken | `fix_speech_cut_off` | 2 |
 
 ## 1. Spike's jacking sound plays twice
 
@@ -98,3 +99,58 @@ After the fix, the trace shows the jack list's sounds at 3, 8 and 30 for
 both Spike and Spike in the Hero levels. Riding and attacking work as
 before, with no errors. `fix_spike_jack_sound = false` brings back the
 original's double sound.
+
+## 2. A new hint line cuts off the one being spoken
+
+Aku Aku's hints (the "tutorial" voice: his advice and the moves he
+explains) come from level-script events. When a second hint is asked for
+while a line is still being spoken (two hint spots close together, a hint
+right after another voice line), the first line stops mid-sentence and the
+new one starts. With subtitles on, the first line's text also stayed on
+screen next to the new one, as if both were spoken.
+
+### Who stops it
+
+A new developer trace, `--debug_sound_stop_trace`
+(`src/debug/sound_stop_trace.cpp`), logs every sound instance the game
+starts (`sub_822DDA10`, the instance gets its clip) and every one set to
+"stop" (`sub_822DDAB8` with state 2), each with the game's call stack. The
+tutorial voice is started by the front end's sound player `sub_82261698`
+(the one the menus use), called from `CActionTutorialMessage`'s Update
+`sub_8229E838` (vtable `0x82040618`, slot 1). That Update first calls
+`sub_822D71A0(sound manager, &name)`, which:
+
+* walks every sound instance (the global list at `0x825A75A4`: a node at
+  instance +8, the next node = the word at the node; the playing voice at
+  instance +0x2C);
+* follows each playing voice's buses (voice +108, first bus
+  `sub_82333EF0`, next `sub_82333EF8`);
+* fades out (`sub_822DD8F0`, 200 ms) every instance on the bus whose name
+  hash (bus +16) equals the word at `0x825A7598`: the speech bus.
+
+Then it plays its own line. The same stop runs before a villager's dialogue
+(`CActionPlayVillagerDialog`, `sub_82297260`) and at a level change
+(`sub_822D6188`, state 5). Aku Aku's in-game lines (`akuaku\ingameNN`)
+are on the same bus: with a probe that tested the bus every sound update,
+the bus was busy for 5.5 s around a 5.26 s tutorial line and 1.7 s around
+a 1.40 s Aku Aku line, then free again.
+
+### The fix
+
+`CActionTutorialMessage`'s Update is called every frame until it answers
+1 ("done"); 0 means "ask again next frame" (the original's own retry while
+its sound can't be had). `src/game_bugs/speech_waits.cpp` wraps it: while
+a voice still plays on the speech bus (the same walk and bus test as
+`sub_822D71A0`, without the stop), it answers 0 without running the
+original. The hint, and the script's events after it, wait; the line
+starts when the bus is free, in full. A wait never lasts more than 12 s (a
+looping sound on that bus would hold hints back forever); after that the
+original runs as before. The villagers' dialogue is left alone: it answers
+the player's own button press, and a delay there would feel like a missed
+press.
+
+Tested with the bus held "busy" for 3 s by a temporary switch: the hint
+waited 3.0 s, then its line played whole (log "Speech: a hint line waits
+for the voice still speaking" / "the hint line waited 3.0 s"), no errors.
+A real overlap of two hints in play is still to be seen.
+`fix_speech_cut_off = false` brings back the original cut.

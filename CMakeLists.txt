@@ -47,6 +47,7 @@ set(CRASHMOM_SOURCES
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)
     src/audio_trace.cpp          # --debug_audio_trace: logs every sound the game asks for, by name
+    src/debug/sound_stop_trace.cpp  # --debug_sound_stop_trace: who starts / stops each sound
     src/subtitles/voice_trace.cpp  # --debug_subtitle_trace: when each voice line really plays (findings/63)
     src/subtitles/subtitles.cpp  # --subtitles: the spoken lines as text over the picture (findings/63)
     src/audio/sound_out.cpp      # the game's mixed 5.1 sound played by our own SDL output (findings/54)
@@ -101,6 +102,7 @@ set(CRASHMOM_SOURCES
     src/players/more_players_loading.cpp  # players 3-4's paw prints on the loading screen (findings/26)
     src/players/more_players_markers.cpp  # players 3-4's own marker pictures (findings/26)
     src/gameplay/game_mods.cpp   # Options -> Gameplay: friendly fire, combos on a partner's hit, simple spinning
+    src/game_bugs/speech_waits.cpp  # bugs of the original game: a hint line cut off by the next (findings/61 s.2)
     src/game_bugs/spike_jack_sound.cpp  # bugs of the original game: Spike's double jacking sound (findings/61)
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
     src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups

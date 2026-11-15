@@ -145,6 +145,10 @@ and put back when an update fails).
   mojo left behind), loading a save after **Quit Game** could crash. Leftover
   pickups still pointed at the old level's areas; they now find their place
   in the new one.
+- **Aku Aku finishes his sentence.** A new hint from Aku Aku no longer
+  cuts off the line he is still speaking: it waits until that line has
+  ended. The Xbox 360 game cuts it (**fix_speech_cut_off** in
+  `settings.toml` brings that back).
 - **Spike's jacking sound plays once.** Jacking Spike (or Spike in the Hero
   levels) played the jacking sound twice; every other titan plays it once.
   The Xbox 360 game does the same: Spike's move data lists the sound twice.
