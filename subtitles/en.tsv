@@ -42,16 +42,16 @@
 # ----------------------------------------------------------------------------
 # Crash_02_51  -  "Worst Contact"  (19 lines)
 # ----------------------------------------------------------------------------
-Crash_02_51	00:06.35	00:08.05	Coco	Oh, stupid thing, work!
-Crash_02_51	00:10.35	00:12.08	Crunch	Wow, we should clean this place up, childrens!
+Crash_02_51	00:06.35	00:08.05	Coco	Oh, stu
+Crash_02_51	00:10.35	00:12.08	Crunch	Wow, we shou\n
 Crash_02_51	00:12.11	00:13.47	Crunch	It's been like a metric year!
-Crash_02_51	00:13.50	00:15.23	Coco	Who's gonna make us, you?
+Crash_02_51	00:13.50	00:15.23	Coco	Who's gonna make us, yo
 Crash_02_51	00:15.26	00:16.46	Coco	I don't think so.
 Crash_02_51	00:17.40	00:19.71	Crunch	Okay, guess I'll just say some catchphrases.
 Crash_02_51	00:19.74	00:20.94	Crunch	Drink lemonade, vitamin C!
 Crash_02_51	00:22.82	00:24.29	Coco	Hot!
 Crash_02_51	00:24.32	00:25.52	Crunch	I gotcha!
-Crash_02_51	00:32.00	00:37.47	Coco	If I get this Doominator eye working, we'll have the best entertainment system of all time.
+Crash_02_51	00:32.00	00:37.47	Coco	If I get this Doomihave the
 Crash_02_51	00:37.50	00:40.67	Coco	It'll play games, watch movies, and dispense butter.
 Crash_02_51	00:40.70	00:43.47	Coco	It'll be the mother of all TiVos!
 Crash_02_51	00:43.50	00:44.85	Crash	Ah-hoo!
@@ -538,53 +538,66 @@ c58edb57a7c3f249	00:29.94	00:32.60	Nina	I've got new evil plans to start.
 # In game: Aku Aku  (81 sounds)
 # ----------------------------------------------------------------------------
 bbfe7614066de856	00:00.00	00:02.94	Aku Aku	Oh yeah, never seeing this in a game before.
-a9e9230a9a51e952	00:00.00	00:04.17	Aku Aku	This is weird stuff, Crash. It's tiki mojo, but somehow evil.
-a9e9230a9a51e952	00:04.17	00:06.69	Aku Aku	Like the source itself was corrupt.
+a9e9230a9a51e952	00:00.00	00:01.87	Aku Aku	This is weird stuff, Crash.
+a9e9230a9a51e952	00:02.37	00:05.03	Aku Aku	It's tiki mojo, but somehow evil.
+a9e9230a9a51e952	00:05.03	00:06.69	Aku Aku	Like the source itself was corrupt.
 803a80480ea96755	00:00.00	00:04.30	Aku Aku	Crash! That roller is going to get the ever-loving bejeezus knocked out of him!
 803a80480ea96755	00:04.30	00:05.74	Aku Aku	We've got to help him!
 803a80480ea96757	00:00.00	00:04.74	Aku Aku	Fine. I don't actually know if it's a girl or boy. I'm just presuming it's male.
 803a80480ea96757	00:04.74	00:05.47	Aku Aku	Happy?
-0453c239b6dde45f	00:00.00	00:04.77	Aku Aku	Hear that, Crash? The entrance to the school must be near the Rat Village.
+0453c239b6dde45f	00:00.00	00:01.46	Aku Aku	Hear that, Crash?
+0453c239b6dde45f	00:01.46	00:04.76	Aku Aku	The entrance to the school must be near the Rat Village.
 f56706d62840c35e	00:00.00	00:04.04	Aku Aku	We're going to need some serious mutant muscle to get to the desert.
 f56706d62840c35e	00:04.04	00:05.68	Aku Aku	This guy will do nicely.
 4abf1a524902445f	00:00.00	00:04.99	Aku Aku	The only way to scare off those bad mutants will be to take out their leader.
-077c59bf847aca40	00:00.00	00:04.91	Aku Aku	We need to find out where Nina's school is, Crash. Try talking to the local mutants.
+077c59bf847aca40	00:00.00	00:03.07	Aku Aku	We need to find out where Nina's school is, Crash.
+077c59bf847aca40	00:03.07	00:04.91	Aku Aku	Try talking to the local mutants.
 b0b49afe2b1a4149	00:00.00	00:02.47	Aku Aku	That prison sounds pretty weird, Crash.
 b0b49afe2b1a4149	00:02.47	00:06.06	Aku Aku	There might be some link between it and evil school.
-b2a0aaae20cec75a	00:00.00	00:04.16	Aku Aku	Those rats are up to something bad, Crash. Let's mess up their plans.
-07f8be2a4190485b	00:00.00	00:04.69	Aku Aku	This iceberg must be how they get to the prison. It's time to catch a ride.
-c4b5fdb78ceac65c	00:00.00	00:04.95	Aku Aku	All right, Crash, we're inside. Try to find out something about Nina's school.
-409cbbc5e4b64955	00:00.00	00:04.88	Aku Aku	We made it, Crash, now we just need to get a roller so we can open those doors.
-ad11bab077d0c756	00:00.00	00:05.38	Aku Aku	We found them! Oh, they don't seem too happy to see us though.
+b2a0aaae20cec75a	00:00.00	00:04.16	Aku Aku	Those rats are up to something bad, Crash. Let's mess up their plans!
+07f8be2a4190485b	00:00.00	00:02.47	Aku Aku	This iceberg must be how they get to the prison.
+07f8be2a4190485b	00:03.06	00:04.68	Aku Aku	It's time to catch a ride.
+c4b5fdb78ceac65c	00:00.00	00:02.25	Aku Aku	All right, Crash, we're inside.
+c4b5fdb78ceac65c	00:02.55	00:04.94	Aku Aku	Try to find out something about Nina's school.
+409cbbc5e4b64955	00:00.00	00:01.56	Aku Aku	We made it, Crash.
+409cbbc5e4b64955	00:01.56	00:04.87	Aku Aku	Now we just need to get a roller so we can open those doors.
+ad11bab077d0c756	00:00.00	00:01.03	Aku Aku	We found them!
+ad11bab077d0c756	00:01.74	00:05.37	Aku Aku	Oh, they don't seem too happy to see us though.
 0269ce2c98924857	00:00.00	00:03.88	Aku Aku	It looks like the bridge is out, Crash. We'll have to find another way back.
-5579873384e32109	00:00.00	00:02.79	Aku Aku	These rollers seem free from evil control, Crash.
-5579873384e32109	00:02.79	00:05.45	Aku Aku	See if they know a way back to Wumpa.
-17881a3972226b00	00:00.00	00:04.90	Aku Aku	The rollers fixed a bridge, Crash. That old lady wanted to do you a favor.
-ef840687a2cb241f	00:00.00	00:04.36	Aku Aku	This is the place, Crash. We need to find a way inside with punching.
-0572c75015e8641e	00:00.00	00:03.68	Aku Aku	Nina needs samples from some serious mutants for her project, Crash.
-0572c75015e8641e	00:03.68	00:06.64	Aku Aku	We'll have to find and jack everyone she's after.
+5579873384e32109	00:00.00	00:02.81	Aku Aku	These rollers seem free from evil control, Crash.
+5579873384e32109	00:03.26	00:05.45	Aku Aku	See if they know a way back to Wumpa.
+17881a3972226b00	00:00.00	00:03.87	Aku Aku	The rollers fixed a bridge, Crash. That old lady wanted to do you a favor.
+17881a3972226b00	00:03.87	00:04.90	Aku Aku	(Laughs)
+ef840687a2cb241f	00:00.00	00:01.48	Aku Aku	This is the place, Crash.
+ef840687a2cb241f	00:01.48	00:04.35	Aku Aku	We need to find a way inside with punching!
+0572c75015e8641e	00:00.00	00:03.95	Aku Aku	Nina needs samples from some serious mutants for her project, Crash.
+0572c75015e8641e	00:03.95	00:06.64	Aku Aku	We'll have to find and jack everyone she's after.
 e561a7fb3e7f2915	00:00.00	00:03.68	Aku Aku	N. Brio and Crunch must be on the far side of the desert, Crash.
 e561a7fb3e7f2915	00:03.68	00:05.92	Aku Aku	Let's get moving, chop chop, mush!
-d4c1be317a92671c	00:00.00	00:03.96	Aku Aku	Oh, we didn't come all this way to get stopped by a walking nasal illness.
-d4c1be317a92671c	00:03.96	00:05.19	Aku Aku	Give him a good kick!
-acbdaa5f9b59281b	00:00.00	00:03.09	Aku Aku	We need to use Crunch against N. Brio to defeat him, Crash.
-acbdaa5f9b59281b	00:03.09	00:05.35	Aku Aku	Try to jack him when you get the chance.
-c2ac6b280e76681a	00:00.00	00:02.69	Aku Aku	That's one down two to go, Crash.
-92b562b917eb44e1	00:00.00	00:03.58	Aku Aku	Just one left, Crash. Boy, this isn't getting any easier.
-cf32ce33d1946718	00:00.00	00:03.50	Aku Aku	That's all of them, Crash. Time to go back and see my brother.
-f5cc6a9f0bfb4990	00:00.00	00:06.49	Aku Aku	Yes, looks like things haven't gone well for Nina. We just might have a chance.
+d4c1be317a92671c	00:00.00	00:04.11	Aku Aku	Oh, we didn't come all this way to get stopped by a walking nasal illness.
+d4c1be317a92671c	00:04.11	00:05.19	Aku Aku	Give him a good kick!
+acbdaa5f9b59281b	00:00.00	00:03.41	Aku Aku	We need to use Crunch against N. Brio to defeat him, Crash.
+acbdaa5f9b59281b	00:03.41	00:05.35	Aku Aku	Try to jack him when you get the chance!
+c2ac6b280e76681a	00:00.00	00:02.69	Aku Aku	That's one down. Two to go, Crash.
+92b562b917eb44e1	00:00.00	00:01.71	Aku Aku	Just one left, Crash.
+92b562b917eb44e1	00:01.71	00:03.58	Aku Aku	Boy, this isn't getting any easier.
+cf32ce33d1946718	00:00.00	00:01.46	Aku Aku	That's all of them, Crash!
+cf32ce33d1946718	00:01.46	00:03.50	Aku Aku	Time to go back and see my brother.
+f5cc6a9f0bfb4990	00:00.00	00:04.34	Aku Aku	Yes, looks like things haven't gone well for Nina.
+f5cc6a9f0bfb4990	00:04.34	00:06.49	Aku Aku	We just might have a chance.
 167c459a8409c5dc	00:00.00	00:02.09	Aku Aku	Let's go back to our house, Crash.
 926303a8dbd548d5	00:00.00	00:05.00	Aku Aku	Uka Uka somehow used his power to energize the old Doominator head, Crash.
 0b370034e94088d1	00:00.00	00:03.61	Aku Aku	Get inside so we can give Cortex that whooping we've been saving up.
-0466f29117edc6da	00:00.00	00:02.66	Aku Aku	We'll need powerful mojo to open this gate, Crash.
-0466f29117edc6da	00:02.66	00:05.27	Aku Aku	We'll have to figure out where the key is.
+0466f29117edc6da	00:00.00	00:03.06	Aku Aku	We'll need powerful mojo to open this gate, Crash.
+0466f29117edc6da	00:03.06	00:05.27	Aku Aku	We'll have to figure out where the key is.
 59bf060d38af47db	00:00.00	00:03.14	Aku Aku	This must be the key to that huge lock we found in the desert.
-5942a1a27b99c9c0	00:00.00	00:02.89	Aku Aku	We'll need powerful mojo to open this gate, Crash.
-5942a1a27b99c9c0	00:02.89	00:06.62	Aku Aku	We can get it by jacking two of the roughest mutants around.
+5942a1a27b99c9c0	00:00.00	00:03.28	Aku Aku	We'll need powerful mojo to open this gate, Crash.
+5942a1a27b99c9c0	00:03.28	00:06.62	Aku Aku	We can get it by jacking two of the roughest mutants around.
 027ae2e1223940c9	00:00.00	00:02.09	Aku Aku	Time to go back to that gate, Crash.
 472d4eb91f5fc2de	00:00.00	00:04.48	Aku Aku	Yeah, yeah, yeah, the princess is in another castle. We know how this works.
 9c856235402143df	00:00.00	00:03.40	Aku Aku	This cave is a shortcut home, Crash. Let's get going.
-ce26f974d399c9d4	00:00.00	00:04.26	Aku Aku	Crash! We've got to get back home fast! Get moving, boy!
+ce26f974d399c9d4	00:00.00	00:03.00	Aku Aku	Crash! We've got to get back home fast!
+ce26f974d399c9d4	00:03.00	00:04.26	Aku Aku	Get moving, boy!
 2a41e56efc4344cd	00:00.00	00:04.79	Aku Aku	Crash! Your titan is too big to swing on that rope. You'll have to do it yourself.
 1dd07e70eb348897	00:00.00	00:03.47	Aku Aku	Yeah, yeah, we helped you out. Now tell us what we need to know.
 1dd07e70eb348891	00:00.00	00:00.89	Aku Aku	N. Brio?

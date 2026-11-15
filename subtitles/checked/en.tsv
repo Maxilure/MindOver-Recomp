@@ -1,0 +1,39 @@
+# Lines checked by hand in the en subtitles (tools/subtitle_editor). Not read by the game.
+# <sound ID or movie> TAB <voice listened to> TAB <who> TAB <date, UTC> TAB <fingerprint of the line>
+# A fingerprint that no longer matches the line = changed since it was checked.
+
+0269ce2c98924857	english	Maxilure/BlueCheese	2026-11-15	0d9b4dafca16325d
+027ae2e1223940c9	english	Maxilure/BlueCheese	2026-11-15	3fd87b6e80ebbb67
+0453c239b6dde45f	english	Maxilure/BlueCheese	2026-11-15	25504a65904bd608
+0466f29117edc6da	english	Maxilure/BlueCheese	2026-11-15	2188d85d06cea6e7
+0572c75015e8641e	english	Maxilure/BlueCheese	2026-11-15	10d4d01824f5b22d
+077c59bf847aca40	english	Maxilure/BlueCheese	2026-11-15	ff7899f583c2739f
+07f8be2a4190485b	english	Maxilure/BlueCheese	2026-11-15	dfd1403798a1e3c2
+0b370034e94088d1	english	Maxilure/BlueCheese	2026-11-15	8afc920b9a312c62
+167c459a8409c5dc	english	Maxilure/BlueCheese	2026-11-15	740b090c1b137fe8
+17881a3972226b00	english	Maxilure/BlueCheese	2026-11-15	830436b567b03e78
+409cbbc5e4b64955	english	Maxilure/BlueCheese	2026-11-15	f692ff3c03172395
+472d4eb91f5fc2de	english	Maxilure/BlueCheese	2026-11-15	3d28fd169fe3745d
+4abf1a524902445f	english	Maxilure/BlueCheese	2026-11-15	c15b1f8d6a640e9b
+5579873384e32109	english	Maxilure/BlueCheese	2026-11-15	dace8d6c4af2f8c2
+5942a1a27b99c9c0	english	Maxilure/BlueCheese	2026-11-15	3f19f803a49e48a3
+59bf060d38af47db	english	Maxilure/BlueCheese	2026-11-15	df956569167c1a4c
+803a80480ea96757	english	Maxilure/BlueCheese	2026-11-15	8a896b6377dec496
+926303a8dbd548d5	english	Maxilure/BlueCheese	2026-11-15	1576fb8ac23796a9
+92b562b917eb44e1	english	Maxilure/BlueCheese	2026-11-15	cf75a7dc770dda33
+9c856235402143df	english	Maxilure/BlueCheese	2026-11-15	78a056c87540c1bf
+a9e9230a9a51e952	english	Maxilure/BlueCheese	2026-11-15	e25112bc7806e346
+acbdaa5f9b59281b	english	Maxilure/BlueCheese	2026-11-15	f9befa53cc6e0559
+ad11bab077d0c756	english	Maxilure/BlueCheese	2026-11-15	145a5ebebdc906e5
+b0b49afe2b1a4149	english	Maxilure/BlueCheese	2026-11-15	208762a8e133bbb9
+b2a0aaae20cec75a	english	Maxilure/BlueCheese	2026-11-15	483cc7ab5f812af2
+bbfe7614066de856	english	Maxilure/BlueCheese	2026-11-15	5b5f4415091bdffe
+c2ac6b280e76681a	english	Maxilure/BlueCheese	2026-11-15	cb7e154d8650d053
+c4b5fdb78ceac65c	english	Maxilure/BlueCheese	2026-11-15	50349c04b926ebf7
+ce26f974d399c9d4	english	Maxilure/BlueCheese	2026-11-15	ca64ce5db95d9eaa
+cf32ce33d1946718	english	Maxilure/BlueCheese	2026-11-15	3a881d2ec326d88d
+d4c1be317a92671c	english	Maxilure/BlueCheese	2026-11-15	c1b9a4881d4521d7
+e561a7fb3e7f2915	english	Maxilure/BlueCheese	2026-11-15	c378ce774ec3f476
+ef840687a2cb241f	english	Maxilure/BlueCheese	2026-11-15	885eb728eadfe629
+f56706d62840c35e	english	Maxilure/BlueCheese	2026-11-15	9ecd195fc1b65f75
+f5cc6a9f0bfb4990	english	Maxilure/BlueCheese	2026-11-15	a4e6dce0b68b90f0
