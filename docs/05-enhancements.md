@@ -141,7 +141,8 @@ colour.
 
 🔧 In progress ([findings/63](findings/63-subtitles-research.md)). The
 original has no subtitles and its disc has no dialogue text, so every line
-is transcribed. Shipped so far: the story cartoons' lines in English.
+is transcribed. Shipped so far, in English: the story cartoons, the in-engine
+cutscenes, Aku Aku (and his tutorial hints) and the characters you talk to.
 
 Options -> **Accessibility**: Subtitles (off by default), Subtitle Size,
 Subtitle Background (how opaque the box behind the text is) and Speaker
@@ -150,5 +151,5 @@ subtitles are in the game's text language, English where a line has no
 translation; they step up above the game's message bar (achievements,
 mission messages) and hide while the pause menu is up.
 
-Not yet: the in-engine cutscenes, Aku Aku and the other characters' lines.
+Other languages come later (the English lines are being checked first).
 

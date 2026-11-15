@@ -30,6 +30,12 @@
 #   Crash_18_51  Fists of Orange Fury            19 lines
 #   Crash_19_51  Home Pun                        16 lines
 #   (Crash_01_51 has no dialogue; Crash_09 and Crash_12 do not exist.)
+#
+# Then: the in-engine cutscenes and the in-game lines (Aku Aku, his tutorial
+# hints, the characters you talk to), keyed by sound ID. A draft from speech
+# recognition with names and obvious mishearings corrected; not yet checked
+# by ear. Enemies' and combat lines are not subtitled; Cortex's loudspeaker
+# announcements are left out for now.
 # ============================================================================
 
 
@@ -468,3 +474,896 @@ Crash_19_51	01:21.40	01:22.30	Coco	Great job, big brother!
 Crash_19_51	01:22.40	01:25.60	Crunch	Wow, we're really getting a lot of this evil junk all over the place.
 Crash_19_51	01:25.90	01:27.30	Coco	We're still not going to clean up.
 Crash_19_51	01:27.60	01:29.90	Aku Aku	I know, Coco, I know.
+
+# ----------------------------------------------------------------------------
+# In-engine cutscenes (one sound each, several lines; key = the sound ID)
+# ----------------------------------------------------------------------------
+# Mail call: the NVs arrive
+80736861cec2b2cb	00:00.00	00:01.60	Aku Aku	Mail call!
+80736861cec2b2cb	00:02.10	00:03.30	Coco	Gimme, gimme, gimme!
+80736861cec2b2cb	00:04.08	00:06.60	Coco	Oh my God! Somebody sent us NVs!
+# Crunch runs off with the NV (one player)
+6dbeb94cac612d5f	00:11.26	00:14.20	Crunch	Don't touch my gizmo! It's fantabulous!
+6dbeb94cac612d5f	00:15.60	00:17.60	Aku Aku	Crunch! Come back!
+# Crunch runs off with the NV (two players)
+b8e52274cde436eb	00:11.28	00:14.20	Crunch	Don't touch my gizmo! It's fantabulous!
+b8e52274cde436eb	00:15.78	00:17.60	Aku Aku	Crunch! Come back!
+# Coco's suggestion
+6c803711dc0d6977	00:00.14	00:02.60	Coco	Those NVs could be sent all over the island by now.
+6c803711dc0d6977	00:02.86	00:04.90	Coco	We need to find a way to take them out at the source.
+6c803711dc0d6977	00:05.26	00:06.40	Aku Aku	How do we do that?
+6c803711dc0d6977	00:06.64	00:09.00	Coco	Well, I think I know someone we can ask.
+6c803711dc0d6977	00:09.36	00:13.40	Coco	Ugh, I don't believe I'm going to say this, but let's go talk to Nina.
+6c803711dc0d6977	00:14.16	00:15.30	Aku Aku	Coco!
+6c803711dc0d6977	00:15.64	00:17.90	Aku Aku	I think that NV gave you brain damage.
+6c803711dc0d6977	00:18.26	00:21.40	Coco	Look, she'll be on the outs with Cortex after all her shenanigans.
+6c803711dc0d6977	00:21.66	00:23.60	Coco	Face it, she's our only lead.
+# Ratcicle invasion
+5fe7edc8e80b5c4d	00:01.38	00:04.30	Bratgirl	Move faster, mutant slaves!
+5fe7edc8e80b5c4d	00:04.58	00:08.40	Bratgirl	We need all mutants brought under NV control.
+# The bratgirls' plan
+107f358068137436	00:00.00	00:03.40	Bratgirl	Soon we will return to the Evil School's secret northern entrance.
+107f358068137436	00:03.70	00:07.90	Bratgirl	This hall of freaks and mutants is perfect for the Evil School science fair.
+107f358068137436	00:08.08	00:11.10	Bratgirl	Nina will be doomed to suffer in mediocrity.
+107f358068137436	00:11.46	00:12.60	Aku Aku	Hear that, Crash?
+107f358068137436	00:13.00	00:15.90	Aku Aku	The entrance to the school must be near the rat village.
+# Nina's help (one player)
+630767c694a53631	00:00.00	00:03.60	Nina	Ah, victory! Feels so good!
+630767c694a53631	00:04.04	00:05.50	Nina	So good!
+630767c694a53631	00:05.70	00:07.40	Aku Aku	Yeah, yeah, we helped you out.
+630767c694a53631	00:07.48	00:09.10	Aku Aku	Now tell us what we need to know.
+630767c694a53631	00:09.24	00:11.20	Nina	Sure thing there, shingle.
+630767c694a53631	00:11.54	00:14.90	Nina	Uncle Cortex made up with his old lab partner, N. Brio.
+630767c694a53631	00:15.14	00:15.90	Aku Aku	N. Brio?
+630767c694a53631	00:16.08	00:18.10	Nina	Uncie Cortex talks a big game,
+630767c694a53631	00:18.16	00:20.50	Nina	but N. Brio's the guy that actually built everything.
+630767c694a53631	00:20.52	00:26.80	Nina	And luckily for you, my science project thingy tells me exactly where he is.
+630767c694a53631	00:27.10	00:29.70	Nina	Now run along to the other side of the island.
+630767c694a53631	00:29.94	00:32.60	Nina	I've got new evil plans to start.
+# Nina's help (two players)
+c58edb57a7c3f249	00:00.00	00:03.60	Nina	Ah, victory! Feels so good!
+c58edb57a7c3f249	00:04.04	00:05.50	Nina	So good!
+c58edb57a7c3f249	00:05.70	00:07.40	Aku Aku	Yeah, yeah, we helped you out.
+c58edb57a7c3f249	00:07.48	00:09.10	Aku Aku	Now tell us what we need to know.
+c58edb57a7c3f249	00:09.24	00:11.20	Nina	Sure thing there, shingle.
+c58edb57a7c3f249	00:11.54	00:14.90	Nina	Uncle Cortex made up with his old lab partner, N. Brio.
+c58edb57a7c3f249	00:15.14	00:15.90	Aku Aku	N. Brio?
+c58edb57a7c3f249	00:16.08	00:18.10	Nina	Uncie Cortex talks a big game,
+c58edb57a7c3f249	00:18.16	00:20.50	Nina	but N. Brio's the guy that actually built everything.
+c58edb57a7c3f249	00:20.52	00:26.80	Nina	And luckily for you, my science project thingy tells me exactly where he is.
+c58edb57a7c3f249	00:27.10	00:29.70	Nina	Now run along to the other side of the island.
+c58edb57a7c3f249	00:29.94	00:32.60	Nina	I've got new evil plans to start.
+
+# ----------------------------------------------------------------------------
+# In game: Aku Aku  (81 sounds)
+# ----------------------------------------------------------------------------
+bbfe7614066de856	00:00.00	00:02.94	Aku Aku	Oh yeah, never seeing this in a game before.
+a9e9230a9a51e952	00:00.00	00:04.17	Aku Aku	This is weird stuff, Crash. It's tiki mojo, but somehow evil.
+a9e9230a9a51e952	00:04.17	00:06.69	Aku Aku	Like the source itself was corrupt.
+803a80480ea96755	00:00.00	00:04.30	Aku Aku	Crash! That roller is going to get the ever-loving bejeezus knocked out of him!
+803a80480ea96755	00:04.30	00:05.74	Aku Aku	We've got to help him!
+803a80480ea96757	00:00.00	00:04.74	Aku Aku	Fine. I don't actually know if it's a girl or boy. I'm just presuming it's male.
+803a80480ea96757	00:04.74	00:05.47	Aku Aku	Happy?
+0453c239b6dde45f	00:00.00	00:04.77	Aku Aku	Hear that, Crash? The entrance to the school must be near the Rat Village.
+f56706d62840c35e	00:00.00	00:04.04	Aku Aku	We're going to need some serious mutant muscle to get to the desert.
+f56706d62840c35e	00:04.04	00:05.68	Aku Aku	This guy will do nicely.
+4abf1a524902445f	00:00.00	00:04.99	Aku Aku	The only way to scare off those bad mutants will be to take out their leader.
+077c59bf847aca40	00:00.00	00:04.91	Aku Aku	We need to find out where Nina's school is, Crash. Try talking to the local mutants.
+b0b49afe2b1a4149	00:00.00	00:02.47	Aku Aku	That prison sounds pretty weird, Crash.
+b0b49afe2b1a4149	00:02.47	00:06.06	Aku Aku	There might be some link between it and evil school.
+b2a0aaae20cec75a	00:00.00	00:04.16	Aku Aku	Those rats are up to something bad, Crash. Let's mess up their plans.
+07f8be2a4190485b	00:00.00	00:04.69	Aku Aku	This iceberg must be how they get to the prison. It's time to catch a ride.
+c4b5fdb78ceac65c	00:00.00	00:04.95	Aku Aku	All right, Crash, we're inside. Try to find out something about Nina's school.
+409cbbc5e4b64955	00:00.00	00:04.88	Aku Aku	We made it, Crash, now we just need to get a roller so we can open those doors.
+ad11bab077d0c756	00:00.00	00:05.38	Aku Aku	We found them! Oh, they don't seem too happy to see us though.
+0269ce2c98924857	00:00.00	00:03.88	Aku Aku	It looks like the bridge is out, Crash. We'll have to find another way back.
+5579873384e32109	00:00.00	00:02.79	Aku Aku	These rollers seem free from evil control, Crash.
+5579873384e32109	00:02.79	00:05.45	Aku Aku	See if they know a way back to Wumpa.
+17881a3972226b00	00:00.00	00:04.90	Aku Aku	The rollers fixed a bridge, Crash. That old lady wanted to do you a favor.
+ef840687a2cb241f	00:00.00	00:04.36	Aku Aku	This is the place, Crash. We need to find a way inside with punching.
+0572c75015e8641e	00:00.00	00:03.68	Aku Aku	Nina needs samples from some serious mutants for her project, Crash.
+0572c75015e8641e	00:03.68	00:06.64	Aku Aku	We'll have to find and jack everyone she's after.
+e561a7fb3e7f2915	00:00.00	00:03.68	Aku Aku	N. Brio and Crunch must be on the far side of the desert, Crash.
+e561a7fb3e7f2915	00:03.68	00:05.92	Aku Aku	Let's get moving, chop chop, mush!
+d4c1be317a92671c	00:00.00	00:03.96	Aku Aku	Oh, we didn't come all this way to get stopped by a walking nasal illness.
+d4c1be317a92671c	00:03.96	00:05.19	Aku Aku	Give him a good kick!
+acbdaa5f9b59281b	00:00.00	00:03.09	Aku Aku	We need to use Crunch against N. Brio to defeat him, Crash.
+acbdaa5f9b59281b	00:03.09	00:05.35	Aku Aku	Try to jack him when you get the chance.
+c2ac6b280e76681a	00:00.00	00:02.69	Aku Aku	That's one down two to go, Crash.
+92b562b917eb44e1	00:00.00	00:03.58	Aku Aku	Just one left, Crash. Boy, this isn't getting any easier.
+cf32ce33d1946718	00:00.00	00:03.50	Aku Aku	That's all of them, Crash. Time to go back and see my brother.
+f5cc6a9f0bfb4990	00:00.00	00:06.49	Aku Aku	Yes, looks like things haven't gone well for Nina. We just might have a chance.
+167c459a8409c5dc	00:00.00	00:02.09	Aku Aku	Let's go back to our house, Crash.
+926303a8dbd548d5	00:00.00	00:05.00	Aku Aku	Uka Uka somehow used his power to energize the old Doominator head, Crash.
+0b370034e94088d1	00:00.00	00:03.61	Aku Aku	Get inside so we can give Cortex that whooping we've been saving up.
+0466f29117edc6da	00:00.00	00:02.66	Aku Aku	We'll need powerful mojo to open this gate, Crash.
+0466f29117edc6da	00:02.66	00:05.27	Aku Aku	We'll have to figure out where the key is.
+59bf060d38af47db	00:00.00	00:03.14	Aku Aku	This must be the key to that huge lock we found in the desert.
+5942a1a27b99c9c0	00:00.00	00:02.89	Aku Aku	We'll need powerful mojo to open this gate, Crash.
+5942a1a27b99c9c0	00:02.89	00:06.62	Aku Aku	We can get it by jacking two of the roughest mutants around.
+027ae2e1223940c9	00:00.00	00:02.09	Aku Aku	Time to go back to that gate, Crash.
+472d4eb91f5fc2de	00:00.00	00:04.48	Aku Aku	Yeah, yeah, yeah, the princess is in another castle. We know how this works.
+9c856235402143df	00:00.00	00:03.40	Aku Aku	This cave is a shortcut home, Crash. Let's get going.
+ce26f974d399c9d4	00:00.00	00:04.26	Aku Aku	Crash! We've got to get back home fast! Get moving, boy!
+2a41e56efc4344cd	00:00.00	00:04.79	Aku Aku	Crash! Your titan is too big to swing on that rope. You'll have to do it yourself.
+1dd07e70eb348897	00:00.00	00:03.47	Aku Aku	Yeah, yeah, we helped you out. Now tell us what we need to know.
+1dd07e70eb348891	00:00.00	00:00.89	Aku Aku	N. Brio?
+414a4e6a99ea239f	00:00.00	00:04.38	Aku Aku	You can't use that yet, Crash. You'll need some kind of huge spitting creature.
+57390f330d07639e	00:00.00	00:02.17	Aku Aku	Time to go back to the Ice Village, Crash.
+a73fcf167c022089	00:00.00	00:04.84	Aku Aku	This door can't be open yet, Crash. You'll need very special keys for it.
+694e621c69416a80	00:00.00	00:04.64	Aku Aku	Nina must have meant that big metal gate in the desert. Let's get going.
+fe83f2429278279b	00:00.00	00:03.18	Aku Aku	Let's get this roller back to Wumpa Island.
+1472b30b0595679a	00:00.00	00:02.94	Aku Aku	Let's bring this roller back to the Ice Village, Crash.
+1472b30b0595679a	00:02.94	00:04.85	Aku Aku	Then we can open the school gate.
+3727efde359e2895	00:00.00	00:04.03	Aku Aku	Crash! You lost your Grimly! You need one to defeat Cortex!
+2688061471b1669c	00:00.00	00:03.76	Aku Aku	Nina must have meant whatever is on the other side of that huge gate we saw.
+f8f50244e97a2797	00:00.00	00:04.52	Aku Aku	We've got to hurry back and help Coco and Crunch. Get moving, boy!
+0ee3c30d5c976796	00:00.00	00:02.70	Aku Aku	We better go and save that boy's dad, Crash.
+0ee3c30d5c976796	00:02.70	00:05.64	Aku Aku	Having a huge titan like that can be handy.
+562d3a740f0cc65a	00:00.00	00:04.28	Aku Aku	We better get back home, Crash. Nobody invades our turf and gets away with it.
+ab854df02fce475b	00:00.00	00:05.30	Aku Aku	Okay now I'm seriously mad. Let's find who's responsible and take him out.
+3892c6c7136d4594	00:00.00	00:00.95	Aku Aku	Beautiful?
+995cca8f62a265db	00:00.00	00:02.96	Aku Aku	Evil School must be on the other side of this gate, Crash.
+995cca8f62a265db	00:02.96	00:05.64	Aku Aku	I think we need a mutant that spins to open it.
+bcde4e4388e04308	00:00.00	00:01.21	Aku Aku	Oh boy.
+b9f4e38487f98a11	00:00.00	00:01.77	Aku Aku	Yeah, what are the odds?
+fcbb3fac8f6b8616	00:00.00	00:01.47	Aku Aku	This is the place, Crash.
+e6cc7ee41c4e4617	00:00.00	00:00.93	Aku Aku	Hurry, Crash!
+145f82b3a485851c	00:00.00	00:01.23	Aku Aku	Hurry up, Crash!
+24ff6c7d68724715	00:00.00	00:01.18	Aku Aku	Look out, Crash!
+392160bc322d6955	00:00.00	00:01.30	Aku Aku	This looks like trouble.
+bd3aa2adda61e65c	00:00.00	00:01.25	Aku Aku	Stay on guard!
+007d63208f07685b	00:00.00	00:00.88	Aku Aku	Watch your back!
+ab254fa46e45e75a	00:00.00	00:01.61	Aku Aku	Here they come, get ready!
+a9393ff478916149	00:00.00	00:02.31	Aku Aku	After them, Crash, don't let them get away!
+0000feb5d1f1ea40	00:00.00	00:01.07	Aku Aku	Let's go, Crash.
+4343bf489679645f	00:00.00	00:01.51	Aku Aku	Let's get out of here, Crash!
+edebabcc75b7e35e	00:00.00	00:02.35	Aku Aku	Look around Crash, see what you can learn.
+d1004282529b654d	00:00.00	00:02.56	Aku Aku	Talk to that guy, Crash. See what he knows.
+74e5568829f1ea54	00:00.00	00:03.22	Aku Aku	Talk to that girl, Crash. Find out what she knows.
+0cf75801530c879a	00:00.00	00:03.11	Aku Aku	Talk to that kid, Crash. He must know something.
+f7089738dfef479b	00:00.00	00:01.41	Aku Aku	Take them out, Crash!
+1f0cab0abf28869c	00:00.00	00:01.27	Aku Aku	Let's do this!
+2fac94d483154895	00:00.00	00:04.83	Aku Aku	Those hairy nerves are getting away! After them, Crash, we need more punching!
+4fbdb4295a7e839e	00:00.00	00:04.06	Aku Aku	I think there's somebody inside here, Crash. Go check it out.
+39cef360e761439f	00:00.00	00:02.31	Aku Aku	Crash, we need to go to the Temple Coliseum.
+39cef360e761439f	00:02.31	00:05.05	Aku Aku	You have to pass through it to reach the desert.
+61d30712b6b88a80	00:00.00	00:03.34	Aku Aku	I don't like the sounds of that, Crash. Stay sharp!
+9fc4740cc9794089	00:00.00	00:03.23	Aku Aku	Looks like N. Gin left some goons behind, Crash.
+9fc4740cc9794089	00:03.23	00:06.21	Aku Aku	Time to whip up some knuckle sandwiches.
+c4a20bdba29c8b92	00:00.00	00:04.59	Aku Aku	I think we'll need one of those telekinetic mutants to get inside, Crash.
+aeb34b132f7f4b93	00:00.00	00:06.49	Aku Aku	Crash! I don't know how to say it. But I think these creatures are... nice!
+aeb34b132f7f4b90	00:00.00	00:04.21	Aku Aku	Crash! Let's ask around here. Maybe we can find out how to get to Nina.
+aeb34b132f7f4b91	00:00.00	00:02.28	Aku Aku	Some weird stuff is going on here, Crash.
+aeb34b132f7f4b91	00:02.28	00:05.13	Aku Aku	We'd better get to the bottom of it, Pronto.
+
+# ----------------------------------------------------------------------------
+# In game: Aku Aku: tutorial hints  (176 sounds)
+# ----------------------------------------------------------------------------
+4e30fab72634f6cc	00:00.00	00:04.53	Aku Aku	Crash, these stones are reminders scattered around the island with hints and tips
+4e30fab72634f6cc	00:04.53	00:06.57	Aku Aku	about how to use your abilities.
+4bb63d5360fca92d	00:00.00	00:03.83	Aku Aku	To do your classic spin attack, quickly rotate the left stick.
+4bb63d5360fca92d	00:03.83	00:08.23	Aku Aku	Spinning is a great attack and also a way to quickly collect mojo.
+47bcc314dd1ca929	00:00.00	00:02.07	Aku Aku	Come on, Crash, jump with the A button,
+47bcc314dd1ca929	00:02.07	00:05.73	Aku Aku	then press the A button again while in the air to do an air jump.
+b284cfc2e8d9cc64	00:00.00	00:04.85	Aku Aku	Crash! Pull and hold the right trigger to block enemy attacks with my face.
+b284cfc2e8d9cc64	00:04.85	00:08.11	Aku Aku	Don't worry about me though. Solid oak, baby!
+b08812718e10b6b6	00:00.00	00:01.62	Aku Aku	Crash, he looks pretty tough.
+b08812718e10b6b6	00:01.62	00:06.11	Aku Aku	If he's blocking your attacks, you must use a charged attack to smash through.
+af09557ec37b896d	00:00.00	00:05.63	Aku Aku	Crash! After doing an upper cut, press the Y button to slam them with my face!
+17d4a5098b38689a	00:00.00	00:02.70	Aku Aku	I think you can jump up here with some good timing.
+17d4a5098b38689a	00:02.70	00:05.57	Aku Aku	Jump up with the A button, then push against the wall,
+17d4a5098b38689a	00:05.57	00:08.40	Aku Aku	and press the A button again to go even higher.
+13db2acb07686ca6	00:00.00	00:04.23	Aku Aku	Crash! You've unlocked the boot! The boot is one of our proudest traditions.
+13db2acb07686ca6	00:04.23	00:08.51	Aku Aku	When you find the boot you can press the X button to wallop the brains out of
+13db2acb07686ca6	00:08.51	00:10.16	Aku Aku	enemies for a short time.
+0fe1b08c83886ca2	00:00.00	00:03.50	Aku Aku	Good for you, Crash! You just unlocked the gyro jackhammer.
+0fe1b08c83886ca2	00:03.50	00:07.14	Aku Aku	Rotate the left stick and press the Y button to try it out.
+ddc67e1fd990c7d1	00:00.00	00:05.07	Aku Aku	Crash! You just unlocked a health upgrade. Now watch that health bar grow.
+ddc67e1fd990c7d1	00:05.07	00:06.69	Aku Aku	A little bit anyway.
+e0413b0761d1989c	00:00.00	00:02.82	Aku Aku	Crash! You just unlock the rolling air attack.
+e0413b0761d1989c	00:02.82	00:07.71	Aku Aku	Press the Y button to attack or hold the Y button to charge the attack for extra
+e0413b0761d1989c	00:07.71	00:08.39	Aku Aku	wallop.
+e43ab545e5b19880	00:00.00	00:02.15	Aku Aku	Nice one, Crash. Press the Y button.
+e43ab545e5b19880	00:02.15	00:06.69	Aku Aku	Then the Y button again when you land to chain a second heavy attack.
+be651f64095f6e23	00:00.00	00:00.31	Aku Aku	Crash!
+be651f64095f6e23	00:00.31	00:04.59	Aku Aku	Chain a third attack onto your rolling air attack by pressing the Y button again as
+be651f64095f6e23	00:04.59	00:06.54	Aku Aku	you land from the second attack.
+c25e99a28d3f6e27	00:00.00	00:01.30	Aku Aku	Now is your chance, Crash.
+c25e99a28d3f6e27	00:01.30	00:05.50	Aku Aku	Press the B button to slam me onto his face and take control of that creature.
+213a37950d4c8d66	00:00.00	00:01.47	Aku Aku	When you're on an enemy,
+213a37950d4c8d66	00:01.47	00:05.70	Aku Aku	use the Y button and the X button to attack and the A button to jump.
+213a37950d4c8d66	00:05.70	00:08.75	Aku Aku	Press the B button to get off the creature.
+2533b1d3911c895a	00:00.00	00:04.22	Aku Aku	Crash! Press the X button to smash stuff and collect magical mojo.
+2533b1d3911c895a	00:04.22	00:07.82	Aku Aku	The more you collect, the more powerful you become.
+19474318057c896e	00:00.00	00:02.14	Aku Aku	Crash! You've unlocked a combo.
+19474318057c896e	00:02.14	00:06.14	Aku Aku	Repeatedly press the X button to do a series of blows.
+840f4fce152e29ad	00:00.00	00:02.50	Aku Aku	Crash! You can do an upper cut now.
+840f4fce152e29ad	00:02.50	00:07.30	Aku Aku	Press the X button twice, then the Y button to go tooth hunting.
+8808ca0c991e2da1	00:00.00	00:02.60	Aku Aku	while controlling an enemy with a ranged attack.
+8808ca0c991e2da1	00:02.60	00:05.32	Aku Aku	Pull the right trigger to use precision aiming.
+7e1918be7598d7ff	00:00.00	00:00.49	Aku Aku	Crash!
+7e1918be7598d7ff	00:00.49	00:07.47	Aku Aku	Did you know that if you time an attack just right, you can hit back projectiles?
+eb5be237fb9d0de1	00:00.00	00:03.98	Aku Aku	To do the spin drill attack, press the X button while still in the air.
+eb5be237fb9d0de1	00:03.98	00:07.60	Aku Aku	Hit something bouncy with the spin drill to go really high.
+ed589f25253016b3	00:00.00	00:03.62	Aku Aku	Crash, this is a spot where the spin drill move would be useful.
+ed589f25253016b3	00:03.62	00:05.51	Aku Aku	Try doing it here to advance.
+e6e467cd004e3630	00:00.00	00:02.43	Aku Aku	Crash! You've unlocked a spin upgrade.
+e6e467cd004e3630	00:02.43	00:05.54	Aku Aku	Now you can spend longer before getting dizzy.
+e76267c75f6417b9	00:00.00	00:00.35	Aku Aku	Crash!
+e76267c75f6417b9	00:00.35	00:05.20	Aku Aku	Somehow my brother's magic is tied to these mutants and being used to trap us here.
+e76267c75f6417b9	00:05.20	00:07.86	Aku Aku	Defeat all of them to lower the barrier.
+e8e124ec42423736	00:00.00	00:03.19	Aku Aku	Crash. This item indicates a mojo challenge for you.
+e8e124ec42423736	00:03.19	00:06.81	Aku Aku	You'll be constrained by special rules, but if you succeed,
+e8e124ec42423736	00:06.81	00:09.64	Aku Aku	you'll gain a valuable treasure of mojo.
+e95f24e6a15016b7	00:00.00	00:02.21	Aku Aku	Here you can access arena challenges, Crash.
+e95f24e6a15016b7	00:02.21	00:06.39	Aku Aku	The fights are demanding and difficult, but the rewards are just fabulous.
+e2eaed8e7c6e3634	00:00.00	00:03.66	Aku Aku	Crash. At places like this, you can climb straight up. See?
+e2eaed8e7c6e3634	00:03.66	00:07.27	Aku Aku	You don't have to jump everywhere. Just most places.
+e368edbaf3cd09e9	00:00.00	00:02.82	Aku Aku	While climbing, Crash, you can jump to another climbable area.
+e368edbaf3cd09e9	00:02.82	00:05.47	Aku Aku	Just press the jump button when you're in position.
+e368ed88db8417bd	00:00.00	00:02.82	Aku Aku	While climbing, Crash, you can jump to another climbable area.
+e368ed88db8417bd	00:02.82	00:05.47	Aku Aku	Just press the jump button when you're in position.
+29210d4dd4215a7d	00:00.00	00:00.31	Aku Aku	Crash!
+29210d4dd4215a7d	00:00.31	00:04.53	Aku Aku	Don't forget that you can use your creature to freeze water at places like this.
+27a25024ef3af8f4	00:00.00	00:04.11	Aku Aku	Use your creature at places like this to freeze and break blast of water.
+2b1dca6d160d597b	00:00.00	00:01.71	Aku Aku	It's a little windy here, Crash.
+2b1dca6d160d597b	00:01.71	00:06.29	Aku Aku	You'll have to time your jump when the wind is low to safely reach the other side.
+299f0d44312ef9fa	00:00.00	00:02.90	Aku Aku	To use this, Crash, you'll need a little help from a friend.
+299f0d44312ef9fa	00:02.90	00:06.49	Aku Aku	Another person balancing on the other end would make it much easier.
+3114017cb5b2af21	00:00.00	00:02.96	Aku Aku	These enemies are strong, Crash, but you're a lot faster.
+3114017cb5b2af21	00:02.96	00:06.28	Aku Aku	Press the Y button at the right time to dodge their blows.
+2f954453d0502f24	00:00.00	00:01.63	Aku Aku	Good job, Crash!
+8bf624fe9902b7b4	00:00.00	00:03.94	Aku Aku	This enemy will do a light attack, Crash, try to dodge it on your own.
+9663d6c358214f67	00:00.00	00:02.07	Aku Aku	Press the Y button to get him good.
+f3a9209d52ae1da1	00:00.00	00:01.21	Aku Aku	Nicely done, Crash.
+f3a9209d52ae1da1	00:01.21	00:05.77	Aku Aku	Your speed is your greatest asset when finding big things like that.
+efafa6acf4fcc8f9	00:00.00	00:03.73	Aku Aku	Okay, Crash, now this enemy is going to do a heavy attack.
+efafa6acf4fcc8f9	00:03.73	00:06.74	Aku Aku	Time your dodge and counter and take him out.
+f02da6a3520a6876	00:00.00	00:03.20	Aku Aku	Brilliant, Crash! I'm so proud of you!
+ebb62c204ade19a9	00:00.00	00:03.79	Aku Aku	Crash. Bandicoots are great diggers. And you are no exception.
+ebb62c204ade19a9	00:03.79	00:07.46	Aku Aku	When you see digable stuff like this, rotate the left stick.
+ebb62c204ade19a9	00:07.46	00:10.66	Aku Aku	Then the X button to dig through the ground here.
+9152085ea94e3e67	00:00.00	00:04.56	Aku Aku	When you reach the end of stuff you can dig through, do your spin attack to pop out.
+856599a31d9e3a6b	00:00.00	00:04.38	Aku Aku	If you're hanging onto a ledge, you can fall down by pressing the Y button.
+2886b91e063be8f6	00:00.00	00:03.10	Aku Aku	Crash! You need to spin on top of this to make it work.
+2886b91e063be8f6	00:03.10	00:07.13	Aku Aku	Luckily, I hear that spinning is something you do pretty well by now.
+2a0575f4c2ef5e23	00:00.00	00:03.78	Aku Aku	Hey Crash, you can press the map button at any time to view your map.
+2a0575f4c2ef5e23	00:03.78	00:05.31	Aku Aku	Let's check it out now.
+2a057646eb1a4877	00:00.00	00:03.78	Aku Aku	Hey Crash, you can press the map button at any time to view your map.
+2a057646eb1a4877	00:03.78	00:05.31	Aku Aku	Let's check it out now.
+2c80330a615cda1a	00:00.00	00:02.94	Aku Aku	To store a Titan to use later, just press this button.
+2c80330a615cda1a	00:02.94	00:05.38	Aku Aku	Press this button again to bring it out.
+2a83763d4827e7cc	00:00.00	00:05.16	Aku Aku	Oh, that one's a little too big to store, Crash. Sorry about that.
+2c0233662d0e4975	00:00.00	00:03.56	Aku Aku	You'll have to store your titan before jumping for that rope, Crash.
+2093c4a0fe7be8fe	00:00.00	00:04.33	Aku Aku	Remember Crash, you're the hero around here and there are things you can do that
+2093c4a0fe7be8fe	00:04.33	00:08.26	Aku Aku	the other mutants can't, such as jumping high or swinging on ropes.
+221281c9e35a487f	00:00.00	00:02.35	Aku Aku	Crash! Try spinning on that thing over there!
+c3b4e34d815708b9	00:00.00	00:03.14	Aku Aku	Crash! See that wall over there? Try climbing it!
+c336e35322412730	00:00.00	00:02.89	Aku Aku	Crash, while holding a ledge you can still run back and forth.
+c5b1a06cc34307b7	00:00.00	00:04.08	Aku Aku	Often an easy way to avoid enemy attacks is to jump at the right time.
+c7305dc3befe3de4	00:00.00	00:02.29	Aku Aku	To do a spin jump and get some real height,
+c7305dc3befe3de4	00:02.29	00:04.87	Aku Aku	rotate the left stick and press the A button.
+c92d1ab0e8152832	00:00.00	00:04.30	Aku Aku	This is a spot where the spin jump would be a good idea, Crash. Give it a try.
+bbc1ee9059b31081	00:00.00	00:02.97	Aku Aku	Try to collect all the items before time runs out.
+bb03bfca9850d7b8	00:00.00	00:04.75	Aku Aku	Oh, snap! That power-up lets you do four times the damage for a short time.
+bb03bfca9850d7b8	00:04.75	00:06.66	Aku Aku	Hurry up and hit somebody!
+e494fedc0c539d88	00:00.00	00:05.51	Aku Aku	Mmm, delicious! That snack will restore energy to the titan you're controlling.
+e512fed66b497711	00:00.00	00:00.91	Aku Aku	Nice one, Crash!
+e512fed66b497711	00:00.91	00:05.11	Aku Aku	That power up will double the amount of mojo you collect for a short time.
+e512fed66b497711	00:05.11	00:06.98	Aku Aku	So hurry up and break stuff!
+e70fbbf5ad557e0f	00:00.00	00:03.43	Aku Aku	These voodoo dolls will unlock special rewards for you, Crash.
+e70fbbf5ad557e0f	00:03.43	00:06.13	Aku Aku	Collect all of them to get tons of cool stuff.
+e88e791a90339d84	00:00.00	00:02.58	Aku Aku	Ratcicles have the ability to freeze water.
+e88e791a90339d84	00:02.58	00:06.09	Aku Aku	Make the Ratcicle sneeze to freeze water or bad guys.
+e90c7914ef497f0d	00:00.00	00:03.98	Aku Aku	A Ratcicle's super freeze is more powerful than sneeze freeze.
+e90c7914ef497f0d	00:03.98	00:05.66	Aku Aku	Try using it in combat.
+ec87f3ab3cc2a840	00:00.00	00:02.32	Aku Aku	To do an ice slide while on a Ratcicle,
+ec87f3ab3cc2a840	00:02.32	00:07.19	Aku Aku	press the A button to jump and then pull the right trigger to slide over water.
+209fe33b2a8e8633	00:00.00	00:02.86	Aku Aku	A roller can take you to places other enemies can't.
+209fe33b2a8e8633	00:02.86	00:06.27	Aku Aku	He can activate roller switches and boost up steep curves.
+1e252653a269bc64	00:00.00	00:03.44	Aku Aku	Rollers can dash into enemies with devastating results.
+1e252653a269bc64	00:03.44	00:06.75	Aku Aku	To do this, press the Y button while on a roller.
+1a2bac151e79b850	00:00.00	00:03.52	Aku Aku	To come to a sudden stop on a roller, pull the right trigger.
+1a2bac151e79b850	00:03.52	00:07.21	Aku Aku	Screeching to a stop can save you from falling off a ledge.
+182eeec3c3c0a6ba	00:00.00	00:03.04	Aku Aku	Crash, Grimlies have the power to slow down time.
+182eeec3c3c0a6ba	00:03.04	00:07.49	Aku Aku	Your special bar will drain while it is active, so use it sparingly.
+bbce0e6721b8e7f2	00:00.00	00:04.42	Aku Aku	This guy is a slippery one. He can morph into the ground so nobody can touch him.
+bbce0e6721b8e7f2	00:04.42	00:08.47	Aku Aku	When you're morphed low you can move underneath certain objects.
+bd4ccb9006974773	00:00.00	00:02.61	Aku Aku	You're controlling the mighty Scorporilla, Crash.
+bd4ccb9006974773	00:02.61	00:05.76	Aku Aku	Use her huge smashing moves to take out enemies around you.
+bd4ccb9006974773	00:05.76	00:08.95	Aku Aku	Sometimes the move will even break through the floor.
+b9d15147dfc4e6cc	00:00.00	00:02.26	Aku Aku	Oh, you're going to like this one, Crash.
+b9d15147dfc4e6cc	00:02.26	00:06.78	Aku Aku	This titan can throw enemies around using the power of its mind. How can he do it?
+b9d15147dfc4e6cc	00:06.78	00:07.47	Aku Aku	Science!
+bb500e70c4ab4875	00:00.00	00:03.51	Aku Aku	The purple bar below your health meter is the enemy special bar.
+bb500e70c4ab4875	00:03.51	00:07.93	Aku Aku	When it is full, your enemy is ready to perform their very own special move.
+b7d494289dd8e7f6	00:00.00	00:02.03	Aku Aku	When a second player joins the game,
+b7d494289dd8e7f6	00:02.03	00:05.48	Aku Aku	you can jack them and take control of my magical powers.
+b953515182b74777	00:00.00	00:02.26	Aku Aku	When you're controlling my powers in two-player,
+b953515182b74777	00:02.26	00:05.29	Aku Aku	you can find bigger objects to shoot by searching around.
+b5d7d7095be4e6f0	00:00.00	00:03.52	Aku Aku	This should be easier with another person to help you balance your way across.
+b756943240cb4879	00:00.00	00:03.06	Aku Aku	This would be a great time to jack the player on the roller.
+b756943240cb4879	00:03.06	00:06.39	Aku Aku	That way, you can use me to shoot the objects out of the way.
+b3db19ea19f8e7fa	00:00.00	00:03.14	Aku Aku	Try shooting those crates for the other player so you can roll through.
+b559d712fed7477b	00:00.00	00:03.69	Aku Aku	This will be a great time to jack onto the same Grimly if you can.
+56fc38969cd407b5	00:00.00	00:02.44	Aku Aku	Try jacking the other player while they ride a titan.
+56fc38969cd407b5	00:02.44	00:05.07	Aku Aku	Then you can shoot while they control the creature.
+567e389c3dbe260c	00:00.00	00:03.75	Aku Aku	Crash. Go into your house on Wumpa Island to change clothes.
+58f8f5b5dec006b3	00:00.00	00:03.99	Aku Aku	Crash! Go into your house on Wumpa Island and check out pretty pictures.
+c0c0cf36e12efb6f	00:00.00	00:04.30	Aku Aku	Crash! Go into your house on Wumpa Island and check out the concept art.
+587af5bb7fb22732	00:00.00	00:04.69	Aku Aku	Hi there Player 2. Go into Crash's House if you want to play as Coco.
+5302be5818f407b9	00:00.00	00:05.25	Aku Aku	Crash! I can store your titan for you so you can take him along. Try it now.
+5284be5db9de2630	00:00.00	00:03.85	Aku Aku	Remember that you can store your Titan in order to take them with you across spaces
+5284be5db9de2630	00:03.85	00:05.32	Aku Aku	than only you can navigate.
+54ff7b775ae006b7	00:00.00	00:03.98	Aku Aku	Looks like this way is no good, Crash. Try and find another way.
+54817b7cfbd22736	00:00.00	00:04.09	Aku Aku	Maybe we should talk to Coco, Crash. She's right by the Doominator head.
+4f094419951407bd	00:00.00	00:03.34	Aku Aku	Maybe we should talk to Coco, Crash. She's right by the house.
+4e8b441f35fe2634	00:00.00	00:03.05	Aku Aku	After them, Crash, they ran towards the bridge behind the house.
+cb9bb9305cfc6974	00:00.00	00:02.48	Aku Aku	Quickly, Crash! Go to the back of the Doominator!
+cd1a765941e2cafd	00:00.00	00:02.52	Aku Aku	Let's go to the Ratcicle Kingdom, Crash.
+cd98764f9ef06a7a	00:00.00	00:02.14	Aku Aku	Let's head to the roller village, Crash.
+cf17337883cec9fb	00:00.00	00:02.03	Aku Aku	Let's head to the ice prison, Crash.
+c862cc145fad57f8	00:00.00	00:02.10	Aku Aku	Let's go to the Sludge village.
+c920fbda9e1ed2c1	00:00.00	00:02.39	Aku Aku	Let's head to the shadowy mountain.
+c99efc111b106a7e	00:00.00	00:01.98	Aku Aku	Let's go to Nina's school.
+cb1db939ffeec9ff	00:00.00	00:01.72	Aku Aku	Let's go to Wumpa, Crash!
+d38eadad64bc694c	00:00.00	00:02.55	Aku Aku	Time to go to Cortex's base in outer space.
+d50d6ad649a2caf5	00:00.00	00:02.13	Aku Aku	Let's head to the Junkyard, Crash.
+66c9e35fd817893f	00:00.00	00:01.86	Aku Aku	Let's head home now, Crash.
+664be3657909a9be	00:00.00	00:01.97	Aku Aku	Let's head to the desert, Crash.
+64cd260076479201	00:00.00	00:03.82	Aku Aku	Hmm. There must be a button around here, Crash.
+640ef73ab4e55938	00:00.00	00:02.03	Aku Aku	Maybe there's a key around here somewhere.
+6ac35d9e5bf7893b	00:00.00	00:01.70	Aku Aku	Try wall jumping here, Crash.
+6a455da3fce9a9ba	00:00.00	00:01.69	Aku Aku	Try spin jumping here, Crash.
+68c6a07f1a0b8a3d	00:00.00	00:01.79	Aku Aku	Try spinning on this spot, Crash.
+6848a084baf5a8b4	00:00.00	00:02.10	Aku Aku	Maybe there's something you can break here.
+6ebcd7dcdfd78937	00:00.00	00:02.43	Aku Aku	There must be something you can freeze here.
+6e3ed7e280c9a9b6	00:00.00	00:02.41	Aku Aku	I think a roller would help here, Crash.
+09b9a2e871847673	00:00.00	00:02.89	Aku Aku	The telekinetic titan would be a big help here.
+083ae5bf8ca616f2	00:00.00	00:02.03	Aku Aku	Maybe having a Grimly would help here.
+07bce5c92f987775	00:00.00	00:02.06	Aku Aku	Maybe you need a Ratcicle here.
+063e28a04ab215cc	00:00.00	00:01.89	Aku Aku	It looks like you can climb here.
+05c028a9eda47677	00:00.00	00:02.13	Aku Aku	Try using your special power, Crash.
+04416b8108c616f6	00:00.00	00:03.20	Aku Aku	Try looking for a door that might need a key to open.
+03c36b8aabb87779	00:00.00	00:04.86	Aku Aku	Hey Crash! Maybe try sliding on that water with one of those ice guys.
+0244ae61c6d215f0	00:00.00	00:03.10	Aku Aku	Hey Crash! Try breaking that big thing there!
+01c6ae6b69c4767b	00:00.00	00:03.93	Aku Aku	See if there's something you can move around by using this telekinetic guy's powers.
+0047f14284e616fa	00:00.00	00:02.34	Aku Aku	You'll have to think about this one, Crash.
+ccae015acd790dc8	00:00.00	00:04.21	Aku Aku	There must be some way of opening that door. Think, Crash, think!
+ce2cbe83b23f6751	00:00.00	00:04.39	Aku Aku	I think if you destroy all those evil toilet bots we can get out of here.
+ceaabe7a0f6d0ece	00:00.72	00:05.74	Aku Aku	That gunk looks pretty hazardous, little buddy. You can't cross it on your own.
+d0297ba2f44b6e4f	00:00.00	00:04.47	Aku Aku	Looks like this thing is one of those teleporters my brother was talking about.
+d0297ba2f44b6e4f	00:04.47	00:05.57	Aku Aku	Hate that guy!
+d0a77b6b3a80381c	00:00.00	00:03.43	Aku Aku	Hey Crash, you can press the map button at any time to view your map.
+d0a77b6b3a80381c	00:03.43	00:07.30	Aku Aku	Your map will show you where you are and where to go to so you don't get lost.
+d0a77b6b3a80381c	00:07.30	00:08.75	Aku Aku	Let's check it out now.
+d0a77b9951590dc4	00:00.00	00:03.43	Aku Aku	Hey Crash, you can press the map button at any time to view your map.
+d0a77b9951590dc4	00:03.43	00:07.30	Aku Aku	Your map will show you where you are and where to go to so you don't get lost.
+d0a77b9951590dc4	00:07.30	00:08.75	Aku Aku	Let's check it out now.
+d22638c2363f6f4d	00:00.00	00:03.55	Aku Aku	The Red Missions with the book icon are your critical story missions.
+d22638c2363f6f4d	00:03.55	00:06.93	Aku Aku	These missions must be complete for you to advance in the game.
+d2a438b8934d0eca	00:00.00	00:03.36	Aku Aku	You also have optional missions shown with the trophy icon.
+d2a438b8934d0eca	00:03.36	00:07.26	Aku Aku	Completing these missions will help you get 100% game completion.
+d61fb2d2a3c2b81d	00:00.00	00:04.24	Aku Aku	To scroll the map view, simply pull the right trigger and move the left stick.
+712628e2f7ab21c9	00:00.00	00:03.69	Aku Aku	Hey Crash, you can press the map button at any time to view your map.
+712628e2f7ab21c9	00:03.69	00:07.85	Aku Aku	Your map will show you where you are and where to go to so you don't get lost.
+712628e2f7ab21c9	00:07.85	00:09.08	Aku Aku	Let's check it out now.
+712628e2f7ab21c9	00:09.08	00:12.77	Aku Aku	The red missions with the book icon are your critical story missions.
+712628e2f7ab21c9	00:12.77	00:16.14	Aku Aku	These missions must be complete for you to advance in the game.
+712628e2f7ab21c9	00:16.14	00:19.29	Aku Aku	You also have optional missions shown with the trophy icon.
+712628e2f7ab21c9	00:19.29	00:27.44	Aku Aku	Completing these missions will help you get 100% game completion.
+3e973b1afee3964c	00:00.00	00:03.54	Aku Aku	You lost? Maybe you should check your map again, Crash.
+4212b56325b5f6f3	00:00.00	00:02.02	Aku Aku	We should head back to Wumpa Island, Crash.
+4212b56325b5f6f3	00:02.02	00:05.01	Aku Aku	You can take the route we originally traveled to get here.
+4093f83a40d79772	00:00.00	00:04.30	Aku Aku	Okay, we should be able to make it back to Ratcicle Kingdom with a roller now.
+4093f83a40d79772	00:04.30	00:07.31	Aku Aku	Head down, power through, Crash, we need to hurry.
+3c1c7e055fe9f7f9	00:00.00	00:03.49	Aku Aku	You might want to wait for the wind to stop before trying, Crash.
+3a9dc0dc7b039670	00:00.00	00:04.67	Aku Aku	Hey, try digging underneath the ground to get by. You're a bandicoot after all.
+3e193b24a1d5f6f7	00:00.00	00:02.85	Aku Aku	This looks like a way out. Try jumping up from here.
+3c9a7dfbbcf79776	00:00.00	00:02.90	Aku Aku	This looks like it would be easier to travel with two people, Crash.
+382303c6dc09f7fd	00:00.00	00:03.75	Aku Aku	You can free sparkling water with this titan. Give it a try now.
+36a4469df7239674	00:00.00	00:02.61	Aku Aku	Remember that you can free sparkling water, Crash.
+a4e7cd13ea9f5632	00:00.00	00:03.56	Aku Aku	You can use your sneeze attack to easily freeze blast of water.
+a565cd0e49ad35b3	00:00.00	00:02.37	Aku Aku	Remember you can freeze blast with a sneeze attack.
+a2eb0ff4a8ab550c	00:00.00	00:03.19	Aku Aku	You can freeze flowing water blast and jump on them with your titan.
+a3690fef07c136b5	00:00.00	00:02.54	Aku Aku	Try freezing the blast of water and jumping on them.
+a0ee52d566bf5636	00:00.00	00:03.72	Aku Aku	When you freeze water blasts, you can use a heavy attack to break through them.
+a16c52cfc5cd35b7	00:00.00	00:01.76	Aku Aku	Freeze and break, stick and move.
+9ef195b624cb5530	00:00.00	00:03.51	Aku Aku	Hit the basketballs back with a spin or light attack to knock her down.
+9f6f95b083e136b9	00:00.00	00:01.65	Aku Aku	Try hitting them back, Crash.
+9cf4d896e2df563a	00:00.00	00:02.76	Aku Aku	Jack bigger guys to break bigger obstacles.
+9d72d89141ed35bb	00:00.00	00:02.94	Aku Aku	Try walking on it to move it. Be careful you don't fall.
+76724d9f56077777	00:00.00	00:02.63	Aku Aku	That looks like something you can target and pull down.
+74f39076712917f6	00:00.00	00:01.94	Aku Aku	Try pulling those blocks out from the wall.
+74759080141b7879	00:00.00	00:01.82	Aku Aku	Try rolling against that drum there.
+72f6d3572f3516f0	00:00.00	00:02.57	Aku Aku	Close those pipes, Crash, and we'll never get out of here!
+786f0abe97fb7875	00:00.00	00:02.19	Aku Aku	This is too fast for you to move across, Crash.
+786f0abe97fb7875	00:02.19	00:04.48	Aku Aku	You'll need to find a way to slow it down.
+76f04d95b31516cc	00:00.00	00:02.48	Aku Aku	Try slowing time to get past those boulders.
+6e7f59224e47777f	00:00.00	00:02.63	Aku Aku	I think this would be easier if time were slowed.
+6d009bf9696917fe	00:00.00	00:02.04	Aku Aku	This is too fast for you to move across, Crash.
+6d009bf9696917fe	00:02.04	00:04.19	Aku Aku	You'll need to find a way to slow it down.
+db44226f5cdcd58c	00:00.00	00:02.49	Aku Aku	Follow the mojo to find the exit, Crash.
+dbc22269bbf2b735	00:00.58	00:03.13	Aku Aku	Congratulations, you've earned your first upgrade.
+dbc22269bbf2b735	00:03.13	00:05.79	Aku Aku	Both you and the creatures you jack can be upgraded.
+dbc22269bbf2b735	00:05.79	00:09.92	Aku Aku	The mojo you collect will count towards upgrading the mutant you are jacked on at
+dbc22269bbf2b735	00:09.92	00:10.38	Aku Aku	the time.
+dbc22269bbf2b735	00:10.38	00:14.65	Aku Aku	If you're not jacked, then it counts towards upgrading your own abilities.
+dd40df8e9ed0d6b2	00:00.00	00:02.03	Aku Aku	Well done, Crash!
+ddbedf88fddeb633	00:00.00	00:03.81	Aku Aku	Check the game manual for cheats. Now you can use them while playing.
+ddbedf88fddeb633	00:03.81	00:06.16	Aku Aku	You've earned it, you little cheater!
+d74aa830d8fcd5b0	00:00.00	00:03.77	Aku Aku	If you forget how to do a move, you can look it up anytime in the moves menu.
+d74aa830d8fcd5b0	00:03.77	00:05.58	Aku Aku	Just pause the game to get there.
+d7c8a82b3812b739	00:00.00	00:03.13	Aku Aku	Destroy those mojo collectors to free my brother.
+d7c8a82b3812b739	00:03.13	00:08.50	Aku Aku	They look pretty hefty though, so you'll need to jack a huge titan to break them.
+d94765501af0d6b6	00:00.00	00:01.43	Aku Aku	You found the first part.
+d9c5654a79feb637	00:00.00	00:01.55	Aku Aku	You found the second part!
+d3512df2551cd5b4	00:00.11	00:00.94	Aku Aku	The third part!
+d3cf2decb432b73d	00:00.00	00:01.10	Aku Aku	Part number four!
+accea2fac84cf8f9	00:00.14	00:00.87	Aku Aku	Fifth part!
+ab4fe5d1e3669770	00:00.00	00:02.86	Aku Aku	Well done! We've got all the parts!
+aecb601a0a38f7f7	00:00.00	00:02.86	Aku Aku	N. Gin got away. We've got to find him, Crash.
+ad4ca2f1255a9876	00:00.00	00:05.27	Aku Aku	I smell evil and lunacy on the wind. N. Gin must be up ahead somewhere.
+b0c81d394c2cf8f5	00:00.00	00:02.92	Aku Aku	I don't think he looks nimble enough to swing on that rope.
+b0c81d394c2cf8f5	00:02.92	00:04.68	Aku Aku	You'll have to do it yourself.
+af4960106746974c	00:00.00	00:03.94	Aku Aku	Come on, Crash. There must be a way to get up there. You're good with puzzles.
+b2c4da588e18f7f3	00:00.00	00:02.81	Aku Aku	This device must be for a creature you haven't encountered yet.
+b1461d2fa93a9872	00:00.00	00:04.28	Aku Aku	Keep moving forward, Crash. We need to get back to the Ratcicle Kingdom.
+a41d7e77623785f8	00:00.00	00:03.95	Aku Aku	I can sense that this door will need something very special to open it.
+a41d7e77623785f8	00:03.95	00:05.56	Aku Aku	We'd better keep moving.
+11a077cacf225736	00:00.00	00:02.19	Aku Aku	Let's get this roller back to Wumpa Village.
+
+# ----------------------------------------------------------------------------
+# In game: Architect  (28 sounds)
+# ----------------------------------------------------------------------------
+e62b44a63d55472d	00:00.00	00:06.08	Architect	(gibberish)
+e62b44a63d55472e	00:00.27	00:05.59	Architect	(gibberish)
+e62b44a63d55472f	00:00.00	00:04.77	Architect	(gibberish)
+e62b44a63d554728	00:00.58	00:05.82	Architect	(gibberish)
+3b0c091da688196e	00:00.00	00:04.32	Architect	(gibberish)
+3b0c091da688196d	00:00.95	00:04.59	Architect	(gibberish)
+3b0c091da688196c	00:00.00	00:04.59	Architect	(gibberish)
+3b0c091da688196b	00:00.00	00:05.91	Architect	(gibberish)
+408a8b62aa432da7	00:00.49	00:04.54	Architect	(gibberish)
+408a8b62aa432da4	00:00.00	00:04.95	Architect	(gibberish)
+408a8b62aa432da5	00:00.05	00:05.93	Architect	(gibberish)
+408a8b62aa432da2	00:00.00	00:04.69	Architect	(gibberish)
+659e22cfb36d7bf8	00:01.12	00:08.68	Architect	(gibberish)
+659e22cfb36d7bfb	00:00.00	00:03.80	Architect	(gibberish)
+659e22cfb36d7bfa	00:00.00	00:04.75	Architect	(gibberish)
+659e22cfb36d7bfd	00:00.00	00:04.98	Architect	(gibberish)
+04479e8eb9db8e29	00:00.00	00:04.46	Architect	(gibberish)
+04479e8eb9db8e2a	00:00.00	00:03.48	Architect	(gibberish)
+04479e8eb9db8e2b	00:00.00	00:03.61	Architect	(gibberish)
+04479e8eb9db8e2c	00:00.00	00:04.37	Architect	(gibberish)
+8fecdc1d54b9586a	00:00.46	00:05.38	Architect	(gibberish)
+8fecdc1d54b95869	00:00.50	00:06.64	Architect	(gibberish)
+8fecdc1d54b95868	00:00.18	00:05.93	Architect	(gibberish)
+8fecdc1d54b9586f	00:00.00	00:04.51	Architect	(gibberish)
+64770fdb43c75ada	00:00.68	00:06.62	Architect	(gibberish)
+64770fdb43c75ad9	00:00.00	00:05.55	Architect	(gibberish)
+64770fdb43c75ad8	00:00.62	00:07.38	Architect	(gibberish)
+64770fdb43c75adf	00:00.59	00:05.00	Architect	(gibberish)
+
+# ----------------------------------------------------------------------------
+# In game: Architect's assistant  (28 sounds)
+# ----------------------------------------------------------------------------
+c43e1d67516b6043	00:00.00	00:04.26	Architect's assistant	I'm the architect's assistant, by the way, and I'll be acting as translator,
+c43e1d67516b6043	00:04.26	00:08.15	Architect's assistant	as he doesn't care enough about you to form actual words.
+c43e1d67516b6040	00:00.00	00:05.47	Architect's assistant	The Honorable Architect is greeting you and has no time to talk to lesser mutations.
+c43e1d67516b6041	00:00.00	00:02.16	Architect's assistant	The architect says, during your briefs day,
+c43e1d67516b6041	00:02.16	00:06.53	Architect's assistant	be sure to enjoy things like indoor plumbing that you're probably not used to.
+c43e1d67516b6046	00:00.00	00:04.29	Architect's assistant	The architect was the one responsible for designing our homes because surely the
+c43e1d67516b6046	00:04.29	00:06.62	Architect's assistant	world has never seen ice before.
+ec00a113b1e137f0	00:00.00	00:04.50	Architect's assistant	The architect says he's not impressed by a telekinetic chicken. I disagree.
+ec00a113b1e137f0	00:04.50	00:05.85	Architect's assistant	That thing is hot.
+ec00a113b1e137f3	00:00.00	00:04.10	Architect's assistant	Are there limits to that thing's mental powers? How exactly are you controlling it?
+ec00a113b1e137f2	00:00.00	00:02.89	Architect's assistant	Were there other weird creatures in the ice prisons?
+ec00a113b1e137f5	00:00.02	00:05.65	Architect's assistant	So as your little friend, they're single? I have a thing for beaks. R-R-L.
+ce3e1000048c9591	00:00.00	00:03.05	Architect's assistant	The architect is wondering if that thing is housebroken.
+ce3e1000048c9592	00:00.00	00:03.91	Architect's assistant	The architect is wondering why you brought that creature into our fragile home.
+ce3e1000048c9593	00:00.00	00:03.20	Architect's assistant	The architect wishes you'd hurry up and get on with your quest already.
+ce3e1000048c9594	00:00.00	00:05.10	Architect's assistant	Again, I better not translate that one, but let me tell you it's dirty!
+7eb5f77bbcd888ce	00:00.00	00:03.48	Architect's assistant	The architect is worried about the horrors you brought upon the world by helping
+7eb5f77bbcd888ce	00:03.48	00:04.06	Architect's assistant	Nina.
+7eb5f77bbcd888cd	00:00.00	00:02.31	Architect's assistant	The architect was unimpressed with evil school.
+7eb5f77bbcd888cd	00:02.31	00:05.20	Architect's assistant	Forty percent of students become good in later life.
+7eb5f77bbcd888cc	00:00.00	00:03.62	Architect's assistant	The architect wants to know if they still serve tuna noodle casserole at the school
+7eb5f77bbcd888cc	00:03.62	00:04.41	Architect's assistant	cafeteria.
+7eb5f77bbcd888cb	00:00.00	00:03.33	Architect's assistant	Does evil school still smell like sawdust and walrus hide?
+7eb5f77bbcd888cb	00:03.33	00:05.26	Architect's assistant	I always wondered about that.
+e56a7b417e7c2a5f	00:00.00	00:04.00	Architect's assistant	The architect is pleased that you brought back such an imposing specimen.
+e56a7b417e7c2a5c	00:00.00	00:04.23	Architect's assistant	Well, I gotta say, that rats got some nice guns.
+e56a7b417e7c2a5d	00:00.00	00:04.49	Architect's assistant	Since freeing the chief, mysterious fires are apparently down 40%.
+e56a7b417e7c2a5a	00:00.00	00:03.79	Architect's assistant	I can't believe you control such a haughty! It's very madly if you, Crash!
+e56a7b417e7c2a5a	00:03.79	00:06.12	Architect's assistant	Oh and the architect said something too.
+aceba198d298f9fc	00:00.00	00:04.64	Architect's assistant	The architect says that he's received disturbing reports about the ice prisons.
+aceba198d298f9fc	00:04.64	00:06.91	Architect's assistant	Something about inferior design.
+aceba198d298f9ff	00:00.00	00:03.92	Architect's assistant	The architect wonders if you had a chance to visit the prisons to see if there's
+aceba198d298f9ff	00:03.92	00:05.37	Architect's assistant	anything unusual going on.
+aceba198d298f9fe	00:00.00	00:03.68	Architect's assistant	You must have a lot of time on your hands if you keep coming back here.
+aceba198d298f9f9	00:00.00	00:04.71	Architect's assistant	The architect says that recently the worst thing possible has been reported from
+aceba198d298f9f9	00:04.71	00:06.25	Architect's assistant	the ice prisons near here.
+aceba198d298f9f9	00:06.25	00:06.89	Architect's assistant	Heat!
+989c060bd8957b4d	00:00.00	00:05.38	Architect's assistant	So, how's all that collecting jumping stuff going anyway?
+989c060bd8957b4e	00:00.00	00:04.01	Architect's assistant	Remember power crystals? I miss those.
+989c060bd8957b4f	00:00.00	00:03.14	Architect's assistant	You look well, Crash. You must do Pilates or something.
+989c060bd8957b4f	00:03.14	00:05.51	Architect's assistant	Or maybe it's all that fruit you eat.
+989c060bd8957b48	00:00.00	00:01.99	Architect's assistant	You know, I'm not sure what he said just there.
+989c060bd8957b48	00:01.99	00:03.79	Architect's assistant	It was something about tuna, I think.
+
+# ----------------------------------------------------------------------------
+# In game: Conjoined Sludge  (15 sounds)
+# ----------------------------------------------------------------------------
+d34d0df61087e0e1	00:00.00	00:03.00	Conjoined Sludge	Crash! Fabulous! You come help us, no?
+d34d0df61087e0e1	00:03.00	00:08.36	Conjoined Sludge	You chase off the bad sludge is what are trapped by the module.
+d34d0df61087e0e2	00:00.00	00:03.70	Conjoined Sludge	Big Conface embryo used NV to enslave slodges.
+d34d0df61087e0e2	00:03.70	00:10.36	Conjoined Sludge	Put slodges to work, building death toys. Take away best junk from slodgy home.
+d34d0df61087e0e3	00:00.00	00:03.01	Conjoined Sludge	Between you me, sludge is worried soon,
+d34d0df61087e0e3	00:03.01	00:08.56	Conjoined Sludge	embryo notice the hurting you are doing and retaliate on Sludge village.
+d34d0df61087e0e3	00:08.56	00:14.07	Conjoined Sludge	Your brother worked for embryo now. He's scary too. Bad it is here.
+d34d0df61087e0e4	00:00.00	00:01.58	Conjoined Sludge	So worried about home!
+d34d0df61087e0e4	00:01.58	00:07.50	Conjoined Sludge	Not worried about these little jokers of course, but very worried about self!
+e6c8100e8f92a1d8	00:00.00	00:06.28	Conjoined Sludge	You did it crashy! Embryo running scared! Your brother free! Junk pile!
+e6c8100e8f92a1d8	00:06.28	00:08.75	Conjoined Sludge	Still crummy! In good way!
+e6c8100e8f92a1db	00:00.00	00:04.09	Conjoined Sludge	Things not all fabulous though, huge bad sludgy work for Cortex,
+e6c8100e8f92a1db	00:04.09	00:07.67	Conjoined Sludge	come here and take loud mouth away, you save him for us,
+e6c8100e8f92a1db	00:07.67	00:09.94	Conjoined Sludge	seems like kind of thing you do.
+e6c8100e8f92a1da	00:00.00	00:05.80	Conjoined Sludge	You know Shadow Place near here? Very spooky lately. Bad spooky. Scary spooky.
+e6c8100e8f92a1da	00:05.80	00:09.43	Conjoined Sludge	With dumb, dumb, dumb kind of music, you know?
+e6c8100e8f92a1dd	00:00.00	00:03.91	Conjoined Sludge	You go to Shadowland maybe. We hear screams and cries.
+e6c8100e8f92a1dd	00:03.91	00:06.74	Conjoined Sludge	Smells little bits like cheese too.
+e6c8100e8f92a1dc	00:00.00	00:03.09	Conjoined Sludge	Why are you still here? You like sludge's maybe?
+e6c8100e8f92a1dc	00:03.09	00:06.94	Conjoined Sludge	Sludge's no role that way, you know? Move along, fuzzy.
+e6c8100e8f92a1df	00:00.00	00:04.53	Conjoined Sludge	Sludges hear many scary noises from black mountains nearby.
+e6c8100e8f92a1df	00:04.53	00:09.54	Conjoined Sludge	Sludges don't go there for, well, hopefully obvious reasons.
+e6c8100e8f92a1de	00:00.00	00:04.86	Conjoined Sludge	Maybe Hero like Crashy go to a shadowy mountain place.
+e6c8100e8f92a1de	00:04.86	00:11.98	Conjoined Sludge	If you beat bad guys, then place okay. If you die, well, we wait for next hero.
+e6c8100e8f92a1de	00:11.98	00:13.29	Conjoined Sludge	It's okay.
+2a012c21cebc478f	00:00.24	00:01.38	Conjoined Sludge	Ash, you back!
+2a012c21cebc478f	00:01.38	00:05.75	Conjoined Sludge	Good timing, metal Cortex hand guys dropping from sky,
+2a012c21cebc478f	00:05.75	00:11.02	Conjoined Sludge	causing many problems ranging from a minor to major, you know.
+2a012c21cebc478c	00:00.00	00:03.85	Conjoined Sludge	You'll help sludge is again by beating up Cortex, guys, no?
+2a012c21cebc478c	00:03.85	00:07.57	Conjoined Sludge	Also, maybe beat up new smelly mutants that arrive! Whoo!
+2a012c21cebc478c	00:07.57	00:11.48	Conjoined Sludge	Smell worse than sludge is! And dad's saying something!
+2a012c21cebc478d	00:00.00	00:05.89	Conjoined Sludge	Yeah, yeah, nice to see you again. Not sure why I'm seeing you, but there you go.
+2a012c21cebc478a	00:00.00	00:03.39	Conjoined Sludge	Can that smart mask person maybe tell you what to do?
+2a012c21cebc478a	00:03.39	00:07.10	Conjoined Sludge	Honestly, I don't know why you're still here. It's simple.
+2a012c21cebc478a	00:07.10	00:11.76	Conjoined Sludge	See bad person, punch bad person. What's so difficult? Honestly.
+
+# ----------------------------------------------------------------------------
+# In game: Bratgirl  (2 sounds)
+# ----------------------------------------------------------------------------
+1a5acd86c2424a48	00:00.02	00:06.30	Bratgirl	Move faster, mutant slaves! We need all mutants brought under NV control.
+1a5acd86c2424a4a	00:00.00	00:04.04	Bratgirl	Hey look, a village! These rats must have come from there!
+
+# ----------------------------------------------------------------------------
+# In game: Bratgirl  (2 sounds)
+# ----------------------------------------------------------------------------
+8bb2251446f9abfd	00:00.37	00:03.46	Bratgirl	Sureks don't want to make me angry! We're wanted students.
+8bb2251446f9abfd	00:03.46	00:06.11	Bratgirl	We have the death sentence from 12 schools!
+8bb2251446f9abfb	00:02.38	00:06.08	Bratgirl	A treasure mutants! Faster freaks! Mush!
+
+# ----------------------------------------------------------------------------
+# In game: Coco  (7 sounds)
+# ----------------------------------------------------------------------------
+a68ed7cf91f2951d	00:00.00	00:05.12	Coco	Thanks, Crash! I'll just insert that where the sun also rises. Oh no!
+a68ed7cf91f2951d	00:05.12	00:11.42	Coco	That capacitorms McGuffin needs to be calibrated! Go get me some more gizmos, boy!
+90099380a09cc6c4	00:00.00	00:03.02	Coco	Sorry Crash, I need all the parts before we can watch TV.
+90099380a09cc6c7	00:00.00	00:03.52	Coco	Crash? What are you doing back here? Hurry up! Mush!
+90099380a09cc6c6	00:00.53	00:02.79	Coco	Hurry up, Crash! We're missing wrestling!
+90099380a09cc6c6	00:02.79	00:05.94	Coco	I want to see the evil wrestler briefly become champ!
+f37d43e69b377956	00:00.00	00:05.42	Coco	Finally, Crash, give me this stuff and let's fire this sucker up watch us some next
+f37d43e69b377956	00:05.42	00:05.76	Coco	car
+1a0526ddd25d9819	00:00.05	00:03.85	Coco	Wow! That thing looked amazing! We should totally get us some!
+7a516a655fa00996	00:00.00	00:04.86	Coco	Oh no! Industry tried to warn us about recycling. Why didn't we listen?
+
+# ----------------------------------------------------------------------------
+# In game: Crunch  (3 sounds)
+# ----------------------------------------------------------------------------
+ce2d3b0e96d615d5	00:00.00	00:00.94	Crunch	Yeah, turn a left!
+e90b158d8c946162	00:00.00	00:02.49	Crunch	Yeah, games, messaging, data, lights!
+aa189f0d3cedb404	00:00.00	00:02.28	Crunch	I move this thingamah who he crashed, then so long,
+aa189f0d3cedb404	00:02.28	00:03.98	Crunch	I forgot what was even back there.
+
+# ----------------------------------------------------------------------------
+# In game: RhinoRoller cub  (23 sounds)
+# ----------------------------------------------------------------------------
+041fc882039aac5d	00:02.22	00:06.83	RhinoRoller cub	I am Commander Alpha One! We defend the village from the spiking ones.
+041fc882039aac5d	00:06.83	00:10.87	RhinoRoller cub	Normally our parents do it, but they're away being crazy.
+041fc882039aac5e	00:00.00	00:01.33	RhinoRoller cub	We gotta keep making noises.
+041fc882039aac5e	00:01.33	00:05.28	RhinoRoller cub	The Spikies don't know that we're so little, so we're trying to scare them off.
+041fc882039aac5f	00:00.00	00:05.51	RhinoRoller cub	You know, I think the old one likes you. Likes you, if you know what I mean?
+041fc882039aac5f	00:05.51	00:08.48	RhinoRoller cub	I think you do. Wow! H-h-h-h-h-h-h-h-h-
+041fc882039aac58	00:00.00	00:03.19	RhinoRoller cub	Good thing you're standing around here all day instead of helping.
+041fc882039aac58	00:03.19	00:05.29	RhinoRoller cub	Jeebus, just go punch bad guys already!
+c9d5b57bd03f366e	00:01.30	00:05.09	RhinoRoller cub	Gone! Not that I couldn't have taken care of them eventually.
+c9d5b57bd03f366d	00:00.00	00:02.74	RhinoRoller cub	If you're riding a roller, you should try it in cold places.
+c9d5b57bd03f366d	00:02.74	00:05.25	RhinoRoller cub	It's all slippery and sliding and awesome!
+c9d5b57bd03f366c	00:00.00	00:04.32	RhinoRoller cub	The other cubs are very impressed with you, Crash. Honestly, just thrilled!
+c9d5b57bd03f366b	00:01.26	00:05.15	RhinoRoller cub	there you're probably my fifth favorite and that is saying a lot
+2189c123dc05ee53	00:00.00	00:02.18	RhinoRoller cub	Oh, you're not going to believe this!
+2189c123dc05ee53	00:02.18	00:05.09	RhinoRoller cub	Those lousy spikes are working with Snipes now!
+2189c123dc05ee50	00:00.00	00:04.38	RhinoRoller cub	Crash! I can hear crazy music nearby! Hey, it must be the Snipe Gang!
+2189c123dc05ee51	00:00.00	00:02.79	RhinoRoller cub	I hear they're based somewhere in junk land.
+2189c123dc05ee51	00:02.79	00:06.00	RhinoRoller cub	I'd go there myself, but I'm, you know, small.
+2189c123dc05ee56	00:00.00	00:04.85	RhinoRoller cub	Oh, get moving already, Crash! Seriously, what the heck are you here for?
+2189c123dc05ee57	00:00.24	00:03.64	RhinoRoller cub	Come on, get! Oh, heroes today!
+a109e0b1757bec5c	00:00.00	00:03.31	RhinoRoller cub	Crash! Thank goodness you're here! One of our dumber cubs is gone.
+a109e0b1757bec5c	00:03.31	00:06.78	RhinoRoller cub	We think it got caught by a Snipes gang. You've got to rescue it!
+a109e0b1757bec5f	00:00.00	00:01.42	RhinoRoller cub	Hurry, there's not much time.
+a109e0b1757bec5f	00:01.42	00:04.66	RhinoRoller cub	Most of the snipes are out being mean now, so you gotta hurry!
+a109e0b1757bec5e	00:00.00	00:03.87	RhinoRoller cub	Still here, huh? Honestly, I don't know how to take that.
+a109e0b1757bec5e	00:03.87	00:07.33	RhinoRoller cub	Sometimes I just think you don't care anymore.
+a109e0b1757bec59	00:00.98	00:07.72	RhinoRoller cub	You're just going to leave that little cub to die? I'm so disappointed!
+edbb03170c8cba69	00:00.00	00:07.20	RhinoRoller cub	You did I didn't tell you for a second? A few hours, maybe but never a second!
+edbb03170c8cba6a	00:00.00	00:02.62	RhinoRoller cub	I can't believe you took out so many bad guys.
+edbb03170c8cba6a	00:02.62	00:06.78	RhinoRoller cub	You must have been pow-pow-pow-wack-wack-wack-wack-slope-lop-yback.
+edbb03170c8cba6b	00:00.00	00:04.69	RhinoRoller cub	Really? I just don't have enough to say. I just can't think of it right now.
+97e52ec116dd2c5a	00:00.11	00:02.57	RhinoRoller cub	to see you, Crash. We should play sometime.
+97e52ec116dd2c5a	00:02.57	00:05.86	RhinoRoller cub	I'm really good at doing the same thing over and over.
+97e52ec116dd2c59	00:00.00	00:03.53	RhinoRoller cub	Wonder what's gonna happen next? I don't think Cortex will just give up.
+97e52ec116dd2c58	00:00.30	00:04.52	RhinoRoller cub	stopping by, Crash, and don't forget to give the lady a big hog.
+97e52ec116dd2c58	00:04.52	00:06.28	RhinoRoller cub	She told me to say that.
+
+# ----------------------------------------------------------------------------
+# In game: RhinoRoller Elder  (22 sounds)
+# ----------------------------------------------------------------------------
+d420d8c719435880	00:00.00	00:01.57	RhinoRoller Elder	Hey there, good looking.
+d420d8c719435880	00:01.57	00:05.74	RhinoRoller Elder	You look like the kind of bandy coop that appreciates sandpaper.
+d420d8c719435880	00:05.74	00:12.70	RhinoRoller Elder	Been kind of lonely since all hunky rollers packed off and left.
+d420d8c719435883	00:00.00	00:05.45	RhinoRoller Elder	For some reason, those rollers weren't interested in an attractive lady like myself.
+d420d8c719435883	00:05.45	00:07.80	RhinoRoller Elder	It was those darned NV things.
+d420d8c719435882	00:00.00	00:03.26	RhinoRoller Elder	Yeah! Things are looking pretty worrying around here.
+d420d8c719435882	00:03.26	00:06.67	RhinoRoller Elder	Well, with all those spiky fellers hanging around.
+d420d8c719435885	00:00.00	00:06.24	RhinoRoller Elder	I can hear those spikes now, hanging around outside, I'll scratchy-scretching,
+d420d8c719435885	00:06.24	00:09.53	RhinoRoller Elder	not in a good way.
+a029cf2bedee8293	00:00.00	00:02.29	RhinoRoller Elder	You took care of all those spiky boys!
+a029cf2bedee8293	00:02.29	00:08.50	RhinoRoller Elder	Now all I gotta do is get out of this hole and I'll properly thank you!
+a029cf2bedee8290	00:00.02	00:05.16	RhinoRoller Elder	It's a relief not having to worry about the spikes all the time.
+a029cf2bedee8290	00:05.16	00:10.76	RhinoRoller Elder	Now I can concentrate on you properly. R-R-R-R-R-
+a029cf2bedee8291	00:00.00	00:04.20	RhinoRoller Elder	Mmm, you're looking good now, heroic!
+a029cf2bedee8296	00:00.00	00:06.08	RhinoRoller Elder	I sure wish I could dim the lights in here. Set the mood. R-R-R-R-
+19084cd0e205ab8e	00:00.00	00:05.32	RhinoRoller Elder	Oh, darnation! Those silly spikes are working with those feather fellers now!
+19084cd0e205ab8d	00:00.00	00:05.03	RhinoRoller Elder	See if you can clear those boys out. I think they're hanging out near the junkyard.
+19084cd0e205ab8d	00:05.03	00:08.74	RhinoRoller Elder	Filthy place.
+19084cd0e205ab8c	00:00.00	00:07.40	RhinoRoller Elder	Oh, I think you've taken a shine to me. Nice to see some attention. I don't know.
+19084cd0e205ab8b	00:00.00	00:04.66	RhinoRoller Elder	Okay, sooner or later you'll notice I can't move. Go on, boy!
+52e2f468ca46fd61	00:00.00	00:01.85	RhinoRoller Elder	Oh, thank goodness, you're here, cutie.
+52e2f468ca46fd61	00:01.85	00:03.56	RhinoRoller Elder	Whenever our dumber cubs is missing,
+52e2f468ca46fd61	00:03.56	00:07.44	RhinoRoller Elder	the silly thing rang off and got itself grabbed by those feathery freaks.
+52e2f468ca46fd62	00:00.00	00:03.48	RhinoRoller Elder	Quit hanging around here! You got them feathery boys to beat up!
+52e2f468ca46fd62	00:03.48	00:06.76	RhinoRoller Elder	If you take out their leader, that cub can break free!
+52e2f468ca46fd63	00:00.00	00:01.98	RhinoRoller Elder	Get moving, would you cutie guys?
+52e2f468ca46fd63	00:01.98	00:05.56	RhinoRoller Elder	If you don't hurry up, you'll never find them in time.
+d02b07b6642c929c	00:00.00	00:01.59	RhinoRoller Elder	You did it, big boy!
+d02b07b6642c929c	00:01.59	00:08.45	RhinoRoller Elder	I knew you could, what were those strong legs and cheery thighs? I'll be in my bunk.
+d02b07b6642c929f	00:00.00	00:02.38	RhinoRoller Elder	Honestly, I'm thrilled with you, Crash!
+d02b07b6642c929f	00:02.38	00:08.04	RhinoRoller Elder	No other mutated bandy-coot except maybe your sister or Crunch could do what you do.
+fb005b46ff4a77c0	00:00.00	00:03.22	RhinoRoller Elder	Couldn't stay away, could you, Crash? Oh, I knew it.
+fb005b46ff4a77c0	00:03.22	00:07.81	RhinoRoller Elder	I mean, I'm packing some serious good looks after all. Ha ha!
+fb005b46ff4a77c3	00:00.00	00:04.82	RhinoRoller Elder	I got me a new hip installed, really flexible.
+fb005b46ff4a77c2	00:00.00	00:02.49	RhinoRoller Elder	Yeah, feels like I've been here forever.
+fb005b46ff4a77c5	00:00.00	00:05.11	RhinoRoller Elder	What's the weather like out there anyway? Hot? I like it hot.
+fb005b46ff4a77c4	00:00.00	00:03.94	RhinoRoller Elder	Don't get hung up on me, Crash. You're just a piece of meat.
+
+# ----------------------------------------------------------------------------
+# In game: Melvin  (28 sounds)
+# ----------------------------------------------------------------------------
+d164004b5b2438a6	00:00.00	00:03.39	Melvin	Hello Mr. Crash Person and welcome to our lovely home.
+d164004b5b2438a6	00:03.39	00:08.88	Melvin	Feel free to talk to Big Mouth over there. Or hit me if you want entertainment.
+d164004b5b2438a5	00:00.00	00:04.95	Melvin	That little rat thinks he's so great because of his dad? Well, I can cur.
+d164004b5b2438a4	00:00.00	00:02.34	Melvin	I'm sure I deserve more beatings!
+d164004b5b2438a3	00:00.00	00:02.28	Melvin	If you need a break from your adventures, Crash,
+d164004b5b2438a3	00:02.28	00:05.98	Melvin	please take a moment and enjoy our village's collection of locked doors.
+5c4cf234e00328a5	00:00.00	00:03.23	Melvin	Oh boy, that's a big hurt me thing!
+5c4cf234e00328a6	00:00.00	00:03.07	Melvin	Explain to me what you're holding on to exactly
+5c4cf234e00328a7	00:00.21	00:03.56	Melvin	He went at me. I'm disturbed now.
+5c4cf234e00328a0	00:00.00	00:02.77	Melvin	I think you took that out of the oven too soon, Crash.
+455ac06d3482b0db	00:00.05	00:04.95	Melvin	If it's not too much trouble, Crash, can you go to the desert nearby?
+455ac06d3482b0db	00:04.95	00:09.02	Melvin	Lots of scary beds for you to fight. They spin, too!
+6392cca28e48460f	00:00.00	00:04.16	Melvin	That's an impressive mutant, Crash. I wish I could have one.
+6392cca28e48460f	00:04.16	00:06.32	Melvin	I can't have nice things.
+6392cca28e48460c	00:02.24	00:04.35	Melvin	and I'm not even dressed for it!
+6392cca28e48460d	00:00.00	00:03.95	Melvin	Oh, finally, something big enough to end my pain!
+6392cca28e48460a	00:00.00	00:03.23	Melvin	Oh, that's a large and unsavory looking thing.
+28ed9328bdc95649	00:00.00	00:05.71	Melvin	The scary girls aren't gonna come anymore. That's relief. I hate girls.
+28ed9328bdc95649	00:05.71	00:07.77	Melvin	You probably noticed.
+28ed9328bdc9564a	00:00.00	00:04.47	Melvin	What were the beatings like at the school, Crash, injurious, or merely menacing?
+28ed9328bdc9564b	00:00.00	00:05.73	Melvin	I'm so glad to know the brat girls won't keep coming back with their evil NV's and
+28ed9328bdc9564b	00:05.73	00:07.11	Melvin	sense of style.
+28ed9328bdc9564c	00:00.00	00:04.79	Melvin	I'm shocked, shocked that the evil students are using NV to capture mutants,
+28ed9328bdc9564c	00:04.79	00:07.41	Melvin	even though it's totally in character.
+4416e55ff874bd0a	00:00.00	00:02.29	Melvin	Oh, the chief is back. What a relief!
+4416e55ff874bd0a	00:02.29	00:07.26	Melvin	Now people like myself won't be weighted down with lunch money all the time.
+4416e55ff874bd09	00:00.00	00:03.96	Melvin	Oh, that little big mouth is so happy to have his dad back, Crash.
+4416e55ff874bd09	00:03.96	00:07.74	Melvin	Now when he hits me, he can really concentrate and enjoy it.
+4416e55ff874bd08	00:00.02	00:03.31	Melvin	I'm not sure how we decided that guy's dad would be chief.
+4416e55ff874bd08	00:03.31	00:06.61	Melvin	I think we just elected the one that hit the hardest.
+fbc7b4b84a73b0d7	00:02.48	00:04.97	Melvin	It's strange and worrying!
+fbc7b4b84a73b0d4	00:00.00	00:05.31	Melvin	Once again, where are the shoulders? Lack of shoulders is unusual.
+fbc7b4b84a73b0d5	00:00.00	00:04.87	Melvin	Oh, it's a Grimly! Grimlies are the worrying and bothersome ones!
+fbc7b4b84a73b0d2	00:00.05	00:02.57	Melvin	Aren't those the mutants that can affect time?
+fbc7b4b84a73b0d2	00:02.57	00:06.47	Melvin	Because I just got a new watch and I don't want you messing it up.
+b226d00fe6402380	00:00.00	00:06.13	Melvin	So, how's it going? Have you hit me recently? If not, feel free.
+b226d00fe6402383	00:00.00	00:04.80	Melvin	I wish someone would go find my dad! Oh, I'm so low!
+b226d00fe6402382	00:00.00	00:04.23	Melvin	Later on, if you've got a minute, I'll introduce you to my trophy wife.
+b226d00fe6402385	00:00.00	00:08.32	Melvin	You know, I'm not sure what food we eat. Ice, maybe frozen food, fish sticks.
+
+# ----------------------------------------------------------------------------
+# In game: Nina  (3 sounds)
+# ----------------------------------------------------------------------------
+4622238e33d22459	00:00.37	00:05.70	Nina	Ah, victory! Feels so good! So good!
+4622238e33d2245b	00:00.00	00:05.60	Nina	Sure thing there, shingle! Uncle Cortex made up with his old lab partner, N. Brio.
+4622238e33d2245d	00:00.00	00:05.67	Nina	Uncie Cortex talks a big game, but N. Brio's the guy that actually built everything.
+4622238e33d2245d	00:05.67	00:10.80	Nina	And luckily for you, my science project thingy tells me exactly where he is.
+4622238e33d2245d	00:10.80	00:16.47	Nina	Now run along to the other side of the island. I've got new evil plans to start.
+
+# ----------------------------------------------------------------------------
+# In game: Elderly Ratcicle  (28 sounds)
+# ----------------------------------------------------------------------------
+4df1f766890a6980	00:00.21	00:05.77	Elderly Ratcicle	You want to talk to me? Untabulous! Nobody talks to me since Grenada.
+4df1f766890a6980	00:05.77	00:12.53	Elderly Ratcicle	There's a prison there here. Weird place, spooky place, too. I stayed there a spell.
+4df1f766890a6980	00:12.53	00:16.40	Elderly Ratcicle	My few but loudie ambience. I wouldn't go there.
+4df1f766890a6980	00:16.40	00:23.36	Elderly Ratcicle	Everybody but me that went there never came back. No scary girls made sure of that.
+4df1f766890a6983	00:00.21	00:06.08	Elderly Ratcicle	You want to talk to me? Untabulous! Nobody talks to me since Grenada.
+4df1f766890a6982	00:00.00	00:05.33	Elderly Ratcicle	Yep, that prison's a death trap for any creature foolish enough to enter it.
+4df1f766890a6982	00:05.33	00:08.28	Elderly Ratcicle	But if you do go there, don't tell nobody.
+4df1f766890a6982	00:08.28	00:11.71	Elderly Ratcicle	Being an only survivor is kind of my thing.
+4df1f766890a6985	00:00.00	00:02.24	Elderly Ratcicle	I know I don't look like much,
+4df1f766890a6985	00:02.24	00:08.43	Elderly Ratcicle	but in my four ligades I was a proud warrior of many a hardfoot bottom at a battle.
+4df1f766890a6985	00:08.43	00:10.88	Elderly Ratcicle	Battle. Battle. Said battle.
+7db7e58dc7b11fe9	00:00.91	00:06.39	Elderly Ratcicle	those, they had them in the prison. Spookyest thing ever to come out of an egg.
+7db7e58dc7b11fe9	00:06.39	00:07.66	Elderly Ratcicle	Lately, anyway.
+7db7e58dc7b11fea	00:00.00	00:06.21	Elderly Ratcicle	Oh yeah, I know all about those. I've designed them. I'm kind of a big deal.
+7db7e58dc7b11feb	00:00.02	00:08.15	Elderly Ratcicle	Honestly our day reminds me of my time in prison and the wedding ceremony I
+7db7e58dc7b11feb	00:08.15	00:10.84	Elderly Ratcicle	participated therein.
+7db7e58dc7b11fec	00:00.00	00:05.86	Elderly Ratcicle	Well, some spooky bird you got there reminds me of something I ate overseas.
+d95a2c85b1c4c0a3	00:00.27	00:02.91	Elderly Ratcicle	It's one of them roly-poly mutants.
+d95a2c85b1c4c0a3	00:02.91	00:07.77	Elderly Ratcicle	These mighty handy, they can get up to high places and stuff.
+d95a2c85b1c4c0a0	00:00.00	00:03.03	Elderly Ratcicle	I sure wish I had one of those roller fellies.
+d95a2c85b1c4c0a0	00:03.03	00:08.04	Elderly Ratcicle	I got ideas for making waffles and those things were coming right handy.
+d95a2c85b1c4c0a1	00:00.00	00:04.58	Elderly Ratcicle	Honestly, I'm just thrilled by that thing. It's a serious piece of mutant.
+d95a2c85b1c4c0a6	00:00.78	00:03.89	Elderly Ratcicle	get dizzy on that thing? I'm getting dizzy just looking at it!
+d95a2c85b1c4c0a6	00:03.89	00:05.93	Elderly Ratcicle	I also get dizzy looking at apples.
+bb5a6e55be640122	00:00.00	00:05.60	Elderly Ratcicle	You again? Oh, you've been a busy one. Not too many people adopted me this much.
+bb5a6e55be640121	00:00.00	00:04.02	Elderly Ratcicle	There's one thing about the prison I never told nobody.
+bb5a6e55be640121	00:04.02	00:08.77	Elderly Ratcicle	That scrappy kid over there, his papa's still locked up in there.
+bb5a6e55be640121	00:08.77	00:11.47	Elderly Ratcicle	Biggiest badest rat you ever saw.
+bb5a6e55be640120	00:00.00	00:05.24	Elderly Ratcicle	Yep, I can't bring myself to tell that little feller about his dad being locked
+bb5a6e55be640120	00:05.24	00:05.57	Elderly Ratcicle	away.
+bb5a6e55be640120	00:05.57	00:08.96	Elderly Ratcicle	Of course that boy keeps lighting my beard on fire,
+bb5a6e55be640120	00:08.96	00:11.61	Elderly Ratcicle	so I'm not trying too hard neither.
+bb5a6e55be640127	00:00.00	00:04.48	Elderly Ratcicle	I suppose if you need some sort of dangerous, psychopathic Newton to control,
+bb5a6e55be640127	00:04.48	00:07.15	Elderly Ratcicle	that big rat in prison is the way to go.
+798fbb14a829faf1	00:00.08	00:02.37	Elderly Ratcicle	Nice heaven that big fell around again.
+798fbb14a829faf1	00:02.37	00:05.33	Elderly Ratcicle	He'll slipper in that new with all arky fella.
+798fbb14a829faf2	00:00.00	00:02.47	Elderly Ratcicle	It's just so nice having the chief back.
+798fbb14a829faf2	00:02.47	00:05.86	Elderly Ratcicle	I never knew I'd miss the British psycho so much.
+798fbb14a829faf3	00:00.18	00:02.75	Elderly Ratcicle	I wonder if things will calm down around here.
+798fbb14a829faf3	00:02.75	00:07.11	Elderly Ratcicle	Not likely, I suppose, we're a little wound up in case you didn't notice.
+798fbb14a829faf4	00:00.00	00:03.42	Elderly Ratcicle	You want a dollar? Here have a dollar. I got lots.
+821ea796fbd53d28	00:00.00	00:02.87	Elderly Ratcicle	That's one of the weirdest things I've ever seen.
+821ea796fbd53d28	00:02.87	00:05.16	Elderly Ratcicle	Every time you come by with that thing,
+821ea796fbd53d28	00:05.16	00:08.65	Elderly Ratcicle	we all gotta wind our watches in their digital watches!
+821ea796fbd53d2b	00:00.00	00:01.91	Elderly Ratcicle	You see those big handbillies?
+821ea796fbd53d2b	00:01.91	00:06.43	Elderly Ratcicle	Well, I'm trying to figure out where their butt is, so I can kick it!
+821ea796fbd53d2a	00:00.00	00:03.89	Elderly Ratcicle	Nice to take the vacation. Go somewhere, tropical, but frozen.
+821ea796fbd53d2a	00:03.89	00:06.71	Elderly Ratcicle	There must be lots of those places, right?
+4846e8f2fd6d3aaf	00:00.00	00:03.95	Elderly Ratcicle	Well, nothing left to do but stand around looking good.
+4846e8f2fd6d3aaf	00:03.95	00:07.13	Elderly Ratcicle	Because I make this look real good.
+4846e8f2fd6d3aac	00:00.00	00:04.83	Elderly Ratcicle	Don't suppose you've seen a seriously old rat lady somewhere else? Gotta be old!
+4846e8f2fd6d3aac	00:04.83	00:06.86	Elderly Ratcicle	That's my one requirement.
+4846e8f2fd6d3aad	00:00.00	00:03.23	Elderly Ratcicle	Quest, I think I've got to up my lunch into my beard.
+4846e8f2fd6d3aad	00:03.23	00:06.21	Elderly Ratcicle	Race in there and get it for me? No bad touch.
+4846e8f2fd6d3aaa	00:00.00	00:05.95	Elderly Ratcicle	So how's it going? How's the family? Hurry you all related exactly.
+4846e8f2fd6d3aab	00:00.00	00:03.00	Elderly Ratcicle	Now get out of here already, you doorknob!
+
+# ----------------------------------------------------------------------------
+# In game: Ratcicle Hero's son  (31 sounds)
+# ----------------------------------------------------------------------------
+80c47bdd238321b8	00:00.11	00:05.08	Ratcicle Hero's son	So, your, Crash, right? I heard a box killed your father with something, huh?
+80c47bdd238321b8	00:05.08	00:08.82	Ratcicle Hero's son	I'm kind of a big deal myself. I keep this place safe.
+80c47bdd238321bb	00:00.00	00:06.32	Ratcicle Hero's son	So don't forget that I'm in charge around here. Marked my territory and everything.
+80c47bdd238321bb	00:06.32	00:08.32	Ratcicle Hero's son	Needed lots of water.
+80c47bdd238321ba	00:00.62	00:03.30	Ratcicle Hero's son	I'm impressive, but you should see my dad.
+80c47bdd238321ba	00:03.30	00:06.74	Ratcicle Hero's son	Now that's a rat what can burn down an orphanage.
+80c47bdd238321bd	00:00.00	00:06.07	Ratcicle Hero's son	So I know that most rats you've met try to kill you, Crash, but we're the nice ones.
+80c47bdd238321bd	00:06.07	00:08.38	Ratcicle Hero's son	I'm not so sure why myself.
+80c47bdd238321bc	00:00.00	00:04.55	Ratcicle Hero's son	So... ever get lonely and start fires? I do!
+268fe7e40da74b10	00:00.30	00:01.40	Ratcicle Hero's son	That is that thing!
+268fe7e40da74b10	00:01.40	00:05.84	Ratcicle Hero's son	Seriously, it's like someone put a turkey brain in a microwave, you know?
+268fe7e40da74b13	00:00.14	00:04.26	Ratcicle Hero's son	Holy hand grenades! What came first, the chicken or the egg?
+268fe7e40da74b12	00:00.00	00:03.75	Ratcicle Hero's son	So is that a boy you were girl or what? Both maybe, I don't know.
+268fe7e40da74b15	00:00.00	00:01.79	Ratcicle Hero's son	That thing makes me want breakfast.
+268fe7e40da74b15	00:01.79	00:04.83	Ratcicle Hero's son	Why'd you break it out of the great bar hotel anyway?
+268fe7e40da74b14	00:00.00	00:02.92	Ratcicle Hero's son	Oh sure, don't like any wanniness, but deal.
+268fe7e40da74b14	00:02.92	00:06.44	Ratcicle Hero's son	I know where to buy propane and matches in bulk.
+4b491105e6ba8065	00:00.00	00:04.38	Ratcicle Hero's son	Uh, Crash, there's something stuck to your butt. Oh, never mind.
+4b491105e6ba8065	00:04.38	00:06.56	Ratcicle Hero's son	Thought you had hemorrhoids.
+4b491105e6ba8066	00:00.00	00:03.84	Ratcicle Hero's son	Say, that's a nice little dog thingy you're riding there, Crash.
+4b491105e6ba8066	00:03.84	00:07.50	Ratcicle Hero's son	You know, you should crush Melvin over there. He likes it.
+4b491105e6ba8067	00:00.56	00:06.15	Ratcicle Hero's son	Rolling mutants, disgusting, wallowing around in the dirt all day,
+4b491105e6ba8067	00:06.15	00:08.00	Ratcicle Hero's son	where's my lighter?
+4b491105e6ba8060	00:00.00	00:03.47	Ratcicle Hero's son	I could roll around like that, too, I just don't wanna. It's demeaning.
+4b491105e6ba8060	00:03.47	00:05.85	Ratcicle Hero's son	That's a big person word. You wouldn't get it.
+79b944605a9af9e2	00:00.00	00:04.32	Ratcicle Hero's son	You went to evil school? Oh, what's it like? Is it flammable?
+79b944605a9af9e1	00:00.00	00:05.64	Ratcicle Hero's son	So, are those girls had or not? It's important I find out for, uh, medical reasons.
+79b944605a9af9e1	00:05.64	00:07.96	Ratcicle Hero's son	You see, I have dysfunction.
+79b944605a9af9e0	00:00.00	00:04.32	Ratcicle Hero's son	You'd never catch me in evil school. For one thing, it's a goil school.
+79b944605a9af9e0	00:04.32	00:06.98	Ratcicle Hero's son	For the more, I look terrible in makeup.
+79b944605a9af9e7	00:00.00	00:02.30	Ratcicle Hero's son	It's probably for the best I'm being homeschooled.
+79b944605a9af9e7	00:02.30	00:05.65	Ratcicle Hero's son	Where else can I learn about gas leaks and plausible deniability?
+b3eeb89fc08ef16f	00:00.00	00:02.36	Ratcicle Hero's son	I can't believe that daddy's home.
+b3eeb89fc08ef16f	00:02.36	00:07.07	Ratcicle Hero's son	I've forgotten all about his loving caresses and leather belt.
+b3eeb89fc08ef16c	00:02.13	00:07.60	Ratcicle Hero's son	I'm pretty tough, but believe me, nobody's tougher than daddy. Child services?
+b3eeb89fc08ef16c	00:07.60	00:09.52	Ratcicle Hero's son	Your days are numbered.
+b3eeb89fc08ef16d	00:00.00	00:04.74	Ratcicle Hero's son	Now that daddy's home, I won't have to stay around protecting the village no more.
+b3eeb89fc08ef16d	00:04.74	00:08.76	Ratcicle Hero's son	I'll be free to start fires! Ew, for research purposes of course.
+b3eeb89fc08ef16a	00:00.00	00:04.52	Ratcicle Hero's son	I keep hearing about scary mutants attacking Wumpa Island right near your house.
+b3eeb89fc08ef16a	00:04.52	00:06.09	Ratcicle Hero's son	Scarier than us, I mean.
+2385ab43f5a3fee4	00:02.32	00:04.21	Ratcicle Hero's son	I couldn't have arms but no shoulders.
+2385ab43f5a3fee4	00:04.21	00:07.89	Ratcicle Hero's son	You know, I think you should take it back to the store or something.
+2385ab43f5a3fee7	00:00.08	00:06.62	Ratcicle Hero's son	So, it's a mutant shadow? I don't get the philosophical implications of it all.
+2385ab43f5a3fee7	00:06.62	00:08.94	Ratcicle Hero's son	Also, I'm terrified!
+2385ab43f5a3fee6	00:00.02	00:01.72	Ratcicle Hero's son	Good thing you came by, Crash,
+2385ab43f5a3fee6	00:01.72	00:06.50	Ratcicle Hero's son	all these hand guys in Smelly's basement have had dead me make a knuckle sandwiches.
+2385ab43f5a3fee6	00:06.50	00:09.62	Ratcicle Hero's son	I know it looks like we haven't moved much, but really,
+2385ab43f5a3fee6	00:09.62	00:12.76	Ratcicle Hero's son	we've been very busy beating up things and whatnot.
+2385ab43f5a3fee1	00:00.56	00:04.31	Ratcicle Hero's son	I shouldn't do not those handy guys for a while. You know, uh, snore!
+2385ab43f5a3fee1	00:04.31	00:08.83	Ratcicle Hero's son	For a participant's face, I expected a lot more poo-poo and a lot less chatty-chat,
+2385ab43f5a3fee1	00:08.83	00:09.51	Ratcicle Hero's son	you know.
+a1d4748655538ca9	00:01.37	00:06.48	Ratcicle Hero's son	Don't suppose you happen to have any list of say poorly guarded preschools lying
+a1d4748655538ca9	00:06.48	00:07.47	Ratcicle Hero's son	around?
+a1d4748655538caa	00:00.27	00:03.29	Ratcicle Hero's son	You need a character reference for say a hypothetical court case.
+a1d4748655538caa	00:03.29	00:06.87	Ratcicle Hero's son	Can I count on your support? Or are you going to call a smoky bear on me?
+a1d4748655538cab	00:00.00	00:03.24	Ratcicle Hero's son	You know who get a bad rap? Dingos! Think about it!
+a1d4748655538cab	00:03.24	00:07.07	Ratcicle Hero's son	They just want to take children screaming into the night!
+a1d4748655538cac	00:00.00	00:04.24	Ratcicle Hero's son	You seem like a pretty wild guy, at least according to your marketing campaign.
+a1d4748655538cac	00:04.24	00:06.64	Ratcicle Hero's son	Hey, you wanna go chase cars sometimes?
+a1d4748655538cad	00:00.00	00:04.41	Ratcicle Hero's son	So I'm gonna practice that spin move dealie. I think the ladies'll like it.
+
+# ----------------------------------------------------------------------------
+# In game: Sludge salesman  (12 sounds)
+# ----------------------------------------------------------------------------
+f8848f0757cc6c59	00:00.00	00:04.07	Sludge salesman	Hey man, thanks for taking care of those bad dudes for us.
+f8848f0757cc6c59	00:04.07	00:08.76	Sludge salesman	I was sitting on a treasure of merchandise and couldn't move it.
+f8848f0757cc6c5a	00:00.00	00:06.12	Sludge salesman	This part of the junkyard is a Goldman for smart squishes like me that know where
+f8848f0757cc6c5a	00:06.12	00:07.44	Sludge salesman	to look.
+f8848f0757cc6c5b	00:00.00	00:05.16	Sludge salesman	Not fully embryo and those bad sludgees have been building weird stuff over there.
+f8848f0757cc6c5b	00:05.16	00:08.24	Sludge salesman	He's all dead for ideas and well destroying that.
+f8848f0757cc6c5b	00:08.24	00:11.76	Sludge salesman	These people just need more chick and sandwiches.
+f8848f0757cc6c5c	00:00.00	00:01.30	Sludge salesman	That's right, man.
+f8848f0757cc6c5c	00:01.30	00:06.43	Sludge salesman	I've been selling the best used chicken sandwiches on the market today.
+f8848f0757cc6c5c	00:06.43	00:08.67	Sludge salesman	I could hook you up.
+5b98950e181a5fd0	00:00.00	00:03.73	Sludge salesman	You beat embryo and freed your brother man? That is far out!
+5b98950e181a5fd0	00:03.73	00:06.89	Sludge salesman	There's this sleeping slide of heroism right there.
+5b98950e181a5fd0	00:06.89	00:12.39	Sludge salesman	And it allows me greater freedom to move merchandise to young guard inhabitants.
+5b98950e181a5fd3	00:00.00	00:03.66	Sludge salesman	Yeah, at once I move some of my units around this place,
+5b98950e181a5fd3	00:03.66	00:06.56	Sludge salesman	I'm gonna be one upright sludge, baby.
+5b98950e181a5fd2	00:00.00	00:04.04	Sludge salesman	I've heard there's an enormous thoroughly evil sludge out there.
+5b98950e181a5fd2	00:04.04	00:07.58	Sludge salesman	I'm going to sell him some partially what is to toilets.
+5b98950e181a5fd2	00:07.58	00:11.24	Sludge salesman	Surely nothing wrong can happen requiring rescue.
+4499fe7984b0c423	00:00.53	00:02.63	Sludge salesman	Oh, it takes for saving me, man.
+4499fe7984b0c423	00:02.63	00:08.40	Sludge salesman	I can't believe that incommodably huge an evil slash turned out to be dangerous.
+4499fe7984b0c421	00:00.00	00:05.08	Sludge salesman	I'm turning over a new leave man, going this straight and narrow.
+4499fe7984b0c421	00:05.08	00:11.80	Sludge salesman	From now on is nothing but good old-fashioned time shares. Junkyard time shares.
+4499fe7984b0c426	00:00.00	00:04.42	Sludge salesman	Yeah, I knew that times you like they would appeal to you, classy, baby!
+b9b31e2dd1f6f3a2	00:00.00	00:02.44	Sludge salesman	You're crazy, good to see you again, huh?
+b9b31e2dd1f6f3a2	00:02.44	00:05.36	Sludge salesman	They swore all the rescue I seen you did earlier.
+b9b31e2dd1f6f3a2	00:05.36	00:08.04	Sludge salesman	Oh, you, do, do, do, do, do, do, love you.
+b9b31e2dd1f6f3a1	00:00.00	00:02.79	Sludge salesman	Things are cool here, can't complain.
+b9b31e2dd1f6f3a1	00:02.79	00:06.93	Sludge salesman	Time's your thing, isn't taking off quite like I hoped.
+b9b31e2dd1f6f3a1	00:06.93	00:12.91	Sludge salesman	Maybe it's their neighbors, you know, there is all this screaming next door.
+
+# ----------------------------------------------------------------------------
+# In game: Uka Uka  (6 sounds)
+# ----------------------------------------------------------------------------
+e187a8c4f0534fbe	00:00.00	00:08.31	Uka Uka	Get me out of here! You have no idea how sore I am! And full! I'm very full!
+cb98e7fc7d360fbf	00:00.37	00:08.86	Uka Uka	Ha ha ha! The power! The lovely power! I feel strong and alive and beautiful again!
+cb98e7fc7d360fbd	00:00.00	00:03.94	Uka Uka	Yes, beautiful, get over it. Return to your home.
+cb98e7fc7d360fbd	00:03.94	00:07.99	Uka Uka	There is a little surprise waiting for you.
+b0206304e4348dbb	00:00.08	00:03.86	Uka Uka	What are you idiots doing back here? I need my bones!
+b0206304e4348db8	00:00.00	00:04.15	Uka Uka	Stop hanging around here and do something useful, you little fools!
+b0206304e4348db9	00:00.00	00:04.74	Uka Uka	Do you two have head injuries or something? Get out of here!

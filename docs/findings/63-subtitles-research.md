@@ -894,3 +894,47 @@ card and the wide bar (Tools -> Developer -> "Test: fake achievement card"
 / "Test: game-style message" while a line is shown), the pause menu
 hiding, the clock.
 
+## 22. The in-game lines and the in-engine cutscenes
+
+`subtitles/en.tsv` now also holds, keyed by sound ID (s.13), the lines of
+the voice archive's in-scope groups: Aku Aku (81 sounds), his tutorial
+hints (176), the characters the player talks to (238) and the in-engine
+cutscene tracks (8): 813 timed lines in all. Enemies' and combat lines are
+not subtitled; Cortex's loudspeaker announcements (36) are left out for now.
+
+How they were made (outside the repository):
+
+* Each clip decoded with `tools/subtitles.py extract-voices` and run
+  through speech recognition (`faster-whisper`, `distil-small.en`).
+* **Wrong turn:** a first pass with a long prompt of the game's names, no
+  voice-activity filter and a fixed temperature turned most clips into
+  repeated phrases ("you know, you know, ..."), and silence into "Thank
+  you". The second pass (voice-activity filter on, the library's
+  temperature fallback, no prompt) gave clean lines for all but three.
+* **The in-engine cutscene tracks are 5.1** (s.19): mixed down to mono, the
+  music under the speech produced the same loops. The speech is the front
+  centre channel alone (channel 2: about -11 dB against -30 to -90 dB on
+  the others), and that channel transcribes cleanly. The two-player copies
+  (`pl2`, stereo) carry the same lines at the same times.
+* Names and misheard words corrected (Wumpa, N. Brio, N. Gin, Ratcicle,
+  Doominator, Grimly, Scorporilla, titan...), some lines and the
+  cutscenes' speakers checked against the Crash Bandicoot wiki's script
+  page.
+* **Speakers**: by the sound's folder (s.13): Aku Aku, Coco, Crunch, Nina,
+  Uka Uka; the NPCs by the names the wiki uses (Melvin, Elderly Ratcicle,
+  Ratcicle Hero's son, RhinoRoller cub, RhinoRoller Elder, Conjoined
+  Sludge, Sludge salesman, the Architect's assistant, Bratgirl); the
+  disc has no names for them. The **tutorial voice is Aku Aku**: the
+  median pitch of its clips (about 128 Hz) matches Aku Aku's (125 Hz),
+  every other speaker folder is 190-310 Hz (a rough autocorrelation pitch
+  estimate over 15 clips per folder). The Architect speaks no words (his
+  assistant says so and translates): his lines are "(gibberish)".
+* Times: a clip's text split into rows of at most 84 characters at
+  sentence ends (commas for long sentences), spread over the clip's speech
+  (first to last recognised word) by length; the last row runs to the
+  clip's end.
+
+Not yet checked by ear: the NPCs' lines in particular (accents, broken
+grammar on purpose: the Elderly Ratcicle, the Sludges); some corrections
+could not be confirmed. Not run on the game yet for these keys.
+
