@@ -49,17 +49,17 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "AFFICHAGE {0}"
 
-#: src/achievements/achievements.cpp:768
+#: src/achievements/achievements.cpp:786
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Succès débloqué"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1086 src/options/options_menu.cpp:2419 src/options/options_settings.cpp:1374
+#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1089 src/options/options_menu.cpp:2433 src/options/options_settings.cpp:1451
 #, fuzzy
 msgid "Achievements"
 msgstr "Succès"
 
-#: src/achievements/achievements_screen.cpp:42 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Joueurs"
@@ -90,6 +90,10 @@ msgstr "Quitter"
 #, fuzzy
 msgid "Are you sure you want to quit the game?"
 msgstr "Vraiment quitter le jeu ?"
+
+#: src/subtitles/subtitles.cpp:475
+msgid "This is how the subtitles look."
+msgstr ""
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -338,7 +342,7 @@ msgstr "Orange"
 msgid "Crash"
 msgstr "Crash"
 
-#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1385 src/options/options_menu.cpp:1399 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
+#: src/options/options_menu.cpp:1388 src/options/options_menu.cpp:1402 src/players/outfit_picker.cpp:1100 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
 #, fuzzy
 msgid "Back"
 msgstr "Retour"
@@ -448,122 +452,122 @@ msgstr "{1} {0}"
 msgid "Drop Out"
 msgstr "Abandonner"
 
-#: src/options/options_menu.cpp:861 src/options/options_menu.cpp:912
+#: src/options/options_menu.cpp:864 src/options/options_menu.cpp:915
 #, fuzzy
 msgid "Press a Key"
 msgstr "Appuie sur une touche"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:922
+#: src/options/options_menu.cpp:925
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Appuie sur la nouvelle deuxième touche ou le bouton de souris pour {0}. {1} ou {2} : annuler."
 
-#: src/options/options_menu.cpp:923
+#: src/options/options_menu.cpp:926
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Appuie sur la nouvelle touche ou le bouton de souris pour {0}. {1} ou {2} : annuler."
 
-#: src/options/options_menu.cpp:940
+#: src/options/options_menu.cpp:943
 #, fuzzy
 msgid "Second Key"
 msgstr "2e touche"
 
-#: src/options/options_menu.cpp:946
+#: src/options/options_menu.cpp:949
 #, fuzzy
 msgid "Remove Key"
 msgstr "Retirer la touche"
 
-#: src/options/options_menu.cpp:1119
+#: src/options/options_menu.cpp:1122
 #, fuzzy
 msgid "Locked"
 msgstr "Verrouillé"
 
-#: src/options/options_menu.cpp:1384
+#: src/options/options_menu.cpp:1387
 #, fuzzy
 msgid "Confirm"
 msgstr "Confirmer"
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 #, fuzzy
 msgid "Swap"
 msgstr "Échanger"
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 #, fuzzy
 msgid "Move Here"
 msgstr "Placer ici"
 
-#: src/options/options_menu.cpp:1390 launcher/installer.cpp:1681 launcher/setup.cpp:2138
+#: src/options/options_menu.cpp:1393 launcher/installer.cpp:1681 launcher/setup.cpp:2138
 #, fuzzy
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src/options/options_menu.cpp:1393
+#: src/options/options_menu.cpp:1396
 #, fuzzy
 msgid "Buttons"
 msgstr "Boutons"
 
-#: src/options/options_menu.cpp:1396
+#: src/options/options_menu.cpp:1399
 #, fuzzy
 msgid "Move"
 msgstr "Déplacer"
 
-#: src/options/options_menu.cpp:1397
+#: src/options/options_menu.cpp:1400
 #, fuzzy
 msgid "Remove"
 msgstr "Retirer"
 
-#: src/options/options_menu.cpp:1525
+#: src/options/options_menu.cpp:1528
 #, fuzzy
 msgid "No room for this player"
 msgstr "Pas de place pour ce joueur"
 
-#: src/options/options_menu.cpp:1529 src/options/options_menu.cpp:1537
+#: src/options/options_menu.cpp:1532 src/options/options_menu.cpp:1540
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Clavier et souris"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Vers le joueur {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 #, fuzzy
 msgid "Pick a player"
 msgstr "Choisis un joueur"
 
-#: src/options/options_menu.cpp:1539
+#: src/options/options_menu.cpp:1542
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Appuie sur un bouton pour rejoindre"
 
-#: src/options/options_menu.cpp:2006
+#: src/options/options_menu.cpp:2019
 #, fuzzy
 msgid "Not changed."
 msgstr "Pas de changement."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:2013
+#: src/options/options_menu.cpp:2026
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} sert aux menus ({1}) : choisis une autre touche."
 
-#: src/options/options_menu.cpp:2025
+#: src/options/options_menu.cpp:2038
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} était la touche de {1} : elle est à {2} maintenant."
 
-#: src/options/options_menu.cpp:2046
+#: src/options/options_menu.cpp:2059
 #, fuzzy
 msgid "No key to remove."
 msgstr "Aucune touche à retirer."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2054
+#: src/options/options_menu.cpp:2067
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} retirée."
@@ -683,12 +687,12 @@ msgstr "Augmente-la jusqu'à distinguer à peine les carrés les plus sombres ci
 msgid "V-sync"
 msgstr "Synchro verticale"
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 #, fuzzy
 msgid "On"
 msgstr "Oui"
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 #, fuzzy
 msgid "Off"
 msgstr "Non"
@@ -952,7 +956,7 @@ msgstr "Non (original)"
 msgid "Low"
 msgstr "Faible"
 
-#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681 src/options/options_settings.cpp:1389
 #, fuzzy
 msgid "Medium"
 msgstr "Moyen"
@@ -1718,7 +1722,7 @@ msgstr "Fenêtre en arrière-plan"
 msgid "Keep Playing"
 msgstr "Continuer à jouer"
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Pause"
 msgstr "Pause"
@@ -2010,255 +2014,315 @@ msgstr ""
 msgid "The game's own wide message bar."
 msgstr ""
 
-#: src/options/options_settings.cpp:1368
+#: src/options/options_settings.cpp:1373
+msgid "Subtitles"
+msgstr ""
+
+#: src/options/options_settings.cpp:1378
+msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
+msgstr ""
+
+#: src/options/options_settings.cpp:1380
+msgid "No subtitles. The voices play as always."
+msgstr ""
+
+#: src/options/options_settings.cpp:1387
+msgid "Subtitle Size"
+msgstr ""
+
+#: src/options/options_settings.cpp:1389
+msgid "Small"
+msgstr ""
+
+#: src/options/options_settings.cpp:1389
+msgid "Large"
+msgstr ""
+
+#: src/options/options_settings.cpp:1394
+msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
+msgstr ""
+
+#: src/options/options_settings.cpp:1406
+msgid "Subtitle Background"
+msgstr ""
+
+#: src/options/options_settings.cpp:1425
+msgid "No box behind the subtitles: only the letters and their dark outline."
+msgstr ""
+
+#: src/options/options_settings.cpp:1426
+msgid "A solid black box behind the subtitles."
+msgstr ""
+
+#: src/options/options_settings.cpp:1427
+msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
+msgstr ""
+
+#: src/options/options_settings.cpp:1433
+msgid "Speaker Names"
+msgstr ""
+
+#: src/options/options_settings.cpp:1434
+msgid "Who is speaking, in yellow, in front of the line (when it is known)."
+msgstr ""
+
+#: src/options/options_settings.cpp:1435
+msgid "Only the spoken words."
+msgstr ""
+
+#: src/options/options_settings.cpp:1445
 #, fuzzy
 msgid "Display"
 msgstr "Affichage"
 
-#: src/options/options_settings.cpp:1371
+#: src/options/options_settings.cpp:1448
 #, fuzzy
 msgid "HUD"
 msgstr "ATH"
 
-#: src/options/options_settings.cpp:1372
+#: src/options/options_settings.cpp:1449
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Compteur d'images"
 
-#: src/options/options_settings.cpp:1376
+#: src/options/options_settings.cpp:1453
 #, fuzzy
 msgid "Graphics"
 msgstr "Graphismes"
 
-#: src/options/options_settings.cpp:1377
+#: src/options/options_settings.cpp:1454
 #, fuzzy
 msgid "Quality"
 msgstr "Qualité"
 
-#: src/options/options_settings.cpp:1378
+#: src/options/options_settings.cpp:1455
 #, fuzzy
 msgid "Effects"
 msgstr "Effets"
 
-#: src/options/options_settings.cpp:1381
+#: src/options/options_settings.cpp:1458
 #, fuzzy
 msgid "Audio"
 msgstr "Son"
 
-#: src/options/options_settings.cpp:1382
+#: src/options/options_settings.cpp:1459
 #, fuzzy
 msgid "Music"
 msgstr "Musique"
 
-#: src/options/options_settings.cpp:1383
+#: src/options/options_settings.cpp:1460
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Le volume de la musique."
 
-#: src/options/options_settings.cpp:1384
+#: src/options/options_settings.cpp:1461
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialogue"
 
-#: src/options/options_settings.cpp:1385
+#: src/options/options_settings.cpp:1462
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Le volume des voix des personnages."
 
-#: src/options/options_settings.cpp:1386
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "SFX"
 msgstr "Son"
 
-#: src/options/options_settings.cpp:1387
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Le volume des coups, des caisses, des pas et du reste."
 
-#: src/options/options_settings.cpp:1388
+#: src/options/options_settings.cpp:1465
 msgid "Movies"
 msgstr ""
 
-#: src/options/options_settings.cpp:1389
+#: src/options/options_settings.cpp:1466
 msgid "How loud the movies play: the intros and the story cartoons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1390
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Output"
 msgstr "Sortie"
 
-#: src/options/options_settings.cpp:1391 launcher/settings_page.cpp:537
+#: src/options/options_settings.cpp:1468 launcher/settings_page.cpp:537
 #, fuzzy
 msgid "Controls"
 msgstr "Commandes"
 
-#: src/options/options_settings.cpp:1392
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Gameplay"
 msgstr "Jouabilité"
 
-#: src/options/options_settings.cpp:1393
+#: src/options/options_settings.cpp:1470
 #, fuzzy
 msgid "Language"
 msgstr "Langue"
 
-#: src/options/options_settings.cpp:1437 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1472
+msgid "Accessibility"
+msgstr ""
+
+#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Aucune"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Up"
 msgstr "Haut"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Down"
 msgstr "Bas"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Left"
 msgstr "Gauche"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Right"
 msgstr "Droite"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Marcher (maintenir)"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Spin"
 msgstr "Tourbillon"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Jump"
 msgstr "Sauter"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Light Attack"
 msgstr "Attaque rapide"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Attaque puissante"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Bloquer (maintenir)"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Contrôler / Utiliser"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Attaque spéciale du titan"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Empocher / Sortir"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Map"
 msgstr "Carte"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu : confirmer"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu : retour"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu : onglet précédent"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu : onglet suivant"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu : action X"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu : action Y"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Croix haut"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Croix bas"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Croix gauche"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Croix droite"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Stick droit haut"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Stick droit bas"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Stick droit gauche"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Stick droit droite"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Gâchette haute gauche"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clic stick gauche"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clic stick droit"
@@ -2399,7 +2463,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:399 launcher/main.cpp:395 launcher/setup.cpp:2152
+#: launcher/installer.cpp:399 launcher/setup.cpp:2152 launcher/main.cpp:395
 #, fuzzy
 msgid "Log: %s"
 msgstr "Journal : %s"
@@ -3213,7 +3277,7 @@ msgstr "Voir le journal du jeu"
 msgid "Report a problem..."
 msgstr "Signaler un problème..."
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:2147
+#: launcher/setup.cpp:2147 launcher/main.cpp:426 launcher/main.cpp:660
 #, fuzzy
 msgid "OK"
 msgstr "OK"
@@ -3359,7 +3423,7 @@ msgstr "Mis à jour en %s"
 msgid "What's new:"
 msgstr "Nouveautés :"
 
-#: launcher/main.cpp:664 launcher/setup.cpp:1198
+#: launcher/setup.cpp:1198 launcher/main.cpp:664
 #, fuzzy
 msgid "Release page"
 msgstr "Page de la version"

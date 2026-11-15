@@ -16,6 +16,7 @@ Status: ✅ done · 🧪 in testing · 🔧 in progress · 📋 planned
 |---|---|---|---|
 | [More saves, with names](#more-saves-with-names) | 3 save slots; a save's name is typed once, at New Game | as many saves as you like, in the game's own Load / Save Game screen; rename and delete | ✅ done |
 | [Up to four players](#up-to-four-players) | two-player co-op | four players together on one PC: Players screen, outfits, HUD, a camera that frames everyone | 🧪 in testing |
+| [Subtitles](#subtitles) | no subtitles | the spoken lines as text, in the game's font; Options -> Accessibility: on / off, size, box opacity, speaker names | 🔧 in progress |
 
 ## More saves, with names
 
@@ -135,3 +136,19 @@ colour.
 ![Players 1, 4 and 3's markers](images/markers-players-three-four.jpg)
 
 ![Four players, each "counter now" Y beside its own HUD](images/four-players-counter-prompts.jpg)
+
+## Subtitles
+
+🔧 In progress ([findings/63](findings/63-subtitles-research.md)). The
+original has no subtitles and its disc has no dialogue text, so every line
+is transcribed. Shipped so far: the story cartoons' lines in English.
+
+Options -> **Accessibility**: Subtitles (off by default), Subtitle Size,
+Subtitle Background (how opaque the box behind the text is) and Speaker
+Names. Changes show at once, and the tab shows a sample line. The
+subtitles are in the game's text language, English where a line has no
+translation; they step up above the game's message bar (achievements,
+mission messages) and hide while the pause menu is up.
+
+Not yet: the in-engine cutscenes, Aku Aku and the other characters' lines.
+

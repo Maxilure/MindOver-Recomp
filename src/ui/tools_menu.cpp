@@ -95,6 +95,14 @@ constexpr Tool kTools[] = {
      "Changes how particles are drawn in the native picture, then erases groups of\n"
      "them in both pictures, then normal again.",
      false},
+    {"Developer", "Subtitle clock on / off", nullptr, "-",
+     "The playing movie's name and clock in the picture's top left corner, for\n"
+     "timing subtitle lines (debug_subtitle_clock; not saved). Never part of a subtitle.",
+     false, [] {
+       const bool on = !rex::cvar::Query<bool>("debug_subtitle_clock");
+       rex::cvar::SetFlagByName("debug_subtitle_clock", on ? "true" : "false");
+       overlay_banner::Show("SUBTITLE CLOCK", on ? "On" : "Off");
+     }},
     {"Developer", "Test: fake achievement card", nullptr, "-",
      "The achievement card on the game's message bar with a made-up name (in a level).\n"
      "Nothing is earned or recorded.",

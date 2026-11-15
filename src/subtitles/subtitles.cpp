@@ -24,6 +24,7 @@
 #include "subtitles/subtitles.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <chrono>
 #include <cmath>
@@ -49,22 +50,31 @@
 #include <rex/ui/immediate_drawer.h>
 
 #include "game_folder.h"
+#include "achievements/achievements.h"
 #include "language/language.h"
+#include "language/texts.h"
+#include "options/options_menu.h"
 #include "ui/game_font.h"
 
 REXCVAR_DEFINE_INT32(subtitles, 0, "CrashMoM",
-                     "Subtitles for spoken lines (cutscenes, characters, Aku Aku): 0 off, 1 on "
-                     "(findings/63)")
+                     "Subtitles for spoken lines (cutscenes, characters, Aku Aku): 0 off, 1 on; "
+                     "takes effect at once (findings/63)")
     .range(0, 1);
 REXCVAR_DEFINE_INT32(subtitles_size, 1, "CrashMoM", "Subtitle size: 0 small, 1 medium, 2 large")
     .range(0, 2);
 REXCVAR_DEFINE_BOOL(subtitles_background, true, "CrashMoM",
-                    "A dark translucent box behind the subtitles");
+                    "A dark box behind the subtitles (off = none, whatever its opacity)");
+REXCVAR_DEFINE_INT32(subtitles_background_opacity, 70, "CrashMoM",
+                     "How opaque the box behind the subtitles is, 0-100 % (the text stays solid)")
+    .range(0, 100);
 REXCVAR_DEFINE_BOOL(subtitles_speakers, true, "CrashMoM",
                     "The speaker's name in front of a subtitle, when it is known");
 REXCVAR_DEFINE_BOOL(subtitles_placeholders, false, "CrashMoM",
-                    "Where a line has no text yet, show its speaker folder and sound file name "
-                    "(for checking subtitle timing)");
+                    "Developer: where a voice line has no text yet, show its speaker folder and "
+                    "sound file name instead (for checking subtitle timing)");
+REXCVAR_DEFINE_BOOL(debug_subtitle_clock, false, "CrashMoM",
+                    "Developer: the playing movie's name and clock in the picture's top left corner "
+                    "(for timing subtitle lines); never part of the subtitles");
 
 namespace subtitles {
 namespace {
@@ -76,7 +86,19 @@ using Clock = std::chrono::steady_clock;
 constexpr double kHoldSeconds = 0.3;
 constexpr size_t kMaxLines = 2;
 
+// The voices and movies are FOLLOWED (lines queued, movie clock kept) when
+// there is anything to show: a text file, or a developer option. Decided at
+// start-up (audio_trace builds its sound index only then). Whether lines are
+// DRAWN is the `subtitles` flag, read every frame: the Options row works at
+// once, and turning it on mid-scene shows the line being spoken.
 bool g_on = false;
+
+// The pause menu's decision runs every frame the menu is up
+// (achievements_screen.cpp calls NoteMenuFrame): the time of the last one.
+std::atomic<int64_t> g_menu_seen_ms{0};
+int64_t NowMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count();
+}
 
 // ---------------------------------------------------------------------------
 // 2. The text file
@@ -295,10 +317,13 @@ Clock::time_point After(Clock::time_point t, double seconds) {
 
 bool On() { return g_on; }
 
+void NoteMenuFrame() { g_menu_seen_ms.store(NowMs(), std::memory_order_relaxed); }
+
 void Start() {
-  g_on = REXCVAR_GET(subtitles) != 0;
-  if (!g_on) return;
-  // The text language's code ("pt-br").
+  // The text language's code ("pt-br"): the language the game runs in
+  // (Options -> Language -> Text, language.h RunningText). It is fixed for
+  // the session (a change there restarts the game), so the subtitles follow
+  // it from the next start; no separate subtitle language exists.
   const auto& langs = language::TextLanguages();
   const int running = language::RunningText();
   const std::string code =
@@ -307,11 +332,19 @@ void Start() {
   // English ones key by key; what it doesn't have stays English).
   const bool english = ReadTexts("en");
   const bool own = code != "en" && ReadTexts(code);
+  // A language without its own file shows English (the fallback); with
+  // neither, nothing (never an empty box or a sound's name: the placeholders
+  // are a developer option).
   if (!english && !own) {
-    REXLOG_INFO("Subtitles: on, no text file in {} or next to the exe ({}.tsv or en.tsv){}",
+    REXLOG_INFO("Subtitles: no text file in {} or next to the exe ({}.tsv or en.tsv){}",
                 (game_folder::UserFolder() / "subtitles").string(), code,
                 REXCVAR_GET(subtitles_placeholders) ? "; placeholders shown" : "");
+  } else if (!own && code != "en" && code != "en-us") {
+    REXLOG_INFO("Subtitles: no {}.tsv, English lines shown", code);
   }
+  g_on = english || own || REXCVAR_GET(subtitles_placeholders) || REXCVAR_GET(debug_subtitle_clock);
+  REXLOG_INFO("Subtitles: {} (shown: {})", g_on ? "following the voices and movies" : "nothing to show",
+              REXCVAR_GET(subtitles) ? "on" : "off");
 }
 
 void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
@@ -388,7 +421,17 @@ constexpr float kWidthShare = 0.70f;    // lines wrap at 70 % of the picture's w
 constexpr ImU32 kTextColour = IM_COL32(0xFF, 0xFF, 0xFF, 0xFF);
 constexpr ImU32 kSpeakerColour = IM_COL32(0xFF, 0xD9, 0x40, 0xFF);  // the menus' selected yellow
 constexpr ImU32 kOutlineColour = IM_COL32(0, 0, 0, 220);
-constexpr ImU32 kBoxColour = IM_COL32(0, 0, 0, 140);
+// THE MESSAGE BAR (achievements.h BarOnScreen): the game's pop-up at the
+// bottom centre, drawn by the game INSIDE the picture. The subtitles are
+// drawn after the whole picture (this layer), so they are never behind it;
+// over it they would hide its words. So while the bar's page is up the
+// subtitles' bottom moves up to just above it: its top edge at rest, in
+// 720p pixels from the picture's top (options_page.cpp, canvas y up, at
+// 720p y = 720 - 1.5 u): our card's glass top y 87 u -> 589.5; the bar's own
+// wide glass top y 135 u -> 517.5. A gap of kBarGap over it. The move eases
+// over kLiftSeconds so the text doesn't jump.
+constexpr float kCardTop720 = 589.5f, kWideBarTop720 = 517.5f, kBarGap720 = 10.0f;
+constexpr float kLiftSeconds = 0.2f;
 
 // One piece of a drawn row: a run of characters in one colour.
 struct Run {
@@ -407,12 +450,41 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
 
  protected:
   void OnDraw(ImGuiIO& io) override {
-    if (!g_on || !FontReady()) return;
-    // The lines to show now (the newest kMaxLines), expired ones dropped.
+    if (!FontReady()) return;
+    // The game's 16:9 picture in the window.
+    const float window_w = io.DisplaySize.x, window_h = io.DisplaySize.y;
+    if (window_w <= 0 || window_h <= 0) return;
+    pic_w_ = window_w;
+    pic_h_ = window_w * 9.0f / 16.0f;
+    if (pic_h_ > window_h) {
+      pic_h_ = window_h;
+      pic_w_ = window_h * 16.0f / 9.0f;
+    }
+    pic_x_ = (window_w - pic_w_) * 0.5f;
+    pic_y_ = (window_h - pic_h_) * 0.5f;
+    unit_ = pic_h_ / 720.0f;  // one pixel of the game's 720p picture
+    ImDrawList* list = ImGui::GetForegroundDrawList();
+
+    // THE SAMPLE (the Options screen's Accessibility tab): one line in the
+    // chosen size, box and speaker setting, in the usual place, shown even
+    // with the subtitles off so their look can be judged before turning
+    // them on. Nothing else is drawn meanwhile.
+    if (options_menu::SubtitlePreview()) {
+      Line sample;
+      if (REXCVAR_GET(subtitles_speakers)) sample.speaker = u"Aku Aku";
+      sample.text = tr(u"This is how the subtitles look.");
+      DrawLines({sample}, list, BaseBottom());
+      return;
+    }
+
     std::vector<Line> shown;
+    std::string movie;
+    double movie_time = 0;
     {
       const Clock::time_point now = Clock::now();
       std::lock_guard<std::mutex> lock(g_mutex);
+      movie = g_movie;
+      movie_time = g_movie_time;
       // A movie's lines at its own clock (it stops when the movie pauses).
       if (!g_movie.empty()) {
         const auto cues = g_movie_cues.find(g_movie);
@@ -425,14 +497,6 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
             shown.push_back(std::move(line));
           }
         }
-        if (shown.empty() && REXCVAR_GET(subtitles_placeholders)) {
-          // Test text: the movie's name and clock, for checking (and for
-          // noting down the times of its lines).
-          const int tenths = int(g_movie_time * 10.0);
-          shown.push_back({0, u"", Utf16(fmt::format("[{}] {:02d}:{:02d}.{}", g_movie, tenths / 600,
-                                                     (tenths / 10) % 60, tenths % 10)),
-                           now, now});
-        }
       }
       std::erase_if(g_lines, [&](const Line& l) { return l.end <= now; });
       for (const Line& l : g_lines) {
@@ -440,72 +504,126 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
       }
       if (shown.size() > kMaxLines) shown.erase(shown.begin(), shown.end() - std::ptrdiff_t(kMaxLines));
     }
-    if (shown.empty()) return;
 
-    // The game's 16:9 picture in the window.
-    const float window_w = io.DisplaySize.x, window_h = io.DisplaySize.y;
-    if (window_w <= 0 || window_h <= 0) return;
-    float pic_w = window_w, pic_h = window_w * 9.0f / 16.0f;
-    if (pic_h > window_h) {
-      pic_h = window_h;
-      pic_w = window_h * 16.0f / 9.0f;
+    // THE DEVELOPER CLOCK (debug_subtitle_clock): the movie's name and time,
+    // top left, small, apart from the subtitles; gone the moment it's off.
+    if (REXCVAR_GET(debug_subtitle_clock) && !movie.empty()) {
+      const int tenths = int(movie_time * 10.0);
+      Line clock;
+      clock.text = Utf16(fmt::format("[{}] {:02d}:{:02d}.{}", movie, tenths / 600, (tenths / 10) % 60,
+                                     tenths % 10));
+      DrawClock(clock, list);
     }
-    const float pic_x = (window_w - pic_w) * 0.5f, pic_y = (window_h - pic_h) * 0.5f;
-    const float unit = pic_h / 720.0f;  // one pixel of the game's 720p picture
+
+    // Shown: the flag on, and not while a menu stands over the game (the
+    // pause menu: its decision ran in the last 200 ms; the Options screen).
+    // The lines keep their clocks meanwhile and reappear if still running.
+    const bool menu = NowMs() - g_menu_seen_ms.load(std::memory_order_relaxed) < 200 || options_menu::Open();
+    if (!g_on || !REXCVAR_GET(subtitles) || menu || shown.empty()) {
+      lifted_ = 0;
+      return;
+    }
+    DrawLines(shown, list, LiftedBottom(io.DeltaTime));
+  }
+
+  // The lowest row's bottom where nothing is in the way: 11 % above the
+  // picture's bottom.
+  float BaseBottom() const { return pic_y_ + pic_h_ * (1.0f - kBottomShare); }
+
+  // The bottom moved up above the message bar while its page is up, eased.
+  float LiftedBottom(float dt) {
+    const float base = BaseBottom();
+    float target = 0;  // how far up, in screen pixels
+    switch (achievements::BarOnScreen()) {
+      case achievements::BarLook::kCard:
+        target = std::max(0.0f, base - (pic_y_ + (kCardTop720 - kBarGap720) * unit_));
+        break;
+      case achievements::BarLook::kWideBar:
+        target = std::max(0.0f, base - (pic_y_ + (kWideBarTop720 - kBarGap720) * unit_));
+        break;
+      case achievements::BarLook::kNone:
+        break;
+    }
+    const float step = pic_h_ * 0.25f * std::max(dt, 0.0f) / kLiftSeconds;  // a 25 %-of-picture move takes kLiftSeconds
+    if (lifted_ < target) lifted_ = std::min(target, lifted_ + step);
+    else lifted_ = std::max(target, lifted_ - step);
+    return base - lifted_;
+  }
+
+  // Lines (oldest first) as wrapped rows, their block's bottom at `bottom`:
+  // the box, then the outline layer, then the letters.
+  void DrawLines(const std::vector<Line>& shown, ImDrawList* list, float bottom) {
     const int size = std::clamp(int(REXCVAR_GET(subtitles_size)), 0, 2);
-    scale_ = kCapHeights[size] * unit / font_.cap_height();
-    const float max_width = pic_w * kWidthShare;
+    scale_ = kCapHeights[size] * unit_ / font_.cap_height();
+    const float max_width = pic_w_ * kWidthShare;
     const float row_height = font_.cell_height() * scale_ * 0.78f;  // the cell has room above / below
 
-    // Rows of every shown line, wrapped by words.
+    // Rows of every shown line, wrapped by words at kWidthShare of the
+    // picture (so the size never pushes a row past the picture's sides).
     std::vector<Row> rows;
     for (const Line& l : shown) Wrap(l, max_width, rows);
     if (rows.empty()) return;
 
-    // The block, bottom-up from 11 % above the picture's bottom: rows are
-    // row_height apart, the last one a whole glyph cell tall.
+    // The block, bottom-up: rows are row_height apart, the last one a whole
+    // glyph cell tall. Never above the picture's top (a very long line at
+    // Large): then it starts at the top and runs down.
     const float cell_h = font_.cell_height() * scale_;
     const float block_h = row_height * float(rows.size() - 1) + cell_h;
-    const float bottom = pic_y + pic_h * (1.0f - kBottomShare);
-    const float top = bottom - block_h;
-    ImDrawList* list = ImGui::GetForegroundDrawList();
-    if (REXCVAR_GET(subtitles_background)) {
+    const float top = std::max(pic_y_, bottom - block_h);
+    bottom = top + block_h;
+    const int opacity = REXCVAR_GET(subtitles_background)
+                            ? std::clamp(int(REXCVAR_GET(subtitles_background_opacity)), 0, 100)
+                            : 0;
+    if (opacity > 0) {
       float widest = 0;
       for (const Row& r : rows) widest = std::max(widest, RowWidth(r));
-      const float pad_x = 14.0f * unit, pad_y = 0.0f;  // the cells' own blank space pads it
-      const float cx = pic_x + pic_w * 0.5f;
-      list->AddRectFilled(ImVec2(cx - widest * 0.5f - pad_x, top - pad_y),
-                          ImVec2(cx + widest * 0.5f + pad_x, bottom + pad_y), kBoxColour,
-                          6.0f * unit);
+      const float pad_x = 14.0f * unit_;  // the cells' own blank space pads it above and below
+      const float cx = pic_x_ + pic_w_ * 0.5f;
+      // Only the box's alpha changes; the letters stay solid.
+      const ImU32 box = IM_COL32(0, 0, 0, (opacity * 255 + 50) / 100);
+      list->AddRectFilled(ImVec2(cx - widest * 0.5f - pad_x, top), ImVec2(cx + widest * 0.5f + pad_x, bottom), box,
+                          6.0f * unit_);
     }
-    // Outline layer first (dark), then the letters, like the game's look.
     for (int layer = 0; layer < 2; ++layer) {
       float y = top;
       for (const Row& r : rows) {
-        float pen = std::round(pic_x + (pic_w - RowWidth(r)) * 0.5f);
-        for (const Run& run : r) {
-          for (char16_t c : run.text) {
-            const ImU32 colour = layer == 0 ? kOutlineColour : run.colour;
-            const Composite k = CompositeOf(c);
-            const game_font::Glyph* g = font_.Find(k.base ? k.base : c);
-            if (!g) continue;
-            DrawGlyph(list, *g, pen, y, layer == 1, colour, 1.0f);
-            if (k.base) {
-              // The tilde: the top rows of õ / Õ, down to where o / O's ink begins,
-              // centred over the base letter.
-              const game_font::Glyph* accent = font_.Find(k.accent);
-              const game_font::Glyph* plain = font_.Find(k.plain);
-              const float ink = plain ? InkTop(*plain) : -1.0f;  // o's first inked row
-              if (accent && accent->height > 0 && ink > 0) {
-                const float share = std::min(1.0f, ink / accent->height);
-                const float shift = (g->left + g->width * 0.5f) - (accent->left + accent->width * 0.5f);
-                DrawGlyph(list, *accent, pen + shift * scale_, y, layer == 1, colour, share);
-              }
-            }
-            pen += g->advance * scale_;
+        DrawRow(list, r, std::round(pic_x_ + (pic_w_ - RowWidth(r)) * 0.5f), y, layer);
+        y += row_height;
+      }
+    }
+  }
+
+  // The developer clock: one small row in the picture's top left corner.
+  void DrawClock(const Line& l, ImDrawList* list) {
+    scale_ = kCapHeights[0] * unit_ / font_.cap_height();
+    const Row row{{l.text, kTextColour}};
+    for (int layer = 0; layer < 2; ++layer) {
+      DrawRow(list, row, std::round(pic_x_ + 12.0f * unit_), pic_y_ + 8.0f * unit_, layer);
+    }
+  }
+
+  // One row from `pen`, its top at `y`: layer 0 = the dark outline, 1 = the letters.
+  void DrawRow(ImDrawList* list, const Row& r, float pen, float y, int layer) {
+    for (const Run& run : r) {
+      for (char16_t c : run.text) {
+        const ImU32 colour = layer == 0 ? kOutlineColour : run.colour;
+        const Composite k = CompositeOf(c);
+        const game_font::Glyph* g = font_.Find(k.base ? k.base : c);
+        if (!g) continue;
+        DrawGlyph(list, *g, pen, y, layer == 1, colour, 1.0f);
+        if (k.base) {
+          // The tilde: the top rows of õ / Õ, down to where o / O's ink begins,
+          // centred over the base letter.
+          const game_font::Glyph* accent = font_.Find(k.accent);
+          const game_font::Glyph* plain = font_.Find(k.plain);
+          const float ink = plain ? InkTop(*plain) : -1.0f;  // o's first inked row
+          if (accent && accent->height > 0 && ink > 0) {
+            const float share = std::min(1.0f, ink / accent->height);
+            const float shift = (g->left + g->width * 0.5f) - (accent->left + accent->width * 0.5f);
+            DrawGlyph(list, *accent, pen + shift * scale_, y, layer == 1, colour, share);
           }
         }
-        y += row_height;
+        pen += g->advance * scale_;
       }
     }
   }
@@ -652,6 +770,9 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   bool font_failed_ = false;
   std::vector<PageTextures> textures_;
   float scale_ = 1.0f;
+  // The game's 16:9 picture in the window this frame, and 720p's pixel in it.
+  float pic_x_ = 0, pic_y_ = 0, pic_w_ = 0, pic_h_ = 0, unit_ = 1.0f;
+  float lifted_ = 0;  // how far up the subtitles stand now (screen pixels), LiftedBottom
   std::map<std::pair<uint32_t, uint32_t>, float> ink_top_;  // InkTop's cache
 };
 

@@ -49,17 +49,17 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "VISNING {0}"
 
-#: src/achievements/achievements.cpp:768
+#: src/achievements/achievements.cpp:786
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Prestasjon låst opp"
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1086 src/options/options_menu.cpp:2419 src/options/options_settings.cpp:1374
+#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1089 src/options/options_menu.cpp:2433 src/options/options_settings.cpp:1451
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestasjoner"
 
-#: src/achievements/achievements_screen.cpp:42 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Spillere"
@@ -90,6 +90,10 @@ msgstr "Avslutt spill"
 #, fuzzy
 msgid "Are you sure you want to quit the game?"
 msgstr "Er du sikker på at du vil avslutte spillet?"
+
+#: src/subtitles/subtitles.cpp:475
+msgid "This is how the subtitles look."
+msgstr ""
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
 #: src/input/prompt_icons.cpp:2317
@@ -338,7 +342,7 @@ msgstr "Oransje"
 msgid "Crash"
 msgstr "Crash"
 
-#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1385 src/options/options_menu.cpp:1399 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
+#: src/options/options_menu.cpp:1388 src/options/options_menu.cpp:1402 src/players/outfit_picker.cpp:1100 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
 #, fuzzy
 msgid "Back"
 msgstr "Tilbake"
@@ -448,122 +452,122 @@ msgstr "{0}-{1}"
 msgid "Drop Out"
 msgstr "Avslutt samarbeid"
 
-#: src/options/options_menu.cpp:861 src/options/options_menu.cpp:912
+#: src/options/options_menu.cpp:864 src/options/options_menu.cpp:915
 #, fuzzy
 msgid "Press a Key"
 msgstr "Trykk på en tast"
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:922
+#: src/options/options_menu.cpp:925
 #, fuzzy
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye andre tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:923
+#: src/options/options_menu.cpp:926
 #, fuzzy
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr "Trykk på den nye tasten eller museknappen for {0}. {1} eller {2}: avbryt."
 
-#: src/options/options_menu.cpp:940
+#: src/options/options_menu.cpp:943
 #, fuzzy
 msgid "Second Key"
 msgstr "Andre tast"
 
-#: src/options/options_menu.cpp:946
+#: src/options/options_menu.cpp:949
 #, fuzzy
 msgid "Remove Key"
 msgstr "Fjern tast"
 
-#: src/options/options_menu.cpp:1119
+#: src/options/options_menu.cpp:1122
 #, fuzzy
 msgid "Locked"
 msgstr "Låst"
 
-#: src/options/options_menu.cpp:1384
+#: src/options/options_menu.cpp:1387
 #, fuzzy
 msgid "Confirm"
 msgstr "Bekreft"
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 #, fuzzy
 msgid "Swap"
 msgstr "Bytt"
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 #, fuzzy
 msgid "Move Here"
 msgstr "Flytt hit"
 
-#: src/options/options_menu.cpp:1390 launcher/installer.cpp:1681 launcher/setup.cpp:2138
+#: src/options/options_menu.cpp:1393 launcher/installer.cpp:1681 launcher/setup.cpp:2138
 #, fuzzy
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: src/options/options_menu.cpp:1393
+#: src/options/options_menu.cpp:1396
 #, fuzzy
 msgid "Buttons"
 msgstr "Knapper"
 
-#: src/options/options_menu.cpp:1396
+#: src/options/options_menu.cpp:1399
 #, fuzzy
 msgid "Move"
 msgstr "Flytt"
 
-#: src/options/options_menu.cpp:1397
+#: src/options/options_menu.cpp:1400
 #, fuzzy
 msgid "Remove"
 msgstr "Fjern"
 
-#: src/options/options_menu.cpp:1525
+#: src/options/options_menu.cpp:1528
 #, fuzzy
 msgid "No room for this player"
 msgstr "Ikke plass til denne spilleren"
 
-#: src/options/options_menu.cpp:1529 src/options/options_menu.cpp:1537
+#: src/options/options_menu.cpp:1532 src/options/options_menu.cpp:1540
 #, fuzzy
 msgid "Keyboard and Mouse"
 msgstr "Tastatur og mus"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 #, fuzzy
 msgid "Moving to Player {0}"
 msgstr "Til spiller {0}"
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 #, fuzzy
 msgid "Pick a player"
 msgstr "Velg en spiller"
 
-#: src/options/options_menu.cpp:1539
+#: src/options/options_menu.cpp:1542
 #, fuzzy
 msgid "Press any button to join"
 msgstr "Trykk på en knapp for å bli med"
 
-#: src/options/options_menu.cpp:2006
+#: src/options/options_menu.cpp:2019
 #, fuzzy
 msgid "Not changed."
 msgstr "Ikke endret."
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:2013
+#: src/options/options_menu.cpp:2026
 #, fuzzy
 msgid "{0} is the menus' {1}: pick another key."
 msgstr "{0} brukes av menyene ({1}): velg en annen tast."
 
-#: src/options/options_menu.cpp:2025
+#: src/options/options_menu.cpp:2038
 #, fuzzy
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr "{0} var tasten for {1}: nå hører den til {2}."
 
-#: src/options/options_menu.cpp:2046
+#: src/options/options_menu.cpp:2059
 #, fuzzy
 msgid "No key to remove."
 msgstr "Ingen tast å fjerne."
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2054
+#: src/options/options_menu.cpp:2067
 #, fuzzy
 msgid "{0} removed."
 msgstr "{0} fjernet."
@@ -683,12 +687,12 @@ msgstr "Øk til du så vidt kan skille de mørkeste rutene ovenfor fra hverandre
 msgid "V-sync"
 msgstr "V-sync"
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 #, fuzzy
 msgid "On"
 msgstr "På"
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 #, fuzzy
 msgid "Off"
 msgstr "Av"
@@ -952,7 +956,7 @@ msgstr "Av (original)"
 msgid "Low"
 msgstr "Lav"
 
-#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681 src/options/options_settings.cpp:1389
 #, fuzzy
 msgid "Medium"
 msgstr "Middels"
@@ -1718,7 +1722,7 @@ msgstr "Vindu i bakgrunnen"
 msgid "Keep Playing"
 msgstr "Fortsett å spille"
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Pause"
 msgstr "Pause"
@@ -2010,255 +2014,315 @@ msgstr ""
 msgid "The game's own wide message bar."
 msgstr ""
 
-#: src/options/options_settings.cpp:1368
+#: src/options/options_settings.cpp:1373
+msgid "Subtitles"
+msgstr ""
+
+#: src/options/options_settings.cpp:1378
+msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
+msgstr ""
+
+#: src/options/options_settings.cpp:1380
+msgid "No subtitles. The voices play as always."
+msgstr ""
+
+#: src/options/options_settings.cpp:1387
+msgid "Subtitle Size"
+msgstr ""
+
+#: src/options/options_settings.cpp:1389
+msgid "Small"
+msgstr ""
+
+#: src/options/options_settings.cpp:1389
+msgid "Large"
+msgstr ""
+
+#: src/options/options_settings.cpp:1394
+msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
+msgstr ""
+
+#: src/options/options_settings.cpp:1406
+msgid "Subtitle Background"
+msgstr ""
+
+#: src/options/options_settings.cpp:1425
+msgid "No box behind the subtitles: only the letters and their dark outline."
+msgstr ""
+
+#: src/options/options_settings.cpp:1426
+msgid "A solid black box behind the subtitles."
+msgstr ""
+
+#: src/options/options_settings.cpp:1427
+msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
+msgstr ""
+
+#: src/options/options_settings.cpp:1433
+msgid "Speaker Names"
+msgstr ""
+
+#: src/options/options_settings.cpp:1434
+msgid "Who is speaking, in yellow, in front of the line (when it is known)."
+msgstr ""
+
+#: src/options/options_settings.cpp:1435
+msgid "Only the spoken words."
+msgstr ""
+
+#: src/options/options_settings.cpp:1445
 #, fuzzy
 msgid "Display"
 msgstr "Skjerm"
 
-#: src/options/options_settings.cpp:1371
+#: src/options/options_settings.cpp:1448
 #, fuzzy
 msgid "HUD"
 msgstr "HUD"
 
-#: src/options/options_settings.cpp:1372
+#: src/options/options_settings.cpp:1449
 #, fuzzy
 msgid "Frame Counter"
 msgstr "Bildeteller"
 
-#: src/options/options_settings.cpp:1376
+#: src/options/options_settings.cpp:1453
 #, fuzzy
 msgid "Graphics"
 msgstr "Grafikk"
 
-#: src/options/options_settings.cpp:1377
+#: src/options/options_settings.cpp:1454
 #, fuzzy
 msgid "Quality"
 msgstr "Kvalitet"
 
-#: src/options/options_settings.cpp:1378
+#: src/options/options_settings.cpp:1455
 #, fuzzy
 msgid "Effects"
 msgstr "Effekter"
 
-#: src/options/options_settings.cpp:1381
+#: src/options/options_settings.cpp:1458
 #, fuzzy
 msgid "Audio"
 msgstr "Lyd"
 
-#: src/options/options_settings.cpp:1382
+#: src/options/options_settings.cpp:1459
 #, fuzzy
 msgid "Music"
 msgstr "Musikk"
 
-#: src/options/options_settings.cpp:1383
+#: src/options/options_settings.cpp:1460
 #, fuzzy
 msgid "How loud the music plays."
 msgstr "Hvor høyt musikken spiller."
 
-#: src/options/options_settings.cpp:1384
+#: src/options/options_settings.cpp:1461
 #, fuzzy
 msgid "Dialogue"
 msgstr "Dialog"
 
-#: src/options/options_settings.cpp:1385
+#: src/options/options_settings.cpp:1462
 #, fuzzy
 msgid "How loud the characters talk."
 msgstr "Hvor høyt figurene snakker."
 
-#: src/options/options_settings.cpp:1386
+#: src/options/options_settings.cpp:1463
 #, fuzzy
 msgid "SFX"
 msgstr "SFX"
 
-#: src/options/options_settings.cpp:1387
+#: src/options/options_settings.cpp:1464
 #, fuzzy
 msgid "How loud hits, crates, footsteps and the rest are."
 msgstr "Hvor høye slag, kasser, fottrinn og resten er."
 
-#: src/options/options_settings.cpp:1388
+#: src/options/options_settings.cpp:1465
 msgid "Movies"
 msgstr ""
 
-#: src/options/options_settings.cpp:1389
+#: src/options/options_settings.cpp:1466
 msgid "How loud the movies play: the intros and the story cartoons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1390
+#: src/options/options_settings.cpp:1467
 #, fuzzy
 msgid "Output"
 msgstr "Utgang"
 
-#: src/options/options_settings.cpp:1391 launcher/settings_page.cpp:537
+#: src/options/options_settings.cpp:1468 launcher/settings_page.cpp:537
 #, fuzzy
 msgid "Controls"
 msgstr "Kontroller"
 
-#: src/options/options_settings.cpp:1392
+#: src/options/options_settings.cpp:1469
 #, fuzzy
 msgid "Gameplay"
 msgstr "Spilling"
 
-#: src/options/options_settings.cpp:1393
+#: src/options/options_settings.cpp:1470
 #, fuzzy
 msgid "Language"
 msgstr "Språk"
 
-#: src/options/options_settings.cpp:1437 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1472
+msgid "Accessibility"
+msgstr ""
+
+#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Ingen"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Up"
 msgstr "Opp"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Down"
 msgstr "Ned"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Left"
 msgstr "Venstre"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Move Right"
 msgstr "Høyre"
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Gå (hold)"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Spin"
 msgstr "Spinn"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Jump"
 msgstr "Hopp"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Light Attack"
 msgstr "Lett angrep"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Tungt angrep"
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Blokker (hold)"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Jacke / Bruk"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Titanens spesialangrep"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "I lomma / Fram"
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Map"
 msgstr "Kart"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Meny: bekreft"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Meny: tilbake"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Meny: forrige fane"
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Meny: neste fane"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Meny: X-handling"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Meny: Y-handling"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Retningsknapp opp"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Retningsknapp ned"
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Retningsknapp venstre"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Retningsknapp høyre"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Høyre styrespak opp"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Høyre styrespak ned"
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Høyre styrespak venstre"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Høyre styrespak høyre"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Venstre skulderknapp"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Trykk venstre styrespak"
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Trykk høyre styrespak"
@@ -2399,7 +2463,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:399 launcher/main.cpp:395 launcher/setup.cpp:2152
+#: launcher/installer.cpp:399 launcher/setup.cpp:2152 launcher/main.cpp:395
 #, fuzzy
 msgid "Log: %s"
 msgstr "Logg: %s"
@@ -3213,7 +3277,7 @@ msgstr "Vis spillets logg"
 msgid "Report a problem..."
 msgstr "Rapporter et problem..."
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:2147
+#: launcher/setup.cpp:2147 launcher/main.cpp:426 launcher/main.cpp:660
 #, fuzzy
 msgid "OK"
 msgstr "OK"
@@ -3359,7 +3423,7 @@ msgstr "Oppdatert til %s"
 msgid "What's new:"
 msgstr "Nytt:"
 
-#: launcher/main.cpp:664 launcher/setup.cpp:1198
+#: launcher/setup.cpp:1198 launcher/main.cpp:664
 #, fuzzy
 msgid "Release page"
 msgstr "Utgivelsesside"

@@ -800,3 +800,97 @@ columns.
 
 Not covered yet: the six in-engine cutscene tracks, Aku Aku, the tutorial
 voice and the NPC lines (sound-ID keys, s.13).
+
+## 21. The Accessibility tab; the subtitles next to the message bar
+
+What was asked: the subtitles' settings in the in-game Options screen,
+live; a box opacity setting; the subtitles never hidden by the game's
+pop-ups (achievement card, mission messages) and never hiding their words;
+the movie clock (s.17's placeholder) out of the player's sight; the text in
+the game's language.
+
+**The Options screen** (findings/31, `src/options/`): a tab is a list of
+rows in `options_settings.cpp` `Build()`, each row backed by a port flag
+(`REXCVAR`) and written to `user/settings.toml` when the screen closes
+(only the changed keys). A new tab **Accessibility**, after Language:
+Subtitles (Off / On), Subtitle Size (Small / Medium / Large), Subtitle
+Background (0-100 % in steps of 10), Speaker Names (On / Off). Defaults:
+off, Medium, 70 %, On. The subtitles stay **off by default** (the original
+has none: AGENTS.md "keep the original's defaults").
+
+* Live: the drawing reads every flag each frame. `subtitles` used to be
+  read once at start-up (it decided whether the voices were followed);
+  now the voices and movies are followed whenever there is a text file
+  (or a developer option is on), and `subtitles` only decides whether the
+  lines are drawn, so turning them on mid-scene shows the line being
+  spoken.
+* Opacity: a new flag `subtitles_background_opacity` (0-100, default 70;
+  before: a fixed 55 %). The older `subtitles_background = false` still
+  means no box; the row writes both (0 % = off). Only the box's alpha
+  changes, the letters stay solid.
+* A sample line ("This is how the subtitles look.", with "Aku Aku" as
+  the speaker when names are on) stands in the subtitles' place while the
+  tab is open, in the chosen look, even with the subtitles off
+  (`options_menu::SubtitlePreview`: a `Tab` flag, mirrored for the UI
+  thread).
+
+**Which layer draws what.** The game draws the whole frame on the emulated
+GPU: the 3D, then its 2D pages (Scrooby, findings/30), the message bar and
+the achievement card among them. The subtitles are drawn by the port after
+that, over the finished picture (an ImGui foreground draw list with the
+game's font, both renderers). So the subtitles cannot end up behind the
+bar's glass; drawn where they were, they covered its words. No draw-order
+change can fix that; the subtitles move instead.
+
+**The message bar.** `achievements.cpp` already reads the bar every
+front-end frame (front end +1428; page +128 shown or not; queue at +8,
+findings/51 s.4) and decides which look it has: our card (an achievement,
+a notice, or a game message with `message_bar_card` on) or the bar's own
+wide glass. It now publishes that (`achievements::BarOnScreen()`: none /
+card / wide bar, stale after 250 ms without a front-end frame, e.g. during
+a Bink movie). While the bar's page is up, the subtitles' bottom moves up
+to just above it (10 px of 720p over its top edge at rest: the card's glass
+top at canvas y 87 = 589.5 px of 720, the wide glass's at y 135 = 517.5
+px; options_page.cpp), easing over 0.2 s, and comes back down when the
+page is gone. Nothing of the bar changes: its timing, queue, slide and
+sound are the game's.
+
+* Not measured yet: the bar's position during its slide (the page moves
+  up from under the screen's edge). The subtitles move to the bar's resting
+  height as soon as the page shows, so they are above it for the whole
+  slide; how that looks still has to be checked on the real game.
+* Other things at the bottom of the screen (the HUD's hints, the button
+  prompts) are not avoided; none was seen under the subtitles so far.
+
+**Menus.** The subtitles are hidden while the pause menu is up (its
+decision, `sub_82121B48` / `sub_82121EA8`, runs every frame it is:
+`achievements_screen.cpp` notes the time, hidden for 200 ms after the last
+one) and while the Options screen is open. The voices go on under the
+pause menu (s.16.3), and so do the lines' clocks: a line still running
+when the menu closes shows again.
+
+**The movie clock** (s.17) was a `subtitles_placeholders` feature, drawn as
+a subtitle when a movie had no line at that moment. It is now its own
+developer flag, `debug_subtitle_clock` (off by default; F1 Tools ->
+Developer -> "Subtitle clock on / off", or settings.toml), drawn small in
+the picture's top left corner, apart from the subtitles, and gone as soon
+as the flag is off. `subtitles_placeholders` keeps only the voice lines'
+folder / file name stand-ins. Neither is in the Options screen. The clock
+itself (the Bink player's frame / rate, s.15.1) runs either way: the timed
+lines need it.
+
+**The language.** The text language (Options -> Language -> Text,
+`language::RunningText()`) picks `<code>.tsv` over `en.tsv` (s.19); a
+missing file or a missing line falls back to English, and with neither
+nothing is shown (never a sound's name). The text language is fixed for a
+session (changing it restarts the game), so the subtitles follow a change
+from the next start. Open: the story cartoons' timed lines follow the
+English dialogue track; with another voice language (Options -> Language
+-> Voices) the movie plays another track whose timing may differ.
+
+Tested: syntax only (clang 18 with the SDK's headers, Linux). Not run on
+the game yet: the tab, the live changes, the sample, the move over the
+card and the wide bar (Tools -> Developer -> "Test: fake achievement card"
+/ "Test: game-style message" while a line is shown), the pause menu
+hiding, the clock.
+

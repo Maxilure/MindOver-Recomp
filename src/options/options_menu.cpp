@@ -266,6 +266,9 @@ bool ListMode() {
 // or side card.
 bool OtherMode() { return g.achievements || g.players; }
 std::atomic<bool> g_open{false};
+// The open tab asks for the subtitles' sample (options_settings.h Tab
+// subtitle_preview): mirrored here for the subtitles' drawing (UI thread).
+std::atomic<bool> g_subtitle_preview{false};
 std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
 // The Players screen takes input now (front end +8592 bit 0x40, read by its
 // Update each frame): its prompt row shows only then, like the game's own
@@ -1909,11 +1912,21 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
   RefreshPlayers(env);
 }
 
+// The Options screen (not Players / Achievements, which share it) on a tab
+// that shows the subtitles' sample.
+void UpdateSubtitlePreview() {
+  const auto& tabs = options_settings::Tabs();
+  const bool on = !g.players && !g.achievements && g.tab >= 0 && g.tab < int(tabs.size()) &&
+                  tabs[size_t(g.tab)].subtitle_preview;
+  g_subtitle_preview.store(on, std::memory_order_relaxed);
+}
+
 void SwitchTab(Env& env, int delta) {
   // Leaving the tab: its focused row hears "off" first.
   Unfocus(env);
   const int count = int(options_settings::Tabs().size());
   g.tab = (g.tab + delta + count) % count;
+  UpdateSubtitlePreview();
   g.key_message_row = -1;
   g.top = 0;
   scrooby::Select(env.ctx, env.base, g.menu, FirstSelectableOnScreen());
@@ -2267,6 +2280,7 @@ void SeePad(uint32_t user, const uint8_t* gamepad) {
 }
 
 bool Open() { return g_open.load(std::memory_order_relaxed); }
+bool SubtitlePreview() { return Open() && g_subtitle_preview.load(std::memory_order_relaxed); }
 bool InMainMenu() { return Open() && g.main_menu; }
 bool WheelScrollsList() { return Open() && g_wheel_list.load(std::memory_order_relaxed); }
 
@@ -2453,6 +2467,7 @@ extern "C" REX_FUNC(sub_820D2828) {
   g_players_take_input = false;  // (opening = sliding in: no prompt row yet)
   Refresh(env);
   g_open = true;
+  UpdateSubtitlePreview();
   REXLOG_INFO("{}: screen opened ({}) by player {} (tab {})",
               g.players ? "Players" : g.achievements ? "Achievements" : "Options",
               main_menu ? "main menu" : "in game", owner + 1, g.tab);
@@ -2792,6 +2807,7 @@ extern "C" REX_FUNC(sub_820D2F08) {
     }
     g.action = 0;
     g_open = false;
+    g_subtitle_preview.store(false, std::memory_order_relaxed);
     options_settings::SaveChanged();
     REXLOG_INFO("Options: screen closed");
   }

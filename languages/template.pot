@@ -42,15 +42,15 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr ""
 
-#: src/achievements/achievements.cpp:768
+#: src/achievements/achievements.cpp:786
 msgid "Achievement Unlocked"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:31 src/options/options_menu.cpp:1086 src/options/options_menu.cpp:2419 src/options/options_settings.cpp:1374
+#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1089 src/options/options_menu.cpp:2433 src/options/options_settings.cpp:1451
 msgid "Achievements"
 msgstr ""
 
-#: src/achievements/achievements_screen.cpp:42 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:501
 msgid "Players"
 msgstr ""
 
@@ -74,6 +74,10 @@ msgstr ""
 
 #: src/ui/quit_game.cpp:56
 msgid "Are you sure you want to quit the game?"
+msgstr ""
+
+#: src/subtitles/subtitles.cpp:475
+msgid "This is how the subtitles look."
 msgstr ""
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
@@ -265,7 +269,7 @@ msgstr ""
 msgid "Crash"
 msgstr ""
 
-#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1385 src/options/options_menu.cpp:1399 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
+#: src/options/options_menu.cpp:1388 src/options/options_menu.cpp:1402 src/players/outfit_picker.cpp:1100 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
 msgid "Back"
 msgstr ""
 
@@ -354,100 +358,100 @@ msgstr ""
 msgid "Drop Out"
 msgstr ""
 
-#: src/options/options_menu.cpp:861 src/options/options_menu.cpp:912
+#: src/options/options_menu.cpp:864 src/options/options_menu.cpp:915
 msgid "Press a Key"
 msgstr ""
 
 #. {0} = the move's name ("Jump"), {1} = the Esc key's picture, {2} = the B button's picture.
-#: src/options/options_menu.cpp:922
+#: src/options/options_menu.cpp:925
 msgid "Press the new second key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:923
+#: src/options/options_menu.cpp:926
 msgid "Press the new key or mouse button for {0}. {1} or {2}: cancel."
 msgstr ""
 
-#: src/options/options_menu.cpp:940
+#: src/options/options_menu.cpp:943
 msgid "Second Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:946
+#: src/options/options_menu.cpp:949
 msgid "Remove Key"
 msgstr ""
 
-#: src/options/options_menu.cpp:1119
+#: src/options/options_menu.cpp:1122
 msgid "Locked"
 msgstr ""
 
-#: src/options/options_menu.cpp:1384
+#: src/options/options_menu.cpp:1387
 msgid "Confirm"
 msgstr ""
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 msgid "Swap"
 msgstr ""
 
-#: src/options/options_menu.cpp:1388
+#: src/options/options_menu.cpp:1391
 msgid "Move Here"
 msgstr ""
 
-#: src/options/options_menu.cpp:1390 launcher/installer.cpp:1681 launcher/setup.cpp:2138
+#: src/options/options_menu.cpp:1393 launcher/installer.cpp:1681 launcher/setup.cpp:2138
 msgid "Cancel"
 msgstr ""
 
-#: src/options/options_menu.cpp:1393
+#: src/options/options_menu.cpp:1396
 msgid "Buttons"
 msgstr ""
 
-#: src/options/options_menu.cpp:1396
+#: src/options/options_menu.cpp:1399
 msgid "Move"
 msgstr ""
 
-#: src/options/options_menu.cpp:1397
+#: src/options/options_menu.cpp:1400
 msgid "Remove"
 msgstr ""
 
-#: src/options/options_menu.cpp:1525
+#: src/options/options_menu.cpp:1528
 msgid "No room for this player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1529 src/options/options_menu.cpp:1537
+#: src/options/options_menu.cpp:1532 src/options/options_menu.cpp:1540
 msgid "Keyboard and Mouse"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 msgid "Moving to Player {0}"
 msgstr ""
 
 #. {0} = a player's number (1-4).
-#: src/options/options_menu.cpp:1534
+#: src/options/options_menu.cpp:1537
 msgid "Pick a player"
 msgstr ""
 
-#: src/options/options_menu.cpp:1539
+#: src/options/options_menu.cpp:1542
 msgid "Press any button to join"
 msgstr ""
 
-#: src/options/options_menu.cpp:2006
+#: src/options/options_menu.cpp:2019
 msgid "Not changed."
 msgstr ""
 
 #. {0} = a key's name ("Enter"), {1} = a menu move's name ("Menu: Confirm").
-#: src/options/options_menu.cpp:2013
+#: src/options/options_menu.cpp:2026
 msgid "{0} is the menus' {1}: pick another key."
 msgstr ""
 
-#: src/options/options_menu.cpp:2025
+#: src/options/options_menu.cpp:2038
 msgid "{0} was {1}'s key: it's {2}'s now."
 msgstr ""
 
-#: src/options/options_menu.cpp:2046
+#: src/options/options_menu.cpp:2059
 msgid "No key to remove."
 msgstr ""
 
 #. {0} = a key's name.
-#: src/options/options_menu.cpp:2054
+#: src/options/options_menu.cpp:2067
 msgid "{0} removed."
 msgstr ""
 
@@ -544,11 +548,11 @@ msgstr ""
 msgid "V-sync"
 msgstr ""
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:419 src/options/options_settings.cpp:646 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 msgid "On"
 msgstr ""
 
-#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343
+#: src/options/options_settings.cpp:334 src/options/options_settings.cpp:354 src/options/options_settings.cpp:419 src/options/options_settings.cpp:625 src/options/options_settings.cpp:693 src/options/options_settings.cpp:875 src/options/options_settings.cpp:1055 src/options/options_settings.cpp:1082 src/options/options_settings.cpp:1170 src/options/options_settings.cpp:1181 src/options/options_settings.cpp:1338 src/options/options_settings.cpp:1343 src/options/options_settings.cpp:1374 src/options/options_settings.cpp:1433
 msgid "Off"
 msgstr ""
 
@@ -773,7 +777,7 @@ msgstr ""
 msgid "Low"
 msgstr ""
 
-#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681
+#: src/options/options_settings.cpp:561 src/options/options_settings.cpp:681 src/options/options_settings.cpp:1389
 msgid "Medium"
 msgstr ""
 
@@ -1408,7 +1412,7 @@ msgstr ""
 msgid "Keep Playing"
 msgstr ""
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
 msgid "Pause"
 msgstr ""
 
@@ -1647,207 +1651,267 @@ msgstr ""
 msgid "The game's own wide message bar."
 msgstr ""
 
-#: src/options/options_settings.cpp:1368
-msgid "Display"
-msgstr ""
-
-#: src/options/options_settings.cpp:1371
-msgid "HUD"
-msgstr ""
-
-#: src/options/options_settings.cpp:1372
-msgid "Frame Counter"
-msgstr ""
-
-#: src/options/options_settings.cpp:1376
-msgid "Graphics"
-msgstr ""
-
-#: src/options/options_settings.cpp:1377
-msgid "Quality"
+#: src/options/options_settings.cpp:1373
+msgid "Subtitles"
 msgstr ""
 
 #: src/options/options_settings.cpp:1378
-msgid "Effects"
+msgid "The spoken lines as text at the bottom of the screen: the story cartoons, cutscenes, characters and Aku Aku."
 msgstr ""
 
-#: src/options/options_settings.cpp:1381
-msgid "Audio"
-msgstr ""
-
-#: src/options/options_settings.cpp:1382
-msgid "Music"
-msgstr ""
-
-#: src/options/options_settings.cpp:1383
-msgid "How loud the music plays."
-msgstr ""
-
-#: src/options/options_settings.cpp:1384
-msgid "Dialogue"
-msgstr ""
-
-#: src/options/options_settings.cpp:1385
-msgid "How loud the characters talk."
-msgstr ""
-
-#: src/options/options_settings.cpp:1386
-msgid "SFX"
+#: src/options/options_settings.cpp:1380
+msgid "No subtitles. The voices play as always."
 msgstr ""
 
 #: src/options/options_settings.cpp:1387
-msgid "How loud hits, crates, footsteps and the rest are."
-msgstr ""
-
-#: src/options/options_settings.cpp:1388
-msgid "Movies"
+msgid "Subtitle Size"
 msgstr ""
 
 #: src/options/options_settings.cpp:1389
+msgid "Small"
+msgstr ""
+
+#: src/options/options_settings.cpp:1389
+msgid "Large"
+msgstr ""
+
+#: src/options/options_settings.cpp:1394
+msgid "How big the subtitles' letters are. Long lines wrap onto a second row."
+msgstr ""
+
+#: src/options/options_settings.cpp:1406
+msgid "Subtitle Background"
+msgstr ""
+
+#: src/options/options_settings.cpp:1425
+msgid "No box behind the subtitles: only the letters and their dark outline."
+msgstr ""
+
+#: src/options/options_settings.cpp:1426
+msgid "A solid black box behind the subtitles."
+msgstr ""
+
+#: src/options/options_settings.cpp:1427
+msgid "A dark box behind the subtitles; the higher, the less of the picture shows through it."
+msgstr ""
+
+#: src/options/options_settings.cpp:1433
+msgid "Speaker Names"
+msgstr ""
+
+#: src/options/options_settings.cpp:1434
+msgid "Who is speaking, in yellow, in front of the line (when it is known)."
+msgstr ""
+
+#: src/options/options_settings.cpp:1435
+msgid "Only the spoken words."
+msgstr ""
+
+#: src/options/options_settings.cpp:1445
+msgid "Display"
+msgstr ""
+
+#: src/options/options_settings.cpp:1448
+msgid "HUD"
+msgstr ""
+
+#: src/options/options_settings.cpp:1449
+msgid "Frame Counter"
+msgstr ""
+
+#: src/options/options_settings.cpp:1453
+msgid "Graphics"
+msgstr ""
+
+#: src/options/options_settings.cpp:1454
+msgid "Quality"
+msgstr ""
+
+#: src/options/options_settings.cpp:1455
+msgid "Effects"
+msgstr ""
+
+#: src/options/options_settings.cpp:1458
+msgid "Audio"
+msgstr ""
+
+#: src/options/options_settings.cpp:1459
+msgid "Music"
+msgstr ""
+
+#: src/options/options_settings.cpp:1460
+msgid "How loud the music plays."
+msgstr ""
+
+#: src/options/options_settings.cpp:1461
+msgid "Dialogue"
+msgstr ""
+
+#: src/options/options_settings.cpp:1462
+msgid "How loud the characters talk."
+msgstr ""
+
+#: src/options/options_settings.cpp:1463
+msgid "SFX"
+msgstr ""
+
+#: src/options/options_settings.cpp:1464
+msgid "How loud hits, crates, footsteps and the rest are."
+msgstr ""
+
+#: src/options/options_settings.cpp:1465
+msgid "Movies"
+msgstr ""
+
+#: src/options/options_settings.cpp:1466
 msgid "How loud the movies play: the intros and the story cartoons."
 msgstr ""
 
-#: src/options/options_settings.cpp:1390
+#: src/options/options_settings.cpp:1467
 msgid "Output"
 msgstr ""
 
-#: src/options/options_settings.cpp:1391 launcher/settings_page.cpp:537
+#: src/options/options_settings.cpp:1468 launcher/settings_page.cpp:537
 msgid "Controls"
 msgstr ""
 
-#: src/options/options_settings.cpp:1392
+#: src/options/options_settings.cpp:1469
 msgid "Gameplay"
 msgstr ""
 
-#: src/options/options_settings.cpp:1393
+#: src/options/options_settings.cpp:1470
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1437 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1472
+msgid "Accessibility"
+msgstr ""
+
+#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
 msgid "None"
 msgstr ""
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 msgid "Move Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 msgid "Move Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 msgid "Move Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 msgid "Move Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1459
+#: src/options/options_settings.cpp:1540
 msgid "Walk (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 msgid "Spin"
 msgstr ""
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 msgid "Jump"
 msgstr ""
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 msgid "Light Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 msgid "Heavy Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1460
+#: src/options/options_settings.cpp:1541
 msgid "Block (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 msgid "Jack / Use"
 msgstr ""
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 msgid "Titan Special Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 msgid "Pocket / Unpocket"
 msgstr ""
 
-#: src/options/options_settings.cpp:1461
+#: src/options/options_settings.cpp:1542
 msgid "Map"
 msgstr ""
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 msgid "Menu: Confirm"
 msgstr ""
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 msgid "Menu: Back"
 msgstr ""
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 msgid "Menu: Previous Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1462
+#: src/options/options_settings.cpp:1543
 msgid "Menu: Next Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 msgid "Menu: X Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 msgid "Menu: Y Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 msgid "D-pad Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 msgid "D-pad Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1463
+#: src/options/options_settings.cpp:1544
 msgid "D-pad Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 msgid "D-pad Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 msgid "Right Stick Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 msgid "Right Stick Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1464
+#: src/options/options_settings.cpp:1545
 msgid "Right Stick Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 msgid "Right Stick Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 msgid "Left Bumper"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 msgid "Left Stick Click"
 msgstr ""
 
-#: src/options/options_settings.cpp:1465
+#: src/options/options_settings.cpp:1546
 msgid "Right Stick Click"
 msgstr ""
 
@@ -1979,7 +2043,7 @@ msgstr ""
 msgid "Show details"
 msgstr ""
 
-#: launcher/installer.cpp:399 launcher/main.cpp:395 launcher/setup.cpp:2152
+#: launcher/installer.cpp:399 launcher/setup.cpp:2152 launcher/main.cpp:395
 msgid "Log: %s"
 msgstr ""
 
@@ -2734,7 +2798,7 @@ msgstr ""
 msgid "Report a problem..."
 msgstr ""
 
-#: launcher/main.cpp:426 launcher/main.cpp:660 launcher/setup.cpp:2147
+#: launcher/setup.cpp:2147 launcher/main.cpp:426 launcher/main.cpp:660
 msgid "OK"
 msgstr ""
 
@@ -2851,7 +2915,7 @@ msgstr ""
 msgid "What's new:"
 msgstr ""
 
-#: launcher/main.cpp:664 launcher/setup.cpp:1198
+#: launcher/setup.cpp:1198 launcher/main.cpp:664
 msgid "Release page"
 msgstr ""
 

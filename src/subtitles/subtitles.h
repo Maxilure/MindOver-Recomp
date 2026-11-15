@@ -2,11 +2,17 @@
 // subtitles/subtitles.h -- subtitles for the game's spoken lines (findings/63)
 // =============================================================================
 //
-// WHAT THE PLAYER SEES (with --subtitles=1, off by default like the original):
-// the line being spoken, centred near the bottom of the picture, in the
-// game's own font (Titans_Small, ui/game_font.h) with its dark outline, over
-// an optional dark translucent box, with the speaker's name in front when it
-// is known for sure. At most two lines at once (the newest at the bottom).
+// WHAT THE PLAYER SEES (Options -> Accessibility, or --subtitles=1; off by
+// default like the original, which had none): the line being spoken,
+// centred near the bottom of the picture, in the game's own font
+// (Titans_Small, ui/game_font.h) with its dark outline, over a dark box
+// (0-100 % opaque, default 70 %), with the speaker's name in front when it is
+// known for sure. At most two lines at once (the newest at the bottom).
+// Every setting takes effect at once (read each frame); the Accessibility
+// tab shows a sample line while it is open (options_menu.h SubtitlePreview).
+// Hidden while the pause menu or the Options screen is up. Moved up above
+// the game's message bar (achievement card, mission messages) while that is
+// on screen, so neither covers the other (findings/63 s.21).
 //
 // WHERE THE TIMING COMES FROM (findings/63 s.16): voice_trace.cpp ties every
 // sound the game decodes to its sound ID and reports
@@ -34,9 +40,11 @@
 // own clock, findings/63 s.15.1) or a sound ID (a sound with several lines:
 // an in-engine cutscene track, timed from its start); times "mm:ss.cc" or
 // seconds; the speaker may be empty. "\n" in a text breaks the line; # starts
-// a comment. With --subtitles_placeholders, a line without text shows its
-// speaker folder and file name, and a movie without lines its name and
-// clock (for checking the timing and noting down the times of lines).
+// a comment. Developer options (never in the Options screen):
+// --subtitles_placeholders shows a voice line without text as its speaker
+// folder and file name; --debug_subtitle_clock shows the playing movie's
+// name and clock in the top left corner (for timing lines). Neither is ever
+// part of a subtitle.
 //
 // Drawn by us on the layer over the finished picture (an ImGui foreground
 // draw list textured with the font's pages, like fps_overlay.h): it shows in
@@ -58,8 +66,14 @@ REXCVAR_DECLARE(int32_t, subtitles);
 
 namespace subtitles {
 
-// Subtitles are on (--subtitles=1). Read at start-up.
+// The voices and movies are being followed (there is a text file, or a
+// developer option is on). Decided at start-up. Whether subtitles are SHOWN
+// is the `subtitles` flag, read every frame.
 bool On();
+
+// The pause menu is up this frame (its decision, achievements_screen.cpp):
+// the subtitles stay hidden while this keeps coming. Any thread.
+void NoteMenuFrame();
 
 // Once at start-up, after the text language is known: reads the text file.
 void Start();
