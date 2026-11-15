@@ -1132,7 +1132,9 @@ drawn as one block). Now every line is its own block with its own box
   up before it fades: after its sound's end, and after the end time the
   text file gives a timed line (a cutscene track's or a movie's). This
   replaces the old 0.3 s hold. A cut (a skipped cutscene) still ends a line
-  at once. A line fading out keeps its place;
+  at once. Options -> Accessibility -> **Stay on Screen** sets it: 0, 0.5, 1,
+  1.5, 2 (default), 3, 4 or 5 s (a hand-set value shows as the nearest
+  step). Tested by console: two presses right = 2000 -> 4000 ms, live; A line fading out keeps its place;
   the lines above slide down once it is gone;
 * at most `subtitles_max_lines` (1-4, default 2; not in the Options screen)
   are wanted at once: a newer line makes the oldest fade out early;

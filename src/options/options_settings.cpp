@@ -1435,6 +1435,40 @@ Row SubtitleSpeakersRow() {
                   tr(u"Only the spoken words."), true);
 }
 
+// How long a line stays on screen after it has been spoken (its sound's
+// end, or the end time its text file gives it) before it disappears:
+// subtitles_linger_ms (subtitles/subtitles.cpp LingerSeconds; default 2 s).
+// The fade-out itself stays 0.4 s. A hand-set value shows as the nearest step.
+constexpr int kLingerSteps[] = {0, 500, 1000, 1500, 2000, 3000, 4000, 5000};
+
+Row SubtitleLingerRow() {
+  Row r;
+  r.label = tr(u"Stay on Screen");
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (int ms : kLingerSteps) {
+      const std::string text = ms % 1000 ? fmt::format("{}.{} s", ms / 1000, (ms % 1000) / 100)
+                                         : fmt::format("{} s", ms / 1000);
+      v.push_back(std::u16string(text.begin(), text.end()));
+    }
+    return v;
+  };
+  r.get = [](Env&) {
+    const int ms = int(rex::cvar::Query<int32_t>("subtitles_linger_ms"));
+    int best = 0;
+    for (int i = 1; i < int(std::size(kLingerSteps)); ++i) {
+      if (std::abs(kLingerSteps[i] - ms) < std::abs(kLingerSteps[best] - ms)) best = i;
+    }
+    return best;
+  };
+  r.set = [](Env&, int i) { SetFlag("subtitles_linger_ms", std::to_string(kLingerSteps[i])); };
+  r.describe = [](Env&, int i) -> std::u16string {
+    if (kLingerSteps[i] == 0) return tr(u"A subtitle disappears as soon as its line has been spoken.");
+    return tr(u"How long a subtitle stays after its line has been spoken, so it can be read to the end.");
+  };
+  return r;
+}
+
 std::vector<Tab> Build() {
   // THE LAYOUT (sorted 2026-10-24: Display = the screen and the window,
   // Graphics = how the picture is drawn; Camera folded into Gameplay's Co-op
@@ -1472,7 +1506,7 @@ std::vector<Tab> Build() {
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
-                   SubtitleSpeakersRow()},
+                   SubtitleSpeakersRow(), SubtitleLingerRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
