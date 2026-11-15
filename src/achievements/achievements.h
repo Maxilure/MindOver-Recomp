@@ -110,6 +110,14 @@ void ShowTestGameMessage();
 // game's thread).
 void FrontEndFrame(PPCContext& ctx, uint8_t* base);
 
+// WHAT THE MESSAGE BAR SHOWS (for the subtitles, findings/63 s.21): the
+// bar's page is up (sliding in, shown or sliding away) with our card on it
+// (achievements, notices, the game's messages with message_bar_card on), or
+// with the bar's own wide glass. The subtitles move up above it meanwhile
+// (subtitles.cpp). Set by FrontEndFrame every front-end frame; any thread.
+enum class BarLook { kNone = 0, kCard = 1, kWideBar = 2 };
+BarLook BarOnScreen();
+
 // THE ACHIEVEMENTS SCREEN's pictures (achievements_screen.h) as SPRITES of
 // the game's menu pages (ui/menu_pictures.h): "AchIcon<id>.tga" per
 // achievement (its picture from the title data, 64 x 64) and "AchRing.tga"

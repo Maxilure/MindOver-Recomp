@@ -41,6 +41,7 @@
 
 #include "../guest_memory.h"
 #include "../pddi/intercept.h"
+#include "../subtitles/voice_trace.h"
 
 REXCVAR_DEFINE_STRING(text_language, "en-us", "CrashMoM",
                       "Language of the game's text: en-us (default), en-gb, fr, fr-ca, de, it, es, nl, da, "
@@ -289,6 +290,7 @@ void OnMovieOpen(PPCContext& ctx, uint8_t* base, PPCFunc* original) {
   std::string ids;
   for (uint32_t i = 0; i < count && i < 16; ++i) ids += " " + std::to_string(word(player + 0xDC + 4 * i));
   REXLOG_INFO("Language: movie {} opened, {} track(s):{} (from 0x{:08X})", name, count, ids, lr);
+  voice_trace::OnMovieOpen(player, name, base);  // findings/63 (only with --debug_subtitle_trace)
 }
 }  // namespace
 void Install() { pddi::SetHandler(pddi::kFn_82428E58, &OnMovieOpen); }

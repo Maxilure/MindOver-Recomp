@@ -1358,6 +1358,83 @@ Row MessageBarRow() {
                   tr(u"The game's own wide message bar."));
 }
 
+// ---------------------------------------------------------------------------
+// Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
+// ---------------------------------------------------------------------------
+// Every row is live: the subtitles' drawing reads the flags each frame, and
+// the tab shows a sample line in the chosen look (Tab subtitle_preview).
+
+// On / off. Off by default (the original has no subtitles: AGENTS.md "keep
+// the original's defaults"). Only the drawing stops: the voices play as
+// always, and the lines go on being followed so that turning the subtitles
+// on mid-scene shows the line being spoken.
+Row SubtitlesRow() {
+  Row r;
+  r.label = tr(u"Show Subtitles");
+  r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Off"), tr(u"On")}; };
+  r.get = [](Env&) { return rex::cvar::Query<int32_t>("subtitles") != 0 ? 1 : 0; };
+  r.set = [](Env&, int i) { SetFlag("subtitles", i ? "1" : "0"); };
+  r.describe = [](Env&, int i) {
+    return i ? std::u16string(tr(u"The spoken lines as text at the bottom of the screen: the story cartoons, "
+                                 u"cutscenes, characters and Aku Aku."))
+             : std::u16string(tr(u"No subtitles. The voices play as always."));
+  };
+  return r;
+}
+
+Row SubtitleSizeRow() {
+  Row r;
+  r.label = tr(u"Subtitle Size");
+  r.values = [](Env&) {
+    return std::vector<std::u16string>{tr(u"Small"), tr(u"Medium"), tr(u"Large")};
+  };
+  r.get = [](Env&) { return std::clamp(int(rex::cvar::Query<int32_t>("subtitles_size")), 0, 2); };
+  r.set = [](Env&, int i) { SetFlag("subtitles_size", std::to_string(i)); };
+  r.describe = [](Env&, int) {
+    return std::u16string(tr(u"How big the subtitles' letters are. Long lines wrap onto a second row."));
+  };
+  return r;
+}
+
+// The box behind the text, 0-100 % in steps of 10 (default 70). Kept in two
+// flags: subtitles_background (on / off, the older setting, still honoured:
+// off = no box) and subtitles_background_opacity. 0 % turns the box off.
+constexpr int kOpacityStep = 10;
+
+Row SubtitleBackgroundRow() {
+  Row r;
+  r.label = tr(u"Subtitle Background");
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (int o = 0; o <= 100; o += kOpacityStep) {
+      const std::string text = std::to_string(o) + "%";
+      v.push_back(std::u16string(text.begin(), text.end()));
+    }
+    return v;
+  };
+  r.get = [](Env&) {
+    if (!rex::cvar::Query<bool>("subtitles_background")) return 0;
+    const int o = std::clamp(int(rex::cvar::Query<int32_t>("subtitles_background_opacity")), 0, 100);
+    return (o + kOpacityStep / 2) / kOpacityStep;  // the nearest step (a hand-set 75 shows as 80)
+  };
+  r.set = [](Env&, int i) {
+    SetFlag("subtitles_background_opacity", std::to_string(i * kOpacityStep));
+    SetFlag("subtitles_background", i > 0 ? "true" : "false");
+  };
+  r.describe = [](Env&, int i) -> std::u16string {
+    if (i == 0) return tr(u"No box behind the subtitles: only the letters and their dark outline.");
+    if (i * kOpacityStep >= 100) return tr(u"A solid black box behind the subtitles.");
+    return tr(u"A dark box behind the subtitles; the higher, the less of the picture shows through it.");
+  };
+  return r;
+}
+
+Row SubtitleSpeakersRow() {
+  return OnOffRow(tr(u"Speaker Names"), "subtitles_speakers", tr(u"On"), tr(u"Off"),
+                  tr(u"Who is speaking, in yellow, in front of the line (when it is known)."),
+                  tr(u"Only the spoken words."), true);
+}
+
 std::vector<Tab> Build() {
   // THE LAYOUT (sorted 2026-10-24: Display = the screen and the window,
   // Graphics = how the picture is drawn; Camera folded into Gameplay's Co-op
@@ -1391,6 +1468,12 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Controls"), ControlsRows()});
   tabs.push_back({tr(u"Gameplay"), GameplayRows()});
   tabs.push_back({tr(u"Language"), {TextLanguageRow(), VoiceLanguageRow()}});
+  // The subtitles' rows under their heading (cyan, like Display's "HUD"),
+  // with a sample line on screen while the tab is open.
+  tabs.push_back({tr(u"Accessibility"),
+                  {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
+                   SubtitleSpeakersRow()},
+                  true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
   // every heading that doesn't open its tab.

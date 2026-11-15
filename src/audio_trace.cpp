@@ -81,6 +81,7 @@
 #include "audio_trace.h"
 #include "guest_memory.h"
 #include "language/language.h"
+#include "subtitles/voice_trace.h"
 
 #include <algorithm>
 #include <atomic>
@@ -132,6 +133,11 @@ struct RsdFile {
   uint16_t archive;  // index into Index::archives
   uint32_t offset;   // its first byte inside that archive
   std::string name;  // the designer's file name, read on first use ("" = not yet)
+  // The XMA header H at 0x80C, read with the name (subtitles/voice_trace.cpp
+  // ties a decoder to its sound by H+8, findings/63 s.14).
+  bool has_header = false;
+  uint32_t lead_in = 0, end = 0, rate = 0;
+  uint32_t data = 0;  // 0x808: compressed data bytes
 };
 
 struct Index {
@@ -140,7 +146,8 @@ struct Index {
   std::unordered_map<uint64_t, RsdFile> files;  // key: the sound's 64-bit ID
 };
 Index g_index;
-std::atomic<bool> g_on{false};
+std::atomic<bool> g_on{false};       // the "Audio:" log lines
+std::atomic<bool> g_indexed{false};  // the archives' index is built
 
 // Adds an archive's .rsd files to the index (see the header comment for the
 // format). False if it isn't a readable RCF.
@@ -212,10 +219,21 @@ std::string NameOf(uint64_t id) {
   }
   RsdFile& file = it->second;
   if (file.name.empty()) {
-    char header[0x200] = {};
+    // 0x81C bytes: the RSD6 header with the name, then (from 0x800) three
+    // sizes and the first 16 bytes of the XMA header H at 0x80C.
+    char header[0x820] = {};
     std::ifstream in(g_index.archives[file.archive], std::ios::binary);
     in.seekg(file.offset);
-    in.read(header, sizeof(header) - 1);
+    in.read(header, 0x81C);
+    if (in.gcount() == 0x81C) {
+      const auto* h = reinterpret_cast<const uint8_t*>(header + 0x80C);
+      file.has_header = true;
+      file.lead_in = Be32(h + 4);
+      file.end = Be32(h + 8);
+      file.rate = Be32(h + 0x0C);
+      file.data = Be32(reinterpret_cast<const uint8_t*>(header + 0x808));
+    }
+    header[0x7FF] = 0;  // the name ends inside the 0x800-byte RSD6 header
     // "RSD6" "XMA " channels bits rate "****" then the name (NUL-terminated).
     std::string_view name(header + 0x18);
     constexpr std::string_view kPrefix = "in_game_art\\sound\\sounds\\";
@@ -283,7 +301,7 @@ constexpr uint32_t kFromLoadWrapper = 0x823365FC;
 
 }  // namespace
 
-void Start(const std::filesystem::path& game_data_root) {
+void Start(const std::filesystem::path& game_data_root, bool for_subtitles) {
   if (const std::string& dump = REXCVAR_GET(debug_audio_dump); !dump.empty()) {
     g_dump = std::fopen(dump.c_str(), "wb");
     if (g_dump) {
@@ -293,7 +311,8 @@ void Start(const std::filesystem::path& game_data_root) {
       REXLOG_WARN("Audio dump: can't write {}", dump);
     }
   }
-  if (!REXCVAR_GET(debug_audio_trace)) {
+  const bool trace = REXCVAR_GET(debug_audio_trace);
+  if (!trace && !for_subtitles) {
     return;
   }
   // The voices: the archive this session mounts (language.h: voice_language,
@@ -304,9 +323,42 @@ void Start(const std::filesystem::path& game_data_root) {
       REXLOG_WARN("Audio trace: can't read the file list of {}", archive);
     }
   }
+  g_indexed.store(true, std::memory_order_release);
+  if (!trace) {
+    REXLOG_INFO("Audio trace: {} sounds indexed for the subtitles (no log lines)",
+                g_index.files.size());
+    return;
+  }
   REXLOG_INFO("Audio trace: {} sounds indexed; logging every sound the game asks for",
               g_index.files.size());
   g_on.store(true, std::memory_order_release);
+}
+
+bool Indexed() { return g_indexed.load(std::memory_order_acquire); }
+
+std::string SoundName(uint64_t id) {
+  if (!Indexed()) return {};
+  return NameOf(id);
+}
+
+ClipHeader ClipHeaderOf(uint64_t id) {
+  ClipHeader out;
+  if (!Indexed()) return out;
+  NameOf(id);  // reads (once) the name and H together
+  std::lock_guard<std::mutex> lock(g_index.mutex);
+  auto it = g_index.files.find(id);
+  if (it == g_index.files.end() || !it->second.has_header) return out;
+  out.ok = true;
+  out.lead_in = it->second.lead_in;
+  out.end = it->second.end;
+  out.rate = it->second.rate;
+  out.data = it->second.data;
+  return out;
+}
+
+double DumpSeconds() {
+  if (!g_dump) return -1;
+  return double(g_dump_frames.load(std::memory_order_relaxed)) * kFrameSamples / kSampleRate;
 }
 
 }  // namespace audio_trace
@@ -318,7 +370,8 @@ void Start(const std::filesystem::path& game_data_root) {
 // The .rsd path from a sound ID (r5 points to it).
 extern "C" REX_FUNC(__imp__sub_82336430);
 extern "C" REX_FUNC(sub_82336430) {
-  if (!audio_trace::g_on.load(std::memory_order_acquire)) {
+  const bool tracing = audio_trace::g_on.load(std::memory_order_acquire);
+  if (!tracing && !voice_trace::On()) {
     __imp__sub_82336430(ctx, base);
     return;
   }
@@ -328,6 +381,10 @@ extern "C" REX_FUNC(sub_82336430) {
   const uint64_t id = (uint64_t(audio_trace::Be32(GuestPtr(base, id_address))) << 32) |
                       audio_trace::Be32(GuestPtr(base, id_address + 4));
   __imp__sub_82336430(ctx, base);
+  // The voice trace (findings/63): the last ID this thread asked for, so the
+  // next XmaDecoder built on this thread can be tied to it.
+  if (voice_trace::On()) voice_trace::NoteSoundId(id, return_address);
+  if (!tracing) return;
   const char* kind = return_address == audio_trace::kFromLoadWrapper ? "load"
                      : audio_trace::t_kind                           ? audio_trace::t_kind
                                                                       : "other";

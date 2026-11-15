@@ -648,9 +648,27 @@ static void CardTexts(PPCContext& ctx, uint8_t* base, const std::u16string& head
   }
 }
 
+// What the bar shows this frame, for the subtitles (BarOnScreen): written by
+// FrontEndFrame (game main thread), read by the subtitles' drawing (UI thread).
+// With the time of that frame: when the front end stops updating (a Bink
+// movie plays, a load), the last answer goes stale and counts as nothing.
+namespace {
+std::atomic<int> g_bar_on_screen{0};
+std::atomic<int64_t> g_bar_seen_ms{0};
+int64_t NowMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::steady_clock::now().time_since_epoch())
+      .count();
+}
+}  // namespace
+
 void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
+  g_bar_seen_ms.store(NowMs(), std::memory_order_relaxed);
   const uint32_t bar = Bar(base);
-  if (!bar) return;
+  if (!bar) {
+    g_bar_on_screen.store(int(BarLook::kNone), std::memory_order_relaxed);
+    return;
+  }
   auto add = [&](uint32_t r6, uint32_t r7, uint32_t r8, uint32_t r9, double seconds) {
     const PPCContext saved = ctx;
     ctx.r3.u64 = bar;
@@ -845,9 +863,15 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     }
     scrooby::SetVisible(base, Read32(base, bar + kBarCounter), !g_notice_up.counter.empty());
     scrooby::SetVisible(base, g_bar_glass, true);
+    g_bar_on_screen.store(int(BarLook::kWideBar), std::memory_order_relaxed);
     return;
   }
   const bool ours = g_showing_id != 0 && page_shown;
+  // The page up with our card on it, or with the bar's own wide glass (a game
+  // message with message_bar_card off; the bar's slide in / away included:
+  // the page is shown for all of it).
+  g_bar_on_screen.store(int(ours ? BarLook::kCard : page_shown ? BarLook::kWideBar : BarLook::kNone),
+                        std::memory_order_relaxed);
   for (const uint32_t e : {g_card.glass, g_card.title, g_card.name}) scrooby::SetVisible(base, e, ours);
   const bool game_message = ours && g_showing_id == kGameMessageId;
   scrooby::SetVisible(base, g_card.count,
@@ -865,6 +889,11 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
     }
   }
   scrooby::SetVisible(base, g_bar_glass, !ours);
+}
+
+BarLook BarOnScreen() {
+  if (NowMs() - g_bar_seen_ms.load(std::memory_order_relaxed) > 250) return BarLook::kNone;  // stale
+  return BarLook(g_bar_on_screen.load(std::memory_order_relaxed));
 }
 
 // THE ACHIEVEMENTS SCREEN's sprites (achievements.h MenuSprites).

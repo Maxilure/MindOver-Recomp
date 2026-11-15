@@ -95,6 +95,10 @@ struct Row {
 struct Tab {
   std::u16string name;
   std::vector<Row> rows;
+  // While this tab is open, a sample subtitle shows at the bottom of the
+  // screen in the chosen size and box (the Accessibility tab: subtitles.h
+  // preview, options_menu.h SubtitlePreview).
+  bool subtitle_preview = false;
 };
 
 // The tabs, built once.

@@ -46,6 +46,8 @@
 #include <rex/ui/keybinds.h>
 
 #include "audio_trace.h"
+#include "subtitles/subtitles.h"
+#include "subtitles/voice_trace.h"
 #include "cheats/cheat_menu.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
@@ -344,7 +346,12 @@ class CrashMomApp : public rex::ReXApp {
     // Frame statistics, only with --debug_log_fps / --debug_fps_csv (frame_rate.h).
     frame_rate::StartFrameStats();
     // Sound requests by name, only with --debug_audio_trace (audio_trace.h).
-    audio_trace::Start(game_data_root());
+    // Subtitles (findings/63): their text file first, then the sound index
+    // (also built for them when the audio trace is off), then the voice
+    // follower that feeds them (and logs, with --debug_subtitle_trace).
+    subtitles::Start();
+    audio_trace::Start(game_data_root(), subtitles::On());
+    voice_trace::Start();
   }
 
   // Last hook before the game's main thread starts running.
@@ -429,6 +436,7 @@ class CrashMomApp : public rex::ReXApp {
     overlay_banner::Create(drawer);
     // The frame-rate counter over the picture, in the game's font (fps_overlay.h).
     fps_overlay::Create(drawer, immediate_drawer());
+    subtitles::Create(drawer, immediate_drawer());  // subtitles over the picture (findings/63)
     // The Wii-style gameplay cursor on the mouse pointer (ui/wii_cursor.h).
     wii_cursor::Create(drawer, immediate_drawer());
     // F6: keyboard + mouse keys (input/controls_menu.h), closed at first.

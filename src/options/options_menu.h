@@ -50,6 +50,9 @@ void SeePad(uint32_t user, const uint8_t* gamepad);
 
 // The Options screen is up (for other code that wants to stay out of its way).
 bool Open();
+// The Options screen is open on a tab that shows the subtitles' sample (the
+// Accessibility tab): subtitles.cpp draws a sample line. Any thread.
+bool SubtitlePreview();
 
 // The screen open is the MAIN MENU's (no game in progress), not the pause
 // menu's. False while closed.

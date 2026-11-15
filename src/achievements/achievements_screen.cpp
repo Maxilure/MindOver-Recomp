@@ -17,6 +17,7 @@
 #include "../players/players_setup.h"
 #include "../ui/scrooby.h"
 #include "../language/texts.h"
+#include "../subtitles/subtitles.h"
 
 extern "C" REX_FUNC(__imp__sub_82121B48);  // the pause menu's decision (node 868)
 extern "C" REX_FUNC(__imp__sub_82121EA8);  // the pause menu without Save's decision (node 901)
@@ -153,6 +154,9 @@ void Register() { mouse_menus::SetMenuIndexFilter(&ShiftPauseIndex); }
 // may answer the decision's Drop Out exit, 882, for the menu's owner).
 extern "C" REX_FUNC(sub_82121B48) {
   using namespace achievements_screen;
+  // The pause menu is up (this decision runs every frame it is): the
+  // subtitles step aside meanwhile (subtitles.h NoteMenuFrame).
+  subtitles::NoteMenuFrame();
   if (!options_page::PauseAchievementsAvailable()) {
     __imp__sub_82121B48(ctx, base);
     return;
@@ -183,6 +187,9 @@ extern "C" REX_FUNC(sub_82121B48) {
 // extras; its two-player page lost Drop Out too (exit 914 for it).
 extern "C" REX_FUNC(sub_82121EA8) {
   using namespace achievements_screen;
+  // The pause menu is up (this decision runs every frame it is): the
+  // subtitles step aside meanwhile (subtitles.h NoteMenuFrame).
+  subtitles::NoteMenuFrame();
   if (!options_page::PauseNoSaveDropOutRemoved()) {
     __imp__sub_82121EA8(ctx, base);
     return;
