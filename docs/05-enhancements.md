@@ -151,5 +151,5 @@ subtitles are in the game's text language, English where a line has no
 translation; they step up above the game's message bar (achievements,
 mission messages) and hide while the pause menu is up.
 
-Other languages come later (the English lines are being checked first).
+Translations: Brazilian Portuguese (a draft); other languages later.
 

@@ -938,3 +938,31 @@ Not yet checked by ear: the NPCs' lines in particular (accents, broken
 grammar on purpose: the Elderly Ratcicle, the Sludges); some corrections
 could not be confirmed. Not run on the game yet for these keys.
 
+## 23. Brazilian Portuguese
+
+`subtitles/pt-br.tsv`: every key of `en.tsv` (519: the cartoons, the
+in-engine cutscenes and the in-game sounds) with the same times, 1208
+timed lines. Read over `en.tsv` when the text language is Português
+(Brasil) (`language::RunningText()`, key `pt-br`, s.19); a key it lacked
+would stay English. A draft translation, not yet checked by a native
+speaker.
+
+* Character names stay as they are (Crash, Coco, Aku Aku, Cortex, N. Brio,
+  Melvin...), and so do the game's own coined names (NV, Doominator,
+  Evolvo-Ray, Ratcicle, Grimly, Scorporilla). Descriptive speaker labels
+  are translated (Elderly Ratcicle = "Ratcicle idoso", RhinoRoller cub =
+  "Filhote RhinoRoller", Narrator = "Narrador"...), and place names where
+  they translate (Wumpa Island = "Ilha Wumpa", Evil Public School =
+  "Escola Pública do Mal", Junkyard = "Ferro-Velho").
+* The cartoons' and in-engine cutscenes' lines keep their English times
+  one for one; an in-game sound's text is split again (84 characters a
+  row) over the same span, since the Portuguese rows differ in length.
+* Only letters of the game's font: checked against `tools/translations.py`'s
+  font list. `"` is not in it (also used by two English lines, changed to
+  `'` in both files).
+
+Tested: the file parsed (five fields, valid times, the same 519 keys as
+`en.tsv`). The game reads a `pt-br.tsv` over `en.tsv` with the text
+language Português (Brasil) (seen in the log with a test file); this file's
+lines not yet seen on screen.
+
