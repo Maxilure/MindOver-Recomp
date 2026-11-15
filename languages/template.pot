@@ -1412,7 +1412,7 @@ msgstr ""
 msgid "Keep Playing"
 msgstr ""
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1544
 msgid "Pause"
 msgstr ""
 
@@ -1652,6 +1652,10 @@ msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1373
+msgid "Show Subtitles"
+msgstr ""
+
+#: src/options/options_settings.cpp:1474
 msgid "Subtitles"
 msgstr ""
 
@@ -1783,135 +1787,135 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
-#: src/options/options_settings.cpp:1472
+#: src/options/options_settings.cpp:1473
 msgid "Accessibility"
 msgstr ""
 
-#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 msgid "None"
 msgstr ""
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 msgid "Move Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 msgid "Move Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 msgid "Move Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 msgid "Move Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 msgid "Walk (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 msgid "Spin"
 msgstr ""
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 msgid "Jump"
 msgstr ""
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 msgid "Light Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 msgid "Heavy Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 msgid "Block (Hold)"
 msgstr ""
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 msgid "Jack / Use"
 msgstr ""
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 msgid "Titan Special Attack"
 msgstr ""
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 msgid "Pocket / Unpocket"
 msgstr ""
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 msgid "Map"
 msgstr ""
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 msgid "Menu: Confirm"
 msgstr ""
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 msgid "Menu: Back"
 msgstr ""
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 msgid "Menu: Previous Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 msgid "Menu: Next Tab"
 msgstr ""
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 msgid "Menu: X Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 msgid "Menu: Y Action"
 msgstr ""
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 msgid "D-pad Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 msgid "D-pad Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 msgid "D-pad Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 msgid "D-pad Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 msgid "Right Stick Up"
 msgstr ""
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 msgid "Right Stick Down"
 msgstr ""
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 msgid "Right Stick Left"
 msgstr ""
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 msgid "Right Stick Right"
 msgstr ""
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 msgid "Left Bumper"
 msgstr ""
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 msgid "Left Stick Click"
 msgstr ""
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 msgid "Right Stick Click"
 msgstr ""
 

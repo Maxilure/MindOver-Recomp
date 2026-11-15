@@ -1730,7 +1730,7 @@ msgstr "Janela em segundo plano"
 msgid "Keep Playing"
 msgstr "Continuar jogando"
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Pause"
 msgstr "Pausa"
@@ -2024,6 +2024,11 @@ msgstr "A barra larga de mensagens do jogo."
 
 #: src/options/options_settings.cpp:1373
 #, fuzzy
+msgid "Show Subtitles"
+msgstr "Mostrar legendas"
+
+#: src/options/options_settings.cpp:1474
+#, fuzzy
 msgid "Subtitles"
 msgstr "Legendas"
 
@@ -2187,167 +2192,167 @@ msgstr "Jogabilidade"
 msgid "Language"
 msgstr "Idioma"
 
-#: src/options/options_settings.cpp:1472
+#: src/options/options_settings.cpp:1473
 #, fuzzy
 msgid "Accessibility"
 msgstr "Acessibilidade"
 
-#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Nenhuma"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Up"
 msgstr "Para cima"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Down"
 msgstr "Para baixo"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Left"
 msgstr "Para a esquerda"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Right"
 msgstr "Para a direita"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Andar (segurar)"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Spin"
 msgstr "Girar"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Jump"
 msgstr "Pular"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Light Attack"
 msgstr "Ataque leve"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Ataque pesado"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Bloquear (segurar)"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Dominar / Usar"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Ataque especial do titã"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "Guardar / Tirar"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Map"
 msgstr "Mapa"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Menu: confirmar"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Menu: voltar"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Menu: aba anterior"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Menu: próxima aba"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Menu: ação X"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Menu: ação Y"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Direcional para cima"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Direcional para baixo"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Direcional para a esquerda"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Direcional para a direita"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Analógico direito para cima"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Analógico direito para baixo"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Analógico direito para a esquerda"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Analógico direito para a direita"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Botão superior esquerdo"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Clicar analógico esquerdo"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Clicar analógico direito"

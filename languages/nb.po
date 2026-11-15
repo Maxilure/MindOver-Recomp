@@ -1722,7 +1722,7 @@ msgstr "Vindu i bakgrunnen"
 msgid "Keep Playing"
 msgstr "Fortsett å spille"
 
-#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1099 src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Pause"
 msgstr "Pause"
@@ -2015,6 +2015,10 @@ msgid "The game's own wide message bar."
 msgstr ""
 
 #: src/options/options_settings.cpp:1373
+msgid "Show Subtitles"
+msgstr ""
+
+#: src/options/options_settings.cpp:1474
 msgid "Subtitles"
 msgstr ""
 
@@ -2163,166 +2167,166 @@ msgstr "Spilling"
 msgid "Language"
 msgstr "Språk"
 
-#: src/options/options_settings.cpp:1472
+#: src/options/options_settings.cpp:1473
 msgid "Accessibility"
 msgstr ""
 
-#: src/options/options_settings.cpp:1518 launcher/main.cpp:953
+#: src/options/options_settings.cpp:1520 launcher/main.cpp:953
 #, fuzzy
 msgid "None"
 msgstr "Ingen"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Up"
 msgstr "Opp"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Down"
 msgstr "Ned"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Left"
 msgstr "Venstre"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Move Right"
 msgstr "Høyre"
 
-#: src/options/options_settings.cpp:1540
+#: src/options/options_settings.cpp:1542
 #, fuzzy
 msgid "Walk (Hold)"
 msgstr "Gå (hold)"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Spin"
 msgstr "Spinn"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Jump"
 msgstr "Hopp"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Light Attack"
 msgstr "Lett angrep"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Heavy Attack"
 msgstr "Tungt angrep"
 
-#: src/options/options_settings.cpp:1541
+#: src/options/options_settings.cpp:1543
 #, fuzzy
 msgid "Block (Hold)"
 msgstr "Blokker (hold)"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Jack / Use"
 msgstr "Jacke / Bruk"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Titan Special Attack"
 msgstr "Titanens spesialangrep"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Pocket / Unpocket"
 msgstr "I lomma / Fram"
 
-#: src/options/options_settings.cpp:1542
+#: src/options/options_settings.cpp:1544
 #, fuzzy
 msgid "Map"
 msgstr "Kart"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Confirm"
 msgstr "Meny: bekreft"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Back"
 msgstr "Meny: tilbake"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Previous Tab"
 msgstr "Meny: forrige fane"
 
-#: src/options/options_settings.cpp:1543
+#: src/options/options_settings.cpp:1545
 #, fuzzy
 msgid "Menu: Next Tab"
 msgstr "Meny: neste fane"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Menu: X Action"
 msgstr "Meny: X-handling"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "Menu: Y Action"
 msgstr "Meny: Y-handling"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Up"
 msgstr "Retningsknapp opp"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Down"
 msgstr "Retningsknapp ned"
 
-#: src/options/options_settings.cpp:1544
+#: src/options/options_settings.cpp:1546
 #, fuzzy
 msgid "D-pad Left"
 msgstr "Retningsknapp venstre"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "D-pad Right"
 msgstr "Retningsknapp høyre"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Up"
 msgstr "Høyre styrespak opp"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Down"
 msgstr "Høyre styrespak ned"
 
-#: src/options/options_settings.cpp:1545
+#: src/options/options_settings.cpp:1547
 #, fuzzy
 msgid "Right Stick Left"
 msgstr "Høyre styrespak venstre"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Right Stick Right"
 msgstr "Høyre styrespak høyre"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Left Bumper"
 msgstr "Venstre skulderknapp"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Left Stick Click"
 msgstr "Trykk venstre styrespak"
 
-#: src/options/options_settings.cpp:1546
+#: src/options/options_settings.cpp:1548
 #, fuzzy
 msgid "Right Stick Click"
 msgstr "Trykk høyre styrespak"

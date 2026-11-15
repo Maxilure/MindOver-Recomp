@@ -1370,7 +1370,7 @@ Row MessageBarRow() {
 // on mid-scene shows the line being spoken.
 Row SubtitlesRow() {
   Row r;
-  r.label = tr(u"Subtitles");
+  r.label = tr(u"Show Subtitles");
   r.values = [](Env&) { return std::vector<std::u16string>{tr(u"Off"), tr(u"On")}; };
   r.get = [](Env&) { return rex::cvar::Query<int32_t>("subtitles") != 0 ? 1 : 0; };
   r.set = [](Env&, int i) { SetFlag("subtitles", i ? "1" : "0"); };
@@ -1468,9 +1468,11 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Controls"), ControlsRows()});
   tabs.push_back({tr(u"Gameplay"), GameplayRows()});
   tabs.push_back({tr(u"Language"), {TextLanguageRow(), VoiceLanguageRow()}});
-  // The subtitles' look, with a sample line on screen while the tab is open.
+  // The subtitles' rows under their heading (cyan, like Display's "HUD"),
+  // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
-                  {SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(), SubtitleSpeakersRow()},
+                  {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
+                   SubtitleSpeakersRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
