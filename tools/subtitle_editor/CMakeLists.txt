@@ -30,7 +30,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# The SDK's FFmpeg libraries are built against the DLL C runtime (/MD): the
+# editor links them, so it uses the same runtime (else lld-link: dllimport bsearch...).
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 set(REPO ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(SDK_THIRDPARTY ${REPO}/thirdparty/rexglue-sdk/thirdparty)
@@ -107,6 +109,8 @@ add_executable(subtitle_editor WIN32
 target_include_directories(subtitle_editor PRIVATE ${REPO}/src ${SDK_THIRDPARTY}/FFmpeg)
 target_link_libraries(subtitle_editor PRIVATE subtitle_editor_imgui subtitle_editor_bink
     ${SE_AVCODEC} ${SE_AVUTIL})
-if(NOT WIN32)
+if(WIN32)
+    target_link_libraries(subtitle_editor PRIVATE bcrypt)  # FFmpeg's av_get_random_seed
+else()
     target_link_libraries(subtitle_editor PRIVATE m)
 endif()
