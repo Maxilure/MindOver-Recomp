@@ -51,6 +51,7 @@
 //    outfit's package, lets go of the old one), which lands in our setter.
 // =============================================================================
 
+#include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "../decomp/simple_setup.h"
 #include "outfits.h"
 #include "../input/prompt_icons.h"
@@ -1156,6 +1157,7 @@ extern "C" REX_FUNC(sub_820E57A0) {
     g_levelup_source = it->second.render;
   }
   __imp__sub_820E57A0(ctx, base);
+  reduce_motion::UpgradeScreenBuilt(base, screen);  // Reduce Motion: the character held still
   const uint32_t model = Read32(screen + 0x34);
   const uint32_t render = g_levelup_render;
   const uint32_t object = render ? Read32(render + kRenderObject) : 0;

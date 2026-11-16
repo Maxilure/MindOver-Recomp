@@ -21,4 +21,11 @@ int MotionBlurLevel();
 // between 0 and 1) is taken back out of `scale`.
 double GameTimeScale(const uint8_t* base, uint32_t manager, double scale);
 
+// The Level Up / upgrade screen (CUpgradeScreenAction) `screen`: its shown
+// character was just built (after sub_820E57A0), or the screen is about to
+// close (before sub_820E5F20). With the setting on, that character's
+// animation stays on its first frame.
+void UpgradeScreenBuilt(const uint8_t* base, uint32_t screen);
+void UpgradeScreenClosing(const uint8_t* base, uint32_t screen);
+
 }  // namespace reduce_motion

@@ -87,8 +87,8 @@ constexpr uint32_t kIconWobble = 0x6C;      // CIconBehaviour: its wobble's time
 constexpr uint32_t kCollectableTimer = 0xC4;  // Collectable: the current state's timer (seconds)
 constexpr uint32_t kCollectableState = 0xC8;  // Collectable: its state (4 = flying to the player)
 constexpr uint32_t kStateFlying = 4;
-constexpr float kFlightSeconds = 0.5f;
-constexpr uint32_t kUpgradePuppet = 0x3C;   // CUpgradeScreenAction: the shown character's puppet      // the flight's progress is timer x 2 (constant 0x8201FB74)
+constexpr float kFlightSeconds = 0.5f;      // the flight's progress is timer x 2 (constant 0x8201FB74)
+constexpr uint32_t kUpgradePuppet = 0x3C;   // CUpgradeScreenAction: the shown character's puppet
 
 // A big-endian guest word.
 uint32_t LoadWord(const uint8_t* base, uint32_t address) {
@@ -222,32 +222,23 @@ bool IsFrozenPuppet(uint32_t puppet) {
   return std::find(g_frozen_puppets.begin(), g_frozen_puppets.end(), puppet) != g_frozen_puppets.end();
 }
 
+// Called by the port's own wrappers of the two screen functions (they are
+// already overridden for other work: players/outfits.cpp sub_820E57A0,
+// players/menu_input.cpp sub_820E5F20).
+void UpgradeScreenBuilt(const uint8_t* base, uint32_t screen) {
+  const uint32_t puppet = LoadWord(base, screen + kUpgradePuppet);
+  if (puppet == 0) return;
+  std::lock_guard lock(g_frozen_mutex);
+  g_frozen_puppets.push_back(puppet);
+}
+void UpgradeScreenClosing(const uint8_t* base, uint32_t screen) {
+  const uint32_t puppet = LoadWord(base, screen + kUpgradePuppet);
+  std::lock_guard lock(g_frozen_mutex);
+  g_frozen_puppets.erase(std::remove(g_frozen_puppets.begin(), g_frozen_puppets.end(), puppet),
+                         g_frozen_puppets.end());
+}
+
 }  // namespace reduce_motion
-
-// CUpgradeScreenAction: builds the shown character (r3 = the screen).
-extern "C" REX_FUNC(__imp__sub_820E57A0);
-extern "C" REX_FUNC(sub_820E57A0) {
-  const uint32_t screen = ctx.r3.u32;
-  __imp__sub_820E57A0(ctx, base);
-  const uint32_t puppet = reduce_motion::LoadWord(base, screen + reduce_motion::kUpgradePuppet);
-  if (puppet != 0) {
-    std::lock_guard lock(reduce_motion::g_frozen_mutex);
-    reduce_motion::g_frozen_puppets.push_back(puppet);
-  }
-}
-
-// CUpgradeScreenAction's exit (slot 6): its puppet is forgotten before the
-// original destroys it.
-extern "C" REX_FUNC(__imp__sub_820E5F20);
-extern "C" REX_FUNC(sub_820E5F20) {
-  const uint32_t puppet = reduce_motion::LoadWord(base, ctx.r3.u32 + reduce_motion::kUpgradePuppet);
-  {
-    std::lock_guard lock(reduce_motion::g_frozen_mutex);
-    auto& list = reduce_motion::g_frozen_puppets;
-    list.erase(std::remove(list.begin(), list.end(), puppet), list.end());
-  }
-  __imp__sub_820E5F20(ctx, base);
-}
 
 // choreo::Puppet::Advance: r3 = the puppet, f1 = the time step. f1 is put
 // back after a frozen call.
