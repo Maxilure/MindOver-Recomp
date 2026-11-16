@@ -74,6 +74,10 @@ class Font {
   // height of a capital letter's ink inside it (for sizing text).
   float cell_height() const { return cell_height_; }
   float cap_height() const { return cap_height_; }
+  // How far below a cell's top the middle of a capital's ink is (pixels at
+  // the font's size): where a button picture among the letters is centred
+  // (the subtitles' prompt pictures, subtitles.cpp).
+  float cap_middle() const { return cap_middle_; }
 
   // Width in pixels of a line at the font's own size.
   float Measure(std::u16string_view text) const;
@@ -96,7 +100,7 @@ class Font {
   // 2026-10-15).
   std::unordered_map<char16_t, float> picture_advance_;
   float PictureAdvance(char16_t c) const;
-  float cell_height_ = 0, cap_height_ = 0;
+  float cell_height_ = 0, cap_height_ = 0, cap_middle_ = 0;
 };
 
 }  // namespace game_font

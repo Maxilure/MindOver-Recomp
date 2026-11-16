@@ -2226,6 +2226,104 @@ char16_t KeyGlyph(Input key, SlotSize size) {
 
 std::u16string TextForPlayer(std::u16string text, int p) { return ForPlayer(std::move(text), p); }
 
+// --- Prompt pictures for text the port draws itself (PromptPicture, the .h) ---------
+namespace {
+
+// The disc prompt `glyph`'s entry in kBasePrompts (null: not one).
+const Prompt* DiscPrompt(char16_t glyph) {
+  for (size_t k = 0; k < kDiscPrompts; ++k) {
+    if (kBasePrompts[k].character == glyph) return &kBasePrompts[k];
+  }
+  return nullptr;
+}
+
+// The game's page of `prompt` in the small font (Titans_Small, the font the
+// subtitles use), else in any font; null before the fonts were checked.
+// With g.mutex held.
+const GuestPage* PageOf(const Prompt* prompt) {
+  const GuestPage* any = nullptr;
+  for (const GuestPage& gp : g.pages) {
+    if (gp.prompt != prompt) continue;
+    if (gp.name.rfind("Titans_Small", 0) == 0) return &gp;
+    if (!any) any = &gp;
+  }
+  return any;
+}
+
+// What player p's picture of `prompt` shows: Describe() as for the game's
+// own pages ("" = the disc's own picture: "disc"). With g.mutex held.
+std::string PictureKeyOf(const Prompt* prompt, int p) {
+  const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
+  const Look look = LookOf(uint32_t(std::clamp(p, 0, 3)));
+  std::string d;
+  if (driver) {
+    d = Describe(*prompt, driver->bindings(), look.keys, look.dark, look.pad_style);
+  } else if (!look.keys && look.pad_style != kOriginalStyle && PadButtonOf(prompt->source) >= 0) {
+    d = "P " + std::to_string(look.pad_style) + " " + std::to_string(PadButtonOf(prompt->source));
+  }
+  return d.empty() ? "disc" : d;
+}
+
+}  // namespace
+
+bool IsPromptGlyph(char16_t c) { return DiscPrompt(c) != nullptr; }
+
+std::string PromptPictureKey(char16_t glyph, int p) {
+  const Prompt* prompt = DiscPrompt(glyph);
+  if (!prompt) return {};
+  std::lock_guard<std::mutex> lock(g.mutex);
+  if (!PageOf(prompt)) return {};
+  return PictureKeyOf(prompt, p);
+}
+
+bool PromptPicture(char16_t glyph, int p, PromptPictureData* out) {
+  const Prompt* prompt = DiscPrompt(glyph);
+  if (!prompt || !out) return false;
+  std::lock_guard<std::mutex> lock(g.mutex);
+  const GuestPage* gp = PageOf(prompt);
+  if (!gp || !gp->used_height) return false;
+  const std::string key = PictureKeyOf(prompt, p);
+  Picture page;
+  if (key == "disc") {
+    // The game's own picture: the disc's page (8-bit + palette) as RGBA, at
+    // the size the game's page has (the font may hold it bigger: `k` in MakePage).
+    if (g.disc.empty()) return false;
+    const auto at = g.disc[0].page_of.find(prompt->source);
+    if (at == g.disc[0].page_of.end()) return false;
+    const DiscPage& dp = g.disc[0].pages.at(at->second);
+    if (!dp.width || !dp.height || !dp.colours) return false;
+    Picture disc;
+    disc.width = dp.width;
+    disc.height = dp.height;
+    disc.rgba.resize(size_t(dp.width) * dp.height * 4);
+    for (uint32_t i = 0; i < dp.width * dp.height; ++i) {
+      const uint8_t* bgra = &dp.palette[4 * size_t(std::min<uint32_t>(dp.indices[i], dp.colours - 1))];
+      disc.rgba[4 * size_t(i) + 0] = bgra[2];
+      disc.rgba[4 * size_t(i) + 1] = bgra[1];
+      disc.rgba[4 * size_t(i) + 2] = bgra[0];
+      disc.rgba[4 * size_t(i) + 3] = bgra[3];
+    }
+    page = disc.width == gp->width && disc.height == gp->height ? std::move(disc)
+                                                                : Resize(disc, gp->width, gp->height);
+  } else {
+    page = Draw(key, gp->width, gp->height, gp->ink);  // as the game's page gets it (Show)
+  }
+  if (page.empty()) return false;
+  // Only the rows the glyph shows (a stick's page: the top 3/4).
+  page.height = std::min(page.height, gp->used_height);
+  page.rgba.resize(size_t(page.width) * page.height * 4);
+  out->key = key;
+  out->width = page.width;
+  out->height = page.height;
+  out->rgba = std::move(page.rgba);
+  out->draw_height = float(out->height);
+  // The rotate arrow on keys: drawn stretched to 2:1 for the game's font,
+  // which then draws the page SQUARE (NarrowRotate): the same here.
+  const bool narrowed = prompt->kind == Kind::kSpin && (key[0] == 'L' || key[0] == 'D');
+  out->draw_width = narrowed ? float(out->width) / 2 : float(out->width);
+  return true;
+}
+
 char16_t ButtonGlyph(std::string_view pad, SlotSize size) {
   if (!g_menu_glyphs.load()) return 0;
   // The 360 control names of input/bindings.h (ActionInfo::pad).

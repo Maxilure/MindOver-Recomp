@@ -57,6 +57,7 @@
 #include <thread>
 #include <vector>
 
+#include "button_pictures.h"
 #include "exchange.h"
 #include "icons.h"
 #include "movie_archive.h"
@@ -273,6 +274,13 @@ class Editor {
     }
     save_to_source_ = !source_dir_.empty();
     movies_.Open(root_ / "game");
+    // The button tags' pictures: the source tree's assets/, an installed
+    // game's program/assets/, or next to the editor; the keys = the player's
+    // own controls.toml (else the defaults).
+    buttons_ = std::make_unique<ButtonPictures>(
+        renderer_, std::vector<fs::path>{root_, root_ / "program",
+                                         fs::path(SDL_GetBasePath() ? SDL_GetBasePath() : ".")});
+    buttons_->ReadControls({root_ / "user" / "controls.toml"});
     // Who checks lines on this PC (kept in the player's own folder, never shared
     // by itself: it only goes out inside the checks they save).
     {
@@ -1529,6 +1537,24 @@ class Editor {
                    show_preview_)) {
       show_preview_ = !show_preview_;
     }
+    // BUTTON TAGS: which pictures the preview and the "Shows as" lines draw
+    // ({Y} -> the key bound to heavy attack, or a controller's button).
+    ToolbarGap(ImGui::GetFontSize() * 12.0f);
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.0f);
+    if (ImGui::BeginCombo("##button_style", StyleName(buttons_->style))) {
+      for (int i = 0; i < int(ButtonStyle::kCount); ++i) {
+        const ButtonStyle st = ButtonStyle(i);
+        if (ImGui::Selectable(StyleName(st), st == buttons_->style)) buttons_->style = st;
+      }
+      ImGui::EndCombo();
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("Button tags ({A} {B} {X} {Y} {LB} {RB} {LT} {RT} {Back} {Start} {LS} {RS} {Rotate} {Spin})\n"
+                        "show as this device's pictures. On keyboard + mouse a tag is the ACTION on that\n"
+                        "button ({Y} = heavy attack): the key shown is the one bound to it%s.",
+                        buttons_->controls_file().empty() ? " (the default keys: no controls.toml found)"
+                                                          : " in user/controls.toml");
+    }
   }
 
   // THE PREVIEW: the picture (a cartoon's frame at that moment, else black)
@@ -1539,6 +1565,7 @@ class Editor {
   // (src/subtitles/subtitles.cpp; drawn here in the desktop's font, not the
   // game's).
   void DrawPreview(const Clip& c, double length) {
+    buttons_->KeepControlsFresh();  // a rebind in the game shows here at once
     const ImVec2 avail = ImGui::GetContentRegionAvail();
     float w = avail.x, h = avail.x * 9.0f / 16.0f;
     if (h > avail.y) {
@@ -1585,6 +1612,9 @@ class Editor {
     if (now.size() > 2) now.erase(now.begin(), now.end() - 2);
     if (now.empty()) return;
     ImFont* font = ImGui::GetFont();
+    // Text widths count button tags as their pictures (button_pictures.h).
+    ButtonPictures* pics = buttons_.get();
+    const auto width = [&](float sz, const std::string& t) { return RichWidth(font, sz, pics, t); };
     const float size = h * 0.042f;  // ~ the game's Medium size on a 720p picture
     const float max_w = w * 0.70f;
     const ImU32 white = IM_COL32(255, 255, 255, 255), yellow = IM_COL32(255, 217, 64, 255);
@@ -1596,7 +1626,7 @@ class Editor {
     for (const Piece* p : now) {
       std::string label = p->speaker.empty() ? "" : p->speaker + ": ";
       std::string row_text;
-      float row_w = font->CalcTextSizeA(size, FLT_MAX, 0, label.c_str()).x;
+      float row_w = width(size, label);
       const auto flush = [&]() {
         rows.push_back({label, row_text});
         label.clear();
@@ -1615,11 +1645,11 @@ class Editor {
         while (j < text.size() && text[j] != ' ' && text[j] != '\n') ++j;
         const std::string word = text.substr(i, j - i);
         const std::string piece = row_text.empty() ? word : " " + word;
-        const float pw = font->CalcTextSizeA(size, FLT_MAX, 0, piece.c_str()).x;
+        const float pw = width(size, piece);
         if (row_w + pw > max_w && row_w > 0) {
           flush();
           row_text = word;
-          row_w = font->CalcTextSizeA(size, FLT_MAX, 0, word.c_str()).x;
+          row_w = width(size, word);
         } else {
           row_text += piece;
           row_w += pw;
@@ -1634,25 +1664,18 @@ class Editor {
     float top = bottom - line_h * float(rows.size());
     float widest = 0;
     for (const Row& r : rows) {
-      widest = std::max(widest, font->CalcTextSizeA(size, FLT_MAX, 0, (r.speaker + r.text).c_str()).x);
+      widest = std::max(widest, width(size, r.speaker + r.text));
     }
     const float cx = (p0.x + p1.x) * 0.5f;
     dl->AddRectFilled(ImVec2(cx - widest * 0.5f - size * 0.5f, top - size * 0.15f),
                       ImVec2(cx + widest * 0.5f + size * 0.5f, bottom + size * 0.15f), IM_COL32(0, 0, 0, 150),
                       size * 0.25f);
     for (const Row& r : rows) {
-      const float rw = font->CalcTextSizeA(size, FLT_MAX, 0, (r.speaker + r.text).c_str()).x;
+      const float rw = width(size, r.speaker + r.text);
       float x = cx - rw * 0.5f;
+      // Words outlined like the game's; tags as button pictures.
       const auto outlined = [&](const std::string& s, ImU32 colour) {
-        if (s.empty()) return;
-        const float o = std::max(1.0f, size * 0.06f);
-        for (int dx = -1; dx <= 1; ++dx) {
-          for (int dy = -1; dy <= 1; ++dy) {
-            if (dx || dy) dl->AddText(font, size, ImVec2(x + dx * o, top + dy * o), IM_COL32(0, 0, 0, 220), s.c_str());
-          }
-        }
-        dl->AddText(font, size, ImVec2(x, top), colour, s.c_str());
-        x += font->CalcTextSizeA(size, FLT_MAX, 0, s.c_str()).x;
+        if (!s.empty()) x += DrawRich(dl, font, size, pics, x, top, colour, s, true);
       };
       outlined(r.speaker, yellow);
       outlined(r.text, white);
@@ -2317,7 +2340,24 @@ class Editor {
                                            ImVec2(-1, ImGui::GetTextLineHeight() * 2.4f + ImGui::GetStyle().FramePadding.y * 2));
       RememberWhenActivated(i);
       // Problems the game would show.
-      std::string problems;
+      std::string problems_tags;
+      // BUTTON TAGS: the line as it will look (pictures in the style picked
+      // in the toolbar), live while typing.
+      if (const std::string unknown = UnknownButtonTags(words); words.find('{') != std::string::npos) {
+        const std::vector<RichRun> runs = SplitTags(words);
+        if (std::any_of(runs.begin(), runs.end(), [](const RichRun& r) { return r.is_tag; })) {
+          ImGui::TextDisabled("Shows as:");
+          ImGui::SameLine();
+          const ImVec2 at = ImGui::GetCursorScreenPos();
+          const float avail = std::max(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 4);
+          const float h = DrawRichWrapped(ImGui::GetWindowDrawList(), ImGui::GetFont(), ImGui::GetFontSize(),
+                                          buttons_.get(), at.x, at.y, avail,
+                                          ImGui::GetColorU32(ImGuiCol_Text), words);
+          ImGui::Dummy(ImVec2(avail, h));
+        }
+        if (!unknown.empty()) problems_tags = "Not a button tag: " + unknown + "  ";
+      }
+      std::string problems = problems_tags;
       if (const std::string missing = MissingFontCharacters(words); !missing.empty()) {
         problems += "The game's font can't show: " + missing + "  ";
       }
@@ -2536,6 +2576,8 @@ class Editor {
   std::vector<std::pair<float, float>> peaks_;
   MovieArchive movies_;
   SDL_Renderer* renderer_ = nullptr;
+  // The button tags' pictures (button_pictures.h): made with the renderer.
+  std::unique_ptr<ButtonPictures> buttons_;
   MovieVideo video_;                       // the selected cartoon's picture
   SDL_Texture* video_texture_ = nullptr;   // its frame on screen
   int video_tex_w_ = 0, video_tex_h_ = 0;

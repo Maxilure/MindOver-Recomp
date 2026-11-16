@@ -3,6 +3,8 @@
 // =============================================================================
 #include "subtitle_texts.h"
 
+#include "subtitles/button_tags.h"
+
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
@@ -569,11 +571,28 @@ std::string TodayUtc() {
 }
 
 std::string MissingFontCharacters(const std::string& text) {
+  // A "{...}" pair is a BUTTON TAG (src/subtitles/button_tags.h): the game
+  // draws a picture there, not the braces. Known or not, its braces are left
+  // out here (an unknown one: UnknownButtonTags says so).
+  std::string rest = text;
+  std::vector<std::pair<size_t, size_t>> pairs;
+  button_tags::ForEach(std::string_view(text), [&](size_t at, size_t length, const button_tags::Tag*) {
+    pairs.push_back({at, length});
+  });
+  for (size_t k = pairs.size(); k-- > 0;) rest.erase(pairs[k].first, pairs[k].second);
   std::string missing;
   for (char c : std::string_view("\"*<>^_`{|}~\t")) {
-    if (text.find(c) != std::string::npos) missing += c == '\t' ? std::string("TAB") : std::string(1, c);
+    if (rest.find(c) != std::string::npos) missing += c == '\t' ? std::string("TAB") : std::string(1, c);
   }
   return missing;
+}
+
+std::string UnknownButtonTags(const std::string& text) {
+  std::string out;
+  button_tags::ForEach(std::string_view(text), [&](size_t at, size_t length, const button_tags::Tag* tag) {
+    if (!tag) out += (out.empty() ? "" : " ") + text.substr(at, length);
+  });
+  return out;
 }
 
 std::string FormatTime(double seconds) {

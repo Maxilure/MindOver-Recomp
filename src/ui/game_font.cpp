@@ -195,6 +195,10 @@ bool Font::Load(std::string_view name) {
       }
     }
     cap_height_ = top_row >= 0 ? float(bottom_row - top_row + 1) : cell_height_ * 0.6f;
+    // The capital's middle from the cell's top: the 'H' is drawn from page row
+    // y0 at `h->top` below the cell's top (Load skipped the cell's row 0).
+    cap_middle_ = top_row >= 0 ? h->top + float(top_row + bottom_row + 1) * 0.5f - float(y0)
+                               : cell_height_ * 0.5f;
     REXLOG_INFO("Game font: {} read ({} glyphs, {} pages, cell {:.0f} px, capitals {:.0f} px)",
                 name, glyphs_.size(), pages_.size(), cell_height_, cap_height_);
     return true;

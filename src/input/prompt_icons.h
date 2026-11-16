@@ -206,6 +206,37 @@ int64_t PadActivity(int p);
 // (The co-op outfit picker's cards, players/outfit_picker.cpp.)
 std::u16string TextForPlayer(std::u16string text, int p);
 
+// A PROMPT PICTURE FOR TEXT THE PORT DRAWS ITSELF (2026-11-16, the subtitles:
+// subtitles/subtitles.cpp, findings/63). The subtitles are drawn over the
+// finished picture with OUR copy of the game's font (ui/game_font.h), not
+// through the game's own font, so the prompt pages this file keeps in the
+// game's memory never reach them. Instead they ask here for the picture
+// itself, as host RGBA:
+//   `glyph` = one of the disc's prompt characters (± ² ³ ´ µ ¶ · ¸ ½ ¾ =
+//   A B X Y Back Start RT RB LT LB, ¹ left stick, ¥ right stick, ¼ rotate);
+//   `p` = whose look (0-3: keys or which controller set, as LookOf decides
+//   for the game's own prompts).
+// PromptPictureKey is cheap (call it every frame): what the picture shows
+// now ("" = not ready: the fonts aren't read yet, or not a prompt glyph);
+// a new key = the picture changed (another device was used, a key rebound,
+// another Controller Icons style). PromptPicture draws it (a resize or two:
+// call it only when the key changed). Sizes in the FONT's pixels (the size
+// the game draws the picture at, next to letters of the same font):
+// `width` x `height` = the picture (the page's used part), `draw_width` =
+// how wide to draw it (the rotate arrow on keys is drawn square: the font
+// narrows its record then, and the pen step after it shrinks by as much).
+// Any thread.
+struct PromptPictureData {
+  std::string key;
+  uint32_t width = 0, height = 0;  // pixels of `rgba`, rows top first, not premultiplied
+  std::vector<uint8_t> rgba;
+  float draw_width = 0, draw_height = 0;  // font pixels
+};
+std::string PromptPictureKey(char16_t glyph, int p);
+bool PromptPicture(char16_t glyph, int p, PromptPictureData* out);
+// Is `c` one of the disc's prompt characters above? Any thread.
+bool IsPromptGlyph(char16_t c);
+
 // The name ("Titans_Large", "Titans_Small") of the game's font object at
 // `font` (a pure3d::TextureFont the loader built), "" if it isn't one of
 // them. For measuring texts (input/mouse_menus.h). Any thread.

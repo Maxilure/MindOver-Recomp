@@ -159,5 +159,8 @@ std::string FormatTime(double seconds);
 // Characters the game's subtitle font has no picture for (they'd show as
 // nothing): " * < > ^ _ ` { | } ~ (findings/49 s.8), plus TAB.
 std::string MissingFontCharacters(const std::string& text);
+// The "{...}" of a line that aren't button tags (a typo: {Yy}), space-separated;
+// "" = none. The game leaves them as written.
+std::string UnknownButtonTags(const std::string& text);
 
 }  // namespace subtitle_editor

@@ -103,8 +103,10 @@ add_executable(subtitle_editor WIN32
     movie_archive.cpp   # the story cartoons (Bink) and their dialogue tracks
     exchange.cpp        # .srt / .wav to and from other subtitle programs
     icons.cpp           # the button symbols, drawn (no symbol font needed)
+    button_pictures.cpp # the button tags' pictures (Xelu's prompts: assets/prompts)
     ${REPO}/src/audio/xma_stream.cpp)  # the port's XMA decoder core
-target_include_directories(subtitle_editor PRIVATE ${REPO}/src ${SDK_THIRDPARTY}/FFmpeg)
+target_include_directories(subtitle_editor PRIVATE ${REPO}/src ${SDK_THIRDPARTY}/FFmpeg
+    ${SDK_THIRDPARTY}/stb)  # stb_image: the PNG pictures
 target_link_libraries(subtitle_editor PRIVATE subtitle_editor_imgui subtitle_editor_bink
     ${SE_AVCODEC} ${SE_AVUTIL})
 if(NOT WIN32)

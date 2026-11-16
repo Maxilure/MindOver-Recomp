@@ -57,6 +57,8 @@
 #include "achievements/achievements.h"
 #include "language/language.h"
 #include "language/texts.h"
+#include "input/prompt_icons.h"
+#include "subtitles/button_tags.h"
 #include "ui/font_letters.h"
 #include "options/options_menu.h"
 #include "ui/game_font.h"
@@ -237,6 +239,39 @@ double ParseTime(std::string_view s) {
   try { return minutes * 60.0 + std::stod(std::string(s)); } catch (...) { return -1; }
 }
 
+// BUTTON TAGS (2026-11-16, findings/63 s.27): a control named in a line
+// ("press the Y button") can be written as a TAG, which the subtitle shows
+// as the PLAYER'S OWN button picture: their key on the keyboard and mouse,
+// else their controller's button (PlayStation, Switch, Xbox Series, or the
+// game's own Xbox 360 pictures), exactly as the game's own button prompts
+// do (input/prompt_icons.h). A tag is the 360 control's name in braces,
+// upper or lower case:
+//   {A} {B} {X} {Y}  {LB} {RB} {LT} {RT}  {Back} {Start}
+//   {LS} {RS}        the left / right stick (keys: the four move keys)
+//   {Rotate}         the "rotate" arrow alone
+//   {Spin}           left stick + rotate arrow, the game's own way of
+//                    writing a spin (circle the stick)
+// The tags become the game's prompt characters (U+00A5..U+00BE, the ones
+// its text bank writes), which the drawing below swaps for pictures. An
+// unknown tag stays as it is written (a typo shows). Whose pictures: player
+// 1's, like the game's own hints and tutorials (shared texts follow player 1).
+// (The tag list: subtitles/button_tags.h, shared with the subtitle editor.)
+
+// The tags of a line -> prompt characters (after font_letters::ForFont: its
+// « » codes are U+00AB / U+00BB, in the same range, and must not catch ours).
+// From the end backwards, so the places found stay right while replacing.
+void ReplaceTags(std::u16string& text) {
+  struct Hit {
+    size_t at, length;
+    const button_tags::Tag* tag;
+  };
+  std::vector<Hit> hits;
+  button_tags::ForEach(std::u16string_view(text), [&](size_t at, size_t length, const button_tags::Tag* tag) {
+    if (tag) hits.push_back({at, length, tag});
+  });
+  for (size_t k = hits.size(); k-- > 0;) text.replace(hits[k].at, hits[k].length, hits[k].tag->glyphs);
+}
+
 // "\n" written as two characters breaks the line.
 std::u16string TextOf(std::string text) {
   for (size_t p = text.find("\\n"); p != std::string::npos; p = text.find("\\n", p + 1)) {
@@ -244,6 +279,7 @@ std::u16string TextOf(std::string text) {
   }
   std::u16string out = Utf16(text);
   font_letters::ForFont(out);  // « » -> the font's private codes (ui/font_letters.h)
+  ReplaceTags(out);            // {Y} -> the game's Y prompt character
   return out;
 }
 
@@ -796,6 +832,10 @@ constexpr float kLiftSeconds = 0.2f;
 constexpr float kFadeInSeconds = 0.15f, kFadeOutSeconds = 0.40f;
 constexpr float kStackGap720 = 6.0f;
 constexpr float kSlideRate = 12.0f;
+// A button picture (BUTTON TAGS) is drawn at kPictureScale of the size the
+// game draws it at next to letters of the same font (1 = the game's own
+// prompts' proportions: an A button a little taller than the line's cell).
+constexpr float kPictureScale = 1.0f;
 // Older lines (every one above the newest) are drawn at kOlderShare of their
 // opacity, box included, easing there over kDimSeconds.
 constexpr float kOlderShare = 0.6f, kDimSeconds = 0.25f;
@@ -1099,6 +1139,16 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   void DrawRow(ImDrawList* list, const Row& r, float pen, float y, int layer, float alpha = 1.0f) {
     for (const Run& run : r) {
       for (char16_t c : run.text) {
+        // A BUTTON PICTURE (a tag, ReplaceTags): player 1's own picture of it,
+        // with the letters (layer 1; nothing on the outline layer), centred on
+        // the capitals' middle. Its pen step is the font's, as the game's.
+        if (prompt_icons::IsPromptGlyph(c)) {
+          if (const Picture* pic = PictureOf(c)) {
+            if (layer == 1) DrawPicture(list, *pic, pen, y, alpha);
+            pen += pic->advance * scale_;
+          }
+          continue;
+        }
         const ImU32 colour = Faded(layer == 0 ? kOutlineColour : run.colour, alpha);
         // (Ã ã, Ё ё, « » and the rest the disc's font lacks come from
         // font_letters' patch, run by game_font on its copy of the font.)
@@ -1124,13 +1174,63 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
                    ImVec2(g.u1, v1), colour);
   }
 
-  // A line's width: the font's advances.
+  // A line's width: the font's advances (a button picture's own: PictureOf).
   float Width(std::u16string_view s) const {
     float w = 0;
     for (char16_t c : s) {
-      if (const game_font::Glyph* g = font_.Find(c)) w += g->advance;
+      if (prompt_icons::IsPromptGlyph(c)) {
+        if (const Picture* pic = PictureOf(c)) w += pic->advance;
+      } else if (const game_font::Glyph* g = font_.Find(c)) {
+        w += g->advance;
+      }
     }
     return w * scale_;
+  }
+
+  // THE BUTTON PICTURES (BUTTON TAGS above): one texture per picture (its
+  // key from prompt_icons: which glyph, which look), made on first use and
+  // kept (a handful: the few buttons the lines name, in the looks used).
+  struct Picture {
+    std::unique_ptr<rex::ui::ImmediateTexture> texture;
+    float width = 0, height = 0, advance = 0;  // font pixels
+  };
+  // Player 1's picture of prompt character `c` as it looks NOW, null if it
+  // isn't ready (the game's fonts not read yet). Asked every frame for each
+  // picture on screen: a change of device / binding / style shows at once.
+  const Picture* PictureOf(char16_t c) const {
+    constexpr int kPlayer = 0;  // shared texts follow player 1 (as the game's hints)
+    const std::string key = prompt_icons::PromptPictureKey(c, kPlayer);
+    if (key.empty() || !immediate_) return nullptr;
+    const std::string full = std::to_string(uint32_t(c)) + " " + key;
+    auto it = pictures_.find(full);
+    if (it == pictures_.end()) {
+      prompt_icons::PromptPictureData data;
+      Picture pic;
+      if (prompt_icons::PromptPicture(c, kPlayer, &data) && data.width && data.height) {
+        pic.texture = immediate_->CreateTexture(data.width, data.height,
+                                                rex::ui::ImmediateTextureFilter::kLinear, false,
+                                                data.rgba.data());
+        pic.width = data.draw_width * kPictureScale;
+        pic.height = data.draw_height * kPictureScale;
+        // The game's pen step for the picture (its glyph record), less what a
+        // narrowed picture gave up (the rotate arrow on keys, drawn square).
+        const float record = font_.Measure(std::u16string(1, c));
+        pic.advance = record > 0 ? (record - (float(data.width) - data.draw_width)) * kPictureScale : pic.width;
+        REXLOG_INFO("Subtitles: button picture U+{:04X} = {} ({}x{} px, drawn {:.0f}x{:.0f}, step {:.0f})",
+                    uint32_t(c), data.key, data.width, data.height, pic.width, pic.height, pic.advance);
+      }
+      it = pictures_.emplace(full, std::move(pic)).first;  // (a failure is kept too: not retried)
+    }
+    return it->second.texture ? &it->second : nullptr;
+  }
+
+  // A picture at `pen`, the row's top at `y`, centred on the capitals' middle.
+  void DrawPicture(ImDrawList* list, const Picture& pic, float pen, float y, float alpha) const {
+    const float w = pic.width * scale_, h = pic.height * scale_;
+    const float mid = y + font_.cap_middle() * scale_;
+    const ImVec2 a(std::round(pen), std::round(mid - h * 0.5f));
+    list->AddImage(ImTextureID(reinterpret_cast<uintptr_t>(pic.texture.get())), a,
+                   ImVec2(a.x + w, a.y + h), ImVec2(0, 0), ImVec2(1, 1), Faded(kTextColour, alpha));
   }
 
   // A colour with its alpha scaled by `alpha` (0..1).
@@ -1220,6 +1320,7 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   game_font::Font font_;
   bool font_failed_ = false;
   std::vector<PageTextures> textures_;
+  mutable std::map<std::string, Picture> pictures_;  // button pictures by "<glyph> <key>": PictureOf
   float scale_ = 1.0f;
   // The game's 16:9 picture in the window this frame, and 720p's pixel in it.
   float pic_x_ = 0, pic_y_ = 0, pic_w_ = 0, pic_h_ = 0, unit_ = 1.0f;

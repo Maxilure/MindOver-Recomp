@@ -1213,3 +1213,83 @@ screen. The tab's sample line shows Aku Aku's colour while it is on.
 
 Not yet seen in the game: the build and the look are to be checked on a
 playthrough.
+
+## 27. Button tags: each player's own button in a line
+
+Aku Aku's hints name the 360's controls ("press the Y button", "pull the
+right trigger", "rotate the left stick"). A subtitle line can now carry a
+TAG instead of the words, and the line shows the button's PICTURE, the one
+the game's own prompts show right now: the bound key on keyboard and mouse
+(Xelu's Light or Dark keys), else the controller's button in the Controller
+Icons style (Xbox Series, DualSense, DualShock, Joy-Con, or the game's own
+360 pictures). A rebind, another device used or another style shows at once.
+
+Tags (in braces, any case), written into the `.tsv` text like any word:
+
+| Tag | Picture |
+| --- | --- |
+| `{A}` `{B}` `{X}` `{Y}` | the face buttons (by the 360's place: `{A}` = the bottom one, Cross on a PlayStation) |
+| `{LB}` `{RB}` `{LT}` `{RT}` | bumpers and triggers |
+| `{Back}` `{Start}` | Back (the map) / Start (pause) |
+| `{LS}` `{RS}` | the left / right stick (on keys: the four move keys / right stick keys) |
+| `{Rotate}` | the "rotate" arrow alone |
+| `{Spin}` | left stick + rotate arrow, the game's own way of writing a spin |
+
+ON KEYBOARD AND MOUSE A TAG IS AN ACTION: the 360 control's action in the
+port's key table (`src/input/bindings.cpp`): `{A}` jump, `{B}` jack / use,
+`{X}` light attack, `{Y}` heavy attack, `{RT}` block, `{RB}` pocket, `{LT}`
+titan special, `{LB}` left bumper, `{Back}` map, `{Start}` pause, `{LS}` the
+four move keys, `{RS}` the right stick keys. The picture is the FIRST key
+bound to that action now, so a rebind changes it; an action without a key
+keeps the controller picture (the game's own prompts work the same way).
+
+An unknown tag stays as written, so a typo shows. Example:
+`Crash! After doing an upper cut, press {Y} to slam them with my face!`
+
+How it works (`src/subtitles/subtitles.cpp` BUTTON TAGS, `input/prompt_icons.h`
+PromptPicture):
+
+* reading a file, the tags become the game's own prompt characters
+  (U+00B1..U+00BE, U+00A5, U+00B9: those its text bank writes), after the
+  font-letter patch (its « » codes share that range);
+* the subtitles are drawn with the port's own copy of the font
+  (ui/game_font.h), which skips button pictures, so the prompt pages the
+  port keeps in the game's memory never reach them. `prompt_icons::
+  PromptPictureKey` / `PromptPicture` give the picture as host RGBA instead:
+  the same description (`Describe`) and drawing (`Draw`) the game's own
+  page gets, at that page's size and ink box; the game's own 360 picture
+  comes from the disc's page. One ImGui texture per picture, kept by its
+  key;
+* a picture is drawn with the letters (none on the outline layer), centred
+  on the capitals' middle (`game_font::Font::cap_middle`), its pen step =
+  the font's record for that picture (the rotate arrow on keys drawn square,
+  as the font patch narrows it for the game's prompts); size = the game's
+  own proportions (`kPictureScale` = 1);
+* whose pictures: player 1's, like the game's own hints and tutorials
+  (shared texts follow player 1).
+
+Checked by console (`subtitle <s> <text>` with tags, keyboard then a pad
+press): the log line `Subtitles: button picture U+00B4 = L key 2 ...` per new
+picture, keys first, then `P 1 ...` (the pad's set) after the pad press,
+`disc` for the 360-only rotate arrow; `{Bogus}` left as text. The look
+itself (ImGui, not in photos) is still to be seen.
+
+THE SUBTITLE EDITOR (tools/subtitle_editor) knows the tags too:
+
+* the font check ("The game's font can't show") leaves out every `{...}`
+  pair; a pair that isn't a tag is reported as "Not a button tag: {Yy}";
+* under a text box holding tags, a "Shows as:" line draws it with the
+  pictures, wrapped, live while typing; the preview draws them in the
+  subtitle too (`button_pictures.*`: Xelu's PNGs from `assets/prompts`, the
+  same files the game uses; tag list from `src/subtitles/button_tags.h`);
+* a toolbar menu picks the style: keyboard + mouse (Light or Dark keys),
+  Xbox Series, DualSense, DualShock, Joy-Con. The game's own Xbox 360
+  pictures live in the disc's font, which the editor doesn't read, so there
+  is no 360 style there;
+* the keyboard styles show the keys of `user/controls.toml` (first key per
+  action, as the game), read again whenever the file changes; the port's
+  default keys without one.
+
+Checked with the editor's `--screenshot` on a copy of the files with tagged
+lines: Space / mouse buttons / Shift / WASD + the arrow drawn in both places,
+the unknown tag reported, no font warning for the tags.
