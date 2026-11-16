@@ -1815,6 +1815,29 @@ msgstr ""
 
 #: src/options/options_settings.cpp:1370
 msgid "Flashes and glows as in the original game."
+
+#: src/options/options_settings.cpp
+msgid "Motion"
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "Camera Shake"
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes as in the original game."
 msgstr ""
 
 #: src/options/options_settings.cpp:1446

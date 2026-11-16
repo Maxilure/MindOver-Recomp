@@ -2225,6 +2225,36 @@ msgstr "Les flashs et lueurs du jeu sont bien plus faibles."
 msgid "Flashes and glows as in the original game."
 msgstr "Flashs et lueurs comme dans le jeu d'origine."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Mouvement"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Tremblement de caméra"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "La caméra ne tremble pas en jeu. Les cinématiques gardent leurs propres secousses."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "La caméra tremble un peu quand quelque chose de lourd atterrit, explose ou frappe. Les cinématiques ne changent pas."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "La caméra tremble un peu plus de la moitié de l'original. Les cinématiques ne changent pas."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "La caméra tremble comme dans le jeu original."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

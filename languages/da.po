@@ -2225,6 +2225,36 @@ msgstr "Spillets blink og glød er meget svagere."
 msgid "Flashes and glows as in the original game."
 msgstr "Blink og glød som i det originale spil."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Bevægelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Kamerarystelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "Kameraet ryster ikke under spillet. Mellemsekvenser beholder deres egen rysten."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "Kameraet ryster lidt, når noget tungt lander, eksploderer eller rammer. Mellemsekvenser er uændrede."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "Kameraet ryster lidt over halvt så meget som i det originale spil. Mellemsekvenser er uændrede."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Kameraet ryster som i det originale spil."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

@@ -2225,6 +2225,36 @@ msgstr "Spelets blixtar och sken är mycket svagare."
 msgid "Flashes and glows as in the original game."
 msgstr "Blixtar och sken som i originalspelet."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Rörelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Kameraskakning"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "Kameran skakar inte under spelet. Mellansekvenser behåller sitt eget skakande."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "Kameran skakar lite när något tungt landar, exploderar eller träffar. Mellansekvenser är oförändrade."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "Kameran skakar lite mer än hälften så mycket som i originalspelet. Mellansekvenser är oförändrade."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Kameran skakar som i originalspelet."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

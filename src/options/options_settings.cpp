@@ -1423,6 +1423,23 @@ Row ReduceScreenFlashesRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: motion (findings/66)
+// ---------------------------------------------------------------------------
+// CAMERA SHAKE (gameplay/camera_shake.cpp): how big the camera's wobble is
+// when something heavy lands, explodes or hits. Off / Low (30 %) / Medium
+// (60 %) / Original (the default); a shake lasts as long as in the original.
+// The game's camera logic, so both pictures, live at once. NOT cutscenes:
+// their shaking can be baked into their camera animation (findings/66 s.4),
+// which never reaches this path: the descriptions say so.
+Row CameraShakeRow() {
+  return LevelRow(tr(u"Camera Shake"), "camera_shake", {tr(u"Off"), tr(u"Low"), tr(u"Medium"), tr(u"Original")},
+                  {tr(u"The camera doesn't shake in play. Cutscenes keep their own shaking."),
+                   tr(u"The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."),
+                   tr(u"The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."),
+                   tr(u"The camera shakes as in the original game.")});
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1588,6 +1605,7 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Colour Blindness")), ColourblindnessModeRow(), ColourblindnessIntensityRow(),
                    Heading(tr(u"Visual Sensitivity")), ReduceScreenFlashesRow(),
+                   Heading(tr(u"Motion")), CameraShakeRow(),
                    Heading(tr(u"Subtitles")), SubtitleSample(SubtitlesRow()), SubtitleSample(SubtitleSizeRow()),
                    SubtitleSample(SubtitleBackgroundRow()), SubtitleSample(SubtitleSpeakersRow()),
                    SubtitleSample(SubtitleSpeakerColoursRow()), SubtitleSample(SubtitleLingerRow())},

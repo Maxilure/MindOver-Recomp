@@ -2225,6 +2225,36 @@ msgstr "Вспышки и свечение в игре намного слабе
 msgid "Flashes and glows as in the original game."
 msgstr "Вспышки и свечение как в оригинальной игре."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Движение"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Тряска камеры"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "Камера не трясётся во время игры. Ролики сохраняют свою тряску."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "Камера немного трясётся, когда что-то тяжёлое приземляется, взрывается или бьёт. Ролики не меняются."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "Тряска камеры — чуть больше половины от оригинальной игры. Ролики не меняются."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Камера трясётся как в оригинальной игре."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

@@ -2225,6 +2225,36 @@ msgstr "Pelin välähdykset ja hehkut ovat paljon heikompia."
 msgid "Flashes and glows as in the original game."
 msgstr "Välähdykset ja hehkut kuten alkuperäisessä pelissä."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Liike"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Kameran tärinä"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "Kamera ei tärise pelatessa. Välianimaatiot säilyttävät oman tärinänsä."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "Kamera tärisee hieman, kun jokin raskas laskeutuu, räjähtää tai osuu. Välianimaatiot eivät muutu."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "Kamera tärisee hieman yli puolet alkuperäisen pelin määrästä. Välianimaatiot eivät muutu."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Kamera tärisee kuten alkuperäisessä pelissä."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

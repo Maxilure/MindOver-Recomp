@@ -102,6 +102,7 @@ set(CRASHMOM_SOURCES
     src/players/more_players_loading.cpp  # players 3-4's paw prints on the loading screen (findings/26)
     src/players/more_players_markers.cpp  # players 3-4's own marker pictures (findings/26)
     src/gameplay/game_mods.cpp   # Options -> Gameplay: friendly fire, combos on a partner's hit, simple spinning
+    src/gameplay/camera_shake.cpp  # Options -> Accessibility: how much the camera shakes (findings/66)
     src/game_bugs/speech_waits.cpp  # bugs of the original game: a hint line cut off by the next (findings/61 s.2)
     src/game_bugs/spike_jack_sound.cpp  # bugs of the original game: Spike's double jacking sound (findings/61)
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD

@@ -2225,6 +2225,36 @@ msgstr "De flitsen en gloed van het spel zijn veel zwakker."
 msgid "Flashes and glows as in the original game."
 msgstr "Flitsen en gloed zoals in het originele spel."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Beweging"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Camerabeving"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera doesn't shake in play. Cutscenes keep their own shaking."
+msgstr "De camera schudt niet tijdens het spelen. Tussenfilmpjes houden hun eigen schudden."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits. Cutscenes are unchanged."
+msgstr "De camera schudt een beetje als er iets zwaars landt, ontploft of raakt. Tussenfilmpjes blijven ongewijzigd."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
+msgstr "De camera schudt iets meer dan half zo veel als in het originele spel. Tussenfilmpjes blijven ongewijzigd."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "De camera trilt zoals in het originele spel."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""
