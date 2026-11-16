@@ -2077,8 +2077,8 @@ msgstr "Nome di chi parla"
 
 #: src/options/options_settings.cpp:1434
 #, fuzzy
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr "Chi parla, in giallo, davanti alla frase (quando si sa)."
+msgid "Who is speaking, in front of the line (when it is known)."
+msgstr "Chi parla, davanti alla frase (quando si sa)."
 
 #: src/options/options_settings.cpp:1435
 #, fuzzy

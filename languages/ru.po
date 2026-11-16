@@ -2077,8 +2077,8 @@ msgstr "Имя говорящего"
 
 #: src/options/options_settings.cpp:1434
 #, fuzzy
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr "Кто говорит, желтым, перед репликой (если известно)."
+msgid "Who is speaking, in front of the line (when it is known)."
+msgstr "Кто говорит, перед репликой (если известно)."
 
 #: src/options/options_settings.cpp:1435
 #, fuzzy

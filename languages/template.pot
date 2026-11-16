@@ -1700,7 +1700,7 @@ msgid "Speaker Names"
 msgstr ""
 
 #: src/options/options_settings.cpp:1434
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
+msgid "Who is speaking, in front of the line (when it is known)."
 msgstr ""
 
 #: src/options/options_settings.cpp:1435

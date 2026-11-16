@@ -1431,7 +1431,7 @@ Row SubtitleBackgroundRow() {
 
 Row SubtitleSpeakersRow() {
   return OnOffRow(tr(u"Speaker Names"), "subtitles_speakers", tr(u"On"), tr(u"Off"),
-                  tr(u"Who is speaking, in yellow, in front of the line (when it is known)."),
+                  tr(u"Who is speaking, in front of the line (when it is known)."),
                   tr(u"Only the spoken words."), true);
 }
 

@@ -2077,8 +2077,8 @@ msgstr "Puhujan nimi"
 
 #: src/options/options_settings.cpp:1434
 #, fuzzy
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr "Kuka puhuu, keltaisella, repliikin edessä (kun se tiedetään)."
+msgid "Who is speaking, in front of the line (when it is known)."
+msgstr "Kuka puhuu, repliikin edessä (kun se tiedetään)."
 
 #: src/options/options_settings.cpp:1435
 #, fuzzy

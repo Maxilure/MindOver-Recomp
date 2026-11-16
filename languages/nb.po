@@ -2077,8 +2077,8 @@ msgstr "Navn på den som snakker"
 
 #: src/options/options_settings.cpp:1434
 #, fuzzy
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr "Hvem som snakker, i gult, foran replikken (når det er kjent)."
+msgid "Who is speaking, in front of the line (when it is known)."
+msgstr "Hvem som snakker, foran replikken (når det er kjent)."
 
 #: src/options/options_settings.cpp:1435
 #, fuzzy

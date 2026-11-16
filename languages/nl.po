@@ -2077,8 +2077,8 @@ msgstr "Naam van de spreker"
 
 #: src/options/options_settings.cpp:1434
 #, fuzzy
-msgid "Who is speaking, in yellow, in front of the line (when it is known)."
-msgstr "Wie er spreekt, in geel, voor de zin (als dat bekend is)."
+msgid "Who is speaking, in front of the line (when it is known)."
+msgstr "Wie er spreekt, voor de zin (als dat bekend is)."
 
 #: src/options/options_settings.cpp:1435
 #, fuzzy
