@@ -94,16 +94,26 @@ at progress 1 the pick-up counts as collected (`sub_821994D0`) and moves on.
 (plus 1e-4 against rounding), so the progress reaches 1 on this frame: the
 pick-up is collected at once.
 
-### 2.2d 3D models on menu pages (Level Up)
+### 2.2d The character on the Level Up / upgrade screen
 
-The Level Up and upgrade screens show Crash as a 3D model, spinning or
-kicking. A 3D model on a menu page is a `Pure3dObject@frontend@pure3d`
-(vtable `0x8200F534`); its update (slot 5, a jump to `sub_823DB5C0`) passes
-the time step to the model's animation players at `+0x70`, `+0x78` and
-`+0x7C` (their vtable slot 6). **Change:** the update runs with a time step
-of 0 (the caller's is put back after): every such model stays on the frame
-its animation starts on. This covers every 3D model on a menu page, not
-only Level Up.
+The Level Up and upgrade screen (`CUpgradeScreenAction`, vtable
+`0x82025AA4`) shows the player's character (Crash spinning or kicking, or
+the titan being upgraded) as an actor of its own (screen `+0x34`, made with
+`sub_8211AA50`) whose animations play through a `choreo::Puppet` (screen
+`+0x3C`, vtable `0x8200ABD8`, built by `sub_82351340`). `sub_820E57A0`
+builds both when the screen opens; the screen's exit (slot 6,
+`sub_820E5F20`) destroys them. Like every actor's, the puppet is moved on
+each frame by `Puppet::Advance` (`sub_82350F88`: r3 = the puppet, f1 = the
+time step; it walks the puppet's layers, count at `+0xA8`).
+
+A first try held the menu pages' 3D objects (`Pure3dObject@frontend@pure3d`,
+update `sub_823DB5C0`) still: no change, the character is not one of them.
+
+**Change:** the port notes each upgrade screen's puppet when it is built and
+forgets it at the exit; with the setting on, `Puppet::Advance` runs with a
+time step of 0 for those puppets only (other actors are untouched). The
+first Advance, made while the screen builds the character, still runs, so it
+stands in its animation's first pose.
 
 ### 2.3 Slow motion
 

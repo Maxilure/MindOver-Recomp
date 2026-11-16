@@ -12,8 +12,8 @@
 //        prompts, the "!" and its flash) stop wobbling and pulsing.
 //     2b. Mojo and other pick-ups are collected at once instead of flying to
 //        the player.
-//     2c. 3D models on menu pages (Crash spinning or kicking on the Level Up
-//        and upgrade screens) stay on one frame of their animation.
+//     2c. The character on the Level Up / upgrade screen (Crash spinning or
+//        kicking, a titan) stays on one frame of its animation.
 //     3. The game's slow-motion moments run at normal speed.
 //     4. The port's motion blur stays off whatever its own row says.
 //   Research and what is not covered: docs/findings/67-reduce-motion.md.
@@ -47,6 +47,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
+#include <vector>
 
 #include <rex/cvar.h>
 #include <rex/ppc/context.h>
@@ -85,7 +87,8 @@ constexpr uint32_t kIconWobble = 0x6C;      // CIconBehaviour: its wobble's time
 constexpr uint32_t kCollectableTimer = 0xC4;  // Collectable: the current state's timer (seconds)
 constexpr uint32_t kCollectableState = 0xC8;  // Collectable: its state (4 = flying to the player)
 constexpr uint32_t kStateFlying = 4;
-constexpr float kFlightSeconds = 0.5f;      // the flight's progress is timer x 2 (constant 0x8201FB74)
+constexpr float kFlightSeconds = 0.5f;
+constexpr uint32_t kUpgradePuppet = 0x3C;   // CUpgradeScreenAction: the shown character's puppet      // the flight's progress is timer x 2 (constant 0x8201FB74)
 
 // A big-endian guest word.
 uint32_t LoadWord(const uint8_t* base, uint32_t address) {
@@ -198,21 +201,64 @@ extern "C" REX_FUNC(sub_82198738) {
   __imp__sub_82198738(ctx, base);
 }
 
-// Pure3dObject (a 3D model placed on a menu page, Scrooby class
-// Pure3dObject@frontend@pure3d, vtable 0x8200F534): its update (slot 5 is a
-// jump to sub_823DB5C0; r3 = the object, f1 = the time step) advances the
-// model's animation players at +0x70, +0x78 and +0x7C by the step. This is
-// what animates Crash on the Level Up / upgrade screens (spinning, kicking)
-// and the other 3D models on menu pages. With the setting on they get a
-// step of 0: each animation stays on the frame it starts on. f1 is put back.
-extern "C" REX_FUNC(__imp__sub_823DB5C0);
-extern "C" REX_FUNC(sub_823DB5C0) {
-  if (!reduce_motion::On()) {
-    __imp__sub_823DB5C0(ctx, base);
+namespace reduce_motion {
+
+// LEVEL UP / UPGRADE SCREEN (CUpgradeScreenAction, vtable 0x82025AA4): it
+// shows the player's character (Crash or the titan being upgraded) as a
+// real actor of its own (screen +0x34) whose animations (spinning, kicking,
+// a titan's moves) play through a choreo::Puppet (screen +0x3C, vtable
+// 0x8200ABD8). sub_820E57A0 builds both when the screen opens; the screen's
+// exit (slot 6, sub_820E5F20) destroys them. Every frame the puppet is
+// advanced by Puppet::Advance (sub_82350F88: r3 = the puppet, f1 = the time
+// step), like any actor's. The screen's puppets are noted here; with the
+// setting on they are advanced by 0, so the character stays on the frame
+// its animation starts on (the first Advance, made while the screen builds
+// it, still runs: it puts the character in its first pose).
+std::mutex g_frozen_mutex;
+std::vector<uint32_t> g_frozen_puppets;  // the open upgrade screens' puppets
+
+bool IsFrozenPuppet(uint32_t puppet) {
+  std::lock_guard lock(g_frozen_mutex);
+  return std::find(g_frozen_puppets.begin(), g_frozen_puppets.end(), puppet) != g_frozen_puppets.end();
+}
+
+}  // namespace reduce_motion
+
+// CUpgradeScreenAction: builds the shown character (r3 = the screen).
+extern "C" REX_FUNC(__imp__sub_820E57A0);
+extern "C" REX_FUNC(sub_820E57A0) {
+  const uint32_t screen = ctx.r3.u32;
+  __imp__sub_820E57A0(ctx, base);
+  const uint32_t puppet = reduce_motion::LoadWord(base, screen + reduce_motion::kUpgradePuppet);
+  if (puppet != 0) {
+    std::lock_guard lock(reduce_motion::g_frozen_mutex);
+    reduce_motion::g_frozen_puppets.push_back(puppet);
+  }
+}
+
+// CUpgradeScreenAction's exit (slot 6): its puppet is forgotten before the
+// original destroys it.
+extern "C" REX_FUNC(__imp__sub_820E5F20);
+extern "C" REX_FUNC(sub_820E5F20) {
+  const uint32_t puppet = reduce_motion::LoadWord(base, ctx.r3.u32 + reduce_motion::kUpgradePuppet);
+  {
+    std::lock_guard lock(reduce_motion::g_frozen_mutex);
+    auto& list = reduce_motion::g_frozen_puppets;
+    list.erase(std::remove(list.begin(), list.end(), puppet), list.end());
+  }
+  __imp__sub_820E5F20(ctx, base);
+}
+
+// choreo::Puppet::Advance: r3 = the puppet, f1 = the time step. f1 is put
+// back after a frozen call.
+extern "C" REX_FUNC(__imp__sub_82350F88);
+extern "C" REX_FUNC(sub_82350F88) {
+  if (!reduce_motion::On() || !reduce_motion::IsFrozenPuppet(ctx.r3.u32)) {
+    __imp__sub_82350F88(ctx, base);
     return;
   }
   const double step = ctx.f1.f64;
   ctx.f1.f64 = 0.0;
-  __imp__sub_823DB5C0(ctx, base);
+  __imp__sub_82350F88(ctx, base);
   ctx.f1.f64 = step;
 }
