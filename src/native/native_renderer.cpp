@@ -213,8 +213,8 @@ constexpr uint32_t kFlagLights = 256;
 // Debug (F11, spotter.h): this draw is painted magenta (motion trails).
 constexpr uint32_t kFlagHighlight = 512;
 // Reduce Screen Flashes (the `reduce_screen_flashes` setting, findings/65):
-// the fx grid's screen-wide glow / tint at a quarter of its strength
-// (fxgrid.frag kFlagCalmFx).
+// the fx grid's screen-wide glow / tint (fxgrid.frag) and the attack
+// ribbons (motion trails, simple.frag) kept at a fraction of their light.
 constexpr uint32_t kFlagCalmFx = 1024;
 
 // Push constants of the Bink material (shaders/bink.*): the game's movie
@@ -2395,7 +2395,9 @@ void NativeRenderer::RecordPasses(VkCommandBuffer cmd) {
                         (d.layout.colour == native::VertexLayout::kAbsent ? kFlagNoColour : 0) |
                         (d.layout.uv == native::VertexLayout::kAbsent ? kFlagNoUv : 0) |
                         (d.fog ? kFlagFog : 0) | (d.fx_add ? kFlagFxAdd : 0) |
-                        (d.material == native::Material::kFxGrid && REXCVAR_GET(reduce_screen_flashes)
+                        ((d.material == native::Material::kFxGrid ||
+                          d.material == native::Material::kMotionTrail) &&
+                                 REXCVAR_GET(reduce_screen_flashes)
                              ? kFlagCalmFx
                              : 0) |
                         (d.block != native::DrawCommand::kNoBlock ? kFlagLights : 0) |

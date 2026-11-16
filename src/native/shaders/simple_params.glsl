@@ -46,8 +46,8 @@ const uint kFlagFxAdd = 128u;
 const uint kFlagLights = 256u;
 // Debug (F11, spotter.h): paint the draw magenta (the motion trails).
 const uint kFlagHighlight = 512u;
-// Fx grid only (fxgrid.frag): Reduce Screen Flashes is on: the screen-wide
-// glow / tint at a quarter of its strength (findings/65).
+// Reduce Screen Flashes is on (findings/65): the fx grid's screen-wide glow
+// / tint (fxgrid.frag) or a motion trail (simple.frag) kept at a fraction.
 const uint kFlagCalmFx = 1024u;
 
 // The GPU's alpha test (the game's materials set it in their state cache):

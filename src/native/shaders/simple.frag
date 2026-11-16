@@ -101,6 +101,11 @@ void main() {
       discard;
     }
   }
+  // REDUCE SCREEN FLASHES (findings/65): the attack ribbons (motion trails:
+  // Crash's spin and the like) at 30 % of their light and opacity.
+  if ((flags & kFlagCalmFx) != 0u) {
+    colour *= 0.3;
+  }
   // Debug (F11): solid magenta where the draw covers anything, so even a
   // faint additive trail shows exactly where it is.
   if ((flags & kFlagHighlight) != 0u) {

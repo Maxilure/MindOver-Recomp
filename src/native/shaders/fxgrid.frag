@@ -23,8 +23,8 @@
 // and texture coordinate on.
 //
 // REDUCE SCREEN FLASHES (the port's `reduce_screen_flashes`, findings/65):
-// with kFlagCalmFx the effect keeps a quarter of its strength: a glow adds a
-// quarter of its colour, a tint moves only a quarter of the way from white
+// with kFlagCalmFx the effect keeps 15 % of its strength: a glow adds 15 %
+// of its colour, a tint moves only 15 % of the way from white
 // (no change) to its colour. The effect still shows (the power-up's moment
 // stays visible) but never as a full-screen flash.
 // =============================================================================
@@ -48,7 +48,7 @@ void main() {
   vec3 copy = texture(u_picture, in_uv).rgb;
   vec3 effect = in_colour.rgb;
   if ((flags & kFlagCalmFx) != 0u) {
-    const float kCalm = 0.25;  // the share of the effect kept
+    const float kCalm = 0.15;  // the share of the effect kept
     effect = (flags & kFlagFxAdd) != 0u ? effect * kCalm : mix(vec3(1.0), effect, kCalm);
   }
   vec3 rgb = (flags & kFlagFxAdd) != 0u ? copy + effect : copy * effect;

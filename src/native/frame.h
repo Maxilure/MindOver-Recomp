@@ -324,6 +324,9 @@ constexpr uint32_t kParticleNoColour = 32;  // the vertex has no colour: white
 constexpr uint32_t kParticleNoUv = 64;
 constexpr uint32_t kParticleSoft = 128;     // the depth copy is bound
 constexpr uint32_t kParticleHighlight = 256;  // debug: F11 paints it magenta (spotter.h)
+// Reduce Screen Flashes (findings/65): a glowing (fade_rgb) sprite keeps
+// kCalm of its light (particle.frag). High bit: clear of the debug bits.
+constexpr uint32_t kParticleCalm = 32768;
 // Debug experiments (F12, spotter.h): skip one step of the particle shader.
 constexpr uint32_t kParticleNoSoft = 512;       // soft edge off (soft = 1)
 constexpr uint32_t kParticleNoFog = 1024;       // fog off

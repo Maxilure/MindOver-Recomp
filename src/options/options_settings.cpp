@@ -1361,9 +1361,9 @@ Row MessageBarRow() {
 // ---------------------------------------------------------------------------
 // Accessibility: visual sensitivity (findings/65)
 // ---------------------------------------------------------------------------
-// REDUCE SCREEN FLASHES: the game's screen-wide fx grid effects (the double
-// mojo power-up's glow, findings/18) at a quarter of their strength
-// (fxgrid.frag). Off by default (the original). Native renderer only.
+// REDUCE SCREEN FLASHES: the game's light effects (screen-wide glows,
+// glowing particles, attack ribbons, effects' proximity lights) at a
+// fraction of their strength. Off by default (the original). Native only.
 Row ReduceScreenFlashesRow() {
   Row r = OnOffRow(tr(u"Reduce Screen Flashes"), "reduce_screen_flashes", tr(u"On"), tr(u"Off"),
                    tr(u"The game's full-screen flashes and glows are much weaker."),

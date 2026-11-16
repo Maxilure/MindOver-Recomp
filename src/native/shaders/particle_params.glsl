@@ -32,5 +32,8 @@ const uint kParticleWhiteTex = 2048u;
 const uint kParticleWhiteColour = 4096u;
 const uint kParticleBaseMip = 8192u;
 const uint kParticleSmallestMip = 16384u;
+// Reduce Screen Flashes (findings/65): this glowing sprite keeps a fraction
+// of its light (frame.h kParticleCalm).
+const uint kParticleCalm = 32768u;
 
 bool ParticleFlag(uint flag) { return (particle.flags.x & flag) != 0u; }

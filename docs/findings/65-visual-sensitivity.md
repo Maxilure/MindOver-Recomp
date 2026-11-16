@@ -2,7 +2,8 @@
 
 Options -> Accessibility -> **Visual Sensitivity** -> **Reduce Screen
 Flashes** (`reduce_screen_flashes`, off by default): for photosensitive
-players, the game's screen-wide flashes are weakened in the native renderer.
+players, the game's flashes and light effects are weakened in the native
+renderer.
 
 ## 1. What flashes, and where
 
@@ -16,23 +17,34 @@ drawn natively by `shaders/fxgrid.frag`.
 
 ## 2. The change
 
-With the setting on, the native renderer sets `kFlagCalmFx` on every fx grid
-draw (`native_renderer.cpp`, the draw's flags; `simple_params.glsl`), and
-`fxgrid.frag` keeps a quarter of the effect: a glow adds a quarter of its
-colour, a tint moves a quarter of the way from white (no change) to its
-colour. The moment is still visible (the power-up still reads) but it is
-never a full-screen flash. Nothing changes with the setting off; the
-emulated picture is not touched.
+With the setting on, in the native renderer:
+
+| What | Where | Kept |
+|---|---|---|
+| The fx grid's screen-wide glow / tint (the double mojo flash) | `kFlagCalmFx` on fx grid draws, `fxgrid.frag`: a glow adds 15 % of its colour, a tint moves 15 % of the way | 15 % |
+| Glowing sprites: the particles with additive / subtractive blending (sparks, glows, the bursts of broken crates and objects) | `kParticleCalm` (`recorder.cpp`, `frame.h`), `particle.frag`: their colour x 0.3 | 30 % |
+| The attack ribbons (motion trails: Crash's spin and the like, findings/42) | `kFlagCalmFx` on motion trail draws, `simple.frag`: colour and alpha x 0.3 | 30 % |
+| The "proximity" point lights an effect throws on what is near it (up to 4 per draw, e.g. the Ratcicle's cyan flash, findings/20) | `CalmProximityLights` (`recorder.cpp`): each light's intensity (PS c38+n .z) x 0.35 | 35 % |
+
+Normal (alpha-blended) sprites such as smoke and debris, the characters'
+yellow hit flash (combat feedback) and the scene's own lighting are not
+touched. The effects still show, so the moment still reads, but none
+lights the screen up. Nothing changes with the setting off; the emulated
+picture is not touched.
+
+A first version only weakened the fx grid (to 25 %); a playtest found no
+difference in normal play: the bright moments players notice most (broken
+crates, Crash's spin) are particles, trails and their lights, not the fx
+grid.
 
 Read every draw: the Options row works at once. Kept in
 `user/settings.toml` like every REXCVAR (a missing entry = off).
 
 ## 3. Not done / to check
 
-* Other bright full-screen moments the game may draw another way (an
-  explosion's sprite, a white fade, a hit effect on the characters, whose
-  yellow flash is combat feedback and is kept) are not covered: a
-  playthrough with the setting on should list what still flashes.
+* Other bright moments drawn another way (a white fade, a bright
+  alpha-blended sprite) are not covered: a playthrough with the setting on
+  should list what still flashes.
 * A general limiter of sudden brightness changes between frames (the
   picture's average brightness, eased over a few frames) would catch any
   of them, but needs a small GPU reduction and a value kept from frame to
