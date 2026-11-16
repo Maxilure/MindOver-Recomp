@@ -37,7 +37,8 @@
 //                    u64 page hash x page count
 //   ~3.1 KB per frame = ~185 KB per second at 60 fps.
 //
-// Console: worldhash <file> [frames] [dump <frame>] | worldhash stop | worldhash
+// Console: worldhash <file> [frames] [dump [r]<frame>] | worldhash stop | worldhash
+//   dump r<N> = at REPLAY frame N (waits for the replay to start)
 // =============================================================================
 #pragma once
 

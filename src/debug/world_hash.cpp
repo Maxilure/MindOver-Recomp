@@ -70,6 +70,8 @@ struct Recorder {
   uint64_t count = 0;        // frame column without a fixed step
   int64_t dump_frame = -1;   // write the data section at this frame (frame column)
   bool dumped = false;
+  bool saw_replay = false;       // a replay frame was seen
+  bool replay_expected = false;  // `dump r<frame>`: count replay frames only
   std::mutex mutex;
   uint64_t pages[kPages];
 };
@@ -133,8 +135,15 @@ void OnFrameEnd(void* user) {
 
   // The optional dump: the whole data section as the game stores it
   // (big-endian), for a word-by-word comparison of two runs.
+  // Counted in REPLAY frames while a replay runs (or once one has run), so
+  // two runs dump the same moment; the plain frame number only without one.
+  // (Before 2026-11-17 a dump asked for frame 640 fired at the first playable
+  // frame BEFORE the replay, whose fixed-step number was already ~1000.)
+  if (replay_frame >= 0) r.saw_replay = true;
+  const bool waiting_for_replay = input_record::ReplayFrame() < 0 && !r.saw_replay &&
+                                  r.replay_expected;
   const int64_t dump_key = replay_frame >= 0 ? replay_frame : frame;
-  if (!r.dumped && r.dump_frame >= 0 && dump_key >= r.dump_frame) {
+  if (!r.dumped && r.dump_frame >= 0 && !waiting_for_replay && dump_key >= r.dump_frame) {
     r.dumped = true;
     const std::string dump_path = fmt::format("{}.frame{}.bin", r.path, dump_key);
     if (std::FILE* d = std::fopen(dump_path.c_str(), "wb")) {
@@ -179,7 +188,14 @@ std::string Command(const std::vector<std::string_view>& w) {
   r->path = std::string(w[1]);
   for (size_t i = 2; i < w.size(); ++i) {
     if (w[i] == "dump" && i + 1 < w.size()) {
-      r->dump_frame = Number(w[++i], "dump frame");
+      std::string_view f = w[++i];
+      // `dump r600` = replay frame 600 (waits for a replay); `dump 600` =
+      // replay frame 600 if a replay runs then, else frame 600.
+      if (!f.empty() && f[0] == 'r') {
+        r->replay_expected = true;
+        f.remove_prefix(1);
+      }
+      r->dump_frame = Number(f, "dump frame");
     } else {
       r->max_frames = Number(w[i], "frames");
     }

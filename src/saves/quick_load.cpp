@@ -3,6 +3,7 @@
 // =============================================================================
 #include "quick_load.h"
 #include "../guest_memory.h"
+#include "../fixed_step.h"  // StartSession: exact runs / online
 
 #include <algorithm>
 #include <cctype>
@@ -293,5 +294,8 @@ extern "C" REX_FUNC(sub_8211CE30) {
     g_step = Step::kOff;
     REXLOG_INFO("Quick load: {:.1f} s: save loaded, starting the level", Seconds());
     ctx.r3.u64 = uint32_t(kExitToLevel);
+    // With the fixed step: a session starts here (every run alike from now
+    // on, whatever its boot and menus took).
+    fixed_step::StartSession();
   }
 }

@@ -69,6 +69,24 @@ uint32_t ClockMs();
 // ready (off, or before the first clock read).
 bool RestartClockAtWholeMs();
 
+// A SESSION STARTS (2026-11-17, toward online / LAN co-op): the moment a
+// session's save starts loading. Every copy of the game reaches it with its
+// own history (boot, menus, how many frames its loads took), and the game's
+// random generators carry that history: the enemy AI's generator (0x8259F928)
+// already differed at a replay's first frame between a normal run and one
+// starved on one CPU core. StartSession restarts the clock
+// (RestartClockAtWholeMs) and sets every random generator the port knows to
+// a value made from SessionSeed, so from here on the history doesn't matter:
+//   0x825A14F4  the main generator (findings/66)
+//   0x825A4FC4  the spawners' (CHeuristicSpawnerBehaviour; its "seeded"
+//               flag 0x8259AD9E set: the clock seed is never taken after)
+//   0x8259F928  the enemy AI's (code around the AI manager, 0x820BAxxx)
+//   0x8257FA04  Pure3D's particle emitters' (3 pairs; view only, but alike
+//               everywhere keeps the pictures comparable)
+// Main thread, fixed step on (else nothing). Quick load calls it when the
+// save is loaded and the level starts; an online session will at its start.
+void StartSession();
+
 // The seed for the game's random generators that it would otherwise take from
 // its clock (the spawners' generator, manifest CrashMomSpawnerSeed): with the
 // fixed step on, every run (and, later, every PC of an online session) must

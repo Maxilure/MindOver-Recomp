@@ -41,6 +41,7 @@
 #include "fixed_step.h"
 
 #include "audio/sound_out.h"
+#include "guest_memory.h"
 #include "system/helper_threads.h"
 
 #if defined(__x86_64__) || defined(_M_X64)
@@ -56,6 +57,9 @@
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
+#include <rex/memory.h>
+#include <rex/system/kernel_state.h>
+#include <rex/system/xmemory.h>
 
 REXCVAR_DEFINE_INT32(fixed_step, 0, "CrashMoM",
                      "EXACT REPEATABLE RUNS (testing): every game frame lasts exactly 1/N s, "
@@ -389,3 +393,54 @@ void CrashMomSpawnerSeed(PPCRegister& r4) {
               seed, r4.u32);
   r4.u64 = seed;
 }
+
+// =============================================================================
+// A session starts (fixed_step.h StartSession)
+// =============================================================================
+namespace fixed_step {
+namespace {
+// A generator word made from the session seed: never 0 (a multiply-with-carry
+// half stuck at 0 stays 0), different for every (generator, word).
+uint32_t SeedWord(uint32_t seed, uint32_t index) {
+  uint64_t z = (uint64_t(seed) << 32 | index) + 0x9E3779B97F4A7C15ull;
+  z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+  z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+  const uint32_t w = uint32_t(z ^ (z >> 31));
+  return w ? w : 0x6D6F5221u;
+}
+void Store32(uint8_t* base, uint32_t address, uint32_t v) {
+  uint8_t* p = GuestPtr(base, address);
+  p[0] = uint8_t(v >> 24);
+  p[1] = uint8_t(v >> 16);
+  p[2] = uint8_t(v >> 8);
+  p[3] = uint8_t(v);
+}
+struct Generator {
+  uint32_t address;
+  uint32_t words;
+  const char* what;
+};
+constexpr Generator kGenerators[] = {
+    {0x825A14F4, 2, "main"},
+    {0x825A4FC4, 2, "spawners"},
+    {0x8259F928, 2, "enemy AI"},
+    {0x8257FA04, 6, "particles"},
+};
+constexpr uint32_t kSpawnerSeededFlag = 0x8259AD9E;
+}  // namespace
+
+void StartSession() {
+  if (!Active() || !t_main) return;
+  RestartClockAtWholeMs();
+  uint8_t* base = rex::system::kernel_memory()->virtual_membase();
+  const uint32_t seed = SessionSeed();
+  uint32_t index = 0;
+  for (const Generator& g : kGenerators) {
+    for (uint32_t w = 0; w < g.words; ++w) Store32(base, g.address + 4 * w, SeedWord(seed, index++));
+  }
+  *GuestPtr(base, kSpawnerSeededFlag) = 1;
+  REXLOG_INFO("Fixed step: SESSION START at frame {}: clock restarted, {} random generators set "
+              "from seed {:08X}",
+              Frame(), sizeof(kGenerators) / sizeof(kGenerators[0]), seed);
+}
+}  // namespace fixed_step
