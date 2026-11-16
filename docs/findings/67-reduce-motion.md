@@ -124,4 +124,6 @@ on, whatever the Motion Blur row says.
 
 ## 4. Tests
 
-To be filled in from the playtest of the pull request.
+Playtested on Windows (one player) with the setting on and off: menus and
+panels, the selected item, button prompts and the "!" icon, mojo pick-ups,
+announcements. Not tested: Linux, co-op, every front-end screen.
