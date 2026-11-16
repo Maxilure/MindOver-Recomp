@@ -41,6 +41,7 @@
 #include "fixed_step.h"
 
 #include "audio/sound_out.h"
+#include "system/helper_threads.h"
 
 #if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>  // _mm_pause
@@ -340,6 +341,9 @@ void CrashMomPassDelta(PPCRegister& f31) {
   // a replay's first frame restarts the clock's epoch there).
   sound_clocked = true;
   sound_out::OnFixedFrame(k, g_epoch_frame, fps);
+  // Loading on game frames (system/helper_threads.h): the helper threads
+  // finish what they were asked (after the sound: its blocks wake them too).
+  helper_threads::WaitUntilQuiet();
   if (!g_fast.load(std::memory_order_relaxed)) WaitForFrameStart(k, fps);
   // The guest computed f31 in single precision (fmuls): give the same kind
   // of number, 1/N rounded to a float.
