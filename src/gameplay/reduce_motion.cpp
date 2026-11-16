@@ -8,7 +8,8 @@
 //        that slide in, the items that spring past their place and settle)
 //        jumps straight to its end.
 //     2. The selected menu item and the pulsing texts stop pulsing: they stay
-//        at their highlighted size.
+//        at their highlighted size; the button prompts floating over things
+//        to use stop wobbling.
 //     3. The game's slow-motion moments run at normal speed.
 //     4. The port's motion blur stays off whatever its own row says.
 //   Research and what is not covered: docs/findings/67-reduce-motion.md.
@@ -75,6 +76,7 @@ void StoreFloat(uint8_t* base, uint32_t address, float f) {
 constexpr uint32_t kMenuPulseTimer = 0x94;  // Scrooby Menu: the selected item's pulse timer
 constexpr uint32_t kTextPulseTimer = 0xAC;  // Scrooby Text: its pulse timer
 constexpr uint32_t kSlowMotion = 0x04;      // CTimeManager: the slow-motion factor
+constexpr uint32_t kIconWobble = 0x6C;      // CIconBehaviour: its wobble's timer
 
 }  // namespace
 
@@ -92,12 +94,19 @@ double GameTimeScale(const uint8_t* base, uint32_t manager, double scale) {
 }  // namespace reduce_motion
 
 // CFETransition's step: r3 = this, f1 = the time step (seconds).
+// f1 is put back afterwards: the step doesn't change it, and its callers go
+// on using it as their own time step (the announcement display subtracts it
+// from its display time right after, sub_8225B750).
 extern "C" REX_FUNC(__imp__sub_8225EAE0);
 extern "C" REX_FUNC(sub_8225EAE0) {
-  if (reduce_motion::On()) {
-    ctx.f1.f64 = 1.0e6;  // any transition's whole length at once: it ends now
+  if (!reduce_motion::On()) {
+    __imp__sub_8225EAE0(ctx, base);
+    return;
   }
+  const double step = ctx.f1.f64;
+  ctx.f1.f64 = 1.0e6;  // any transition's whole length at once: it ends now
   __imp__sub_8225EAE0(ctx, base);
+  ctx.f1.f64 = step;
 }
 
 // Scrooby Menu update (slot 5): r3 = the menu, f1 = the time step. The pulse
@@ -125,4 +134,21 @@ extern "C" REX_FUNC(sub_823730B0) {
   reduce_motion::StoreFloat(base, text + reduce_motion::kTextPulseTimer, 0.0f);
   __imp__sub_823730B0(ctx, base);
   reduce_motion::StoreFloat(base, text + reduce_motion::kTextPulseTimer, 0.0f);
+}
+
+// CIconBehaviour::Update (slot 4, vtable 0x8203248C): r3 = this, f1 = the
+// time step. The icons floating over things to use (the button prompt over
+// a door or a hatch) wobble: the timer at +0x6C advances each frame and the
+// icon is turned by sin(timer) and cos(timer x a constant). Held at 0, the
+// icon stays upright in its resting place.
+extern "C" REX_FUNC(__imp__sub_82178ED8);
+extern "C" REX_FUNC(sub_82178ED8) {
+  if (!reduce_motion::On()) {
+    __imp__sub_82178ED8(ctx, base);
+    return;
+  }
+  const uint32_t icon = ctx.r3.u32;
+  reduce_motion::StoreFloat(base, icon + reduce_motion::kIconWobble, 0.0f);
+  __imp__sub_82178ED8(ctx, base);
+  reduce_motion::StoreFloat(base, icon + reduce_motion::kIconWobble, 0.0f);
 }

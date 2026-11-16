@@ -49,7 +49,11 @@ them.
 **Change:** with the setting on, the step is given a time step of 1e6 s:
 every transition reaches its end on its first frame, and a spring's value at
 t = 1 is exactly the end. Screens that wait for a transition to finish see
-it finished at once.
+it finished at once. The caller's time step (`f1`) is put back after the
+call: the announcement display (`CAnnouncementDisplay`, update
+`sub_8225B750`) subtracts it from its display time right after stepping its
+slide, and a first version that left 1e6 in `f1` would have ended every
+announcement at once.
 
 ### 2.2 Pulses
 
@@ -63,6 +67,15 @@ it finished at once.
 **Change:** the timer is set to 0 before and after the original call: the
 item keeps the size 1.1 (still bigger and yellow, so the cursor stays easy
 to see) and stops moving.
+
+### 2.2b Floating button prompts
+
+The icons over things that can be used (a door, a hatch: the button prompt)
+are `CIconBehaviour`s (vtable `0x8203248C`). Their update (slot 4,
+`sub_82178ED8`) advances a timer at `+0x6C` and turns the icon by
+`sin(timer)` and a second wave of `timer x` a constant around its resting
+place (`+0x60`, 3 floats). **Change:** the timer is held at 0 around the
+original call: the icon stays upright in place.
 
 ### 2.3 Slow motion
 
