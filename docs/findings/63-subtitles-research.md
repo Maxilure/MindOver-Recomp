@@ -829,10 +829,12 @@ has none: AGENTS.md "keep the original's defaults").
   means no box; the row writes both (0 % = off). Only the box's alpha
   changes, the letters stay solid.
 * A sample line ("This is how the subtitles look.", with "Aku Aku" as
-  the speaker when names are on) stands in the subtitles' place while the
-  tab is open, in the chosen look, even with the subtitles off
-  (`options_menu::SubtitlePreview`: a `Tab` flag, mirrored for the UI
-  thread).
+  the speaker when names are on) stands in the subtitles' place while
+  the cursor is on one of the subtitle rows, in the chosen look, even with
+  the subtitles off (`options_menu::SubtitlePreview`: a `Tab` flag and a
+  `Row` flag, mirrored for the UI thread). Opening the tab or moving to
+  another row hides it: shown from the moment the tab opened, it covered
+  the screen while other options were being set (a playtest).
 
 **Which layer draws what.** The game draws the whole frame on the emulated
 GPU: the 3D, then its 2D pages (Scrooby, findings/30), the message bar and

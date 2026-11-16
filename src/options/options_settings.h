@@ -82,6 +82,10 @@ struct Row {
   int key_action = -1;
   // Show the Brightness guide (the calibration grey scale) on this row.
   bool guide = false;
+  // A subtitle row: while it has the cursor (on a tab with subtitle_preview),
+  // the sample subtitle shows at the bottom of the screen, so its look can be
+  // judged; the tab's other rows (and the tab just opened) show none.
+  bool subtitle_preview = false;
   // An X button action on this row (the prompt bottom right while the row is
   // selected and x_shown says so for its value): Renderer's "Dual Mode".
   std::u16string x_label;
@@ -95,9 +99,10 @@ struct Row {
 struct Tab {
   std::u16string name;
   std::vector<Row> rows;
-  // While this tab is open, a sample subtitle shows at the bottom of the
-  // screen in the chosen size and box (the Accessibility tab: subtitles.h
-  // preview, options_menu.h SubtitlePreview).
+  // This tab can show a sample subtitle at the bottom of the screen in the
+  // chosen size and box (the Accessibility tab: subtitles.h preview,
+  // options_menu.h SubtitlePreview), while one of its subtitle rows (Row
+  // subtitle_preview) has the cursor.
   bool subtitle_preview = false;
 };
 
