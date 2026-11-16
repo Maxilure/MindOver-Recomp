@@ -101,6 +101,19 @@ void main() {
       discard;
     }
   }
+  // REDUCE SCREEN FLASHES (findings/65): the attack ribbons (motion trails:
+  // Crash's spin and the like) at 30 % of their light AND opacity; glowing
+  // (additive / subtractive, kFlagFadeRgb) meshes, e.g. a titan ability's
+  // energy, at 30 % of their LIGHT only, like particle.frag and lit.frag: an
+  // additive blend weighs the colour by its alpha too, so scaling both kept
+  // only 0.3 x 0.3 = 9 % of the light.
+  if ((flags & kFlagCalmFx) != 0u) {
+    if ((flags & kFlagFadeRgb) != 0u) {
+      colour.rgb *= 0.3;
+    } else {
+      colour *= 0.3;
+    }
+  }
   // Debug (F11): solid magenta where the draw covers anything, so even a
   // faint additive trail shows exactly where it is.
   if ((flags & kFlagHighlight) != 0u) {

@@ -2205,6 +2205,26 @@ msgstr "Cuánto se corrigen los colores: 0% mantiene los colores originales."
 msgid "Colour Blindness"
 msgstr "Daltonismo"
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Sensibilidad visual"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Reducir destellos de pantalla"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's flashes and glows are much weaker."
+msgstr "Los destellos y brillos del juego son mucho más débiles."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Flashes and glows as in the original game."
+msgstr "Destellos y brillos como en el juego original."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

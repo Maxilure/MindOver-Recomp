@@ -2205,6 +2205,26 @@ msgstr "Hvor kraftigt farverne korrigeres: 0% bevarer de oprindelige farver."
 msgid "Colour Blindness"
 msgstr "Farveblindhed"
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Visuel følsomhed"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Reducer skærmblink"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's flashes and glows are much weaker."
+msgstr "Spillets blink og glød er meget svagere."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Flashes and glows as in the original game."
+msgstr "Blink og glød som i det originale spil."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

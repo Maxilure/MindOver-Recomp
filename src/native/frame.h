@@ -282,6 +282,7 @@ constexpr uint32_t kLitNoTangents = 512;      // ... no tangent / binormal
 constexpr uint32_t kLitNoNormalMap = 1024;    // character without a normal map: flat
 constexpr uint32_t kLitVertexColour = 2048;   // reflect: use the vertex colour (PS bool b10)
 constexpr uint32_t kLitNoColour = 4096;       // ... the vertex has no colour (white)
+constexpr uint32_t kLitCalm = 8192;           // Reduce Screen Flashes: a glowing mesh at 30 % (findings/65)
 
 // The shadow material's parameters (Material::kShadow, shaders/shadow.*),
 // std140 like LitParams. The game's pixel shader blurs a copy of the stencil
@@ -324,6 +325,9 @@ constexpr uint32_t kParticleNoColour = 32;  // the vertex has no colour: white
 constexpr uint32_t kParticleNoUv = 64;
 constexpr uint32_t kParticleSoft = 128;     // the depth copy is bound
 constexpr uint32_t kParticleHighlight = 256;  // debug: F11 paints it magenta (spotter.h)
+// Reduce Screen Flashes (findings/65): a glowing (fade_rgb) sprite keeps
+// kCalm of its light (particle.frag). High bit: clear of the debug bits.
+constexpr uint32_t kParticleCalm = 32768;
 // Debug experiments (F12, spotter.h): skip one step of the particle shader.
 constexpr uint32_t kParticleNoSoft = 512;       // soft edge off (soft = 1)
 constexpr uint32_t kParticleNoFog = 1024;       // fog off

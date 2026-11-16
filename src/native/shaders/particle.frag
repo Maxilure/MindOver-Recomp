@@ -88,6 +88,12 @@ void main() {
   if (fade_rgb) {
     colour.rgb *= fade;
   }
+  // REDUCE SCREEN FLASHES (findings/65): an additive / subtractive sprite
+  // (sparks, glows, the bursts of broken objects) adds or takes away only
+  // 30 % of its light; normal sprites (smoke, debris) are unchanged.
+  if (ParticleFlag(kParticleCalm)) {
+    colour.rgb *= 0.3;
+  }
 
   // 4. Fog: 1 nearer than the start, 0 beyond the end, linear in between.
   if (ParticleFlag(kParticleFog) && !ParticleFlag(kParticleNoFog)) {

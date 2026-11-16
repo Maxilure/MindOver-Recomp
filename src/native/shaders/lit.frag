@@ -95,6 +95,11 @@ void main() {
   if (fade_rgb) {
     colour.rgb *= fade;
   }
+  // REDUCE SCREEN FLASHES (findings/65): a glowing (additive / subtractive)
+  // lit mesh, e.g. a titan ability's energy, adds only 30 % of its light.
+  if (LitFlag(kLitCalm)) {
+    colour.rgb *= 0.3;
+  }
   if (LitFlag(kLitAlphaTest)) {
     if (kAlphaToCoverage && lit.more.x == 4u) {
       float ref = lit.fog_fade_alpha.w;

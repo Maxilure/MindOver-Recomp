@@ -53,6 +53,13 @@ REXCVAR_DEFINE_INT32(colourblindness_mode, 0, "CrashMoM",
 REXCVAR_DEFINE_INT32(colourblindness_intensity, 100, "CrashMoM",
                      "Strength of the colour blindness correction, 0-100 % (0 = the original colours)")
     .range(0, 100);
+// REDUCE SCREEN FLASHES (findings/65): in the native renderer, the game's
+// light effects at a fraction of their strength: the screen-wide fx grid
+// glows, glowing particles, attack ribbons, effects' proximity lights. Off
+// by default (the original).
+REXCVAR_DEFINE_BOOL(reduce_screen_flashes, false, "CrashMoM",
+                    "Photosensitivity: the game's flashes and light effects (screen-wide glows, glowing "
+                    "particles, attack ribbons, effect lights) much weaker, native renderer only");
 REXCVAR_DEFINE_INT32(sharpening, 0, "CrashMoM",
                      "Sharpening filter over the finished picture (contrast-adaptive), native renderer "
                      "only: 0 off, 1 low, 2 medium, 3 high")

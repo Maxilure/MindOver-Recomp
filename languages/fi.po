@@ -2205,6 +2205,26 @@ msgstr "Kuinka voimakkaasti värejä korjataan: 0% säilyttää alkuperäiset v�
 msgid "Colour Blindness"
 msgstr "Värisokeus"
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Näköherkkyys"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Vähennä näytön välähdyksiä"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's flashes and glows are much weaker."
+msgstr "Pelin välähdykset ja hehkut ovat paljon heikompia."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Flashes and glows as in the original game."
+msgstr "Välähdykset ja hehkut kuten alkuperäisessä pelissä."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

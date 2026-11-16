@@ -49,5 +49,6 @@ const uint kLitNoTangents = 512u;
 const uint kLitNoNormalMap = 1024u;
 const uint kLitVertexColour = 2048u;  // reflect: use the vertex colour (the game's b10)
 const uint kLitNoColour = 4096u;      // the vertex has no colour: white
+const uint kLitCalm = 8192u;          // Reduce Screen Flashes: a glowing mesh at 30 % (findings/65)
 
 bool LitFlag(uint flag) { return (lit.counts.w & flag) != 0u; }

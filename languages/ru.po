@@ -2205,6 +2205,26 @@ msgstr "Насколько сильно корректируются цвета:
 msgid "Colour Blindness"
 msgstr "Дальтонизм"
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Чувствительность зрения"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Ослабить вспышки экрана"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's flashes and glows are much weaker."
+msgstr "Вспышки и свечение в игре намного слабее."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Flashes and glows as in the original game."
+msgstr "Вспышки и свечение как в оригинальной игре."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

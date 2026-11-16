@@ -1409,6 +1409,20 @@ Row ColourblindnessIntensityRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: visual sensitivity (findings/65)
+// ---------------------------------------------------------------------------
+// REDUCE SCREEN FLASHES: the game's light effects (screen-wide glows,
+// glowing particles, attack ribbons, effects' proximity lights) at a
+// fraction of their strength. Off by default (the original). Native only.
+Row ReduceScreenFlashesRow() {
+  Row r = OnOffRow(tr(u"Reduce Screen Flashes"), "reduce_screen_flashes", tr(u"On"), tr(u"Off"),
+                   tr(u"The game's flashes and glows are much weaker."),
+                   tr(u"Flashes and glows as in the original game."), true);
+  NeedsNative(r);
+  return r;
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1566,6 +1580,7 @@ std::vector<Tab> Build() {
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Colour Blindness")), ColourblindnessModeRow(), ColourblindnessIntensityRow(),
+                   Heading(tr(u"Visual Sensitivity")), ReduceScreenFlashesRow(),
                    Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
                    SubtitleSpeakersRow(), SubtitleSpeakerColoursRow(), SubtitleLingerRow()},
                   true});

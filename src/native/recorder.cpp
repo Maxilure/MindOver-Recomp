@@ -41,6 +41,7 @@
 #include "scan.h"
 
 REXCVAR_DECLARE(int32_t, motion_blur);      // effects/post_effects.cpp
+REXCVAR_DECLARE(bool, reduce_screen_flashes);  // effects/post_effects.cpp
 REXCVAR_DECLARE(int32_t, shadow_softness);  // effects/post_effects.cpp
 REXCVAR_DEFINE_INT32(debug_bump_experiment, 0, "CrashMoM",
                      "Debug: the bump material (native picture only) with steps left out / shown "
@@ -96,6 +97,21 @@ VertexLayout MeshVertexLayout(uint32_t flags, uint32_t stride) {
 namespace recorder {
 
 namespace {
+
+// REDUCE SCREEN FLASHES (findings/65): the game's "proximity" point lights
+// (up to 4 per draw, lighting.glsl ProximityLights: the coloured light an
+// effect throws on what is near it, e.g. the Ratcicle's cyan flash,
+// findings/20) at kCalmLight of their intensity (PS c38+n .z).
+constexpr float kCalmLight = 0.35f;
+// The characters' yellow glow (PS c98.x "pulse", character.frag) at 25 %.
+constexpr float kCalmPulse = 0.25f;
+// The characters' and titans' glowing outline (rim light, PS c102.x) at 40 %.
+constexpr float kCalmRim = 0.4f;
+void CalmProximityLights(LitParams& p) {
+  if (!REXCVAR_GET(reduce_screen_flashes)) return;
+  for (auto& light : p.point_params) light[2] *= kCalmLight;
+}
+
 
 using namespace native::guest;
 
@@ -298,6 +314,7 @@ bool ReadSimpleLights(const uint8_t* base, uint32_t dev, LitParams& p) {
   ReadConstants(base, dev, device::PsConstant(30), &p.point_position[0][0], 4);
   ReadConstants(base, dev, device::PsConstant(34), &p.point_colour[0][0], 4);
   ReadConstants(base, dev, device::PsConstant(38), &p.point_params[0][0], 4);
+  CalmProximityLights(p);
   p.counts[2] = shadows;
   ReadConstants(base, dev, device::PsConstant(201), &p.shadow_spheres[0][0], 8);
   return true;
@@ -343,6 +360,7 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
     ReadConstants(base, dev, device::PsConstant(30), &p.point_position[0][0], 4);
     ReadConstants(base, dev, device::PsConstant(34), &p.point_colour[0][0], 4);
     ReadConstants(base, dev, device::PsConstant(38), &p.point_params[0][0], 4);
+    CalmProximityLights(p);
   }
   if (!reflect) {  // the reflect shader has no Fx shadows either
     p.counts[2] = count(200, 8);
@@ -358,9 +376,15 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
   if (character) {
     ReadConstants(base, dev, device::PsConstant(100), p.rim_colour);
     p.character[0] = LoadFloat(base, dev + device::PsConstant(98));   // pulse
+    // REDUCE SCREEN FLASHES (findings/65): the pulse is the yellow glow a
+    // character gives off (e.g. Crash's spinning jump): kept at kCalmPulse.
+    if (REXCVAR_GET(reduce_screen_flashes)) p.character[0] *= kCalmPulse;
     p.character[1] = LoadFloat(base, dev + device::PsConstant(99));   // blend weight
     p.character[2] = LoadFloat(base, dev + device::PsConstant(101));  // rim blend
     p.character[3] = LoadFloat(base, dev + device::PsConstant(102));  // rim amount
+    // REDUCE SCREEN FLASHES (findings/65): the rim light, the glowing outline
+    // characters and titans have (character.frag), kept at kCalmRim.
+    if (REXCVAR_GET(reduce_screen_flashes)) p.character[3] *= kCalmRim;
   }
   std::memcpy(p.fog_colour, d.fog_colour, sizeof(d.fog_colour));
   p.fog_fade_alpha[0] = d.fog_start;
@@ -373,7 +397,10 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
                 (d.fog ? kLitFog : 0) | (d.fade_rgb ? kLitFadeRgb : 0) |
                 (d.alpha_test ? kLitAlphaTest : 0) |
                 (d.blend_map.present() ? kLitBlendMap : 0) |
-                (character && !d.normal_map.present() ? kLitNoNormalMap : 0);
+                (character && !d.normal_map.present() ? kLitNoNormalMap : 0) |
+                // Reduce Screen Flashes (findings/65): a glowing (additive /
+                // subtractive) lit mesh, e.g. a titan ability's energy, at 30 %.
+                (d.fade_rgb && REXCVAR_GET(reduce_screen_flashes) ? kLitCalm : 0);
   p.more[0] = d.alpha_func;
 }
 
@@ -396,7 +423,11 @@ void ReadParticleParams(const uint8_t* base, uint32_t dev, const DrawCommand& d,
                (d.textured && d.palette.present() ? kParticlePalettized : 0) |
                (d.fade_rgb ? kParticleFadeRgb : 0) | (d.fog ? kParticleFog : 0) |
                (d.alpha_test ? kParticleAlphaTest : 0) |
-               (d.depth_copy.present() ? kParticleSoft : 0);
+               (d.depth_copy.present() ? kParticleSoft : 0) |
+               // Reduce Screen Flashes (findings/65): glowing sprites (the
+               // additive / subtractive ones: sparks, the spin's glow, the
+               // bursts of broken crates) at a fraction of their light.
+               (d.fade_rgb && REXCVAR_GET(reduce_screen_flashes) ? kParticleCalm : 0);
   p.flags[1] = d.alpha_func;
 }
 
