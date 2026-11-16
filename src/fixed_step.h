@@ -60,13 +60,22 @@ uint64_t Frame();
 uint32_t ClockMs();
 
 // Main thread, fixed step on: from THIS frame on, the game's clocks count
-// from the next whole millisecond (frame k = that + (k - this) / N s). Two
-// runs that call it on their own first frame then read identical clock values
-// frame for frame, whatever frame number they reached it on (the ms rounding
-// of 1/N s otherwise depends on the frame number). The replay's first frame
+// from the next whole HOUR of clock time (frame k = that + (k - this) / N s).
+// Two runs that call it on their own first frame then read identical clock
+// VALUES frame for frame, whatever frame number they reached it on and however
+// long their loading took (the ms rounding of 1/N s otherwise depends on the
+// frame number, and the value on the load's length). The replay's first frame
 // (input_record.cpp) and, later, an online session's first frame. False = not
 // ready (off, or before the first clock read).
 bool RestartClockAtWholeMs();
+
+// The seed for the game's random generators that it would otherwise take from
+// its clock (the spawners' generator, manifest CrashMomSpawnerSeed): with the
+// fixed step on, every run (and, later, every PC of an online session) must
+// start them alike. Default = a fixed value; SetSessionSeed changes it (an
+// online session's host picks one and sends it). Any thread.
+uint32_t SessionSeed();
+void SetSessionSeed(uint32_t seed);
 
 // Called on the main thread at the start of every main-loop pass while the
 // fixed step is on, after the frame number is set (input_record's replay

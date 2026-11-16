@@ -289,6 +289,28 @@ address = 0x8227B04C
 name = "CrashMomPassDelta"
 registers = ["f31"]
 
+# THE SPAWNERS' RANDOM SEED (src/fixed_step.cpp, 2026-11-17, toward online /
+# LAN co-op). The game has a SECOND random generator (8 bytes at 0x825A4FC4,
+# the same multiply-with-carry kind as the main one at 0x825A14F4), used by
+# CHeuristicSpawnerBehaviour (vtable slot 5 = sub_82148218 -> sub_82148300).
+# The first time any spawner acts, sub_82148300 seeds it from the game's
+# MILLISECOND CLOCK:
+#   0x82148320  lbz    r11,-21090(r29)   ; "seeded" flag 0x8259AD9E
+#   0x8214832C  bl     0x8235abc8        ; ms clock -> r3
+#   0x82148330  mr     r4,r3             ; seed
+#   0x82148334  mr     r3,r31            ; <- hook: r4 = the seed
+#   0x82148338  bl     0x82424b18        ; seed(state, r4): x = hi16, y = lo16
+# So two runs of the same inputs drew different spawner numbers whenever the
+# first spawn came a few ms apart (4-player exact runs parted ~65 s in, the
+# generator's low half differing). With the fixed step on, the hook answers a
+# fixed seed (fixed_step::SessionSeed); in normal play the clock stays.
+# Found with debug console `worldhash` (first differing word 0x825A4FC8) +
+# the generated code (the inlined 36969 / 18000 steps).
+[[entrypoint.midasm_hook]]
+address = 0x82148334
+name = "CrashMomSpawnerSeed"
+registers = ["r4"]
+
 # SOUND OUT (src/audio/sound_out.cpp, docs/findings/54) + AUDIO DUMP
 # (src/audio_trace.cpp, --debug_audio_dump). Microsoft's XAudio library
 # (statically linked) mixes every sound into blocks of 256 samples x 6

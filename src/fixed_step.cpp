@@ -196,15 +196,20 @@ uint64_t Frame() { return g_frame.load(std::memory_order_relaxed); }
 // runs parted from there (the "join race" of the 4-player tests). Restarting
 // the count here makes every run's clock read the same from this frame on.
 // Online lockstep needs the same thing at a session's first frame.
-bool RestartClockAtWholeMs() {
+bool RestartClockAtWholeMs() {  // (name kept: it now restarts on a whole HOUR)
   const int32_t fps = g_fps.load(std::memory_order_relaxed);
   if (!t_main || fps <= 0 || g_need_base) return false;
   const uint64_t k = g_frame.load(std::memory_order_relaxed);
   const uint64_t now_us = g_clock_base_us + FrameUs(k, fps);
-  // The next whole millisecond: later than anything handed out, so the
-  // clock never runs backwards.
-  const uint64_t next_ms_us = (std::max(now_us, g_last_virtual_us) / 1000 + 1) * 1000;
-  g_clock_base_us = next_ms_us;
+  // The next WHOLE HOUR of clock time: the same VALUE in every run, not
+  // just the same rhythm (2026-11-17: a whole-ms restart still carried the
+  // load's length, so the spawners' seed, taken from this clock 65 s later,
+  // differed by 2.3 s between a normal and a fast run). Later than anything
+  // handed out, so the clock never runs backwards; loads take minutes, not
+  // hours, so every run lands on the same hour.
+  constexpr uint64_t kHourUs = 3600ull * 1000000ull;
+  const uint64_t next_hour_us = (std::max(now_us, g_last_virtual_us) / kHourUs + 1) * kHourUs;
+  g_clock_base_us = next_hour_us;
   g_epoch_frame = k;
   g_reads_this_pass = 0;
   return true;
@@ -313,4 +318,27 @@ void CrashMomPassDelta(PPCRegister& f31) {
   // The guest computed f31 in single precision (fmuls): give the same kind
   // of number, 1/N rounded to a float.
   f31.f64 = double(float(1.0 / double(fps)));
+}
+
+// =============================================================================
+// The spawners' random seed (manifest CrashMomSpawnerSeed, fixed_step.h)
+// =============================================================================
+namespace fixed_step {
+namespace {
+// Any fixed number will do; this one spells "MoR!" in ASCII.
+std::atomic<uint32_t> g_session_seed{0x4D6F5221u};
+}  // namespace
+uint32_t SessionSeed() { return g_session_seed.load(std::memory_order_relaxed); }
+void SetSessionSeed(uint32_t seed) { g_session_seed.store(seed, std::memory_order_relaxed); }
+}  // namespace fixed_step
+
+// Codegen declares `extern void CrashMomSpawnerSeed(PPCRegister& r4);`.
+// r4 = the game's millisecond clock reading it is about to seed the spawners'
+// generator with (0x82148334). Fixed step on: the session's seed instead.
+void CrashMomSpawnerSeed(PPCRegister& r4) {
+  if (!fixed_step::Active()) return;
+  const uint32_t seed = fixed_step::SessionSeed();
+  REXLOG_INFO("Fixed step: spawners' random generator seeded with {:08X} (the game asked its clock: {:08X})",
+              seed, r4.u32);
+  r4.u64 = seed;
 }
