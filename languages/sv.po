@@ -2085,6 +2085,111 @@ msgstr "Vem som talar, i gult, före repliken (när det är känt)."
 msgid "Only the spoken words."
 msgstr "Bara de talade orden."
 
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "Correction"
+msgstr "Korrigering"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanopia"
+msgstr "Protanopi"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanomaly"
+msgstr "Protanomali"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Deuteranopia"
+msgstr "Deuteranopi"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Deuteranomaly"
+msgstr "Deuteranomali"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanopia"
+msgstr "Tritanopi"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanomaly"
+msgstr "Tritanomali"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Achromatopsia"
+msgstr "Akromatopsi"
+
+#: src/options/options_settings.cpp:1372
+#, fuzzy
+msgid "Achromatomaly"
+msgstr "Akromatomali"
+
+#: src/options/options_settings.cpp:1373
+#, fuzzy
+msgid "The game's own colours."
+msgstr "Spelets egna färger."
+
+#: src/options/options_settings.cpp:1374
+#, fuzzy
+msgid "No red cones: reds and greens that look alike are pushed apart."
+msgstr "Inga röda tappar: röda och gröna nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1375
+#, fuzzy
+msgid "Weak red cones: reds and greens that look alike are pushed apart."
+msgstr "Svaga röda tappar: röda och gröna nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1376
+#, fuzzy
+msgid "No green cones: greens and reds that look alike are pushed apart."
+msgstr "Inga gröna tappar: gröna och röda nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1377
+#, fuzzy
+msgid "Weak green cones: greens and reds that look alike are pushed apart."
+msgstr "Svaga gröna tappar: gröna och röda nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1378
+#, fuzzy
+msgid "No blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Inga blå tappar: blå och gula nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1379
+#, fuzzy
+msgid "Weak blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Svaga blå tappar: blå och gula nyanser som liknar varandra skiljs åt."
+
+#: src/options/options_settings.cpp:1380
+#, fuzzy
+msgid "No colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Inget färgseende: färger med samma ljusstyrka blir lite ljusare eller mörkare."
+
+#: src/options/options_settings.cpp:1381
+#, fuzzy
+msgid "Weak colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Svagt färgseende: färger med samma ljusstyrka blir lite ljusare eller mörkare."
+
+#: src/options/options_settings.cpp:1390
+#, fuzzy
+msgid "Correction Strength"
+msgstr "Korrigeringens styrka"
+
+#: src/options/options_settings.cpp:1405
+#, fuzzy
+msgid "How strongly the colours are corrected: 0% keeps the original colours."
+msgstr "Hur starkt färgerna korrigeras: 0% behåller de ursprungliga färgerna."
+
+#: src/options/options_settings.cpp:1558
+#, fuzzy
+msgid "Colour Blindness"
+msgstr "Färgblindhet"
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

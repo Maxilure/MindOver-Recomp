@@ -2092,6 +2092,111 @@ msgstr "Quem está falando, em amarelo, antes da fala (quando se sabe)."
 msgid "Only the spoken words."
 msgstr "Só as palavras faladas."
 
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "Correction"
+msgstr "Correção"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanopia"
+msgstr "Protanopia"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanomaly"
+msgstr "Protanomalia"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Deuteranopia"
+msgstr "Deuteranopia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Deuteranomaly"
+msgstr "Deuteranomalia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanopia"
+msgstr "Tritanopia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanomaly"
+msgstr "Tritanomalia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Achromatopsia"
+msgstr "Acromatopsia"
+
+#: src/options/options_settings.cpp:1372
+#, fuzzy
+msgid "Achromatomaly"
+msgstr "Acromatomalia"
+
+#: src/options/options_settings.cpp:1373
+#, fuzzy
+msgid "The game's own colours."
+msgstr "As cores originais do jogo."
+
+#: src/options/options_settings.cpp:1374
+#, fuzzy
+msgid "No red cones: reds and greens that look alike are pushed apart."
+msgstr "Sem cones vermelhos: vermelhos e verdes parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1375
+#, fuzzy
+msgid "Weak red cones: reds and greens that look alike are pushed apart."
+msgstr "Cones vermelhos fracos: vermelhos e verdes parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1376
+#, fuzzy
+msgid "No green cones: greens and reds that look alike are pushed apart."
+msgstr "Sem cones verdes: verdes e vermelhos parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1377
+#, fuzzy
+msgid "Weak green cones: greens and reds that look alike are pushed apart."
+msgstr "Cones verdes fracos: verdes e vermelhos parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1378
+#, fuzzy
+msgid "No blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Sem cones azuis: azuis e amarelos parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1379
+#, fuzzy
+msgid "Weak blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Cones azuis fracos: azuis e amarelos parecidos ficam mais diferentes."
+
+#: src/options/options_settings.cpp:1380
+#, fuzzy
+msgid "No colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Sem visão de cores: cores com o mesmo brilho ficam um pouco mais claras ou escuras."
+
+#: src/options/options_settings.cpp:1381
+#, fuzzy
+msgid "Weak colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Visão de cores fraca: cores com o mesmo brilho ficam um pouco mais claras ou escuras."
+
+#: src/options/options_settings.cpp:1390
+#, fuzzy
+msgid "Correction Strength"
+msgstr "Força da correção"
+
+#: src/options/options_settings.cpp:1405
+#, fuzzy
+msgid "How strongly the colours are corrected: 0% keeps the original colours."
+msgstr "O quanto as cores são corrigidas: 0% mantém as cores originais."
+
+#: src/options/options_settings.cpp:1558
+#, fuzzy
+msgid "Colour Blindness"
+msgstr "Daltonismo"
+
 #: src/options/options_settings.cpp:1446
 #, fuzzy
 msgid "Stay on Screen"

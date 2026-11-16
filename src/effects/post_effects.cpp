@@ -41,6 +41,18 @@ REXCVAR_DEFINE_INT32(shadow_softness, 1, "CrashMoM",
                      "Soft character shadows' edge, native renderer only: 0 sharper, 1 original, "
                      "2 softer, 3 softest")
     .range(0, 3);
+// COLOUR BLINDNESS (findings/64): a daltonisation in the native renderer's
+// present pass (shaders/present.frag): 0 off, 1 protanopia, 2 protanomaly,
+// 3 deuteranopia, 4 deuteranomaly, 5 tritanopia, 6 tritanomaly,
+// 7 achromatopsia, 8 achromatomaly; its strength 0-100 %.
+REXCVAR_DEFINE_INT32(colourblindness_mode, 0, "CrashMoM",
+                     "Colour blindness correction of the finished picture, native renderer only: 0 off, "
+                     "1 protanopia, 2 protanomaly, 3 deuteranopia, 4 deuteranomaly, 5 tritanopia, "
+                     "6 tritanomaly, 7 achromatopsia, 8 achromatomaly")
+    .range(0, 8);
+REXCVAR_DEFINE_INT32(colourblindness_intensity, 100, "CrashMoM",
+                     "Strength of the colour blindness correction, 0-100 % (0 = the original colours)")
+    .range(0, 100);
 REXCVAR_DEFINE_INT32(sharpening, 0, "CrashMoM",
                      "Sharpening filter over the finished picture (contrast-adaptive), native renderer "
                      "only: 0 off, 1 low, 2 medium, 3 high")
