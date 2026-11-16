@@ -147,4 +147,5 @@ on, whatever the Motion Blur row says.
 
 Playtested on Windows (one player) with the setting on and off: menus and
 panels, the selected item, button prompts and the "!" icon, mojo pick-ups,
-announcements. Not tested: Linux, co-op, every front-end screen.
+announcements, the Level Up / upgrade screen (Crash and a titan). Not
+tested: Linux, co-op, every front-end screen.
