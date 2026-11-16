@@ -2,6 +2,7 @@
 // players/more_players.cpp -- see more_players.h (and findings/26)
 // =============================================================================
 #include "more_players.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 #include "outfit_picker.h"
 
 #include <algorithm>
@@ -236,8 +237,8 @@ int LocalPlayerCount() { return LocalPlayers(); }
 bool FourPlayerLayout() {
   if (LocalPlayers() <= 2) return false;
   static bool active = false;
-  static std::chrono::steady_clock::time_point last_present;
-  const auto now = std::chrono::steady_clock::now();
+  static game_time::Clock::time_point last_present;
+  const auto now = game_time::Clock::now();
   if (Read32(kState + 8) != 0 || Read32(kState + 12) != 0) {
     active = true;
     last_present = now;
@@ -1110,7 +1111,7 @@ extern "C" REX_FUNC(__imp__sub_820B44D0);  // message: mask (r3 msg, r4 kind 4 a
 extern "C" REX_FUNC(__imp__sub_820B0B70);  // send a message to an actor (r3 actor, r4 msg)
 extern "C" REX_FUNC(__imp__sub_820B45C8);  // message: free
 void more_players::ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base) {
-  using StrayClock = std::chrono::steady_clock;
+  using StrayClock = game_time::Clock;
   constexpr float kStraySeconds = 1.0f;
   static StrayClock::time_point stray_since[kMaxPlayers];
   const StrayClock::time_point now = StrayClock::now();
@@ -2071,7 +2072,7 @@ extern "C" REX_FUNC(__imp__sub_8214A080);  // the interactable named by *r3 (a n
 extern "C" REX_FUNC(__imp__sub_8226FCD8);  // player number of an actor (r3 = game object, r4 = actor)
 namespace {
 int g_interaction_player = -1;  // a player 3-4 a requirement just accepted for player 1-2
-std::chrono::steady_clock::time_point g_interaction_at;
+game_time::Clock::time_point g_interaction_at;
 }  // namespace
 extern "C" REX_FUNC(sub_822A2460) {
   const uint32_t req = ctx.r3.u32;
@@ -2092,7 +2093,7 @@ extern "C" REX_FUNC(sub_822A2460) {
   Write32(req + 16, word);  // its own "who" back
   if (ctx.r3.u32 & 0xFF) {
     g_interaction_player = borrowed;
-    g_interaction_at = std::chrono::steady_clock::now();
+    g_interaction_at = game_time::Clock::now();
     if (REXCVAR_GET(debug_coop_trace)) {
       REXLOG_INFO("Co-op: player {} counts for player {}'s interaction (requirement {:08X})", borrowed + 1,
                   who + 1, req);
@@ -2111,7 +2112,7 @@ extern "C" REX_FUNC(sub_82263620) {
     const int p = g_interaction_player;
     g_interaction_player = -1;
     if (int32_t(ctx.r5.u32) == (p & 1) &&
-        std::chrono::steady_clock::now() - g_interaction_at < std::chrono::seconds(1)) {
+        game_time::Clock::now() - g_interaction_at < std::chrono::seconds(1)) {
       ctx.r5.u64 = uint32_t(p);
     }
   }
@@ -2240,7 +2241,7 @@ namespace more_players {
 namespace {
 constexpr int16_t kNodeDigSuccess = 827, kNodeDigExit = 832;  // Crash.bfig
 int g_dig_trigger = -1;                                       // player who just dug in / out
-std::chrono::steady_clock::time_point g_dig_trigger_at;
+game_time::Clock::time_point g_dig_trigger_at;
 }  // namespace
 }  // namespace more_players
 
@@ -2255,7 +2256,7 @@ extern "C" REX_FUNC(sub_820C1578) {
       const int p = PlayerOf(Read32(ctx.r3.u32 + 16));
       if (p >= 0) {
         g_dig_trigger = p;
-        g_dig_trigger_at = std::chrono::steady_clock::now();
+        g_dig_trigger_at = game_time::Clock::now();
       }
     }
   }
@@ -2268,7 +2269,7 @@ extern "C" REX_FUNC(sub_82295B08) {
   const int32_t named = int32_t(Read32(event + 8));
   int keeper = g_dig_trigger;
   // the trigger is the same frame as the event (same game thread moment)
-  if (std::chrono::steady_clock::now() - g_dig_trigger_at > std::chrono::milliseconds(100)) keeper = -1;
+  if (game_time::Clock::now() - g_dig_trigger_at > std::chrono::milliseconds(100)) keeper = -1;
   g_dig_trigger = -1;
   if (LocalPlayers() <= 2 || named < 0 || keeper < 0 || Read32(kState + 4 * keeper) != 2) {
     __imp__sub_82295B08(ctx, base);

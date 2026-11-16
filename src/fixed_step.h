@@ -74,6 +74,11 @@ bool RestartClockAtWholeMs();
 // fixed step on, every run (and, later, every PC of an online session) must
 // start them alike. Default = a fixed value; SetSessionSeed changes it (an
 // online session's host picks one and sends it). Any thread.
+// game_time::Clock's source (game_time.h), in nanoseconds, any thread:
+// fixed step off = std::chrono::steady_clock's own count; on = the steady
+// clock's count at the moment it came on + frame number / N s (game time).
+int64_t GameClockNs();
+
 uint32_t SessionSeed();
 void SetSessionSeed(uint32_t seed);
 

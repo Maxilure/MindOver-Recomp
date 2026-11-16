@@ -1,5 +1,6 @@
 // players/lost_controller.cpp -- see lost_controller.h.
 #include "lost_controller.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <array>
 #include <atomic>
@@ -128,7 +129,7 @@ std::atomic<bool> g_want_takeover{false};
 // Game's main thread: a take-over under way (box closed, game running):
 // who joins, who drops out once they're in, and until when.
 int g_handover_joiner = -1, g_handover_lost = -1;
-std::chrono::steady_clock::time_point g_handover_until;
+game_time::Clock::time_point g_handover_until;
 // STEPPING IN (2026-11-05, playtest idea): the box is about the LAST PLAYER ON
 // FOOT and the others ride them as masks (MayLeave says no: a mask needs a
 // Crash). Any of those masks with a device presses Y: that player comes OUT
@@ -151,10 +152,10 @@ std::atomic<int> g_drop_presser{-1};
 // reads it.)
 constexpr auto kListenDelay = std::chrono::milliseconds(1000);
 std::atomic<int64_t> g_listen_from{0};
-bool Listening() { return std::chrono::steady_clock::now().time_since_epoch().count() >= g_listen_from.load(); }
+bool Listening() { return game_time::Clock::now().time_since_epoch().count() >= g_listen_from.load(); }
 int g_stepin_player = -1, g_stepin_lost = -1;
 bool g_stepin_keyboard = false;  // ... about player 1's controller (they still have the keyboard)
-std::chrono::steady_clock::time_point g_stepin_until;
+game_time::Clock::time_point g_stepin_until;
 // The buttons each socket held at its last read: only a NEW press counts.
 std::array<uint16_t, kMaxPlayers> g_held{};
 // THE PRESS THAT CLOSES THE BOX STAYS IN THE BOX (2026-11-13, playtest: after
@@ -428,8 +429,8 @@ bool AnyoneCanStepIn(int lost) {
 constexpr auto kUnjackTime = std::chrono::seconds(3);
 constexpr auto kOffTime = std::chrono::milliseconds(1000);
 std::array<bool, kMaxPlayers> g_unjacking{};
-std::array<std::chrono::steady_clock::duration, kMaxPlayers> g_unjack_waited{}, g_unjack_off{};
-std::chrono::steady_clock::time_point g_unjack_last_tick{};
+std::array<game_time::Clock::duration, kMaxPlayers> g_unjack_waited{}, g_unjack_off{};
+game_time::Clock::time_point g_unjack_last_tick{};
 
 // The game's Drop Out for player p (the menu owner is p for the call).
 void CallDropOut(PPCContext& ctx, uint8_t* base, uint32_t fe, int p, bool rules) {
@@ -441,7 +442,7 @@ void CallDropOut(PPCContext& ctx, uint8_t* base, uint32_t fe, int p, bool rules)
 
 // Once per frame: an unjacked player is on foot -> the drop out goes on.
 void TickUnjacking(PPCContext& ctx, uint8_t* base, uint32_t fe) {
-  const auto now = std::chrono::steady_clock::now();
+  const auto now = game_time::Clock::now();
   const auto dt = now - g_unjack_last_tick;
   g_unjack_last_tick = now;
   const uint32_t manager = Read32(kGameGlobal);
@@ -490,7 +491,7 @@ int FirstWaiting() {
 void ShowFor(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
   for (uint16_t& held : g_held) held = 0xFFFF;  // wait for every button to be let go first
   g_want_drop = g_want_resume = false;
-  g_listen_from = (std::chrono::steady_clock::now() + kListenDelay).time_since_epoch().count();
+  g_listen_from = (game_time::Clock::now() + kListenDelay).time_since_epoch().count();
   g_can_drop = MayLeave(p);
   g_lost = p;
   g_phase = kLost;
@@ -562,7 +563,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
   // box asks again if it's still needed).
   if (g_handover_lost >= 0) {
     const int joiner = g_handover_joiner, lost = g_handover_lost;
-    if (InGame(joiner) || !InGame(lost) || HasDevice(lost) || std::chrono::steady_clock::now() > g_handover_until) {
+    if (InGame(joiner) || !InGame(lost) || HasDevice(lost) || game_time::Clock::now() > g_handover_until) {
       g_handover_joiner = g_handover_lost = -1;
       if (InGame(joiner) && InGame(lost) && !HasDevice(lost)) {
         DropOut(ctx, base, lost, ("player " + std::to_string(joiner + 1) + " took over").c_str());
@@ -581,7 +582,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     // happened but player 1 never dropped out, first test.)
     const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
     const bool still_without = g_stepin_keyboard ? assignment && assignment->PadKeyFor(0).empty() : !HasDevice(gone);
-    if (on_foot || !InGame(gone) || !still_without || std::chrono::steady_clock::now() > g_stepin_until) {
+    if (on_foot || !InGame(gone) || !still_without || game_time::Clock::now() > g_stepin_until) {
       g_stepin_player = g_stepin_lost = -1;
       if (on_foot && InGame(gone) && still_without) {
         // The other masks follow the player who stepped in (they'd all be
@@ -629,7 +630,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     if (!g_can_drop.load() && joiner >= 0 && joiner == Joiner(lost)) {
       g_handover_joiner = joiner;
       g_handover_lost = lost;
-      g_handover_until = std::chrono::steady_clock::now() + kJoinWindow;
+      g_handover_until = game_time::Clock::now() + kJoinWindow;
       return Finish(ctx, base, fe,
                     ("is taken over by player " + std::to_string(joiner + 1) + ": game runs for the join").c_str());
     }
@@ -643,7 +644,7 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
       g_stepin_player = q;
       g_stepin_lost = lost;
       g_stepin_keyboard = KeyboardCase(lost);
-      g_stepin_until = std::chrono::steady_clock::now() + kStepInWindow;
+      g_stepin_until = game_time::Clock::now() + kStepInWindow;
       return Finish(ctx, base, fe,
                     ("will drop out: player " + std::to_string(q + 1) + " comes out of the mask first").c_str());
     }

@@ -38,6 +38,7 @@
 // =============================================================================
 
 #include "victory_scenes.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <algorithm>
 #include <chrono>
@@ -116,7 +117,7 @@ bool Finite(Vec v) { return std::isfinite(v.x) && std::isfinite(v.y) && std::isf
 
 int64_t NowMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::steady_clock::now().time_since_epoch())
+             game_time::Clock::now().time_since_epoch())
       .count();
 }
 

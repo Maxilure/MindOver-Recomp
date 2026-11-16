@@ -79,6 +79,15 @@ std::atomic<bool> g_fast{false};
 std::atomic<uint64_t> g_frame{0};
 
 std::atomic<void (*)()> g_pass_listener{nullptr};
+// game_time::Clock (GameClockNs): the steady clock's count when the fixed
+// step last came on; frames count from there.
+std::atomic<int64_t> g_game_clock_origin_ns{0};
+// The largest value GameClockNs handed out: switching the fixed step on or off
+// never makes the clock run backwards.
+std::atomic<int64_t> g_game_clock_last_ns{0};
+int64_t SteadyNs() {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count();
+}
 
 // Main thread only.
 uint32_t g_applied_generation = 0;
@@ -146,6 +155,8 @@ void ApplyRequests() {
   g_frame = 0;
   g_epoch_frame = 0;
   g_start = Clock::now();
+  // game_time::Clock carries on from where it was (never backwards).
+  g_game_clock_origin_ns = std::max(SteadyNs(), g_game_clock_last_ns.load());
   if (fps > 0) {
     REXLOG_INFO("Fixed step: ON, every frame exactly 1/{} s ({:.3f} ms){}", fps, 1000.0 / fps,
                 fast ? ", not waiting between frames (fast)" : "");
@@ -328,6 +339,23 @@ namespace {
 // Any fixed number will do; this one spells "MoR!" in ASCII.
 std::atomic<uint32_t> g_session_seed{0x4D6F5221u};
 }  // namespace
+int64_t GameClockNs() {
+  const int32_t fps = g_fps.load(std::memory_order_relaxed);
+  int64_t ns;
+  if (fps > 0) {
+    // Integer nanoseconds per frame, like the guest's integer microseconds.
+    ns = g_game_clock_origin_ns.load(std::memory_order_relaxed) +
+         int64_t(g_frame.load(std::memory_order_relaxed)) * 1000000000ll / fps;
+  } else {
+    ns = SteadyNs();
+  }
+  // Never backwards (only matters right after the fixed step is switched).
+  int64_t last = g_game_clock_last_ns.load(std::memory_order_relaxed);
+  while (ns > last && !g_game_clock_last_ns.compare_exchange_weak(last, ns, std::memory_order_relaxed)) {
+  }
+  return std::max(ns, last);
+}
+
 uint32_t SessionSeed() { return g_session_seed.load(std::memory_order_relaxed); }
 void SetSessionSeed(uint32_t seed) { g_session_seed.store(seed, std::memory_order_relaxed); }
 }  // namespace fixed_step

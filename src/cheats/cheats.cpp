@@ -3,6 +3,7 @@
 // docs/findings/27-cheat-menu.md)
 // =============================================================================
 #include "cheats.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <algorithm>
 #include <chrono>
@@ -535,7 +536,7 @@ void GiveFreeJack(PPCContext& ctx, uint8_t* base, int p, uint32_t titan) {
 // mojo seemed not to count any more, with "Upgrades: 18/32" on screen.
 constexpr double kCrashMaxPatience = 10.0;
 double g_crash_max_left[kPlayers] = {};  // seconds; 0 = no chain running
-std::chrono::steady_clock::time_point g_last_tick;
+game_time::Clock::time_point g_last_tick;
 
 // Is id in the list (the game's own tests, e.g. sub_8229F858)?
 bool InUnlockList(const UnlockList& list, int id) {
@@ -595,7 +596,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
   const bool in_level = more_players::InPlay();
   const uint32_t stats = StatsManager();
   // Real time since the last tick (the max level chain's patience).
-  const auto now = std::chrono::steady_clock::now();
+  const auto now = game_time::Clock::now();
   const double tick_seconds =
       g_last_tick.time_since_epoch().count() == 0
           ? 0.0

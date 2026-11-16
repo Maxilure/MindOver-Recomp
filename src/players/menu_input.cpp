@@ -60,6 +60,7 @@
 // =============================================================================
 #include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "more_players.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 #include "outfit_picker.h"
 #include "../data/fight_tree.h"
 
@@ -111,7 +112,7 @@ constexpr auto kConfirmAfterInteraction = std::chrono::seconds(8);
 // The player who last interacted with an object (B at the totem), -1 = none,
 // and when (game's main thread only).
 std::atomic<int> g_last_interactor{-1};
-std::chrono::steady_clock::time_point g_interacted_at;
+game_time::Clock::time_point g_interacted_at;
 // Is the level-up screen (CUpgradeScreenAction) up? (Its Enter / Exit below.)
 std::atomic<bool> g_upgrade_screen{false};
 
@@ -167,8 +168,8 @@ int MenuOwner(PPCContext& ctx, uint8_t* base, uint32_t fe, const char** why) {
   // storage access to the end of the save list).
   static bool confirm_was_showing = false;
   static int flow_owner = -1;
-  static std::chrono::steady_clock::time_point menu_seen;
-  const auto now = std::chrono::steady_clock::now();
+  static game_time::Clock::time_point menu_seen;
+  const auto now = game_time::Clock::now();
   const bool confirm_showing = *Guest(fe + kConfirmBox) & kConfirmShowing;
   const uint8_t menus = *Guest(fe + kMenuFlags);
   if (confirm_showing && !confirm_was_showing &&
@@ -228,7 +229,7 @@ int CurrentMenuOwner(PPCContext& ctx, uint8_t* base) {
 bool PlayerPlays(int p) { return Plays(p); }
 bool InteractedRecently(int p) {
   return p >= 0 && p == g_last_interactor.load() &&
-         std::chrono::steady_clock::now() - g_interacted_at < std::chrono::milliseconds(1500);
+         game_time::Clock::now() - g_interacted_at < std::chrono::milliseconds(1500);
 }
 bool MenuOnScreen() {
   if (!more_players::InPlay()) {
@@ -411,7 +412,7 @@ extern "C" REX_FUNC(sub_8214A9A8) {
   if (!target) return;
   const int player = PlayerOfActor(ctx, base, actor);
   if (player < 0) return;
-  g_interacted_at = std::chrono::steady_clock::now();
+  g_interacted_at = game_time::Clock::now();
   if (player != g_last_interactor.exchange(player) && Tracing()) {
     REXLOG_INFO("Menu input: player {} interacted with {:08X}", player + 1, target);
   }

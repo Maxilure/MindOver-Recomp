@@ -2,6 +2,7 @@
 // players/pause_drop_out.cpp -- see pause_drop_out.h
 // =============================================================================
 #include "pause_drop_out.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <array>
 #include <chrono>
@@ -47,7 +48,7 @@ constexpr std::u16string_view kWords = trn(u"Drop Out"), kGlyph = u"µ";  // wor
 constexpr auto kGap = std::chrono::milliseconds(250);
 
 std::array<uint16_t, kPlayers> g_held{};
-std::chrono::steady_clock::time_point g_last_call{};
+game_time::Clock::time_point g_last_call{};
 bool g_prompt_shown = false;
 // The menu owner's Back, step by step like the old item's A:
 //   g_owner_back: pressed; the pause screen's next "open" step picks for it
@@ -114,7 +115,7 @@ void ShowPrompt(PPCContext& ctx, uint8_t* base, bool show) {
 }  // namespace
 
 int32_t AfterPauseDecision(PPCContext& ctx, uint8_t* base, int32_t exit, int32_t drop_out_exit) {
-  const auto now = std::chrono::steady_clock::now();
+  const auto now = game_time::Clock::now();
   const bool fresh = now - g_last_call > kGap;
   g_last_call = now;
   if (fresh) g_owner_back = g_drop_picked = false;  // a new visit of the pause menu
@@ -172,7 +173,7 @@ int32_t AfterPauseDecision(PPCContext& ctx, uint8_t* base, int32_t exit, int32_t
 }
 
 bool OwnerPickWaiting() {
-  return g_owner_back && std::chrono::steady_clock::now() - g_last_call <= kGap;
+  return g_owner_back && game_time::Clock::now() - g_last_call <= kGap;
 }
 
 void PickForOwner(PPCContext& ctx, uint8_t* base, uint32_t action) {

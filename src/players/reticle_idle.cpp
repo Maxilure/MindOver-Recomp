@@ -2,6 +2,7 @@
 // players/reticle_idle.cpp -- see reticle_idle.h (findings/26 s.57)
 // =============================================================================
 #include "reticle_idle.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <chrono>
 #include <unordered_map>
@@ -29,7 +30,7 @@ extern "C" REX_FUNC(__imp__sub_822AE910);  // its restart         // player of c
 namespace reticle_idle {
 namespace {
 
-using Clock = std::chrono::steady_clock;
+using Clock = game_time::Clock;
 constexpr int kPlayers = 4;
 constexpr uint32_t kCoopState = 0x8259B11C;  // u32 per player: 1 = a mask (findings/26 s.8)
 constexpr uint32_t kGameGlobal = 0x8259B190; // the game object (+52 the front end)

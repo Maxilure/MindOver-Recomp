@@ -53,6 +53,7 @@
 
 #include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "../decomp/simple_setup.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 #include "outfits.h"
 #include "../input/prompt_icons.h"
 
@@ -282,7 +283,7 @@ bool g_hold_respawns = false;         // Wear Skin: store, don't respawn
 int g_respawn_wanted_by = -1;         // the last player whose held pick wants one (-1 none)
 int64_t NowMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::steady_clock::now().time_since_epoch())
+             game_time::Clock::now().time_since_epoch())
       .count();
 }
 

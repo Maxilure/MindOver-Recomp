@@ -3,6 +3,7 @@
 // partner's hit, simple spinning (what each does and why: game_mods.h)
 // =============================================================================
 #include "game_mods.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <algorithm>
 #include <chrono>
@@ -44,7 +45,7 @@ REXCVAR_DECLARE(bool, debug_coop_trace);
 namespace game_mods {
 namespace {
 
-using Clock = std::chrono::steady_clock;
+using Clock = game_time::Clock;
 
 // --- Guest memory (big-endian) ------------------------------------------------
 uint32_t Read32(uint8_t* base, uint32_t address) {

@@ -174,6 +174,7 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 #include "guest_memory.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
 
@@ -193,7 +194,7 @@ REXCVAR_DEFINE_STRING(debug_ground_trace, "", "CrashMoM",
 namespace ground_physics {
 namespace {
 
-using Clock = std::chrono::steady_clock;
+using Clock = game_time::Clock;
 
 // CPhysicsBehaviour fields (see the header comment).
 constexpr uint32_t kActor = 88;         // u32: the character (owner of the variables)
