@@ -1,7 +1,5 @@
 # ============================================================================
 # Legendas em português brasileiro - Crash: Mind over Mutant (Recomp)
-# Vai junto com o port (copiado para o lado do executável); um
-# <pasta do usuário>/subtitles/pt-br.tsv do jogador é lido no lugar deste.
 # Lidas por cima do en.tsv quando o idioma de texto do jogo é Português
 # (Brasil): cada chave (filme ou som) daqui substitui a do inglês; o que
 # faltar aqui aparece em inglês. Mesmas chaves e tempos do en.tsv; só o
@@ -20,7 +18,7 @@
 # ----------------------------------------------------------------------------
 # Crash_02_51  -  "Worst Contact"  (19 falas)
 # ----------------------------------------------------------------------------
-Crash_02_51	00:06.35	00:08.05	Coco	Ah, coisa idiota, funciona!
+Crash_02_51	00:06.35	00:09.78	Coco	Ah, coisa idiota, funciona!
 Crash_02_51	00:10.35	00:12.08	Crunch	Nossa, a gente devia limpar este lugar, criançadas!
 Crash_02_51	00:12.11	00:13.47	Crunch	Faz tipo um ano métrico!
 Crash_02_51	00:13.50	00:15.23	Coco	Quem vai obrigar a gente, você?
@@ -36,8 +34,8 @@ Crash_02_51	00:43.50	00:44.85	Crash	Ah-hoo!
 Crash_02_51	00:44.88	00:46.22	Crunch	Isso parece bom mesmo!
 Crash_02_51	00:47.62	00:49.95	Crunch	Manteiga? E onde eu arrumei isto? Perda de memória recente.
 Crash_02_51	00:49.98	00:50.87	Crunch	Confuso!
-Crash_02_51	00:50.90	00:52.65	Crunch	E onde eu arrumei isto?
-Crash_02_51	00:52.68	00:55.01	Coco	Crash, pra fazer esta coisa funcionar, vou precisar de um monte de peças.
+Crash_02_51	00:50.90	00:52.65	Crunch	E onde eu arrumei isto? Crash!
+Crash_02_51	00:52.68	00:55.01	Coco	Pra fazer esta coisa funcionar, vou precisar de um monte de peças.
 Crash_02_51	00:55.04	00:57.70	Coco	Aqui está a lista. Primeiro, o capacitron perto da minha casa.
 
 # ----------------------------------------------------------------------------
@@ -139,7 +137,7 @@ Crash_06_51	00:13.90	00:15.80	Ratnician	Isso não foi muito legal, chefe.
 Crash_06_51	00:16.30	00:18.90	N. Gin	Quieta, Tina! Ou vai levar as costas do meu míssil!
 Crash_06_51	00:19.10	00:21.30	Aku Aku	Só vou dizer isso uma vez:
 Crash_06_51	00:21.40	00:24.40	Aku Aku	saia da nossa ilha.
-Crash_06_51	00:24.80	00:30.00	N. Gin	Sinto muito, não posso atender sua mensagem agora.
+Crash_06_51	00:24.80	00:30.00	N. Gin	Sinto muito, não posso atender sua mensagem agora. Deixe uma mensagem após o bip,
 Crash_06_51	00:30.60	00:31.80	N. Gin	Bip!
 Crash_06_51	00:32.70	00:36.00	N. Gin	Tô indo, tô indo. Valeu a tentativa.
 Crash_06_51	00:36.00	00:38.40	Aku Aku	Vamos ver o que o Crunch e a Coco estão aprontando.
@@ -237,13 +235,13 @@ Crash_10_51	00:46.90	00:48.90	Narrador	As turmas estão cheias e nós odiamos ge
 # ----------------------------------------------------------------------------
 # Crash_11_51  -  "Forbidden Love"  (29 falas, 1:45 de duração)
 # ----------------------------------------------------------------------------
-Crash_11_51	00:17.20	00:19.90	Nina	O que vocês estão fazendo aqui?
+Crash_11_51	00:17.20	00:19.90	Nina	Crash? O que vocês estão fazendo aqui?
 Crash_11_51	00:20.40	00:21.60	Nina	Me deixa em paz!
 Crash_11_51	00:21.60	00:23.30	Nina	Eu odeio você!
 Crash_11_51	00:23.30	00:25.10	Nina	Você arruinou a minha vida!
-Crash_11_51	00:29.10	00:30.20	Aku Aku	Então...
+Crash_11_51	00:28.30	00:30.20	Aku Aku	Então...
 Crash_11_51	00:31.00	00:32.50	Aku Aku	como vão as coisas?
-Crash_11_51	00:35.00	00:36.30	Nina	Como vão as coisas?
+Crash_11_51	00:33.36	00:36.30	Nina	Como vão as coisas?
 Crash_11_51	00:37.10	00:39.70	Nina	Agora eu tô presa na Escola Pública do Mal!
 Crash_11_51	00:40.40	00:44.40	Nina	Eu era a rainha da escola particular da Madame Amberley.
 Crash_11_51	00:44.40	00:47.60	Nina	E agora tô presa com a escória da sociedade.
@@ -467,18 +465,18 @@ Crash_19_51	01:27.60	01:29.90	Aku Aku	Eu sei, Coco, eu sei.
 b8e52274cde436eb	00:11.28	00:14.20	Crunch	Não mexe no meu brinquedinho! É fantabuloso!
 b8e52274cde436eb	00:15.78	00:17.60	Aku Aku	Crunch! Volta aqui!
 # Coco's suggestion
-6c803711dc0d6977	00:00.14	00:02.60	Coco	Esses NVs já podem ter sido mandados pra ilha toda.
+6c803711dc0d6977	00:00.00	00:02.60	Coco	Esses NVs já podem ter sido mandados pra ilha toda.
 6c803711dc0d6977	00:02.86	00:04.90	Coco	Precisamos achar um jeito de acabar com eles na fonte.
 6c803711dc0d6977	00:05.26	00:06.40	Aku Aku	E como fazemos isso?
 6c803711dc0d6977	00:06.64	00:09.00	Coco	Bom, acho que conheço alguém a quem podemos perguntar.
 6c803711dc0d6977	00:09.36	00:13.40	Coco	Argh, não acredito que vou dizer isso, mas vamos falar com a Nina.
 6c803711dc0d6977	00:14.16	00:15.30	Aku Aku	Coco!
-6c803711dc0d6977	00:15.64	00:17.90	Aku Aku	Acho que aquele NV danificou o seu cérebro.
+6c803711dc0d6977	00:15.64	00:17.90	Aku Aku	Acho que aquele NV zoou o seu cérebro.
 6c803711dc0d6977	00:18.26	00:21.40	Coco	Olha, ela deve estar de mal com o Cortex depois de todas as travessuras dela.
 6c803711dc0d6977	00:21.66	00:23.60	Coco	Encare os fatos: ela é nossa única pista.
 # Ratcicle invasion
-5fe7edc8e80b5c4d	00:01.38	00:04.30	Bratgirl	Mais rápido, escravos mutantes!
-5fe7edc8e80b5c4d	00:04.58	00:08.40	Bratgirl	Precisamos de todos os mutantes sob o controle do NV.
+5fe7edc8e80b5c4d	00:01.88	00:04.58	Bratgirl	Mais rápido, escravos mutantes!
+5fe7edc8e80b5c4d	00:04.58	00:08.52	Bratgirl	Precisamos de todos os mutantes sob o controle do NV.
 # The bratgirls' plan
 107f358068137436	00:00.00	00:03.40	Bratgirl	Logo voltaremos à entrada norte secreta da Escola do Mal.
 107f358068137436	00:03.70	00:07.90	Bratgirl	Este salão de aberrações e mutantes é perfeito para a feira de ciências da Escola do Mal.
@@ -490,7 +488,7 @@ b8e52274cde436eb	00:15.78	00:17.60	Aku Aku	Crunch! Volta aqui!
 630767c694a53631	00:04.04	00:05.50	Nina	Muito boa!
 630767c694a53631	00:05.70	00:07.40	Aku Aku	É, é, nós ajudamos você.
 630767c694a53631	00:07.48	00:09.10	Aku Aku	Agora diga o que precisamos saber.
-630767c694a53631	00:09.24	00:11.20	Nina	Claro, meu chapa.
+630767c694a53631	00:09.24	00:11.20	Nina	Claro, meu querido.
 630767c694a53631	00:11.54	00:14.90	Nina	O tio Cortex fez as pazes com o antigo parceiro de laboratório dele, N. Brio.
 630767c694a53631	00:15.14	00:15.90	Aku Aku	N. Brio?
 630767c694a53631	00:16.08	00:18.10	Nina	O titio Cortex fala muito,
@@ -503,7 +501,7 @@ c58edb57a7c3f249	00:00.00	00:03.60	Nina	Ah, vitória! Que sensação boa!
 c58edb57a7c3f249	00:04.04	00:05.50	Nina	Muito boa!
 c58edb57a7c3f249	00:05.70	00:07.40	Aku Aku	É, é, nós ajudamos você.
 c58edb57a7c3f249	00:07.48	00:09.10	Aku Aku	Agora diga o que precisamos saber.
-c58edb57a7c3f249	00:09.24	00:11.20	Nina	Claro, meu chapa.
+c58edb57a7c3f249	00:09.24	00:11.20	Nina	Claro, meu querido.
 c58edb57a7c3f249	00:11.54	00:14.90	Nina	O tio Cortex fez as pazes com o antigo parceiro de laboratório dele, N. Brio.
 c58edb57a7c3f249	00:15.14	00:15.90	Aku Aku	N. Brio?
 c58edb57a7c3f249	00:16.08	00:18.10	Nina	O titio Cortex fala muito,
@@ -516,55 +514,54 @@ c58edb57a7c3f249	00:29.94	00:32.60	Nina	Tenho novos planos malignos para começa
 # No jogo: Aku Aku  (81 sons)
 # ----------------------------------------------------------------------------
 bbfe7614066de856	00:00.00	00:02.94	Aku Aku	Ah, sim, nunca vi isso num jogo antes.
-a9e9230a9a51e952	00:00.00	00:03.27	Aku Aku	Que coisa estranha, Crash. É mojo tiki, mas de algum jeito é do mal.
-a9e9230a9a51e952	00:03.27	00:06.69	Aku Aku	Como se a própria fonte estivesse corrompida.
+a9e9230a9a51e952	00:00.00	00:04.90	Aku Aku	Que coisa estranha, Crash. É mojo tiki, mas de algum jeito é do mal.
+a9e9230a9a51e952	00:04.90	00:06.69	Aku Aku	Como se a própria fonte estivesse corrompida.
 803a80480ea96755	00:00.00	00:05.74	Aku Aku	Crash! Aquele roller vai levar uma surra daquelas! Temos que ajudar ele!
 803a80480ea96757	00:00.00	00:05.47	Aku Aku	Tá bom. Eu nem sei se é menina ou menino. Só estou supondo que é macho. Satisfeito?
 0453c239b6dde45f	00:00.00	00:04.77	Aku Aku	Ouviu isso, Crash? A entrada da escola deve ficar perto da Vila dos Ratos.
-f56706d62840c35e	00:00.00	00:03.30	Aku Aku	Vamos precisar de músculo mutante de verdade para chegar ao deserto.
-f56706d62840c35e	00:03.30	00:05.68	Aku Aku	Este cara vai servir direitinho.
+f56706d62840c35e	00:00.00	00:04.13	Aku Aku	Vamos precisar de um mutante musculoso de verdade para chegar ao deserto.
+f56706d62840c35e	00:04.13	00:05.68	Aku Aku	Esse cara vai servir direitinho.
 4abf1a524902445f	00:00.00	00:04.99	Aku Aku	O único jeito de espantar esses mutantes malvados vai ser derrubar o líder deles.
-077c59bf847aca40	00:00.00	00:03.00	Aku Aku	Precisamos descobrir onde fica a escola da Nina, Crash.
-077c59bf847aca40	00:03.00	00:04.91	Aku Aku	Tente falar com os mutantes locais.
-b0b49afe2b1a4149	00:00.00	00:01.77	Aku Aku	Essa prisão parece bem estranha, Crash.
-b0b49afe2b1a4149	00:01.77	00:06.06	Aku Aku	Talvez haja alguma ligação entre ela e a Escola do Mal.
+077c59bf847aca40	00:00.00	00:02.87	Aku Aku	Precisamos descobrir onde fica a escola da Nina, Crash.
+077c59bf847aca40	00:02.87	00:04.91	Aku Aku	Tente falar com os mutantes locais.
+b0b49afe2b1a4149	00:00.00	00:02.25	Aku Aku	Essa prisão parece bem estranha, Crash.
+b0b49afe2b1a4149	00:02.25	00:06.06	Aku Aku	Talvez haja alguma ligação entre ela e a Escola do Mal.
 b2a0aaae20cec75a	00:00.00	00:04.16	Aku Aku	Esses ratos estão tramando algo ruim, Crash. Vamos estragar os planos deles.
 07f8be2a4190485b	00:00.00	00:04.69	Aku Aku	Este iceberg deve ser como eles chegam à prisão. Hora de pegar carona.
-c4b5fdb78ceac65c	00:00.00	00:04.95	Aku Aku	Muito bem, Crash, estamos lá dentro. Tente descobrir algo sobre a escola da Nina.
-409cbbc5e4b64955	00:00.00	00:04.88	Aku Aku	Conseguimos, Crash, agora só precisamos de um roller para abrir aquelas portas.
-ad11bab077d0c756	00:00.00	00:05.38	Aku Aku	Achamos eles! Ih, mas parece que não ficaram muito felizes em nos ver.
+c4b5fdb78ceac65c	00:00.00	00:04.95	Aku Aku	Muito bem, Crash, estamos dentro. Tente descobrir algo sobre a escola da Nina.
+409cbbc5e4b64955	00:00.00	00:04.88	Aku Aku	Conseguimos, Crash. Agora só precisamos de um roller para abrir aquelas portas.
+ad11bab077d0c756	00:00.00	00:05.38	Aku Aku	Achamos eles! Ih, mas parece que não ficaram muito felizes em ver a gente.
 0269ce2c98924857	00:00.00	00:03.88	Aku Aku	Parece que a ponte caiu, Crash. Vamos ter que achar outro caminho de volta.
-5579873384e32109	00:00.00	00:02.10	Aku Aku	Esses rollers parecem livres do controle do mal, Crash.
-5579873384e32109	00:02.10	00:05.45	Aku Aku	Veja se eles conhecem um caminho de volta para Wumpa.
-17881a3972226b00	00:00.00	00:02.33	Aku Aku	Os rollers consertaram uma ponte, Crash.
-17881a3972226b00	00:02.33	00:04.90	Aku Aku	Aquela senhora quis fazer um favor pra você.
+5579873384e32109	00:00.00	00:03.23	Aku Aku	Esses rollers parecem livres do controle do mal, Crash.
+5579873384e32109	00:03.23	00:05.45	Aku Aku	Veja se eles conhecem um caminho de volta para Wumpa.
+17881a3972226b00	00:00.00	00:01.70	Aku Aku	Os rollers consertaram a ponte, Crash.
+17881a3972226b00	00:01.70	00:04.90	Aku Aku	Aquela senhora quis fazer um favor pra você.
 ef840687a2cb241f	00:00.00	00:04.36	Aku Aku	É aqui, Crash. Precisamos achar um jeito de entrar na base do soco.
-0572c75015e8641e	00:00.00	00:03.20	Aku Aku	A Nina precisa de amostras de alguns mutantes poderosos para o projeto dela, Crash.
-0572c75015e8641e	00:03.20	00:06.64	Aku Aku	Vamos ter que achar e montar em todos que ela quer.
+0572c75015e8641e	00:00.00	00:03.78	Aku Aku	A Nina precisa de amostras de alguns mutantes poderosos para o projeto dela, Crash.
+0572c75015e8641e	00:03.78	00:06.64	Aku Aku	Vamos ter que achar e montar em todos que ela quer.
 e561a7fb3e7f2915	00:00.00	00:03.32	Aku Aku	O N. Brio e o Crunch devem estar do outro lado do deserto, Crash.
 e561a7fb3e7f2915	00:03.32	00:05.92	Aku Aku	Vamos andando, rapidinho, xô!
-d4c1be317a92671c	00:00.00	00:03.60	Aku Aku	Ah, não viemos de tão longe pra sermos parados por uma doença nasal ambulante.
-d4c1be317a92671c	00:03.60	00:05.19	Aku Aku	Dá um bom chute nele!
-acbdaa5f9b59281b	00:00.00	00:02.61	Aku Aku	Precisamos usar o Crunch contra o N. Brio para derrotá-lo, Crash.
-acbdaa5f9b59281b	00:02.61	00:05.35	Aku Aku	Tente montar nele quando tiver a chance.
+d4c1be317a92671c	00:00.00	00:04.11	Aku Aku	Ah, não viemos de tão longe pra sermos parados por uma doença nasal ambulante.
+d4c1be317a92671c	00:04.11	00:05.19	Aku Aku	Dá um chutão nele!
+acbdaa5f9b59281b	00:00.00	00:03.34	Aku Aku	Precisamos usar o Crunch contra o N. Brio para derrotá-lo, Crash.
+acbdaa5f9b59281b	00:03.34	00:05.35	Aku Aku	Tente montar nele quando tiver a chance.
 c2ac6b280e76681a	00:00.00	00:02.69	Aku Aku	Um já foi, faltam dois, Crash.
-92b562b917eb44e1	00:00.00	00:03.58	Aku Aku	Só falta um, Crash. Puxa, isso não está ficando nada mais fácil.
-cf32ce33d1946718	00:00.00	00:03.50	Aku Aku	São todos, Crash. Hora de voltar e ver meu irmão.
+92b562b917eb44e1	00:00.00	00:03.58	Aku Aku	Só falta um, Crash. Cara, isso não tá ficando mais fácill.
+cf32ce33d1946718	00:00.00	00:03.50	Aku Aku	São todos eles, Crash. Hora de voltar e ver meu irmão.
 f5cc6a9f0bfb4990	00:00.00	00:04.02	Aku Aku	Sim, parece que as coisas não foram bem para a Nina.
 f5cc6a9f0bfb4990	00:04.02	00:06.49	Aku Aku	Talvez a gente tenha uma chance.
 167c459a8409c5dc	00:00.00	00:02.09	Aku Aku	Vamos voltar pra nossa casa, Crash.
-926303a8dbd548d5	00:00.00	00:04.03	Aku Aku	O Uka Uka de algum jeito usou o poder dele para energizar a velha cabeça do
-926303a8dbd548d5	00:04.03	00:05.00	Aku Aku	Doominator, Crash.
-0b370034e94088d1	00:00.00	00:03.61	Aku Aku	Entre para darmos no Cortex aquela surra que estamos guardando.
-0466f29117edc6da	00:00.00	00:02.41	Aku Aku	Vamos precisar de um mojo poderoso para abrir este portão, Crash.
-0466f29117edc6da	00:02.41	00:05.27	Aku Aku	Vamos ter que descobrir onde está a chave.
+926303a8dbd548d5	00:00.00	00:04.99	Aku Aku	O Uka Uka de algum jeito usou o poder dele para energizar a velha cabeça do Doominator, Crash.
+0b370034e94088d1	00:00.00	00:03.61	Aku Aku	Entre para darmos no Cortex aquela surra que estamos preparando.
+0466f29117edc6da	00:00.00	00:03.01	Aku Aku	Vamos precisar de um mojo poderoso para abrir este portão, Crash.
+0466f29117edc6da	00:03.01	00:05.27	Aku Aku	Vamos ter que descobrir onde está a chave.
 59bf060d38af47db	00:00.00	00:03.14	Aku Aku	Esta deve ser a chave daquele cadeado enorme que achamos no deserto.
-5942a1a27b99c9c0	00:00.00	00:02.31	Aku Aku	Vamos precisar de um mojo poderoso para abrir este portão, Crash.
-5942a1a27b99c9c0	00:02.31	00:06.62	Aku Aku	Dá pra conseguir montando em dois dos mutantes mais brutos da região.
+5942a1a27b99c9c0	00:00.00	00:03.23	Aku Aku	Vamos precisar de um mojo poderoso para abrir este portão, Crash.
+5942a1a27b99c9c0	00:03.23	00:06.62	Aku Aku	Dá pra conseguir montando em dois dos mutantes mais brutos da região.
 027ae2e1223940c9	00:00.00	00:02.09	Aku Aku	Hora de voltar àquele portão, Crash.
-472d4eb91f5fc2de	00:00.00	00:04.48	Aku Aku	É, é, é, a princesa está em outro castelo. Sabemos como funciona.
+472d4eb91f5fc2de	00:00.00	00:04.48	Aku Aku	É, é, é, a princesa está em outro castelo. A gente sabe como isso funciona.
 9c856235402143df	00:00.00	00:03.40	Aku Aku	Esta caverna é um atalho para casa, Crash. Vamos lá.
-ce26f974d399c9d4	00:00.00	00:04.26	Aku Aku	Crash! Temos que voltar pra casa rápido! Mexa-se, garoto!
+ce26f974d399c9d4	00:00.00	00:04.26	Aku Aku	Crash! Temos que voltar pra casa rápido! Se mexe, rapaz!
 2a41e56efc4344cd	00:00.00	00:03.33	Aku Aku	Crash! Seu titan é grande demais para se balançar naquela corda.
 2a41e56efc4344cd	00:03.33	00:04.79	Aku Aku	Você vai ter que ir sozinho.
 1dd07e70eb348897	00:00.00	00:03.47	Aku Aku	É, é, nós ajudamos você. Agora diga o que precisamos saber.
@@ -573,33 +570,34 @@ ce26f974d399c9d4	00:00.00	00:04.26	Aku Aku	Crash! Temos que voltar pra casa ráp
 414a4e6a99ea239f	00:01.74	00:04.38	Aku Aku	Vai precisar de algum tipo de criatura enorme que cospe.
 57390f330d07639e	00:00.00	00:02.17	Aku Aku	Hora de voltar à Vila do Gelo, Crash.
 a73fcf167c022089	00:00.00	00:02.42	Aku Aku	Esta porta ainda não pode ser aberta, Crash.
-a73fcf167c022089	00:02.42	00:04.84	Aku Aku	Você vai precisar de chaves muito especiais.
+a73fcf167c022089	00:02.42	00:04.84	Aku Aku	Você vai precisar de chaves muito especiais pra isso.
 694e621c69416a80	00:00.00	00:04.64	Aku Aku	A Nina devia estar falando daquele portão de metal grande no deserto. Vamos lá.
 fe83f2429278279b	00:00.00	00:03.18	Aku Aku	Vamos levar este roller de volta para a Ilha Wumpa.
-1472b30b0595679a	00:00.00	00:02.30	Aku Aku	Vamos levar este roller de volta à Vila do Gelo, Crash.
-1472b30b0595679a	00:02.30	00:04.85	Aku Aku	Aí poderemos abrir o portão da escola.
+1472b30b0595679a	00:00.00	00:02.90	Aku Aku	Vamos levar este roller de volta à Vila do Gelo, Crash.
+1472b30b0595679a	00:02.90	00:04.85	Aku Aku	Aí poderemos abrir o portão da escola.
 3727efde359e2895	00:00.00	00:04.03	Aku Aku	Crash! Você perdeu seu Grimly! Você precisa de um para derrotar o Cortex!
-2688061471b1669c	00:00.00	00:03.09	Aku Aku	A Nina devia estar falando do que quer que esteja do outro lado daquele portão
-2688061471b1669c	00:03.09	00:03.76	Aku Aku	enorme que vimos.
-f8f50244e97a2797	00:00.00	00:04.52	Aku Aku	Temos que voltar correndo e ajudar a Coco e o Crunch. Mexa-se, garoto!
-0ee3c30d5c976796	00:00.00	00:02.24	Aku Aku	É melhor irmos salvar o pai daquele garoto, Crash.
-0ee3c30d5c976796	00:02.24	00:05.64	Aku Aku	Ter um titan enorme daqueles pode ser útil.
-562d3a740f0cc65a	00:00.00	00:04.28	Aku Aku	É melhor voltarmos pra casa, Crash. Ninguém invade nosso território e sai impune.
-ab854df02fce475b	00:00.00	00:05.30	Aku Aku	Tá, agora eu fiquei bravo de verdade. Vamos achar o responsável e acabar com ele.
+2688061471b1669c	00:00.00	00:03.75	Aku Aku	A Nina devia estar falando do que quer que esteja do outro lado daquele portão enorme que vimos.
+f8f50244e97a2797	00:00.00	00:04.52	Aku Aku	Temos que voltar correndo e ajudar a Coco e o Crunch. Se mexe, rapaz!
+0ee3c30d5c976796	00:00.00	00:02.73	Aku Aku	É melhor irmos salvar o pai daquele garoto, Crash.
+0ee3c30d5c976796	00:02.73	00:05.64	Aku Aku	Ter um titan enorme daqueles pode ser útil.
+562d3a740f0cc65a	00:00.00	00:01.87	Aku Aku	É melhor voltarmos pra casa, Crash.
+562d3a740f0cc65a	00:01.87	00:04.28	Aku Aku	Ninguém invade nosso território e sai impune.
+ab854df02fce475b	00:00.00	00:02.57	Aku Aku	Tá, agora eu fiquei bravo de verdade.
+ab854df02fce475b	00:02.57	00:05.30	Aku Aku	Vamos achar o responsável e acabar com ele.
 3892c6c7136d4594	00:00.00	00:00.95	Aku Aku	Lindo?
-995cca8f62a265db	00:00.00	00:02.28	Aku Aku	A Escola do Mal deve ficar do outro lado deste portão, Crash.
-995cca8f62a265db	00:02.28	00:05.64	Aku Aku	Acho que precisamos de um mutante que gira para abrir.
+995cca8f62a265db	00:00.00	00:02.99	Aku Aku	A Escola do Mal deve ficar do outro lado deste portão, Crash.
+995cca8f62a265db	00:02.99	00:05.64	Aku Aku	Acho que precisamos de um mutante que gira para abrir.
 bcde4e4388e04308	00:00.00	00:01.21	Aku Aku	Ih, rapaz.
 b9f4e38487f98a11	00:00.00	00:01.77	Aku Aku	É, quais as chances?
-fcbb3fac8f6b8616	00:00.00	00:01.47	Aku Aku	É aqui, Crash.
+fcbb3fac8f6b8616	00:00.00	00:01.47	Aku Aku	Esse é o lugar, Crash.
 e6cc7ee41c4e4617	00:00.00	00:00.93	Aku Aku	Rápido, Crash!
 145f82b3a485851c	00:00.00	00:01.23	Aku Aku	Anda logo, Crash!
 24ff6c7d68724715	00:00.00	00:01.18	Aku Aku	Cuidado, Crash!
-392160bc322d6955	00:00.00	00:01.30	Aku Aku	Isso parece encrenca.
+392160bc322d6955	00:00.00	00:01.30	Aku Aku	Isso parece ser um problema.
 bd3aa2adda61e65c	00:00.00	00:01.25	Aku Aku	Fique alerta!
 007d63208f07685b	00:00.00	00:00.88	Aku Aku	Cuidado com as costas!
 ab254fa46e45e75a	00:00.00	00:01.61	Aku Aku	Lá vêm eles, prepare-se!
-a9393ff478916149	00:00.00	00:02.31	Aku Aku	Atrás deles, Crash, não deixe que escapem!
+a9393ff478916149	00:00.00	00:02.31	Aku Aku	Atrás deles, Crash, não deixe eles escaparem!
 0000feb5d1f1ea40	00:00.00	00:01.07	Aku Aku	Vamos, Crash.
 4343bf489679645f	00:00.00	00:01.51	Aku Aku	Vamos sair daqui, Crash!
 edebabcc75b7e35e	00:00.00	00:02.35	Aku Aku	Dê uma olhada por aí, Crash, veja o que consegue descobrir.
@@ -608,190 +606,178 @@ d1004282529b654d	00:00.00	00:02.56	Aku Aku	Fale com aquele cara, Crash. Veja o q
 0cf75801530c879a	00:00.00	00:03.11	Aku Aku	Fale com aquele garoto, Crash. Ele deve saber de alguma coisa.
 f7089738dfef479b	00:00.00	00:01.41	Aku Aku	Acabe com eles, Crash!
 1f0cab0abf28869c	00:00.00	00:01.27	Aku Aku	Vamos nessa!
-2fac94d483154895	00:00.00	00:04.83	Aku Aku	Esses peludos estão fugindo! Atrás deles, Crash, precisamos de mais socos!
+2fac94d483154895	00:00.00	00:04.83	Aku Aku	Esses cabeludos estão fugindo! Atrás deles, Crash, precisamos de mais socos!
 4fbdb4295a7e839e	00:00.00	00:04.06	Aku Aku	Acho que tem alguém aqui dentro, Crash. Vai lá ver.
-39cef360e761439f	00:00.00	00:01.66	Aku Aku	Crash, precisamos ir ao Coliseu do Templo.
-39cef360e761439f	00:01.66	00:05.05	Aku Aku	Você tem que passar por ele para chegar ao deserto.
-61d30712b6b88a80	00:00.00	00:03.34	Aku Aku	Não gostei nada disso, Crash. Fique esperto!
-9fc4740cc9794089	00:00.00	00:02.70	Aku Aku	Parece que o N. Gin deixou uns capangas pra trás, Crash.
-9fc4740cc9794089	00:02.70	00:06.21	Aku Aku	Hora de distribuir uns sanduíches de soco.
+39cef360e761439f	00:00.00	00:02.51	Aku Aku	Crash, precisamos ir ao Coliseu do Templo.
+39cef360e761439f	00:02.51	00:05.05	Aku Aku	Você tem que passar por ele para chegar ao deserto.
+61d30712b6b88a80	00:00.00	00:03.34	Aku Aku	Não gostei nada disso, Crash. Fica esperto!
+9fc4740cc9794089	00:00.00	00:03.32	Aku Aku	Parece que o N. Gin deixou uns capangas pra trás, Crash.
+9fc4740cc9794089	00:03.32	00:06.21	Aku Aku	Hora de distribuir uns sanduíches de soco.
 c4a20bdba29c8b92	00:00.00	00:04.59	Aku Aku	Acho que vamos precisar de um daqueles mutantes telecinéticos para entrar, Crash.
 aeb34b132f7f4b93	00:00.00	00:06.49	Aku Aku	Crash! Não sei como dizer isso. Mas acho que essas criaturas são... legais!
 aeb34b132f7f4b90	00:00.00	00:04.21	Aku Aku	Crash! Vamos perguntar por aqui. Talvez a gente descubra como chegar até a Nina.
-aeb34b132f7f4b91	00:00.00	00:02.13	Aku Aku	Tem umas coisas estranhas acontecendo aqui, Crash.
-aeb34b132f7f4b91	00:02.13	00:05.13	Aku Aku	É melhor irmos a fundo nisso, pra já.
+aeb34b132f7f4b91	00:00.00	00:02.70	Aku Aku	Tem umas coisas estranhas acontecendo aqui, Crash.
+aeb34b132f7f4b91	00:02.70	00:05.13	Aku Aku	É melhor irmos a fundo nisso, pra já.
 
 # ----------------------------------------------------------------------------
 # No jogo: Aku Aku, dicas do tutorial  (176 sons)
 # ----------------------------------------------------------------------------
-4e30fab72634f6cc	00:00.00	00:04.15	Aku Aku	Crash, estas pedras são lembretes espalhados pela ilha com dicas e truques sobre
-4e30fab72634f6cc	00:04.15	00:06.57	Aku Aku	como usar suas habilidades.
-4bb63d5360fca92d	00:00.00	00:03.33	Aku Aku	Para fazer seu clássico ataque giratório, gire rapidamente o analógico esquerdo.
-4bb63d5360fca92d	00:03.33	00:08.23	Aku Aku	Girar é um ótimo ataque e também um jeito rápido de coletar mojo.
-47bcc314dd1ca929	00:00.00	00:01.37	Aku Aku	Vamos, Crash, pule com o botão A,
-47bcc314dd1ca929	00:01.37	00:05.73	Aku Aku	depois aperte o botão A de novo no ar para dar um pulo duplo.
-b284cfc2e8d9cc64	00:00.00	00:00.29	Aku Aku	Crash!
-b284cfc2e8d9cc64	00:00.29	00:04.10	Aku Aku	Puxe e segure o gatilho direito para bloquear ataques inimigos com a minha cara.
-b284cfc2e8d9cc64	00:04.10	00:08.11	Aku Aku	Mas não se preocupe comigo. Carvalho maciço, baby!
-b08812718e10b6b6	00:00.00	00:00.96	Aku Aku	Crash, ele parece bem durão.
-b08812718e10b6b6	00:00.96	00:02.29	Aku Aku	Se ele estiver bloqueando seus ataques,
-b08812718e10b6b6	00:02.29	00:06.11	Aku Aku	use um ataque carregado para quebrar a defesa.
+4e30fab72634f6cc	00:00.00	00:06.56	Aku Aku	Crash, estas pedras são lembretes espalhados pela ilha com dicas e truques sobre como usar suas habilidades.
+4bb63d5360fca92d	00:00.00	00:04.25	Aku Aku	Para fazer seu clássico ataque giratório, gire rapidamente o analógico esquerdo.
+4bb63d5360fca92d	00:04.25	00:08.23	Aku Aku	Girar é um ótimo ataque e também um jeito rápido de coletar mojo.
+47bcc314dd1ca929	00:00.00	00:02.51	Aku Aku	Vamos, Crash, pule com o botão A,
+47bcc314dd1ca929	00:02.51	00:05.73	Aku Aku	depois aperte o botão A de novo no ar para dar um pulo duplo.
+b284cfc2e8d9cc64	00:00.00	00:04.89	Aku Aku	Crash, puxe e segure o gatilho direito para bloquear ataques inimigos com a minha cara.
+b284cfc2e8d9cc64	00:04.89	00:08.11	Aku Aku	Mas não se preocupe comigo. Carvalho maciço, baby!
+b08812718e10b6b6	00:00.00	00:01.92	Aku Aku	Crash, ele parece bem durão.
+b08812718e10b6b6	00:01.92	00:06.11	Aku Aku	Se ele estiver bloqueando seus ataques, use um ataque carregado para quebrar a defesa.
 af09557ec37b896d	00:00.00	00:05.63	Aku Aku	Crash! Depois de dar um gancho, aperte o botão Y para esmagá-los com a minha cara!
-17d4a5098b38689a	00:00.00	00:02.46	Aku Aku	Acho que você consegue pular até aqui com um bom tempo.
-17d4a5098b38689a	00:02.46	00:06.13	Aku Aku	Pule com o botão A, depois empurre contra a parede e aperte o botão A de novo para
-17d4a5098b38689a	00:06.13	00:08.40	Aku Aku	ir ainda mais alto.
-13db2acb07686ca6	00:00.00	00:04.45	Aku Aku	Crash! Você desbloqueou a bota! A bota é uma das nossas tradições mais orgulhosas.
-13db2acb07686ca6	00:04.45	00:08.85	Aku Aku	Quando achar a bota, aperte o botão X para arrancar os miolos dos inimigos por um
-13db2acb07686ca6	00:08.85	00:10.16	Aku Aku	tempinho.
-0fe1b08c83886ca2	00:00.00	00:02.55	Aku Aku	Muito bem, Crash! Você desbloqueou a britadeira giratória.
-0fe1b08c83886ca2	00:02.55	00:07.14	Aku Aku	Gire o analógico esquerdo e aperte o botão Y para experimentar.
-ddc67e1fd990c7d1	00:00.00	00:04.51	Aku Aku	Crash! Você desbloqueou um aumento de vida. Agora veja essa barra de vida crescer.
-ddc67e1fd990c7d1	00:04.51	00:06.69	Aku Aku	Um pouquinho, pelo menos.
-e0413b0761d1989c	00:00.00	00:02.76	Aku Aku	Crash! Você desbloqueou o ataque aéreo rolante.
-e0413b0761d1989c	00:02.76	00:07.40	Aku Aku	Aperte o botão Y para atacar ou segure o botão Y para carregar o ataque e bater
-e0413b0761d1989c	00:07.40	00:08.39	Aku Aku	mais forte.
-e43ab545e5b19880	00:00.00	00:01.23	Aku Aku	Boa, Crash. Aperte o botão Y.
-e43ab545e5b19880	00:01.23	00:06.69	Aku Aku	Depois o botão Y de novo quando cair para emendar um segundo ataque pesado.
-be651f64095f6e23	00:00.00	00:00.30	Aku Aku	Crash!
-be651f64095f6e23	00:00.30	00:04.28	Aku Aku	Emende um terceiro ataque no seu ataque aéreo rolante apertando o botão Y de novo
-be651f64095f6e23	00:04.28	00:06.54	Aku Aku	ao cair do segundo ataque.
-c25e99a28d3f6e27	00:00.00	00:00.71	Aku Aku	É a sua chance, Crash.
-c25e99a28d3f6e27	00:00.71	00:05.50	Aku Aku	Aperte o botão B para me grudar na cara dele e assumir o controle daquela criatura.
-213a37950d4c8d66	00:00.00	00:01.96	Aku Aku	Quando estiver montado num inimigo,
-213a37950d4c8d66	00:01.96	00:05.04	Aku Aku	use os botões Y e X para atacar e o botão A para pular.
-213a37950d4c8d66	00:05.04	00:08.75	Aku Aku	Aperte o botão B para sair da criatura.
-2533b1d3911c895a	00:00.00	00:03.58	Aku Aku	Crash! Aperte o botão X para quebrar coisas e coletar mojo mágico.
-2533b1d3911c895a	00:03.58	00:07.82	Aku Aku	Quanto mais você coletar, mais poderoso fica.
-19474318057c896e	00:00.00	00:01.44	Aku Aku	Crash! Você desbloqueou um combo.
-19474318057c896e	00:01.44	00:06.14	Aku Aku	Aperte o botão X repetidas vezes para dar uma série de golpes.
-840f4fce152e29ad	00:00.00	00:01.66	Aku Aku	Crash! Agora você sabe dar um gancho.
-840f4fce152e29ad	00:01.66	00:07.30	Aku Aku	Aperte o botão X duas vezes e depois o botão Y para sair caçando dentes.
-8808ca0c991e2da1	00:00.00	00:02.08	Aku Aku	enquanto controla um inimigo com ataque à distância.
-8808ca0c991e2da1	00:02.08	00:05.32	Aku Aku	Puxe o gatilho direito para mirar com precisão.
-7e1918be7598d7ff	00:00.00	00:07.47	Aku Aku	Crash! Sabia que, se acertar o tempo do ataque, você pode rebater projéteis?
-eb5be237fb9d0de1	00:00.00	00:03.01	Aku Aku	Para fazer o ataque broca giratória, aperte o botão X ainda no ar.
-eb5be237fb9d0de1	00:03.01	00:07.60	Aku Aku	Acerte algo que quica com a broca giratória para ir bem alto.
-ed589f25253016b3	00:00.00	00:02.96	Aku Aku	Crash, este é um lugar onde a broca giratória seria útil.
-ed589f25253016b3	00:02.96	00:05.51	Aku Aku	Tente usá-la aqui para avançar.
-e6e467cd004e3630	00:00.00	00:01.87	Aku Aku	Crash! Você desbloqueou uma melhoria no giro.
-e6e467cd004e3630	00:01.87	00:05.54	Aku Aku	Agora dá pra girar mais tempo antes de ficar tonto.
-e76267c75f6417b9	00:00.00	00:00.26	Aku Aku	Crash!
-e76267c75f6417b9	00:00.26	00:03.80	Aku Aku	De algum jeito a magia do meu irmão está ligada a esses mutantes e está sendo usada
-e76267c75f6417b9	00:03.80	00:04.74	Aku Aku	para nos prender aqui.
-e76267c75f6417b9	00:04.74	00:07.86	Aku Aku	Derrote todos eles para baixar a barreira.
-e8e124ec42423736	00:00.00	00:03.18	Aku Aku	Crash. Este item indica um desafio de mojo para você.
-e8e124ec42423736	00:03.18	00:05.94	Aku Aku	Você terá regras especiais, mas, se conseguir,
-e8e124ec42423736	00:05.94	00:09.64	Aku Aku	vai ganhar um valioso tesouro de mojo.
-e95f24e6a15016b7	00:00.00	00:01.54	Aku Aku	Aqui você acessa os desafios da arena, Crash.
-e95f24e6a15016b7	00:01.54	00:06.39	Aku Aku	As lutas são exigentes e difíceis, mas as recompensas são simplesmente fabulosas.
-e2eaed8e7c6e3634	00:00.00	00:03.23	Aku Aku	Crash. Em lugares como este, você pode escalar direto pra cima. Viu?
-e2eaed8e7c6e3634	00:03.23	00:07.27	Aku Aku	Não precisa pular em todo lugar. Só na maioria.
-e368edbaf3cd09e9	00:00.00	00:02.26	Aku Aku	Enquanto escala, Crash, você pode pular para outra área escalável.
-e368edbaf3cd09e9	00:02.26	00:05.47	Aku Aku	É só apertar o botão de pulo quando estiver em posição.
-e368ed88db8417bd	00:00.00	00:02.26	Aku Aku	Enquanto escala, Crash, você pode pular para outra área escalável.
-e368ed88db8417bd	00:02.26	00:05.47	Aku Aku	É só apertar o botão de pulo quando estiver em posição.
-29210d4dd4215a7d	00:00.00	00:00.16	Aku Aku	Crash!
-29210d4dd4215a7d	00:00.16	00:02.29	Aku Aku	Não esqueça que você pode usar sua criatura para congelar a água em lugares como
-29210d4dd4215a7d	00:02.29	00:04.53	Aku Aku	este.
+17d4a5098b38689a	00:00.00	00:02.65	Aku Aku	Acho que você consegue pular até aqui com um bom tempo.
+17d4a5098b38689a	00:02.65	00:08.39	Aku Aku	Pule com o botão A, depois empurre contra a parede e aperte o botão A de novo para ir ainda mais alto.
+13db2acb07686ca6	00:00.00	00:04.96	Aku Aku	Crash! Você desbloqueou a bota! A bota é uma das nossas tradições mais orgulhosas.
+13db2acb07686ca6	00:04.96	00:10.15	Aku Aku	Quando achar a bota, aperte o botão X para arrancar os miolos dos inimigos por um tempinho.
+0fe1b08c83886ca2	00:00.00	00:03.97	Aku Aku	Muito bem, Crash! Você desbloqueou a britadeira giratória.
+0fe1b08c83886ca2	00:03.97	00:07.14	Aku Aku	Gire o analógico esquerdo e aperte o botão Y para experimentar.
+ddc67e1fd990c7d1	00:00.00	00:05.46	Aku Aku	Crash! Você desbloqueou um aumento de vida. Agora veja essa barra de vida crescer.
+ddc67e1fd990c7d1	00:05.46	00:06.69	Aku Aku	Um pouquinho, pelo menos.
+e0413b0761d1989c	00:00.00	00:03.35	Aku Aku	Crash! Você desbloqueou o ataque aéreo rolante.
+e0413b0761d1989c	00:03.35	00:08.38	Aku Aku	Aperte o botão Y para atacar ou segure o botão Y para carregar o ataque e bater mais forte.
+e43ab545e5b19880	00:00.00	00:02.76	Aku Aku	Boa, Crash. Aperte o botão Y.
+e43ab545e5b19880	00:02.76	00:06.69	Aku Aku	Depois o botão Y de novo quando cair para emendar um segundo ataque pesado.
+be651f64095f6e23	00:00.00	00:06.53	Aku Aku	Crash, emende um terceiro ataque no seu ataque aéreo rolante apertando o botão Y de novo ao cair do segundo ataque.
+c25e99a28d3f6e27	00:00.00	00:01.54	Aku Aku	É a sua chance, Crash.
+c25e99a28d3f6e27	00:01.54	00:05.50	Aku Aku	Aperte o botão B para me grudar na cara dele e assumir o controle dessa criatura.
+213a37950d4c8d66	00:00.00	00:01.52	Aku Aku	Quando estiver montado num inimigo,
+213a37950d4c8d66	00:01.52	00:06.32	Aku Aku	use os botões Y e X para atacar e o botão A para pular.
+213a37950d4c8d66	00:06.32	00:08.75	Aku Aku	Aperte o botão B para sair da criatura.
+2533b1d3911c895a	00:00.00	00:04.80	Aku Aku	Crash! Aperte o botão X para quebrar coisas e coletar mojo mágico.
+2533b1d3911c895a	00:04.80	00:07.82	Aku Aku	Quanto mais você coletar, mais poderoso você fica.
+19474318057c896e	00:00.00	00:02.96	Aku Aku	Crash! Você desbloqueou um combo.
+19474318057c896e	00:02.96	00:06.14	Aku Aku	Aperte o botão X repetidas vezes para dar uma série de golpes.
+840f4fce152e29ad	00:00.00	00:02.79	Aku Aku	Crash! Agora você sabe dar um gancho.
+840f4fce152e29ad	00:02.79	00:07.30	Aku Aku	Aperte o botão X duas vezes e depois o botão Y para sair caçando dentes.
+8808ca0c991e2da1	00:00.00	00:02.85	Aku Aku	enquanto controla um inimigo com ataque à distância.
+8808ca0c991e2da1	00:02.85	00:05.32	Aku Aku	Puxe o gatilho direito para mirar com precisão.
+7e1918be7598d7ff	00:00.00	00:06.09	Aku Aku	Crash! Sabia que, se acertar o tempo do ataque, você pode rebater projéteis?
+7e1918be7598d7ff	00:06.09	00:07.47	Aku Aku	É... agora você sabe.
+eb5be237fb9d0de1	00:00.00	00:04.25	Aku Aku	Para fazer o ataque broca giratória, aperte o botão X ainda no ar.
+eb5be237fb9d0de1	00:04.25	00:07.60	Aku Aku	Acerte algo que quica com a broca giratória para ir bem alto.
+ed589f25253016b3	00:00.00	00:03.78	Aku Aku	Crash, este é um lugar onde a broca giratória seria útil.
+ed589f25253016b3	00:03.78	00:05.51	Aku Aku	Tente usá-la aqui para avançar.
+e6e467cd004e3630	00:00.00	00:03.04	Aku Aku	Crash! Você desbloqueou uma melhoria no giro.
+e6e467cd004e3630	00:03.04	00:05.54	Aku Aku	Agora dá pra girar mais tempo antes de ficar tonto.
+e76267c75f6417b9	00:00.00	00:05.41	Aku Aku	Crash, de algum jeito a magia do meu irmão está ligada a esses mutantes e está sendo usada para nos prender aqui.
+e76267c75f6417b9	00:05.41	00:07.86	Aku Aku	Derrote todos eles para baixar a barreira.
+e8e124ec42423736	00:00.00	00:03.58	Aku Aku	Crash. Este item indica um desafio de mojo para você.
+e8e124ec42423736	00:03.58	00:09.63	Aku Aku	Você terá regras especiais, mas, se conseguir, vai ganhar um valioso tesouro de mojo.
+e95f24e6a15016b7	00:00.00	00:02.43	Aku Aku	Aqui você acessa os desafios da arena, Crash.
+e95f24e6a15016b7	00:02.43	00:06.39	Aku Aku	As lutas são exigentes e difíceis, mas as recompensas são simplesmente fabulosas.
+e2eaed8e7c6e3634	00:00.00	00:03.78	Aku Aku	Crash. Em lugares como este, você pode escalar direto pra cima. Viu?
+e2eaed8e7c6e3634	00:03.78	00:07.27	Aku Aku	Não precisa pular em todo lugar. Só na maioria.
+e368edbaf3cd09e9	00:00.00	00:03.26	Aku Aku	Enquanto escala, Crash, você pode pular para outra área escalável.
+e368edbaf3cd09e9	00:03.26	00:05.47	Aku Aku	É só apertar o botão de pulo quando estiver posicionado.
+e368ed88db8417bd	00:00.00	00:03.29	Aku Aku	Enquanto escala, Crash, você pode pular para outra área escalável.
+e368ed88db8417bd	00:03.29	00:05.47	Aku Aku	É só apertar o botão de pulo quando estiver em posicionado.
+29210d4dd4215a7d	00:00.00	00:04.52	Aku Aku	Crash, não esqueça que você pode usar sua criatura para congelar a água em lugares como este.
 27a25024ef3af8f4	00:00.00	00:04.11	Aku Aku	Use sua criatura em lugares como este para congelar e quebrar jatos de água.
-2b1dca6d160d597b	00:00.00	00:01.12	Aku Aku	Está ventando um pouco aqui, Crash.
-2b1dca6d160d597b	00:01.12	00:03.65	Aku Aku	Você vai ter que pular quando o vento estiver fraco para chegar em segurança do
-2b1dca6d160d597b	00:03.65	00:06.29	Aku Aku	outro lado.
-299f0d44312ef9fa	00:00.00	00:02.28	Aku Aku	Para usar isto, Crash, você vai precisar de uma ajudinha de um amigo.
-299f0d44312ef9fa	00:02.28	00:06.49	Aku Aku	Outra pessoa se equilibrando na outra ponta deixaria tudo bem mais fácil.
-3114017cb5b2af21	00:00.00	00:02.43	Aku Aku	Esses inimigos são fortes, Crash, mas você é bem mais rápido.
-3114017cb5b2af21	00:02.43	00:06.28	Aku Aku	Aperte o botão Y na hora certa para desviar dos golpes.
+2b1dca6d160d597b	00:00.00	00:02.05	Aku Aku	Está ventando um pouco aqui, Crash.
+2b1dca6d160d597b	00:02.05	00:06.28	Aku Aku	Você vai ter que pular quando o vento estiver fraco para chegar em segurança do outro lado.
+299f0d44312ef9fa	00:00.00	00:03.11	Aku Aku	Para usar isso, Crash, você vai precisar de uma ajudinha de um amigo.
+299f0d44312ef9fa	00:03.11	00:06.49	Aku Aku	Outra pessoa se equilibrando na outra ponta deixaria tudo bem mais fácil.
+3114017cb5b2af21	00:00.00	00:03.27	Aku Aku	Esses inimigos são fortes, Crash, mas você é bem mais rápido.
+3114017cb5b2af21	00:03.27	00:06.28	Aku Aku	Aperte o botão Y na hora certa para desviar dos golpes.
 2f954453d0502f24	00:00.00	00:01.63	Aku Aku	Bom trabalho, Crash!
 8bf624fe9902b7b4	00:00.00	00:03.94	Aku Aku	Este inimigo vai dar um ataque leve, Crash. Tente desviar sozinho.
 9663d6c358214f67	00:00.00	00:02.07	Aku Aku	Aperte o botão Y para dar uma lição nele.
-f3a9209d52ae1da1	00:00.00	00:05.77	Aku Aku	Muito bem, Crash. Sua velocidade é sua maior vantagem contra coisas grandes assim.
-efafa6acf4fcc8f9	00:00.00	00:02.64	Aku Aku	Certo, Crash, agora este inimigo vai dar um ataque pesado.
-efafa6acf4fcc8f9	00:02.64	00:06.74	Aku Aku	Acerte o tempo da esquiva, contra-ataque e acabe com ele.
+f3a9209d52ae1da1	00:00.00	00:02.15	Aku Aku	Muito bem, Crash.
+f3a9209d52ae1da1	00:02.15	00:05.77	Aku Aku	Sua velocidade é sua maior vantagem contra coisas grandes assim.
+efafa6acf4fcc8f9	00:00.00	00:03.76	Aku Aku	Certo, Crash, agora este inimigo vai dar um ataque pesado.
+efafa6acf4fcc8f9	00:03.76	00:06.74	Aku Aku	Acerte o tempo da esquiva, contra-ataque e acabe com ele.
 f02da6a3520a6876	00:00.00	00:03.20	Aku Aku	Brilhante, Crash! Estou tão orgulhoso de você!
-ebb62c204ade19a9	00:00.00	00:03.34	Aku Aku	Crash. Bandicoots são ótimos escavadores. E você não é exceção.
-ebb62c204ade19a9	00:03.34	00:06.94	Aku Aku	Quando vir coisas assim que dá pra cavar, gire o analógico esquerdo.
-ebb62c204ade19a9	00:06.94	00:10.66	Aku Aku	Depois o botão X para cavar o chão aqui.
+ebb62c204ade19a9	00:00.00	00:04.40	Aku Aku	Crash. Bandicoots são ótimos escavadores. E você não é exceção.
+ebb62c204ade19a9	00:04.40	00:08.07	Aku Aku	Quando você ver coisas assim que dá pra cavar, gire o analógico esquerdo.
+ebb62c204ade19a9	00:08.07	00:10.66	Aku Aku	Depois o botão X para cavar o chão aqui.
 9152085ea94e3e67	00:00.00	00:04.56	Aku Aku	Quando chegar ao fim da parte que dá pra cavar, faça o ataque giratório para sair.
 856599a31d9e3a6b	00:00.00	00:04.38	Aku Aku	Se estiver pendurado numa beirada, você pode soltar apertando o botão Y.
-2886b91e063be8f6	00:00.00	00:02.15	Aku Aku	Crash! Você precisa girar em cima disto para funcionar.
-2886b91e063be8f6	00:02.15	00:07.13	Aku Aku	Por sorte, ouvi dizer que girar é algo que você faz muito bem a esta altura.
-2a0575f4c2ef5e23	00:00.00	00:03.39	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
-2a0575f4c2ef5e23	00:03.39	00:05.31	Aku Aku	Vamos dar uma olhada agora.
-2a057646eb1a4877	00:00.00	00:03.39	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
-2a057646eb1a4877	00:03.39	00:05.31	Aku Aku	Vamos dar uma olhada agora.
-2c80330a615cda1a	00:00.00	00:02.54	Aku Aku	Para guardar um titan e usar depois, é só apertar este botão.
-2c80330a615cda1a	00:02.54	00:05.38	Aku Aku	Aperte este botão de novo para tirá-lo.
+2886b91e063be8f6	00:00.00	00:03.21	Aku Aku	Crash! Você precisa girar em cima disto para funcionar.
+2886b91e063be8f6	00:03.21	00:07.13	Aku Aku	Por sorte, ouvi dizer que girar é algo que você faz muito bem a esta altura.
+2a0575f4c2ef5e23	00:00.00	00:04.17	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
+2a0575f4c2ef5e23	00:04.17	00:05.31	Aku Aku	Vamos dar uma olhada agora.
+2a057646eb1a4877	00:00.00	00:04.13	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
+2a057646eb1a4877	00:04.13	00:05.31	Aku Aku	Vamos dar uma olhada agora.
+2c80330a615cda1a	00:00.00	00:03.44	Aku Aku	Para guardar um titan e usar depois, é só apertar este botão.
+2c80330a615cda1a	00:03.44	00:05.38	Aku Aku	Aperte este botão de novo para tirá-lo.
 2a83763d4827e7cc	00:00.00	00:05.16	Aku Aku	Ih, esse é um pouco grande demais para guardar, Crash. Foi mal.
-2c0233662d0e4975	00:00.00	00:03.56	Aku Aku	Você vai ter que guardar seu titan antes de pular para aquela corda, Crash.
-2093c4a0fe7be8fe	00:00.00	00:01.68	Aku Aku	Lembre-se, Crash, você é o herói por aqui,
-2093c4a0fe7be8fe	00:01.68	00:04.65	Aku Aku	e tem coisas que você consegue fazer que os outros mutantes não conseguem,
-2093c4a0fe7be8fe	00:04.65	00:08.26	Aku Aku	como pular alto ou se balançar em cordas.
+2c0233662d0e4975	00:00.00	00:03.56	Aku Aku	Você vai ter que guardar seu titan antes de pular naquela corda, Crash.
+2093c4a0fe7be8fe	00:00.00	00:03.19	Aku Aku	Lembre-se, Crash, você é o herói por aqui,
+2093c4a0fe7be8fe	00:03.19	00:06.01	Aku Aku	e tem coisas que você consegue fazer que os outros mutantes não conseguem,
+2093c4a0fe7be8fe	00:06.01	00:08.26	Aku Aku	como pular alto ou se balançar em cordas.
 221281c9e35a487f	00:00.00	00:02.35	Aku Aku	Crash! Tente girar naquela coisa ali!
 c3b4e34d815708b9	00:00.00	00:03.14	Aku Aku	Crash! Está vendo aquela parede ali? Tente escalar!
 c336e35322412730	00:00.00	00:02.89	Aku Aku	Crash, segurando numa beirada você ainda pode andar para os lados.
 c5b1a06cc34307b7	00:00.00	00:04.08	Aku Aku	Muitas vezes um jeito fácil de evitar ataques inimigos é pular na hora certa.
-c7305dc3befe3de4	00:00.00	00:01.95	Aku Aku	Para dar um pulo giratório e ganhar altura de verdade,
-c7305dc3befe3de4	00:01.95	00:04.87	Aku Aku	gire o analógico esquerdo e aperte o botão A.
-c92d1ab0e8152832	00:00.00	00:04.30	Aku Aku	Este é um lugar onde o pulo giratório seria uma boa ideia, Crash. Experimente.
+c7305dc3befe3de4	00:00.00	00:02.19	Aku Aku	Para dar um pulo giratório e ganhar altura de verdade,
+c7305dc3befe3de4	00:02.19	00:04.87	Aku Aku	gire o analógico esquerdo e aperte o botão A.
+c92d1ab0e8152832	00:00.00	00:03.50	Aku Aku	Este é um lugar onde o pulo giratório seria uma boa ideia, Crash.
+c92d1ab0e8152832	00:03.50	00:04.30	Aku Aku	Tenta aí.
 bbc1ee9059b31081	00:00.00	00:02.97	Aku Aku	Tente coletar todos os itens antes que o tempo acabe.
-bb03bfca9850d7b8	00:00.00	00:04.43	Aku Aku	Ah, uau! Esse power-up deixa você causar quatro vezes mais dano por um tempinho.
-bb03bfca9850d7b8	00:04.43	00:06.66	Aku Aku	Corre e bate em alguém!
-e494fedc0c539d88	00:00.00	00:00.85	Aku Aku	Hum, delícia!
-e494fedc0c539d88	00:00.85	00:05.51	Aku Aku	Esse lanche vai restaurar a energia do titan que você está controlando.
-e512fed66b497711	00:00.00	00:00.58	Aku Aku	Boa, Crash!
-e512fed66b497711	00:00.58	00:04.68	Aku Aku	Esse power-up vai dobrar a quantidade de mojo que você coleta por um tempinho.
-e512fed66b497711	00:04.68	00:06.98	Aku Aku	Então corre e quebra tudo!
-e70fbbf5ad557e0f	00:00.00	00:02.88	Aku Aku	Esses bonecos de vodu vão desbloquear recompensas especiais para você, Crash.
-e70fbbf5ad557e0f	00:02.88	00:06.13	Aku Aku	Colete todos para ganhar um monte de coisas legais.
-e88e791a90339d84	00:00.00	00:01.64	Aku Aku	Ratcicles conseguem congelar a água.
-e88e791a90339d84	00:01.64	00:06.09	Aku Aku	Faça o Ratcicle espirrar para congelar a água ou os vilões.
-e90c7914ef497f0d	00:00.00	00:03.80	Aku Aku	O supercongelamento de um Ratcicle é mais poderoso que o congelamento por espirro.
-e90c7914ef497f0d	00:03.80	00:05.66	Aku Aku	Tente usar em combate.
-ec87f3ab3cc2a840	00:00.00	00:01.59	Aku Aku	Para deslizar no gelo montado num Ratcicle,
-ec87f3ab3cc2a840	00:01.59	00:04.57	Aku Aku	aperte o botão A para pular e depois puxe o gatilho direito para deslizar sobre a
-ec87f3ab3cc2a840	00:04.57	00:07.19	Aku Aku	água.
-209fe33b2a8e8633	00:00.00	00:02.27	Aku Aku	Um roller pode levar você a lugares onde outros inimigos não chegam.
-209fe33b2a8e8633	00:02.27	00:06.27	Aku Aku	Ele ativa interruptores de roller e sobe curvas íngremes com impulso.
-1e252653a269bc64	00:00.00	00:02.99	Aku Aku	Rollers podem investir contra inimigos com resultados devastadores.
-1e252653a269bc64	00:02.99	00:06.75	Aku Aku	Para isso, aperte o botão Y montado num roller.
-1a2bac151e79b850	00:00.00	00:02.66	Aku Aku	Para parar de repente num roller, puxe o gatilho direito.
-1a2bac151e79b850	00:02.66	00:07.21	Aku Aku	Uma freada brusca pode salvar você de cair de uma beirada.
-182eeec3c3c0a6ba	00:00.00	00:02.02	Aku Aku	Crash, os Grimlies têm o poder de desacelerar o tempo.
-182eeec3c3c0a6ba	00:02.02	00:04.37	Aku Aku	Sua barra especial vai esvaziar enquanto o poder estiver ativo,
-182eeec3c3c0a6ba	00:04.37	00:07.49	Aku Aku	então use com moderação.
-bbce0e6721b8e7f2	00:00.00	00:03.71	Aku Aku	Esse cara é escorregadio. Ele consegue se fundir ao chão para ninguém encostar nele.
-bbce0e6721b8e7f2	00:03.71	00:08.47	Aku Aku	Fundido no chão, você pode passar por baixo de certos objetos.
-bd4ccb9006974773	00:00.00	00:02.30	Aku Aku	Você está controlando a poderosa Scorporilla, Crash.
-bd4ccb9006974773	00:02.30	00:05.80	Aku Aku	Use os golpes esmagadores enormes dela para acabar com os inimigos à sua volta.
-bd4ccb9006974773	00:05.80	00:08.95	Aku Aku	Às vezes o golpe até quebra o chão.
+bb03bfca9850d7b8	00:00.00	00:05.25	Aku Aku	Ah, uau! Esse power-up deixa você causar quatro vezes mais dano por um tempinho.
+bb03bfca9850d7b8	00:05.25	00:06.66	Aku Aku	Corre e bate em alguém!
+e494fedc0c539d88	00:00.00	00:02.11	Aku Aku	Hum, delícia!
+e494fedc0c539d88	00:02.11	00:05.51	Aku Aku	Esse lanche vai restaurar a energia do titan que você está controlando.
+e512fed66b497711	00:00.00	00:01.76	Aku Aku	Boa, Crash!
+e512fed66b497711	00:01.76	00:05.43	Aku Aku	Esse power-up vai dobrar a quantidade de mojo que você coleta por um tempinho.
+e512fed66b497711	00:05.43	00:06.98	Aku Aku	Então corre e quebra tudo!
+e70fbbf5ad557e0f	00:00.00	00:03.69	Aku Aku	Esses bonecos de vodu vão desbloquear recompensas especiais para você, Crash.
+e70fbbf5ad557e0f	00:03.69	00:06.13	Aku Aku	Colete todos para ganhar um monte de coisas legais.
+e88e791a90339d84	00:00.00	00:02.73	Aku Aku	Ratcicles conseguem congelar a água.
+e88e791a90339d84	00:02.73	00:06.09	Aku Aku	Faça o Ratcicle espirrar para congelar a água ou os caras maus.
+e90c7914ef497f0d	00:00.00	00:04.24	Aku Aku	O supercongelamento de um Ratcicle é mais poderoso que o congelamento por espirro.
+e90c7914ef497f0d	00:04.24	00:05.66	Aku Aku	Tenta usar em combate.
+ec87f3ab3cc2a840	00:00.00	00:02.43	Aku Aku	Para deslizar no gelo montado num Ratcicle,
+ec87f3ab3cc2a840	00:02.43	00:07.18	Aku Aku	aperte o botão A para pular e depois puxe o gatilho direito para deslizar sobre a água.
+209fe33b2a8e8633	00:00.00	00:03.00	Aku Aku	Um roller pode levar você a lugares onde outros inimigos não chegam.
+209fe33b2a8e8633	00:03.00	00:06.27	Aku Aku	Ele ativa interruptores de roller e sobe curvas íngremes com impulso.
+1e252653a269bc64	00:00.00	00:03.58	Aku Aku	Rollers podem investir contra inimigos com resultados devastadores.
+1e252653a269bc64	00:03.58	00:06.75	Aku Aku	Para isso, aperte o botão Y montado num roller.
+1a2bac151e79b850	00:00.00	00:04.08	Aku Aku	Para parar de repente num roller, puxe o gatilho direito.
+1a2bac151e79b850	00:04.08	00:07.21	Aku Aku	Uma freada brusca pode salvar você de cair de uma beirada.
+182eeec3c3c0a6ba	00:00.00	00:03.33	Aku Aku	Crash, os Grimlies têm o poder de desacelerar o tempo.
+182eeec3c3c0a6ba	00:03.33	00:05.93	Aku Aku	Sua barra especial vai esvaziar enquanto o poder estiver ativo.
+182eeec3c3c0a6ba	00:05.93	00:07.49	Aku Aku	Então use com moderação.
+bbce0e6721b8e7f2	00:00.00	00:04.97	Aku Aku	Esse cara é escorregadio. Ele consegue se fundir ao chão para ninguém encostar nele.
+bbce0e6721b8e7f2	00:04.97	00:08.47	Aku Aku	Fundido no chão, você pode passar por baixo de certos objetos.
+bd4ccb9006974773	00:00.00	00:02.92	Aku Aku	Você está controlando a poderosa Scorporilla, Crash.
+bd4ccb9006974773	00:02.92	00:06.41	Aku Aku	Use os golpes esmagadores enormes dela para acabar com os inimigos à sua volta.
+bd4ccb9006974773	00:06.41	00:08.95	Aku Aku	Às vezes o golpe até quebra o chão.
 b9d15147dfc4e6cc	00:00.00	00:01.90	Aku Aku	Ah, você vai gostar deste, Crash.
 b9d15147dfc4e6cc	00:01.90	00:06.67	Aku Aku	Este titan consegue arremessar inimigos usando o poder da mente. Como ele faz isso?
 b9d15147dfc4e6cc	00:06.67	00:07.47	Aku Aku	Ciência!
-bb500e70c4ab4875	00:00.00	00:02.77	Aku Aku	A barra roxa abaixo do seu medidor de vida é a barra especial do inimigo.
-bb500e70c4ab4875	00:02.77	00:07.93	Aku Aku	Quando ela enche, seu inimigo está pronto para fazer o próprio golpe especial.
-b7d494289dd8e7f6	00:00.00	00:01.58	Aku Aku	Quando um segundo jogador entra no jogo,
-b7d494289dd8e7f6	00:01.58	00:05.48	Aku Aku	você pode montar nele e controlar meus poderes mágicos.
+bb500e70c4ab4875	00:00.00	00:03.58	Aku Aku	A barra roxa abaixo do seu medidor de vida é a barra especial do inimigo.
+bb500e70c4ab4875	00:03.58	00:07.93	Aku Aku	Quando ela enche, seu inimigo está pronto para fazer o próprio golpe especial.
+b7d494289dd8e7f6	00:00.00	00:02.13	Aku Aku	Quando um segundo jogador entra no jogo,
+b7d494289dd8e7f6	00:02.13	00:05.48	Aku Aku	você pode montar nele e controlar meus poderes mágicos.
 b953515182b74777	00:00.00	00:02.29	Aku Aku	Quando estiver controlando meus poderes no modo de dois jogadores,
 b953515182b74777	00:02.29	00:05.29	Aku Aku	procure por aí objetos maiores para atirar.
-b5d7d7095be4e6f0	00:00.00	00:03.10	Aku Aku	Isto deve ser mais fácil com outra pessoa ajudando você a se equilibrar na
-b5d7d7095be4e6f0	00:03.10	00:03.52	Aku Aku	travessia.
-b756943240cb4879	00:00.00	00:02.36	Aku Aku	Esta seria uma ótima hora para montar no jogador do roller.
-b756943240cb4879	00:02.36	00:06.39	Aku Aku	Assim você pode me usar para atirar nos objetos do caminho.
+b5d7d7095be4e6f0	00:00.00	00:03.51	Aku Aku	Isto deve ser mais fácil com outra pessoa ajudando você a se equilibrar do outro lado
+b756943240cb4879	00:00.00	00:03.14	Aku Aku	Esta seria uma ótima hora para montar no jogador do roller.
+b756943240cb4879	00:03.14	00:06.39	Aku Aku	Assim você pode me usar para atirar nos objetos do caminho.
 b3db19ea19f8e7fa	00:00.00	00:03.14	Aku Aku	Tente atirar naquelas caixas para o outro jogador poder passar rolando.
 b559d712fed7477b	00:00.00	00:03.69	Aku Aku	Esta seria uma ótima hora para montar no mesmo Grimly, se der.
-56fc38969cd407b5	00:00.00	00:02.12	Aku Aku	Tente montar no outro jogador enquanto ele estiver num titan.
-56fc38969cd407b5	00:02.12	00:05.07	Aku Aku	Aí você atira enquanto ele controla a criatura.
+56fc38969cd407b5	00:00.00	00:02.81	Aku Aku	Tente montar no outro jogador enquanto ele estiver num titan.
+56fc38969cd407b5	00:02.81	00:05.07	Aku Aku	Aí você atira enquanto ele controla a criatura.
 567e389c3dbe260c	00:00.00	00:03.75	Aku Aku	Crash. Entre na sua casa na Ilha Wumpa para trocar de roupa.
-58f8f5b5dec006b3	00:00.00	00:03.99	Aku Aku	Crash! Entre na sua casa na Ilha Wumpa e veja umas figuras bonitas.
+58f8f5b5dec006b3	00:00.00	00:03.99	Aku Aku	Crash! Entre na sua casa na Ilha Wumpa e veja umas fotos bonitas.
 c0c0cf36e12efb6f	00:00.00	00:04.30	Aku Aku	Crash! Entre na sua casa na Ilha Wumpa e veja as artes conceituais.
 587af5bb7fb22732	00:00.00	00:04.69	Aku Aku	Olá, Jogador 2. Entre na casa do Crash se quiser jogar com a Coco.
-5302be5818f407b9	00:00.00	00:05.25	Aku Aku	Crash! Eu posso guardar seu titan para você levar junto. Experimente agora.
-5284be5db9de2630	00:00.00	00:03.64	Aku Aku	Lembre-se de que você pode guardar seu titan para levá-lo por lugares por onde só
-5284be5db9de2630	00:03.64	00:05.32	Aku Aku	você consegue passar.
-54ff7b775ae006b7	00:00.00	00:03.98	Aku Aku	Parece que por aqui não dá, Crash. Tente achar outro caminho.
-54817b7cfbd22736	00:00.00	00:01.97	Aku Aku	Talvez devêssemos falar com a Coco, Crash.
-54817b7cfbd22736	00:01.97	00:04.09	Aku Aku	Ela está bem do lado da cabeça do Doominator.
-4f094419951407bd	00:00.00	00:03.34	Aku Aku	Talvez devêssemos falar com a Coco, Crash. Ela está bem do lado da casa.
+5302be5818f407b9	00:00.00	00:04.32	Aku Aku	Crash! Eu posso guardar seu titan para você levar junto. 
+5302be5818f407b9	00:04.32	00:05.25	Aku Aku	Tente agora.
+5284be5db9de2630	00:00.00	00:05.31	Aku Aku	Lembre-se de que você pode guardar seu titan para levá-lo por lugares por onde só você consegue passar.
+54ff7b775ae006b7	00:00.00	00:02.59	Aku Aku	Parece que por aqui não dá, Crash.
+54ff7b775ae006b7	00:02.59	00:03.98	Aku Aku	Tente achar outro caminho.
+54817b7cfbd22736	00:00.00	00:02.30	Aku Aku	Talvez devêssemos falar com a Coco, Crash.
+54817b7cfbd22736	00:02.30	00:04.09	Aku Aku	Ela está bem do lado da cabeça do Doominator.
+4f094419951407bd	00:00.00	00:03.34	Aku Aku	Talvez nós devíamos falar com a Coco, Crash. Ela está bem do lado da casa.
 4e8b441f35fe2634	00:00.00	00:03.05	Aku Aku	Atrás deles, Crash, eles correram para a ponte atrás da casa.
 cb9bb9305cfc6974	00:00.00	00:02.48	Aku Aku	Rápido, Crash! Vá para os fundos do Doominator!
 cd1a765941e2cafd	00:00.00	00:02.52	Aku Aku	Vamos para o Reino Ratcicle, Crash.
@@ -825,38 +811,41 @@ d50d6ad649a2caf5	00:00.00	00:02.13	Aku Aku	Vamos para o Ferro-Velho, Crash.
 0047f14284e616fa	00:00.00	00:02.34	Aku Aku	Esta vai exigir que você pense, Crash.
 ccae015acd790dc8	00:00.00	00:04.21	Aku Aku	Deve ter algum jeito de abrir aquela porta. Pense, Crash, pense!
 ce2cbe83b23f6751	00:00.00	00:04.39	Aku Aku	Acho que, se você destruir todos aqueles robôs-privada do mal, a gente sai daqui.
-ceaabe7a0f6d0ece	00:00.72	00:05.74	Aku Aku	Essa gosma parece bem perigosa, amiguinho. Você não consegue atravessar sozinho.
+ceaabe7a0f6d0ece	00:00.00	00:05.74	Aku Aku	Essa gosma parece bem perigosa, amiguinho. Você não consegue atravessar sozinho.
 d0297ba2f44b6e4f	00:00.00	00:04.03	Aku Aku	Parece que isto é um daqueles teletransportadores que meu irmão comentou.
-d0297ba2f44b6e4f	00:04.03	00:05.57	Aku Aku	Odeio aquele cara!
+d0297ba2f44b6e4f	00:04.39	00:05.57	Aku Aku	Odeio aquele cara!
 d0a77b6b3a80381c	00:00.00	00:03.62	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
-d0a77b6b3a80381c	00:03.62	00:06.79	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
-d0a77b6b3a80381c	00:06.79	00:08.75	Aku Aku	Vamos dar uma olhada agora.
+d0a77b6b3a80381c	00:03.62	00:07.57	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
+d0a77b6b3a80381c	00:07.57	00:08.75	Aku Aku	Vamos dar uma olhada agora.
 d0a77b9951590dc4	00:00.00	00:03.62	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
-d0a77b9951590dc4	00:03.62	00:06.79	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
-d0a77b9951590dc4	00:06.79	00:08.75	Aku Aku	Vamos dar uma olhada agora.
-d22638c2363f6f4d	00:00.00	00:03.33	Aku Aku	As missões vermelhas com o ícone de livro são suas missões principais da história.
-d22638c2363f6f4d	00:03.33	00:06.93	Aku Aku	Você precisa completá-las para avançar no jogo.
-d2a438b8934d0eca	00:00.00	00:03.09	Aku Aku	Você também tem missões opcionais, mostradas com o ícone de troféu.
-d2a438b8934d0eca	00:03.09	00:07.26	Aku Aku	Completá-las ajuda você a chegar a 100% do jogo.
+d0a77b9951590dc4	00:03.62	00:07.54	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
+d0a77b9951590dc4	00:07.54	00:08.75	Aku Aku	Vamos dar uma olhada agora.
+d22638c2363f6f4d	00:00.00	00:03.89	Aku Aku	As missões vermelhas com o ícone de livro são suas missões principais da história.
+d22638c2363f6f4d	00:03.89	00:06.93	Aku Aku	Você precisa completá-las para avançar no jogo.
+d2a438b8934d0eca	00:00.00	00:03.31	Aku Aku	Você também tem missões opcionais, mostradas com o ícone de troféu.
+d2a438b8934d0eca	00:03.63	00:07.26	Aku Aku	Completá-las ajuda você a chegar a 100% do jogo.
 d61fb2d2a3c2b81d	00:00.00	00:01.35	Aku Aku	Para rolar a visão do mapa,
 d61fb2d2a3c2b81d	00:01.35	00:04.24	Aku Aku	é só puxar o gatilho direito e mover o analógico esquerdo.
-712628e2f7ab21c9	00:00.00	00:04.41	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
-712628e2f7ab21c9	00:04.41	00:08.25	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
-712628e2f7ab21c9	00:08.25	00:09.76	Aku Aku	Vamos dar uma olhada agora.
-712628e2f7ab21c9	00:09.76	00:14.33	Aku Aku	As missões vermelhas com o ícone de livro são suas missões principais da história.
-712628e2f7ab21c9	00:14.33	00:16.95	Aku Aku	Você precisa completá-las para avançar no jogo.
-712628e2f7ab21c9	00:16.95	00:20.69	Aku Aku	Você também tem missões opcionais, mostradas com o ícone de troféu.
-712628e2f7ab21c9	00:20.69	00:27.44	Aku Aku	Completá-las ajuda você a chegar a 100% do jogo.
+712628e2f7ab21c9	00:00.00	00:03.76	Aku Aku	Ei, Crash, você pode apertar o botão do mapa a qualquer hora para ver seu mapa.
+712628e2f7ab21c9	00:03.76	00:07.51	Aku Aku	O mapa mostra onde você está e para onde ir, para você não se perder.
+712628e2f7ab21c9	00:07.51	00:08.81	Aku Aku	Vamos dar uma olhada agora.
+712628e2f7ab21c9	00:08.81	00:12.42	Aku Aku	As missões vermelhas com o ícone de livro são suas missões principais da história.
+712628e2f7ab21c9	00:12.42	00:15.73	Aku Aku	Você precisa completá-las para avançar no jogo.
+712628e2f7ab21c9	00:15.73	00:19.24	Aku Aku	Você também tem missões opcionais, mostradas com o ícone de troféu.
+712628e2f7ab21c9	00:19.24	00:23.17	Aku Aku	Completá-las ajuda você a chegar a 100% do jogo.
+712628e2f7ab21c9	00:23.17	00:27.44	Aku Aku	 Para rolar sobre a visão do mapa, só aperte o gatilho direito e mova o analógico esquerdo.
 3e973b1afee3964c	00:00.00	00:03.54	Aku Aku	Perdido? Talvez seja melhor olhar o mapa de novo, Crash.
-4212b56325b5f6f3	00:00.00	00:01.50	Aku Aku	Devíamos voltar para a Ilha Wumpa, Crash.
-4212b56325b5f6f3	00:01.50	00:05.01	Aku Aku	Você pode pegar o caminho que fizemos para chegar aqui.
-4093f83a40d79772	00:00.00	00:03.47	Aku Aku	Certo, agora devemos conseguir voltar ao Reino Ratcicle com um roller.
-4093f83a40d79772	00:03.47	00:07.31	Aku Aku	Desça, passe com tudo, Crash, temos que correr.
+4212b56325b5f6f3	00:00.00	00:02.35	Aku Aku	Devíamos voltar para a Ilha Wumpa, Crash.
+4212b56325b5f6f3	00:02.35	00:05.01	Aku Aku	Você pode pegar o caminho que fizemos para chegar aqui.
+4093f83a40d79772	00:00.00	00:04.43	Aku Aku	Certo, agora devemos conseguir voltar ao Reino Ratcicle com um roller.
+4093f83a40d79772	00:04.43	00:07.31	Aku Aku	Desça, passe com tudo, Crash, temos que correr!
 3c1c7e055fe9f7f9	00:00.00	00:03.49	Aku Aku	Talvez seja melhor esperar o vento parar antes de tentar, Crash.
-3a9dc0dc7b039670	00:00.00	00:04.67	Aku Aku	Ei, tente cavar por baixo do chão para passar. Afinal, você é um bandicoot.
+3a9dc0dc7b039670	00:00.00	00:02.93	Aku Aku	Ei, tente cavar por baixo do chão para passar.
+3a9dc0dc7b039670	00:02.93	00:04.67	Aku Aku	Afinal, você é um bandicoot.
 3e193b24a1d5f6f7	00:00.00	00:02.85	Aku Aku	Parece uma saída. Tente pular daqui.
 3c9a7dfbbcf79776	00:00.00	00:02.90	Aku Aku	Parece que seria mais fácil atravessar isto com duas pessoas, Crash.
-382303c6dc09f7fd	00:00.00	00:03.75	Aku Aku	Você pode congelar a água borbulhante com este titan. Experimente agora.
+382303c6dc09f7fd	00:00.00	00:02.62	Aku Aku	Você pode congelar a água borbulhante com este titan. 
+382303c6dc09f7fd	00:02.62	00:03.75	Aku Aku	Tenta aí!
 36a4469df7239674	00:00.00	00:02.61	Aku Aku	Lembre-se de que você pode congelar a água borbulhante, Crash.
 a4e7cd13ea9f5632	00:00.00	00:03.56	Aku Aku	Você pode usar seu ataque de espirro para congelar jatos de água com facilidade.
 a565cd0e49ad35b3	00:00.00	00:02.37	Aku Aku	Lembre-se: você pode congelar jatos com um ataque de espirro.
@@ -872,42 +861,43 @@ a16c52cfc5cd35b7	00:00.00	00:01.76	Aku Aku	Congele e quebre, bata e corra.
 74f39076712917f6	00:00.00	00:01.94	Aku Aku	Tente puxar aqueles blocos para fora da parede.
 74759080141b7879	00:00.00	00:01.82	Aku Aku	Tente rolar contra aquele tambor ali.
 72f6d3572f3516f0	00:00.00	00:02.57	Aku Aku	Feche esses canos, Crash, ou nunca vamos sair daqui!
-786f0abe97fb7875	00:00.00	00:01.70	Aku Aku	Isto é rápido demais para você atravessar, Crash.
-786f0abe97fb7875	00:01.70	00:04.48	Aku Aku	Você vai ter que achar um jeito de desacelerar.
+786f0abe97fb7875	00:00.00	00:02.59	Aku Aku	Isto é rápido demais para você atravessar, Crash.
+786f0abe97fb7875	00:02.59	00:04.48	Aku Aku	Você vai ter que achar um jeito de desacelerar.
 76f04d95b31516cc	00:00.00	00:02.48	Aku Aku	Tente desacelerar o tempo para passar por aquelas pedras.
 6e7f59224e47777f	00:00.00	00:02.63	Aku Aku	Acho que isso seria mais fácil com o tempo desacelerado.
-6d009bf9696917fe	00:00.00	00:01.59	Aku Aku	Isto é rápido demais para você atravessar, Crash.
-6d009bf9696917fe	00:01.59	00:04.19	Aku Aku	Você vai ter que achar um jeito de desacelerar.
+6d009bf9696917fe	00:00.00	00:02.36	Aku Aku	Isto é rápido demais para você atravessar, Crash.
+6d009bf9696917fe	00:02.36	00:04.19	Aku Aku	Você vai ter que achar um jeito de desacelerar.
 db44226f5cdcd58c	00:00.00	00:02.49	Aku Aku	Siga o mojo para achar a saída, Crash.
-dbc22269bbf2b735	00:00.58	00:02.52	Aku Aku	Parabéns, você ganhou sua primeira melhoria.
-dbc22269bbf2b735	00:02.52	00:05.40	Aku Aku	Tanto você quanto as criaturas em que monta podem ser melhorados.
-dbc22269bbf2b735	00:05.40	00:09.07	Aku Aku	O mojo que você coleta conta para melhorar o mutante em que você estiver montado no
-dbc22269bbf2b735	00:09.07	00:09.42	Aku Aku	momento.
-dbc22269bbf2b735	00:09.42	00:14.65	Aku Aku	Se não estiver montado, conta para melhorar suas próprias habilidades.
+dbc22269bbf2b735	00:00.00	00:03.59	Aku Aku	Parabéns, você ganhou sua primeira melhoria.
+dbc22269bbf2b735	00:03.59	00:06.43	Aku Aku	Tanto você quanto as criaturas em que monta podem ser melhorados.
+dbc22269bbf2b735	00:06.43	00:11.03	Aku Aku	O mojo que você coleta conta para melhorar o mutante em que você estiver montado no momento
+dbc22269bbf2b735	00:11.03	00:14.65	Aku Aku	Se não estiver montado, conta para melhorar suas próprias habilidades.
 dd40df8e9ed0d6b2	00:00.00	00:02.03	Aku Aku	Muito bem, Crash!
-ddbedf88fddeb633	00:00.00	00:03.40	Aku Aku	Veja os truques no manual do jogo. Agora você pode usá-los enquanto joga.
-ddbedf88fddeb633	00:03.40	00:06.16	Aku Aku	Você mereceu, seu trapaceirozinho!
-d74aa830d8fcd5b0	00:00.00	00:01.19	Aku Aku	Se esquecer como faz um golpe,
-d74aa830d8fcd5b0	00:01.19	00:03.33	Aku Aku	você pode consultar a qualquer hora no menu de golpes.
-d74aa830d8fcd5b0	00:03.33	00:05.58	Aku Aku	É só pausar o jogo para chegar lá.
-d7c8a82b3812b739	00:00.00	00:02.23	Aku Aku	Destrua aqueles coletores de mojo para libertar meu irmão.
-d7c8a82b3812b739	00:02.23	00:03.39	Aku Aku	Mas eles parecem bem robustos,
-d7c8a82b3812b739	00:03.39	00:08.50	Aku Aku	então você vai ter que montar num titan enorme para quebrá-los.
+ddbedf88fddeb633	00:00.00	00:04.28	Aku Aku	Veja os truques no manual do jogo. Agora você pode usá-los enquanto joga.
+ddbedf88fddeb633	00:04.29	00:06.16	Aku Aku	Você mereceu, seu trapaceirozinho!
+d74aa830d8fcd5b0	00:00.00	00:01.57	Aku Aku	Se esquecer como faz um golpe,
+d74aa830d8fcd5b0	00:01.57	00:03.91	Aku Aku	você pode consultar a qualquer hora no menu de golpes.
+d74aa830d8fcd5b0	00:03.91	00:05.58	Aku Aku	É só pausar o jogo para chegar lá.
+d7c8a82b3812b739	00:00.00	00:02.94	Aku Aku	Destrua aqueles coletores de mojo para libertar meu irmão.
+d7c8a82b3812b739	00:02.94	00:05.60	Aku Aku	Mas eles parecem bem, bem, bem robustos,
+d7c8a82b3812b739	00:05.60	00:08.50	Aku Aku	então você vai ter que montar num titan enorme para quebrá-los.
 d94765501af0d6b6	00:00.00	00:01.43	Aku Aku	Você achou a primeira peça.
 d9c5654a79feb637	00:00.00	00:01.55	Aku Aku	Você achou a segunda peça!
-d3512df2551cd5b4	00:00.11	00:00.94	Aku Aku	A terceira peça!
+d3512df2551cd5b4	00:00.01	00:00.94	Aku Aku	A terceira peça!
 d3cf2decb432b73d	00:00.00	00:01.10	Aku Aku	Peça número quatro!
-accea2fac84cf8f9	00:00.14	00:00.87	Aku Aku	Quinta peça!
+accea2fac84cf8f9	00:00.00	00:00.87	Aku Aku	Quinta peça!
 ab4fe5d1e3669770	00:00.00	00:02.86	Aku Aku	Muito bem! Temos todas as peças!
 aecb601a0a38f7f7	00:00.00	00:02.86	Aku Aku	O N. Gin fugiu. Temos que achar ele, Crash.
-ad4ca2f1255a9876	00:00.00	00:05.27	Aku Aku	Sinto cheiro de maldade e loucura no vento. O N. Gin deve estar mais à frente.
-b0c81d394c2cf8f5	00:00.00	00:02.73	Aku Aku	Acho que ele não parece ágil o bastante para se balançar naquela corda.
-b0c81d394c2cf8f5	00:02.73	00:04.68	Aku Aku	Você vai ter que ir sozinho.
-af4960106746974c	00:00.00	00:03.94	Aku Aku	Vamos, Crash. Tem que ter um jeito de subir ali. Você é bom com quebra-cabeças.
+ad4ca2f1255a9876	00:00.00	00:03.16	Aku Aku	Sinto cheiro de maldade e loucura no vento.
+ad4ca2f1255a9876	00:03.16	00:05.27	Aku Aku	O N. Gin deve estar mais à frente.
+b0c81d394c2cf8f5	00:00.00	00:03.20	Aku Aku	Acho que ele não parece ágil o bastante para se balançar naquela corda.
+b0c81d394c2cf8f5	00:03.20	00:04.68	Aku Aku	Você vai ter que ir sozinho.
+af4960106746974c	00:00.00	00:02.71	Aku Aku	Vamos, Crash. Tem que ter um jeito de subir ali.
+af4960106746974c	00:02.71	00:03.94	Aku Aku	Você é bom com quebra-cabeças.
 b2c4da588e18f7f3	00:00.00	00:02.81	Aku Aku	Este aparelho deve ser para uma criatura que você ainda não encontrou.
 b1461d2fa93a9872	00:00.00	00:04.28	Aku Aku	Continue em frente, Crash. Precisamos voltar ao Reino Ratcicle.
-a41d7e77623785f8	00:00.00	00:03.33	Aku Aku	Sinto que esta porta vai precisar de algo muito especial para abrir.
-a41d7e77623785f8	00:03.33	00:05.56	Aku Aku	É melhor seguirmos em frente.
+a41d7e77623785f8	00:00.00	00:04.25	Aku Aku	Sinto que esta porta vai precisar de algo muito especial para abrir.
+a41d7e77623785f8	00:04.25	00:05.56	Aku Aku	É melhor seguirmos em frente.
 11a077cacf225736	00:00.00	00:02.19	Aku Aku	Vamos levar este roller de volta à Vila Wumpa.
 
 # ----------------------------------------------------------------------------
@@ -945,89 +935,83 @@ e62b44a63d554728	00:00.58	00:05.82	Arquiteto	(palavras sem sentido)
 # ----------------------------------------------------------------------------
 # No jogo: Assistente do Arquiteto  (28 sons)
 # ----------------------------------------------------------------------------
-c43e1d67516b6043	00:00.00	00:02.75	Assistente do Arquiteto	Aliás, sou o assistente do arquiteto e vou servir de tradutor,
-c43e1d67516b6043	00:02.75	00:08.15	Assistente do Arquiteto	já que ele não se importa o bastante com você para formar palavras de verdade.
-c43e1d67516b6040	00:00.00	00:04.79	Assistente do Arquiteto	O Honorável Arquiteto cumprimenta você e não tem tempo para falar com mutações
-c43e1d67516b6040	00:04.79	00:05.47	Assistente do Arquiteto	inferiores.
-c43e1d67516b6041	00:00.00	00:01.48	Assistente do Arquiteto	O arquiteto diz que, durante sua breve estadia,
-c43e1d67516b6041	00:01.48	00:02.87	Assistente do Arquiteto	aproveite coisas como o encanamento interno,
-c43e1d67516b6041	00:02.87	00:06.53	Assistente do Arquiteto	com que você provavelmente não está acostumado.
-c43e1d67516b6046	00:00.00	00:02.85	Assistente do Arquiteto	O arquiteto foi o responsável pelo projeto das nossas casas,
-c43e1d67516b6046	00:02.85	00:06.62	Assistente do Arquiteto	porque certamente o mundo nunca tinha visto gelo antes.
+c43e1d67516b6043	00:00.00	00:04.45	Assistente do Arquiteto	Aliás, sou o assistente do arquiteto e vou servir de tradutora,
+c43e1d67516b6043	00:04.45	00:08.15	Assistente do Arquiteto	já que ele não se importa o bastante com você para formar palavras de verdade.
+c43e1d67516b6040	00:00.00	00:05.46	Assistente do Arquiteto	O Honorável Arquiteto cumprimenta você e não tem tempo para falar com mutações... inferiores.
+c43e1d67516b6041	00:00.00	00:04.85	Assistente do Arquiteto	O arquiteto diz que, durante sua breve estadia, aproveite coisas como o encanamento interno,
+c43e1d67516b6041	00:04.85	00:06.53	Assistente do Arquiteto	que você provavelmente não está acostumado.
+c43e1d67516b6046	00:00.00	00:03.20	Assistente do Arquiteto	O arquiteto foi o responsável pelo projeto das nossas casas,
+c43e1d67516b6046	00:03.20	00:06.62	Assistente do Arquiteto	porque certamente o mundo nunca tinha visto gelo antes.
 ec00a113b1e137f0	00:00.00	00:03.45	Assistente do Arquiteto	O arquiteto diz que não está impressionado com uma galinha telecinética.
-ec00a113b1e137f0	00:03.45	00:05.85	Assistente do Arquiteto	Eu discordo. Aquela coisa é um gato.
-ec00a113b1e137f3	00:00.00	00:04.10	Assistente do Arquiteto	Os poderes mentais daquela coisa têm limite? Como exatamente você controla ela?
+ec00a113b1e137f0	00:03.45	00:05.85	Assistente do Arquiteto	Eu discordo. Aquela coisa é quente.
+ec00a113b1e137f3	00:00.00	00:02.28	Assistente do Arquiteto	Os poderes mentais daquela coisa têm limite?
+ec00a113b1e137f3	00:02.28	00:04.10	Assistente do Arquiteto	Como exatamente você controla ela?
 ec00a113b1e137f2	00:00.00	00:02.89	Assistente do Arquiteto	Havia outras criaturas estranhas nas prisões de gelo?
 ec00a113b1e137f5	00:00.02	00:05.65	Assistente do Arquiteto	Então, esse seu amiguinho está solteiro? Eu tenho uma queda por bicos. Rrrr.
 ce3e1000048c9591	00:00.00	00:03.05	Assistente do Arquiteto	O arquiteto quer saber se aquela coisa é adestrada.
 ce3e1000048c9592	00:00.00	00:03.91	Assistente do Arquiteto	O arquiteto quer saber por que você trouxe aquela criatura para nossa casa frágil.
 ce3e1000048c9593	00:00.00	00:03.20	Assistente do Arquiteto	O arquiteto queria que você se apressasse e seguisse logo com sua missão.
 ce3e1000048c9594	00:00.00	00:05.10	Assistente do Arquiteto	De novo, é melhor eu não traduzir essa, mas vou te contar: é indecente!
-7eb5f77bbcd888ce	00:00.00	00:03.55	Assistente do Arquiteto	O arquiteto está preocupado com os horrores que você trouxe ao mundo ajudando a
-7eb5f77bbcd888ce	00:03.55	00:04.06	Assistente do Arquiteto	Nina.
-7eb5f77bbcd888cd	00:00.00	00:01.79	Assistente do Arquiteto	O arquiteto não se impressionou com a Escola do Mal.
-7eb5f77bbcd888cd	00:01.79	00:05.20	Assistente do Arquiteto	Quarenta por cento dos alunos viram gente boa mais tarde.
-7eb5f77bbcd888cc	00:00.00	00:03.58	Assistente do Arquiteto	O arquiteto quer saber se ainda servem caçarola de atum com macarrão no refeitório
-7eb5f77bbcd888cc	00:03.58	00:04.41	Assistente do Arquiteto	da escola.
+7eb5f77bbcd888ce	00:00.00	00:04.05	Assistente do Arquiteto	O arquiteto está preocupado com os horrores que você trouxe ao mundo ajudando a Nina.
+7eb5f77bbcd888cd	00:00.00	00:02.29	Assistente do Arquiteto	O arquiteto não se impressionou com a Escola do Mal.
+7eb5f77bbcd888cd	00:02.29	00:05.20	Assistente do Arquiteto	Quarenta por cento dos alunos viram gente boa mais tarde.
+7eb5f77bbcd888cc	00:00.00	00:04.40	Assistente do Arquiteto	O arquiteto quer saber se ainda servem caçarola de atum com macarrão no refeitório da escola.
 7eb5f77bbcd888cb	00:00.00	00:05.26	Assistente do Arquiteto	A Escola do Mal ainda cheira a serragem e couro de morsa? Sempre me perguntei isso.
 e56a7b417e7c2a5f	00:00.00	00:04.00	Assistente do Arquiteto	O arquiteto está satisfeito por você ter trazido um espécime tão imponente.
 e56a7b417e7c2a5c	00:00.00	00:04.23	Assistente do Arquiteto	Bom, tenho que dizer, esse rato tem uns braços bem fortes.
-e56a7b417e7c2a5d	00:00.00	00:03.90	Assistente do Arquiteto	Desde que o chefe foi libertado, os incêndios misteriosos caíram uns 40%,
-e56a7b417e7c2a5d	00:03.90	00:04.49	Assistente do Arquiteto	pelo jeito.
-e56a7b417e7c2a5a	00:00.00	00:03.47	Assistente do Arquiteto	Não acredito que você controla uma coisa dessas! Muito corajoso da sua parte, Crash!
-e56a7b417e7c2a5a	00:03.47	00:06.12	Assistente do Arquiteto	Ah, e o arquiteto disse algo também.
+e56a7b417e7c2a5d	00:00.00	00:04.48	Assistente do Arquiteto	Desde que o chefe foi libertado, os incêndios misteriosos caíram uns 40%, pelo jeito.
+e56a7b417e7c2a5a	00:00.00	00:03.93	Assistente do Arquiteto	Não acredito que você controla uma coisa dessas! Muito corajoso da sua parte, Crash!
+e56a7b417e7c2a5a	00:03.93	00:06.12	Assistente do Arquiteto	Ah, e o arquiteto disse algo também.
 aceba198d298f9fc	00:00.00	00:04.07	Assistente do Arquiteto	O arquiteto diz que recebeu relatos preocupantes sobre as prisões de gelo.
 aceba198d298f9fc	00:04.07	00:06.91	Assistente do Arquiteto	Algo sobre um projeto inferior.
-aceba198d298f9ff	00:00.00	00:03.43	Assistente do Arquiteto	O arquiteto quer saber se você teve a chance de visitar as prisões para ver se tem
-aceba198d298f9ff	00:03.43	00:05.37	Assistente do Arquiteto	algo de estranho acontecendo.
+aceba198d298f9ff	00:00.00	00:05.37	Assistente do Arquiteto	O arquiteto quer saber se você teve a chance de visitar as prisões para ver se tem algo de estranho acontecendo.
 aceba198d298f9fe	00:00.00	00:03.68	Assistente do Arquiteto	Você deve ter muito tempo livre, já que vive voltando aqui.
-aceba198d298f9f9	00:00.00	00:05.18	Assistente do Arquiteto	O arquiteto diz que recentemente foi relatada a pior coisa possível nas prisões de
-aceba198d298f9f9	00:05.18	00:06.19	Assistente do Arquiteto	gelo aqui perto.
-aceba198d298f9f9	00:06.19	00:06.89	Assistente do Arquiteto	Calor!
+aceba198d298f9f9	00:00.00	00:06.19	Assistente do Arquiteto	O arquiteto diz que recentemente foi relatada a pior coisa possível nas prisões de gelo aqui perto.
+aceba198d298f9f9	00:06.19	00:06.89	Assistente do Arquiteto	CALOR!
 989c060bd8957b4d	00:00.00	00:05.38	Assistente do Arquiteto	Então, como vai essa coisa de coletar e pular?
 989c060bd8957b4e	00:00.00	00:04.01	Assistente do Arquiteto	Lembra dos cristais de poder? Sinto falta deles.
-989c060bd8957b4f	00:00.00	00:02.59	Assistente do Arquiteto	Você está com uma cara ótima, Crash. Deve fazer Pilates ou algo assim.
-989c060bd8957b4f	00:02.59	00:05.51	Assistente do Arquiteto	Ou talvez seja toda aquela fruta que você come.
-989c060bd8957b48	00:00.00	00:03.79	Assistente do Arquiteto	Sabe, não tenho certeza do que ele disse agora. Era algo sobre atum, acho.
+989c060bd8957b4f	00:00.00	00:03.86	Assistente do Arquiteto	Você está com uma cara ótima, Crash. Deve fazer Pilates ou algo assim.
+989c060bd8957b4f	00:03.86	00:05.51	Assistente do Arquiteto	Ou talvez seja toda aquela fruta que você come.
+989c060bd8957b48	00:00.00	00:03.79	Assistente do Arquiteto	Sabe, não tenho certeza do que ele disse agora. Era algo sobre atum, eu acho.
 
 # ----------------------------------------------------------------------------
 # No jogo: Sludges siameses  (15 sons)
 # ----------------------------------------------------------------------------
-d34d0df61087e0e1	00:00.00	00:02.51	Sludges siameses	Crash! Fabuloso! Você vem ajudar a gente, não?
-d34d0df61087e0e1	00:02.51	00:08.36	Sludges siameses	Você espanta os sludges maus que estão presos pelo módulo.
-d34d0df61087e0e2	00:00.00	00:02.55	Sludges siameses	Grande cara de pau N. Brio usou NV pra escravizar sludges.
-d34d0df61087e0e2	00:02.55	00:05.18	Sludges siameses	Botou sludges pra trabalhar construindo brinquedos da morte.
-d34d0df61087e0e2	00:05.18	00:10.36	Sludges siameses	Levou a melhor tralha da casa dos sludges.
-d34d0df61087e0e3	00:00.00	00:02.83	Sludges siameses	Cá entre nós, sludge está preocupado: logo N.
-d34d0df61087e0e3	00:02.83	00:06.73	Sludges siameses	Brio nota estrago que você faz e se vinga na vila dos Sludges.
-d34d0df61087e0e3	00:06.73	00:14.07	Sludges siameses	Seu irmão trabalha pro N. Brio agora. Ele também assusta. Ruim está aqui.
-d34d0df61087e0e4	00:00.00	00:01.11	Sludges siameses	Muito preocupado com casa!
-d34d0df61087e0e4	00:01.11	00:07.50	Sludges siameses	Não preocupado com esses palhacinhos, claro, mas muito preocupado consigo mesmo!
-e6c8100e8f92a1d8	00:00.00	00:04.57	Sludges siameses	Você conseguiu, Crashzinho! N. Brio fugindo com medo! Seu irmão livre!
-e6c8100e8f92a1d8	00:04.57	00:08.75	Sludges siameses	Pilha de tralha! Ainda nojenta! Do jeito bom!
-e6c8100e8f92a1db	00:00.00	00:03.60	Sludges siameses	Mas nem tudo fabuloso: sludge enorme e mau trabalha pro Cortex,
-e6c8100e8f92a1db	00:03.60	00:05.83	Sludges siameses	veio aqui e levou o boca-grande embora.
-e6c8100e8f92a1db	00:05.83	00:09.94	Sludges siameses	Você salva ele pra gente, parece coisa que você faz.
-e6c8100e8f92a1da	00:00.00	00:04.48	Sludges siameses	Conhece Lugar Sombrio aqui perto? Muito assustador ultimamente. Assustador ruim.
-e6c8100e8f92a1da	00:04.48	00:09.43	Sludges siameses	Assustador medonho. Com música tipo tum, tum, tum, sabe?
-e6c8100e8f92a1dd	00:00.00	00:03.41	Sludges siameses	Você vai pra Terra Sombria, talvez. A gente ouve gritos e choro.
-e6c8100e8f92a1dd	00:03.41	00:06.74	Sludges siameses	Cheira um pouquinho a queijo também.
-e6c8100e8f92a1dc	00:00.00	00:02.76	Sludges siameses	Por que você ainda está aqui? Você gosta de sludges, talvez?
-e6c8100e8f92a1dc	00:02.76	00:06.94	Sludges siameses	Sludges não são dessas, sabe? Circulando, peludo.
-e6c8100e8f92a1df	00:00.00	00:03.69	Sludges siameses	Sludges ouvem muitos barulhos assustadores das montanhas negras aqui perto.
-e6c8100e8f92a1df	00:03.69	00:09.54	Sludges siameses	Sludges não vão lá por, bom, motivos que esperamos que sejam óbvios.
-e6c8100e8f92a1de	00:00.00	00:05.01	Sludges siameses	Talvez herói como Crashzinho vai pro lugar da montanha sombria.
-e6c8100e8f92a1de	00:05.01	00:07.95	Sludges siameses	Se você vence vilões, lugar fica bem.
+d34d0df61087e0e1	00:00.00	00:04.12	Sludges siameses	Crash! Fabuloso! Você vem ajudar a gente, não?
+d34d0df61087e0e1	00:04.12	00:08.36	Sludges siameses	Você espanta os sludges maus que estão presos pelo mojo.
+d34d0df61087e0e2	00:00.00	00:04.18	Sludges siameses	Grande cara de pau N. Brio usou NV pra escravizar sludges.
+d34d0df61087e0e2	00:04.18	00:06.94	Sludges siameses	Botou sludges pra trabalhar construindo brinquedos da morte.
+d34d0df61087e0e2	00:06.94	00:10.36	Sludges siameses	Levou a melhor tralha da casa dos sludges.
+d34d0df61087e0e3	00:00.00	00:08.44	Sludges siameses	Cá entre nós, sludges estão preocupados que o N. Brio note o estrago que você está fazendo e desconte na vila Sludge!
+d34d0df61087e0e3	00:08.44	00:14.06	Sludges siameses	O seu irmão trabalha pro N. Brio agora. Ele é assustador também. O mal está aqui!
+d34d0df61087e0e4	00:00.00	00:02.33	Sludges siameses	Muito preocupado com a casa!
+d34d0df61087e0e4	00:02.33	00:07.50	Sludges siameses	Não preocupado com esses palhacinhos, claro, mas muito preocupado consigo mesmo!
+e6c8100e8f92a1d8	00:00.00	00:05.11	Sludges siameses	Você conseguiu, Crashzinho! N. Brio fugindo com medo! Seu irmão livre!
+e6c8100e8f92a1d8	00:05.11	00:08.75	Sludges siameses	Pilha de tralha! Ainda nojenta! De um jeito bom!
+e6c8100e8f92a1db	00:00.00	00:04.61	Sludges siameses	Mas nem tudo fabuloso: sludge enorme e mau trabalha pro Cortex,
+e6c8100e8f92a1db	00:04.61	00:06.59	Sludges siameses	veio aqui e levou o boca-grande embora.
+e6c8100e8f92a1db	00:06.59	00:09.94	Sludges siameses	Você salva ele pra gente, parece o tipo de coisa que você faz.
+e6c8100e8f92a1da	00:00.00	00:04.97	Sludges siameses	Conhece Lugar Sombrio aqui perto? Muito assustador ultimamente. Assustador ruim.
+e6c8100e8f92a1da	00:04.97	00:09.43	Sludges siameses	Assustador medonho. Com música tipo tum, tum, tum, sabe?
+e6c8100e8f92a1dd	00:00.00	00:04.42	Sludges siameses	Você vai pra Terra Sombria, talvez. A gente ouve gritos e choro.
+e6c8100e8f92a1dd	00:04.42	00:06.74	Sludges siameses	Cheira um pouquinho a queijo também.
+e6c8100e8f92a1dc	00:00.00	00:03.13	Sludges siameses	Por que você ainda está aqui? Você gosta de sludges, talvez?
+e6c8100e8f92a1dc	00:03.13	00:06.94	Sludges siameses	Sludges não são dessas, sabe? Circulando, peludo.
+e6c8100e8f92a1df	00:00.00	00:04.84	Sludges siameses	Sludges ouvem muitos barulhos assustadores das montanhas negras aqui perto.
+e6c8100e8f92a1df	00:04.84	00:09.54	Sludges siameses	Sludges não vão lá por, bom, motivos que esperamos que sejam óbvios.
+e6c8100e8f92a1de	00:00.00	00:04.09	Sludges siameses	Talvez herói como Crashzinho vai pro lugar da montanha sombria.
+e6c8100e8f92a1de	00:04.09	00:07.95	Sludges siameses	Se você vence vilões, lugar fica bem.
 e6c8100e8f92a1de	00:07.95	00:13.29	Sludges siameses	Se você morre, bom, a gente espera próximo herói. Tudo bem.
-2a012c21cebc478f	00:00.24	00:01.46	Sludges siameses	Crash, você voltou!
-2a012c21cebc478f	00:01.46	00:06.59	Sludges siameses	Boa hora: caras-mão de metal do Cortex caindo do céu, causando muitos problemas,
-2a012c21cebc478f	00:06.59	00:11.02	Sludges siameses	de pequenos a grandes, sabe.
-2a012c21cebc478c	00:00.00	00:03.07	Sludges siameses	Você ajuda sludges de novo batendo nos caras do Cortex, não?
-2a012c21cebc478c	00:03.07	00:06.45	Sludges siameses	E também, talvez, bate nos mutantes fedidos novos que chegam! Uuh!
-2a012c21cebc478c	00:06.45	00:11.48	Sludges siameses	Fedem mais que sludges! E o papai está dizendo alguma coisa!
-2a012c21cebc478d	00:00.00	00:05.89	Sludges siameses	É, é, bom ver você de novo. Não sei por que estou vendo você, mas é isso aí.
-2a012c21cebc478a	00:00.00	00:03.39	Sludges siameses	Aquela pessoa máscara esperta não pode dizer o que você tem que fazer?
-2a012c21cebc478a	00:03.39	00:06.38	Sludges siameses	Sinceramente, não sei por que você ainda está aqui. É simples.
+2a012c21cebc478f	00:00.00	00:01.91	Sludges siameses	Crash, você voltou!
+2a012c21cebc478f	00:01.91	00:08.25	Sludges siameses	Boa hora: caras-mão de metal do Cortex caindo do céu, causando muitos problemas,
+2a012c21cebc478f	00:08.25	00:11.02	Sludges siameses	de pequenos a grandes, sabe.
+2a012c21cebc478c	00:00.00	00:03.57	Sludges siameses	Você ajuda sludges de novo batendo nos caras do Cortex, não?
+2a012c21cebc478c	00:03.57	00:07.74	Sludges siameses	E também, talvez, bate nos mutantes fedidos novos que chegam! Uuh!
+2a012c21cebc478c	00:07.74	00:11.48	Sludges siameses	Fedem mais que sludges! E isso significa algo.
+2a012c21cebc478d	00:00.00	00:02.41	Sludges siameses	É, é, bom ver você de novo.
+2a012c21cebc478d	00:02.41	00:05.89	Sludges siameses	Não sei por que estou vendo você, mas é isso aí.
+2a012c21cebc478a	00:00.00	00:03.03	Sludges siameses	Aquela pessoa máscara esperta não pode dizer o que você tem que fazer?
+2a012c21cebc478a	00:03.03	00:06.38	Sludges siameses	Sinceramente, não sei por que você ainda está aqui. É simples.
 2a012c21cebc478a	00:06.38	00:11.76	Sludges siameses	Vê pessoa má, soca pessoa má. Qual a dificuldade? Sinceramente.
 
 # ----------------------------------------------------------------------------
@@ -1040,22 +1024,22 @@ e6c8100e8f92a1de	00:07.95	00:13.29	Sludges siameses	Se você morre, bom, a gente
 # ----------------------------------------------------------------------------
 # No jogo: Bratgirl  (2 sons)
 # ----------------------------------------------------------------------------
-8bb2251446f9abfd	00:00.37	00:03.42	Bratgirl	Seus nerds, não queiram me deixar brava! Somos alunas procuradas.
-8bb2251446f9abfd	00:03.42	00:06.11	Bratgirl	Fomos expulsas de 12 escolas!
-8bb2251446f9abfb	00:02.38	00:06.08	Bratgirl	Andem, mutantes! Mais rápido, aberrações! Xô!
+8bb2251446f9abfd	00:00.37	00:03.74	Bratgirl	Seus nerds, não queiram me deixar brava! Somos alunas procuradas.
+8bb2251446f9abfd	00:03.74	00:06.11	Bratgirl	Fomos expulsas de 12 escolas!
+8bb2251446f9abfb	00:00.00	00:04.35	Bratgirl	Fabuloso! Um tesouro de mutantes.
+8bb2251446f9abfb	00:04.35	00:06.08	Bratgirl	Mais rápido, doidos! Xô!
 
 # ----------------------------------------------------------------------------
 # No jogo: Coco  (7 sons)
 # ----------------------------------------------------------------------------
-a68ed7cf91f2951d	00:00.00	00:03.70	Coco	Valeu, Crash! Vou só encaixar isto onde o sol também nasce. Ah, não!
-a68ed7cf91f2951d	00:03.70	00:06.42	Coco	Esse McGuffin do capacitron precisa ser calibrado!
-a68ed7cf91f2951d	00:06.42	00:11.42	Coco	Vá buscar mais umas peças, garoto!
-90099380a09cc6c4	00:00.00	00:03.02	Coco	Desculpa, Crash, preciso de todas as peças antes de a gente ver TV.
+a68ed7cf91f2951d	00:00.00	00:04.26	Coco	Valeu, Crash! Vou só encaixar isto onde o sol também nasce.
+a68ed7cf91f2951d	00:04.26	00:09.45	Coco	 Ah, não! Esse McGuffin do capacitron precisa ser calibrado!
+a68ed7cf91f2951d	00:09.45	00:11.42	Coco	Vá buscar mais umas peças, garoto!
+90099380a09cc6c4	00:00.00	00:03.02	Coco	Desculpa, Crash, preciso de todas as peças antes da gente ver TV.
 90099380a09cc6c7	00:00.00	00:03.52	Coco	Crash? O que você está fazendo aqui de novo? Anda logo! Xô!
-90099380a09cc6c6	00:00.53	00:02.27	Coco	Anda logo, Crash! Estamos perdendo a luta livre!
-90099380a09cc6c6	00:02.27	00:05.94	Coco	Quero ver o lutador malvado virar campeão por um tempinho!
-f37d43e69b377956	00:00.00	00:05.06	Coco	Finalmente, Crash, me dá essas coisas e vamos ligar essa belezinha e ver uma
-f37d43e69b377956	00:05.06	00:05.76	Coco	corrida!
+90099380a09cc6c6	00:00.00	00:03.16	Coco	Anda logo, Crash! Estamos perdendo a luta livre!
+90099380a09cc6c6	00:03.16	00:05.94	Coco	Quero ver o lutador malvado virar campeão por um tempinho!
+f37d43e69b377956	00:00.00	00:05.75	Coco	Finalmente, Crash, me dá essas coisas e vamos ligar essa belezinha e ver um Nascar!
 1a0526ddd25d9819	00:00.05	00:03.85	Coco	Uau! Aquela coisa parecia incrível! A gente tem que arrumar uns pra nós!
 7a516a655fa00996	00:00.00	00:04.86	Coco	Ah, não! A indústria tentou nos avisar sobre a reciclagem. Por que não ouvimos?
 
@@ -1063,88 +1047,87 @@ f37d43e69b377956	00:05.06	00:05.76	Coco	corrida!
 # No jogo: Crunch  (3 sons)
 # ----------------------------------------------------------------------------
 ce2d3b0e96d615d5	00:00.00	00:00.94	Crunch	É, virando à esquerda!
-e90b158d8c946162	00:00.00	00:02.49	Crunch	É, jogos, mensagens, dados, luzes!
+e90b158d8c946162	00:00.00	00:02.49	Crunch	É, jogos, mensagens, luzes dançantes!
 aa189f0d3cedb404	00:00.00	00:03.98	Crunch	Eu mexi neste treco aqui, Crash, e aí, sei lá, esqueci o que tinha lá atrás.
 
 # ----------------------------------------------------------------------------
 # No jogo: Filhote RhinoRoller  (23 sons)
 # ----------------------------------------------------------------------------
-041fc882039aac5d	00:02.22	00:05.24	Filhote RhinoRoller	Eu sou o Comandante Alfa Um! Defendemos a vila dos espinhudos.
-041fc882039aac5d	00:05.24	00:10.87	Filhote RhinoRoller	Normalmente nossos pais fazem isso, mas eles estão longe, ficando malucos.
-041fc882039aac5e	00:00.00	00:01.03	Filhote RhinoRoller	Temos que continuar fazendo barulho.
-041fc882039aac5e	00:01.03	00:05.28	Filhote RhinoRoller	Os Spikes não sabem que somos tão pequenos, então estamos tentando espantá-los.
-041fc882039aac5f	00:00.00	00:05.64	Filhote RhinoRoller	Sabe, acho que a velha gosta de você. Gosta, se é que me entende? Acho que entende.
-041fc882039aac5f	00:05.64	00:08.48	Filhote RhinoRoller	Uau! Hi-hi-hi-hi-hi-
+041fc882039aac5d	00:00.00	00:02.22	Filhote RhinoRoller	Ei! Quem está ai? 
+041fc882039aac5d	00:02.22	00:05.44	Filhote RhinoRoller	Eu sou o Comandante Alfa Um!
+041fc882039aac5d	00:05.44	00:10.87	Filhote RhinoRoller	Defendemos a vila dos espinhudos. Normalmente nossos pais fazem isso, mas eles estão longe, ficando malucos.
+041fc882039aac5e	00:00.00	00:01.76	Filhote RhinoRoller	Temos que continuar fazendo barulho.
+041fc882039aac5e	00:01.76	00:05.28	Filhote RhinoRoller	Os Spikes não sabem que somos tão pequenos, então estamos tentando espantá-los.
+041fc882039aac5f	00:00.00	00:06.24	Filhote RhinoRoller	Sabe, acho que a velha gosta de você. Gosta, se é que me entende? Acho que entende.
+041fc882039aac5f	00:06.24	00:08.48	Filhote RhinoRoller	Uau! Hi-hi-hi-hi-hi-
 041fc882039aac58	00:00.00	00:02.80	Filhote RhinoRoller	Ainda bem que você fica parado aí o dia todo em vez de ajudar.
 041fc882039aac58	00:02.80	00:05.29	Filhote RhinoRoller	Credo, vai logo socar os vilões!
-c9d5b57bd03f366e	00:01.30	00:05.09	Filhote RhinoRoller	Sumiram! Não que eu não fosse dar conta deles uma hora dessas.
-c9d5b57bd03f366d	00:00.00	00:02.37	Filhote RhinoRoller	Se estiver montado num roller, experimente em lugares frios.
-c9d5b57bd03f366d	00:02.37	00:05.25	Filhote RhinoRoller	É tudo escorregadio e deslizante e irado!
+c9d5b57bd03f366e	00:00.00	00:05.09	Filhote RhinoRoller	Yay, os Spikes se foram! Não que eu não fosse dar conta deles uma hora...
+c9d5b57bd03f366d	00:00.00	00:02.79	Filhote RhinoRoller	Se estiver montado num roller, experimente em lugares frios.
+c9d5b57bd03f366d	00:02.79	00:05.25	Filhote RhinoRoller	É tudo escorregadio e deslizante e irado!
 c9d5b57bd03f366c	00:00.00	00:03.04	Filhote RhinoRoller	Os outros filhotes estão muito impressionados com você, Crash.
 c9d5b57bd03f366c	00:03.04	00:04.32	Filhote RhinoRoller	Sinceramente, emocionados!
-c9d5b57bd03f366b	00:01.26	00:05.15	Filhote RhinoRoller	Você é provavelmente meu quinto favorito, e isso quer dizer muito.
-2189c123dc05ee53	00:00.00	00:01.10	Filhote RhinoRoller	Ah, você não vai acreditar!
-2189c123dc05ee53	00:01.10	00:05.09	Filhote RhinoRoller	Aqueles Spikes nojentos estão trabalhando com os Snipes agora!
+c9d5b57bd03f366b	00:00.00	00:05.15	Filhote RhinoRoller	De todos os heróis de games por aí você é provavelmente meu quinto favorito, e isso quer dizer muito.
+2189c123dc05ee53	00:00.00	00:02.12	Filhote RhinoRoller	Ah, você não vai acreditar!
+2189c123dc05ee53	00:02.12	00:05.09	Filhote RhinoRoller	Aqueles Spikes nojentos estão trabalhando com os Snipes agora!
 2189c123dc05ee50	00:00.00	00:04.38	Filhote RhinoRoller	Crash! Estou ouvindo uma música maluca aqui perto! Ei, deve ser a Gangue Snipe!
 2189c123dc05ee51	00:00.00	00:02.54	Filhote RhinoRoller	Ouvi dizer que eles ficam em algum lugar no Ferro-Velho.
 2189c123dc05ee51	00:02.54	00:06.00	Filhote RhinoRoller	Eu mesmo iria, mas eu sou, sabe, pequeno.
 2189c123dc05ee56	00:00.00	00:04.85	Filhote RhinoRoller	Ah, anda logo, Crash! Sério, o que você está fazendo aqui?
-2189c123dc05ee57	00:00.24	00:03.64	Filhote RhinoRoller	Vamos, vai! Ah, esses heróis de hoje!
-a109e0b1757bec5c	00:00.00	00:02.70	Filhote RhinoRoller	Crash! Ainda bem que você está aqui! Um dos nossos filhotes mais bobos sumiu.
-a109e0b1757bec5c	00:02.70	00:06.78	Filhote RhinoRoller	Achamos que foi pego por uma gangue Snipe. Você tem que resgatá-lo!
-a109e0b1757bec5f	00:00.00	00:00.86	Filhote RhinoRoller	Rápido, não temos muito tempo.
-a109e0b1757bec5f	00:00.86	00:04.66	Filhote RhinoRoller	A maioria dos Snipes está por aí fazendo maldade, então você tem que correr!
-a109e0b1757bec5e	00:00.00	00:03.14	Filhote RhinoRoller	Ainda aqui, é? Sinceramente, não sei como encarar isso.
-a109e0b1757bec5e	00:03.14	00:07.33	Filhote RhinoRoller	Às vezes acho que você não se importa mais.
-a109e0b1757bec59	00:00.98	00:07.72	Filhote RhinoRoller	Você vai simplesmente deixar aquele filhotinho morrer? Que decepção!
-edbb03170c8cba69	00:00.00	00:03.77	Filhote RhinoRoller	Conseguiu! Eu duvidei de você por um segundo?
-edbb03170c8cba69	00:03.77	00:07.20	Filhote RhinoRoller	Umas horas, talvez, mas nunca um segundo!
-edbb03170c8cba6a	00:00.00	00:02.12	Filhote RhinoRoller	Não acredito que você derrubou tantos vilões.
-edbb03170c8cba6a	00:02.12	00:06.78	Filhote RhinoRoller	Deve ter sido pou-pou-pou-tum-tum-tum-tum-plaft-pá-pum.
+2189c123dc05ee57	00:00.00	00:03.64	Filhote RhinoRoller	Vamos, vai! Ah, esses heróis de hoje em dia!
+a109e0b1757bec5c	00:00.00	00:03.47	Filhote RhinoRoller	Crash! Ainda bem que você está aqui! Um dos nossos filhotes mais bobos sumiu.
+a109e0b1757bec5c	00:03.47	00:06.78	Filhote RhinoRoller	Achamos que foi pego por uma gangue Snipe. Você tem que resgatá-lo!
+a109e0b1757bec5f	00:00.00	00:01.70	Filhote RhinoRoller	Rápido, não temos muito tempo.
+a109e0b1757bec5f	00:01.70	00:04.66	Filhote RhinoRoller	A maioria dos Snipes está por aí fazendo maldades, então você tem que correr!
+a109e0b1757bec5e	00:00.00	00:04.60	Filhote RhinoRoller	Ainda aqui, é? Sinceramente, não sei como encarar isso.
+a109e0b1757bec5e	00:04.60	00:07.33	Filhote RhinoRoller	Às vezes acho que você nem se importa mais.
+a109e0b1757bec59	00:00.00	00:03.99	Filhote RhinoRoller	Então é isso? Você vai simplesmente deixar aquele filhotinho morrer?
+a109e0b1757bec59	00:03.99	00:07.72	Filhote RhinoRoller	EU... TÔ... TÃO... DE-SA-PON-TA-DA...
+edbb03170c8cba69	00:00.00	00:02.94	Filhote RhinoRoller	Você conseguiu, Crash! Você salvou ela!
+edbb03170c8cba69	00:02.94	00:07.20	Filhote RhinoRoller	Eu nunca duvidei de você nem por um segundo! Algumas horas, talvez, mas nenhum segundo!
+edbb03170c8cba6a	00:00.00	00:02.73	Filhote RhinoRoller	Não acredito que você derrotou tantos vilões.
+edbb03170c8cba6a	00:02.73	00:06.78	Filhote RhinoRoller	Deve ter sido pou-pou-pou-tum-tum-tum-tum-plaft-pá-pum.
 edbb03170c8cba6b	00:00.00	00:04.69	Filhote RhinoRoller	Sério? Não tenho mais nada pra dizer. Só não consigo pensar em nada agora.
-97e52ec116dd2c5a	00:00.11	00:02.34	Filhote RhinoRoller	Bom ver você, Crash. A gente devia brincar qualquer dia.
-97e52ec116dd2c5a	00:02.34	00:05.86	Filhote RhinoRoller	Sou muito bom em fazer a mesma coisa sem parar.
+97e52ec116dd2c5a	00:00.00	00:02.79	Filhote RhinoRoller	Bom ver você, Crash. A gente devia brincar qualquer dia.
+97e52ec116dd2c5a	00:02.79	00:05.86	Filhote RhinoRoller	Sou muito bom em fazer a mesma coisa sem parar.
 97e52ec116dd2c59	00:00.00	00:03.53	Filhote RhinoRoller	O que será que vai acontecer agora? Acho que o Cortex não vai desistir assim fácil.
-97e52ec116dd2c58	00:00.30	00:03.99	Filhote RhinoRoller	Valeu por passar aqui, Crash, e não esqueça de dar um abração na senhora.
-97e52ec116dd2c58	00:03.99	00:06.28	Filhote RhinoRoller	Ela me pediu pra dizer isso.
+97e52ec116dd2c58	00:00.00	00:04.92	Filhote RhinoRoller	Valeu por passar aqui, Crash, e não esqueça de dar um abração na senhorita.
+97e52ec116dd2c58	00:04.92	00:06.28	Filhote RhinoRoller	Ela me pediu pra dizer isso.
 
 # ----------------------------------------------------------------------------
 # No jogo: Anciã RhinoRoller  (22 sons)
 # ----------------------------------------------------------------------------
-d420d8c719435880	00:00.00	00:03.90	Anciã RhinoRoller	Oi, bonitão. Você parece o tipo de bandicoot que gosta de lixa.
-d420d8c719435880	00:03.90	00:08.79	Anciã RhinoRoller	Ando meio sozinha desde que todos os rollers gostosões fizeram as malas e foram
-d420d8c719435880	00:08.79	00:12.70	Anciã RhinoRoller	embora.
-d420d8c719435883	00:00.00	00:05.01	Anciã RhinoRoller	Por algum motivo, aqueles rollers não se interessaram por uma dama atraente como eu.
-d420d8c719435883	00:05.01	00:07.80	Anciã RhinoRoller	Foram aqueles malditos NVs.
-d420d8c719435882	00:00.00	00:02.60	Anciã RhinoRoller	É! As coisas estão bem preocupantes por aqui.
-d420d8c719435882	00:02.60	00:06.67	Anciã RhinoRoller	Bom, com todos esses espinhudos rondando.
+d420d8c719435880	00:00.00	00:06.34	Anciã RhinoRoller	Oi, bonitão. Você parece o tipo de bandicoot que gosta de lixa.
+d420d8c719435880	00:06.34	00:12.69	Anciã RhinoRoller	Ando meio sozinha desde que todos os rollers gostosões fizeram as malas e foram embora.
+d420d8c719435883	00:00.00	00:05.38	Anciã RhinoRoller	Por algum motivo, aqueles rollers não se interessaram por uma dama atraente como eu.
+d420d8c719435883	00:05.38	00:07.80	Anciã RhinoRoller	Foram aqueles malditos NVs.
+d420d8c719435882	00:00.00	00:03.88	Anciã RhinoRoller	É! As coisas estão bem preocupantes por aqui.
+d420d8c719435882	00:03.88	00:06.67	Anciã RhinoRoller	Bom, com todos esses espinhudos rondando.
 d420d8c719435885	00:00.00	00:06.22	Anciã RhinoRoller	Estou ouvindo os Spikes agora, rondando lá fora, arranhando e raspando,
 d420d8c719435885	00:06.22	00:09.53	Anciã RhinoRoller	e não do jeito bom.
-a029cf2bedee8293	00:00.00	00:02.23	Anciã RhinoRoller	Você deu conta de todos aqueles espinhudos!
-a029cf2bedee8293	00:02.23	00:08.50	Anciã RhinoRoller	Agora é só eu sair deste buraco e vou agradecer como se deve!
+a029cf2bedee8293	00:00.00	00:02.51	Anciã RhinoRoller	Você deu conta de todos aqueles espinhudos!
+a029cf2bedee8293	00:02.51	00:08.50	Anciã RhinoRoller	Agora é só eu sair deste buraco e vou agradecer como se deve!
 a029cf2bedee8290	00:00.02	00:04.49	Anciã RhinoRoller	Que alívio não ter que me preocupar com os Spikes o tempo todo.
 a029cf2bedee8290	00:04.49	00:10.76	Anciã RhinoRoller	Agora posso me concentrar direito em você. Rrrrr-
 a029cf2bedee8291	00:00.00	00:04.20	Anciã RhinoRoller	Hum, você está com uma cara ótima agora, herói!
 a029cf2bedee8296	00:00.00	00:06.08	Anciã RhinoRoller	Bem que eu queria poder diminuir as luzes aqui. Criar um clima. Rrrr-
 19084cd0e205ab8e	00:00.00	00:05.32	Anciã RhinoRoller	Ah, raios! Esses Spikes bobos estão trabalhando com aqueles penosos agora!
-19084cd0e205ab8d	00:00.00	00:05.92	Anciã RhinoRoller	Veja se consegue tirar esses rapazes de lá. Acho que estão perto do Ferro-Velho.
-19084cd0e205ab8d	00:05.92	00:08.74	Anciã RhinoRoller	Lugar imundo.
-19084cd0e205ab8c	00:00.00	00:07.40	Anciã RhinoRoller	Ah, acho que você se encantou comigo. Que bom receber atenção. Sei lá.
+19084cd0e205ab8d	00:00.00	00:04.80	Anciã RhinoRoller	Veja se consegue tirar esses rapazes de lá. Acho que estão perto do Ferro-Velho.
+19084cd0e205ab8d	00:04.80	00:06.81	Anciã RhinoRoller	Lugar imundo.
+19084cd0e205ab8c	00:00.00	00:05.89	Anciã RhinoRoller	Ah, acho que você se encantou comigo. Que bom receber atenção.
 19084cd0e205ab8b	00:00.00	00:04.66	Anciã RhinoRoller	Tá, cedo ou tarde você vai notar que eu não consigo me mexer. Vai lá, garoto!
 52e2f468ca46fd61	00:00.00	00:01.61	Anciã RhinoRoller	Ah, graças a Deus você está aqui, gracinha.
-52e2f468ca46fd61	00:01.61	00:04.49	Anciã RhinoRoller	Um dos nossos filhotes mais bobos sumiu: a coisinha boba fugiu e foi pega por
-52e2f468ca46fd61	00:04.49	00:07.44	Anciã RhinoRoller	aquelas aberrações penosas.
-52e2f468ca46fd62	00:00.00	00:02.69	Anciã RhinoRoller	Pare de ficar parado aqui! Você tem aqueles penosos pra surrar!
-52e2f468ca46fd62	00:02.69	00:06.76	Anciã RhinoRoller	Se derrubar o líder deles, aquele filhote consegue fugir!
+52e2f468ca46fd61	00:01.61	00:07.43	Anciã RhinoRoller	Um dos nossos filhotes mais bobos sumiu: a coisinha boba fugiu e foi pega por aquelas aberrações cheias de penas!
+52e2f468ca46fd62	00:00.00	00:03.79	Anciã RhinoRoller	Pare de ficar parado aqui! Você tem aqueles penosos pra surrar!
+52e2f468ca46fd62	00:03.79	00:06.76	Anciã RhinoRoller	Se derrubar o líder deles, aquele filhote consegue fugir!
 52e2f468ca46fd63	00:00.00	00:05.56	Anciã RhinoRoller	Anda logo, gracinha, pode ser? Se não se apressar, nunca vai achar eles a tempo.
-d02b07b6642c929c	00:00.00	00:01.04	Anciã RhinoRoller	Você conseguiu, garotão!
-d02b07b6642c929c	00:01.04	00:03.94	Anciã RhinoRoller	Eu sabia que conseguiria, com essas pernas fortes e coxas fofinhas.
-d02b07b6642c929c	00:03.94	00:08.45	Anciã RhinoRoller	Vou estar no meu beliche.
-d02b07b6642c929f	00:00.00	00:01.79	Anciã RhinoRoller	Sinceramente, estou encantada com você, Crash!
-d02b07b6642c929f	00:01.79	00:04.39	Anciã RhinoRoller	Nenhum outro bandicoot mutante, exceto talvez sua irmã ou o Crunch,
-d02b07b6642c929f	00:04.39	00:08.04	Anciã RhinoRoller	faria o que você faz.
-fb005b46ff4a77c0	00:00.00	00:02.45	Anciã RhinoRoller	Não conseguiu ficar longe, né, Crash? Ah, eu sabia.
-fb005b46ff4a77c0	00:02.45	00:07.81	Anciã RhinoRoller	Quer dizer, afinal eu sou um baita pedaço de mau caminho. Rá-rá!
+d02b07b6642c929c	00:00.00	00:02.00	Anciã RhinoRoller	Você conseguiu, garotão!
+d02b07b6642c929c	00:02.00	00:07.33	Anciã RhinoRoller	Eu sabia que conseguiria, com essas pernas fortes e coxas fofinhas.
+d02b07b6642c929c	00:07.33	00:08.45	Anciã RhinoRoller	Vou estar no meu beliche.
+d02b07b6642c929f	00:00.00	00:02.24	Anciã RhinoRoller	Sinceramente, estou encantada com você, Crash!
+d02b07b6642c929f	00:02.24	00:08.03	Anciã RhinoRoller	Nenhum outro bandicoot mutante, exceto talvez sua irmã ou o Crunch faria o que você faz.
+fb005b46ff4a77c0	00:00.00	00:03.68	Anciã RhinoRoller	Não conseguiu ficar longe, né, Crash? Ah, eu sabia.
+fb005b46ff4a77c0	00:03.68	00:07.81	Anciã RhinoRoller	Quer dizer, afinal eu sou um baita pedaço de mau caminho. Rá-rá!
 fb005b46ff4a77c3	00:00.00	00:04.82	Anciã RhinoRoller	Coloquei um quadril novo, bem flexível.
 fb005b46ff4a77c2	00:00.00	00:02.49	Anciã RhinoRoller	É, parece que estou aqui desde sempre.
 fb005b46ff4a77c5	00:00.00	00:05.11	Anciã RhinoRoller	Como está o tempo lá fora, afinal? Quente? Eu gosto de quente.
@@ -1153,219 +1136,314 @@ fb005b46ff4a77c4	00:00.00	00:03.94	Anciã RhinoRoller	Não fique apegado a mim, 
 # ----------------------------------------------------------------------------
 # No jogo: Melvin  (28 sons)
 # ----------------------------------------------------------------------------
-d164004b5b2438a6	00:00.00	00:02.48	Melvin	Olá, Senhor Pessoa Crash, e bem-vindo ao nosso lindo lar.
-d164004b5b2438a6	00:02.48	00:08.88	Melvin	Fique à vontade para falar com o Boca-Grande ali. Ou me bata, se quiser se divertir.
+d164004b5b2438a6	00:00.00	00:03.83	Melvin	Olá, Senhor Pessoa Crash, e bem-vindo ao nosso lindo lar.
+d164004b5b2438a6	00:03.83	00:08.88	Melvin	Fique à vontade para falar com o linguarudo ali. Ou me bata, se quiser se divertir.
 d164004b5b2438a5	00:00.00	00:04.95	Melvin	Aquele ratinho se acha o máximo por causa do pai? Pois eu também posso.
 d164004b5b2438a4	00:00.00	00:02.34	Melvin	Tenho certeza de que mereço mais surras!
-d164004b5b2438a3	00:00.00	00:01.69	Melvin	Se precisar de uma pausa nas suas aventuras, Crash,
-d164004b5b2438a3	00:01.69	00:05.98	Melvin	tire um momento para apreciar a coleção de portas trancadas da nossa vila.
+d164004b5b2438a3	00:00.00	00:02.14	Melvin	Se precisar de uma pausa nas suas aventuras, Crash,
+d164004b5b2438a3	00:02.14	00:05.98	Melvin	tire um momento para apreciar a coleção de portas trancadas da nossa vila.
 5c4cf234e00328a5	00:00.00	00:03.23	Melvin	Puxa, isso é uma coisa grande de me machucar!
 5c4cf234e00328a6	00:00.00	00:03.07	Melvin	Me explique exatamente no que você está segurando.
-5c4cf234e00328a7	00:00.21	00:03.56	Melvin	Ele veio pra cima de mim. Agora estou perturbado.
+5c4cf234e00328a7	00:00.00	00:03.56	Melvin	Ele veio pra cima de mim. Agora estou perturbado.
 5c4cf234e00328a0	00:00.00	00:02.77	Melvin	Acho que você tirou isso do forno cedo demais, Crash.
-455ac06d3482b0db	00:00.05	00:03.22	Melvin	Se não for muito incômodo, Crash, pode ir ao deserto aqui perto?
-455ac06d3482b0db	00:03.22	00:09.02	Melvin	Tem um monte de bichos assustadores pra você enfrentar. E eles giram também!
-6392cca28e48460f	00:00.00	00:06.32	Melvin	Que mutante impressionante, Crash. Queria ter um. Eu não posso ter coisas boas.
-6392cca28e48460c	00:02.24	00:04.35	Melvin	e eu nem estou vestido pra isso!
+455ac06d3482b0db	00:00.05	00:04.40	Melvin	Se não for muito incômodo, Crash, pode ir ao deserto aqui perto?
+455ac06d3482b0db	00:04.40	00:09.02	Melvin	Tem um monte de bichos assustadores pra você enfrentar. E eles giram também!
+6392cca28e48460f	00:00.00	00:06.32	Melvin	Que mutante impressionante, Crash. Queria ter um. Eu não posso ter coisas legais.
+6392cca28e48460c	00:00.00	00:02.36	Melvin	Isso vai rolar pra cima de mim e me esmagar!
+6392cca28e48460c	00:02.36	00:04.35	Melvin	E eu nem estou vestido pra isso!
 6392cca28e48460d	00:00.00	00:03.95	Melvin	Ah, finalmente, algo grande o bastante pra acabar com o meu sofrimento!
 6392cca28e48460a	00:00.00	00:03.23	Melvin	Ah, que coisa grande e de aparência desagradável.
-28ed9328bdc95649	00:00.00	00:05.20	Melvin	As meninas assustadoras não vão mais vir. Que alívio. Eu odeio meninas.
-28ed9328bdc95649	00:05.20	00:07.77	Melvin	Você deve ter notado.
+28ed9328bdc95649	00:00.00	00:05.97	Melvin	As meninas assustadoras não vão mais vir. Que alívio. Eu odeio meninas.
+28ed9328bdc95649	00:05.97	00:07.77	Melvin	Você deve ter notado.
 28ed9328bdc9564a	00:00.00	00:04.47	Melvin	Como eram as surras na escola, Crash? Danosas ou só ameaçadoras?
-28ed9328bdc9564b	00:00.00	00:05.72	Melvin	Que bom saber que as Bratgirls não vão mais voltar com seus NVs do mal e seu senso
-28ed9328bdc9564b	00:05.72	00:07.11	Melvin	de estilo.
-28ed9328bdc9564c	00:00.00	00:03.82	Melvin	Estou chocado, chocado que as alunas do mal estejam usando o NV para capturar
-28ed9328bdc9564c	00:03.82	00:07.41	Melvin	mutantes, mesmo sendo totalmente a cara delas.
-4416e55ff874bd0a	00:00.00	00:01.23	Melvin	Ah, o chefe voltou. Que alívio!
-4416e55ff874bd0a	00:01.23	00:04.34	Melvin	Agora gente como eu não vai mais ficar sobrecarregada com dinheiro do lanche o
-4416e55ff874bd0a	00:04.34	00:07.26	Melvin	tempo todo.
-4416e55ff874bd09	00:00.00	00:02.82	Melvin	Ah, aquele boca-grandinho está tão feliz com o pai de volta, Crash.
-4416e55ff874bd09	00:02.82	00:07.74	Melvin	Agora, quando ele me bater, vai poder se concentrar de verdade e curtir.
-4416e55ff874bd08	00:00.02	00:02.97	Melvin	Não sei bem como decidimos que o pai daquele cara seria o chefe.
-4416e55ff874bd08	00:02.97	00:06.61	Melvin	Acho que só elegemos quem batia mais forte.
-fbc7b4b84a73b0d7	00:02.48	00:04.97	Melvin	É estranho e preocupante!
+28ed9328bdc9564b	00:00.00	00:05.72	Melvin	Que bom saber que as Bratgirls não vão mais voltar com seus NVs do mal e...
+28ed9328bdc9564b	00:05.72	00:07.11	Melvin	seu senso de estilo.
+28ed9328bdc9564c	00:00.00	00:07.40	Melvin	Estou chocado, chocado que as alunas do mal estejam usando o NV para capturar mutantes, mesmo sendo totalmente a cara delas.
+4416e55ff874bd0a	00:00.00	00:02.72	Melvin	Ah, o chefe voltou. Que alívio!
+4416e55ff874bd0a	00:02.72	00:07.25	Melvin	Agora gente como eu não vai mais ficar sobrecarregada com dinheiro do lanche o tempo todo.
+4416e55ff874bd09	00:00.00	00:04.22	Melvin	Ah, aquele linguarudo está tão feliz com o pai de volta, Crash.
+4416e55ff874bd09	00:04.22	00:07.74	Melvin	Agora, quando ele me bater, vai poder se concentrar de verdade e curtir.
+4416e55ff874bd08	00:00.02	00:03.56	Melvin	Não sei bem como decidimos que o pai daquele cara seria o chefe.
+4416e55ff874bd08	00:03.56	00:06.61	Melvin	Acho que só elegemos quem batia mais forte.
+fbc7b4b84a73b0d7	00:01.26	00:02.73	Melvin	É um fantasma! 
+fbc7b4b84a73b0d7	00:02.73	00:04.97	Melvin	É estranho...  e preocupante!
 fbc7b4b84a73b0d4	00:00.00	00:05.31	Melvin	De novo, cadê os ombros? A falta de ombros é incomum.
 fbc7b4b84a73b0d5	00:00.00	00:04.87	Melvin	Ah, é um Grimly! Os Grimlies são os preocupantes e incômodos!
-fbc7b4b84a73b0d2	00:00.05	00:01.87	Melvin	Não são esses os mutantes que mexem com o tempo?
-fbc7b4b84a73b0d2	00:01.87	00:06.47	Melvin	Porque acabei de ganhar um relógio novo e não quero que você estrague.
+fbc7b4b84a73b0d2	00:00.05	00:02.66	Melvin	Não são esses os mutantes que mexem com o tempo?
+fbc7b4b84a73b0d2	00:02.66	00:06.47	Melvin	Porque acabei de ganhar um relógio novo e não quero que você estrague.
 b226d00fe6402380	00:00.00	00:06.13	Melvin	E aí, como vão as coisas? Me bateu recentemente? Se não, fique à vontade.
 b226d00fe6402383	00:00.00	00:04.80	Melvin	Queria que alguém fosse procurar o meu pai! Ah, estou tão pra baixo!
 b226d00fe6402382	00:00.00	00:04.23	Melvin	Mais tarde, se tiver um minuto, apresento você à minha esposa troféu.
-b226d00fe6402385	00:00.00	00:03.89	Melvin	Sabe, não tenho certeza do que a gente come.
-b226d00fe6402385	00:03.89	00:08.32	Melvin	Gelo, talvez comida congelada, empanados de peixe.
+b226d00fe6402385	00:00.00	00:03.35	Melvin	Sabe, não tenho certeza do que a gente come.
+b226d00fe6402385	00:03.35	00:08.32	Melvin	Gelo, talvez comida congelada, empanados de peixe.
 
 # ----------------------------------------------------------------------------
 # No jogo: Nina  (3 sons)
 # ----------------------------------------------------------------------------
-4622238e33d22459	00:00.37	00:05.70	Nina	Ah, vitória! Que sensação boa! Muito boa!
-4622238e33d2245b	00:00.00	00:01.01	Nina	Claro, meu chapa!
-4622238e33d2245b	00:01.01	00:05.60	Nina	O tio Cortex fez as pazes com o antigo parceiro de laboratório dele, N. Brio.
-4622238e33d2245d	00:00.00	00:04.45	Nina	O titio Cortex fala muito, mas o N. Brio é o cara que construiu tudo de verdade.
-4622238e33d2245d	00:04.45	00:09.13	Nina	E, para sua sorte, meu treco do projeto de ciências me diz exatamente onde ele está.
-4622238e33d2245d	00:09.13	00:16.47	Nina	Agora corram para o outro lado da ilha. Tenho novos planos malignos para começar.
+4622238e33d22459	00:00.00	00:05.70	Nina	Ah, vitória! Que sensação boa! Muito boa!
+4622238e33d2245b	00:00.00	00:02.11	Nina	Claro, meu querido!
+4622238e33d2245b	00:02.11	00:05.60	Nina	O tio Cortex fez as pazes com o antigo parceiro de laboratório dele, N. Brio.
+4622238e33d2245d	00:00.00	00:04.76	Nina	O titio Cortex fala muito, mas o N. Brio é o cara que construiu tudo de verdade.
+4622238e33d2245d	00:04.76	00:10.66	Nina	E, para sua sorte, meu treco do projeto de ciências me diz exatamente onde ele está.
+4622238e33d2245d	00:10.66	00:16.47	Nina	Agora corram para o outro lado da ilha. Tenho novos planos malignos para começar.
 
 # ----------------------------------------------------------------------------
 # No jogo: Ratcicle idoso  (28 sons)
 # ----------------------------------------------------------------------------
-4df1f766890a6980	00:00.21	00:05.41	Ratcicle idoso	Você quer falar comigo? Intabuloso! Ninguém fala comigo desde Granada.
-4df1f766890a6980	00:05.41	00:11.27	Ratcicle idoso	Tem uma prisão lá. Lugar estranho, lugar assustador também. Fiquei lá um tempo.
-4df1f766890a6980	00:11.27	00:16.99	Ratcicle idoso	Não recomendo. Eu não iria lá. Todo mundo, menos eu, que foi lá nunca voltou.
-4df1f766890a6980	00:16.99	00:23.36	Ratcicle idoso	As meninas assustadoras cuidaram disso.
-4df1f766890a6983	00:00.21	00:06.08	Ratcicle idoso	Você quer falar comigo? Intabuloso! Ninguém fala comigo desde Granada.
-4df1f766890a6982	00:00.00	00:04.55	Ratcicle idoso	É, aquela prisão é uma armadilha mortal pra qualquer criatura tola o bastante pra
-4df1f766890a6982	00:04.55	00:04.94	Ratcicle idoso	entrar.
-4df1f766890a6982	00:04.94	00:07.19	Ratcicle idoso	Mas, se você for, não conta pra ninguém.
-4df1f766890a6982	00:07.19	00:11.71	Ratcicle idoso	Ser o único sobrevivente é meio que a minha marca.
+4df1f766890a6980	00:00.00	00:06.17	Ratcicle idoso	Você quer falar comigo? Intabuloso! Ninguém fala comigo desde Granada.
+4df1f766890a6980	00:06.17	00:12.21	Ratcicle idoso	Tem uma prisão lá. Lugar estranho, lugar assustador também. Fiquei lá um tempo.
+4df1f766890a6980	00:12.21	00:20.63	Ratcicle idoso	Não recomendo. Eu não iria lá. Todo mundo, menos eu, que foi lá nunca voltou.
+4df1f766890a6980	00:20.63	00:23.36	Ratcicle idoso	As meninas assustadoras cuidaram disso.
+4df1f766890a6983	00:00.00	00:06.08	Ratcicle idoso	Você quer falar comigo? Intabuloso! Ninguém fala comigo desde Granada.
+4df1f766890a6982	00:00.00	00:04.94	Ratcicle idoso	É, aquela prisão é uma armadilha mortal pra qualquer criatura tola o bastante pra entrar.
+4df1f766890a6982	00:04.94	00:07.98	Ratcicle idoso	Mas, se você for, não conta pra ninguém.
+4df1f766890a6982	00:07.98	00:11.71	Ratcicle idoso	Ser o único sobrevivente é meio que a minha fama.
 4df1f766890a6985	00:00.00	00:02.19	Ratcicle idoso	Sei que não pareço grande coisa,
 4df1f766890a6985	00:02.19	00:07.53	Ratcicle idoso	mas nos meus tempos eu fui um guerreiro orgulhoso de muitas batalhas difíceis.
-4df1f766890a6985	00:07.53	00:10.88	Ratcicle idoso	Batalha. Batalha. Dita batalha.
-7db7e58dc7b11fe9	00:00.91	00:05.61	Ratcicle idoso	Esses aí, tinha deles na prisão. A coisa mais assustadora que já saiu de um ovo.
-7db7e58dc7b11fe9	00:05.61	00:07.66	Ratcicle idoso	Ultimamente, pelo menos.
+4df1f766890a6985	00:07.53	00:10.88	Ratcicle idoso	Batalha. Batalha. É batalha.
+7db7e58dc7b11fe9	00:00.01	00:06.12	Ratcicle idoso	Eu não lembro desses. Esses aí, tinha deles na prisão. A coisa mais assustadora que já saiu de um ovo.
+7db7e58dc7b11fe9	00:06.12	00:07.66	Ratcicle idoso	Ultimamente, pelo menos.
 7db7e58dc7b11fea	00:00.00	00:06.21	Ratcicle idoso	Ah, sim, sei tudo sobre eles. Fui eu que projetei. Sou meio que importante.
-7db7e58dc7b11feb	00:00.02	00:07.79	Ratcicle idoso	Sinceramente, isso me lembra do meu tempo na prisão e da cerimônia de casamento de
-7db7e58dc7b11feb	00:07.79	00:10.84	Ratcicle idoso	que participei lá.
+7db7e58dc7b11feb	00:00.02	00:10.84	Ratcicle idoso	Sinceramente, isso me lembra do meu tempo na prisão e da cerimônia de casamento de que participei lá.
 7db7e58dc7b11fec	00:00.00	00:05.86	Ratcicle idoso	Bom, esse pássaro assustador que você tem aí me lembra de algo que comi no exterior.
-d95a2c85b1c4c0a3	00:00.27	00:02.02	Ratcicle idoso	É um desses mutantes rolantes.
-d95a2c85b1c4c0a3	00:02.02	00:07.77	Ratcicle idoso	São muito úteis, conseguem chegar em lugares altos e tal.
-d95a2c85b1c4c0a0	00:00.00	00:01.98	Ratcicle idoso	Bem que eu queria ter um desses rollers.
-d95a2c85b1c4c0a0	00:01.98	00:08.04	Ratcicle idoso	Tenho umas ideias pra fazer waffles, e esses bichos viriam bem a calhar.
+d95a2c85b1c4c0a3	00:00.00	00:03.31	Ratcicle idoso	É um desses mutantes rolantes.
+d95a2c85b1c4c0a3	00:03.31	00:07.77	Ratcicle idoso	São muito úteis, conseguem chegar em lugares altos e tal.
+d95a2c85b1c4c0a0	00:00.00	00:02.74	Ratcicle idoso	Bem que eu queria ter um desses rollers.
+d95a2c85b1c4c0a0	00:02.74	00:08.04	Ratcicle idoso	Tenho umas ideias pra fazer waffles, e esses bichos viriam bem a calhar.
 d95a2c85b1c4c0a1	00:00.00	00:04.58	Ratcicle idoso	Sinceramente, estou empolgado com essa coisa. É um baita mutante.
-d95a2c85b1c4c0a6	00:00.78	00:03.39	Ratcicle idoso	Você fica tonto nessa coisa? Eu fico tonto só de olhar!
-d95a2c85b1c4c0a6	00:03.39	00:05.93	Ratcicle idoso	Também fico tonto olhando maçãs.
+d95a2c85b1c4c0a6	00:00.00	00:04.12	Ratcicle idoso	Você fica tonto nessa coisa? Eu fico tonto só de olhar!
+d95a2c85b1c4c0a6	00:04.12	00:05.93	Ratcicle idoso	Também fico tonto olhando maçãs.
 bb5a6e55be640122	00:00.00	00:05.60	Ratcicle idoso	Você de novo? Ah, você anda ocupado. Pouca gente me procurou tanto assim.
 bb5a6e55be640121	00:00.00	00:03.56	Ratcicle idoso	Tem uma coisa sobre a prisão que nunca contei pra ninguém.
-bb5a6e55be640121	00:03.56	00:07.42	Ratcicle idoso	Aquele garoto encrenqueiro ali, o pai dele ainda está preso lá.
-bb5a6e55be640121	00:07.42	00:11.47	Ratcicle idoso	O rato maior e mais malvado que você já viu.
-bb5a6e55be640120	00:00.00	00:04.37	Ratcicle idoso	É, não tenho coragem de contar pro rapazinho que o pai dele está preso.
-bb5a6e55be640120	00:04.37	00:07.64	Ratcicle idoso	Claro que esse garoto vive pondo fogo na minha barba,
-bb5a6e55be640120	00:07.64	00:11.61	Ratcicle idoso	então também não estou me esforçando muito.
-bb5a6e55be640127	00:00.00	00:03.65	Ratcicle idoso	Acho que, se você precisar de algum mutante perigoso e psicopata pra controlar,
-bb5a6e55be640127	00:03.65	00:07.15	Ratcicle idoso	aquele rato grandão da prisão é a melhor opção.
-798fbb14a829faf1	00:00.08	00:05.33	Ratcicle idoso	Que bom ter aquele grandalhão de volta. Ele vai se dar bem com esse arqueiro novo.
-798fbb14a829faf2	00:00.00	00:01.39	Ratcicle idoso	É tão bom ter o chefe de volta.
-798fbb14a829faf2	00:01.39	00:05.86	Ratcicle idoso	Nunca imaginei que fosse sentir tanta falta daquele psicopata.
-798fbb14a829faf3	00:00.18	00:02.78	Ratcicle idoso	Será que as coisas vão se acalmar por aqui? Difícil, acho.
-798fbb14a829faf3	00:02.78	00:07.11	Ratcicle idoso	Somos meio agitados, caso você não tenha notado.
+bb5a6e55be640121	00:03.56	00:08.46	Ratcicle idoso	Aquele garoto encrenqueiro ali, o pai dele ainda está preso lá.
+bb5a6e55be640121	00:08.46	00:11.47	Ratcicle idoso	O rato maior e mais malvado que você já viu.
+bb5a6e55be640120	00:00.00	00:06.10	Ratcicle idoso	É, não tenho coragem de contar pro rapazinho que o pai dele está preso.
+bb5a6e55be640120	00:06.10	00:11.60	Ratcicle idoso	Claro que esse garoto vive pondo fogo na minha barba, então também não estou me esforçando muito.
+bb5a6e55be640127	00:00.00	00:04.32	Ratcicle idoso	Acho que, se você precisar de algum mutante perigoso e psicopata pra controlar,
+bb5a6e55be640127	00:04.32	00:07.15	Ratcicle idoso	aquele rato grandão da prisão é a melhor opção.
+798fbb14a829faf1	00:00.08	00:05.33	Ratcicle idoso	Que bom ter aquele grandalhão de volta. (sons esquisitos) .
+798fbb14a829faf2	00:00.00	00:02.45	Ratcicle idoso	É tão bom ter o chefe de volta.
+798fbb14a829faf2	00:02.45	00:05.86	Ratcicle idoso	Nunca imaginei que fosse sentir tanta falta daquele psicopata.
+798fbb14a829faf3	00:00.00	00:04.32	Ratcicle idoso	Será que as coisas vão se acalmar por aqui? Difícil, acho.
+798fbb14a829faf3	00:04.32	00:07.11	Ratcicle idoso	Somos meio agitados, caso você não tenha notado.
 798fbb14a829faf4	00:00.00	00:03.42	Ratcicle idoso	Quer um dólar? Toma um dólar. Tenho um monte.
-821ea796fbd53d28	00:00.00	00:02.29	Ratcicle idoso	Essa é uma das coisas mais estranhas que já vi.
-821ea796fbd53d28	00:02.29	00:06.13	Ratcicle idoso	Toda vez que você passa com essa coisa, todo mundo tem que acertar os relógios,
-821ea796fbd53d28	00:06.13	00:08.65	Ratcicle idoso	até os digitais!
-821ea796fbd53d2b	00:00.00	00:01.40	Ratcicle idoso	Está vendo aqueles caras-mão grandões?
-821ea796fbd53d2b	00:01.40	00:06.43	Ratcicle idoso	Pois estou tentando descobrir onde fica o traseiro deles, pra poder chutar!
-821ea796fbd53d2a	00:00.00	00:03.35	Ratcicle idoso	Seria bom tirar férias. Ir pra algum lugar tropical, mas congelado.
-821ea796fbd53d2a	00:03.35	00:06.71	Ratcicle idoso	Deve ter um monte de lugares assim, né?
+821ea796fbd53d28	00:00.00	00:03.27	Ratcicle idoso	Essa é uma das coisas mais estranhas que já vi.
+821ea796fbd53d28	00:03.27	00:07.41	Ratcicle idoso	Toda vez que você passa com essa coisa, todo mundo tem que acertar os relógios,
+821ea796fbd53d28	00:07.41	00:08.65	Ratcicle idoso	até os digitais!
+821ea796fbd53d2b	00:00.00	00:02.19	Ratcicle idoso	Está vendo aqueles caras-mão grandões?
+821ea796fbd53d2b	00:02.19	00:06.43	Ratcicle idoso	Pois estou tentando descobrir onde fica o traseiro deles, pra poder chutar!
+821ea796fbd53d2a	00:00.00	00:04.49	Ratcicle idoso	Seria bom tirar férias. Ir pra algum lugar tropical, mas congelado.
+821ea796fbd53d2a	00:04.49	00:06.71	Ratcicle idoso	Deve ter um monte de lugares assim, né?
 4846e8f2fd6d3aaf	00:00.00	00:03.50	Ratcicle idoso	Bom, não sobrou nada pra fazer além de ficar parado sendo bonito.
 4846e8f2fd6d3aaf	00:03.50	00:07.13	Ratcicle idoso	Porque eu faço isso parecer muito bom.
-4846e8f2fd6d3aac	00:00.00	00:04.57	Ratcicle idoso	Por acaso você viu uma rata bem velha em algum lugar por aí? Tem que ser velha!
-4846e8f2fd6d3aac	00:04.57	00:06.86	Ratcicle idoso	É meu único requisito.
-4846e8f2fd6d3aad	00:00.00	00:03.58	Ratcicle idoso	Acho que deixei meu almoço cair na minha barba. Corre lá e pega pra mim?
-4846e8f2fd6d3aad	00:03.58	00:06.21	Ratcicle idoso	Sem segundas intenções.
+4846e8f2fd6d3aac	00:00.00	00:04.88	Ratcicle idoso	Por acaso você viu uma rata bem velha em algum lugar por aí? Tem que ser velha!
+4846e8f2fd6d3aac	00:04.88	00:06.86	Ratcicle idoso	É meu único requisito.
+4846e8f2fd6d3aad	00:00.00	00:05.05	Ratcicle idoso	Acho que deixei meu almoço cair na minha barba. Corre lá e pega pra mim?
+4846e8f2fd6d3aad	00:05.05	00:06.21	Ratcicle idoso	Sem segundas intenções.
 4846e8f2fd6d3aaa	00:00.00	00:05.95	Ratcicle idoso	E aí, como vai? Como vai a família? Vocês são parentes como, exatamente?
 4846e8f2fd6d3aab	00:00.00	00:03.00	Ratcicle idoso	Agora some daqui de uma vez, sua maçaneta!
 
 # ----------------------------------------------------------------------------
 # No jogo: Filho do herói Ratcicle  (31 sons)
 # ----------------------------------------------------------------------------
-80c47bdd238321b8	00:00.11	00:03.80	Filho do herói Ratcicle	Então, você é o Crash, né? Ouvi dizer que você acabou com um monte de gente.
-80c47bdd238321b8	00:03.80	00:08.82	Filho do herói Ratcicle	Eu também sou meio que importante. Eu mantenho este lugar seguro.
-80c47bdd238321bb	00:00.00	00:05.69	Filho do herói Ratcicle	Então não esquece que quem manda por aqui sou eu. Marquei meu território e tudo.
-80c47bdd238321bb	00:05.69	00:08.32	Filho do herói Ratcicle	Precisei de muita água.
-80c47bdd238321ba	00:00.62	00:02.90	Filho do herói Ratcicle	Eu sou impressionante, mas você precisa ver o meu pai.
-80c47bdd238321ba	00:02.90	00:06.74	Filho do herói Ratcicle	Esse sim é um rato capaz de incendiar um orfanato.
+80c47bdd238321b8	00:00.11	00:04.97	Filho do herói Ratcicle	Então, você é o Crash, né? Ouvi dizer que você acabou com um monte de gente.
+80c47bdd238321b8	00:04.97	00:08.82	Filho do herói Ratcicle	Eu também sou meio que importante. Eu mantenho este lugar seguro.
+80c47bdd238321bb	00:00.00	00:06.35	Filho do herói Ratcicle	Então não esquece que quem manda por aqui sou eu. Marquei meu território e tudo.
+80c47bdd238321bb	00:06.35	00:08.32	Filho do herói Ratcicle	Precisei de muita água.
+80c47bdd238321ba	00:00.00	00:03.45	Filho do herói Ratcicle	Eu sei. Eu sou impressionante, mas você precisa ver o meu pai.
+80c47bdd238321ba	00:03.45	00:06.74	Filho do herói Ratcicle	Esse sim é um rato capaz de incendiar um orfanato.
 80c47bdd238321bd	00:00.00	00:04.16	Filho do herói Ratcicle	Sei que a maioria dos ratos que você conheceu tenta te matar, Crash,
-80c47bdd238321bd	00:04.16	00:05.82	Filho do herói Ratcicle	mas nós somos os bonzinhos.
-80c47bdd238321bd	00:05.82	00:08.38	Filho do herói Ratcicle	Nem eu sei bem por quê.
+80c47bdd238321bd	00:04.16	00:06.15	Filho do herói Ratcicle	mas nós somos os bonzinhos.
+80c47bdd238321bd	00:06.15	00:08.38	Filho do herói Ratcicle	Nem eu sei bem o porquê.
 80c47bdd238321bc	00:00.00	00:04.55	Filho do herói Ratcicle	Então... você já se sentiu sozinho e começou incêndios? Eu sim!
-268fe7e40da74b10	00:00.30	00:00.96	Filho do herói Ratcicle	Que coisa é essa!
-268fe7e40da74b10	00:00.96	00:05.84	Filho do herói Ratcicle	Sério, parece que alguém pôs um cérebro de peru no micro-ondas, sabe?
-268fe7e40da74b13	00:00.14	00:04.26	Filho do herói Ratcicle	Santas granadas! O que veio primeiro, o ovo ou a galinha?
+268fe7e40da74b10	00:00.00	00:02.17	Filho do herói Ratcicle	Que coisa é essa!
+268fe7e40da74b10	00:02.17	00:05.84	Filho do herói Ratcicle	Sério, parece que alguém pôs um cérebro de peru no micro-ondas, sabe?
+268fe7e40da74b13	00:00.00	00:04.26	Filho do herói Ratcicle	Santas granadas! O que veio primeiro, o ovo ou a galinha?
 268fe7e40da74b12	00:00.00	00:03.75	Filho do herói Ratcicle	Então, isso é menino ou menina? Os dois, talvez, sei lá.
-268fe7e40da74b15	00:00.00	00:01.75	Filho do herói Ratcicle	Essa coisa me dá vontade de tomar café da manhã.
-268fe7e40da74b15	00:01.75	00:04.83	Filho do herói Ratcicle	Por que você tirou ela do xilindró, afinal?
-268fe7e40da74b14	00:00.00	00:02.14	Filho do herói Ratcicle	Ah, claro, nada de frescura, mas tudo bem.
-268fe7e40da74b14	00:02.14	00:06.44	Filho do herói Ratcicle	Eu sei onde comprar propano e fósforos no atacado.
-4b491105e6ba8065	00:00.00	00:03.82	Filho do herói Ratcicle	Hã, Crash, tem uma coisa grudada no seu traseiro. Ah, deixa pra lá.
-4b491105e6ba8065	00:03.82	00:06.56	Filho do herói Ratcicle	Achei que fossem hemorroidas.
-4b491105e6ba8066	00:00.00	00:03.19	Filho do herói Ratcicle	Olha, que cachorrinho legal esse que você está montando, Crash.
-4b491105e6ba8066	00:03.19	00:07.50	Filho do herói Ratcicle	Sabe, você devia esmagar o Melvin ali. Ele gosta.
-4b491105e6ba8067	00:00.56	00:08.00	Filho do herói Ratcicle	Mutantes rolantes, nojentos, rolando na sujeira o dia todo. Cadê meu isqueiro?
-4b491105e6ba8060	00:00.00	00:02.56	Filho do herói Ratcicle	Eu também conseguiria rolar assim, só não quero. É degradante.
-4b491105e6ba8060	00:02.56	00:05.85	Filho do herói Ratcicle	É uma palavra de gente grande. Você não entenderia.
+268fe7e40da74b15	00:00.00	00:02.20	Filho do herói Ratcicle	Essa coisa me dá vontade de tomar café da manhã.
+268fe7e40da74b15	00:02.20	00:04.83	Filho do herói Ratcicle	Por que você tirou ela do xilindró, afinal?
+268fe7e40da74b14	00:00.00	00:03.35	Filho do herói Ratcicle	Ah, claro, nada de frescura, mas tudo bem.
+268fe7e40da74b14	00:03.35	00:06.44	Filho do herói Ratcicle	Eu sei onde comprar propano e fósforos no atacado.
+4b491105e6ba8065	00:00.00	00:05.09	Filho do herói Ratcicle	Hã, Crash, tem uma coisa grudada no seu traseiro. Ah, deixa pra lá.
+4b491105e6ba8065	00:05.09	00:06.56	Filho do herói Ratcicle	Achei que fossem hemorroidas.
+4b491105e6ba8066	00:00.00	00:03.76	Filho do herói Ratcicle	Olha, que cachorrinho legal esse que você está montando, Crash.
+4b491105e6ba8066	00:03.76	00:07.50	Filho do herói Ratcicle	Sabe, você devia esmagar o Melvin ali. Ele gosta.
+4b491105e6ba8067	00:00.00	00:08.00	Filho do herói Ratcicle	Mutantes rolantes, nojentos, rolando na sujeira o dia todo. Cadê meu isqueiro?
+4b491105e6ba8060	00:00.00	00:03.55	Filho do herói Ratcicle	Eu também conseguiria rolar assim, só não quero. É degradante.
+4b491105e6ba8060	00:03.55	00:05.85	Filho do herói Ratcicle	É uma palavra de gente grande. Você não entenderia.
 79b944605a9af9e2	00:00.00	00:04.32	Filho do herói Ratcicle	Você foi pra Escola do Mal? Ah, como é lá? É inflamável?
 79b944605a9af9e1	00:00.00	00:02.36	Filho do herói Ratcicle	Então, aquelas meninas eram gatas ou não?
 79b944605a9af9e1	00:02.36	00:07.96	Filho do herói Ratcicle	É importante eu saber por, hã, motivos médicos. Sabe, eu tenho uma disfunção.
-79b944605a9af9e0	00:00.00	00:03.60	Filho do herói Ratcicle	Você nunca me pegaria na Escola do Mal. Pra começar, é escola de minina.
-79b944605a9af9e0	00:03.60	00:06.98	Filho do herói Ratcicle	E além disso, fico horrível de maquiagem.
-79b944605a9af9e7	00:00.00	00:01.36	Filho do herói Ratcicle	Deve ser melhor eu estudar em casa.
-79b944605a9af9e7	00:01.36	00:05.65	Filho do herói Ratcicle	Onde mais eu aprenderia sobre vazamento de gás e negação plausível?
-b3eeb89fc08ef16f	00:00.00	00:01.76	Filho do herói Ratcicle	Não acredito que o papai está em casa.
-b3eeb89fc08ef16f	00:01.76	00:07.07	Filho do herói Ratcicle	Eu tinha esquecido os carinhos amorosos e o cinto de couro dele.
-b3eeb89fc08ef16c	00:02.13	00:07.09	Filho do herói Ratcicle	Eu sou bem durão, mas, acredite, ninguém é mais durão que o papai. Conselho Tutelar?
-b3eeb89fc08ef16c	00:07.09	00:09.52	Filho do herói Ratcicle	Seus dias estão contados.
-b3eeb89fc08ef16d	00:00.00	00:03.51	Filho do herói Ratcicle	Agora que o papai está em casa, não vou mais precisar ficar protegendo a vila.
-b3eeb89fc08ef16d	00:03.51	00:08.76	Filho do herói Ratcicle	Vou estar livre pra começar incêndios! Hã, para fins de pesquisa, claro.
-b3eeb89fc08ef16a	00:00.00	00:03.66	Filho do herói Ratcicle	Vivo ouvindo falar de mutantes assustadores atacando a Ilha Wumpa bem perto da sua
-b3eeb89fc08ef16a	00:03.66	00:03.88	Filho do herói Ratcicle	casa.
-b3eeb89fc08ef16a	00:03.88	00:06.09	Filho do herói Ratcicle	Mais assustadores que nós, digo.
-2385ab43f5a3fee4	00:02.32	00:03.56	Filho do herói Ratcicle	Tem braços, mas não tem ombros.
-2385ab43f5a3fee4	00:03.56	00:07.89	Filho do herói Ratcicle	Sabe, acho que você devia devolver isso na loja ou algo assim.
-2385ab43f5a3fee7	00:00.08	00:05.95	Filho do herói Ratcicle	Então é uma sombra mutante? Não entendo as implicações filosóficas de tudo isso.
-2385ab43f5a3fee7	00:05.95	00:08.94	Filho do herói Ratcicle	E também estou apavorado!
+79b944605a9af9e0	00:00.00	00:04.43	Filho do herói Ratcicle	Você nunca me pegaria na Escola do Mal. Pra começar, é escola de menininha.
+79b944605a9af9e0	00:04.43	00:06.98	Filho do herói Ratcicle	E além disso, fico horrível de maquiagem.
+79b944605a9af9e7	00:00.00	00:02.57	Filho do herói Ratcicle	Deve ser melhor eu estudar em casa.
+79b944605a9af9e7	00:02.57	00:05.65	Filho do herói Ratcicle	Onde mais eu aprenderia sobre vazamento de gás e negação plausível?
+b3eeb89fc08ef16f	00:00.00	00:02.89	Filho do herói Ratcicle	Não acredito que o papai está em casa.
+b3eeb89fc08ef16f	00:02.89	00:07.07	Filho do herói Ratcicle	Eu tinha esquecido os carinhos amorosos e o cinto de couro dele.
+b3eeb89fc08ef16c	00:00.00	00:02.00	Filho do herói Ratcicle	Você trouxe o meu papai de volta! 
+b3eeb89fc08ef16c	00:02.00	00:06.36	Filho do herói Ratcicle	Eu sou bem durão, mas, acredite, ninguém é mais durão que o papai.
+b3eeb89fc08ef16c	00:06.36	00:09.52	Filho do herói Ratcicle	 Conselho Tutelar? Seus dias estão contados.
+b3eeb89fc08ef16d	00:00.00	00:04.46	Filho do herói Ratcicle	Agora que o papai está em casa, não vou mais precisar ficar protegendo a vila.
+b3eeb89fc08ef16d	00:04.46	00:08.76	Filho do herói Ratcicle	Vou estar livre pra começar incêndios! Hã, para fins de pesquisa, claro.
+b3eeb89fc08ef16a	00:00.00	00:04.54	Filho do herói Ratcicle	Vivo ouvindo falar de mutantes assustadores atacando a Ilha Wumpa bem perto da sua casa.
+b3eeb89fc08ef16a	00:04.54	00:06.09	Filho do herói Ratcicle	Mais assustadores que nós, digo.
+2385ab43f5a3fee4	00:00.00	00:02.45	Filho do herói Ratcicle	Woooow, o que que é isso?
+2385ab43f5a3fee4	00:02.45	00:04.99	Filho do herói Ratcicle	Tem braços, mas não tem ombros.
+2385ab43f5a3fee4	00:04.99	00:07.89	Filho do herói Ratcicle	Sabe, acho que você devia devolver isso na loja ou algo assim.
+2385ab43f5a3fee7	00:00.08	00:06.53	Filho do herói Ratcicle	Então é uma sombra mutante? Não entendo as implicações filosóficas de tudo isso.
+2385ab43f5a3fee7	00:06.53	00:08.94	Filho do herói Ratcicle	E também estou apavorado!
 2385ab43f5a3fee6	00:00.02	00:01.78	Filho do herói Ratcicle	Ainda bem que você apareceu, Crash.
-2385ab43f5a3fee6	00:01.78	00:05.81	Filho do herói Ratcicle	Todos esses caras-mão no porão fedido queriam fazer de mim um sanduíche de soco.
-2385ab43f5a3fee6	00:05.81	00:08.72	Filho do herói Ratcicle	Sei que parece que a gente não se mexeu muito, mas, sério,
-2385ab43f5a3fee6	00:08.72	00:12.76	Filho do herói Ratcicle	estivemos muito ocupados batendo em coisas e tal.
-2385ab43f5a3fee1	00:00.56	00:04.35	Filho do herói Ratcicle	Fiquei escutando esses caras-mão por um tempo. Sabe, hã, que sono!
-2385ab43f5a3fee1	00:04.35	00:09.51	Filho do herói Ratcicle	Pra uma cara de pau, eu esperava muito mais ação e muito menos conversa fiada, sabe?
-a1d4748655538ca9	00:01.37	00:07.47	Filho do herói Ratcicle	Por acaso você não tem aí uma lista de, digamos, pré-escolas mal vigiadas?
-a1d4748655538caa	00:00.27	00:02.78	Filho do herói Ratcicle	Preciso de uma referência de caráter para, digamos, um processo hipotético.
-a1d4748655538caa	00:02.78	00:06.87	Filho do herói Ratcicle	Posso contar com seu apoio? Ou você vai chamar o Smokey Bear pra mim?
-a1d4748655538cab	00:00.00	00:02.48	Filho do herói Ratcicle	Sabe quem tem fama injusta? Os dingos! Pensa bem!
-a1d4748655538cab	00:02.48	00:07.07	Filho do herói Ratcicle	Eles só querem levar crianças gritando noite adentro!
-a1d4748655538cac	00:00.00	00:03.42	Filho do herói Ratcicle	Você parece um cara bem selvagem, pelo menos segundo a sua campanha de marketing.
-a1d4748655538cac	00:03.42	00:06.64	Filho do herói Ratcicle	Ei, quer ir correr atrás de carros qualquer dia?
+2385ab43f5a3fee6	00:01.78	00:06.51	Filho do herói Ratcicle	Todos esses caras-mão no porão fedido queriam fazer de mim um sanduíche de soco.
+2385ab43f5a3fee6	00:06.51	00:09.54	Filho do herói Ratcicle	Sei que parece que a gente não se mexeu muito, mas, sério,
+2385ab43f5a3fee6	00:09.54	00:12.76	Filho do herói Ratcicle	estivemos muito ocupados batendo em coisas e tal.
+2385ab43f5a3fee1	00:00.00	00:04.71	Filho do herói Ratcicle	Fiquei escutando esses caras-mão por um tempo. Sabe, hã, que sono!
+2385ab43f5a3fee1	00:04.71	00:09.51	Filho do herói Ratcicle	Pra uma cara de pau, eu esperava muito mais pew-pew e muito menos conversa fiada, sabe?
+a1d4748655538ca9	00:00.00	00:07.47	Filho do herói Ratcicle	Então, Crash, por acaso você não tem aí uma lista de, digamos, pré-escolas mal vigiadas? Hein?
+a1d4748655538caa	00:00.00	00:03.74	Filho do herói Ratcicle	Preciso de uma referência de caráter para, digamos, um processo hipotético.
+a1d4748655538caa	00:03.74	00:06.87	Filho do herói Ratcicle	Posso contar com seu apoio? Ou você vai chamar o Smokey Bear pra mim?
+a1d4748655538cab	00:00.00	00:02.96	Filho do herói Ratcicle	Sabe quem tem fama injusta? Os dingos!
+a1d4748655538cab	00:02.96	00:07.07	Filho do herói Ratcicle	Pensa bem: eles só querem levar crianças gritando noite adentro!
+a1d4748655538cac	00:00.00	00:04.98	Filho do herói Ratcicle	Você parece um cara bem selvagem, pelo menos segundo a sua campanha de marketing.
+a1d4748655538cac	00:04.98	00:06.64	Filho do herói Ratcicle	Ei, quer ir correr atrás de carros qualquer dia?
 a1d4748655538cad	00:00.00	00:04.41	Filho do herói Ratcicle	Então vou treinar aquele golpe de giro lá. Acho que as garotas vão gostar.
 
 # ----------------------------------------------------------------------------
 # No jogo: Vendedor Sludge  (12 sons)
 # ----------------------------------------------------------------------------
-f8848f0757cc6c59	00:00.00	00:02.84	Vendedor Sludge	E aí, cara, valeu por cuidar daqueles malandros pra gente.
-f8848f0757cc6c59	00:02.84	00:08.76	Vendedor Sludge	Eu estava sentado num tesouro de mercadorias e não conseguia vender nada.
-f8848f0757cc6c5a	00:00.00	00:05.12	Vendedor Sludge	Esta parte do Ferro-Velho é uma mina de ouro pra sludges espertos como eu,
-f8848f0757cc6c5a	00:05.12	00:07.44	Vendedor Sludge	que sabem onde procurar.
-f8848f0757cc6c5b	00:00.00	00:04.70	Vendedor Sludge	O N. Brio e aqueles sludges maus andaram construindo umas coisas estranhas ali.
-f8848f0757cc6c5b	00:04.70	00:06.85	Vendedor Sludge	Ele está sem ideias e só destruindo.
-f8848f0757cc6c5b	00:06.85	00:11.76	Vendedor Sludge	Esse pessoal só precisa de mais sanduíches de frango.
-f8848f0757cc6c5c	00:00.00	00:01.06	Vendedor Sludge	Isso mesmo, cara.
-f8848f0757cc6c5c	00:01.06	00:05.87	Vendedor Sludge	Ando vendendo os melhores sanduíches de frango usados do mercado hoje em dia.
-f8848f0757cc6c5c	00:05.87	00:08.67	Vendedor Sludge	Posso arrumar uns pra você.
-5b98950e181a5fd0	00:00.00	00:03.53	Vendedor Sludge	Você derrotou o N. Brio e libertou seu irmão, cara? Que demais!
-5b98950e181a5fd0	00:03.53	00:05.16	Vendedor Sludge	Que belo exemplo de heroísmo.
-5b98950e181a5fd0	00:05.16	00:12.39	Vendedor Sludge	E isso me dá mais liberdade pra vender mercadoria pros moradores do Ferro-Velho.
+f8848f0757cc6c59	00:00.00	00:03.71	Vendedor Sludge	E aí, cara, valeu por cuidar daqueles malandros pra gente.
+f8848f0757cc6c59	00:03.71	00:08.76	Vendedor Sludge	Eu estava sentado num tesouro de mercadorias e não conseguia vender nada.
+f8848f0757cc6c5a	00:00.00	00:07.43	Vendedor Sludge	Esta parte do Ferro-Velho é uma mina de ouro pra sludges espertos como eu que sabem onde procurar.
+f8848f0757cc6c5b	00:00.00	00:05.32	Vendedor Sludge	O N. Brio e aqueles sludges maus andaram construindo umas coisas estranhas ali.
+f8848f0757cc6c5b	00:05.32	00:08.96	Vendedor Sludge	Ele está sem ideias e só destruindo.
+f8848f0757cc6c5b	00:08.96	00:11.76	Vendedor Sludge	Esse pessoal só precisa de mais sanduíches de frango.
+f8848f0757cc6c5c	00:00.00	00:01.83	Vendedor Sludge	Isso mesmo, cara.
+f8848f0757cc6c5c	00:01.83	00:06.29	Vendedor Sludge	Ando vendendo os melhores sanduíches de frango usados do mercado hoje em dia.
+f8848f0757cc6c5c	00:06.29	00:08.67	Vendedor Sludge	Posso arrumar uns pra você.
+5b98950e181a5fd0	00:00.00	00:04.95	Vendedor Sludge	Você derrotou o N. Brio e libertou seu irmão, cara? Que demais!
+5b98950e181a5fd0	00:04.95	00:08.21	Vendedor Sludge	Que belo exemplo de heroísmo. 
+5b98950e181a5fd0	00:08.21	00:12.39	Vendedor Sludge	E isso me dá mais liberdade pra vender mercadoria pros moradores do Ferro-Velho.
 5b98950e181a5fd3	00:00.00	00:06.56	Vendedor Sludge	É, assim que eu vender umas unidades por aqui, vou ser um sludge respeitável, baby.
-5b98950e181a5fd2	00:00.00	00:03.36	Vendedor Sludge	Ouvi dizer que tem um sludge enorme e totalmente mau por aí.
-5b98950e181a5fd2	00:03.36	00:05.88	Vendedor Sludge	Vou vender pra ele umas privadas meio usadas.
-5b98950e181a5fd2	00:05.88	00:11.24	Vendedor Sludge	Com certeza nada vai dar errado a ponto de precisar de resgate.
-4499fe7984b0c423	00:00.53	00:01.89	Vendedor Sludge	Ah, valeu por me salvar, cara.
-4499fe7984b0c423	00:01.89	00:08.40	Vendedor Sludge	Não acredito que aquele sludge mau e incrivelmente enorme acabou sendo perigoso.
-4499fe7984b0c421	00:00.00	00:02.74	Vendedor Sludge	Estou virando a página, cara, andando na linha.
-4499fe7984b0c421	00:02.74	00:06.23	Vendedor Sludge	De agora em diante, só bons e velhos imóveis compartilhados.
-4499fe7984b0c421	00:06.23	00:11.80	Vendedor Sludge	Imóveis compartilhados no Ferro-Velho.
+5b98950e181a5fd2	00:00.00	00:04.12	Vendedor Sludge	Ouvi dizer que tem um sludge enorme e totalmente mau por aí.
+5b98950e181a5fd2	00:04.12	00:07.40	Vendedor Sludge	Vou vender pra ele umas privadas meio usadas.
+5b98950e181a5fd2	00:07.40	00:11.24	Vendedor Sludge	Com certeza nada vai dar errado a ponto de precisar de resgate.
+4499fe7984b0c423	00:00.00	00:02.96	Vendedor Sludge	Ah, valeu por me salvar, cara.
+4499fe7984b0c423	00:02.96	00:08.40	Vendedor Sludge	Não acredito que aquele sludge mau e incrivelmente enorme acabou sendo perigoso.
+4499fe7984b0c421	00:00.00	00:04.82	Vendedor Sludge	Estou virando a página, cara, andando na linha.
+4499fe7984b0c421	00:04.82	00:09.39	Vendedor Sludge	De agora em diante, só bons e velhos imóveis compartilhados.
+4499fe7984b0c421	00:09.39	00:11.80	Vendedor Sludge	Imóveis compartilhados no Ferro-Velho.
 4499fe7984b0c426	00:00.00	00:04.42	Vendedor Sludge	É, eu sabia que imóveis compartilhados iam agradar você, chiquezinho, baby!
-b9b31e2dd1f6f3a2	00:00.00	00:05.12	Vendedor Sludge	Crash, cara, bom te ver de novo, hein? Não esqueci o resgate que você fez mais cedo.
-b9b31e2dd1f6f3a2	00:05.12	00:08.04	Vendedor Sludge	Ah, você, você, eu te amo.
+b9b31e2dd1f6f3a2	00:00.00	00:06.59	Vendedor Sludge	Crash, cara, bom te ver de novo, hein? Não esqueci o resgate que você fez mais cedo.
+b9b31e2dd1f6f3a2	00:06.59	00:08.04	Vendedor Sludge	Ah, você, você, eu te amo.
 b9b31e2dd1f6f3a1	00:00.00	00:02.71	Vendedor Sludge	As coisas estão tranquilas aqui, não posso reclamar.
-b9b31e2dd1f6f3a1	00:02.71	00:06.53	Vendedor Sludge	O negócio dos imóveis compartilhados não está decolando como eu esperava.
-b9b31e2dd1f6f3a1	00:06.53	00:12.91	Vendedor Sludge	Talvez sejam os vizinhos, sabe, com toda aquela gritaria ao lado.
+b9b31e2dd1f6f3a1	00:02.71	00:08.24	Vendedor Sludge	O negócio dos imóveis compartilhados não está decolando como eu esperava.
+b9b31e2dd1f6f3a1	00:08.24	00:12.91	Vendedor Sludge	Talvez sejam os vizinhos, sabe, com toda aquela gritaria ao lado.
 
 # ----------------------------------------------------------------------------
 # No jogo: Uka Uka  (6 sons)
 # ----------------------------------------------------------------------------
 e187a8c4f0534fbe	00:00.00	00:06.61	Uka Uka	Me tirem daqui! Vocês não fazem ideia de como estou dolorido! E cheio!
 e187a8c4f0534fbe	00:06.61	00:08.31	Uka Uka	Estou muito cheio!
-cb98e7fc7d360fbf	00:00.37	00:08.86	Uka Uka	Rá-rá-rá! O poder! O lindo poder! Me sinto forte, vivo e lindo de novo!
-cb98e7fc7d360fbd	00:00.00	00:07.99	Uka Uka	Sim, lindo, superem. Voltem para casa. Tem uma surpresinha esperando por vocês.
+cb98e7fc7d360fbf	00:00.00	00:04.18	Uka Uka	Rá-rá-rá! O poder!  O lindo poder! 
+cb98e7fc7d360fbf	00:04.18	00:08.86	Uka Uka	Me sinto forte...e vivo... e lindo de novo!
+cb98e7fc7d360fbd	00:00.00	00:04.95	Uka Uka	Sim, lindo, superem. Voltem para casa.
+cb98e7fc7d360fbd	00:04.95	00:07.99	Uka Uka	 Tem uma surpresinha esperando por vocês.
 b0206304e4348dbb	00:00.08	00:03.86	Uka Uka	O que vocês, idiotas, estão fazendo aqui de novo? Eu preciso dos meus ossos!
 b0206304e4348db8	00:00.00	00:04.15	Uka Uka	Parem de ficar à toa aqui e façam algo útil, seus tolinhos!
-b0206304e4348db9	00:00.00	00:04.74	Uka Uka	Vocês dois têm algum traumatismo craniano ou algo assim? Saiam daqui!
+b0206304e4348db9	00:00.00	00:03.27	Uka Uka	Vocês dois têm algum traumatismo craniano ou algo assim?
+b0206304e4348db9	00:03.27	00:04.74	Uka Uka	SAIAM DAQUI!
 
+3cd731c25796f74f	00:00.00	00:02.00	Cortex	Atenção estudantes!
+3cd731c25796f74f	00:02.00	00:08.32	Cortex	A refeição malvada de amanhã vai conter peras malvadas, torta malvada e pudim.
+3cd731c25796f74f	00:08.32	00:13.44	Cortex	O pudim não é particurlamente malvado. Isso é tudo!
+1a6b679650f1d33e	00:00.00	00:02.31	Cortex	Atenção estudantes!
+1a6b679650f1d33e	00:02.31	00:09.44	Cortex	Um lembrete para tirar dos seus armários quaisquer armas não explodidas do dia do julgamento no final da aula.
+1a6b679650f1d33e	00:09.44	00:13.55	Cortex	Eu estou ficando cansando de substituir os zeladores...
+b1c94bfb19a61e4c	00:00.00	00:05.78	Cortex	Atenção, alunos. Nosso aluno de intercâmbio do mal desapareceu!
+b1c94bfb19a61e4c	00:05.78	00:10.74	Cortex	Se ele ainda estiver vivo, devolvam-no ao dormitório.
+b1c94bfb19a61e4c	00:10.74	00:18.47	Cortex	Se ele tiver sido devorado, devolvam os restos... ou, é... as sobras... à câmara de clonagem.
+b1c94bfb19a61e4c	00:18.47	00:20.65	Cortex	Cortex desligando.
+e7d9c08434cce2fd	00:00.00	00:02.67	Cortex	Estudantes da Escola do Mal!
+e7d9c08434cce2fd	00:02.67	00:08.90	Cortex	Por favor, acorrentem e amordacem todas as suas lições de casa antes de entregá-las.
+e7d9c08434cce2fd	00:08.90	00:13.99	Cortex	Já tenho mutantes fugitivos demais me dando dor de cabeça, muito obrigado!
+e7d9c08434cce2fd	00:13.99	00:16.13	Cortex	Amo vocês, muah!
+d2c4de1660dd3253	00:00.00	00:02.26	Cortex	Prestem atenção, alunos imundos!
+d2c4de1660dd3253	00:02.26	00:06.76	Cortex	Fiquem de olho em mutantes andando por aí e causando problemas.
+d2c4de1660dd3253	00:06.76	00:11.64	Cortex	Quer dizer, além de vocês. Cortex desligando.
+db271d9f36af0e32	00:00.00	00:05.30	Cortex	Escutem aqui, alunos! O Crash Bandicoot pode estar na área.
+db271d9f36af0e32	00:05.30	00:13.25	Cortex	Se o virem, fiquem à vontade para encenar uma luta bem elaborada, com só alguns de vocês atacando por vez, pra ficar mais emocionante.
+db271d9f36af0e32	00:13.25	00:16.78	Cortex	Sabe, porque isso aqui é de verdade.
+a895768d1a8a1df1	00:00.00	00:05.65	Cortex	Escutem aqui, alunos. Alguns de vocês andam adorando o Uka Uka.
+a895768d1a8a1df1	00:05.65	00:14.13	Cortex	Se eu ouvir alguém sequer falar o nome dele, mando executar! Quatro vezes!
+bb5fc5e0a40f7d77	00:00.00	00:03.36	Cortex	Fiquem alertas. O Crash Bandicoot foi avistado!
+bb5fc5e0a40f7d77	00:03.36	00:08.92	Cortex	Se o encontrarem, matem ele até ele morrer. É só isso.
+edf16ceabc43f1b0	00:00.00	00:06.34	Cortex	Alunos, descansem bem para o grande jogo contra a Universidade do Mal.
+edf16ceabc43f1b0	00:06.34	00:11.84	Cortex	Quero a água do time visitante envenenada e a comida laxativada!
+edf16ceabc43f1b0	00:11.84	00:17.72	Cortex	Essa palavra existe? ‘Laxativada’? Sabe, o particípio de ‘laxante’.
+edf16ceabc43f1b0	00:17.72	00:21.55	Cortex	Tanto faz. Só trapaceiem bastante.
+e344100ade2d6d31	00:00.00	00:06.65	Cortex	Queridos alunos, toda a turma do quarto ano foi desintegrada por se atrasarem.
+0d73779424808193	00:00.00	00:08.25	Cortex	Atenção, lacaios. Temos um vencedor no concurso de redação ‘Como eu mataria o Crash Bandicoot’.
+0d73779424808193	00:08.25	00:12.68	Cortex	Quem venceu foi uma redação com frescor de menta da professora de educação física!
+0d73779424808193	00:12.68	00:18.05	Cortex	O plano eloquente dela é matá-lo de tanto fazer squat.
+1ba3506081d9ae8c	00:00.00	00:04.95	Cortex	Saudações, alunos. Foram avistados bandicoots na área.
+1ba3506081d9ae8c	00:04.95	00:10.46	Cortex	Fiquem à vontade para raspar e irritar de qualquer outro jeito os bandicoots que encontrarem.
+1c6caaaebad25d72	00:00.00	00:05.78	Cortex	Atenção! Meus sensores indicam uma queda de doze por cento na maldade.
+1c6caaaebad25d72	00:05.78	00:13.02	Cortex	Todos, por favor, tentem ser um pouquinho mais perversos. Temos uma imagem a zelar!
+22885a01f870323d	00:00.00	00:05.23	Cortex	Ah, alunos. Toda a turma do terceiro ano desapareceu
+22885a01f870323d	00:05.23	00:12.67	Cortex	Se algum de vocês assassinou eles, lembrem-se de preencher o formulário de solicitação da próxima vez.
+5bb0f4a5d515227e	00:00.00	00:10.16	Cortex	Atenção, alunos. Ao aprisionar mutantes, entrem em contato com a Escola do Mal para colocarmos um NV neles imediatamente.
+5bb0f4a5d515227e	00:10.16	00:14.81	Cortex	A última coisa que queremos é alguém soltando essas coisas.
+61cca4091aa3f339	00:00.00	00:03.44	Cortex	Lacaios, protejam as prisões de gelo!
+61cca4091aa3f339	00:03.44	00:07.68	Cortex	Desconfio que tem heróis correndo pelas nossas partes de baixo.
+7785cb401b3a468f	00:00.00	00:09.72	Cortex	Lacaios da Escola Pública do Mal, não se esqueçam de entregar hoje seus projetos de ciências do mal se quiserem concorrer ao grande prêmio.
+7785cb401b3a468f	00:09.72	00:15.11	Cortex	Os vencedores deste ano vão ganhar um Modulador Espacial Explosivo.
+8646af142305edb2	00:00.00	00:02.58	Cortex	Atenção, mutantes nojentos!
+8646af142305edb2	00:02.58	00:07.88	Cortex	Não, vocês não podem comer X-Burguer, então parem de pedir!
+8646af142305edb2	00:07.88	00:11.03	Cortex	Esse meme é idiota, aliás.
+9af53eacf748e37a	00:00.00	00:04.04	Cortex	Atenção, alunos que trabalham nas prisões de gelo.
+9af53eacf748e37a	00:04.04	00:09.71	Cortex	Lembrem-se: nossa política de ‘quebrou, pagou’ vale para os mutantes guardados no estoque.
+9af53eacf748e37a	00:09.71	00:21.17	Cortex	Qualquer mutante que sofra maus-tratos fatais antes ou depois da aplicação do NV deve ser substituído, não importa quão hilária a violência tenha sido no momento.
+b0ae65fc03f0bae8	00:00.00	00:07.92	Cortex	O aluno que escreveu ‘Doominator é um nome idiota’ na porta da diretoria, por favor, compareça à detenção para ser exterminado.
+b0ae65fc03f0bae8	00:07.92	00:12.61	Cortex	Além disso, a cantina está sem bolinhos.
+53b5080206e0fd71	00:00.00	00:02.00	Cortex	Atenção, lacaios!
+53b5080206e0fd71	00:02.00	00:06.32	Cortex	Tem alguém comendo sanduíches enquanto usa o banheiro!
+53b5080206e0fd71	00:06.32	00:08.86	Cortex	Isso é muito nojento...
+53b5080206e0fd71	00:08.86	00:17.97	Cortex	Uma recompensa de dez mil créditos foi colocada na cabeça do comedor de sanduíches. Isso é tudo.
+5ce8dd7005fcfdcc	00:00.00	00:01.23	Cortex	Ouçam!
+5ce8dd7005fcfdcc	00:01.23	00:06.25	Cortex	O Crash Bandicoot está aqui! Parem ele e o destruam!
+5ce8dd7005fcfdcc	00:06.25	00:10.06	Cortex	Qualquer um que morrer em combate será expuldo imediatamente.
+5ce8dd7005fcfdcc	00:10.06	00:12.72	Cortex	Cortex desligando.
+7de46f8b4d3411d3	00:00.00	00:02.00	Cortex	Atenção, lacaios!
+7de46f8b4d3411d3	00:02.00	00:09.29	Cortex	Alguém gravou por cima dos meus programas. Estou muito bravo com isso. Sério!
+7de46f8b4d3411d3	00:09.29	00:14.58	Cortex	Eu tinha até colocado uma etiquetinha na fita, então sei que não foi sem querer.
+7de46f8b4d3411d3	00:14.58	00:18.39	Cortex	Isso foi muito sacanagem!
+c58af90b3d48b2be	00:00.00	00:06.22	Cortex	Hã, pessoal, não quero deixar ninguém pra baixo, mas um dos meus experimentos fugiu.
+c58af90b3d48b2be	00:06.22	00:13.39	Cortex	Se virem algo meio parecido com um professor de marcenaria do ensino médio, bom... sabe como é, façam as pazes.
+c58af90b3d48b2be	00:13.39	00:15.69	Cortex	Cortex desligando.
+92f951f92123c27d	00:00.00	00:01.29	Cortex	Todo mundo!
+92f951f92123c27d	00:01.29	00:05.33	Cortex	Tem um vazamentozinho de oxigênio no setor 4.
+92f951f92123c27d	00:05.33	00:13.17	Cortex	Talvez você sinta uma dormênciazinha, formigamento e talvez uma necrose.
+1a886a616c244b28	00:00.00	00:05.57	Cortex	Eu gostaria de lembrar todos vocês que a zona branca é só para carregamento e descarga.
+1a886a616c244b28	00:05.57	00:09.66	Cortex	Não há nenhum estacionamento na zona branca.
+e7f6c33743edd6cf	00:00.00	00:02.58	Cortex	Vocês poderiam falar mais baixo, por favor?
+e7f6c33743edd6cf	00:02.58	00:05.57	Cortex	Eu tô tentando tirar uma soneca.
+e7f6c33743edd6cf	00:05.57	00:08.94	Cortex	O irmão precisa dos Zzzzzs dele.
+04cf43125f7c73ba	00:00.00	00:11.01	Cortex	Hã, com licença. Isso é meio constrangedor, mas... alguém aí tem troco pra cinquenta? Preciso lavar roupa e fiquei sem moedas.
+04cf43125f7c73ba	00:11.01	00:17.62	Cortex	Era de se esperar que um cientista maluco não precisasse pagar pra lavar a própria roupa, mas regras são regras!
+d23d9c0043578379	00:00.00	00:06.87	Cortex	Atenção, subordinados do mal. Haverá uma explosão solar por volta das seis horas da tarde de hoje.
+d23d9c0043578379	00:06.87	00:15.01	Cortex	Os níveis de radiação vão subir doze mil por cento. Eu estou seguro nos meus aposentos, é claro. Paredes de chumbo.
+d23d9c0043578379	00:15.01	00:22.19	Cortex	Mas vocês deveriam passar um protetor solar ou algo assim. Posso recomendar FPS três mil?
+b893090910d76113	00:00.00	00:04.33	Cortex	O almoço espacial de hoje será estrogonofe de carne.
+b893090910d76113	00:04.33	00:10.95	Cortex	A carne não é exatamente carne, mas me garantiram que ela vai passar por vocês sem nenhum incidente.
+c6c2e1d56e308e0c	00:00.00	00:05.08	Cortex	Lacaios, detectei uma perturbação na Força!
+c6c2e1d56e308e0c	00:05.08	00:08.67	Cortex	Isso é surpreendente, porque eu não sou exatamente um Jedi.
+c6c2e1d56e308e0c	00:08.67	00:14.00	Cortex	Pode ser só gases, mas, por via das dúvidas, achei melhor avisar. 
+8e63a17fca844cb1	00:00.00	00:08.96	Cortex	Segurança, houve uma perturbação no Setor Doze! Mandem mais coisas do mal e preparem-se!
+c78c3c23a7293cf2	00:00.00	00:06.53	Cortex	Segurança, alguém pegou minha foto favorita da minha mãe! Revistem o prédio e tragam ela de volta!
+c78c3c23a7293cf2	00:06.53	00:12.59	Cortex	Quero que ela volte imediatamente para o seu lugar de honra, em cima do meu mictório!
+22a55cb50791260f	00:00.00	00:07.70	Cortex	Lacaios, como está meu cabelo hoje? Sabe, porque estou pensando em prender ele por um tempinho.
+22a55cb50791260f	00:07.70	00:12.98	Cortex	Talvez num rabo de cavalo, mas isso pode ser meio 'professora de artes' demais, se é que vocês me entendem.
+22a55cb50791260f	00:12.98	00:16.60	Cortex	Pililililim! Cortex desligando.
+5bcdf770f0479a68	00:00.00	00:08.25	Cortex	Pessoal, escutem. Estou esperando uma encomenda, então, se virem o entregador, podem abrir o portão pra ele, por favor?
+5bcdf770f0479a68	00:08.72	00:15.87	Cortex	Pensando bem, como ele vai chegar ao espaço? Preciso parar de fazer compras pela internet.
+cda7eb76e4c711bd	00:00.00	00:08.18	Cortex	A distribuição mundial dos NVs foi concluída! A ativação vai acontecer em duas horas terrestres!
+cda7eb76e4c711bd	00:08.18	00:15.77	Cortex	Quer dizer, a não ser que algum herói apareça, mas quais são as chances disso? Tipo uma em um milhão ou algo assim?
