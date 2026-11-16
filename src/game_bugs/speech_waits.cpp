@@ -51,6 +51,7 @@
 #include <rex/runtime.h>
 
 #include "guest_memory.h"
+#include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 REXCVAR_DEFINE_BOOL(fix_speech_cut_off, true, "CrashMoM",
                     "A new Aku Aku hint line waits until the line being spoken has ended (the "
@@ -60,7 +61,10 @@ extern "C" REX_FUNC(__imp__sub_8229E838);
 
 namespace {
 
-using Clock = std::chrono::steady_clock;
+// Game time (game_time.h): with sound on game frames (sound_out.h), "a voice
+// is still playing" is decided on game time too, so the wait comes out the
+// same on every run / PC.
+using Clock = game_time::Clock;
 
 constexpr uint32_t kInstanceList = 0x825A75A4;  // first instance node (instance +8), 0 = none
 constexpr uint32_t kSpeechBusName = 0x825A7598;  // the speech bus's name hash (a word)

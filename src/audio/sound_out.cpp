@@ -83,6 +83,10 @@ REXCVAR_DEFINE_BOOL(sound_out_native, true, "CrashMoM",
 REXCVAR_DEFINE_INT32(sound_out_buffer_blocks, 8, "CrashMoM",
                      "Sound blocks (5.33 ms each) allowed on their way to the speakers at once: "
                      "fewer = less delay, too few = crackles (3-32)");
+REXCVAR_DEFINE_BOOL(sound_follows_game_frames, true, "CrashMoM",
+                    "With the fixed step on (exact runs, online / LAN sessions): every game frame mixes "
+                    "exactly its share of sound and waits for it, so sound (and the cutscenes timed by "
+                    "it) runs on game time. Off = the speakers set the pace, as in normal play");
 REXCVAR_DEFINE_INT32(sound_speakers, 0, "CrashMoM",
                      "Speakers: 0 Automatic (the device's own layout; the system fits 5.1 to it), "
                      "1 Stereo, 2 Headphones (stereo with crossfeed), 3 5.1 Surround, 4 7.1 Surround "
@@ -129,6 +133,17 @@ struct Output {
 
   std::atomic<uint64_t> played{0};
   std::atomic<uint64_t> underruns{0};
+
+  // SOUND ON GAME FRAMES (sound_out.h OnFixedFrame). While `frame_clocked`,
+  // credits come from the game's frames, not from the speakers; `mixed`
+  // counts the game's callback runs (under the mutex), `done` wakes the
+  // frame waiting for them.
+  bool frame_clocked = false;
+  uint64_t mixed = 0;
+  std::condition_variable done;
+  uint64_t epoch_frame = ~0ull;    // the fixed step's epoch the count started at
+  uint64_t mixed_at_epoch = 0;     // `mixed` when it did
+  std::atomic<uint64_t> dropped{0};  // fast runs: blocks the speakers had no room for
 };
 
 Output g_out;
@@ -261,7 +276,9 @@ void SDLCALL DeviceWants(void*, SDL_AudioStream* stream, int additional, int) {
           Convert(g_out.queue.front(), data, channels, crossfeed);
         }
         g_out.queue.pop_front();
-        ++g_out.credits;   // room for one more: the game may mix the next
+        // Room for one more: the game may mix the next. (Sound on game
+        // frames: the frames hand out the credits instead.)
+        if (!g_out.frame_clocked) ++g_out.credits;
         have = true;
       }
     }
@@ -418,6 +435,11 @@ int ThreadMain(uint32_t generation) {
     }
     uint64_t args[] = {g_out.arg_word};
     dispatcher->Execute(g_out.thread->thread_state(), g_out.callback, args, 1);
+    {
+      std::lock_guard<std::mutex> lock(g_out.mutex);
+      ++g_out.mixed;
+    }
+    g_out.done.notify_all();
 
     // Once a minute: blocks played and GAPS (the speakers wanted a block the
     // game hadn't mixed yet = 5.33 ms of silence, heard as a click). A few at
@@ -495,6 +517,14 @@ void Submit(uint32_t frame) {
   }
   std::lock_guard<std::mutex> lock(g_out.mutex);
   g_out.queue.push_back(block);
+  // Sound on game frames, a fast run: the game mixes faster than the speakers
+  // play. Keep the newest ~0.34 s, drop the rest (the speakers only listen).
+  if (g_out.frame_clocked) {
+    while (g_out.queue.size() > 64) {
+      g_out.queue.pop_front();
+      g_out.dropped.fetch_add(1, std::memory_order_relaxed);
+    }
+  }
 }
 
 }  // namespace
@@ -509,6 +539,56 @@ std::vector<std::string> PlaybackDevices() {
 std::string CurrentDevice() {
   std::lock_guard<std::recursive_mutex> lock(g_device_mutex);
   return g_out.device_name;
+}
+
+void OnFixedFrame(uint64_t frame, uint64_t epoch_frame, int32_t fps) {
+  const bool want = REXCVAR_GET(sound_follows_game_frames) && fps > 0;
+  std::unique_lock<std::mutex> lock(g_out.mutex);
+  if (!g_out.running) {
+    g_out.frame_clocked = false;
+    return;
+  }
+  if (!want) {
+    if (g_out.frame_clocked) {
+      // Back to the speakers' pace: give them their usual credits again.
+      g_out.frame_clocked = false;
+      g_out.credits = std::clamp(REXCVAR_GET(sound_out_buffer_blocks), 3, 32);
+      g_out.wake.notify_one();
+      REXLOG_INFO("Sound out: the speakers set the pace again");
+    }
+    return;
+  }
+  if (!g_out.frame_clocked) {
+    g_out.frame_clocked = true;
+    g_out.credits = 0;
+    g_out.epoch_frame = ~0ull;
+    REXLOG_INFO("Sound out: sound follows the game's frames (fixed step 1/{} s)", fps);
+  }
+  // A new epoch (fixed_step::RestartClockAtWholeMs: a replay's or a
+  // session's first frame) restarts the count, so every run mixes the same
+  // number of blocks by each frame from there on.
+  if (epoch_frame != g_out.epoch_frame) {
+    g_out.epoch_frame = epoch_frame;
+    g_out.mixed_at_epoch = g_out.mixed + uint64_t(std::max(g_out.credits, 0));
+  }
+  // Sound owed by the START of frame `frame`: every frame since the epoch,
+  // 48000 / fps samples each, in whole 256-sample blocks (exact integers).
+  const uint64_t frames = frame >= epoch_frame ? frame - epoch_frame : 0;
+  const uint64_t target =
+      g_out.mixed_at_epoch + frames * uint64_t(kRate) / (uint64_t(fps) * kBlockSamples);
+  const uint64_t asked = g_out.mixed + uint64_t(std::max(g_out.credits, 0));
+  if (target > asked) {
+    g_out.credits += int(target - asked);
+    g_out.wake.notify_one();
+  }
+  // The frame starts only once that much is mixed (what the game reads about
+  // its sounds is then the same on every run). A stuck mixer never holds the
+  // game for good: 250 ms, then on without it (logged).
+  if (!g_out.done.wait_for(lock, std::chrono::milliseconds(250),
+                           [&] { return g_out.mixed >= target || !g_out.running; })) {
+    REXLOG_WARN("Sound out: the mixer is behind the game's frames ({} of {} blocks)", g_out.mixed,
+                target);
+  }
 }
 
 void Reopen() {

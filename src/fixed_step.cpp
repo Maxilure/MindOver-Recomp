@@ -40,6 +40,8 @@
 
 #include "fixed_step.h"
 
+#include "audio/sound_out.h"
+
 #if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>  // _mm_pause
 #endif
@@ -321,10 +323,23 @@ void CrashMomPassDelta(PPCRegister& f31) {
   g_reads_this_pass = 0;
   ApplyRequests();
   const int32_t fps = g_fps.load(std::memory_order_relaxed);
-  if (fps <= 0) return;  // real time: the game's own delta
+  // Sound on game frames (sound_out.h OnFixedFrame): handed back to the
+  // speakers once when the fixed step goes off.
+  static bool sound_clocked = false;
+  if (fps <= 0) {
+    if (sound_clocked) {
+      sound_clocked = false;
+      sound_out::OnFixedFrame(0, 0, 0);
+    }
+    return;  // real time: the game's own delta
+  }
   const uint64_t k = g_next_frame++;
   g_frame.store(k, std::memory_order_relaxed);
   if (auto listener = g_pass_listener.load(std::memory_order_relaxed)) listener();
+  // The frame's share of sound is mixed before it runs (after the listener:
+  // a replay's first frame restarts the clock's epoch there).
+  sound_clocked = true;
+  sound_out::OnFixedFrame(k, g_epoch_frame, fps);
   if (!g_fast.load(std::memory_order_relaxed)) WaitForFrameStart(k, fps);
   // The guest computed f31 in single precision (fmuls): give the same kind
   // of number, 1/N rounded to a float.

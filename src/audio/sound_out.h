@@ -50,4 +50,20 @@ struct Stats {
 };
 Stats GetStats();
 
+// SOUND ON GAME FRAMES (2026-11-17, toward online / LAN co-op). Normally the
+// speakers set the pace: each block they take lets the game mix the next one,
+// so sound (and everything the game times by it) runs in REAL time. The game
+// times things by its sound: an in-engine cutscene (the N. Gin lab scene, its
+// 5.1 dialogue track) lasted ~6 s of real time in both a normal-speed and a
+// fast exact run, so it ended on different frames and the runs parted.
+// While the fixed step is on (fixed_step.h) and sound_follows_game_frames is
+// on, every game frame instead lets the game mix exactly its share of sound
+// (48000 / N samples = 3.125 blocks per frame at 60), and the frame waits
+// until that is mixed: sound is then on GAME time, the same on every run and
+// every PC. The speakers just play what's ready (fast runs: extra is dropped).
+// Called by the fixed step at the start of every main-loop pass (game's main
+// thread), with the frame number and the frame its counting starts from
+// (fixed_step's clock epoch).
+void OnFixedFrame(uint64_t frame, uint64_t epoch_frame, int32_t fps);
+
 }  // namespace sound_out
