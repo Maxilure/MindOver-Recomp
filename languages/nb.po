@@ -2085,6 +2085,18 @@ msgstr "Hvem som snakker, i gult, foran replikken (når det er kjent)."
 msgid "Only the spoken words."
 msgstr "Bare de talte ordene."
 
+#: src/options/options_settings.cpp:1443
+msgid "Character Colours"
+msgstr ""
+
+#: src/options/options_settings.cpp:1444
+msgid "Each speaker's name in its character's own colour."
+msgstr ""
+
+#: src/options/options_settings.cpp:1445
+msgid "Every speaker's name in yellow."
+msgstr ""
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

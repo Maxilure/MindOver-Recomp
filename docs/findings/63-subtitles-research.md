@@ -1158,3 +1158,43 @@ look itself (ImGui, not in photos) is still to be seen.
 Lines cut short by the game: a new Aku Aku hint no longer stops the line
 being spoken (findings/61 s.2), so its subtitle no longer stays next to the
 new one.
+
+## 26. Each character's name in its own colour
+
+Every speaker's name used to be drawn in the menus' yellow (`#FFD940`), the
+same for Aku Aku as for a Sludge salesman. Now a name takes its
+character's colour from **`subtitles/speakers.tsv`** (the player's own
+`user/subtitles/speakers.tsv` wins whole, as for the texts; the watcher of
+s.24 reloads it within a second of a change):
+
+```
+<speaker's English name, as written in en.tsv>  TAB  #RRGGBB
+```
+
+**One list for every language.** A cue's colour is looked up by its
+speaker's ENGLISH name (`Cue::speaker_key`), not by the name shown. After
+`en.tsv` is read, its speakers are noted key by key (`SpeakersOf`); after
+the language's own file replaces a key's cues, the n-th cue of that key is
+paired with the n-th English one and the translated name is linked to the
+English name (`LinkSpeakers`; the first pair seen wins, a name never paired
+keeps itself). Every cue then gets the English name as its key, so a
+translation cut into other pieces still keeps its character's colour.
+Checked against the shipped files: every speaker name in
+`pt-br.tsv` links to its English name ("Anciã RhinoRoller" ->
+"RhinoRoller Elder", "Narrador" -> "Narrator"...). The whole lines with a
+speaker from the voice folder (s.13: Aku Aku, Coco, Crunch, Cortex, Uka
+Uka, Nina) already use the English names, which are their own keys.
+
+**The colours** were picked to read on the dark box and over the picture
+with the letters' black outline; Cortex keeps the yellow, and a name not
+in the list (Znu) does too. Ratcicles, RhinoRollers, Sludges and the
+Architect and his assistant share one colour per kind.
+
+**The option:** Options -> Accessibility -> Subtitles -> **Character
+Colours** (`subtitles_speaker_colours`, on by default; the subtitles are
+the port's own, so the original's look is not changed): off = every name in
+yellow, as before. Read at drawing time, so it changes the lines already on
+screen. The tab's sample line shows Aku Aku's colour while it is on.
+
+Not yet seen in the game: the build and the look are to be checked on a
+playthrough.
