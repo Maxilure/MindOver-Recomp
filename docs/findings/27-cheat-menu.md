@@ -648,5 +648,5 @@ such) came from this same read.
 **Fix:** `UpgradeableOf` reads the actor's controller (`+0x1C`), then its
 `+0x140`, each checked as readable and the result by its vtable; the actor's
 `+0x180` stays as a second try. Found by reading the game's code (the
-string's references and the stores that follow the lookup); not yet run
-in the game.
+string's references and the stores that follow the lookup). Playtested on
+Windows: Level up on titans other than the Yuktopus, and on the Yuktopus.
