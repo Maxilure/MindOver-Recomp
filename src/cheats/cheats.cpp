@@ -74,9 +74,17 @@ constexpr int32_t kFrontEndPlaying = 489;
 constexpr uint32_t kCoOpState = 0x8259B11C;
 constexpr uint32_t kStateNotJoined = 0, kStateMask = 1, kStateEnteringMask = 3;
 
-// Actor member (a titan's actor): its CUpgradeableBehaviour*. (Each actor's
-// damageable is found through its update instead: Crash keeps the pointer at
-// +0x12C, titans elsewhere.)
+// Where a titan's CUpgradeableBehaviour* is (findings/27 s.13). Every titan's
+// behaviour controller is an NPCBaseJackable (Strong, Bear, Captain, ...):
+// its set-up (vtable slot 2, sub_821BACC8) looks the behaviour up by its name
+// "m_UpgradeableBehaviour" (sub_821043D8) and keeps it at controller +0x140.
+// The controller is the actor's +0x1C (kActorController). The actor's own
+// +0x180, used first, holds it only for some titans (the Yuktopus); for the
+// others it holds other data, so that read is kept only as a second try.
+// (Each actor's damageable is found through its update instead: Crash keeps
+// the pointer at +0x12C, titans elsewhere.)
+constexpr uint32_t kActorController = 0x1C;  // an actor's behaviour controller
+constexpr uint32_t kJackableUpgradeable = 0x140;
 constexpr uint32_t kActorUpgradeable = 0x180;
 
 // CUpgradeableBehaviour (vtable 0x82032344, constructor sub_82177888).
@@ -295,7 +303,18 @@ namespace {
 
 // Player p's titan's upgrade object (0 when on foot / none).
 uint32_t UpgradeableOf(uint32_t titan) {
-  if (!titan || !Readable(titan + kActorUpgradeable, 4)) return 0;
+  if (!titan) return 0;
+  // The controller's pointer, as the game keeps it (every titan).
+  if (Readable(titan + kActorController, 4)) {
+    const uint32_t controller = Read32(titan + kActorController);
+    if (controller && Readable(controller + kJackableUpgradeable, 4)) {
+      if (const uint32_t upg = ObjectWithVtable(Read32(controller + kJackableUpgradeable), kUpgradeableVtable, 160)) {
+        return upg;
+      }
+    }
+  }
+  // Second try: the actor's +0x180 (each read checked by the vtable).
+  if (!Readable(titan + kActorUpgradeable, 4)) return 0;
   return ObjectWithVtable(Read32(titan + kActorUpgradeable), kUpgradeableVtable, 160);
 }
 uint32_t DamageableOf(uint32_t actor) {
@@ -485,8 +504,8 @@ void Kill(PPCContext& ctx, uint8_t* base, int p, uint32_t body, bool titan) {
 // message handler sub_821ACAD8, at 0x821ACF30) calls sub_821AE998(Crash's
 // controller, actor): it starts the HLFreeJack effect and sets the timer at
 // controller +304 to ~2e31 s, i.e. until a jack uses it up (sub_821AEA70 ends
-// it). The controller is the actor's +0x1C, class "Crash" (vtable 0x82035294).
-constexpr uint32_t kActorController = 0x1C;
+// it). The controller is the actor's +0x1C (kActorController, above), class
+// "Crash" (vtable 0x82035294).
 constexpr uint32_t kCrashControllerVtable = 0x82035294;
 void GiveFreeJack(PPCContext& ctx, uint8_t* base, int p, uint32_t titan) {
   const uint32_t crash = more_players::CharacterOfPlayer(p);

@@ -73,7 +73,8 @@ adds there; then it adds the same to stat 3.
 ### Titans: an upgrade behaviour
 
 Every titan has a `CUpgradeableBehaviour` (vtable `0x82032344`, constructor
-`sub_82177888`), found at actor `+0x180` (checked by its vtable before use).
+`sub_82177888`), found through the titan's behaviour controller (`+0x140`
+of the actor's `+0x1C`; section 13) and checked by its vtable before use.
 Its fields, from the property setters registered for the scripts
 (`upgrade_1_mojo_number` ... `upgrade_5_value_number`, `sub_82178160` /
 `sub_82178178` / `sub_82178188`) and the constructor:
@@ -622,3 +623,30 @@ Checked on Linux: titan save, per-frame snapshot and Level up through the
 new check (level 1 -> 2), console `read 0x41D26B0D` refused, 0 errors. Not
 yet run on Windows. Still unknown: what this titan keeps at `+0x180` (the
 titan's name and type TBD from a save there).
+
+## 13. Titans other than the Yuktopus didn't level up
+
+**Seen:** Level up (and Max level, + mojo, the titan's line in the window)
+did nothing for most titans: the log said `Cheats: player N level up
+(titan): nothing left to buy`. Only the Yuktopus levelled up.
+
+**Cause:** the cheats looked for the titan's `CUpgradeableBehaviour` at the
+actor's `+0x180`, an offset found on the titan tested first. That is not
+where the game keeps it. Every titan's behaviour controller is an
+`NPCBaseJackable` (Strong, Bear, Captain, ...): its set-up (vtable slot 2,
+`sub_821BACC8`) looks the behaviour up by the name `m_UpgradeableBehaviour`
+(string `0x82034108`; the lookup `sub_821043D8` walks the controller's five
+behaviour lists at `+0x1C`, 16 bytes each, comparing names) and stores it at
+controller `+0x140`. Crash's controller does the same for his own at
+`+0x128` (`sub_821AD9E0`). No other code stores that behaviour anywhere, so
+the actor's `+0x180` holds it only by chance for the Yuktopus; for the other
+titans the word there is other data. The vtable check turned it down, so the
+cheat found "no upgrades". The values of section 12's crash (`0x41D26B0D`,
+and in a later report `0x43222222`, `0x41C980E1`, all floats when read as
+such) came from this same read.
+
+**Fix:** `UpgradeableOf` reads the actor's controller (`+0x1C`), then its
+`+0x140`, each checked as readable and the result by its vtable; the actor's
+`+0x180` stays as a second try. Found by reading the game's code (the
+string's references and the stores that follow the lookup); not yet run
+in the game.
