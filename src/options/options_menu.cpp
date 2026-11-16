@@ -269,6 +269,7 @@ std::atomic<bool> g_open{false};
 // The open tab asks for the subtitles' sample (options_settings.h Tab
 // subtitle_preview): mirrored here for the subtitles' drawing (UI thread).
 std::atomic<bool> g_subtitle_preview{false};
+void UpdateSubtitlePreview();  // below: g_subtitle_preview from the tab and row
 std::atomic<bool> g_wheel_list{false};  // WheelScrollsList: open and the tab slides (Refresh)
 // The Players screen takes input now (front end +8592 bit 0x40, read by its
 // Update each frame): its prompt row shows only then, like the game's own
@@ -958,6 +959,7 @@ void Refresh(Env& env) {
     g.focused = focus;
   }
   g.selection = sel;
+  UpdateSubtitlePreview();  // the sample shows only on a subtitle row
 }
 
 // ---------------------------------------------------------------------------
@@ -1913,11 +1915,14 @@ void UpdatePlayers(PPCContext& ctx, uint8_t* base, uint32_t fe, int owner) {
 }
 
 // The Options screen (not Players / Achievements, which share it) on a tab
-// that shows the subtitles' sample.
+// that shows the subtitles' sample, with the cursor on one of its subtitle
+// rows (Row subtitle_preview): opening the tab or moving to another row
+// hides the sample (a playtest found it distracting from the first frame).
 void UpdateSubtitlePreview() {
   const auto& tabs = options_settings::Tabs();
+  const Row* row = RowOnScreen(g.selection);
   const bool on = !g.players && !g.achievements && g.tab >= 0 && g.tab < int(tabs.size()) &&
-                  tabs[size_t(g.tab)].subtitle_preview;
+                  tabs[size_t(g.tab)].subtitle_preview && row && row->subtitle_preview;
   g_subtitle_preview.store(on, std::memory_order_relaxed);
 }
 

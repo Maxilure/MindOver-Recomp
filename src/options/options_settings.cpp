@@ -1426,7 +1426,14 @@ Row ReduceScreenFlashesRow() {
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
-// the tab shows a sample line in the chosen look (Tab subtitle_preview).
+// the tab shows a sample line in the chosen look while one of these rows
+// has the cursor (Tab / Row subtitle_preview).
+
+// A subtitle row: the sample line shows while it has the cursor.
+Row SubtitleSample(Row r) {
+  r.subtitle_preview = true;
+  return r;
+}
 
 // On / off. Off by default (the original has no subtitles: AGENTS.md "keep
 // the original's defaults"). Only the drawing stops: the voices play as
@@ -1577,12 +1584,13 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Gameplay"), GameplayRows()});
   tabs.push_back({tr(u"Language"), {TextLanguageRow(), VoiceLanguageRow()}});
   // The subtitles' rows under their heading (cyan, like Display's "HUD"),
-  // with a sample line on screen while the tab is open.
+  // with a sample line on screen while one of them has the cursor.
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Colour Blindness")), ColourblindnessModeRow(), ColourblindnessIntensityRow(),
                    Heading(tr(u"Visual Sensitivity")), ReduceScreenFlashesRow(),
-                   Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
-                   SubtitleSpeakersRow(), SubtitleSpeakerColoursRow(), SubtitleLingerRow()},
+                   Heading(tr(u"Subtitles")), SubtitleSample(SubtitlesRow()), SubtitleSample(SubtitleSizeRow()),
+                   SubtitleSample(SubtitleBackgroundRow()), SubtitleSample(SubtitleSpeakersRow()),
+                   SubtitleSample(SubtitleSpeakerColoursRow()), SubtitleSample(SubtitleLingerRow())},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
