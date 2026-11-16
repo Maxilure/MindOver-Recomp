@@ -24,11 +24,11 @@ With the setting on, in the native renderer:
 | The fx grid's screen-wide glow / tint (the double mojo flash) | `kFlagCalmFx` on fx grid draws, `fxgrid.frag`: a glow adds 15 % of its colour, a tint moves 15 % of the way | 15 % |
 | Glowing sprites: the particles with additive / subtractive blending (sparks, glows, the bursts of broken crates and objects) | `kParticleCalm` (`recorder.cpp`, `frame.h`), `particle.frag`: their colour x 0.3 | 30 % |
 | The attack ribbons (motion trails: Crash's spin and the like, findings/42) | `kFlagCalmFx` on motion trail draws, `simple.frag`: colour and alpha x 0.3 | 30 % |
+| The characters' yellow glow (the pulse, PS c98.x: red and green + a quarter of it; e.g. Crash's spinning jump) | `recorder.cpp`, the character material's `character[0]` x 0.25 | 25 % |
 | The "proximity" point lights an effect throws on what is near it (up to 4 per draw, e.g. the Ratcicle's cyan flash, findings/20) | `CalmProximityLights` (`recorder.cpp`): each light's intensity (PS c38+n .z) x 0.35 | 35 % |
 
-Normal (alpha-blended) sprites such as smoke and debris, the characters'
-yellow hit flash (combat feedback) and the scene's own lighting are not
-touched. The effects still show, so the moment still reads, but none
+Normal (alpha-blended) sprites such as smoke and debris and the scene's
+own lighting are not touched. The effects still show, so the moment still reads, but none
 lights the screen up. Nothing changes with the setting off; the emulated
 picture is not touched.
 

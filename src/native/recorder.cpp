@@ -103,6 +103,8 @@ namespace {
 // effect throws on what is near it, e.g. the Ratcicle's cyan flash,
 // findings/20) at kCalmLight of their intensity (PS c38+n .z).
 constexpr float kCalmLight = 0.35f;
+// The characters' yellow glow (PS c98.x "pulse", character.frag) at 25 %.
+constexpr float kCalmPulse = 0.25f;
 void CalmProximityLights(LitParams& p) {
   if (!REXCVAR_GET(reduce_screen_flashes)) return;
   for (auto& light : p.point_params) light[2] *= kCalmLight;
@@ -372,6 +374,9 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
   if (character) {
     ReadConstants(base, dev, device::PsConstant(100), p.rim_colour);
     p.character[0] = LoadFloat(base, dev + device::PsConstant(98));   // pulse
+    // REDUCE SCREEN FLASHES (findings/65): the pulse is the yellow glow a
+    // character gives off (e.g. Crash's spinning jump): kept at kCalmPulse.
+    if (REXCVAR_GET(reduce_screen_flashes)) p.character[0] *= kCalmPulse;
     p.character[1] = LoadFloat(base, dev + device::PsConstant(99));   // blend weight
     p.character[2] = LoadFloat(base, dev + device::PsConstant(101));  // rim blend
     p.character[3] = LoadFloat(base, dev + device::PsConstant(102));  // rim amount
