@@ -37,7 +37,10 @@ picture is not touched.
 A first version only weakened the fx grid (to 25 %); a playtest found no
 difference in normal play: the bright moments players notice most (broken
 crates, Crash's spin) are particles, trails and their lights, not the fx
-grid.
+grid. A second playtest (Windows, native renderer, one player) with the
+current version, comparing on / off: breaking crates, Crash's spin and
+spinning jump, the titans and their abilities, storing a titan; every one
+was clearly calmer with the setting on and still readable.
 
 Read every draw: the Options row works at once. Kept in
 `user/settings.toml` like every REXCVAR (a missing entry = off).
