@@ -73,8 +73,8 @@ live), so there is no preview that waits for a confirmation.
 
 ## 4. Not done / to check
 
-* Not seen in the game yet: to be built and tried on Windows, each mode,
-  the strength row, the grey-out with the emulated picture.
+* Built and tried on Windows (native renderer): the modes and the strength
+  change the picture behind the Options screen at once. Linux not built.
 * The emulated picture has no correction (by choice).
 * The ImGui layer (subtitles, tools) is not corrected.
 * The 2.2 power is an approximation of the display encoding.
