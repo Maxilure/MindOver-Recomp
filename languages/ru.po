@@ -2248,12 +2248,26 @@ msgstr "Камера немного трясётся, когда что-то т�
 #: src/options/options_settings.cpp
 #, fuzzy
 msgid "The camera shakes a bit over half as much as in the original game. Cutscenes are unchanged."
-msgstr "Тряска камеры — чуть больше половины от оригинальной игры. Ролики не меняются."
+msgstr "Тряска камеры: чуть больше половины от оригинальной игры. Ролики не меняются."
 
 #: src/options/options_settings.cpp
 #, fuzzy
 msgid "The camera shakes as in the original game."
 msgstr "Камера трясётся как в оригинальной игре."
+
+msgid "Reduce Motion"
+msgstr "Меньше движения"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Меню появляются без скольжения и подпрыгивания, ничего не пульсирует, замедления идут с обычной скоростью, а размытие в движении выключено."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Меню, пульсация и замедления как в оригинальной игре."
+
 
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"

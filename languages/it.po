@@ -2255,6 +2255,20 @@ msgstr "La telecamera trema poco più della metà rispetto al gioco originale. I
 msgid "The camera shakes as in the original game."
 msgstr "La telecamera trema come nel gioco originale."
 
+msgid "Reduce Motion"
+msgstr "Riduci movimento"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "I menu appaiono senza scorrere né rimbalzare, niente pulsa, i rallentatori vanno a velocità normale e il motion blur resta disattivato."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menu, pulsazioni e rallentatori come nel gioco originale."
+
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

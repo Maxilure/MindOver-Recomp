@@ -26,6 +26,7 @@
 
 #include "../achievements/achievements.h"
 #include "../data/fight_tree.h"
+#include "../gameplay/reduce_motion.h"
 #include "../players/more_players.h"
 #include "../ui/hud_scale.h"
 #include "cheat_menu.h"
@@ -942,8 +943,10 @@ extern "C" REX_FUNC(sub_820B8688) {
 // runs our per-frame work.
 extern "C" REX_FUNC(sub_822FFA40) {
   const bool frame_function = uint32_t(ctx.lr) == cheats::kFrameFunctionScaleReturn;
+  const uint32_t manager = ctx.r3.u32;
   __imp__sub_822FFA40(ctx, base);
-  const double scale = ctx.f1.f64;
+  // Reduce Motion (gameplay/reduce_motion.h): the game's slow motion undone.
+  const double scale = reduce_motion::GameTimeScale(base, manager, ctx.f1.f64);
   if (frame_function) {
     cheats::Tick(ctx, base);
   }

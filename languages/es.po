@@ -2255,6 +2255,20 @@ msgstr "La cámara tiembla algo más de la mitad que en el juego original. Las c
 msgid "The camera shakes as in the original game."
 msgstr "La cámara tiembla como en el juego original."
 
+msgid "Reduce Motion"
+msgstr "Reducir movimiento"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Los menús aparecen sin deslizarse ni rebotar, nada late, la cámara lenta va a velocidad normal y el desenfoque de movimiento queda desactivado."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menús, latidos y cámara lenta como en el juego original."
+
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

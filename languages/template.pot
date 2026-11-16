@@ -1838,6 +1838,17 @@ msgstr ""
 
 #: src/options/options_settings.cpp
 msgid "The camera shakes as in the original game."
+
+msgid "Reduce Motion"
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "Menus, pulses and slow motion as in the original game."
+
 msgstr ""
 
 #: src/options/options_settings.cpp:1446

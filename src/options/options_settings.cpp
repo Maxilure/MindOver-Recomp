@@ -1440,6 +1440,20 @@ Row CameraShakeRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: motion (findings/67)
+// ---------------------------------------------------------------------------
+// REDUCE MOTION (gameplay/reduce_motion.cpp): menu animations end at once,
+// menu items and texts stop pulsing, slow motion runs at normal speed, the
+// port's motion blur stays off. Off by default (the original). The game's own
+// logic, so both pictures, live at once.
+Row ReduceMotionRow() {
+  return OnOffRow(tr(u"Reduce Motion"), "reduce_motion", tr(u"On"), tr(u"Off"),
+                  tr(u"Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at "
+                     u"normal speed and motion blur stays off."),
+                  tr(u"Menus, pulses and slow motion as in the original game."), true);
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1605,7 +1619,7 @@ std::vector<Tab> Build() {
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Colour Blindness")), ColourblindnessModeRow(), ColourblindnessIntensityRow(),
                    Heading(tr(u"Visual Sensitivity")), ReduceScreenFlashesRow(),
-                   Heading(tr(u"Motion")), CameraShakeRow(),
+                   Heading(tr(u"Motion")), CameraShakeRow(), ReduceMotionRow(),
                    Heading(tr(u"Subtitles")), SubtitleSample(SubtitlesRow()), SubtitleSample(SubtitleSizeRow()),
                    SubtitleSample(SubtitleBackgroundRow()), SubtitleSample(SubtitleSpeakersRow()),
                    SubtitleSample(SubtitleSpeakerColoursRow()), SubtitleSample(SubtitleLingerRow())},

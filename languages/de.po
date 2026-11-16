@@ -2255,6 +2255,20 @@ msgstr "Die Kamera wackelt etwas mehr als halb so stark wie im Originalspiel. Zw
 msgid "The camera shakes as in the original game."
 msgstr "Die Kamera wackelt wie im Originalspiel."
 
+msgid "Reduce Motion"
+msgstr "Bewegung reduzieren"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menüs erscheinen ohne Gleiten oder Federn, nichts pulsiert, Zeitlupen laufen in normaler Geschwindigkeit und Bewegungsunschärfe bleibt aus."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menüs, Pulsieren und Zeitlupe wie im Originalspiel."
+
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

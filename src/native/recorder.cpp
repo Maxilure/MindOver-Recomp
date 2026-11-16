@@ -13,6 +13,7 @@
 // =============================================================================
 
 #include "recorder.h"
+#include "../gameplay/reduce_motion.h"  // Reduce Motion keeps motion blur off
 #include "../input/prompt_icons.h"
 #include "../guest_memory.h"
 #include "../ui/marquee.h"
@@ -537,7 +538,7 @@ void ReadDofParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, DofP
   // The port's motion blur (camera_motion.h): rides in this pass, which the
   // game draws every frame right after the 3D scene.
   const camera_motion::Motion motion =
-      camera_motion::AtPostPass(base, std::clamp(int(REXCVAR_GET(motion_blur)), 0, 3));
+      camera_motion::AtPostPass(base, std::clamp(reduce_motion::MotionBlurLevel(), 0, 3));  // off with Reduce Motion
   if (motion.valid) {
     p.flags[0] |= kDofMotionBlur;
     p.flags[1] = motion.spheres;

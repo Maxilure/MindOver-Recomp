@@ -58,6 +58,7 @@
 // --debug_menu_input_trace logs every press a menu hears (button, player asked
 // and answered for, owner, caller), START presses, owner changes, interactions.
 // =============================================================================
+#include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "more_players.h"
 #include "outfit_picker.h"
 #include "../data/fight_tree.h"
@@ -437,6 +438,7 @@ extern "C" REX_FUNC(sub_820E5350) {
   __imp__sub_820E5350(ctx, base);
 }
 extern "C" REX_FUNC(sub_820E5F20) {
+  reduce_motion::UpgradeScreenClosing(base, ctx.r3.u32);  // Reduce Motion: before it is destroyed
   __imp__sub_820E5F20(ctx, base);
   g_upgrade_screen.store(false);
   if (Tracing()) REXLOG_INFO("Menu input: level-up screen closed");

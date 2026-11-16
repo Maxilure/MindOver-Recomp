@@ -2255,6 +2255,20 @@ msgstr "De camera schudt iets meer dan half zo veel als in het originele spel. T
 msgid "The camera shakes as in the original game."
 msgstr "De camera trilt zoals in het originele spel."
 
+msgid "Reduce Motion"
+msgstr "Beweging verminderen"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menu's verschijnen zonder te schuiven of te stuiteren, niets pulseert, slow motion loopt op normale snelheid en bewegingsonscherpte blijft uit."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menu's, pulseren en slow motion zoals in het originele spel."
+
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

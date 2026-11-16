@@ -2255,6 +2255,20 @@ msgstr "Kameraet rister litt over halvparten så mye som i originalspillet. Mell
 msgid "The camera shakes as in the original game."
 msgstr "Kameraet rister som i originalspillet."
 
+msgid "Reduce Motion"
+msgstr "Reduser bevegelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menyer vises uten å gli eller sprette, ingenting pulserer, sakte film går i normal hastighet og bevegelsesuskarphet forblir av."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menyer, pulsering og sakte film som i originalspillet."
+
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""
