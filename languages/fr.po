@@ -2085,6 +2085,26 @@ msgstr "Qui parle, en jaune, devant la réplique (quand on le sait)."
 msgid "Only the spoken words."
 msgstr "Seulement les paroles."
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Sensibilité visuelle"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Réduire les flashs à l'écran"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr "Les flashs et lueurs plein écran du jeu sont bien plus faibles."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Full-screen flashes as in the original game."
+msgstr "Flashs plein écran comme dans le jeu d'origine."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

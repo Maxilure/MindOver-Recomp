@@ -1707,6 +1707,22 @@ msgstr ""
 msgid "Only the spoken words."
 msgstr ""
 
+#: src/options/options_settings.cpp:1522
+msgid "Visual Sensitivity"
+msgstr ""
+
+#: src/options/options_settings.cpp:1368
+msgid "Reduce Screen Flashes"
+msgstr ""
+
+#: src/options/options_settings.cpp:1369
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr ""
+
+#: src/options/options_settings.cpp:1370
+msgid "Full-screen flashes as in the original game."
+msgstr ""
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

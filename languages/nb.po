@@ -2085,6 +2085,26 @@ msgstr "Hvem som snakker, i gult, foran replikken (når det er kjent)."
 msgid "Only the spoken words."
 msgstr "Bare de talte ordene."
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Visuell følsomhet"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Reduser skjermblink"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr "Spillets blink og glød over hele skjermen er mye svakere."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Full-screen flashes as in the original game."
+msgstr "Blink over hele skjermen som i originalspillet."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

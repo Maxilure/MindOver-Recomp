@@ -2085,6 +2085,26 @@ msgstr "Кто говорит, желтым, перед репликой (есл
 msgid "Only the spoken words."
 msgstr "Только произносимые слова."
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Чувствительность зрения"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Ослабить вспышки экрана"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr "Полноэкранные вспышки и свечение в игре намного слабее."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Full-screen flashes as in the original game."
+msgstr "Полноэкранные вспышки как в оригинальной игре."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

@@ -2085,6 +2085,26 @@ msgstr "Kuka puhuu, keltaisella, repliikin edessä (kun se tiedetään)."
 msgid "Only the spoken words."
 msgstr "Vain puhutut sanat."
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Näköherkkyys"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Vähennä näytön välähdyksiä"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr "Pelin koko näytön välähdykset ja hehkut ovat paljon heikompia."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Full-screen flashes as in the original game."
+msgstr "Koko näytön välähdykset kuten alkuperäisessä pelissä."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

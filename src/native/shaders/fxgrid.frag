@@ -21,6 +21,12 @@
 // x alpha". The vertex side is the simple material's (simple.vert, with a
 // white tint): the game's fxgridvp does the same matrix and passes colour
 // and texture coordinate on.
+//
+// REDUCE SCREEN FLASHES (the port's `reduce_screen_flashes`, findings/65):
+// with kFlagCalmFx the effect keeps a quarter of its strength: a glow adds a
+// quarter of its colour, a tint moves only a quarter of the way from white
+// (no change) to its colour. The effect still shows (the power-up's moment
+// stays visible) but never as a full-screen flash.
 // =============================================================================
 
 #version 450
@@ -40,7 +46,12 @@ layout(location = 0) out vec4 out_colour;
 void main() {
   uint flags = params.flags.x;
   vec3 copy = texture(u_picture, in_uv).rgb;
-  vec3 rgb = (flags & kFlagFxAdd) != 0u ? copy + in_colour.rgb : copy * in_colour.rgb;
+  vec3 effect = in_colour.rgb;
+  if ((flags & kFlagCalmFx) != 0u) {
+    const float kCalm = 0.25;  // the share of the effect kept
+    effect = (flags & kFlagFxAdd) != 0u ? effect * kCalm : mix(vec3(1.0), effect, kCalm);
+  }
+  vec3 rgb = (flags & kFlagFxAdd) != 0u ? copy + effect : copy * effect;
   vec4 colour = vec4(rgb, in_colour.a);
   if ((flags & kFlagAlphaTest) != 0u && !AlphaTest(colour.a)) {
     discard;

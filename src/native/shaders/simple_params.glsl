@@ -46,6 +46,9 @@ const uint kFlagFxAdd = 128u;
 const uint kFlagLights = 256u;
 // Debug (F11, spotter.h): paint the draw magenta (the motion trails).
 const uint kFlagHighlight = 512u;
+// Fx grid only (fxgrid.frag): Reduce Screen Flashes is on: the screen-wide
+// glow / tint at a quarter of its strength (findings/65).
+const uint kFlagCalmFx = 1024u;
 
 // The GPU's alpha test (the game's materials set it in their state cache):
 // true = keep the pixel. Compare function and reference from `params`.

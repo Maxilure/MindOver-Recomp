@@ -104,6 +104,7 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "each resolve back into guest memory)");
 // The sharpening filter's strength (present pass, docs/findings/41).
 REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
+REXCVAR_DECLARE(bool, reduce_screen_flashes);  // effects/post_effects.cpp
 REXCVAR_DECLARE(int32_t, smooth_cutouts);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
@@ -211,6 +212,10 @@ constexpr uint32_t kFlagFxAdd = 128;  // fx grid: add the colour, else multiply 
 constexpr uint32_t kFlagLights = 256;
 // Debug (F11, spotter.h): this draw is painted magenta (motion trails).
 constexpr uint32_t kFlagHighlight = 512;
+// Reduce Screen Flashes (the `reduce_screen_flashes` setting, findings/65):
+// the fx grid's screen-wide glow / tint at a quarter of its strength
+// (fxgrid.frag kFlagCalmFx).
+constexpr uint32_t kFlagCalmFx = 1024;
 
 // Push constants of the Bink material (shaders/bink.*): the game's movie
 // pixel shader constants c0..c3, and the game's screen size (its movie quad
@@ -2390,6 +2395,9 @@ void NativeRenderer::RecordPasses(VkCommandBuffer cmd) {
                         (d.layout.colour == native::VertexLayout::kAbsent ? kFlagNoColour : 0) |
                         (d.layout.uv == native::VertexLayout::kAbsent ? kFlagNoUv : 0) |
                         (d.fog ? kFlagFog : 0) | (d.fx_add ? kFlagFxAdd : 0) |
+                        (d.material == native::Material::kFxGrid && REXCVAR_GET(reduce_screen_flashes)
+                             ? kFlagCalmFx
+                             : 0) |
                         (d.block != native::DrawCommand::kNoBlock ? kFlagLights : 0) |
                         (d.material == native::Material::kMotionTrail &&
                                  native::spotter::Highlighting() ==

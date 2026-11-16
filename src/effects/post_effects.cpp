@@ -41,6 +41,12 @@ REXCVAR_DEFINE_INT32(shadow_softness, 1, "CrashMoM",
                      "Soft character shadows' edge, native renderer only: 0 sharper, 1 original, "
                      "2 softer, 3 softest")
     .range(0, 3);
+// REDUCE SCREEN FLASHES (findings/65): the game's screen-wide fx grid
+// effects (the double mojo power-up's glow, findings/18) at a quarter of
+// their strength in the native renderer. Off by default (the original).
+REXCVAR_DEFINE_BOOL(reduce_screen_flashes, false, "CrashMoM",
+                    "Photosensitivity: the game's screen-wide flashes (fx grid glows and tints) at a "
+                    "quarter of their strength, native renderer only");
 REXCVAR_DEFINE_INT32(sharpening, 0, "CrashMoM",
                      "Sharpening filter over the finished picture (contrast-adaptive), native renderer "
                      "only: 0 off, 1 low, 2 medium, 3 high")

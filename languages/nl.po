@@ -2085,6 +2085,26 @@ msgstr "Wie er spreekt, in geel, voor de zin (als dat bekend is)."
 msgid "Only the spoken words."
 msgstr "Alleen de gesproken woorden."
 
+#: src/options/options_settings.cpp:1522
+#, fuzzy
+msgid "Visual Sensitivity"
+msgstr "Visuele gevoeligheid"
+
+#: src/options/options_settings.cpp:1368
+#, fuzzy
+msgid "Reduce Screen Flashes"
+msgstr "Schermflitsen verminderen"
+
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "The game's full-screen flashes and glows are much weaker."
+msgstr "De flitsen en gloed over het hele scherm zijn veel zwakker."
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Full-screen flashes as in the original game."
+msgstr "Schermflitsen zoals in het originele spel."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""
