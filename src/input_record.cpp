@@ -233,6 +233,9 @@ std::atomic<uint8_t*> g_base{nullptr};
 // an exact frame resets it there: "last poll" 17 ms ago = a poll this frame.
 constexpr uint32_t kUber = 0x8259B190, kUberInput = 56, kInputLastPollMs = 76;
 void RestartPadPollRhythm() {
+  // The clock first: its ms readings from here on must not depend on which
+  // frame number the replay started on (fixed_step.h RestartClockAtWholeMs).
+  fixed_step::RestartClockAtWholeMs();
   uint8_t* base = g_base.load();
   const uint32_t now_ms = fixed_step::ClockMs();
   if (!base || !now_ms) return;

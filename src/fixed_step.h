@@ -59,6 +59,15 @@ uint64_t Frame();
 // frame (fixed step on, after its first clock read; else 0).
 uint32_t ClockMs();
 
+// Main thread, fixed step on: from THIS frame on, the game's clocks count
+// from the next whole millisecond (frame k = that + (k - this) / N s). Two
+// runs that call it on their own first frame then read identical clock values
+// frame for frame, whatever frame number they reached it on (the ms rounding
+// of 1/N s otherwise depends on the frame number). The replay's first frame
+// (input_record.cpp) and, later, an online session's first frame. False = not
+// ready (off, or before the first clock read).
+bool RestartClockAtWholeMs();
+
 // Called on the main thread at the start of every main-loop pass while the
 // fixed step is on, after the frame number is set (input_record's replay
 // watches for player 1's Crash there: every frame, not only on pad reads).

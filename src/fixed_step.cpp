@@ -44,6 +44,7 @@
 #include <immintrin.h>  // _mm_pause
 #endif
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -110,6 +111,14 @@ constexpr uint64_t kLaunchClockUs = 1000000000ull;  // 1000 s: any fixed value
 // polls, which varies run to run.)
 constexpr uint64_t kReadsBeforeCreep = 1000;
 uint64_t g_last_virtual_us = 0;    // the last time handed out while fixed
+// The frame the clock's time counts from (RestartClockAtWholeMs): the clock at
+// frame k = base + (k - epoch) / N s. 0 until a restart.
+uint64_t g_epoch_frame = 0;
+
+// Microseconds since the epoch frame, for frame k (integer, like the guest's).
+uint64_t FrameUs(uint64_t k, int32_t fps) {
+  return k > g_epoch_frame ? (k - g_epoch_frame) * 1000000ull / uint64_t(fps) : 0;
+}
 
 void ApplyRequests() {
   if (!g_flags_read) {
@@ -135,6 +144,7 @@ void ApplyRequests() {
   g_fast = fast;
   g_next_frame = 0;
   g_frame = 0;
+  g_epoch_frame = 0;
   g_start = Clock::now();
   if (fps > 0) {
     REXLOG_INFO("Fixed step: ON, every frame exactly 1/{} s ({:.3f} ms){}", fps, 1000.0 / fps,
@@ -171,10 +181,34 @@ void SetPassListener(void (*listener)()) { g_pass_listener = listener; }
 uint32_t ClockMs() {
   const int32_t fps = g_fps.load(std::memory_order_relaxed);
   if (fps <= 0 || g_need_base) return 0;
-  return uint32_t((g_clock_base_us + g_frame.load() * 1000000ull / uint64_t(fps)) / 1000);
+  return uint32_t((g_clock_base_us + FrameUs(g_frame.load(), fps)) / 1000);
 }
 int32_t Fps() { return g_fps.load(std::memory_order_relaxed); }
 uint64_t Frame() { return g_frame.load(std::memory_order_relaxed); }
+
+// WHY (2026-11-17, first step toward online co-op: two runs must agree frame
+// for frame): the clock hands out WHOLE milliseconds, and 1/60 s is 16.667 ms,
+// so the ms reading of a frame depends on where that frame sits in a 3-frame
+// cycle. The game polls the pads when its ms clock is more than 16 past the
+// last poll (input_record.cpp), so a replay starting on frame 1056 polled on
+// other frames than one starting on 1057: a joining player's START landed one
+// frame later in every run whose start frame was a multiple of 3, and the
+// runs parted from there (the "join race" of the 4-player tests). Restarting
+// the count here makes every run's clock read the same from this frame on.
+// Online lockstep needs the same thing at a session's first frame.
+bool RestartClockAtWholeMs() {
+  const int32_t fps = g_fps.load(std::memory_order_relaxed);
+  if (!t_main || fps <= 0 || g_need_base) return false;
+  const uint64_t k = g_frame.load(std::memory_order_relaxed);
+  const uint64_t now_us = g_clock_base_us + FrameUs(k, fps);
+  // The next whole millisecond: later than anything handed out, so the
+  // clock never runs backwards.
+  const uint64_t next_ms_us = (std::max(now_us, g_last_virtual_us) / 1000 + 1) * 1000;
+  g_clock_base_us = next_ms_us;
+  g_epoch_frame = k;
+  g_reads_this_pass = 0;
+  return true;
+}
 
 std::string Set(int32_t fps, bool fast) {
   if (fps < 0 || fps > 1000) return "fps must be 0..1000\n";
@@ -205,7 +239,7 @@ template <typename RealClock>
 bool MainThreadClockUs(uint64_t& us, RealClock real) {
   if (!t_main) return false;
   const int32_t fps = g_fps.load(std::memory_order_relaxed);
-  const uint64_t frame_us = fps > 0 ? g_frame.load(std::memory_order_relaxed) * 1000000ull / uint64_t(fps) : 0;
+  const uint64_t frame_us = fps > 0 ? FrameUs(g_frame.load(std::memory_order_relaxed), fps) : 0;
   if (g_need_base && fps > 0) {
     g_need_base = false;
     g_clock_base_us = g_from_launch ? kLaunchClockUs - frame_us
