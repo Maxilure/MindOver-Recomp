@@ -12,6 +12,8 @@
 //        prompts, the "!" and its flash) stop wobbling and pulsing.
 //     2b. Mojo and other pick-ups are collected at once instead of flying to
 //        the player.
+//     2c. 3D models on menu pages (Crash spinning or kicking on the Level Up
+//        and upgrade screens) stay on one frame of their animation.
 //     3. The game's slow-motion moments run at normal speed.
 //     4. The port's motion blur stays off whatever its own row says.
 //   Research and what is not covered: docs/findings/67-reduce-motion.md.
@@ -194,4 +196,23 @@ extern "C" REX_FUNC(sub_82198738) {
     }
   }
   __imp__sub_82198738(ctx, base);
+}
+
+// Pure3dObject (a 3D model placed on a menu page, Scrooby class
+// Pure3dObject@frontend@pure3d, vtable 0x8200F534): its update (slot 5 is a
+// jump to sub_823DB5C0; r3 = the object, f1 = the time step) advances the
+// model's animation players at +0x70, +0x78 and +0x7C by the step. This is
+// what animates Crash on the Level Up / upgrade screens (spinning, kicking)
+// and the other 3D models on menu pages. With the setting on they get a
+// step of 0: each animation stays on the frame it starts on. f1 is put back.
+extern "C" REX_FUNC(__imp__sub_823DB5C0);
+extern "C" REX_FUNC(sub_823DB5C0) {
+  if (!reduce_motion::On()) {
+    __imp__sub_823DB5C0(ctx, base);
+    return;
+  }
+  const double step = ctx.f1.f64;
+  ctx.f1.f64 = 0.0;
+  __imp__sub_823DB5C0(ctx, base);
+  ctx.f1.f64 = step;
 }

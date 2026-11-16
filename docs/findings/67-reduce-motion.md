@@ -94,6 +94,17 @@ at progress 1 the pick-up counts as collected (`sub_821994D0`) and moves on.
 (plus 1e-4 against rounding), so the progress reaches 1 on this frame: the
 pick-up is collected at once.
 
+### 2.2d 3D models on menu pages (Level Up)
+
+The Level Up and upgrade screens show Crash as a 3D model, spinning or
+kicking. A 3D model on a menu page is a `Pure3dObject@frontend@pure3d`
+(vtable `0x8200F534`); its update (slot 5, a jump to `sub_823DB5C0`) passes
+the time step to the model's animation players at `+0x70`, `+0x78` and
+`+0x7C` (their vtable slot 6). **Change:** the update runs with a time step
+of 0 (the caller's is put back after): every such model stays on the frame
+its animation starts on. This covers every 3D model on a menu page, not
+only Level Up.
+
 ### 2.3 Slow motion
 
 `CTimeManager::GetScale` (`sub_822FFA40`, findings/27 s.4) returns a base
