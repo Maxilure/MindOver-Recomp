@@ -68,14 +68,31 @@ announcement at once.
 item keeps the size 1.1 (still bigger and yellow, so the cursor stays easy
 to see) and stops moving.
 
-### 2.2b Floating button prompts
+### 2.2b Floating icons (button prompts, the "!")
 
-The icons over things that can be used (a door, a hatch: the button prompt)
-are `CIconBehaviour`s (vtable `0x8203248C`). Their update (slot 4,
-`sub_82178ED8`) advances a timer at `+0x6C` and turns the icon by
-`sin(timer)` and a second wave of `timer x` a constant around its resting
-place (`+0x60`, 3 floats). **Change:** the timer is held at 0 around the
-original call: the icon stays upright in place.
+The icons over things to use or people to talk to (a door's button prompt,
+the "!" with its flash) are `CIconBehaviour`s (vtable `0x8203248C`). Their
+update (slot 4, `sub_82178ED8`) advances a timer at `+0x6C` by 3 x the time
+step and turns the icon by `sin(timer) x 0.5` and `sin(timer x 2) x 0.2`
+around its resting place (`+0x60`, 3 floats); then it passes the time step
+to the icon's drawable (`+0x74`, vtable slot 5), whose own animation is the
+flash growing and shrinking. **Change:** the update runs with a time step
+of 0 (the caller's is put back after): the icon stays upright and its
+animation stays on its first frame.
+
+### 2.2c Pick-ups flying to the player
+
+A pick-up (mojo, health, power-ups) is a `Collectable` (a script behaviour
+controller, vtable `0x82034DF4`); its update (slot 21, `sub_82198738`)
+adds the time step to a timer at `+0xC4`, then runs a state machine at
+`+0xC8` (jump table at `0x8219881C`, states 1-6). **State 4** is the flight
+to the player who picked it up: from the pick-up point (`+0xD0`, set when the
+state starts) to the player's position along a small arc, progress = timer
+x 2 (the constant `0x8201FB74`, cached at `0x825A0270`), so half a second;
+at progress 1 the pick-up counts as collected (`sub_821994D0`) and moves on.
+**Change:** in state 4 the timer is set to 0.5 s minus this frame's step
+(plus 1e-4 against rounding), so the progress reaches 1 on this frame: the
+pick-up is collected at once.
 
 ### 2.3 Slow motion
 
