@@ -282,6 +282,7 @@ constexpr uint32_t kLitNoTangents = 512;      // ... no tangent / binormal
 constexpr uint32_t kLitNoNormalMap = 1024;    // character without a normal map: flat
 constexpr uint32_t kLitVertexColour = 2048;   // reflect: use the vertex colour (PS bool b10)
 constexpr uint32_t kLitNoColour = 4096;       // ... the vertex has no colour (white)
+constexpr uint32_t kLitCalm = 8192;           // Reduce Screen Flashes: a glowing mesh at 30 % (findings/65)
 
 // The shadow material's parameters (Material::kShadow, shaders/shadow.*),
 // std140 like LitParams. The game's pixel shader blurs a copy of the stencil

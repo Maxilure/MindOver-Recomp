@@ -25,6 +25,8 @@ With the setting on, in the native renderer:
 | Glowing sprites: the particles with additive / subtractive blending (sparks, glows, the bursts of broken crates and objects) | `kParticleCalm` (`recorder.cpp`, `frame.h`), `particle.frag`: their colour x 0.3 | 30 % |
 | The attack ribbons (motion trails: Crash's spin and the like, findings/42) | `kFlagCalmFx` on motion trail draws, `simple.frag`: colour and alpha x 0.3 | 30 % |
 | The characters' yellow glow (the pulse, PS c98.x: red and green + a quarter of it; e.g. Crash's spinning jump) | `recorder.cpp`, the character material's `character[0]` x 0.25 | 25 % |
+| The glowing outline (rim light, PS c102.x) of characters and titans | `recorder.cpp`, the character material's `character[3]` x 0.4 | 40 % |
+| Glowing meshes (additive / subtractive blending) of the simple and lit simple materials, e.g. a titan ability's energy | `kFlagCalmFx` (simple, `simple.frag`), `kLitCalm` (lit, `lit.frag`): colour x 0.3 | 30 % |
 | The "proximity" point lights an effect throws on what is near it (up to 4 per draw, e.g. the Ratcicle's cyan flash, findings/20) | `CalmProximityLights` (`recorder.cpp`): each light's intensity (PS c38+n .z) x 0.35 | 35 % |
 
 Normal (alpha-blended) sprites such as smoke and debris and the scene's

@@ -105,6 +105,8 @@ namespace {
 constexpr float kCalmLight = 0.35f;
 // The characters' yellow glow (PS c98.x "pulse", character.frag) at 25 %.
 constexpr float kCalmPulse = 0.25f;
+// The characters' and titans' glowing outline (rim light, PS c102.x) at 40 %.
+constexpr float kCalmRim = 0.4f;
 void CalmProximityLights(LitParams& p) {
   if (!REXCVAR_GET(reduce_screen_flashes)) return;
   for (auto& light : p.point_params) light[2] *= kCalmLight;
@@ -380,6 +382,9 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
     p.character[1] = LoadFloat(base, dev + device::PsConstant(99));   // blend weight
     p.character[2] = LoadFloat(base, dev + device::PsConstant(101));  // rim blend
     p.character[3] = LoadFloat(base, dev + device::PsConstant(102));  // rim amount
+    // REDUCE SCREEN FLASHES (findings/65): the rim light, the glowing outline
+    // characters and titans have (character.frag), kept at kCalmRim.
+    if (REXCVAR_GET(reduce_screen_flashes)) p.character[3] *= kCalmRim;
   }
   std::memcpy(p.fog_colour, d.fog_colour, sizeof(d.fog_colour));
   p.fog_fade_alpha[0] = d.fog_start;
@@ -392,7 +397,10 @@ void ReadLitParams(const uint8_t* base, uint32_t dev, const DrawCommand& d, LitP
                 (d.fog ? kLitFog : 0) | (d.fade_rgb ? kLitFadeRgb : 0) |
                 (d.alpha_test ? kLitAlphaTest : 0) |
                 (d.blend_map.present() ? kLitBlendMap : 0) |
-                (character && !d.normal_map.present() ? kLitNoNormalMap : 0);
+                (character && !d.normal_map.present() ? kLitNoNormalMap : 0) |
+                // Reduce Screen Flashes (findings/65): a glowing (additive /
+                // subtractive) lit mesh, e.g. a titan ability's energy, at 30 %.
+                (d.fade_rgb && REXCVAR_GET(reduce_screen_flashes) ? kLitCalm : 0);
   p.more[0] = d.alpha_func;
 }
 

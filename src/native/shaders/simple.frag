@@ -102,7 +102,8 @@ void main() {
     }
   }
   // REDUCE SCREEN FLASHES (findings/65): the attack ribbons (motion trails:
-  // Crash's spin and the like) at 30 % of their light and opacity.
+  // Crash's spin and the like) and glowing (additive / subtractive) meshes,
+  // e.g. a titan ability's energy, at 30 % of their light and opacity.
   if ((flags & kFlagCalmFx) != 0u) {
     colour *= 0.3;
   }
