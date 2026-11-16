@@ -575,9 +575,9 @@ void LinkSpeakers(const EnglishSpeakers& en, Texts& data) {
 // SPEAKER FOLDER: a "folder:<name>" line of speakers.tsv, the folder's
 // trailing digits dropped, so labrat1 ... labrat6 (the six voices of one
 // enemy kind) share "folder:labrat". The common enemies' lines (combat
-// barks, findings/63 s.13) have no speaker names yet, and some kinds no
-// official name either: keyed by folder, their colours hold whatever names
-// they are given later (findings/63 s.26).
+// barks, findings/63 s.13) have no speaker names in the text files yet:
+// keyed by folder, their colours hold whatever names they are given later
+// (findings/63 s.26).
 ImU32 ColourOf(const Texts& data, const std::u16string& speaker_key, std::string_view folder = {}) {
   if (!speaker_key.empty()) {
     if (const auto it = data.colours.find(speaker_key); it != data.colours.end()) return it->second;
