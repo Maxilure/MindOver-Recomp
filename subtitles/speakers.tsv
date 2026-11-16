@@ -1,0 +1,45 @@
+# The colour of each speaker's name in the subtitles (findings/63 s.26).
+# <speaker's English name, as written in en.tsv> TAB <#RRGGBB>
+# One list for every language: a translated name takes the colour of the
+# English name at the same place in en.tsv. A name not listed here stays in
+# the menus' yellow (#FFD940), as does every name with Options ->
+# Accessibility -> Character Colours off. Colours are picked to read on the
+# dark box and on the picture with the letters' black outline.
+#
+# A line "folder:<voice folder>" colours a voice line by the folder its
+# sound comes from (the folder's trailing digits dropped: folder:labrat =
+# labrat1 ... labrat6), when its speaker's name isn't listed: for the
+# common enemies' lines, which have no speaker names in the text files yet.
+Aku Aku	#F0A860
+Uka Uka	#FF6B5E
+Cortex	#FFD940
+Nina	#7FB2FF
+N. Brio	#6FE09A
+N. Gin	#C9D2DC
+Coco	#FF9BD0
+Crunch	#FFA3A3
+Crash	#FF9A3C
+Narrator	#A9A9A9
+Elderly Ratcicle	#A8E8FF
+Ratcicle Hero's son	#A8E8FF
+Ratnician	#A8E8FF
+RhinoRoller Elder	#C7A27A
+RhinoRoller cub	#C7A27A
+Conjoined Sludge	#D4E157
+Sludge salesman	#D4E157
+Architect	#8FD3C0
+Architect's assistant	#8FD3C0
+Melvin	#FFB0A0
+Bratgirl	#E58AFF
+Znu	#B39DFF
+Doom Monkey	#6F95FF
+Slap-E	#E8C35A
+
+# The common enemies, by voice folder (six voices per kind): bratgirl =
+# Brat Girls, labrat = Ratnicians, znu = Znu, monkey = Doom Monkeys,
+# slappe = Slap-E (the names of the game's own defeat-count achievements).
+folder:bratgirl	#E58AFF
+folder:labrat	#A8E8FF
+folder:znu	#B39DFF
+folder:monkey	#6F95FF
+folder:slappe	#E8C35A

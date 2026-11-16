@@ -2085,6 +2085,21 @@ msgstr "Qui parle, en jaune, devant la réplique (quand on le sait)."
 msgid "Only the spoken words."
 msgstr "Seulement les paroles."
 
+#: src/options/options_settings.cpp:1443
+#, fuzzy
+msgid "Character Colours"
+msgstr "Couleurs des personnages"
+
+#: src/options/options_settings.cpp:1444
+#, fuzzy
+msgid "Each speaker's name in its character's own colour."
+msgstr "Le nom de qui parle dans la couleur de son personnage."
+
+#: src/options/options_settings.cpp:1445
+#, fuzzy
+msgid "Every speaker's name in yellow."
+msgstr "Tous les noms de qui parle en jaune."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

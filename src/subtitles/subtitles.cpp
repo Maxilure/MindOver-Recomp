@@ -74,6 +74,12 @@ REXCVAR_DEFINE_INT32(subtitles_background_opacity, 70, "CrashMoM",
     .range(0, 100);
 REXCVAR_DEFINE_BOOL(subtitles_speakers, true, "CrashMoM",
                     "The speaker's name in front of a subtitle, when it is known");
+// THE SPEAKERS' COLOURS (findings/63 s.26): each character's name in its own
+// colour, from subtitles/speakers.tsv; off = every name in the menus' yellow
+// (kSpeakerColour), as before. Read every frame: the Options row works at once.
+REXCVAR_DEFINE_BOOL(subtitles_speaker_colours, true, "CrashMoM",
+                    "Each speaker's name in its character's colour (subtitles/speakers.tsv); off = "
+                    "every name in yellow");
 REXCVAR_DEFINE_INT32(subtitles_max_lines, 2, "CrashMoM",
                      "How many subtitles may stand on screen at once (the newest at the bottom, older "
                      "ones pushed up and dimmed; one more makes the oldest fade out)")
@@ -123,6 +129,11 @@ int64_t NowMs() {
 struct Cue {
   double start = 0, end = 0;
   std::u16string speaker;  // "" = none
+  // WHO speaks, for the name's colour: the speaker's ENGLISH name (the
+  // en.tsv cue at the same place), so a translated name ("Anciã
+  // RhinoRoller") gets the same colour as its English one ("RhinoRoller
+  // Elder") without a colour list per language. LinkSpeakers fills it.
+  std::u16string speaker_key;
   std::u16string text;
 };
 // Everything the files say, read in one go. A reload builds a NEW set and
@@ -133,6 +144,8 @@ struct Texts {
   std::unordered_map<uint64_t, std::u16string> texts;          // sound ID -> its whole line
   std::unordered_map<uint64_t, std::vector<Cue>> sound_cues;   // sound ID -> its lines
   std::unordered_map<std::string, std::vector<Cue>> movie_cues;  // movie name (lower case) -> its lines
+  // speakers.tsv: a speaker's English name -> the colour of its name.
+  std::unordered_map<std::u16string, ImU32> colours;
 };
 std::shared_ptr<const Texts> g_data = std::make_shared<Texts>();  // under g_mutex
 
@@ -275,6 +288,7 @@ bool ReadTexts(const std::string& code, Texts& out) {
       cue.start = ParseTime(f[1]);
       cue.end = ParseTime(f[2]);
       cue.speaker = Utf16(f[3]);
+      cue.speaker_key = cue.speaker;  // the English name: LinkSpeakers fixes translated ones
       cue.text = TextOf(f[4]);
       if (cue.start < 0 || cue.end <= cue.start) { ++skipped; continue; }
       if (is_id) {
@@ -427,6 +441,9 @@ struct Line {
   // is named by the movie and its place in the file (MovieUid). 0 = a sample.
   uint64_t uid = 0;
   std::u16string speaker;
+  // The name's colour (speakers.tsv via ColourOf), 0 = the yellow. Drawn
+  // only while subtitles_speaker_colours is on (read at drawing time).
+  ImU32 speaker_colour = 0;
   std::u16string text;
   Clock::time_point start;
   Clock::time_point end;  // moved earlier by a cut
@@ -471,6 +488,109 @@ std::string TextCode() {
   return running >= 0 && running < int(langs.size()) ? langs[size_t(running)].key : "en-us";
 }
 
+// THE COLOURS FILE (findings/63 s.26): subtitles/speakers.tsv (the
+// player's own <user>/subtitles/speakers.tsv wins whole, as for the texts),
+// one line per character:
+//   <speaker's English name, as in en.tsv>  TAB  #RRGGBB
+// A name not in it keeps the yellow; so does every name with
+// subtitles_speaker_colours off. One list for every language: a cue's
+// colour is looked up by its English name (Cue::speaker_key).
+void ReadColours(Texts& out) {
+  const std::filesystem::path path = FileFor("speakers.tsv");
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return;
+  std::string line;
+  size_t skipped = 0;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty() || line[0] == '#') continue;
+    const size_t tab = line.find('\t');
+    if (tab == std::string::npos) { ++skipped; continue; }
+    std::string hex = line.substr(tab + 1);
+    if (!hex.empty() && hex[0] == '#') hex.erase(0, 1);
+    uint32_t rgb = 0;
+    bool ok = hex.size() == 6;
+    for (char c : hex) {
+      const int d = c >= '0' && c <= '9' ? c - '0'
+                    : c >= 'a' && c <= 'f' ? c - 'a' + 10
+                    : c >= 'A' && c <= 'F' ? c - 'A' + 10
+                                           : -1;
+      if (d < 0) { ok = false; break; }
+      rgb = (rgb << 4) | uint32_t(d);
+    }
+    if (!ok) { ++skipped; continue; }
+    out.colours[Utf16(line.substr(0, tab))] =
+        IM_COL32((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 0xFF);
+  }
+  REXLOG_INFO("Subtitles: {} speaker colour(s) from {}{}", out.colours.size(), path.string(),
+              skipped ? fmt::format(" ({} line(s) not understood)", skipped) : "");
+}
+
+// The English speakers of every key's cues, in order, taken right after
+// en.tsv is read (the language's file then REPLACES a key's cues).
+struct EnglishSpeakers {
+  std::unordered_map<uint64_t, std::vector<std::u16string>> sounds;
+  std::unordered_map<std::string, std::vector<std::u16string>> movies;
+};
+EnglishSpeakers SpeakersOf(const Texts& data) {
+  EnglishSpeakers en;
+  for (const auto& [id, cues] : data.sound_cues) {
+    for (const Cue& c : cues) en.sounds[id].push_back(c.speaker);
+  }
+  for (const auto& [key, cues] : data.movie_cues) {
+    for (const Cue& c : cues) en.movies[key].push_back(c.speaker);
+  }
+  return en;
+}
+
+// After the language's file: every translated speaker name -> its English
+// name, learnt from the cues at the same place of the same key in both
+// files (the n-th cue of a key in pt-br.tsv against the n-th in en.tsv:
+// a translation keeps the pieces in order). The first pair seen wins; a
+// name never paired keeps itself (it may be English already). Then every
+// cue's speaker_key is set from that map, so the colour follows the
+// character even where a translation cut a key into other pieces.
+void LinkSpeakers(const EnglishSpeakers& en, Texts& data) {
+  std::unordered_map<std::u16string, std::u16string> english_of;
+  auto pair = [&](const std::vector<Cue>& cues, const std::vector<std::u16string>& english) {
+    for (size_t n = 0; n < cues.size() && n < english.size(); ++n) {
+      if (!cues[n].speaker.empty() && !english[n].empty()) english_of.emplace(cues[n].speaker, english[n]);
+    }
+  };
+  for (const auto& [id, cues] : data.sound_cues) {
+    if (const auto it = en.sounds.find(id); it != en.sounds.end()) pair(cues, it->second);
+  }
+  for (const auto& [key, cues] : data.movie_cues) {
+    if (const auto it = en.movies.find(key); it != en.movies.end()) pair(cues, it->second);
+  }
+  auto link = [&](std::vector<Cue>& cues) {
+    for (Cue& c : cues) {
+      const auto it = english_of.find(c.speaker);
+      c.speaker_key = it != english_of.end() ? it->second : c.speaker;
+    }
+  };
+  for (auto& [id, cues] : data.sound_cues) link(cues);
+  for (auto& [key, cues] : data.movie_cues) link(cues);
+}
+
+// A speaker's name colour from the colours file, 0 = none (the yellow).
+// First by the speaker's English name; then, for a voice line, by its
+// SPEAKER FOLDER: a "folder:<name>" line of speakers.tsv, the folder's
+// trailing digits dropped, so labrat1 ... labrat6 (the six voices of one
+// enemy kind) share "folder:labrat". The common enemies' lines (combat
+// barks, findings/63 s.13) have no speaker names in the text files yet:
+// keyed by folder, their colours hold whatever names they are given later
+// (findings/63 s.26).
+ImU32 ColourOf(const Texts& data, const std::u16string& speaker_key, std::string_view folder = {}) {
+  if (!speaker_key.empty()) {
+    if (const auto it = data.colours.find(speaker_key); it != data.colours.end()) return it->second;
+  }
+  while (!folder.empty() && folder.back() >= '0' && folder.back() <= '9') folder.remove_suffix(1);
+  if (folder.empty()) return 0;
+  const auto it = data.colours.find(Utf16("folder:" + std::string(folder)));
+  return it == data.colours.end() ? 0 : it->second;
+}
+
 // Reads every file into a new set and publishes it. `english` / `own` say
 // which text files were there.
 void Load(bool* english, bool* own) {
@@ -479,7 +599,10 @@ void Load(bool* english, bool* own) {
   // English first, then the language's own file over it (its lines replace
   // English ones key by key; what it doesn't have stays English).
   *english = ReadTexts("en", *data);
+  const EnglishSpeakers en = SpeakersOf(*data);  // before the language's file replaces them
   *own = code != "en" && ReadTexts(code, *data);
+  if (*own) LinkSpeakers(en, *data);
+  ReadColours(*data);
   // Then the voice language's own times over theirs (timing/<voice>.tsv).
   ApplyVoiceTimes(*data);
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -493,7 +616,7 @@ void Load(bool* english, bool* own) {
 // plays, without restarting. Lines already on screen keep their words.
 // A stamp = the file's write time, or "none".
 std::vector<std::filesystem::path> WatchedFiles() {
-  std::vector<std::filesystem::path> names = {"en.tsv"};
+  std::vector<std::filesystem::path> names = {"en.tsv", "speakers.tsv"};
   if (const std::string code = TextCode(); code != "en") names.push_back(code + ".tsv");
   if (const std::string voice = VoiceKey(); !voice.empty()) {
     names.push_back(std::filesystem::path("timing") / (voice + ".tsv"));
@@ -574,7 +697,10 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
       Line line;
       line.id = id;
       line.text = c.text;
-      if (speakers) line.speaker = c.speaker;
+      if (speakers) {
+        line.speaker = c.speaker;
+        line.speaker_colour = ColourOf(*data, c.speaker_key, k.folder);
+      }
       line.start = After(now, c.start);
       line.end = After(now, std::min(c.end, seconds) + LingerSeconds());
       if (line.end > line.start) add.push_back(std::move(line));
@@ -584,7 +710,10 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
     line.id = id;
     if (const auto it = data->texts.find(id); it != data->texts.end()) {
       line.text = it->second;
-      if (speakers) line.speaker = SpeakerOf(k);
+      if (speakers) {
+        line.speaker = SpeakerOf(k);  // the official English names: their own colour keys
+        line.speaker_colour = ColourOf(*data, line.speaker, k.folder);
+      }
     } else if (REXCVAR_GET(subtitles_placeholders)) {
       // Test text: no words of the game, only where the line comes from.
       line.text = Utf16("[" + k.folder + "] " + k.file);
@@ -709,7 +838,11 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     // them on. Nothing else is drawn meanwhile.
     if (options_menu::SubtitlePreview()) {
       Line sample;
-      if (REXCVAR_GET(subtitles_speakers)) sample.speaker = u"Aku Aku";
+      if (REXCVAR_GET(subtitles_speakers)) {
+        sample.speaker = u"Aku Aku";
+        std::lock_guard<std::mutex> lock(g_mutex);
+        sample.speaker_colour = ColourOf(*g_data, sample.speaker);
+      }
       sample.text = tr(u"This is how the subtitles look.");
       DrawLines({sample}, list, BaseBottom());
       return;
@@ -735,7 +868,10 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
             Line line;
             line.uid = MovieUid(g_movie, n);
             line.text = c.text;
-            if (REXCVAR_GET(subtitles_speakers)) line.speaker = c.speaker;
+            if (REXCVAR_GET(subtitles_speakers)) {
+              line.speaker = c.speaker;
+              line.speaker_colour = ColourOf(*g_data, c.speaker_key);
+            }
             shown.push_back(std::move(line));
           }
         }
@@ -1012,13 +1148,16 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   }
 
   // Splits one line into rows no wider than `max_width`, at spaces (and at
-  // "\n"); the speaker's name goes in front of the first row, in yellow.
+  // "\n"); the speaker's name goes in front of the first row, in its
+  // character's colour (speakers.tsv), or yellow when it has none or the
+  // colours are off (subtitles_speaker_colours).
   void Wrap(const Line& l, float max_width, std::vector<Row>& rows) const {
     Row row;
     float row_w = 0;
     if (!l.speaker.empty()) {
       const std::u16string label = l.speaker + u": ";
-      row.push_back({label, kSpeakerColour});
+      const bool own = REXCVAR_GET(subtitles_speaker_colours) && l.speaker_colour != 0;
+      row.push_back({label, own ? l.speaker_colour : kSpeakerColour});
       row_w = Width(label);
     }
     std::u16string current;  // the text run of the row being filled

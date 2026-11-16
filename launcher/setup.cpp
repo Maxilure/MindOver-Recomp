@@ -1806,6 +1806,13 @@ std::vector<Command> Setup::GameJob() {
       if (!ec && fs::is_directory(from / "languages")) {
         fs::copy(from / "languages", fresh / "languages", fs::copy_options::recursive, ec);
       }
+      // The subtitles' text files (subtitles/*.tsv: the lines, the speakers'
+      // colours; src/subtitles/subtitles.cpp ShippedFolder reads
+      // program/subtitles). Without them an installed game shows only the
+      // lines a player keeps in user/subtitles (findings/63 s.26).
+      if (!ec && fs::is_directory(from / "subtitles")) {
+        fs::copy(from / "subtitles", fresh / "subtitles", fs::copy_options::recursive, ec);
+      }
       if (ec) {
         *message = "Couldn't copy the game: " + ec.message();
         return false;

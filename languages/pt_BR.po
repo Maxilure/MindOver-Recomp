@@ -2092,6 +2092,21 @@ msgstr "Quem está falando, em amarelo, antes da fala (quando se sabe)."
 msgid "Only the spoken words."
 msgstr "Só as palavras faladas."
 
+#: src/options/options_settings.cpp:1443
+#, fuzzy
+msgid "Character Colours"
+msgstr "Cores dos personagens"
+
+#: src/options/options_settings.cpp:1444
+#, fuzzy
+msgid "Each speaker's name in its character's own colour."
+msgstr "O nome de quem fala na cor do seu personagem."
+
+#: src/options/options_settings.cpp:1445
+#, fuzzy
+msgid "Every speaker's name in yellow."
+msgstr "Todos os nomes de quem fala em amarelo."
+
 #: src/options/options_settings.cpp:1446
 #, fuzzy
 msgid "Stay on Screen"

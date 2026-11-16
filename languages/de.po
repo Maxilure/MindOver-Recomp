@@ -2085,6 +2085,21 @@ msgstr "Wer spricht, in Gelb, vor dem Satz (wenn bekannt)."
 msgid "Only the spoken words."
 msgstr "Nur die gesprochenen Worte."
 
+#: src/options/options_settings.cpp:1443
+#, fuzzy
+msgid "Character Colours"
+msgstr "Figurenfarben"
+
+#: src/options/options_settings.cpp:1444
+#, fuzzy
+msgid "Each speaker's name in its character's own colour."
+msgstr "Der Name des Sprechers in der eigenen Farbe seiner Figur."
+
+#: src/options/options_settings.cpp:1445
+#, fuzzy
+msgid "Every speaker's name in yellow."
+msgstr "Alle Namen der Sprecher in Gelb."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

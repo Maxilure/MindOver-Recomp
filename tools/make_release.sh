@@ -190,7 +190,7 @@ fi
 #     built (on a PC with the disc: the build needs default.xex, which never
 #     goes online), next to the installer. Only the build's OWN files: the
 #     exe (installed name), the SDK's DLLs, the exe's .pdb (crash reports),
-#     assets/ and languages/. Never the icon (crash_mom.ico/.png are made
+#     assets/, languages/ and subtitles/. Never the icon (crash_mom.ico/.png are made
 #     from the player's disc) and never anything from game/.
 if [ -n "$program_dir" ]; then
   [ -n "$python_dir" ] && [ -f "$python_dir/python.exe" ] || { echo "--program needs --python <embeddable Python folder>"; exit 1; }
@@ -203,6 +203,9 @@ if [ -n "$program_dir" ]; then
   for f in "$program_dir"/*.dll; do cp "$f" "$p/"; done
   cp -r "$program_dir/assets" "$p/assets"
   [ -d "$program_dir/languages" ] && cp -r "$program_dir/languages" "$p/languages"
+  # The subtitles' text files (the lines and the speakers' colours, read from
+  # program/subtitles by src/subtitles/subtitles.cpp ShippedFolder).
+  [ -d "$program_dir/subtitles" ] && cp -r "$program_dir/subtitles" "$p/subtitles"
   # The game's own version: the installed Mind over Recomp compares it with
   # source/RELEASE.toml and finishes an update an older updater left half
   # done (launcher/update.h UnfinishedUpdate).

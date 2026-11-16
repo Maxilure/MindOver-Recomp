@@ -1435,6 +1435,16 @@ Row SubtitleSpeakersRow() {
                   tr(u"Only the spoken words."), true);
 }
 
+// The speakers' names in their characters' colours (subtitles/speakers.tsv,
+// findings/63 s.26) or all in the menus' yellow: subtitles_speaker_colours.
+// On by default (the colours are part of the subtitles, which the original
+// didn't have). Only matters with Speaker Names on.
+Row SubtitleSpeakerColoursRow() {
+  return OnOffRow(tr(u"Character Colours"), "subtitles_speaker_colours", tr(u"On"), tr(u"Off"),
+                  tr(u"Each speaker's name in its character's own colour."),
+                  tr(u"Every speaker's name in yellow."), true);
+}
+
 // How long a line stays on screen after it has been spoken (its sound's
 // end, or the end time its text file gives it) before it disappears:
 // subtitles_linger_ms (subtitles/subtitles.cpp LingerSeconds; default 2 s).
@@ -1506,7 +1516,7 @@ std::vector<Tab> Build() {
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
                   {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
-                   SubtitleSpeakersRow(), SubtitleLingerRow()},
+                   SubtitleSpeakersRow(), SubtitleSpeakerColoursRow(), SubtitleLingerRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
   // as one crowded list): an EMPTY heading row (blank, never selected) before
