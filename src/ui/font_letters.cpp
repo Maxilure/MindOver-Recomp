@@ -308,6 +308,8 @@ struct Font {
   int cap_top = 0;   // the first fill row of 'H'
   int dash_mid = 0;  // the middle row of '-' (its ink with the outline)
   int bearing = 1;   // the gap left and right of a made letter
+  int outline = 3;   // the baked outline's width (fill edge to ink edge, 'H')
+  uint32_t outline_colour = 0;  // an outline pixel of 'H' (BGRA)
 };
 
 struct Made {
@@ -318,18 +320,81 @@ struct Made {
   int widen = 0;
 };
 
-// Rows of `with`'s cell above where `plain`'s ink starts (less one row): the
-// accent of õ / â / à / ë. `y` = where its ink begins in the cell.
-std::optional<Img> Accent(const Font& f, char16_t with, char16_t plain, int* y) {
+// The ACCENT of õ / â / à / Ë..., alone, as a cell-sized picture (the rest
+// transparent). In this font an accent's outline MERGES with its letter's
+// (no empty row between: Ë's dots go down to row 25 of the Large cell, E's
+// ink starts at row 22), so cutting at a row sliced accents (the first
+// version: Ё's dots halved, the tilde's bottom gone). Instead the accent is
+// found by its FILL: the letter's fill pieces (alpha >= kFillAlpha, joined
+// sideways and up/down) whose middle row is above where `plain`'s fill
+// begins. Kept: every pixel within one outline width (+1 for the soft edge)
+// of those pieces, the source's own colours; a pixel of the LETTER's fill in
+// that reach becomes outline (the letter is gone from under it).
+std::optional<Img> AccentPiece(const Font& f, char16_t with, char16_t plain) {
   const auto a = f.cell(with), p = f.cell(plain);
   if (!a || !p) return std::nullopt;
-  const Box pb = InkBox(*p);
-  if (pb.empty()) return std::nullopt;
-  const Img top = Crop(*a, Box{0, 0, a->w, pb.y0 - 1});
-  const Box b = InkBox(top);
+  const Box pf = InkBox(*p, kFillAlpha);
+  if (pf.empty()) return std::nullopt;
+  const int w = a->w, h = a->h;
+  std::vector<int> label(size_t(w) * size_t(h), -1);
+  std::vector<bool> accent_label;
+  std::vector<std::pair<int, int>> stack, accent_fill;
+  for (int y0 = 0; y0 < h; ++y0)
+    for (int x0 = 0; x0 < w; ++x0) {
+      if (a->alpha(x0, y0) < kFillAlpha || label[size_t(y0 * w + x0)] >= 0) continue;
+      const int id = int(accent_label.size());
+      std::vector<std::pair<int, int>> piece;
+      stack.assign(1, {x0, y0});
+      label[size_t(y0 * w + x0)] = id;
+      while (!stack.empty()) {
+        const auto [x, y] = stack.back();
+        stack.pop_back();
+        piece.push_back({x, y});
+        const int nx[4] = {x - 1, x + 1, x, x}, ny[4] = {y, y, y - 1, y + 1};
+        for (int k = 0; k < 4; ++k) {
+          if (nx[k] < 0 || ny[k] < 0 || nx[k] >= w || ny[k] >= h) continue;
+          int& l = label[size_t(ny[k] * w + nx[k])];
+          if (l >= 0 || a->alpha(nx[k], ny[k]) < kFillAlpha) continue;
+          l = id;
+          stack.push_back({nx[k], ny[k]});
+        }
+      }
+      long sum_y = 0;
+      for (const auto& [x, y] : piece) sum_y += y;
+      const bool is_accent = sum_y < long(pf.y0) * long(piece.size());  // middle row above the letter
+      accent_label.push_back(is_accent);
+      if (is_accent) accent_fill.insert(accent_fill.end(), piece.begin(), piece.end());
+    }
+  if (accent_fill.empty()) return std::nullopt;
+  const float reach = float(f.outline) + 1.0f;
+  Img out(w, h);
+  for (int y = 0; y < h; ++y)
+    for (int x = 0; x < w; ++x) {
+      if (!a->alpha(x, y)) continue;
+      const int l = label[size_t(y * w + x)];
+      if (l >= 0 && accent_label[size_t(l)]) {
+        out.at(x, y) = a->at(x, y);
+        continue;
+      }
+      float best = 1e9f;
+      for (const auto& [fx, fy] : accent_fill) {
+        const float dx = float(fx - x), dy = float(fy - y);
+        best = std::min(best, dx * dx + dy * dy);
+      }
+      if (best > reach * reach) continue;
+      out.at(x, y) = l >= 0 ? f.outline_colour : a->at(x, y);  // letter fill -> outline
+    }
+  return out;
+}
+
+// The accent cropped to its ink; `y` = where its ink begins in the cell.
+std::optional<Img> Accent(const Font& f, char16_t with, char16_t plain, int* y) {
+  const auto piece = AccentPiece(f, with, plain);
+  if (!piece) return std::nullopt;
+  const Box b = InkBox(*piece);
   if (b.empty()) return std::nullopt;
   *y = b.y0;
-  return Crop(top, b);
+  return Crop(*piece, b);
 }
 
 Img Canvas(const Font& f, int w) { return Img(w, f.height); }
@@ -338,14 +403,12 @@ Img Canvas(const Font& f, int w) { return Img(w, f.height); }
 // in the wider of the two (the way Ã / ã were made first, 2026-10-31).
 std::optional<Made> AccentOver(const Font& f, char16_t base, char16_t with, char16_t plain,
                                const std::vector<uint8_t>& base_record) {
-  const auto b = f.cell(base), a = f.cell(with), p = f.cell(plain);
-  if (!b || !a || !p) return std::nullopt;
-  const Box pb = InkBox(*p);
-  if (pb.empty()) return std::nullopt;
+  const auto b = f.cell(base), a = AccentPiece(f, with, plain);
+  if (!b || !a) return std::nullopt;
   const int w = std::max(b->w, a->w);
   Made m{Canvas(f, w), base_record, w - b->w};
   Put(m.img, *b, (w - b->w) / 2, 0);
-  Put(m.img, Crop(*a, Box{0, 0, a->w, pb.y0 - 1}), (w - a->w) / 2, 0);
+  Put(m.img, *a, (w - a->w) / 2, 0);
   return m;
 }
 
@@ -556,6 +619,17 @@ bool PatchFont(pure3d::Node& font) {
   const Box db = InkBox(*dash);
   f.dash_mid = (db.y0 + db.y1) / 2;
   f.bearing = std::max(1, f.height / 40);
+  {  // the outline's width and colour: 'H''s middle row, from its ink edge to its fill
+    const int y = (f.cap_top + f.baseline) / 2;
+    int ink = -1, fill = -1;
+    for (int x = 0; x < h->w && fill < 0; ++x) {
+      if (ink < 0 && h->alpha(x, y)) ink = x;
+      if (h->alpha(x, y) >= kFillAlpha) fill = x;
+    }
+    if (ink < 0 || fill <= ink) return false;
+    f.outline = fill - ink;
+    f.outline_colour = h->at(ink + f.outline / 2, y);
+  }
 
   // Every letter first (cells are read from the pages as the disc has them),
   // then placed.

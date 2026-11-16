@@ -278,8 +278,9 @@ the data patcher.
 Titans_Large / Titans_Small list Ã and ã but with EMPTY records (zero width,
 no picture): "não" drew "n o". `ui/font_letters.cpp` (a data patch of
 b4c85fe7, after the menu button glyphs) composes each from the font's own
-pictures: the "a" / "A" cell plus the tilde rows of "õ" / "Õ" (the rows above
-a plain "o"'s first inked row), centred, the cell widened to the wider of the
+pictures: the "a" / "A" cell plus the tilde of "õ" / "Õ" (found by its fill
+since s.8.5: the first cut "above a plain o's first inked row" lost the
+tilde's bottom), centred, the cell widened to the wider of the
 two (left bearing moved by half). It goes into free space of a text page;
 the first version put what didn't fit on ONE new page (a cleared copy of a
 text page). Since s.8.5 a page is GROWN instead (no font gets a new page).
@@ -306,7 +307,7 @@ the fonts' own pictures (outline, colours and baseline come along):
 
 | Characters | Made from |
 |---|---|
-| Ã ã Ё ё | A a Е е + the top rows of Õ õ / Ë ë (tilde, dots) |
+| Ã ã Ё ё | A a Е е + the accent of Õ õ / Ë ë (tilde, dots) |
 | `"` | two apostrophes, 2 px apart |
 | `~` `^` `` ` `` | the tilde of õ (moved to the dash's height), the hat of â, the accent of à |
 | `_` | the dash, widened to an "n" (+4 px), at the baseline |
@@ -325,6 +326,21 @@ U+00BB = the menus' red arrow). They live at U+E140 / U+E141, and
 `font_letters::ForFont` swaps them in where the port loads texts: every .po
 translation (texts.cpp, a » the English also has stays the arrow) and the
 subtitles.
+
+ACCENTS ARE FOUND BY THEIR FILL, not cut at a row. In these fonts an
+accent's outline merges with its letter's (no empty row between them): Ë's
+dots reach row 25 of the Large cell while E's ink starts at row 22, õ's tilde
+fill ends 1-2 rows below o's first ink. The first version cut "above the
+plain letter's first inked row" (as 8.3 did for Ã ã) and sliced accents:
+Ё's dots halved, ~ ^ ` and the tilde of Ã ã lost their lower part and
+outline. Now the letter's fill pieces (alpha >= 200, 4-connected) whose
+middle row lies above the plain letter's first FILL row are the accent; the
+pixels within one outline width (+1, the soft edge) of them are kept with
+their own colours, and the letter's fill inside that reach turns into
+outline colour. The outline width and colour are measured on 'H' (3 px
+Small, 5 px Large). Check: no made glyph's ink touches the top of its cell
+(the game's own cells are cut tight left / right, and descenders touch the
+bottom, as ours do).
 
 Stretching keeps a piece's two ends (their rounded outline) and repeats its
 middle column or row. Turns by a quarter are exact; the asterisk's 30 / 150
