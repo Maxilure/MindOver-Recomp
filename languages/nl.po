@@ -2086,16 +2086,19 @@ msgid "Only the spoken words."
 msgstr "Alleen de gesproken woorden."
 
 #: src/options/options_settings.cpp:1443
+#, fuzzy
 msgid "Character Colours"
-msgstr ""
+msgstr "Personagekleuren"
 
 #: src/options/options_settings.cpp:1444
+#, fuzzy
 msgid "Each speaker's name in its character's own colour."
-msgstr ""
+msgstr "De naam van de spreker in de eigen kleur van zijn personage."
 
 #: src/options/options_settings.cpp:1445
+#, fuzzy
 msgid "Every speaker's name in yellow."
-msgstr ""
+msgstr "Alle namen van sprekers in geel."
 
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
