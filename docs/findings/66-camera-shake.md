@@ -91,4 +91,5 @@ saved in `user/settings.toml`; the Options row is live.
 * Cutscenes and other camera modes that move the camera by their own
   animation (NIS, MAYA, scripted cameras) may contain baked-in shaking that
   does not go through this message (to check).
-* Tested so far: see the pull request.
+* Tested: Windows, one player, each level (Off / Low / Medium / Original)
+  on shakes in gameplay. Not tested: Linux, co-op, cutscenes.
