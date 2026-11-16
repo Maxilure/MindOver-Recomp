@@ -467,6 +467,76 @@ bool SaveUnusedFile(UnusedFile& u, const std::filesystem::path& target, const st
   return true;
 }
 
+// REVIEW NOTES (subtitle_texts.h): same reading / saving as the unused marks,
+// two more fields (the flag, the note).
+ReviewFile ReadReviewFile(const std::filesystem::path& shipped_dir, const std::filesystem::path& user_dir) {
+  ReviewFile r;
+  std::error_code ec;
+  const auto own = user_dir / "review.tsv";
+  const auto path = std::filesystem::is_regular_file(own, ec) ? own : shipped_dir / "review.tsv";
+  std::ifstream in(path, std::ios::binary);
+  if (!in) return r;
+  r.path = path;
+  std::string line;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line.empty() || line[0] == '#') continue;
+    std::vector<std::string> f;
+    for (size_t p = 0;;) {
+      const size_t tab = line.find('\t', p);
+      f.push_back(line.substr(p, tab == std::string::npos ? std::string::npos : tab - p));
+      if (tab == std::string::npos) break;
+      p = tab + 1;
+    }
+    if (f.size() != 5) continue;
+    uint64_t id = 0;
+    const std::string key = ParseId(f[0], &id) ? KeyOf(id) : f[0];
+    Review review{f[1] == "yes", f[2], f[3], TextOf(f[4])};
+    if (!review.empty()) r.reviews[key] = std::move(review);
+  }
+  return r;
+}
+
+bool SaveReviewFile(ReviewFile& r, const std::filesystem::path& target, const std::filesystem::path& backup_dir,
+                    std::string* error) {
+  namespace fs = std::filesystem;
+  std::error_code ec;
+  fs::create_directories(target.parent_path(), ec);
+  if (fs::is_regular_file(target, ec)) {
+    fs::create_directories(backup_dir, ec);
+    fs::copy_file(target, backup_dir / ("review-" + Stamp() + ".tsv"), fs::copy_options::overwrite_existing, ec);
+    if (ec) {
+      *error = "couldn't make a backup in " + backup_dir.string() + ": " + ec.message();
+      return false;
+    }
+  }
+  fs::path temp = target;
+  temp += ".saving";
+  {
+    std::ofstream o(temp, std::ios::binary | std::ios::trunc);
+    o << "# Lines flagged for reviewing and notes left on them (tools/subtitle_editor). Not read by the game.\n"
+      << "# The same for every language. <sound ID or movie> TAB <needs reviewing: yes|no> TAB <who wrote last>"
+         " TAB <date, UTC> TAB <note, line breaks as \\n>\n\n";
+    for (const auto& [key, review] : r.reviews) {  // sorted by key: small, stable diffs
+      if (review.empty()) continue;
+      o << key << '\t' << (review.needs_review ? "yes" : "no") << '\t' << Field(review.name) << '\t'
+        << review.date << '\t' << Field(review.note) << '\n';
+    }
+    if (!o) {
+      *error = "couldn't write " + temp.string();
+      return false;
+    }
+  }
+  fs::rename(temp, target, ec);
+  if (ec) {
+    *error = "couldn't replace " + target.string() + ": " + ec.message();
+    return false;
+  }
+  r.path = target;
+  r.edited = false;
+  return true;
+}
+
 std::string Fingerprint(const std::vector<Piece>& pieces) {
   uint64_t h = 1469598103934665603ull;
   const auto add = [&](const std::string& s) {

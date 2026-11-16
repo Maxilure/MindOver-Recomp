@@ -105,6 +105,19 @@ void DrawIcon(ImDrawList* dl, Icon icon, ImVec2 min, float s, ImU32 c) {
       dl->AddCircleFilled(P(0.5f, 0.5f), s * 0.11f, c);
       dl->AddLine(P(0.18f, 0.82f), P(0.82f, 0.18f), c, t * 1.2f);
       break;
+    case Icon::kFlag:  // a pole, and a flag waving off its top
+      dl->AddLine(P(0.28f, 0.14f), P(0.28f, 0.88f), c, t * 1.2f);
+      dl->AddTriangleFilled(P(0.3f, 0.16f), P(0.82f, 0.32f), P(0.3f, 0.5f), c);
+      break;
+    case Icon::kNote:  // a page with a folded corner and three lines
+      dl->PathLineTo(P(0.22f, 0.14f));
+      dl->PathLineTo(P(0.62f, 0.14f));
+      dl->PathLineTo(P(0.78f, 0.3f));
+      dl->PathLineTo(P(0.78f, 0.86f));
+      dl->PathLineTo(P(0.22f, 0.86f));
+      dl->PathStroke(c, ImDrawFlags_Closed, t);
+      for (float y : {0.42f, 0.56f, 0.7f}) dl->AddLine(P(0.32f, y), P(0.68f, y), c, t);
+      break;
     case Icon::kSave:
       dl->AddRect(P(0.2f, 0.18f), P(0.8f, 0.82f), c, s * 0.04f, 0, t);
       dl->AddRectFilled(P(0.34f, 0.18f), P(0.66f, 0.38f), c);

@@ -37,6 +37,8 @@ enum class Icon {
   kFilter,      // a funnel
   kSearch,      // a magnifier
   kHide,        // an eye struck through (unused)
+  kFlag,        // a flag on a pole (needs reviewing)
+  kNote,        // a page with lines (a note)
 };
 
 // Draws `icon` inside the square at `min` of side `size`.
