@@ -1187,8 +1187,20 @@ Uka, Nina) already use the English names, which are their own keys.
 
 **The colours** were picked to read on the dark box and over the picture
 with the letters' black outline; Cortex keeps the yellow, and a name not
-in the list (Znu) does too. Ratcicles, RhinoRollers, Sludges and the
+in the list does too. Ratcicles, RhinoRollers, Sludges and the
 Architect and his assistant share one colour per kind.
+
+**The common enemies, by voice folder.** Their combat lines (s.13: the
+`bratgirl`, `labrat`, `monkey`, `slappe` and `znu` folders, six voices
+each) are not subtitled yet and have no speaker names; two kinds have no
+official name either ((name TBD)). So `speakers.tsv` also takes
+`folder:<folder>` lines: when a voice line's speaker name isn't listed,
+its colour comes from the folder its sound is in, trailing digits dropped
+(`folder:labrat` = `labrat1` ... `labrat6`; `ColourOf`). Their colours are
+ready for when those lines get text, whatever names they get: Bratgirls
+and Ratnicians as their NPCs, Znu lavender (the one Znu NPC line too), the
+`monkey` kind royal blue, the `slappe` kind gold. Not seen in the game
+(no enemy line is shown yet).
 
 **The option:** Options -> Accessibility -> Subtitles -> **Character
 Colours** (`subtitles_speaker_colours`, on by default; the subtitles are

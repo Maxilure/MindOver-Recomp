@@ -571,9 +571,20 @@ void LinkSpeakers(const EnglishSpeakers& en, Texts& data) {
 }
 
 // A speaker's name colour from the colours file, 0 = none (the yellow).
-ImU32 ColourOf(const Texts& data, const std::u16string& speaker_key) {
-  if (speaker_key.empty()) return 0;
-  const auto it = data.colours.find(speaker_key);
+// First by the speaker's English name; then, for a voice line, by its
+// SPEAKER FOLDER: a "folder:<name>" line of speakers.tsv, the folder's
+// trailing digits dropped, so labrat1 ... labrat6 (the six voices of one
+// enemy kind) share "folder:labrat". The common enemies' lines (combat
+// barks, findings/63 s.13) have no speaker names yet, and some kinds no
+// official name either: keyed by folder, their colours hold whatever names
+// they are given later (findings/63 s.26).
+ImU32 ColourOf(const Texts& data, const std::u16string& speaker_key, std::string_view folder = {}) {
+  if (!speaker_key.empty()) {
+    if (const auto it = data.colours.find(speaker_key); it != data.colours.end()) return it->second;
+  }
+  while (!folder.empty() && folder.back() >= '0' && folder.back() <= '9') folder.remove_suffix(1);
+  if (folder.empty()) return 0;
+  const auto it = data.colours.find(Utf16("folder:" + std::string(folder)));
   return it == data.colours.end() ? 0 : it->second;
 }
 
@@ -685,7 +696,7 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
       line.text = c.text;
       if (speakers) {
         line.speaker = c.speaker;
-        line.speaker_colour = ColourOf(*data, c.speaker_key);
+        line.speaker_colour = ColourOf(*data, c.speaker_key, k.folder);
       }
       line.start = After(now, c.start);
       line.end = After(now, std::min(c.end, seconds) + LingerSeconds());
@@ -698,7 +709,7 @@ void OnVoiceStart(uint64_t id, const std::string& name, double seconds) {
       line.text = it->second;
       if (speakers) {
         line.speaker = SpeakerOf(k);  // the official English names: their own colour keys
-        line.speaker_colour = ColourOf(*data, line.speaker);
+        line.speaker_colour = ColourOf(*data, line.speaker, k.folder);
       }
     } else if (REXCVAR_GET(subtitles_placeholders)) {
       // Test text: no words of the game, only where the line comes from.
