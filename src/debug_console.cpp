@@ -11,6 +11,7 @@
 // =============================================================================
 
 #include "debug_console.h"
+#include "debug/world_hash.h"
 
 #include <algorithm>
 #include <atomic>
@@ -1135,6 +1136,15 @@ std::string Run(std::string_view line) {
   if (verb == "flag") return FlagCommand(w);
   if (verb == "clock") return ClockCommand(w);
   if (verb == "track") return TrackCommand(w);
+  if (verb == "worldhash") {
+    // `worldhash <file> [frames] [dump <frame>]`: the world's fingerprint per
+    // game frame, for proving two runs identical (debug/world_hash.h).
+    try {
+      return world_hash::Command(w);
+    } catch (const std::exception& e) {
+      throw Error{e.what()};
+    }
+  }
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
   if (verb == "profile") {
     // `profile <seconds> [file] [thread name...]`: where the main thread's (or

@@ -42,6 +42,7 @@ set(CRASHMOM_SOURCES
     src/debug/guest_stack.cpp    # the game's call stack (PowerPC back chain), read fault-safely
     src/debug/slow_load_sampler.cpp  # a crawling title load: sample the main thread, log where it is
     src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
+    src/debug/world_hash.cpp     # debug console `worldhash`: the world's fingerprint per frame (exact-run checks)
     src/debug/xbox_calls.cpp     # the Xbox calls meter: which Xbox services the game calls (Linux)
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
