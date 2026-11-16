@@ -2085,6 +2085,36 @@ msgstr "Kuka puhuu, keltaisella, repliikin edessä (kun se tiedetään)."
 msgid "Only the spoken words."
 msgstr "Vain puhutut sanat."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Liike"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Kameran tärinä"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera never shakes."
+msgstr "Kamera ei koskaan tärise."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr "Kamera tärisee hieman, kun jokin raskas laskeutuu, räjähtää tai osuu."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes about half as much as in the original game."
+msgstr "Kamera tärisee noin puolet alkuperäisestä pelistä."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Kamera tärisee kuten alkuperäisessä pelissä."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

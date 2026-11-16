@@ -2085,6 +2085,36 @@ msgstr "Vem som talar, i gult, före repliken (när det är känt)."
 msgid "Only the spoken words."
 msgstr "Bara de talade orden."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Rörelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Kameraskakning"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera never shakes."
+msgstr "Kameran skakar aldrig."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr "Kameran skakar lite när något tungt landar, exploderar eller träffar."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes about half as much as in the original game."
+msgstr "Kameran skakar ungefär hälften så mycket som i originalspelet."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Kameran skakar som i originalspelet."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

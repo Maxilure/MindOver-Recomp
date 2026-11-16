@@ -2085,6 +2085,36 @@ msgstr "Quién habla, en amarillo, delante de la frase (cuando se sabe)."
 msgid "Only the spoken words."
 msgstr "Solo las palabras habladas."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Movimiento"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Temblor de cámara"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera never shakes."
+msgstr "La cámara nunca tiembla."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr "La cámara tiembla un poco cuando algo pesado cae, explota o golpea."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes about half as much as in the original game."
+msgstr "La cámara tiembla más o menos la mitad que en el juego original."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "La cámara tiembla como en el juego original."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

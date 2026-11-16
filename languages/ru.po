@@ -2085,6 +2085,36 @@ msgstr "Кто говорит, желтым, перед репликой (есл
 msgid "Only the spoken words."
 msgstr "Только произносимые слова."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Движение"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Тряска камеры"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera never shakes."
+msgstr "Камера никогда не трясётся."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr "Камера немного трясётся, когда что-то тяжёлое падает, взрывается или бьёт."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes about half as much as in the original game."
+msgstr "Камера трясётся примерно вдвое слабее, чем в оригинальной игре."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "Камера трясётся как в оригинальной игре."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

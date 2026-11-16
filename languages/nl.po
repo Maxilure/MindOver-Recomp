@@ -2085,6 +2085,36 @@ msgstr "Wie er spreekt, in geel, voor de zin (als dat bekend is)."
 msgid "Only the spoken words."
 msgstr "Alleen de gesproken woorden."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Beweging"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Camera Shake"
+msgstr "Camerabeving"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera never shakes."
+msgstr "De camera trilt nooit."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr "De camera trilt een beetje als er iets zwaars landt, ontploft of raakt."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes about half as much as in the original game."
+msgstr "De camera trilt ongeveer half zo veel als in het originele spel."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "The camera shakes as in the original game."
+msgstr "De camera trilt zoals in het originele spel."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

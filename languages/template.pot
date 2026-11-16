@@ -1707,6 +1707,30 @@ msgstr ""
 msgid "Only the spoken words."
 msgstr ""
 
+#: src/options/options_settings.cpp
+msgid "Motion"
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "Camera Shake"
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera never shakes."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes a little when something heavy lands, explodes or hits."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes about half as much as in the original game."
+msgstr ""
+
+#: src/options/options_settings.cpp
+msgid "The camera shakes as in the original game."
+msgstr ""
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

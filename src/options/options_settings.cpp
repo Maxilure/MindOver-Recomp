@@ -1359,6 +1359,21 @@ Row MessageBarRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: motion (findings/66)
+// ---------------------------------------------------------------------------
+// CAMERA SHAKE (gameplay/camera_shake.cpp): how big the camera's wobble is
+// when something heavy lands, explodes or hits. Off / Low (30 %) / Medium
+// (60 %) / Original (the default); a shake lasts as long as in the original.
+// The game's camera logic, so both pictures, live at once.
+Row CameraShakeRow() {
+  return LevelRow(tr(u"Camera Shake"), "camera_shake", {tr(u"Off"), tr(u"Low"), tr(u"Medium"), tr(u"Original")},
+                  {tr(u"The camera never shakes."),
+                   tr(u"The camera shakes a little when something heavy lands, explodes or hits."),
+                   tr(u"The camera shakes about half as much as in the original game."),
+                   tr(u"The camera shakes as in the original game.")});
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1505,7 +1520,8 @@ std::vector<Tab> Build() {
   // The subtitles' rows under their heading (cyan, like Display's "HUD"),
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
-                  {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
+                  {Heading(tr(u"Motion")), CameraShakeRow(),
+                   Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
                    SubtitleSpeakersRow(), SubtitleLingerRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read
