@@ -5,12 +5,14 @@
 
 #include <algorithm>
 #include <cstring>
+#include <mutex>
 #include <string>
 
 #include <rex/logging.h>
 
 #include "../data/data_patcher.h"
 #include "../data/pure3d.h"
+#include "font_letters.h"
 
 namespace game_font {
 namespace {
@@ -86,13 +88,31 @@ bool DecodePage(const Bytes& d, const Chunk& texture, uint32_t* width, uint32_t*
 
 }  // namespace
 
+// The package, read once and kept: with the letters the disc's font lacks
+// (Ã ã Ё ё « " * ...) composed the way the game's copy gets them
+// (ui/font_letters.h), so our overlays draw the same. Composing takes ~0.1 s:
+// every Font::Load (fps counter, subtitles, menus' measuring) shares one copy.
+static bool ReadPackage(Bytes* out) {
+  static std::mutex mutex;
+  static Bytes cached;
+  std::lock_guard lock(mutex);
+  if (cached.empty()) {
+    std::string error;
+    Bytes d;
+    if (!data_patcher::ReadArchiveFile(kPackage, &d, &error)) {
+      REXLOG_WARN("Game font: can't read {} ({})", kPackage, error);
+      return false;
+    }
+    if (Bytes patched; font_letters::PatchPackage(d, &patched)) d = std::move(patched);
+    cached = std::move(d);
+  }
+  *out = cached;
+  return true;
+}
+
 bool Font::Load(std::string_view name) {
   Bytes d;
-  std::string error;
-  if (!data_patcher::ReadArchiveFile(kPackage, &d, &error)) {
-    REXLOG_WARN("Game font: can't read {} ({})", kPackage, error);
-    return false;
-  }
+  if (!ReadPackage(&d)) return false;
   Chunk root;
   std::vector<Chunk> top;
   if (!pure3d::Parse(d, &root, &top)) {

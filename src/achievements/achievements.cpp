@@ -35,6 +35,7 @@
 #include "../ui/menu_pictures.h"
 #include "../ui/voodoo_card.h"
 #include "../ui/scrooby.h"
+#include "../ui/font_letters.h"
 #include "../language/game_text_banks.h"
 #include "../language/texts.h"
 
@@ -975,11 +976,17 @@ bool DebugCommand(std::string_view command) {
   if (command == "test card") return ShowTestCard(false), true;
   if (command == "test long") return ShowTestCard(true), true;
   if (command == "test message") return ShowTestGameMessage(), true;
-  // "notice <text>": a notice of the port's (ShowNotice) with that line
-  // (a long one tests the scrolling text, ui/marquee.h).
+  // "notice [<title>|]<text>": a notice of the port's (ShowNotice) with that
+  // line, UTF-8 (a long one tests the scrolling text, ui/marquee.h; letters
+  // the disc's font lacks test ui/font_letters.h, « » included).
   if (command.substr(0, 7) == "notice ") {
     const std::string_view text = command.substr(7);
-    ShowNotice(u"Test Notice", std::u16string(text.begin(), text.end()));
+    const size_t bar = text.find('|');
+    std::u16string title = bar == std::string_view::npos ? u"Test Notice" : Utf16(text.substr(0, bar));
+    std::u16string line = Utf16(bar == std::string_view::npos ? text : text.substr(bar + 1));
+    font_letters::ForFont(title);
+    font_letters::ForFont(line);
+    ShowNotice(title, line);
     return true;
   }
   // "bar <seconds>": a test message in the game's own message bar (no text,

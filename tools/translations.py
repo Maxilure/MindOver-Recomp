@@ -64,21 +64,22 @@ FONT = set(chr(c) for c in range(0x20, 0x7F))              # ASCII
 FONT |= set(chr(c) for c in range(0xA0, 0x100)) - {"×", "÷"}  # Latin-1...
 # ...but U+00A5-00BE are the BUTTON PICTURES of this font (findings/23 s.1.2: ± = A,
 # ² = B, µ = Back, » = an arrow...), all but © ® °: a translation must not use them
-# as letters (« » quotes would draw as buttons).
+# as letters (« » are fine: the port swaps them for its own quote glyphs, src/ui/font_letters.h).
 BUTTON_PICTURES = set(chr(c) for c in range(0xA5, 0xBF)) - {"©", "®", "°"}
 FONT -= BUTTON_PICTURES
 FONT |= set("ĆćČčŁłŃńŘřŚśŠšŸŽž")                           # some Central European
-FONT |= set(chr(c) for c in range(0x0410, 0x0450))         # Cyrillic А-я (no Ё ё)
+FONT |= set(chr(c) for c in range(0x0410, 0x0450))         # Cyrillic А-я
+FONT |= set("Ёё«»")  # composed by src/ui/font_letters.cpp (« » swapped to its private codes on load)
 FONT |= set("’†…")
 FONT |= set(chr(c) for c in range(0xE000, 0xE200))         # the port's button pictures
 # Listed in the font but EMPTY on the disc (zero width, no picture; findings/49
-# s.8): they draw as a gap. (Ã ã were too: src/ui/font_letters.cpp draws them.)
-FONT -= set('"*<>^_`{|}~')
+# s.8): " * < > ^ _ ` { | } ~ † Ã ã. src/ui/font_letters.cpp composes all of
+# them from the font's own pictures since 2026-11-16 (s.8.4): nothing to remove.
 FONT |= {"\n"}
 # What translators reach for that the font lacks, and what to use instead.
 FONT_HINTS = {
-    "“": "'", "”": "'", "„": "'", "«": "'", "»": "'", "‘": "'", '"': "''",
-    "–": "-", "—": "-", "€": "EUR", "•": "-", "Ё": "Е", "ё": "е", "«": '"', "»": '"',
+    "“": '"', "”": '"', "„": '"', "‘": "'",
+    "–": "-", "—": "-", "€": "EUR", "•": "-",
 }
 
 # --------------------------------------------------------------------------

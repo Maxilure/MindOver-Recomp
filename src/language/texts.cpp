@@ -30,6 +30,7 @@
 #include <rex/logging.h>
 
 #include "../game_folder.h"
+#include "../ui/font_letters.h"
 #include "language.h"
 
 REXCVAR_DEFINE_BOOL(debug_pseudo_texts, false, "CrashMoM",
@@ -113,7 +114,15 @@ bool ReadPo(const std::filesystem::path& path, Catalogue* cat) {
       if (!str.empty()) {
         ++cat->translated;
         if (!fuzzy) ++cat->checked;
-        cat->strings[Key(ctx, FromUtf8(id))] = FromUtf8(str);
+        const std::u16string english = FromUtf8(id);
+        std::u16string text = FromUtf8(str);
+        // « » have no picture of their own (U+00BB is a button arrow): the
+        // font's private codes (ui/font_letters.h). A » the English text has
+        // too is that arrow, kept.
+        for (char16_t& c : text) {
+          if (c != u'\u00BB' || english.find(u'\u00BB') == std::u16string::npos) c = font_letters::ForFont(c);
+        }
+        cat->strings[Key(ctx, english)] = std::move(text);
       }
     }
     ctx.clear(); id.clear(); str.clear();

@@ -62,9 +62,10 @@ msgstr "Appuie sur {0} pour le réafficher"
 - **Talk to the player the way the game does**: the informal "you" (tu, du, tú...) in every
   language that has one.
 - **Only characters the game's font has.** It has the Latin letters with their accents, and
-  Cyrillic (but no Ё/ё: write Е/е, like the game). It has **no** curly quotes (“ ” « »), long
-  dashes (– —), € or •: use straight quotes `"` and a plain `-`. The characters ¥ to ¾ are
-  the font's button pictures: never use them as letters.
+  Cyrillic, Ё/ё included, and the quotes « » (the port adds these to the game's font in the
+  game's look). It has **no** curly quotes (“ ” „), long dashes (– —), € or •: use straight
+  quotes `"` or « », and a plain `-`. The characters ¥ to ¾ (except « ») are the font's button
+  pictures: never use them as letters.
 - **Short where the English is short.** Row names and values sit in small boxes. A longer
   description is fine: the cards wrap.
 

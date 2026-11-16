@@ -57,6 +57,7 @@
 #include "achievements/achievements.h"
 #include "language/language.h"
 #include "language/texts.h"
+#include "ui/font_letters.h"
 #include "options/options_menu.h"
 #include "ui/game_font.h"
 
@@ -228,7 +229,9 @@ std::u16string TextOf(std::string text) {
   for (size_t p = text.find("\\n"); p != std::string::npos; p = text.find("\\n", p + 1)) {
     text.replace(p, 2, "\n");
   }
-  return Utf16(text);
+  std::u16string out = Utf16(text);
+  font_letters::ForFont(out);  // « » -> the font's private codes (ui/font_letters.h)
+  return out;
 }
 
 // Reads `<user>/subtitles/<code>.tsv`, or, when the player has none, the
@@ -961,22 +964,11 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     for (const Run& run : r) {
       for (char16_t c : run.text) {
         const ImU32 colour = Faded(layer == 0 ? kOutlineColour : run.colour, alpha);
-        const Composite k = CompositeOf(c);
-        const game_font::Glyph* g = font_.Find(k.base ? k.base : c);
+        // (Ã ã, Ё ё, « » and the rest the disc's font lacks come from
+        // font_letters' patch, run by game_font on its copy of the font.)
+        const game_font::Glyph* g = font_.Find(c);
         if (!g) continue;
         DrawGlyph(list, *g, pen, y, layer == 1, colour, 1.0f);
-        if (k.base) {
-          // The tilde: the top rows of õ / Õ, down to where o / O's ink begins,
-          // centred over the base letter.
-          const game_font::Glyph* accent = font_.Find(k.accent);
-          const game_font::Glyph* plain = font_.Find(k.plain);
-          const float ink = plain ? InkTop(*plain) : -1.0f;  // o's first inked row
-          if (accent && accent->height > 0 && ink > 0) {
-            const float share = std::min(1.0f, ink / accent->height);
-            const float shift = (g->left + g->width * 0.5f) - (accent->left + accent->width * 0.5f);
-            DrawGlyph(list, *accent, pen + shift * scale_, y, layer == 1, colour, share);
-          }
-        }
         pen += g->advance * scale_;
       }
     }
@@ -996,37 +988,11 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
                    ImVec2(g.u1, v1), colour);
   }
 
-  // How many of a glyph's drawn rows (from its top) have no ink in the
-  // letter layer: where o / O's ink begins, i.e. where õ / Õ's tilde ends.
-  // Read from the font's page once per glyph (UI thread).
-  float InkTop(const game_font::Glyph& g) {
-    const auto key = std::make_pair(g.page, uint32_t(g.v0 * 65536.0f) ^ (uint32_t(g.u0 * 65536.0f) << 16));
-    if (const auto it = ink_top_.find(key); it != ink_top_.end()) return it->second;
-    const game_font::PageLayers& l = font_.Layers(g.page);
-    float result = -1.0f;
-    if (l.width && l.height && !l.fill.empty()) {
-      const uint32_t x0 = uint32_t(g.u0 * float(l.width)), x1 = uint32_t(g.u1 * float(l.width));
-      const uint32_t y0 = uint32_t(g.v0 * float(l.height)), y1 = uint32_t(g.v1 * float(l.height));
-      for (uint32_t y = y0; y < y1 && y < l.height && result < 0; ++y) {
-        for (uint32_t x = x0; x < x1 && x < l.width; ++x) {
-          if (l.fill[(size_t(y) * l.width + x) * 4 + 3] > 64) {  // RGBA: alpha = the ink
-            result = float(y - y0);
-            break;
-          }
-        }
-      }
-    }
-    ink_top_[key] = result;
-    return result;
-  }
-
-  // A line's width: the font's advances, with Ã / ã as wide as their base letter.
+  // A line's width: the font's advances.
   float Width(std::u16string_view s) const {
     float w = 0;
     for (char16_t c : s) {
-      const Composite k = CompositeOf(c);
-      const game_font::Glyph* g = font_.Find(k.base ? k.base : c);
-      if (g) w += g->advance;
+      if (const game_font::Glyph* g = font_.Find(c)) w += g->advance;
     }
     return w * scale_;
   }
@@ -1039,22 +1005,6 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
     return (colour & ~IM_COL32_A_MASK) | (faded << IM_COL32_A_SHIFT);
   }
 
-  // Ã and ã are listed in the game's font but EMPTY on the disc (zero width,
-  // no picture: findings/49 s.8.3). The port composes them for the game's own
-  // menus (ui/font_letters.cpp, a data patch of the loaded font); this
-  // overlay reads the font from the disc, so it composes them the same way
-  // while drawing: the base letter (a / A), plus the TILDE of õ / Õ, i.e. the
-  // rows of õ above the first inked row of a plain o.
-  struct Composite {
-    char16_t base = 0;   // the letter drawn whole
-    char16_t accent = 0; // whose top rows give the tilde
-    char16_t plain = 0;  // the same letter without the accent (where the tilde ends)
-  };
-  static Composite CompositeOf(char16_t c) {
-    if (c == u'\u00E3') return {u'a', u'\u00F5', u'o'};  // ã = a + the tilde of õ
-    if (c == u'\u00C3') return {u'A', u'\u00D5', u'O'};  // Ã = A + the tilde of Õ
-    return {};
-  }
   float RowWidth(const Row& r) const {
     float w = 0;
     for (const Run& run : r) w += Width(run.text);
@@ -1136,7 +1086,6 @@ class SubtitleDialog : public rex::ui::ImGuiDialog {
   float pic_x_ = 0, pic_y_ = 0, pic_w_ = 0, pic_h_ = 0, unit_ = 1.0f;
   float lifted_ = 0;  // how far up the subtitles stand now (screen pixels), LiftedBottom
   std::vector<Entry> stack_;  // the subtitles on screen, oldest (top) first: StackLines
-  std::map<std::pair<uint32_t, uint32_t>, float> ink_top_;  // InkTop's cache
 };
 
 // The one dialog, kept for the whole session (as fps_overlay's).

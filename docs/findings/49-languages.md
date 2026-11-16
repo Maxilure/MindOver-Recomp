@@ -280,16 +280,13 @@ no picture): "não" drew "n o". `ui/font_letters.cpp` (a data patch of
 b4c85fe7, after the menu button glyphs) composes each from the font's own
 pictures: the "a" / "A" cell plus the tilde rows of "õ" / "Õ" (the rows above
 a plain "o"'s first inked row), centred, the cell widened to the wider of the
-two (left bearing moved by half). It goes into free space of a text page
-(Small: the empty bottom strip of page 6; Large: ã fits on page 8), else into
-ONE new page, a cleared copy of a text page (Large's Ã: no 57 x 89 spot left;
-62 -> 63 of the 64 pages a font may have). Colours are mapped to the
-destination page's palette (the pages' palettes differ). prompt_icons checks a
-loaded font's page count as disc + its own pages + `font_letters::
-AddedPages()`. Page format: 0x19000 > 0x19001 > 0x19002 = u32 size + TGA
+two (left bearing moved by half). It goes into free space of a text page;
+the first version put what didn't fit on ONE new page (a cleared copy of a
+text page). Since s.8.5 a page is GROWN instead (no font gets a new page).
+Colours are mapped to the destination page's palette (the pages' palettes
+differ). Page format: 0x19000 > 0x19001 > 0x19002 = u32 size + TGA
 (colour-mapped, 256 x BGRA palette, 8 bit, top-left origin); glyph v runs
-bottom-up (pixel row = (1 - v) x 256). The frame-rate counter draws with the
-disc's font (ui/game_font.cpp) and so avoids Ã (its Portuguese "TROCA").
+bottom-up (pixel row = (1 - v) x page height).
 
 ### 8.4 Checked
 
@@ -299,3 +296,59 @@ with button pictures, the Achievements list: all Portuguese, Ã ã drawn. The
 translation is a machine draft (fuzzy); names of titans and enemies stay as the
 English (no official Brazilian release), places are translated (Ilha Wumpa,
 Reino Ratcicle, Monte Grimly, Terra Devastada, Ferro-Velho, Escola do Mal).
+
+### 8.5 Every character the font lacks (2026-11-16)
+
+![Composed letters in game](../images/font-letters-composed.jpg)
+
+The same patch now makes every character the two fonts are missing, all from
+the fonts' own pictures (outline, colours and baseline come along):
+
+| Characters | Made from |
+|---|---|
+| Ã ã Ё ё | A a Е е + the top rows of Õ õ / Ë ë (tilde, dots) |
+| `"` | two apostrophes, 2 px apart |
+| `~` `^` `` ` `` | the tilde of õ (moved to the dash's height), the hat of â, the accent of à |
+| `_` | the dash, widened to an "n" (+4 px), at the baseline |
+| `\|` | the I's bar, stretched from the top of "(" to its bottom |
+| † | a shorter bar + a dash across its upper quarter |
+| `*` | three dashes, 0.72 capitals long, turned 90 / 30 / 150 degrees |
+| `<` `>` | the "v" turned a quarter |
+| « » | two quarter-turned "v"s at 0.8x, overlapping |
+| `{` `}` | "(" / ")" + a short nub of the dash at the middle, fills joined |
+
+The fourteen listed-but-empty records (the 12 symbols above + Ã ã) get filled in; Ё ё
+and « » aren't in the table at all and get new records, inserted IN
+CHARACTER ORDER (the game binary-searches the table; findings/37 s.4). « »
+can't use their own codes: U+00A5-00BE are the font's button pictures (»
+U+00BB = the menus' red arrow). They live at U+E140 / U+E141, and
+`font_letters::ForFont` swaps them in where the port loads texts: every .po
+translation (texts.cpp, a » the English also has stays the arrow) and the
+subtitles.
+
+Stretching keeps a piece's two ends (their rounded outline) and repeats its
+middle column or row. Turns by a quarter are exact; the asterisk's 30 / 150
+degree arms are resampled bilinearly with premultiplied alpha. Where pieces
+overlap, the more opaque pixel wins, so one piece's fill covers the other's
+outline and they read as one stroke (how the braces' nub joins the bracket).
+
+ROOM: 18 cells at full line height (59 px Small, 89 px Large) don't fit in
+the pages' gaps (Small: 6 of 16 placed, Large: 13 of 16). A new page isn't an
+option: Titans_Small already has the 64 pages a font may have once the
+prompt pictures are added (findings/37 s.6). So the LAST TEXT PAGE IS MADE
+TWICE AS TALL (256 x 512: Small page 6, Large page 20): height in the texture
+(0x19000) and image (0x19001) chunks (after the name and a version word, then
+the width) and in the TGA header, transparent rows appended, and the v
+coordinates of every glyph already on that page rewritten
+(v' = 1 - (1 - v) x 256 / 512). The game loads the taller page like any
+texture (prompt_icons' jack symbol page was the precedent). Both fonts:
+"got 18 of 18 letters (one page grown)"; prompt pictures still found.
+
+The overlays that draw with the disc's font (ui/game_font.cpp: frame-rate
+counter, subtitles, menu text measuring) run the same patch on their copy
+(once per launch, ~0.1 s, shared), so the subtitles' own Ã ã composing is gone.
+
+Checked in game (console `achievement notice <title>|<line>`, UTF-8): both
+lines of the bar's card with every new character, 0 errors. The Large font's
+letters were checked in a prototype render only (no Large text shown in the
+test); the subtitle overlay isn't in photos (ImGui).

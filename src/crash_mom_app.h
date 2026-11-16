@@ -315,7 +315,7 @@ class CrashMomApp : public rex::ReXApp {
     spin_colours::Register();  // their spin effects in their colour (players/spin_colours.h)
     // Two more prompt glyphs in the fonts: the menus' own A and B (input/prompt_icons.h).
     prompt_icons::Register();
-    // Ã ã for the font (empty glyphs on the disc; ui/font_letters.h): after the button glyphs.
+    // The letters the font lacks (Ã ã Ё ё « » " * ...; ui/font_letters.h): after the button glyphs.
     font_letters::Register();
     // Bugs of the original game fixed in its data (game_bugs/game_bugs.h).
     game_bugs::Register();
