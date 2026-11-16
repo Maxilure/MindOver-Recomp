@@ -1359,6 +1359,56 @@ Row MessageBarRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: colour blindness (findings/64)
+// ---------------------------------------------------------------------------
+// A daltonisation in the native renderer's last pass (shaders/present.frag):
+// colours that player would confuse are pushed into ones they tell apart.
+// Live: the game behind the Options screen shows each mode at once. Off by
+// default (the original's colours). Native renderer only (NeedsNative).
+Row ColourblindnessModeRow() {
+  Row r = LevelRow(tr(u"Correction"), "colourblindness_mode",
+                   {tr(u"Off"), tr(u"Protanopia"), tr(u"Protanomaly"), tr(u"Deuteranopia"),
+                    tr(u"Deuteranomaly"), tr(u"Tritanopia"), tr(u"Tritanomaly"), tr(u"Achromatopsia"),
+                    tr(u"Achromatomaly")},
+                   {tr(u"The game's own colours."),
+                    tr(u"No red cones: reds and greens that look alike are pushed apart."),
+                    tr(u"Weak red cones: reds and greens that look alike are pushed apart."),
+                    tr(u"No green cones: greens and reds that look alike are pushed apart."),
+                    tr(u"Weak green cones: greens and reds that look alike are pushed apart."),
+                    tr(u"No blue cones: blues and yellows that look alike are pushed apart."),
+                    tr(u"Weak blue cones: blues and yellows that look alike are pushed apart."),
+                    tr(u"No colour vision: colours of the same brightness get a little lighter or darker."),
+                    tr(u"Weak colour vision: colours of the same brightness get a little lighter or darker.")});
+  NeedsNative(r);
+  return r;
+}
+
+// How strong the correction is: 0 % = the original colours, 100 % = full.
+constexpr int kColourblindStep = 10;
+Row ColourblindnessIntensityRow() {
+  Row r;
+  r.label = tr(u"Correction Strength");
+  r.values = [](Env&) {
+    std::vector<std::u16string> v;
+    for (int i = 0; i <= 100; i += kColourblindStep) {
+      const std::string text = std::to_string(i) + "%";
+      v.push_back(std::u16string(text.begin(), text.end()));
+    }
+    return v;
+  };
+  r.get = [](Env&) {
+    const int i = std::clamp(int(rex::cvar::Query<int32_t>("colourblindness_intensity")), 0, 100);
+    return (i + kColourblindStep / 2) / kColourblindStep;  // the nearest step
+  };
+  r.set = [](Env&, int i) { SetFlag("colourblindness_intensity", std::to_string(i * kColourblindStep)); };
+  r.describe = [](Env&, int) -> std::u16string {
+    return tr(u"How strongly the colours are corrected: 0% keeps the original colours.");
+  };
+  NeedsNative(r);
+  return r;
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1515,7 +1565,8 @@ std::vector<Tab> Build() {
   // The subtitles' rows under their heading (cyan, like Display's "HUD"),
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
-                  {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
+                  {Heading(tr(u"Colour Blindness")), ColourblindnessModeRow(), ColourblindnessIntensityRow(),
+                   Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
                    SubtitleSpeakersRow(), SubtitleSpeakerColoursRow(), SubtitleLingerRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read

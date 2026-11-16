@@ -2100,6 +2100,111 @@ msgstr "Puhujan nimi hänen hahmonsa omalla värillä."
 msgid "Every speaker's name in yellow."
 msgstr "Kaikki puhujien nimet keltaisella."
 
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "Correction"
+msgstr "Korjaus"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanopia"
+msgstr "Protanopia"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanomaly"
+msgstr "Protanomalia"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Deuteranopia"
+msgstr "Deuteranopia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Deuteranomaly"
+msgstr "Deuteranomalia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanopia"
+msgstr "Tritanopia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanomaly"
+msgstr "Tritanomalia"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Achromatopsia"
+msgstr "Akromatopsia"
+
+#: src/options/options_settings.cpp:1372
+#, fuzzy
+msgid "Achromatomaly"
+msgstr "Akromatomalia"
+
+#: src/options/options_settings.cpp:1373
+#, fuzzy
+msgid "The game's own colours."
+msgstr "Pelin omat värit."
+
+#: src/options/options_settings.cpp:1374
+#, fuzzy
+msgid "No red cones: reds and greens that look alike are pushed apart."
+msgstr "Ei punaisia tappisoluja: toisiaan muistuttavat punaiset ja vihreät erotetaan."
+
+#: src/options/options_settings.cpp:1375
+#, fuzzy
+msgid "Weak red cones: reds and greens that look alike are pushed apart."
+msgstr "Heikot punaiset tappisolut: toisiaan muistuttavat punaiset ja vihreät erotetaan."
+
+#: src/options/options_settings.cpp:1376
+#, fuzzy
+msgid "No green cones: greens and reds that look alike are pushed apart."
+msgstr "Ei vihreitä tappisoluja: toisiaan muistuttavat vihreät ja punaiset erotetaan."
+
+#: src/options/options_settings.cpp:1377
+#, fuzzy
+msgid "Weak green cones: greens and reds that look alike are pushed apart."
+msgstr "Heikot vihreät tappisolut: toisiaan muistuttavat vihreät ja punaiset erotetaan."
+
+#: src/options/options_settings.cpp:1378
+#, fuzzy
+msgid "No blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Ei sinisiä tappisoluja: toisiaan muistuttavat siniset ja keltaiset erotetaan."
+
+#: src/options/options_settings.cpp:1379
+#, fuzzy
+msgid "Weak blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Heikot siniset tappisolut: toisiaan muistuttavat siniset ja keltaiset erotetaan."
+
+#: src/options/options_settings.cpp:1380
+#, fuzzy
+msgid "No colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Ei värinäköä: yhtä kirkkaat värit muuttuvat hieman vaaleammiksi tai tummemmiksi."
+
+#: src/options/options_settings.cpp:1381
+#, fuzzy
+msgid "Weak colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Heikko värinäkö: yhtä kirkkaat värit muuttuvat hieman vaaleammiksi tai tummemmiksi."
+
+#: src/options/options_settings.cpp:1390
+#, fuzzy
+msgid "Correction Strength"
+msgstr "Korjauksen voimakkuus"
+
+#: src/options/options_settings.cpp:1405
+#, fuzzy
+msgid "How strongly the colours are corrected: 0% keeps the original colours."
+msgstr "Kuinka voimakkaasti värejä korjataan: 0% säilyttää alkuperäiset värit."
+
+#: src/options/options_settings.cpp:1558
+#, fuzzy
+msgid "Colour Blindness"
+msgstr "Värisokeus"
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

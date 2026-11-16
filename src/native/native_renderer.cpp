@@ -104,6 +104,8 @@ REXCVAR_DEFINE_BOOL(debug_native_emulated_resolves, false, "CrashMoM",
                     "each resolve back into guest memory)");
 // The sharpening filter's strength (present pass, docs/findings/41).
 REXCVAR_DECLARE(int32_t, sharpening);  // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, colourblindness_mode);       // effects/post_effects.cpp
+REXCVAR_DECLARE(int32_t, colourblindness_intensity);  // effects/post_effects.cpp
 REXCVAR_DECLARE(int32_t, smooth_cutouts);  // effects/post_effects.cpp
 // Texture write watch (write_watch.h, docs/findings/20): on = a texture is
 // re-hashed only when its memory was written. Off = every used texture is
@@ -193,6 +195,15 @@ constexpr uint32_t kPresentFs[] =
 
 // Push constants of the simple material: same layout as SimpleParams in
 // shaders/simple_params.glsl.
+// The present pass's push constants (shaders/present.frag, PresentPush):
+// std430-style layout, three 4-byte values in this order.
+struct PresentPushConstants {
+  float sharpness = 0.0f;   // 0 off .. 1 strongest
+  int32_t cvd_mode = 0;     // colourblindness_mode: 0 off, 1-8
+  float intensity = 1.0f;   // colourblindness_intensity / 100
+};
+static_assert(sizeof(PresentPushConstants) == 12, "matches PresentPush in present.frag");
+
 struct SimpleParams {
   float mvp[16];
   float tint_fade[4];
@@ -696,8 +707,9 @@ bool NativeRenderer::Initialize() {
   VkPipelineLayoutCreateInfo present_layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
   present_layout_info.setLayoutCount = 1;
   present_layout_info.pSetLayouts = &present_set_layout_;
-  // The sharpening strength (shaders/present.frag, PresentPush).
-  VkPushConstantRange present_push{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float)};
+  // The sharpening strength and the colour blindness mode / intensity
+  // (shaders/present.frag, PresentPush = PresentPushConstants below).
+  VkPushConstantRange present_push{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PresentPushConstants)};
   present_layout_info.pushConstantRangeCount = 1;
   present_layout_info.pPushConstantRanges = &present_push;
   if (dfn.vkCreatePipelineLayout(device, &present_layout_info, nullptr, &present_layout_) !=
@@ -2555,9 +2567,14 @@ bool NativeRenderer::RecordAndSubmit(VulkanPresenter::VulkanGuestOutputRefreshCo
   // SHARPENING (the `sharpening` setting, findings/41): its strength for the
   // contrast-adaptive filter in present.frag; 0 = off (the plain copy).
   constexpr float kSharpness[4] = {0.0f, 0.3f, 0.6f, 1.0f};
-  const float sharpness = kSharpness[std::clamp(int(REXCVAR_GET(sharpening)), 0, 3)];
+  PresentPushConstants push;
+  push.sharpness = kSharpness[std::clamp(int(REXCVAR_GET(sharpening)), 0, 3)];
+  // COLOUR BLINDNESS (findings/64): the daltonisation's mode and strength,
+  // read every frame, so the Options rows change the picture at once.
+  push.cvd_mode = std::clamp(int(REXCVAR_GET(colourblindness_mode)), 0, 8);
+  push.intensity = std::clamp(int(REXCVAR_GET(colourblindness_intensity)), 0, 100) / 100.0f;
   dfn.vkCmdPushConstants(slot.cmd, present_layout_, VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                         sizeof(sharpness), &sharpness);
+                         sizeof(push), &push);
   dfn.vkCmdDraw(slot.cmd, 3, 1, 0, 0);
   dfn.vkCmdEndRenderPass(slot.cmd);
 

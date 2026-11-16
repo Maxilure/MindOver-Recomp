@@ -2100,6 +2100,111 @@ msgstr "De naam van de spreker in de eigen kleur van zijn personage."
 msgid "Every speaker's name in yellow."
 msgstr "Alle namen van sprekers in geel."
 
+#: src/options/options_settings.cpp:1369
+#, fuzzy
+msgid "Correction"
+msgstr "Correctie"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanopia"
+msgstr "Protanopie"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Protanomaly"
+msgstr "Protanomalie"
+
+#: src/options/options_settings.cpp:1370
+#, fuzzy
+msgid "Deuteranopia"
+msgstr "Deuteranopie"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Deuteranomaly"
+msgstr "Deuteranomalie"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanopia"
+msgstr "Tritanopie"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Tritanomaly"
+msgstr "Tritanomalie"
+
+#: src/options/options_settings.cpp:1371
+#, fuzzy
+msgid "Achromatopsia"
+msgstr "Achromatopsie"
+
+#: src/options/options_settings.cpp:1372
+#, fuzzy
+msgid "Achromatomaly"
+msgstr "Achromatomalie"
+
+#: src/options/options_settings.cpp:1373
+#, fuzzy
+msgid "The game's own colours."
+msgstr "De eigen kleuren van het spel."
+
+#: src/options/options_settings.cpp:1374
+#, fuzzy
+msgid "No red cones: reds and greens that look alike are pushed apart."
+msgstr "Geen rode kegeltjes: rood en groen die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1375
+#, fuzzy
+msgid "Weak red cones: reds and greens that look alike are pushed apart."
+msgstr "Zwakke rode kegeltjes: rood en groen die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1376
+#, fuzzy
+msgid "No green cones: greens and reds that look alike are pushed apart."
+msgstr "Geen groene kegeltjes: groen en rood die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1377
+#, fuzzy
+msgid "Weak green cones: greens and reds that look alike are pushed apart."
+msgstr "Zwakke groene kegeltjes: groen en rood die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1378
+#, fuzzy
+msgid "No blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Geen blauwe kegeltjes: blauw en geel die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1379
+#, fuzzy
+msgid "Weak blue cones: blues and yellows that look alike are pushed apart."
+msgstr "Zwakke blauwe kegeltjes: blauw en geel die op elkaar lijken worden uit elkaar gehaald."
+
+#: src/options/options_settings.cpp:1380
+#, fuzzy
+msgid "No colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Geen kleurenzicht: kleuren met dezelfde helderheid worden iets lichter of donkerder."
+
+#: src/options/options_settings.cpp:1381
+#, fuzzy
+msgid "Weak colour vision: colours of the same brightness get a little lighter or darker."
+msgstr "Zwak kleurenzicht: kleuren met dezelfde helderheid worden iets lichter of donkerder."
+
+#: src/options/options_settings.cpp:1390
+#, fuzzy
+msgid "Correction Strength"
+msgstr "Sterkte van de correctie"
+
+#: src/options/options_settings.cpp:1405
+#, fuzzy
+msgid "How strongly the colours are corrected: 0% keeps the original colours."
+msgstr "Hoe sterk de kleuren worden gecorrigeerd: 0% houdt de originele kleuren."
+
+#: src/options/options_settings.cpp:1558
+#, fuzzy
+msgid "Colour Blindness"
+msgstr "Kleurenblindheid"
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""
