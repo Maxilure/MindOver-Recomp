@@ -231,6 +231,7 @@ const ImU32 kPieceColours[] = {IM_COL32(245, 140, 33, 90), IM_COL32(80, 170, 255
 const ImVec4 kWarnColour(1.0f, 0.80f, 0.35f, 1.0f);
 const ImVec4 kUnusedColour(0.62f, 0.62f, 0.78f, 1.0f);  // lines marked unused
 const ImVec4 kBadColour(1.0f, 0.42f, 0.38f, 1.0f);
+const ImVec4 kReviewColour(1.0f, 0.6f, 0.25f, 1.0f);  // lines flagged "needs reviewing"
 constexpr double kMinPiece = 0.10;  // seconds: a piece is never shorter
 
 // A divider the pointer drags to share space between two panels: `vertical`
@@ -307,6 +308,8 @@ class Editor {
       checks_[t.code] = ReadCheckFile(t.code, shipped_dir_ / "checked", user_dir_ / "checked");
     }
     unused_ = ReadUnusedFile(shipped_dir_, user_dir_);
+    review_ = ReadReviewFile(shipped_dir_, user_dir_);
+    note_key_.clear();  // the note box re-reads the selected line's note
     text_index_ = std::clamp(text_index_, 0, std::max(0, int(texts_.size()) - 1));
     undo_.clear();
     redo_.clear();
@@ -356,6 +359,7 @@ class Editor {
     for (const auto& [voice, timing] : timings_) n += int(timing.edited.size());
     for (const auto& [code, file] : checks_) n += file.edited ? 1 : 0;
     n += unused_.edited ? 1 : 0;
+    n += review_.edited ? 1 : 0;
     return n;
   }
   // The window's close button: quit, or ask first when something is unsaved.
@@ -914,6 +918,14 @@ class Editor {
       }
       done += (done.empty() ? "" : ", ") + std::string("the unused marks to ") + target.string();
     }
+    if (review_.edited) {
+      const fs::path target = dir / "review.tsv";
+      if (!SaveReviewFile(review_, target, backup_dir_, &error)) {
+        Status("NOT saved: " + error, true);
+        return;
+      }
+      done += (done.empty() ? "" : ", ") + std::string("the review flags and notes to ") + target.string();
+    }
     Status(done.empty() ? std::string("Nothing to save.") : "Saved " + done + ".");
   }
 
@@ -995,6 +1007,7 @@ class Editor {
     int unsaved = t ? int(t->Edits()) : 0;
     for (const auto& [code, file] : checks_) unsaved += file.edited ? 1 : 0;
     unsaved += unused_.edited ? 1 : 0;
+    unsaved += review_.edited ? 1 : 0;
     for (const auto& [voice, timing] : timings_) unsaved += int(timing.edited.size());
     const std::string save_label = unsaved ? "Save (" + std::to_string(unsaved) + ")" : std::string("Saved");
     const float h = ImGui::GetFrameHeight();
@@ -1049,7 +1062,8 @@ class Editor {
     ImGui::SetNextItemWidth(font * 14);
     if (ImGui::InputTextWithHint("##search", "file, speaker, ID or words", search_, sizeof(search_))) Refilter();
     ImGui::SameLine();
-    const int filters = int(in_scope_only_) + int(without_text_only_) + int(unchecked_only_) + int(hide_unused_);
+    const int filters = int(in_scope_only_) + int(without_text_only_) + int(unchecked_only_) + int(hide_unused_) +
+                      int(review_only_);
     const std::string filter_label = filters ? "Filter (" + std::to_string(filters) + ")" : std::string("Filter");
     if (IconButton("filter", Icon::kFilter, "Which lines the list shows", filter_label.c_str(), filters > 0)) {
       ImGui::OpenPopup("filters");
@@ -1060,6 +1074,7 @@ class Editor {
       changed |= ImGui::Checkbox("Only lines without text", &without_text_only_);
       changed |= ImGui::Checkbox("Only lines not checked", &unchecked_only_);
       changed |= ImGui::Checkbox("Hide lines marked unused", &hide_unused_);
+      changed |= ImGui::Checkbox("Only lines that need reviewing", &review_only_);
       if (changed) Refilter();
       ImGui::EndPopup();
     }
@@ -1133,11 +1148,14 @@ class Editor {
       if (without_text_only_ && pieces && !pieces->empty()) continue;
       if (unchecked_only_ && StateOf(c) == CheckState::kOk) continue;
       if (hide_unused_ && UnusedMark(c)) continue;
+      const Review* review = ReviewOf(c);
+      if (review_only_ && !(review && review->needs_review)) continue;
       if (!needle.empty()) {
         bool hit = Lower(c.name).find(needle) != std::string::npos || Hex(c.id).find(needle) == 0;
         if (pieces) {
           for (const Piece& p : *pieces) hit |= Lower(p.text).find(needle) != std::string::npos;
         }
+        if (review) hit |= Lower(review->note).find(needle) != std::string::npos;  // notes are searched too
         if (!hit) continue;
       }
       shown_.push_back(int(i));
@@ -1224,7 +1242,7 @@ class Editor {
     DrawCheckCounter();
     const ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
                                   ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp;
-    if (!ImGui::BeginTable("lines", 6, flags)) return;
+    if (!ImGui::BeginTable("lines", 7, flags)) return;
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn("Speaker", 0, 1.0f);
     ImGui::TableSetupColumn("File", 0, 2.6f);
@@ -1232,6 +1250,7 @@ class Editor {
     ImGui::TableSetupColumn("Length", 0, 0.8f);
     ImGui::TableSetupColumn("Subs", 0, 0.6f);
     ImGui::TableSetupColumn("Checked", 0, 0.8f);
+    ImGui::TableSetupColumn("Review", 0, 0.8f);
     ImGui::TableHeadersRow();
     TextFile* t = text();
     ImGuiListClipper clipper;
@@ -1270,6 +1289,15 @@ class Editor {
                              check == CheckState::kOk ? " + yes" : check == CheckState::kChanged ? " + changed" : "");
         } else if (check == CheckState::kOk) ImGui::TextColored(ImVec4(0.45f, 0.82f, 0.45f, 1.0f), "yes");
         else if (check == CheckState::kChanged) ImGui::TextColored(kWarnColour, "changed");
+        // Review: "needs" (orange) and / or "note"; the note itself on hover.
+        ImGui::TableNextColumn();
+        if (const Review* review = ReviewOf(c)) {
+          if (review->needs_review) ImGui::TextColored(kReviewColour, review->note.empty() ? "needs" : "needs + note");
+          else ImGui::TextDisabled("note");
+          if (!review->note.empty() && ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s\n(%s, %s)", review->note.c_str(), review->name.c_str(), review->date.c_str());
+          }
+        }
       }
     }
     ImGui::EndTable();
@@ -1810,6 +1838,82 @@ class Editor {
                           "on its own (the second bar above the list).");
       }
     }
+    DrawReviewRow(c);
+  }
+
+  // REVIEW (subtitle_texts.h): "Needs reviewing" + a free note, per line, for
+  // every language (one review.tsv). Not part of undo: a flag / note is kept
+  // as typed until saved (Ctrl+S) or reloaded.
+  const Review* ReviewOf(const Clip& c) const {
+    const auto it = review_.reviews.find(KeyFor(c));
+    return it == review_.reviews.end() ? nullptr : &it->second;
+  }
+  // Changes the selected line's review (flag and / or note); signs it with
+  // the name and today's date; a review left with neither is dropped.
+  bool ChangeReview(bool needs_review, const std::string& note) {
+    const Clip* c = clip();
+    if (!c) return false;
+    if (checker_.empty()) {
+      Status("Type your name (top right) first: a review flag or note says who wrote it.", true);
+      return false;
+    }
+    const std::string key = KeyFor(*c);
+    Review review{needs_review, checker_, TodayUtc(), note};
+    if (review.empty()) review_.reviews.erase(key);
+    else review_.reviews[key] = std::move(review);
+    review_.edited = true;
+    return true;
+  }
+  void MarkNeedsReview(bool on) {
+    const Review* now = clip() ? ReviewOf(*clip()) : nullptr;
+    if (!ChangeReview(on, now ? now->note : std::string())) return;
+    Status(on ? "Flagged \"needs reviewing\" (all languages). Save (Ctrl+S) to keep it."
+              : "No longer flagged for reviewing.");
+  }
+  void SetNote(const std::string& note) {
+    const Review* now = clip() ? ReviewOf(*clip()) : nullptr;
+    if (!ChangeReview(now && now->needs_review, note)) note_key_.clear();  // no name: the box shows the saved note again
+  }
+
+  void DrawReviewRow(const Clip& c) {
+    const std::string key = KeyFor(c);
+    const Review* review = ReviewOf(c);
+    if (note_key_ != key) {  // another line selected (or reloaded): its note into the box
+      note_key_ = key;
+      note_buf_ = review ? review->note : std::string();
+    }
+    const bool needs = review && review->needs_review;
+    if (IconButton("needs_review", Icon::kFlag, nullptr, needs ? "Needs reviewing" : "Flag for reviewing", needs)) {
+      MarkNeedsReview(!needs);
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip(needs ? "Flagged for another look (click to take the flag off).\nThe list's filter can show "
+                                "only flagged lines."
+                              : "Something here needs another look (times, words, the speaker...): flag it,\nfor "
+                                "every language and everyone (saved in review.tsv with your name).\nSay what in "
+                                "the note beside it.");
+    }
+    ImGui::SameLine();
+    IconLabel(Icon::kNote);
+    const float width = ImGui::GetContentRegionAvail().x;
+    const float lines = note_buf_.empty() ? 1.0f : 3.0f;  // grows once something is written
+    const float height = ImGui::GetTextLineHeight() * lines + ImGui::GetStyle().FramePadding.y * 2;
+    if (ImGui::InputTextMultiline("##note", &note_buf_, ImVec2(width, height), ImGuiInputTextFlags_WordWrap)) {
+      SetNote(note_buf_);
+    }
+    if (ImGui::IsItemHovered() && !ImGui::IsItemActive()) {
+      ImGui::SetTooltip("%s", review && !review->note.empty()
+                            ? ("A note on this line (all languages), last written by " + review->name + " on " +
+                               review->date + ".")
+                                  .c_str()
+                            : "A note on this line, for every language: what is wrong, what to ask, who should "
+                              "listen.\nSaved in review.tsv with your name; the list's search finds notes too.");
+    }
+    if (note_buf_.empty() && !ImGui::IsItemActive()) {  // a hint (multi-line boxes have none of their own)
+      const ImVec2 at(ImGui::GetItemRectMin().x + ImGui::GetStyle().FramePadding.x,
+                      ImGui::GetItemRectMin().y + ImGui::GetStyle().FramePadding.y);
+      ImGui::GetWindowDrawList()->AddText(at, ImGui::GetColorU32(ImGuiCol_TextDisabled), "Note for this line");
+    }
   }
 
   // ---- .srt to and from other programs (exchange.h) ----------------------
@@ -2284,6 +2388,11 @@ class Editor {
         view_len_ = std::atof(arg.c_str() + arg.find(':') + 1);
       }
       else if (verb == "unused") MarkUnused(arg != "off");  // unused / unused:off (name = checker_)
+      else if (verb == "review") MarkNeedsReview(arg != "off");  // review / review:off (name = checker_)
+      else if (verb == "note") {  // note:<text> ("" = remove the note)
+        SetNote(arg);
+        note_key_.clear();
+      }
       else if (verb == "check") {  // check:<name> = mark the line checked by <name>
         checker_ = arg;
         MarkChecked(true);
@@ -2393,6 +2502,10 @@ class Editor {
   bool unchecked_only_ = false;
   bool hide_unused_ = false;
   UnusedFile unused_;  // one list for every language
+  bool review_only_ = false;
+  ReviewFile review_;      // one list for every language
+  std::string note_key_;   // the line whose note is in note_buf_
+  std::string note_buf_;   // the note box's text
   bool save_to_source_ = false;
   std::vector<fs::path> archives_;
   int voice_index_ = 0;

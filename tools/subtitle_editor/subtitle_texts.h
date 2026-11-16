@@ -125,6 +125,28 @@ UnusedFile ReadUnusedFile(const std::filesystem::path& shipped_dir, const std::f
 bool SaveUnusedFile(UnusedFile& file, const std::filesystem::path& target, const std::filesystem::path& backup_dir,
                     std::string* error);
 
+// REVIEW NOTES: a line flagged "needs reviewing" and / or a note left on it
+// (what is wrong, what to ask, who should listen). ONE file for every
+// language, like the unused marks (a note can name a language itself),
+// `subtitles/review.tsv` (the game never reads it; the player's own copy
+// wins whole, as for the others):
+//   <key>  <needs reviewing: yes | no>  <who wrote last>  <date YYYY-MM-DD, UTC>  <note>
+// <note> = UTF-8, line breaks written "\n"; a line with neither the flag nor
+// a note is dropped.
+struct Review {
+  bool needs_review = false;
+  std::string name, date, note;
+  bool empty() const { return !needs_review && note.empty(); }
+};
+struct ReviewFile {
+  std::filesystem::path path;
+  std::map<std::string, Review> reviews;  // key -> flag / note
+  bool edited = false;
+};
+ReviewFile ReadReviewFile(const std::filesystem::path& shipped_dir, const std::filesystem::path& user_dir);
+bool SaveReviewFile(ReviewFile& file, const std::filesystem::path& target, const std::filesystem::path& backup_dir,
+                    std::string* error);
+
 // The fingerprint of a line's pieces as shown (FNV-1a 64 of times in
 // hundredths, speakers and words).
 std::string Fingerprint(const std::vector<Piece>& pieces);
