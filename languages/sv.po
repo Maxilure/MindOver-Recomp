@@ -2085,6 +2085,26 @@ msgstr "Vem som talar, i gult, före repliken (när det är känt)."
 msgid "Only the spoken words."
 msgstr "Bara de talade orden."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Rörelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Reduce Motion"
+msgstr "Minska rörelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menyer visas utan att glida eller studsa, inget pulserar, slowmotion går i normal hastighet och rörelseoskärpa förblir av."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menyer, pulsering och slowmotion som i originalspelet."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

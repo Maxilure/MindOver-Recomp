@@ -1359,6 +1359,20 @@ Row MessageBarRow() {
 }
 
 // ---------------------------------------------------------------------------
+// Accessibility: motion (findings/67)
+// ---------------------------------------------------------------------------
+// REDUCE MOTION (gameplay/reduce_motion.cpp): menu animations end at once,
+// menu items and texts stop pulsing, slow motion runs at normal speed, the
+// port's motion blur stays off. Off by default (the original). The game's own
+// logic, so both pictures, live at once.
+Row ReduceMotionRow() {
+  return OnOffRow(tr(u"Reduce Motion"), "reduce_motion", tr(u"On"), tr(u"Off"),
+                  tr(u"Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at "
+                     u"normal speed and motion blur stays off."),
+                  tr(u"Menus, pulses and slow motion as in the original game."), true);
+}
+
+// ---------------------------------------------------------------------------
 // Accessibility: the subtitles (subtitles/subtitles.h, findings/63 s.21)
 // ---------------------------------------------------------------------------
 // Every row is live: the subtitles' drawing reads the flags each frame, and
@@ -1505,7 +1519,8 @@ std::vector<Tab> Build() {
   // The subtitles' rows under their heading (cyan, like Display's "HUD"),
   // with a sample line on screen while the tab is open.
   tabs.push_back({tr(u"Accessibility"),
-                  {Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
+                  {Heading(tr(u"Motion")), ReduceMotionRow(),
+                   Heading(tr(u"Subtitles")), SubtitlesRow(), SubtitleSizeRow(), SubtitleBackgroundRow(),
                    SubtitleSpeakersRow(), SubtitleLingerRow()},
                   true});
   // BREATHING ROOM (playtest, 2026-10-24: the cyan headings alone still read

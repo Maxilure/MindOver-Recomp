@@ -2085,6 +2085,26 @@ msgstr "Hvem som snakker, i gult, foran replikken (når det er kjent)."
 msgid "Only the spoken words."
 msgstr "Bare de talte ordene."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Bevegelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Reduce Motion"
+msgstr "Reduser bevegelse"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menyer vises uten å gli eller sprette, ingenting pulserer, sakte film går i normal hastighet og bevegelsesuskarphet forblir av."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menyer, pulsering og sakte film som i originalspillet."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

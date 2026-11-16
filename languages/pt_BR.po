@@ -2092,6 +2092,26 @@ msgstr "Quem está falando, em amarelo, antes da fala (quando se sabe)."
 msgid "Only the spoken words."
 msgstr "Só as palavras faladas."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Movimento"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Reduce Motion"
+msgstr "Reduzir movimento"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Os menus aparecem sem deslizar nem quicar, nada pulsa, os momentos em câmera lenta rodam na velocidade normal e o desfoque de movimento fica desligado."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menus, pulsos e câmera lenta como no jogo original."
+
 #: src/options/options_settings.cpp:1446
 #, fuzzy
 msgid "Stay on Screen"

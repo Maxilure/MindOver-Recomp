@@ -2085,6 +2085,26 @@ msgstr "Kuka puhuu, keltaisella, repliikin edessä (kun se tiedetään)."
 msgid "Only the spoken words."
 msgstr "Vain puhutut sanat."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Liike"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Reduce Motion"
+msgstr "Vähennä liikettä"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Valikot ilmestyvät liukumatta tai pomppimatta, mikään ei syki, hidastukset kulkevat normaalinopeudella ja liike-epäterävyys pysyy pois päältä."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Valikot, sykkiminen ja hidastukset kuten alkuperäisessä pelissä."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""

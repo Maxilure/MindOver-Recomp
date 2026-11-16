@@ -2085,6 +2085,26 @@ msgstr "Wer spricht, in Gelb, vor dem Satz (wenn bekannt)."
 msgid "Only the spoken words."
 msgstr "Nur die gesprochenen Worte."
 
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Motion"
+msgstr "Bewegung"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Reduce Motion"
+msgstr "Bewegung reduzieren"
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus appear without sliding or bouncing, nothing pulses, slow-motion moments run at normal speed and motion blur stays off."
+msgstr "Menüs erscheinen ohne Gleiten oder Federn, nichts pulsiert, Zeitlupen laufen in normaler Geschwindigkeit und Bewegungsunschärfe bleibt aus."
+
+#: src/options/options_settings.cpp
+#, fuzzy
+msgid "Menus, pulses and slow motion as in the original game."
+msgstr "Menüs, Pulsieren und Zeitlupe wie im Originalspiel."
+
 #: src/options/options_settings.cpp:1446
 msgid "Stay on Screen"
 msgstr ""
