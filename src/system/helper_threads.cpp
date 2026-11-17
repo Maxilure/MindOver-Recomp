@@ -7,6 +7,8 @@
 #include <atomic>
 #include <chrono>
 #include <string_view>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
 #include <dirent.h>
@@ -30,6 +32,10 @@ REXCVAR_DEFINE_BOOL(loading_follows_game_frames, true, "CrashMoM",
                     "With the fixed step on (exact runs, online / LAN sessions): every game frame "
                     "waits until the game's helper threads (loading, audio) have finished what they "
                     "were asked, so data lands on the same frame on every run / PC");
+REXCVAR_DEFINE_BOOL(helper_threads_between_frames, true, "CrashMoM",
+                    "With the fixed step on: the game's helper threads work only between frames "
+                    "(and while the main thread waits for them), so a frame never sees a helper's "
+                    "result early on one PC and late on another (system/helper_threads.h)");
 REXCVAR_DEFINE_BOOL(helper_threads_on_game_time, true, "CrashMoM",
                     "With the fixed step on: the game's helper threads read the frame's time and "
                     "their timed waits / sleeps end on game frames, not on the PC's clock "
@@ -63,11 +69,32 @@ struct Slot {
   // Game-time deadline (fixed_step::GameClockNs) of the timed wait it is in,
   // or kNoDeadline. Reached while still inside = about to wake = busy.
   std::atomic<int64_t> deadline_ns{INT64_MAX};
+  // D3D's interrupt thread (its waits are called from sub_82320E08): it
+  // answers the GPU, and the main thread waits on it inside a frame (GPU
+  // fences while a load streams): holding it at the gate only stalled the
+  // frame 100 ms at a time. Render plumbing, no world state: never held.
+  std::atomic<bool> render{false};
 };
 constexpr int64_t kNoDeadline = INT64_MAX;
 std::array<Slot, kSlots> g_slots;
 std::atomic<int> g_next_slot{0};
 std::atomic<uint64_t> g_wakes{0};
+
+// THE GATE (helper_threads.h "between frames"): open = helpers may work.
+// Closed while the main thread runs a frame's game code; a helper whose wait
+// ends meanwhile is held here (counted in g_held, still "inside its wait")
+// until the gate opens. kMaxHold = deadlock guard (a helper holding a lock
+// the main thread needs): then it goes on (logged).
+std::mutex g_gate_mutex;
+std::condition_variable g_gate_cv;
+std::atomic<bool> g_gate_open{true};
+std::atomic<int> g_held{0};
+constexpr auto kMaxHold = std::chrono::milliseconds(100);
+
+bool Gating() {
+  return fixed_step::Active() && REXCVAR_GET(loading_follows_game_frames) &&
+         REXCVAR_GET(helper_threads_between_frames);
+}
 thread_local int t_slot = -1;
 
 int64_t NowNs() {
@@ -198,6 +225,7 @@ bool AllWaiting(int64_t now) {
     }
     return false;
   }
+  if (g_held.load() > 0) return false;  // released, about to work
   return !GameThreadRunnable();
 }
 
@@ -212,6 +240,30 @@ void BeforeWait() {
 
 void AfterWait(uint32_t status, bool timed_sleep) {
   if (Slot* s = MySlot()) {
+    // Between frames only: woken while the main thread runs game code =
+    // wait here, still counted as inside the wait, until the gate opens.
+    if (!g_gate_open.load() && !s->render.load() && Gating()) {
+      g_held.fetch_add(1);
+      bool timed_out = false;
+      {
+        std::unique_lock<std::mutex> lock(g_gate_mutex);
+        timed_out = !g_gate_cv.wait_for(lock, kMaxHold, [] { return g_gate_open.load(); });
+      }
+      if (timed_out) {
+        static std::atomic<int> logged{0};
+        if (logged.fetch_add(1) < 20) {
+          REXLOG_WARN("Loading on game frames: helper thread {} held 100 ms while the frame ran "
+                      "(the main thread may need it): let go",
+                      s->name);
+        }
+      }
+      s->in_wait.fetch_sub(1);
+      s->changed_ns = NowNs();
+      if (!timed_sleep && status != kStatusTimeout) g_wakes.fetch_add(1);
+      g_held.fetch_sub(1);
+      s->gave_up_logged = false;
+      return;
+    }
     s->in_wait.fetch_sub(1);
     s->changed_ns = NowNs();
     s->gave_up_logged = false;
@@ -219,6 +271,20 @@ void AfterWait(uint32_t status, bool timed_sleep) {
     // lock handed over) = the thread has work: not quiet yet.
     if (!timed_sleep && status != kStatusTimeout) g_wakes.fetch_add(1);
   }
+}
+
+void OpenGate() {
+  {
+    std::lock_guard<std::mutex> lock(g_gate_mutex);
+    g_gate_open = true;
+  }
+  g_gate_cv.notify_all();
+}
+
+void CloseGate() {
+  if (!Gating()) return;
+  std::lock_guard<std::mutex> lock(g_gate_mutex);
+  g_gate_open = false;
 }
 
 bool OnGameTime() { return fixed_step::Active() && REXCVAR_GET(helper_threads_on_game_time); }
@@ -254,7 +320,18 @@ void StoreI64(uint8_t* base, uint32_t a, int64_t value) {
 }  // namespace
 
 void Wait(PPCContext& ctx, uint8_t* base, RealImport real, int timeout_reg, bool timed_sleep) {
+  // The MAIN thread waits inside a frame (often for a helper's result): the
+  // gate opens for it, and before it goes on the helpers finish everything
+  // they have (the same work done on every PC), then it closes again.
+  if (fixed_step::OnMainThread() && !g_gate_open.load() && Gating()) {
+    OpenGate();
+    real(ctx, base);
+    WaitUntilQuiet();
+    CloseGate();
+    return;
+  }
   Slot* s = MySlot();
+  if (s && uint32_t(ctx.lr) >= 0x82320E08 && uint32_t(ctx.lr) < 0x82320F80) s->render = true;
   const uint32_t timeout_ptr = uint32_t(Register(ctx, timeout_reg));
   const int64_t timeout = timeout_ptr ? LoadI64(base, timeout_ptr) : 0;
   // Untouched: not a helper, option off / fixed step off, no timeout

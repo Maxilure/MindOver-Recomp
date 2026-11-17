@@ -364,6 +364,7 @@ void CrashMomPassDelta(PPCRegister& f31) {
   // speakers once when the fixed step goes off.
   static bool sound_clocked = false;
   if (fps <= 0) {
+    helper_threads::OpenGate();  // (no gate in real time)
     if (sound_clocked) {
       sound_clocked = false;
       sound_out::OnFixedFrame(0, 0, 0);
@@ -378,11 +379,16 @@ void CrashMomPassDelta(PPCRegister& f31) {
   if (!g_need_base) g_helper_us.store(g_clock_base_us + FrameUs(k, fps), std::memory_order_relaxed);
   // The frame's share of sound is mixed before it runs (after the listener:
   // a replay's first frame restarts the clock's epoch there).
+  // The frame boundary: helpers may work (helper_threads.h "between
+  // frames") through the sound mixing and the quiet wait, then not until the
+  // next boundary (or a wait of the main thread).
+  helper_threads::OpenGate();
   sound_clocked = true;
   sound_out::OnFixedFrame(k, g_epoch_frame, fps);
   // Loading on game frames (system/helper_threads.h): the helper threads
   // finish what they were asked (after the sound: its blocks wake them too).
   helper_threads::WaitUntilQuiet();
+  helper_threads::CloseGate();
   if (!g_fast.load(std::memory_order_relaxed)) WaitForFrameStart(k, fps);
   // The guest computed f31 in single precision (fmuls): give the same kind
   // of number, 1/N rounded to a float.

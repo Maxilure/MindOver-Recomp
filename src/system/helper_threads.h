@@ -79,4 +79,20 @@ void Wait(PPCContext& ctx, uint8_t* base, RealImport real, int timeout_reg, bool
 // Main thread, start of a main-loop pass, fixed step on: see the file header.
 void WaitUntilQuiet();
 
+// HELPERS WORK ONLY BETWEEN FRAMES (2026-11-17; helper_threads_between_frames).
+// Waiting for idle helpers at each frame start wasn't enough: on several CPU
+// cores a helper also worked DURING the main thread's frame, and the level's
+// loading task (main thread, sub_822E39A8) found its data ready in the same
+// frame or the next depending on timing: a package section became ready at
+// session frame 295 in a fast run and 296 in paced ones, and later a spawner
+// spawned a frame apart (the Wumpa replay parted at 3928). Now a GATE: the
+// pass hook opens it for the frame boundary (sound mixing + WaitUntilQuiet)
+// and closes it before the frame's game code; a helper woken while it is
+// closed is held (still counted inside its wait) until it opens. When the
+// main thread itself waits (Wait() above, usually for a helper), the gate
+// opens, and after the wait the helpers finish everything before it closes.
+// A helper held over 100 ms is let go (logged): a deadlock guard.
+void OpenGate();
+void CloseGate();
+
 }  // namespace helper_threads
