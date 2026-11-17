@@ -314,3 +314,30 @@ extern "C" REX_FUNC(sub_821BA090) {
   }
   __imp__sub_821BA090(ctx, base);
 }
+
+// PROPS ANIMATE WHETHER OR NOT THIS PC SEES THEM (2026-11-17, own-camera
+// round 9: a breakable broke one frame later on the PC whose camera didn't
+// show it, and player 2's targeting let go of it a frame later there).
+// CRenderObject3D's update (slot 5, sub_822B6608, f1 = time step) has an
+// "animate only when drawn" rule: with its flag +404 bit 0x40 set and the
+// object NOT drawn lately (its draw stamp, sub_8236ABC0(+8), against the
+// render frame counter **0x82571B88, low two bits), it only adds the time to
+// +400 and returns; the next time it is drawn it advances by all of it. Its
+// animation is a StateProp whose frames fire events (a breakable's "break":
+// call chain 822B6720 -> 82380CD0 -> 8237F638 -> 8218CEB0 -> 821959AC), so
+// WHEN an event fires depended on what this PC's camera drew. Online the flag
+// is cleared for the call (and put back after): every object advances every
+// frame, on every PC alike. Offline: the original (saves the work for objects
+// nobody sees).
+extern "C" REX_FUNC(__imp__sub_822B6608);
+extern "C" REX_FUNC(sub_822B6608) {
+  if (!net::InSession()) {
+    __imp__sub_822B6608(ctx, base);
+    return;
+  }
+  uint8_t* flags = GuestPtr(base, ctx.r3.u32 + 404);
+  const uint8_t before = *flags;
+  *flags = uint8_t(before & ~0x40);
+  __imp__sub_822B6608(ctx, base);
+  *flags = uint8_t((*flags & ~0x40) | (before & 0x40));
+}

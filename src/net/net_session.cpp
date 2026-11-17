@@ -42,6 +42,7 @@ namespace online_sticks {  // online_sticks.cpp
 bool CameraFacing(uint16_t& facing);
 bool CameraPose(uint32_t words[10]);
 std::string ControllerParts();
+std::string BehaviourParts();
 }  // namespace online_sticks
 
 #include <algorithm>
@@ -937,8 +938,9 @@ void OnPassStart(uint64_t fixed_step_frame) {
   if (s >= 1 && !REXCVAR_GET(debug_net_fingerprint_log).empty()) {
     static std::FILE* log = std::fopen(REXCVAR_GET(debug_net_fingerprint_log).c_str(), "w");
     if (log) {
-      std::fprintf(log, "%lld %016llX %s || %s\n", (long long)(s - 1), (unsigned long long)g_fp_local[s - 1],
-                   world_hash::QuickFingerprintParts().c_str(), online_sticks::ControllerParts().c_str());
+      std::fprintf(log, "%lld %016llX %s || %s || %s\n", (long long)(s - 1), (unsigned long long)g_fp_local[s - 1],
+                   world_hash::QuickFingerprintParts().c_str(), online_sticks::ControllerParts().c_str(),
+                   online_sticks::BehaviourParts().c_str());
       std::fflush(log);
     }
   }

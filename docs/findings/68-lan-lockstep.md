@@ -311,7 +311,7 @@ position and velocity bits, the random state) on both sides:
 | 4 | a 30-minute random two-player script (jumps, attacks, B), frame 1276: player 1 parked on one PC only | B released 10 units from player 2: the game's off-screen CATCH-UP (off screen + B = forced into a mask) asks the camera whether the Crash is off screen (sub_82235978) | online plan 6.1, "no forced masks": in a session every Crash counts as on screen. A mask by choice doesn't ask the camera (coop_mask_from_anywhere) |
 | 5 | frame 1307: the masked player 1 turned slightly differently on its host (forward row y 0.028 against -0.00006) | the mask turns toward what its player AIMS at; the aim is a ray from the camera through the player's 2D reticle spot (CReticleAimingBehaviour, sub_822AC668) | each input also carries its PC's whole camera pose (position, direction, up, field of view: the camera's own words; protocol 3). While the aim update runs for player P, the game camera holds P's sent pose (camera bytes +16..+251 saved, pose written, matrices marked stale, saved bytes restored after) |
 | 6 | none: the 30-second replay of that script in sync on every frame | | |
-| 7 | the full 30-minute script, frame 9430 (2.6 minutes): player 2 starts the same turn one frame earlier on the PC whose camera shows them; on the other PC they are off screen | not found yet (see below) | three camera reads fixed on the way, none of them this one: the stick's direction sector for the fight trees (sub_8221DD70: camera direction -> the sender's, hook 0x8221DE00), the fight-tree condition "am I off screen" (sub_821BA090: "on screen" online), the held forward written at a controller UNLOCK (sub_82270FE8: camera direction -> the sender's facing) |
+| 7 | the full 30-minute script, frame 9430 (2.6 minutes): player 2 starts the same turn one frame earlier on the PC whose camera shows them; on the other PC they are off screen | a breakable prop player 2 targeted broke a frame later where it was off screen: props animate only when drawn (round 9 below) | three camera reads fixed on the way, none of them this one: the stick's direction sector for the fight trees (sub_8221DD70: camera direction -> the sender's, hook 0x8221DE00), the fight-tree condition "am I off screen" (sub_821BA090: "on screen" online), the held forward written at a controller UNLOCK (sub_82270FE8: camera direction -> the sender's facing) |
 
 Round 7 in detail. Logging each player's controller state per frame (lock
 word, hold bit, held forward, stored stick) shows the stick pipeline equal on
@@ -323,6 +323,34 @@ the camera doesn't see are updated differently (animation detail, an event
 one frame late). The game's frustum test (sub_822ED0C8) is called only from
 the render manager and zone drawing; what that leaves on a culled character
 for game logic to read is the next question.
+
+Round 8: player 2's behaviour objects, hashed per frame on both PCs, then
+their raw words. Several differ long before the split, but mostly in harmless
+ways: pointers to the SAME things at different addresses (each PC loads, draws
+and sounds different things, so the heaps lay out differently), and
+CSoundDialogueBehaviour's squared distance to the sound LISTENER (the global
+at 0x82526324, set by the sound system = each PC's camera). The one that
+mattered: CTargetingBehaviour (+0x3C, the candidate list) let go of its target
+one frame apart. The write watch (`who`) on that list named the cause.
+
+Round 9, the cause: the target was a breakable prop, and it BROKE one frame
+later on the host. Logging every break with the game's call stack showed both
+PCs breaking it from the same place: CRenderBehaviour's update (slot 4,
+sub_82189D38) -> CRenderObject3D's update (slot 5, sub_822B6608) -> the
+prop's StateProp animation (sub_82380B00 -> sub_8237F5C0) -> its "break"
+event -> the breakable (sub_821959AC). sub_822B6608 has an ANIMATE ONLY WHEN
+DRAWN rule: with flag +404 bit 0x40 set and the object not drawn lately (its
+draw stamp against the render frame counter at **0x82571B88), it only adds the
+time step to +400 and returns; the next time it is drawn it advances by all of
+it at once. Player 2's prop was off the host's screen: its break event fired a
+frame later there. Online the flag is cleared for the call (and put back): every
+object advances every frame on every PC. The 3.5-minute replay is then in sync
+on every frame, every break on the same frame on both PCs.
+
+The pattern worth remembering: the engine saves work on what the camera
+doesn't see, and with a camera per PC "what the camera sees" differs. Every
+such saving that changes WHEN something happens in the world has to be turned
+off online.
 
 The random generator stayed identical in every round. The tool that named
 each cause: `--debug_net_fingerprint_log=<file>` on both PCs (every player's

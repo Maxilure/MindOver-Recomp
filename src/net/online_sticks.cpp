@@ -42,6 +42,7 @@
 #include <cstring>
 #include <string>
 
+#include <fmt/format.h>
 #include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
@@ -408,3 +409,72 @@ std::string ControllerParts() {
   return out;
 }
 }  // namespace online_sticks
+
+// Debug (--debug_net_fingerprint_log, own-camera hunt 2026-11-17): player 2's
+// behaviours: every pointer in the actor's slots +108..+347 that points at an
+// object with a vtable in the image, as "vtable:hash of its first 256 bytes".
+namespace online_sticks {
+std::string BehaviourParts() {
+  std::string out;
+  uint8_t* gb = Base();
+  const uint32_t actor = more_players::CharacterOfPlayer(1);
+  if (!actor || !guest_memory::Readable(actor + 108, 240)) return out;
+  for (uint32_t off = 108; off < 348; off += 4) {
+    const uint32_t obj = Word(gb, actor + off);
+    if (obj < 0x40000000 || !guest_memory::Readable(obj, 256)) continue;
+    const uint32_t vt = Word(gb, obj);
+    if (vt < 0x82000000 || vt >= 0x82100000) continue;
+    uint64_t h = 1469598103934665603ull;
+    const uint8_t* p = GuestPtr(gb, obj);
+    for (int i = 0; i < 256; ++i) h = (h ^ p[i]) * 1099511628211ull;
+    char item[48];
+    std::snprintf(item, sizeof(item), "%X:%08X:%04llX ", off, vt, (unsigned long long)(h & 0xFFFF));
+    out += item;
+    // Raw words of the suspects (physics, platform rider, intersection, targeting).
+    if (vt == 0x82032FC4 || vt == 0x8202FC0C || vt == 0x8202ECBC || vt == 0x82031634) {
+      out += "[";
+      for (uint32_t k = 0; k < 256; k += 4) {
+        char w[10];
+        std::snprintf(w, sizeof(w), "%08X ", Word(gb, obj + k));
+        out += w;
+      }
+      out += "] ";
+      // Targeting +0xAC = the chosen target; physics +0xA8 = what the body
+      // stands on: what they ARE (vtable, and an actor's world position via
+      // +44 -> +48) rather than where they sit in memory.
+      const uint32_t ref_off = vt == 0x82031634 ? 0xAC : vt == 0x82032FC4 ? 0xA8 : 0;
+      const uint32_t ref = ref_off ? Word(gb, obj + ref_off) : 0;
+      if (ref && guest_memory::Readable(ref, 48)) {
+        char r[96];
+        const uint32_t m = Word(gb, ref + 44);
+        if (m && guest_memory::Readable(m + 48, 12)) {
+          std::snprintf(r, sizeof(r), "{ref vt %08X at %08X %08X %08X} ", Word(gb, ref), Word(gb, m + 48),
+                        Word(gb, m + 52), Word(gb, m + 56));
+        } else {
+          std::snprintf(r, sizeof(r), "{ref vt %08X} ", Word(gb, ref));
+        }
+        out += r;
+      }
+    }
+  }
+  return out;
+}
+}  // namespace online_sticks
+
+// Debug (own-camera hunt 2026-11-17, --debug_net_fingerprint_log set): every
+// break (Breakable slot 28, sub_82195E30) logs its session frame and the
+// game's call stack, to compare the two PCs.
+#include "../debug/guest_stack.h"
+#include "../fixed_step.h"
+REXCVAR_DECLARE(std::string, debug_net_fingerprint_log);
+extern "C" REX_FUNC(__imp__sub_82195E30);
+extern "C" REX_FUNC(sub_82195E30) {
+  if (net::InSession() && !REXCVAR_GET(debug_net_fingerprint_log).empty()) {
+    uint32_t calls[8] = {};
+    const int n = guest_stack::Callers(ctx.r1.u32, calls, 8);
+    std::string chain = fmt::format("lr {:08X}", uint32_t(ctx.lr));
+    for (int i = 0; i < n; ++i) chain += fmt::format(" {:08X}", calls[i]);
+    REXLOG_INFO("Online debug: break by {:08X} at fixed-step frame {}: {}", ctx.r3.u32, fixed_step::Frame(), chain);
+  }
+  __imp__sub_82195E30(ctx, base);
+}
