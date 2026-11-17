@@ -2331,3 +2331,16 @@ registers = ["r1", "r31"]
 address = 0x8221DE00
 name = "OnlineStickSector"
 registers = ["r5", "r31"]
+
+# ONLINE: THE HOLD'S CAMERA QUESTION (src/net/online_sticks.cpp
+# OnlineHoldQuery). sub_822718E8 asks *(game)+12 an event-9 question with no
+# player in it (0x822719A4..C4) and, when the answer byte (r1+108, loaded
+# into r30 at 0x822719D4) is set, starts the "hold the old forward" right
+# away. The answer comes from THIS PC's camera (found 2026-11-17: yes on the
+# host 10 frames before the guest, player 2's hold began apart). Here r30
+# becomes the answer the controller's player's PC sent. r31 = the controller.
+# Verified with xexdis (0x822719D4 lbz r30,108(r1); 0x822719D8 beq cr6,...).
+[[entrypoint.midasm_hook]]
+address = 0x822719D8
+name = "OnlineHoldQuery"
+registers = ["r30", "r31"]

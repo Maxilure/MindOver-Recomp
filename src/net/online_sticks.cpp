@@ -191,8 +191,8 @@ void OnlineHeldFacing(PPCRegister& r1, PPCRegister& r31) {
   if (!net::InSession()) return;
   uint8_t* base = Base();
   const int player = online_rules::PlayerOfController(base, r31.u32);
-  if (player < 0) return;
   uint16_t facing = 0;
+  if (player < 0) return;
   if (!net::FrameFacing(player, facing)) return;
   double c = 0, sn = 0;
   CosSin(facing, c, sn);
@@ -376,15 +376,25 @@ extern "C" REX_FUNC(sub_82270FE8) {
   if (readable) std::memcpy(before, GuestPtr(gb, controller + 464), 12);
   __imp__sub_82270FE8(ctx, base);
   if (!readable || !net::InSession() || std::memcmp(before, GuestPtr(gb, controller + 464), 12) == 0) return;
-  const int player = online_rules::PlayerOfController(gb, controller);
+  // A controller nobody plays yet (sockets 3-4 in a two-player session, or a
+  // joiner's before the join; own-camera round 10: such a controller kept
+  // each PC's own camera direction from the level's fade-in, and player 2
+  // was briefly handed one at the join) gets player 1's sent facing: the
+  // same value on every PC.
+  const int owner = online_rules::PlayerOfController(gb, controller);
+  const int player = owner < 0 ? 0 : owner;
   uint16_t facing = 0;
-  if (player < 0 || !net::FrameFacing(player, facing)) return;
+  if (!net::FrameFacing(player, facing)) return;
   double c = 0, sn = 0;
   CosSin(facing, c, sn);
   WriteFloat(gb, controller + 464, float(c));
   WriteFloat(gb, controller + 468, 0.0f);
   WriteFloat(gb, controller + 472, float(sn));
-  REXLOG_INFO("Online: player {}'s held forward at an unlock = their PC's sent facing", player + 1);
+  if (owner >= 0) {
+    REXLOG_INFO("Online: player {}'s held forward at an unlock = their PC's sent facing", player + 1);
+  } else {
+    REXLOG_INFO("Online: a free controller's held forward at an unlock = player 1's sent facing");
+  }
 }
 
 // Debug (--debug_net_fingerprint_log): every player's root controller state:
@@ -406,6 +416,11 @@ std::string ControllerParts() {
                   Word(gb, c + 472), Word(gb, c + 476), Word(gb, c + 480));
     out += line;
   }
+  // The game's focus player (game object 0x825B0008 +40, set by the camera's
+  // focus list sub_821099C0; story triggers and interactions read it).
+  char focus[24];
+  std::snprintf(focus, sizeof(focus), "focus %d ", int32_t(Word(gb, 0x825B0008 + 40)));
+  out += focus;
   return out;
 }
 }  // namespace online_sticks
@@ -477,4 +492,37 @@ extern "C" REX_FUNC(sub_82195E30) {
     REXLOG_INFO("Online debug: break by {:08X} at fixed-step frame {}: {}", ctx.r3.u32, fixed_step::Frame(), chain);
   }
   __imp__sub_82195E30(ctx, base);
+}
+
+
+// THE HOLD'S CAMERA QUESTION (2026-11-17, own-camera round 11: a 5-minute
+// random fight script; player 2's hold bit (+520 0x80) set on the host 10
+// frames before the guest, frame 11361). Beside the angle test, the hold
+// logic (sub_822718E8) starts a hold at once when an event-9 question sent to
+// *(game)+12 (0x822719A4..C4) answers yes. The question names no player: it is
+// about the game camera (yes for ~40 frames at a time, on both PCs when the
+// two cameras pass the same spot, but each PC at its own moment). Like the
+// facing: this PC's own answer (the last one seen, any controller) goes out
+// with each input (TakeCameraCut, read when the input is made), and for player
+// P's controller the answer P's PC sent replaces it (r30 at 0x822719D8, right
+// after the answer byte is loaded).
+namespace {
+uint8_t g_local_cut = 0;
+bool g_local_cut_known = false;
+}  // namespace
+namespace online_sticks {
+bool TakeCameraCut(uint8_t& cut) {
+  if (!g_local_cut_known) return false;
+  cut = g_local_cut;
+  return true;
+}
+}  // namespace online_sticks
+void OnlineHoldQuery(PPCRegister& r30, PPCRegister& r31) {
+  if (!net::InSession()) return;
+  g_local_cut = (r30.u32 & 0xFF) != 0 ? 1 : 0;  // this PC's camera's answer
+  g_local_cut_known = true;
+  const int owner = online_rules::PlayerOfController(Base(), r31.u32);
+  uint8_t sent = 0;  // a free controller: player 1's answer (as at the unlock)
+  if (!net::FrameCameraCut(owner < 0 ? 0 : owner, sent)) return;
+  r30.u64 = sent;
 }

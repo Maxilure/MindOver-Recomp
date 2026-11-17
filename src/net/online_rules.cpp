@@ -221,11 +221,41 @@ void OnFrame(PPCContext& ctx, uint8_t* base) {
 
 uint32_t RootOf(int p) { return p >= 0 && p < kPlayers ? g_roots[p] : 0; }
 
+// Player p's root controller read straight from the tables, without calling
+// the game (callable from mid-function hooks, which have no PPCContext):
+// players 1-2's controller number = front end +8524 + 4p (what
+// sub_82266130 reads), 3-4's = more_players' own table (sub_82266130's
+// override); then the input manager's controller list.
+uint32_t RootControllerNow(uint8_t* base, int p) {
+  const uint32_t game = Read32(base, kGameGlobal);
+  if (!game) return 0;
+  const uint32_t fe = Read32(base, game + kFrontEnd), manager = Read32(base, game + kInputManager);
+  if (!fe || !manager || p < 0 || p > 1 || !guest_memory::Readable(fe + 4 * 2131, 8) ||
+      !guest_memory::Readable(manager + kControllers, 4)) {
+    return 0;
+  }
+  const int32_t index = int32_t(Read32(base, fe + 4 * (2131 + uint32_t(p))));
+  if (index < 0 || index > 3) return 0;
+  const uint32_t controllers = Read32(base, manager + kControllers);
+  return controllers ? Read32(base, controllers + 4 * uint32_t(index)) : 0;
+}
+
+// FRESH LOOKUP (2026-11-17, own-camera round 10): g_roots is refreshed once
+// per front-end frame, but a joining player's controller is made and used
+// (the hold logic sub_822718E8 runs) before that refresh: the lookup said
+// "nobody", the online hooks stood aside and the controller's held forward
+// started as each PC's own camera direction (fingerprint: player 2's held
+// forward differed from the join on, with a tilt no sent facing has). Now a
+// controller the cache doesn't know is checked against the tables as they
+// are right now.
 int PlayerOfController(uint8_t* base, uint32_t controller) {
   constexpr uint32_t kParent = 36;  // input controller: its parent (0 = a root)
   for (int depth = 0; controller && depth < 8; ++depth) {
     for (int p = 0; p < kPlayers; ++p) {
       if (g_roots[p] && g_roots[p] == controller) return p;
+    }
+    for (int p = 0; p < 2; ++p) {
+      if (RootControllerNow(base, p) == controller) return p;
     }
     if (!guest_memory::Readable(controller + kParent, 4)) return -1;
     controller = Read32(base, controller + kParent);
@@ -313,6 +343,30 @@ extern "C" REX_FUNC(sub_821BA090) {
     return;
   }
   __imp__sub_821BA090(ctx, base);
+}
+
+// ENEMIES CIRCLING A PLAYER ASK "AM I ON SCREEN?" (2026-11-17, own-camera
+// callers pass: every game function that asks the game camera's slot 17
+// "is this point in view" is one of four: the fight-tree condition above,
+// the co-op catch-up (sub_82235978), the camera's focus list (sub_821099C0,
+// view side) and this one). sub_820BE878 = a step of CAITaskCombatMoveEncircle
+// (r3 = the task, its actor at +152): it asks the camera about the enemy's
+// own position (actor +48 matrix row 3) and sets the task's +16 from its +12,
+// one more when the enemy is OFF screen. With a camera per PC that number
+// (and with it how the enemy moves around the player) would differ per PC.
+// Online every enemy counts as on screen (the original's answer while the
+// single camera sees it): +16 = +12, r3 = 1 like the camera's "yes".
+extern "C" REX_FUNC(__imp__sub_820BE878);
+extern "C" REX_FUNC(sub_820BE878) {
+  if (net::InSession()) {
+    const uint32_t task = ctx.r3.u32;
+    if (guest_memory::Readable(task + 12, 8)) {
+      std::memcpy(GuestPtr(base, task + 16), GuestPtr(base, task + 12), 4);
+    }
+    ctx.r3.u64 = 1;
+    return;
+  }
+  __imp__sub_820BE878(ctx, base);
 }
 
 // PROPS ANIMATE WHETHER OR NOT THIS PC SEES THEM (2026-11-17, own-camera

@@ -21,7 +21,8 @@
 //   INPUTS  (both ways)      u8 player, u8 count (1-64), u16 0, i32 first frame,
 //                            i32 ack (the newest frame of YOUR inputs I hold
 //                            without a gap, -1 none), count x 15 bytes (u8
-//                            flags: bit 0 connected, bit 1 facing known;
+//                            flags: bit 0 connected, bit 1 facing known,
+//                            bit 3 the sender camera's hold answer;
 //                            12-byte XINPUT_GAMEPAD as the game reads it,
 //                            big-endian; u16 FACING = the sender's camera
 //                            direction the stick is meant in, 65536 steps a
@@ -41,6 +42,7 @@
 namespace online_sticks {  // online_sticks.cpp
 bool CameraFacing(uint16_t& facing);
 bool CameraPose(uint32_t words[10]);
+bool TakeCameraCut(uint8_t& cut);
 std::string ControllerParts();
 std::string BehaviourParts();
 }  // namespace online_sticks
@@ -111,7 +113,7 @@ using Clock = std::chrono::steady_clock;
 // -----------------------------------------------------------------------------
 // 1. PACKETS
 // -----------------------------------------------------------------------------
-constexpr uint8_t kProtocol = 3;  // 2: inputs carry the sender's camera facing; 3: + its camera pose  // bump on any layout change: old copies refuse
+constexpr uint8_t kProtocol = 4;  // 2: inputs carry the sender's camera facing; 3: + its camera pose; 4: + its camera's hold answer  // bump on any layout change: old copies refuse
 constexpr char kMagic[4] = {'M', 'O', 'R', 'N'};
 enum Type : uint8_t {
   kHello = 1,
@@ -223,10 +225,13 @@ struct PadIn {
   // camera's words as it stores them. has_camera 0 = none.
   uint8_t has_camera = 0;
   uint32_t camera[10] = {};
+  // The sender's camera's answer to "event 9" (online_sticks.cpp
+  // OnlineHoldQuery: the hold logic's camera question). Flag bit 8.
+  uint8_t camera_cut = 0;
   bool operator==(const PadIn& o) const {
     return connected == o.connected && std::memcmp(bytes, o.bytes, 12) == 0 &&
            has_facing == o.has_facing && facing == o.facing && has_camera == o.has_camera &&
-           std::memcmp(camera, o.camera, sizeof(camera)) == 0;
+           std::memcmp(camera, o.camera, sizeof(camera)) == 0 && camera_cut == o.camera_cut;
   }
 };
 
@@ -341,7 +346,7 @@ void SendInputsLocked() {
   w.U32(uint32_t(int32_t(int64_t(g_inputs[g_remote].size()) - 1)));  // ack
   for (int i = 0; i < count; ++i) {
     const PadIn& in = mine[size_t(first + i)];
-    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0) | (in.has_camera ? 4 : 0)));
+    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0) | (in.has_camera ? 4 : 0) | (in.camera_cut ? 8 : 0)));
     w.Bytes(in.bytes, 12);
     w.U16(in.facing);
     if (in.has_camera) {
@@ -578,6 +583,7 @@ void HandlePacket(const uint8_t* data, size_t size, const sockaddr_in& from) {
         in.connected = flags & 1;
         in.has_facing = (flags >> 1) & 1;
         in.has_camera = (flags >> 2) & 1;
+        in.camera_cut = (flags >> 3) & 1;
         r.Bytes(in.bytes, 12);
         in.facing = r.U16();
         if (in.has_camera) {
@@ -951,6 +957,7 @@ void OnPassStart(uint64_t fixed_step_frame) {
     g_latest_local.facing = facing;
   }
   if (online_sticks::CameraPose(g_latest_local.camera)) g_latest_local.has_camera = 1;
+  if (uint8_t cut = 0; online_sticks::TakeCameraCut(cut)) g_latest_local.camera_cut = cut;
   auto& mine = g_inputs[g_local];
   while (int64_t(mine.size()) <= s + g_delay) mine.push_back(g_latest_local);
   g_last_sent = int64_t(mine.size()) - 1;
@@ -1044,6 +1051,17 @@ bool FrameFacing(int player, uint16_t& facing) {
   const PadIn& in = g_inputs[player][size_t(s)];
   if (!in.has_facing) return false;
   facing = in.facing;
+  return true;
+}
+
+bool FrameCameraCut(int player, uint8_t& cut) {
+  if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+  const PadIn& in = g_inputs[player][size_t(s)];
+  if (!in.has_facing) return false;  // (sent together with the facing)
+  cut = in.camera_cut;
   return true;
 }
 

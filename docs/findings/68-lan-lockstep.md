@@ -347,6 +347,44 @@ frame later there. Online the flag is cleared for the call (and put back): every
 object advances every frame on every PC. The 3.5-minute replay is then in sync
 on every frame, every break on the same frame on both PCs.
 
+Round 10, harder scenes. The two halves of three earlier test scripts (each
+PC plays one player's part) with own cameras and the per-frame log on both PCs:
+
+| Scene | Frames | Result |
+| --- | --- | --- |
+| A titan ridden in a courtyard (50 s) | 3,640 | world in sync on every frame |
+| N. Gin's lab cutscene and the fight after it (90 s) | 5,963 | in sync; the cutscene and the fight on the same frames |
+| Walking into the next level (60 s) | 4,160 | in sync; both arrive at the same spot on the same frame |
+| Five minutes of random jumps, attacks and jacks around the titan (two players) | 18,638 | world in sync; one controller state parted (below), fixed |
+
+The log still showed two harmless differences. The dialogue sound's distance
+to the listener (each PC's camera), which only the sound uses. And a
+controller that NO player owns (sockets 3-4 in a two-player session) holding
+each PC's camera direction as its "held forward": the unlock at a level's
+fade-in (sub_82270FE8) copies the camera direction there, and the online
+replacement skipped controllers without an owner. Player 2 is handed such a
+controller for a while when they join, and the hold logic compares against
+that value, so it now gets player 1's sent facing (the same on every PC).
+
+The controller state that parted in the five-minute run: player 2's "hold
+the old forward" started on the host 10 frames before the guest (frame
+11361). Besides its angle test, the hold logic (sub_822718E8) starts a hold
+at once when a question sent to the game object's +12 (event 9, no player
+named in it) answers yes; it answered yes for about 40 frames on both PCs,
+each at its own moment: the question is about the game camera. It now goes
+the way of the facing: each PC sends its own camera's answer with every input
+(protocol 4), and player P's controller gets the answer P's PC sent (a
+controller nobody owns gets player 1's). After that the same run, the three
+scenes and the titan run were identical on every frame, controllers included.
+
+Every game function that asks the camera "is this point in view" (camera
+slot 17) was listed: the fight-tree condition and the co-op catch-up (both
+answered online already), the camera's own focus list (view side), and one
+more: enemies circling a player (a step of CAITaskCombatMoveEncircle,
+sub_820BE878) count one step more while they are OFF screen. Online every
+enemy now counts as on screen, the original's answer while the single camera
+sees it.
+
 The pattern worth remembering: the engine saves work on what the camera
 doesn't see, and with a camera per PC "what the camera sees" differs. Every
 such saving that changes WHEN something happens in the world has to be turned

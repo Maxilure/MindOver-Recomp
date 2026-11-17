@@ -151,6 +151,9 @@ bool FrameFacing(int player, uint16_t& facing);
 // camera's 10 words (position, direction, up = +216..+251, field of view +16)
 // as the game stores them. False = none. Game main thread.
 bool FrameCamera(int player, uint32_t words[10]);
+// The answer player `player`'s PC's camera gave the hold logic's question
+// (online_sticks.cpp OnlineHoldQuery) when that input was made. False = none.
+bool FrameCameraCut(int player, uint8_t& cut);
 
 // A PLAYER DISCONNECTED (2026-11-17 rules): the other PC stopped answering
 // (2 s of silence) or left. Nothing pauses: this PC plays on alone, the other
