@@ -79,6 +79,11 @@ bool HideMenuDraw(uint32_t node);
 void EndMenuDraw(uint32_t node);
 
 // Registers the front-end exit listener (net::Init).
+// Which player an input controller belongs to (its chain of parents, +36,
+// ends at that player's root controller; roots as of the last front-end
+// frame), -1 = none. Game main thread. (net/online_sticks.cpp)
+int PlayerOfController(uint8_t* base, uint32_t controller);
+
 void Init();
 
 }  // namespace online_rules

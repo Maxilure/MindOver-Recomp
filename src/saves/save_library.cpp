@@ -60,7 +60,8 @@
 extern "C" REX_FUNC(__imp__sub_82258DE8);  // slot -> file name
 extern "C" REX_FUNC(__imp__sub_82259858);  // CSaveGameManager::LoadGame(slot)
 extern "C" REX_FUNC(__imp__sub_822598D8);  // CSaveGameManager::SaveGame(slot)
-extern "C" REX_FUNC(__imp__sub_82259B70);  // CSaveGameManager::AutoSaveGame()
+extern "C" REX_FUNC(__imp__sub_82259B70);
+extern "C" REX_FUNC(__imp__sub_8211DA80);  // in-game ReadingCard's decision (node 384)  // CSaveGameManager::AutoSaveGame()
 extern "C" REX_FUNC(__imp__sub_82259758);  // CSaveGameManager::SelectCard(device) = the scan
 extern "C" REX_FUNC(__imp__sub_822596D8);  // CSaveGameManager::EndAccess()
 extern "C" REX_FUNC(__imp__sub_820CC188);  // CGameSlotScreenAction::Enter (fills the panels)
@@ -357,6 +358,9 @@ struct GameState {
   int game_number = 0;
   int op_number = 0;
   bool in_autosave = false;
+  // ONLINE, on a guest's PC: the file the copies of the host's saves go to
+  // (0 = none yet this game; a load forgets it). OnlineCopyFile.
+  int online_copy = 0;
   // The slot screen, while it shows.
   uint32_t screen = 0;
   uint32_t slot_menu = 0;      // its Scrooby menu (GameSlotMenu)
@@ -1007,6 +1011,31 @@ void TakeCreateJump(PPCContext& ctx, uint8_t* base, bool in_game) {
   ctx.r3.u64 = uint32_t(exit);
 }
 
+// ONLINE, a guest's PC (net/online_saves.h): the file a save of the session
+// writes here. The host overwrites the save the session was loaded from; so
+// that this PC's save manager takes the SAME steps (overwriting an existing
+// file, not creating one), the first save of a game copies the loaded save to
+// a new number before the game writes over it. Later saves overwrite that
+// copy. The player's own save is never touched.
+int OnlineCopyFile() {
+  if (g.online_copy > 0 && save_files::Exists(g.online_copy)) return g.online_copy;
+  std::lock_guard lock(save_files::Lock());
+  const int number = save_files::FreeNumber();
+  std::error_code error;
+  std::filesystem::copy_file(save_files::FileOf(g.game_number), save_files::FileOf(number), error);
+  if (error) {
+    // Nothing to copy from (shouldn't happen: the session was loaded from
+    // it): the game creates the file itself.
+    REXLOG_WARN("Saves: online copy: can't copy save {} to {}: {}", g.game_number, number,
+                error.message());
+  }
+  g.online_copy = number;
+  save_files::MarkPlayed(number);
+  REXLOG_INFO("Saves: online: this PC keeps the host's saves in save {} (a copy of save {})",
+              number, g.game_number);
+  return number;
+}
+
 // A new name for save `number`: the file, the slot table's entry (if that
 // save is in the window), and the game in progress's own copy of its name
 // (it writes that name with every save, or the old one would come back).
@@ -1371,6 +1400,7 @@ extern "C" REX_FUNC(sub_82259858) {
     const int slot = int(int32_t(ctx.r4.u32));
     g.op_number = g.picked && g.picked_slot == slot ? g.picked_number : PanelFile(slot);
     g.game_number = g.op_number;
+    g.online_copy = 0;  // a new game in progress: its own copy, if a session saves
     g.picked = false;
     save_files::MarkPlayed(g.op_number);
     outfits::OnSaveLoaded(g.op_number);  // before the spawn asks who wears what
@@ -1413,9 +1443,15 @@ extern "C" REX_FUNC(sub_822598D8) {
       }
     } else {
       g.op_number = g.game_number ? g.game_number : PanelFile(slot);
+      // ONLINE (net/online_saves.h): a guest never writes the session's
+      // save; its PC keeps a copy of what the host saves.
+      if (net::InSession() && net::LocalPlayer() != 0 && g.game_number > 0) {
+        g.op_number = OnlineCopyFile();
+      }
     }
     g.picked = false;
-    REXLOG_INFO("Saves: saving to save {}{}", g.op_number, g.in_autosave ? " (AutoSaveGame)" : "");
+    REXLOG_INFO("Saves: saving to save {}{}{}", g.op_number, g.in_autosave ? " (AutoSaveGame)" : "",
+                g.op_number == g.online_copy ? " (a copy of the host's save)" : "");
   }
   __imp__sub_822598D8(ctx, base);
 }
@@ -1778,6 +1814,24 @@ extern "C" REX_FUNC(sub_8211BE58) {
   g.picked_slot = 0;
   REXLOG_INFO("Saves: New Game: creating save {}", g.new_number);
   ctx.r3.u64 = uint32_t(kExitSaveSlot1);
+}
+
+// The in-game ReadingCard's decision (node 384: the totem's / pause menu's
+// save, after the storage steps): once the scan is done it opens the list
+// (385 -> GameSlotScreen 386). ONLINE (net/online_saves.h) the list is never
+// shown (it is built from each PC's own files: different lists = different
+// exits = the worlds part): slot 1's "available slot" exit (408 ->
+// AutoSaveGameScreen 326, SaveGame(0)) instead, with nothing picked: SaveGame
+// then writes "the game in progress's" file = the host's session save / a
+// guest's copy (sub_822598D8 above).
+extern "C" REX_FUNC(sub_8211DA80) {
+  using namespace save_library;
+  __imp__sub_8211DA80(ctx, base);
+  if (!REXCVAR_GET(save_library) || !net::InSession() || int32_t(ctx.r3.u32) != 385) return;
+  if (!g.save_mode || g.game_number <= 0) return;  // (not a save of a loaded game: the game's way)
+  g.picked = false;
+  REXLOG_INFO("Saves: online: saving without the list (exit 385 -> {})", kGameExitSaveSlot1);
+  ctx.r3.u64 = uint32_t(kGameExitSaveSlot1);
 }
 
 // The game's XInputGetState wrapper (r3 = player, r4 = XINPUT_STATE: u32

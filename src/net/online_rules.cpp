@@ -61,6 +61,7 @@ uint32_t RootController(PPCContext& ctx, uint8_t* base, int p) {
 }
 
 uint32_t g_locked[kPlayers] = {};  // (below)
+uint32_t g_roots[kPlayers] = {};   // every player's root controller, refreshed per frame (OnFrame)
 
 // The map's owner online (MenuOwner): set at the exit into the map.
 constexpr int32_t kExitToMap = 502, kMapState = 927;
@@ -193,6 +194,7 @@ void OnFrame(PPCContext& ctx, uint8_t* base) {
   // GameRunning (489) for one of its in-game menus (pause 868 and the
   // screens behind it, the totem's prompts, ...). Both = world state, alike
   // on every PC.
+  for (int p = 0; p < kPlayers; ++p) g_roots[p] = RootController(ctx, base, p);
   const bool menu = menu_input::MenuOnScreen() ||
                     (more_players::InPlay() && fight_tree::CurrentFrontEnd().state != kGameRunning);
   const int owner = menu ? menu_input::CurrentMenuOwner(ctx, base) : -1;
@@ -215,6 +217,18 @@ void OnFrame(PPCContext& ctx, uint8_t* base) {
       REXLOG_INFO("Online: player {}'s menu is open: their controller locked (the world plays on)", p + 1);
     }
   }
+}
+
+int PlayerOfController(uint8_t* base, uint32_t controller) {
+  constexpr uint32_t kParent = 36;  // input controller: its parent (0 = a root)
+  for (int depth = 0; controller && depth < 8; ++depth) {
+    for (int p = 0; p < kPlayers; ++p) {
+      if (g_roots[p] && g_roots[p] == controller) return p;
+    }
+    if (!guest_memory::Readable(controller + kParent, 4)) return -1;
+    controller = Read32(base, controller + kParent);
+  }
+  return -1;
 }
 
 }  // namespace online_rules

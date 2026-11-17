@@ -54,12 +54,12 @@ msgstr "TROCA {0}"
 msgid "Achievement Unlocked"
 msgstr "Conquista desbloqueada"
 
-#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1597
+#: src/achievements/achievements_screen.cpp:33 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1597
 #, fuzzy
 msgid "Achievements"
 msgstr "Conquistas"
 
-#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:44 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Jogadores"
@@ -130,27 +130,27 @@ msgstr ""
 msgid "This is how the subtitles look."
 msgstr "É assim que as legendas ficam."
 
-#: src/saves/save_library.cpp:765
+#: src/saves/save_library.cpp:769
 #, fuzzy
 msgid "Create New Save"
 msgstr "Novo jogo salvo"
 
-#: src/saves/save_library.cpp:849
+#: src/saves/save_library.cpp:853
 #, fuzzy
 msgid "Delete"
 msgstr "Apagar"
 
-#: src/saves/save_library.cpp:851
+#: src/saves/save_library.cpp:855
 #, fuzzy
 msgid "Rename"
 msgstr "Renomear"
 
-#: src/saves/save_library.cpp:1091
+#: src/saves/save_library.cpp:1120
 #, fuzzy
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr "Tem certeza de que quer apagar este jogo salvo? Ele será movido para a pasta Deleted saves."
 
-#: src/saves/save_library.cpp:1919
+#: src/saves/save_library.cpp:1973
 #, fuzzy
 msgid "Backspace"
 msgstr "Backspace"
@@ -183,6 +183,16 @@ msgstr ""
 
 #: src/net/net_session.cpp:381
 msgid "You left the online session"
+msgstr ""
+
+#. Online co-op: a guest tried to save; card heading
+#: src/net/online_saves.cpp:44
+msgid "Saving"
+msgstr ""
+
+#. Online co-op: a guest tried to save; card line
+#: src/net/online_saves.cpp:46
+msgid "Only the host can save online"
 msgstr ""
 
 #: src/cheats/cheats.cpp:245

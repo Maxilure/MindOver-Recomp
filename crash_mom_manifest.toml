@@ -2297,3 +2297,17 @@ registers = ["r7"]
 address = 0x82433BEC
 name = "D3DRingSecondarySize"
 registers = ["r5"]
+
+# ONLINE: A STICK IS MEANT IN ITS OWN PLAYER'S CAMERA (src/net/online_sticks.cpp,
+# 2026-11-17, online plan R9). sub_82271E38 turns the stick into a world
+# direction by the game camera's forward (or a held one); both paths have just
+# stored its x / z at r1+88 / r1+96 here. In a session the hook notes this PC's
+# own player's forward (sent with its next input) and puts in the forward the
+# controller's player's PC sent: every PC turns every stick the same way, even
+# when each PC shows its own camera. Out of a session it does nothing.
+# Verified with xexdis: 0x82271F58 = lis r11 after the stores at 0x82271F44-54
+# (camera path) and the branch from 0x82271F18 (held path); r28 = the controller.
+[[entrypoint.midasm_hook]]
+address = 0x82271F58
+name = "OnlineStickFacing"
+registers = ["r1", "r28"]

@@ -20,9 +20,13 @@
 //   REFUSE  (host -> guest)  char reason[64]
 //   INPUTS  (both ways)      u8 player, u8 count (1-64), u16 0, i32 first frame,
 //                            i32 ack (the newest frame of YOUR inputs I hold
-//                            without a gap, -1 none), count x 13 bytes (u8
-//                            connected, 12-byte XINPUT_GAMEPAD as the game reads
-//                            it, big-endian), u8 fingerprint count (0-16),
+//                            without a gap, -1 none), count x 15 bytes (u8
+//                            flags: bit 0 connected, bit 1 facing known;
+//                            12-byte XINPUT_GAMEPAD as the game reads it,
+//                            big-endian; u16 FACING = the sender's camera
+//                            direction the stick is meant in, 65536 steps a
+//                            turn: net/online_sticks.cpp), u8 fingerprint
+//                            count (0-16),
 //                            that many x (i32 frame, u64 fingerprint)
 //   PING / PONG              u64 sender's clock (ns); PONG echoes it
 //   BYE                      (nothing): I'm leaving
@@ -93,7 +97,7 @@ using Clock = std::chrono::steady_clock;
 // -----------------------------------------------------------------------------
 // 1. PACKETS
 // -----------------------------------------------------------------------------
-constexpr uint8_t kProtocol = 1;  // bump on any layout change: old copies refuse
+constexpr uint8_t kProtocol = 2;  // 2: inputs carry the sender's camera facing  // bump on any layout change: old copies refuse
 constexpr char kMagic[4] = {'M', 'O', 'R', 'N'};
 enum Type : uint8_t {
   kHello = 1,
@@ -193,8 +197,13 @@ std::string Build() {
 struct PadIn {
   uint8_t connected = 1;   // 1 = connected (the game's result 0)
   uint8_t bytes[12] = {};  // XINPUT_GAMEPAD, big-endian, after the device + keyboard merge
+  // The sender's camera facing on the ground (online_sticks.cpp): the frame
+  // the stick is meant in. 65536 steps a turn; has_facing 0 = not known yet.
+  uint8_t has_facing = 0;
+  uint16_t facing = 0;
   bool operator==(const PadIn& o) const {
-    return connected == o.connected && std::memcmp(bytes, o.bytes, 12) == 0;
+    return connected == o.connected && std::memcmp(bytes, o.bytes, 12) == 0 &&
+           has_facing == o.has_facing && facing == o.facing;
   }
 };
 
@@ -309,8 +318,9 @@ void SendInputsLocked() {
   w.U32(uint32_t(int32_t(int64_t(g_inputs[g_remote].size()) - 1)));  // ack
   for (int i = 0; i < count; ++i) {
     const PadIn& in = mine[size_t(first + i)];
-    w.U8(in.connected);
+    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0)));
     w.Bytes(in.bytes, 12);
+    w.U16(in.facing);
   }
   // The newest fingerprints (16 frames: one packet a frame, so each is sent
   // 16 times; how far the PEER compared is its business, not ours).
@@ -538,8 +548,11 @@ void HandlePacket(const uint8_t* data, size_t size, const sockaddr_in& from) {
       if (!g_in_session) return;  // (not started here yet: they come again)
       std::vector<PadIn> got(static_cast<size_t>(count));
       for (PadIn& in : got) {
-        in.connected = r.U8() ? 1 : 0;
+        const uint8_t flags = r.U8();
+        in.connected = flags & 1;
+        in.has_facing = (flags >> 1) & 1;
         r.Bytes(in.bytes, 12);
+        in.facing = r.U16();
       }
       const int fp_count = r.U8();
       if (!r.ok || fp_count > kMaxFingerprintsPerPacket) return;
@@ -978,11 +991,29 @@ bool FrameInput(int player, uint8_t gamepad[12]) {
   return true;
 }
 
+void NoteLocalFacing(uint16_t facing) {
+  std::lock_guard lock(g_m);
+  g_latest_local.has_facing = 1;
+  g_latest_local.facing = facing;
+}
+
+bool FrameFacing(int player, uint16_t& facing) {
+  if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+  const PadIn& in = g_inputs[player][size_t(s)];
+  if (!in.has_facing) return false;
+  facing = in.facing;
+  return true;
+}
+
 bool OverridePad(uint32_t socket, uint8_t* gamepad, uint32_t& result) {
   if (!Configured()) return false;
   // This PC's own controller = whatever answers socket 0 here (the keyboard
   // and this PC's pads; a test replay's override included).
   if (socket == 0) {
+    std::lock_guard lock(g_m);
     g_latest_local.connected = result == 0 ? 1 : 0;
     std::memcpy(g_latest_local.bytes, gamepad, 12);
     if (!g_latest_local.connected) std::memset(g_latest_local.bytes, 0, 12);

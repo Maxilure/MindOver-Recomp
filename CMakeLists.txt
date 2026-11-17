@@ -47,6 +47,8 @@ set(CRASHMOM_SOURCES
     src/system/session_settings.cpp  # the settings that change the world: list + fingerprint (lockstep sessions)
     src/net/net_session.cpp      # LAN co-op: two PCs in lockstep over UDP (inputs, frame gate, sync check)
     src/net/online_rules.cpp     # online: nothing pauses; a menu's owner's controller is locked instead
+    src/net/online_saves.cpp     # online: only the host saves; no save list (both PCs alike)
+    src/net/online_sticks.cpp    # online: a stick turned by its sender's camera facing (sent with the input)
     src/net/network_window.cpp   # the Tools menu's Network window (host / join / sync status)
     src/debug/xbox_calls.cpp     # the Xbox calls meter: which Xbox services the game calls (Linux)
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned

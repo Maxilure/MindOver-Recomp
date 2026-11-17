@@ -199,11 +199,101 @@ Open: while one player's menu is up, the other players' HUD disappears too
 (the HUD hides itself when the front end reads "paused", and the front end
 must read the same on every PC).
 
+## 6e. Only the host saves
+
+Online, only the host saves the session. A guest can't; whenever the host
+saves, the guest's PC keeps a copy of that save in its own list.
+
+Both PCs run the same game, so both run the save flow on the same frames. The
+original flow opens the save list (totem "Do you want to save?" Yes = exit 837
+-> AccessMemoryCard 359 -> ReadingCard 384 -> GameSlotScreen 386; pause menu
+Save Game = 886 / 897, same way). That list comes from each PC's own save
+files: a different number of saves or an "overwrite?" question on one PC only
+would send the two front ends down different exits. So online the list never
+shows:
+
+* The storage steps run as usual (BeginAccess, the scan). At ReadingCard's
+  decision (sub_8211DA80) the save library takes slot 1's "available slot"
+  exit (408 -> AutoSaveGameScreen 326, script SaveGame(0)) instead of the list:
+  the route New Game already uses for its first save. Slot 0 is "Create New
+  Save" on every PC, so no overwrite step runs anywhere.
+* SaveGame then writes "the game in progress's" file, chosen per PC: the host
+  overwrites the save the session was loaded from; a guest writes its own copy
+  (the first save of a game copies the loaded file to a new number, so both PCs
+  overwrite an existing file; later saves overwrite that copy). The guest's own
+  save is never written.
+* A guest's own save is refused: the totem's Yes becomes No (838), the pause
+  menu's Save Game becomes Resume. Because the same decision runs on both PCs,
+  both show the message bar card "Only the host can save online". The menu's
+  owner decides (the totem = who used it, the pause menu = who paused).
+
+First try, dropped: the original's unused "ExitAutoSaveScreen" exits (totem
+836, pause 885 / 896) go straight into 326. They skip BeginAccess, and the
+EndAccess at the end freed a slot table that was never made (a write to
+0x0000000C in sub_82360258).
+
+| Test (save 2, two windows) | Result |
+| --- | --- |
+| Host: totem Yes | host's save written; the guest's copy byte-identical; same exits; in sync |
+| Guest: pause -> Save Game | refused, card on both, no file written; in sync |
+| Guest: totem Yes | refused (answered as No), card on both; in sync |
+| Host: pause -> Save Game twice | copy made once, then overwritten; same exits; in sync |
+| Offline: totem Yes | the save list opens as before |
+
+The guest's copy can differ from the host's file in a few bytes: the save
+buffer keeps leftover heap bytes after an empty string (the string itself is
+empty on both). The heap's leftovers come from before the session started, when
+the two PCs ran differently. The original game writes those bytes too; the game
+data is the same.
+
+## 6f. A stick is meant in its own player's camera (first step toward own cameras)
+
+Every "which way does the player push?" question in the game (the fight
+trees' walk, run, jump and aim, the script methods
+GetSelfRelativeInputDirection and its siblings: about 20 callers) goes through
+the input controller's sub_82272208 -> sub_82271E38. That function turns the
+stick by the game camera's forward on the ground:
+
+* normally the game camera, `*(*(0x8259B190) + 76) + 444` (a VectorCamera),
+  virtual slot 14 -> a record whose +32/+36/+40 is its forward;
+* while the controller's +520 top bit is set: a forward it holds (+464 /
+  +472), so a camera cut doesn't swing what the stick means.
+
+Both paths store x and z at r1+88 / r1+96 and meet at 0x82271F58. Today every
+PC shows the same camera, so every PC turns every stick the same way. With a
+camera per PC, player 2's stick would mean "left" on one PC and "back" on the
+other, and the worlds would part.
+
+The fix (src/net/online_sticks.cpp, a mid-function hook at 0x82271F58): each
+PC notes the forward its game used for its own player and sends it with its
+next input as a 16-bit facing (65,536 steps a turn; network protocol 2). Every
+PC then turns player P's stick by the facing that P's PC sent for this frame.
+The cos / sin of the facing come from a fixed series in plain double
+arithmetic (no fused multiply-add), so the result has the same bits on every
+system (a C library's cos can differ in the last bit between Linux and
+Windows). Until a PC's first facing arrives, the local camera is used (the same
+on every PC as long as the cameras are).
+
+| Test (save 2, two windows) | Result |
+| --- | --- |
+| Normal run | in sync on every frame; positions as before |
+| Guest's sent facing turned 90 degrees (debug flag) | player 2 walks off turned, the same on both PCs; in sync |
+
+Other game code reads the camera too: a scan for the
+`*(*(game) + 76) + 444` pattern finds 48 functions. Among them are views
+(markers over the players, the floating button icons, the sound listener, the
+cinematic camera) but also world logic: an enemy task that circles the player
+(CAITaskCombatMoveEncircle), the off-screen catch-up gate (sub_82235978), the
+zones that run near the camera (sub_822F1F78, sub_822F4AA0), a Collectable
+method. These decide whether each PC can show its own camera.
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).
-* Saves: the host-only rule isn't in yet (a guest can still save at a totem).
-* Each PC's own camera following its own player (the plan's milestone M4).
+* Saves: a guest at the totem still gets the "Do you want to save?" question
+  (their Yes is refused afterwards).
+* Each PC's own camera following its own player (the plan's milestone M4): the
+  stick part is in (6f); the other camera readers come next.
 * A session starts at a save load: Host / Join first, then load the same save
   on both. The save itself isn't sent or checked (a different save shows as a
   drift at frame 0).
