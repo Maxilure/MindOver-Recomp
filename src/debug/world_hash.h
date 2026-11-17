@@ -42,6 +42,7 @@
 // =============================================================================
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -51,5 +52,12 @@ namespace world_hash {
 // The console command (any thread). Returns the reply text; throws
 // std::runtime_error on bad arguments.
 std::string Command(const std::vector<std::string_view>& words);
+
+// A small fingerprint of the world NOW (game main thread, between frames):
+// the main random generator + every player's body (position, velocity, titan
+// or not; never a heap address). The network session (net/net_session.h)
+// compares it between PCs every frame: cheap enough for that, wide enough to
+// catch a drift within moments (any random draw or movement that differs).
+uint64_t QuickFingerprint();
 
 }  // namespace world_hash

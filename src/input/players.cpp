@@ -11,6 +11,7 @@
 #include <rex/runtime.h>
 
 #include "../players/who_plays.h"
+#include "../net/net_session.h"
 
 using rex::input::DeviceId;
 using rex::input::DeviceInfo;
@@ -92,6 +93,9 @@ bool PlayerAssignment::KeyboardAnswersFor(uint32_t user) const {
 }
 
 uint32_t PlayerAssignment::PresentMask() const {
+  // A LAN session decides who has a controller (the same answer on every PC
+  // of it, whatever devices this one has: net/net_session.h).
+  if (const uint32_t session = net::PlayerMask()) return session;
   uint32_t mask = 0;
   for (const Known& d : devices_) {
     // A real device (keyboard or pad), not the SDK's "None" stand-in.
@@ -119,6 +123,8 @@ void PlayerAssignment::AnnounceIfChanged() {
               mask & 8 ? "4" : "");
   who_plays::PlayersChanged();
 }
+
+void PlayerAssignment::RefreshPresence() { AnnounceIfChanged(); }
 
 PlayerAssignment* PlayerAssignment::Get() {
   return g_assignment.load();

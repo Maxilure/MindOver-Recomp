@@ -21,6 +21,7 @@
 #include "../players/more_players.h"
 #include "../players/reticle_idle.h"
 #include "../ui/wii_cursor.h"
+#include "../net/net_session.h"
 
 // DEFAULT 2 = Crosshair (2026-11-06, the port's out-of-the-box setting).
 REXCVAR_DEFINE_INT32(mouse_reticle, 2, "CrashMoM",
@@ -131,7 +132,9 @@ void FollowPointer(PPCContext& ctx, uint8_t* base, uint32_t reticle) {
 
 }  // namespace
 
-int Mode() { return REXCVAR_GET(mouse_reticle); }
+// Off in a LAN session (net/net_session.h): the mouse writes the aim point
+// into the world directly, not through the controller state the PCs share.
+int Mode() { return net::Configured() ? 0 : REXCVAR_GET(mouse_reticle); }
 
 }  // namespace mouse_reticle
 

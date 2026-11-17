@@ -23,6 +23,7 @@
 #include "players.h"
 #include "../players/more_players.h"
 #include "../players/outfit_picker.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(debug_key_events_check, false, "CrashMoM",
                     "Debug: work out every input map's events a second time through the game's own rules, on a "
@@ -453,7 +454,9 @@ void KeyboardEvents(PPCContext& saved, uint8_t* base, uint32_t map, uint32_t rea
 }  // namespace
 }  // namespace key_events
 
-bool key_events::Active() { return REXCVAR_GET(keyboard_events); }
+// Off in a LAN session (net/net_session.h): the keys' events would reach only
+// THIS PC's game; as controller state they travel with the session's inputs.
+bool key_events::Active() { return REXCVAR_GET(keyboard_events) && !net::Configured(); }
 
 // An input map's events for this frame (sub_822710D8's loop, every map of
 // every input controller): the game's own first; then, in check mode, the
@@ -495,7 +498,7 @@ extern "C" REX_FUNC(sub_82275E20) {
   const PPCContext saved = ctx;
   __imp__sub_82275E20(ctx, base);
   // The keyboard's own events for this map (KeyboardEvents above).
-  if (REXCVAR_GET(keyboard_events) && map && controller) {
+  if (key_events::Active() && map && controller) {
     const uint32_t root = Root(base, controller);
     const int socket = SocketOf(base, root);
     const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
@@ -605,7 +608,7 @@ extern "C" REX_FUNC(sub_8235CAE8) {
   using namespace key_events;
   const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   const kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
-  if (!REXCVAR_GET(keyboard_events) || g_poll_socket < 0 || g_poll_socket > 3 || !assignment || !driver ||
+  if (!key_events::Active() || g_poll_socket < 0 || g_poll_socket > 3 || !assignment || !driver ||
       !assignment->KeyboardAnswersFor(uint32_t(g_poll_socket))) {
     __imp__sub_8235CAE8(ctx, base);
     return;

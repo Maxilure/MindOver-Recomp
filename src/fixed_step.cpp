@@ -41,6 +41,7 @@
 #include "fixed_step.h"
 
 #include "audio/sound_out.h"
+#include "net/net_session.h"
 #include "guest_memory.h"
 #include "system/helper_threads.h"
 #include "system/session_settings.h"
@@ -380,6 +381,9 @@ void CrashMomPassDelta(PPCRegister& f31) {
   const uint64_t k = g_next_frame++;
   g_frame.store(k, std::memory_order_relaxed);
   if (auto listener = g_pass_listener.load(std::memory_order_relaxed)) listener();
+  // A LAN session (net/net_session.h): this PC's input for a later frame goes
+  // out, the frame that just ended is fingerprinted (helpers still held).
+  net::OnPassStart(k);
   // The helper threads' clock = this frame's time (after the listener: a
   // replay's first frame / a session start may restart the clock there).
   if (!g_need_base) g_helper_us.store(g_clock_base_us + FrameUs(k, fps), std::memory_order_relaxed);
@@ -389,6 +393,15 @@ void CrashMomPassDelta(PPCRegister& f31) {
   // frames") through the sound mixing and the quiet wait, then not until the
   // next boundary (or a wait of the main thread).
   helper_threads::OpenGate();
+  // A LAN session's FRAME GATE: waits for the other PC's input for this frame.
+  // Here, with the helpers' gate open: a wait is "between frames" for them
+  // (they finish their work, their clock stands still), so how long it lasts
+  // changes nothing in the world.
+  if (const int64_t waited_ns = net::BetweenFrames(k)) {
+    // The next frames start that much later too: this PC takes the other's
+    // rhythm (else it stays ahead and waits a little on every frame).
+    g_start += std::chrono::duration_cast<Clock::duration>(std::chrono::nanoseconds(waited_ns));
+  }
   sound_clocked = true;
   sound_out::OnFixedFrame(k, g_epoch_frame, fps);
   // Loading on game frames (system/helper_threads.h): the helper threads
@@ -478,9 +491,16 @@ constexpr uint32_t kSpawnerSeededFlag = 0x8259AD9E;
 
 void StartSession() {
   if (!Active() || !t_main) return;
+  // Once per frame: quick load and the network's "Load successful" listener
+  // can both ask in the same frame, and a 2nd restart would move the clock on
+  // another whole hour (only on the PC that asked twice).
+  static uint64_t last_frame = ~0ull;
+  if (Frame() == last_frame) return;
+  last_frame = Frame();
   RestartClockAtWholeMs();
   uint8_t* base = rex::system::kernel_memory()->virtual_membase();
-  const uint32_t seed = SessionSeed();
+  uint32_t seed = SessionSeed();
+  net::SessionSeed(seed);  // a LAN session: the host's seed
   uint32_t index = 0;
   for (const Generator& g : kGenerators) {
     for (uint32_t w = 0; w < g.words; ++w) Store32(base, g.address + 4 * w, SeedWord(seed, index++));
@@ -492,5 +512,6 @@ void StartSession() {
   // The world settings every PC of a session must share (system/session_settings.h).
   REXLOG_INFO("Fixed step: world settings fingerprint {:016X} (console `settings` lists them)",
               session_settings::Fingerprint());
+  net::OnSessionStart(Frame());  // a LAN session's frame 0 = the next pass
 }
 }  // namespace fixed_step

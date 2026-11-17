@@ -52,6 +52,11 @@ constexpr Tool kTools[] = {
      "OPENING IT TURNS ACHIEVEMENTS OFF until a save is loaded, and a save made\n"
      "meanwhile is marked as made with cheats (achievements stay off for it).",
      true},
+    {"Game", "Network (LAN co-op test)...", "bind_network_window", "-",
+     "Two copies of the game in one session (lockstep, players 1 and 2): host or join,\n"
+     "then load the same save on both. Shows the ping, waits and whether both games\n"
+     "still show the same world. A test tool: the real menu comes later.",
+     true},
     {"Game", "Controls (keys)...", "bind_controls_menu", "F6",
      "Keyboard and mouse keys, and which device plays as which player.", true},
     {"Game", "Hide / show the HUD", "bind_hide_hud", "F2",

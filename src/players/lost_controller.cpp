@@ -23,6 +23,7 @@
 #include "../input/prompt_icons.h"
 #include "more_players.h"
 #include "../language/texts.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(lost_controller, true, "CrashMoM",
                     "A player in a level loses its controller: pause with the game's question box, any "
@@ -222,6 +223,8 @@ bool DeviceBack(int p) {
 }
 // Once per frame in a level: notices player 1's controller going away.
 void WatchPlayerOnePad() {
+  // A LAN session: this PC's devices aren't player 1's (net/net_session.h).
+  if (net::Configured()) return;
   const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
   if (!assignment) return;
   const std::string pad = assignment->PadKeyFor(0);
@@ -556,6 +559,16 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     if (!InGame(p) || HasDevice(p)) g_dropping[p] = false;  // dropped out (or back after all)
   }
   TickUnjacking(ctx, base, fe);
+  // An online player who left (net/net_session.h): drops out by itself, the
+  // others play on (no box, no pause). Tried every frame until it's possible
+  // (the last player on foot waits for someone else on foot, CanDropOut).
+  if (const int gone = net::DropOutWanted(); gone >= 0 && gone < kMaxPlayers) {
+    if (!InGame(gone)) {
+      net::DroppedOut(gone);
+    } else if (!g_dropping[gone] && CanDropOut(gone) && DropOut(ctx, base, gone, "left the online session")) {
+      net::DroppedOut(gone);
+    }
+  }
   WatchPlayerOnePad();
   if (g_p1_pad_lost && (!InGame(0) || g_dropping[0])) g_p1_pad_lost = false;
   // A take-over under way: the joiner is in -> the lost player drops out;

@@ -101,6 +101,34 @@ uint64_t PlayersHash(uint32_t& present) {
   return h;
 }
 
+// For the network session's per-frame check (world_hash.h QuickFingerprint):
+// like PlayersHash but WITHOUT the body's heap address (two PCs can place the
+// same Crash at another address: things loaded in another order before the
+// session) + the main random generator.
+uint64_t Quick() {
+  uint64_t h = 0x6A09E667F3BCC909ull;
+  for (int p = 0; p < 4; ++p) {
+    const uint32_t titan = more_players::TitanOfPlayer(p);
+    const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(p);
+    uint8_t buffer[4 + 12 + 12] = {};
+    buffer[0] = uint8_t(p + 1);
+    buffer[1] = titan ? 1 : 0;
+    if (body && guest_memory::Readable(body + kActorPhysics, 4)) {
+      buffer[2] = 1;
+      const uint32_t physics = Load32(body + kActorPhysics);
+      if (physics && guest_memory::Readable(physics, kPhysicsPosition + 12) &&
+          Load32(physics) == kPhysicsVtable && Load32(physics + kPhysicsActor) == body) {
+        std::memcpy(buffer + 4, GuestPtr(Membase(), physics + kPhysicsPosition), 12);
+        std::memcpy(buffer + 16, GuestPtr(Membase(), physics + kPhysicsVelocity), 12);
+      }
+    }
+    h = HashBytes(buffer, sizeof(buffer), h);
+  }
+  uint8_t rng[8];
+  std::memcpy(rng, GuestPtr(Membase(), kRandomState), 8);
+  return HashBytes(rng, 8, h);
+}
+
 void OnFrameEnd(void* user) {
   Recorder& r = *static_cast<Recorder*>(user);
   std::lock_guard lock(r.mutex);
@@ -222,4 +250,8 @@ std::string Command(const std::vector<std::string_view>& w) {
   return reply;
 }
 
+}  // namespace world_hash
+
+namespace world_hash {
+uint64_t QuickFingerprint() { return Quick(); }
 }  // namespace world_hash

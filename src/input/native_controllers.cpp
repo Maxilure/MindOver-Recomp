@@ -21,6 +21,7 @@
 
 #include "../guest_memory.h"
 #include "players.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(native_controller_state, true, "CrashMoM",
                     "Use the port's SDL controller backend (false = original ReXGlue input)")
@@ -396,6 +397,24 @@ bool Writable(uint32_t address, uint32_t size) {
 extern "C" REX_FUNC(sub_824742E8) {
   using namespace rex;
   using namespace native_controllers;
+  // A LAN session (net/net_session.h): players 1-2 have a standard pad on
+  // EVERY PC of it (the other PC's player included: the game makes a
+  // controller only for a socket that answers here), players 3-4 none.
+  if (net::Configured()) {
+    const uint32_t user = (ctx.r3.u32 & 0xff) == 0xff ? 0 : ctx.r3.u32;
+    rex::input::X_INPUT_CAPABILITIES caps{};
+    if (user >= 2 || !Writable(ctx.r5.u32, sizeof(caps))) {
+      ctx.r3.u64 = user >= 2 ? X_ERROR_DEVICE_NOT_CONNECTED : X_ERROR_BAD_ARGUMENTS;
+      return;
+    }
+    caps.type = caps.sub_type = 1;
+    caps.gamepad.buttons = 0xf3ff;
+    caps.gamepad.left_trigger = caps.gamepad.right_trigger = 255;
+    caps.gamepad.thumb_lx = caps.gamepad.thumb_ly = caps.gamepad.thumb_rx = caps.gamepad.thumb_ry = -1;
+    std::memcpy(GuestPtr(base, ctx.r5.u32), &caps, sizeof(caps));
+    ctx.r3.u64 = X_ERROR_SUCCESS;
+    return;
+  }
   if (!Enabled()) {
     __imp__sub_824742E8(ctx, base);
     return;

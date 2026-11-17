@@ -49,6 +49,8 @@
 #include "subtitles/subtitles.h"
 #include "subtitles/voice_trace.h"
 #include "cheats/cheat_menu.h"
+#include "net/net_session.h"
+#include "net/network_window.h"
 #include "cheats/free_camera.h"
 #include "debug_frame_capture.h"
 #include "debug_console.h"
@@ -180,6 +182,9 @@ class CrashMomApp : public rex::ReXApp {
     session_log::LogSettings();
     // V-sync (frame_rate.h): the window's present mode, before its swapchain is made.
     frame_rate::ApplyVsyncPresentMode();
+    // LAN co-op (net/net_session.h): --net_host / --net_join start the
+    // network now (and turn the fixed step on from launch).
+    net::Init();
   }
 
   // Everything is initialized, including the window and the presenter
@@ -243,6 +248,10 @@ class CrashMomApp : public rex::ReXApp {
       REXLOG_INFO("Fullscreen (F11): {}", to_full ? "on" : "off");
     });
     // The Cheats menu (cheats/cheat_menu.h), for testing: Tools menu.
+    // The Network window (net/network_window.h), LAN co-op test: Tools menu.
+    rex::ui::RegisterBind("bind_network_window", "",
+                          "Open / close the Network window (LAN co-op test: host / join, sync check)",
+                          [] { network_window::Toggle(); });
     rex::ui::RegisterBind("bind_cheat_menu", "" /* Tools menu (was F5) */,
                           "Open / close the Cheats menu (level ups, mojo, god mode, game speed, "
                           "free camera; for testing)",
@@ -443,6 +452,8 @@ class CrashMomApp : public rex::ReXApp {
     controls_menu::Create(drawer);
     // F5: the Cheats menu (cheats/cheat_menu.h), closed at first.
     cheat_menu::Create(drawer);
+    // The Network window (net/network_window.h), closed at first.
+    network_window::Create(drawer);
     // F1: the Tools menu (ui/tools_menu.h), closed at first.
     tools_menu::Create(drawer);
     // The save library's rename / delete box (saves/save_library.h).

@@ -63,6 +63,7 @@
 #include "input/prompt_icons.h"
 #include "native/ab_capture.h"
 #include "players/more_players.h"
+#include "net/net_session.h"
 
 REXCVAR_DEFINE_STRING(debug_console, "", "CrashMoM",
                       "Debug: a Unix socket at this path answers questions about the running game "
@@ -1139,6 +1140,26 @@ std::string Run(std::string_view line) {
   // `settings`: the settings that change the world + their fingerprint
   // (system/session_settings.h): two PCs of a session must show the same.
   if (verb == "settings") return session_settings::Report();
+  // `net` = the LAN session's status line; `net dump` = both PCs dump the
+  // world at the same session frame; `net leave` = the window's Leave
+  // (net/net_session.h).
+  if (verb == "net") {
+    if (w.size() >= 2 && w[1] == "dump") return net::RequestDump() + "\n";
+    if (w.size() >= 2 && w[1] == "leave") {
+      net::Leave();
+      return "left\n";
+    }
+    const net::Status st = net::GetStatus();
+    if (st.role == net::Role::kNone) {
+      return "no session" + (st.last_event.empty() ? "" : " (last: " + st.last_event + ")") + "\n";
+    }
+    return fmt::format("{} player {}, {}; frame {}, {}, waited {} frames ({:.0f} ms), ping {:.1f} ms\n",
+                       st.role == net::Role::kHost ? "host" : "guest", st.local_player + 1, st.state,
+                       st.session_frame,
+                       st.drift_frame >= 0 ? fmt::format("DRIFTED at frame {}", st.drift_frame)
+                                           : fmt::format("in sync through frame {}", st.checked_through),
+                       st.waits, st.wait_ms_total, st.ping_ms);
+  }
   if (verb == "track") return TrackCommand(w);
   if (verb == "worldhash") {
     // `worldhash <file> [frames] [dump <frame>]`: the world's fingerprint per

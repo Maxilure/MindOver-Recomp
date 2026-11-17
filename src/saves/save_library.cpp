@@ -41,6 +41,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/title_any_button.h"
+#include "../net/net_session.h"
 #include "../input/name_typing.h"
 #include "../overlay_banner.h"
 #include "../gameplay/game_mods.h"
@@ -1822,6 +1823,11 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (state) {
     uint32_t result = ctx.r3.u32;
     input_record::BeforeFilters(user, GuestPtr(base, state + 4), result, base);
+    // A LAN session (net/net_session.h): socket 0 here = this PC's player,
+    // sent to the other PC; every socket then gets the session's input for
+    // this frame (the same on both PCs). After the replay: tests drive a PC
+    // by replaying into its socket 0.
+    net::OverridePad(user, GuestPtr(base, state + 4), result);
     ctx.r3.u64 = result;
   }
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
