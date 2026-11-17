@@ -66,6 +66,8 @@
 
 #include "../input/players.h"
 #include "../options/options_menu.h"
+#include "../net/net_session.h"
+#include "../net/online_rules.h"
 
 #include <atomic>
 #include <chrono>
@@ -197,6 +199,13 @@ int MenuOwner(PPCContext& ctx, uint8_t* base, uint32_t fe, const char** why) {
     } else if (menus & (kMenuSavePrompt | kMenuMiniGame)) {
       owner = g_last_interactor.load();
       *why = "interacted";
+    }
+  }
+  // Online, the map belongs to whoever opened it (net/online_rules.h).
+  if (owner < 0) {
+    if (const int map_owner = online_rules::MenuOwner(); map_owner >= 0) {
+      owner = map_owner;
+      *why = "opened the map (online)";
     }
   }
   if (!Plays(owner)) {
@@ -473,17 +482,29 @@ constexpr uint32_t kKeyPausePlayer1 = 0x82023558;       // "InGame_Pause_Player1
 constexpr uint32_t kKeyPaused = 0x82023570;             // "InGame_Pause_Paused"
 constexpr uint32_t kTitleChars = 63;                    // our copy's room (+ the NUL)
 
+// ONLINE (net/net_session.h): the title is the solo game's own plain
+// "Paused" (the game's text, in its language), whoever opened the menu: the
+// menu shows only on its owner's PC, so a player number tells them nothing.
+// True = done.
+bool OnlineTitle(PPCContext& ctx, uint8_t* base, uint32_t title) {
+  if (!net::InSession()) return false;
+  CallGame(__imp__sub_82371CE0, ctx, base, title, kKeyPaused);
+  if (Tracing()) REXLOG_INFO("Menu input: pause title = the solo game's (online)");
+  return true;
+}
+
 void PauseTitleForOwner(PPCContext& ctx, uint8_t* base, uint32_t action) {
   const uint32_t front_end = Read32(Read32(kGameGlobal) + 52);
   const int owner = int32_t(Read32(front_end + kOwner));
-  if (owner < 2 || owner > 3) return;  // players 1-2: the game's own; 3-4 here
   const uint32_t title = Read32(action + kPauseTitle);
   if (!title) return;
-  CallGame(__imp__sub_82371CE0, ctx, base, title, kKeyPausePlayer1);
-  const uint32_t text = Read32(title + kTextString);
-  // Our copy of it, in guest memory (made once; game thread only).
+  if (OnlineTitle(ctx, base, title)) return;
+  if (owner < 2 || owner > 3) return;  // players 1-2: the game's own; 3-4 here
+  // Our copy of the title, in guest memory (made once; game thread only).
   static uint32_t copy = 0;
   if (!copy) copy = rex::system::kernel_memory()->SystemHeapAlloc(2 * (kTitleChars + 1));
+  CallGame(__imp__sub_82371CE0, ctx, base, title, kKeyPausePlayer1);
+  const uint32_t text = Read32(title + kTextString);
   bool digit_changed = false;
   if (text && copy) {
     uint32_t i = 0;

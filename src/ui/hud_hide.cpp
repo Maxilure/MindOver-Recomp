@@ -21,6 +21,7 @@
 #include "slide_fade.h"
 #include "scrooby.h"
 #include "../language/texts.h"
+#include "../net/online_rules.h"
 
 namespace hud_hide {
 namespace {
@@ -110,6 +111,12 @@ extern "C" REX_FUNC(__imp__sub_82371270);
 extern "C" REX_FUNC(sub_82371270) {
   const uint32_t page = ctx.r3.u32;
   if (cheats::HudHidden() && hud_hide::IsHudPage(ctx.r3.u32)) return;
+  // Online: another player's menu isn't drawn on this PC (net/online_rules.h).
+  if (online_rules::HideMenuDraw(page)) return;
+  struct EndDraw {
+    uint32_t node;
+    ~EndDraw() { online_rules::EndMenuDraw(node); }
+  } end_draw{page};
   // A save screen's message held back a moment (saves/save_screen_waits.h).
   if (save_screen_waits::HidingPage(page)) return;
   const int where = page == 0                              ? hud_scale::kNone

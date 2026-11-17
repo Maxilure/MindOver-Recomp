@@ -65,13 +65,13 @@ msgid "Players"
 msgstr "Игроки"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:81 src/ui/hud_hide.cpp:83
+#: src/ui/hud_hide.cpp:82 src/ui/hud_hide.cpp:84
 #, fuzzy
 msgid "HUD Hidden"
 msgstr "Интерфейс скрыт"
 
 #. {0} = the key that shows the HUD again ("F2").
-#: src/ui/hud_hide.cpp:81
+#: src/ui/hud_hide.cpp:82
 #, fuzzy
 msgid "Press {0} to show it again"
 msgstr "Нажми {0}, чтобы показать снова"
@@ -169,15 +169,15 @@ msgstr "Загрузка..."
 msgid "Saving..."
 msgstr "Сохранение..."
 
-#: src/net/net_session.cpp:378
+#: src/net/net_session.cpp:379
 msgid "Disconnected"
 msgstr ""
 
-#: src/net/net_session.cpp:379
+#: src/net/net_session.cpp:380
 msgid "The connection to the host was lost"
 msgstr ""
 
-#: src/net/net_session.cpp:380
+#: src/net/net_session.cpp:381
 msgid "You left the online session"
 msgstr ""
 

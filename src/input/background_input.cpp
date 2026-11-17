@@ -16,6 +16,7 @@
 
 #include "../guest_memory.h"
 #include "../players/more_players.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(background_input, true, "CrashMoM",
                     "Controllers keep playing while the game window isn't focused (the keyboard "
@@ -121,6 +122,24 @@ bool Focused() {
 extern "C" REX_FUNC(sub_8211E850) {
   using namespace background_input;
   __imp__sub_8211E850(ctx, base);
+  // ONLINE (net/online_rules.h): no map for now. The map isn't only a menu
+  // page: the game moves its one camera to the map view, so every PC's picture
+  // would turn into the map while the others play on. It comes back with each
+  // PC's own camera (the online plan's M4). And no pause on a lost window
+  // focus either: it would open a menu on this PC only (the PCs part).
+  if (net::InSession()) {
+    constexpr int32_t kExitToMap = 502;
+    if (int32_t(ctx.r3.u32) == kExitToMap) {
+      static bool told = false;
+      if (!told) {
+        told = true;
+        REXLOG_INFO("Online: the map stays closed in an online session (logged once)");
+      }
+      ctx.r3.u64 = uint32_t(kStay);
+    }
+    g_owed = false;
+    return;
+  }
   // The setting may have changed from the debug console's `flag`: keep SDL
   // in step (no-op when unchanged).
   Apply();

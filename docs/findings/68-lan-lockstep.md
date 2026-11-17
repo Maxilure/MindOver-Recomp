@@ -114,11 +114,95 @@ guest left", with no message.
 | Guest presses Leave | Player 2 drops out at once on both PCs; the guest plays on alone and sees "Disconnected" |
 | 30 minutes, 2 players (108,000 frames) | In sync on every frame, players' tracks identical, 24 frames waited at the gate |
 
+## 6c. Nothing pauses online
+
+A pause would have to stop every PC's world because one player opened a menu.
+Online, nothing pauses: the menu opens and the world runs on under it.
+
+**How the game pauses** (found with the debug console's `who` on the paused
+byte): the pause menu's script calls a script method (`sub_82123778`) that
+calls the game manager's pause, `sub_8227C8E8(manager, on)`. It sets game
+`+168` bit `0x20` (the AI, physics, sound and others skip their updates while
+it is set), bit `0x80` of `+104`'s `+24`, and resets the input manager
+(`sub_82274538`). During a session that function returns at once.
+
+**The menu's owner stands still.** With the world running, the buttons pressed
+in the menu would also move the owner's Crash: the menu reads the MENU input
+map, the character the GENERAL / PLAYER / titan maps of the same controller.
+The game already has the tool: a **locked** root input controller (its byte
+`+516` above 0, `sub_82272D68`) answers "no" to every play question, which is
+how cutscenes take control (`DO_LockAllControllers`; `AreControllersLocked` =
+`sub_82265A60`, which also shows where player p's root controller is: the
+input manager's (`game +56`) controller array `+8`, at the index
+`sub_82266130(front end, p)` gives). The menus still hear their MENU map
+through the lock. So while player p's menu is up, 1 is added to p's lock and
+taken back when it closes. "A menu is up" = the game's flag (front end `+8594`
+bit `0x80`, which comes with its pause and so never comes on online) or, in a
+level, the front end has left GameRunning (state 489). The owner comes from the
+port's menu-owner rules (who paused, who used the totem, ...). Both PCs see the
+same menus on the same frames, so the lock changes on the same frame everywhere.
+Checked every frame from the front end's frame (`sub_82261C40`): the frame
+function's own checks don't run while the pause menu is up.
+
+| Test (host opens the pause menu) | Result |
+|---|---|
+| The paused byte while the menu is up | 0 (the world runs) |
+| The host holds the stick 3 s in the menu | the host's Crash doesn't move |
+| The guest walks meanwhile | the guest's Crash walks |
+| The host presses B | the menu closes; the host's Crash walks again |
+| Both PCs | in sync on every frame |
+
+## 6d. The menus online (totem, map, everyone's view)
+
+Three more findings while testing every in-game menu online:
+
+* **The menus need to see a pause.** Every frame the co-op join check
+  (`sub_82264988`) copies the paused bit into front end `+8594` bit `0x80`
+  ("a menu is on screen in play"); the menus' D-pad handling and the port's
+  menu-owner rules read that flag. And the question box (the save totem's "Do
+  you want to save the game?", update `sub_8225DE68`) closes itself in a level
+  unless the game is paused (its check at `0x8225DEB4`; found with the debug
+  console's `who` on its "answered" flag, front end `+216` bit `0x80`).
+  Online, while a menu is up in a level (front end out of GameRunning 489),
+  the **front end's frame** (`sub_82261C40`) runs with the paused bit set and
+  gets it put back afterwards; the box's own update always does. The world
+  (AI, physics, players, sound) never sees a pause.
+* **The map belongs to whoever opened it**: the original lets any player's
+  buttons work it. Online the opener is the player whose session input has
+  Back down on the frame of the exit into the map (489 -> 502); their Crash
+  is locked and only their buttons work it. **But the map is more than a
+  page**: the game moves its one camera to a bird's-eye map view, so every
+  PC's picture turned into the map. Until each PC has its own camera, the
+  map stays closed online (the exit into it is answered "stay").
+* **Only the owner sees their menu.** In lockstep every PC runs every menu,
+  so every PC drew it over a player who keeps playing. Online, on every PC but
+  the owner's, the menu pages aren't drawn (the Parent draw `sub_82371270`
+  skips top-level pages other than the HUD's: `InGame`, the co-op corners,
+  counters, announcements, the message bar, tutorials, the letterbox). The
+  menu still runs on every PC.
+* The pause menu's title is the solo game's own "Paused" (the game's text, in
+  its language) for whoever opened it: the menu shows only on its owner's PC,
+  so "P1 Paused" / "P2 Paused" tells nobody anything.
+* A lost window focus no longer opens the pause menu online (with
+  `background_input` off it would open on that PC only).
+
+![Online: the host's pause menu on the host's screen only](../images/online-menu-only-for-its-owner.jpg)
+
+| Test (host opens each menu, the guest walks) | Result |
+|---|---|
+| Totem question | stays up on the host's screen only; the host's Crash still under a held stick; A = No (the default) back to play; the stick moves the box's cursor (left = Yes) as in the original |
+| Pause menu | host's screen only; the guest plays on |
+| Back (map) | stays closed online |
+| Both PCs | in sync on every frame |
+
+Open: while one player's menu is up, the other players' HUD disappears too
+(the HUD hides itself when the front end reads "paused", and the front end
+must read the same on every PC).
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).
-* Pause: the pause menu still stops the world on both PCs (next: an online pause
-  that only opens the menu). Saves: the host-only rule isn't in yet.
+* Saves: the host-only rule isn't in yet (a guest can still save at a totem).
 * Each PC's own camera following its own player (the plan's milestone M4).
 * A session starts at a save load: Host / Join first, then load the same save
   on both. The save itself isn't sent or checked (a different save shows as a

@@ -41,6 +41,7 @@
 #include "../achievements/achievements_screen.h"
 #include "../ui/wii_cursor.h"
 #include "../options/global_options.h"
+#include "../net/online_rules.h"
 
 #include <cstring>
 
@@ -193,7 +194,9 @@ extern "C" REX_FUNC(__imp__sub_82261C40);
 extern "C" REX_FUNC(sub_82261C40) {
   const uint32_t fe = ctx.r3.u32;
   const double dt = ctx.f1.f64;
+  online_rules::BeforeFrontEndFrame(base);  // online: the menus see a pause (net/online_rules.h)
   __imp__sub_82261C40(ctx, base);
+  online_rules::AfterFrontEndFrame(base);
   // The volumes + Invert Axis once the audio exists: before the title
   // (options/global_options.h ApplyOnceAudioReady).
   global_options::ApplyOnceAudioReady(ctx, base, fe);
@@ -211,6 +214,10 @@ extern "C" REX_FUNC(sub_82261C40) {
   achievements::FrontEndFrame(ctx, base);
   // The "Achievements" items' words (achievements/achievements_screen.h).
   achievements_screen::FrontEndFrame(ctx, base);
+  // Online, nothing pauses: a menu's owner's controller is locked instead
+  // (net/online_rules.h). Here: the front end runs every frame, menus too
+  // (the frame function's own checks don't while the pause menu is up).
+  online_rules::OnFrame(ctx, base);
   if (fe != g_front_end) return;
   for (int i = 0; i < Extra(); ++i) {
     for (int k : {kCombo, kLockOn, kCounter}) CallVirtual(ctx, base, g_objects[k][i], 3, 0, dt);

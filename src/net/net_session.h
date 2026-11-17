@@ -120,6 +120,8 @@ bool Configured();
 uint32_t PlayerMask();
 // The lockstep is running (session started, peer there). Any thread.
 bool InSession();
+// This PC's player (0-based) in the session, -1 = none. Any thread.
+int LocalPlayer();
 
 // --- hooks (the game's main thread) ------------------------------------------
 // fixed_step::StartSession, after the clock / generators were reset.
@@ -136,6 +138,10 @@ int64_t BetweenFrames(uint64_t fixed_step_frame);
 // override: `gamepad` = the 12-byte big-endian XINPUT_GAMEPAD, `result` 0 =
 // connected. Returns true when the session answered (the state was replaced).
 bool OverridePad(uint32_t socket, uint8_t* gamepad, uint32_t& result);
+// The session's controller state of player `player` (0-3) for the frame being
+// played (the same on every PC): 12-byte big-endian XINPUT_GAMEPAD. False out
+// of a session / no such player. Game main thread.
+bool FrameInput(int player, uint8_t gamepad[12]);
 
 // A PLAYER DISCONNECTED (2026-11-17 rules): the other PC stopped answering
 // (2 s of silence) or left. Nothing pauses: this PC plays on alone, the other

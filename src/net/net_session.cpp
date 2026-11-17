@@ -69,6 +69,7 @@
 #include "../input/players.h"
 #include "../language/texts.h"
 #include "../system/session_settings.h"
+#include "online_rules.h"
 
 REXCVAR_DEFINE_BOOL(net_host, false, "CrashMoM",
                     "LAN co-op (test, milestone M1): host a lockstep session as player 1 and wait for "
@@ -783,6 +784,7 @@ void Leave() {
 }
 
 void Init() {
+  online_rules::Init();
   // Whatever we were, the dump / drift tools also want the session start
   // from the Load Game menu (not only quick load): "Load successful" 282 ->
   // its exit 283 into the level.
@@ -825,6 +827,7 @@ void DroppedOut(int player) {
   g_presence_dirty = true;
 }
 bool InSession() { return g_in_session.load(); }
+int LocalPlayer() { return Configured() ? g_local : -1; }
 
 // =============================================================================
 // 3. THE GAME'S SIDE (main thread)
@@ -962,6 +965,17 @@ int64_t BetweenFrames(uint64_t fixed_step_frame) {
     REXLOG_INFO("Network: frame {} waited {:.0f} ms for the other PC", s, ms);
   }
   return std::chrono::duration_cast<std::chrono::nanoseconds>(waited).count();
+}
+
+bool FrameInput(int player, uint8_t gamepad[12]) {
+  if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+  const PadIn& in = g_inputs[player][size_t(s)];
+  if (!in.connected) return false;
+  std::memcpy(gamepad, in.bytes, 12);
+  return true;
 }
 
 bool OverridePad(uint32_t socket, uint8_t* gamepad, uint32_t& result) {
