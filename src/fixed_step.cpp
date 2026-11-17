@@ -43,6 +43,7 @@
 #include "audio/sound_out.h"
 #include "guest_memory.h"
 #include "system/helper_threads.h"
+#include "system/session_settings.h"
 
 #if defined(__x86_64__) || defined(_M_X64)
 #include <immintrin.h>  // _mm_pause
@@ -310,6 +311,11 @@ bool MainThreadClockUs(uint64_t& us, RealClock real) {
     return true;
   }
   const uint64_t reads = g_reads_this_pass++;
+  // Spinning on the clock (helper_threads.h LetHelpersFinish): at a fixed
+  // read count, so the same on every PC.
+  if (reads >= kReadsBeforeCreep && (reads - kReadsBeforeCreep) % kReadsBeforeCreep == 0) {
+    helper_threads::LetHelpersFinish();
+  }
   us = g_clock_base_us + frame_us + (reads > kReadsBeforeCreep ? reads - kReadsBeforeCreep : 0);
   g_helper_us.store(g_clock_base_us + frame_us, std::memory_order_relaxed);
   g_last_virtual_us = us;
@@ -483,5 +489,8 @@ void StartSession() {
   REXLOG_INFO("Fixed step: SESSION START at frame {}: clock restarted, {} random generators set "
               "from seed {:08X}",
               Frame(), sizeof(kGenerators) / sizeof(kGenerators[0]), seed);
+  // The world settings every PC of a session must share (system/session_settings.h).
+  REXLOG_INFO("Fixed step: world settings fingerprint {:016X} (console `settings` lists them)",
+              session_settings::Fingerprint());
 }
 }  // namespace fixed_step

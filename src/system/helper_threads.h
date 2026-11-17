@@ -91,8 +91,17 @@ void WaitUntilQuiet();
 // closed is held (still counted inside its wait) until it opens. When the
 // main thread itself waits (Wait() above, usually for a helper), the gate
 // opens, and after the wait the helpers finish everything before it closes.
-// A helper held over 100 ms is let go (logged): a deadlock guard.
+// Deadlock guard: a held helper is let go (logged) only if the main thread has
+// been ASLEEP across two 100 ms checks (blocked, maybe on a lock the helper
+// holds); a main thread that is busy keeps it held, however long.
 void OpenGate();
 void CloseGate();
+// Main thread, inside a frame: open the gate, let the helpers finish all
+// their work, close it again (nothing while it is open / gating is off).
+// Called when the main thread SPINS on the clock (fixed_step.cpp: its
+// 1,000th read in a frame and every 1,000 after): it is then polling for
+// something, often a helper's result, and finds it at the same read on every
+// PC.
+void LetHelpersFinish();
 
 }  // namespace helper_threads

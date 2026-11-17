@@ -55,6 +55,7 @@
 #include "debug/write_watchpoints.h"
 #include "debug/xbox_calls.h"
 #include "fixed_step.h"
+#include "system/session_settings.h"
 #include "data/fight_tree.h"
 #include "pddi/intercept.h"
 #include "debug_input_script.h"
@@ -1135,6 +1136,9 @@ std::string Run(std::string_view line) {
   if (verb == "tool") return ToolCommand(w);
   if (verb == "flag") return FlagCommand(w);
   if (verb == "clock") return ClockCommand(w);
+  // `settings`: the settings that change the world + their fingerprint
+  // (system/session_settings.h): two PCs of a session must show the same.
+  if (verb == "settings") return session_settings::Report();
   if (verb == "track") return TrackCommand(w);
   if (verb == "worldhash") {
     // `worldhash <file> [frames] [dump <frame>]`: the world's fingerprint per

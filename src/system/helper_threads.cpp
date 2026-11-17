@@ -83,13 +83,31 @@ std::atomic<uint64_t> g_wakes{0};
 // THE GATE (helper_threads.h "between frames"): open = helpers may work.
 // Closed while the main thread runs a frame's game code; a helper whose wait
 // ends meanwhile is held here (counted in g_held, still "inside its wait")
-// until the gate opens. kMaxHold = deadlock guard (a helper holding a lock
-// the main thread needs): then it goes on (logged).
+// until the gate opens. kMaxHold = the deadlock guard's check interval (see
+// AfterWait: let go only while the main thread sleeps).
 std::mutex g_gate_mutex;
 std::condition_variable g_gate_cv;
 std::atomic<bool> g_gate_open{true};
 std::atomic<int> g_held{0};
 constexpr auto kMaxHold = std::chrono::milliseconds(100);
+
+std::atomic<int> g_main_tid{0};  // set when the main thread closes the gate
+
+// Is the main thread asleep (state S/D in /proc), not running or ready?
+bool MainThreadAsleep() {
+  const int tid = g_main_tid.load();
+  if (tid <= 0) return false;
+  char path[64];
+  std::snprintf(path, sizeof(path), "/proc/self/task/%d/stat", tid);
+  char stat[256] = {};
+  if (FILE* f = std::fopen(path, "r")) {
+    const size_t got = std::fread(stat, 1, sizeof(stat) - 1, f);
+    stat[got] = 0;
+    std::fclose(f);
+  }
+  const char* close = std::strrchr(stat, ')');
+  return close && close[1] == ' ' && (close[2] == 'S' || close[2] == 'D');
+}
 
 bool Gating() {
   return fixed_step::Active() && REXCVAR_GET(loading_follows_game_frames) &&
@@ -247,13 +265,25 @@ void AfterWait(uint32_t status, bool timed_sleep) {
       bool timed_out = false;
       {
         std::unique_lock<std::mutex> lock(g_gate_mutex);
-        timed_out = !g_gate_cv.wait_for(lock, kMaxHold, [] { return g_gate_open.load(); });
+        // Held as long as the main thread RUNS (a frame may take long: the
+        // boot's data patches ran 100+ ms on the main thread, and letting the
+        // helper go after a fixed 100 ms released it mid-frame). Let go only
+        // when the main thread has been ASLEEP across two checks: blocked on
+        // something the helper may hold (a lock the wait wrappers don't see).
+        int asleep_checks = 0;
+        while (!g_gate_cv.wait_for(lock, kMaxHold, [] { return g_gate_open.load(); })) {
+          asleep_checks = MainThreadAsleep() ? asleep_checks + 1 : 0;
+          if (asleep_checks >= 2) {
+            timed_out = true;
+            break;
+          }
+        }
       }
       if (timed_out) {
         static std::atomic<int> logged{0};
         if (logged.fetch_add(1) < 20) {
-          REXLOG_WARN("Loading on game frames: helper thread {} held 100 ms while the frame ran "
-                      "(the main thread may need it): let go",
+          REXLOG_WARN("Loading on game frames: helper thread {} let go while the frame runs: the "
+                      "main thread is blocked (it may need it)",
                       s->name);
         }
       }
@@ -283,8 +313,16 @@ void OpenGate() {
 
 void CloseGate() {
   if (!Gating()) return;
+  g_main_tid = int(gettid());
   std::lock_guard<std::mutex> lock(g_gate_mutex);
   g_gate_open = false;
+}
+
+void LetHelpersFinish() {
+  if (g_gate_open.load() || !Gating()) return;
+  OpenGate();
+  WaitUntilQuiet();
+  CloseGate();
 }
 
 bool OnGameTime() { return fixed_step::Active() && REXCVAR_GET(helper_threads_on_game_time); }
