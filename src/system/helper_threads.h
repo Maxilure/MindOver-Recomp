@@ -27,10 +27,12 @@
 // before this frame is then finished, on every run and every PC alike: data
 // lands on the same frame everywhere.
 //
-// Not counted as work: a thread whose wait ended by its TIMEOUT (a periodic
-// poll) and a thread busy for more than kGiveUpBusy without any wait (a thread
-// that ended, or one that never sleeps: logged once). A frame never waits
-// longer than kMaxWait (logged).
+// Not counted as work: a thread whose wait ended by its TIMEOUT before the
+// game time reached it (see OnGameTime below) and a thread that has ENDED
+// (logged once). A busy thread is waited for however long it works (a
+// level's loader decompresses for seconds without a wait: the loading screen
+// holds still meanwhile); a frame never waits longer than kMaxWait, 30 s
+// (logged).
 //
 // Linux only for now: Windows' linker has no --wrap (no Xbox calls meter
 // there); WaitUntilQuiet then returns at once.
@@ -39,12 +41,40 @@
 
 #include <cstdint>
 
+struct PPCContext;
+
 namespace helper_threads {
 
 // The wrappers of the game's wait imports (any thread). `timed_sleep` = the
 // call is KeDelayExecutionThread (a plain sleep: its end is never a wake).
 void BeforeWait();
 void AfterWait(uint32_t status, bool timed_sleep);
+
+// HELPER THREADS ON GAME TIME (2026-11-17). Waiting for idle helpers isn't
+// enough on its own: a helper that wakes up because its TIMEOUT ran out (a
+// worker that checks for work every N ms, a sleep) does so on the PC's real
+// clock, and the main thread's "quiet" check counted a thread inside such a
+// wait as idle. A load on one starved CPU core then took 154 frames instead
+// of the normal 300 (= 5.0 s of real time at 60: loading still followed the
+// wall clock). So, while the fixed step is on and helper_threads_on_game_time
+// is on:
+//  * the game's three clocks answer the FRAME'S time on helper threads too
+//    (fixed_step.cpp; before, only the main thread got game time);
+//  * a helper's wait / sleep with a RELATIVE timeout ends when GAME time has
+//    passed it: the wait runs in 1 ms real slices until the object signals or
+//    fixed_step::GameClockNs() reaches the deadline. A helper inside a wait
+//    whose deadline the game time has reached counts as BUSY in
+//    WaitUntilQuiet: the frame waits until its timeout work is done.
+// Zero / absolute / no timeouts are untouched. Main thread and the port's
+// own threads: untouched.
+bool OnGameTime();
+
+// A wait import's wrapper body (CMakeLists.txt generates the call):
+// `real` = the SDK's import, `timeout_reg` = the argument register (3-10)
+// holding the guest pointer to the big-endian 64-bit timeout (100 ns units,
+// negative = relative), `timed_sleep` as above. Calls BeforeWait / AfterWait.
+using RealImport = void (*)(PPCContext&, uint8_t*);
+void Wait(PPCContext& ctx, uint8_t* base, RealImport real, int timeout_reg, bool timed_sleep);
 
 // Main thread, start of a main-loop pass, fixed step on: see the file header.
 void WaitUntilQuiet();

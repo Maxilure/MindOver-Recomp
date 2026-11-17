@@ -215,16 +215,25 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND EXISTS ${_xbox_table})
         string(REPLACE "__imp__" "" _short ${_name})
         if(_name IN_LIST _wait_imports)
             set(_sleep "false")
+            # The register holding the guest pointer to the timeout (helper
+            # threads on game time: their timed waits end on game frames).
             if(_name STREQUAL "__imp__KeDelayExecutionThread")
                 set(_sleep "true")
+                set(_timeout_reg 5)   # (mode, alertable, interval)
+            elseif(_name STREQUAL "__imp__KeWaitForSingleObject")
+                set(_timeout_reg 7)   # (object, reason, mode, alertable, timeout)
+            elseif(_name STREQUAL "__imp__KeWaitForMultipleObjects")
+                set(_timeout_reg 9)   # (count, objects, type, reason, mode, alertable, timeout, blocks)
+            elseif(_name STREQUAL "__imp__NtWaitForSingleObjectEx")
+                set(_timeout_reg 6)   # (handle, mode, alertable, timeout)
+            else()
+                set(_timeout_reg 8)   # NtWaitForMultipleObjectsEx (count, handles, type, mode, alertable, timeout)
             endif()
             string(APPEND _wraps
                 "extern \"C\" void __real_${_name}(PPCContext&, uint8_t*);\n"
                 "extern \"C\" void __wrap_${_name}(PPCContext& ctx, uint8_t* base) {\n"
                 "  xbox_calls::Hit(${_index}, uint32_t(ctx.lr));\n"
-                "  helper_threads::BeforeWait();\n"
-                "  __real_${_name}(ctx, base);\n"
-                "  helper_threads::AfterWait(ctx.r3.u32, ${_sleep});\n}\n")
+                "  helper_threads::Wait(ctx, base, __real_${_name}, ${_timeout_reg}, ${_sleep});\n}\n")
         else()
             string(APPEND _wraps
                 "extern \"C\" void __real_${_name}(PPCContext&, uint8_t*);\n"

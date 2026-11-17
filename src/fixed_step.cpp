@@ -130,6 +130,12 @@ uint64_t g_last_virtual_us = 0;    // the last time handed out while fixed
 // The frame the clock's time counts from (RestartClockAtWholeMs): the clock at
 // frame k = base + (k - epoch) / N s. 0 until a restart.
 uint64_t g_epoch_frame = 0;
+// HELPER THREADS' CLOCK (2026-11-17, helper_threads.h): what the game's clocks
+// answer on every thread but the main one while the fixed step is on = the
+// current frame's time (no creep), published by the main thread at each pass
+// start. 0 = not known yet (before the first clock read of a fixed stretch):
+// helpers then read the real clock.
+std::atomic<uint64_t> g_helper_us{0};
 
 // Microseconds since the epoch frame, for frame k (integer, like the guest's).
 uint64_t FrameUs(uint64_t k, int32_t fps) {
@@ -158,6 +164,7 @@ void ApplyRequests() {
   g_reads_this_pass = 0;
   g_fps = fps;
   g_fast = fast;
+  g_helper_us = 0;  // helpers: real clock until the new stretch's first read
   g_next_frame = 0;
   g_frame = 0;
   g_epoch_frame = 0;
@@ -260,7 +267,31 @@ namespace {
 // game's own 64-bit microsecond clock (sub_8235AB58's original).
 template <typename RealClock>
 bool MainThreadClockUs(uint64_t& us, RealClock real) {
-  if (!t_main) return false;
+  if (!t_main) {
+    // Every other thread (the game's helpers: loaders, audio, workers): the
+    // frame's time while the fixed step is on and the option is on
+    // (helper_threads.h). Their work then sees the same time on every run,
+    // however fast the PC is; a timed wait of theirs ends on game frames.
+    if (g_fps.load(std::memory_order_relaxed) <= 0 || !helper_threads::OnGameTime()) return false;
+    const uint64_t t = g_helper_us.load(std::memory_order_relaxed);
+    if (t == 0) return false;
+    // CREEP, like the main thread's: past kReadsBeforeCreep reads of the same
+    // frame's time, each further read adds 1 us, counted per thread and per
+    // frame. The XMA decode-to-memory loop sub_8234C580 (a loader thread)
+    // spins `t0 = clock; while (clock - t0 < 50);` between steps: with a
+    // frozen clock it spun until the next frame, and the frame waited for
+    // it to go idle (2 s per sound, 2026-11-17). The count is the thread's
+    // own, so the times it sees still don't depend on the PC's speed.
+    thread_local uint64_t t_reads_of = UINT64_MAX;  // the frame time they're for
+    thread_local uint64_t t_reads = 0;
+    if (t_reads_of != t) {
+      t_reads_of = t;
+      t_reads = 0;
+    }
+    const uint64_t reads = t_reads++;
+    us = t + (reads > kReadsBeforeCreep ? reads - kReadsBeforeCreep : 0);
+    return true;
+  }
   const int32_t fps = g_fps.load(std::memory_order_relaxed);
   const uint64_t frame_us = fps > 0 ? FrameUs(g_frame.load(std::memory_order_relaxed), fps) : 0;
   if (g_need_base && fps > 0) {
@@ -280,6 +311,7 @@ bool MainThreadClockUs(uint64_t& us, RealClock real) {
   }
   const uint64_t reads = g_reads_this_pass++;
   us = g_clock_base_us + frame_us + (reads > kReadsBeforeCreep ? reads - kReadsBeforeCreep : 0);
+  g_helper_us.store(g_clock_base_us + frame_us, std::memory_order_relaxed);
   g_last_virtual_us = us;
   return true;
 }
@@ -341,6 +373,9 @@ void CrashMomPassDelta(PPCRegister& f31) {
   const uint64_t k = g_next_frame++;
   g_frame.store(k, std::memory_order_relaxed);
   if (auto listener = g_pass_listener.load(std::memory_order_relaxed)) listener();
+  // The helper threads' clock = this frame's time (after the listener: a
+  // replay's first frame / a session start may restart the clock there).
+  if (!g_need_base) g_helper_us.store(g_clock_base_us + FrameUs(k, fps), std::memory_order_relaxed);
   // The frame's share of sound is mixed before it runs (after the listener:
   // a replay's first frame restarts the clock's epoch there).
   sound_clocked = true;
