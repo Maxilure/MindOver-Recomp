@@ -731,6 +731,7 @@ void KeyboardMouseDriver::MenuMouseDown(Input input, Clock::time_point now) {
     case kWheelUp:
     case kWheelDown: {
       const bool up = input == kWheelUp;
+      if (mouse_menus::MouseBlocked()) break;  // another player's menu, or online (mouse_menus.cpp)
       const mouse_menus::Wheel use = options_menu::WheelScrollsList() ? mouse_menus::Wheel::kList
                                                                       : mouse_menus::WheelUse();
       if (use == mouse_menus::Wheel::kList) {

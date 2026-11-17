@@ -17,6 +17,7 @@
 #include <rex/ppc/context.h>
 
 #include "../guest_memory.h"
+#include "../net/net_session.h"
 #include "../players/more_players.h"
 #include "../ui/game_font.h"
 #include "../ui/scrooby.h"
@@ -472,9 +473,17 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
   {  // the mouse in another player's menu (see g_mouse_blocked)
     const int owner = menu_input::CurrentMenuOwner(ctx, base);
     const kbm::PlayerAssignment* a = kbm::PlayerAssignment::Get();
-    const bool blocked = owner > 0 && a && !a->KeyboardAnswersFor(uint32_t(owner));
+    // ONLINE (2026-11-17, a player's pause desynced the session): the mouse
+    // acts on THIS copy only, it isn't part of the input the PCs share. A
+    // pointer resting over the host's window moved its pause cursor to
+    // Options; the same START + A picked Options on the host and Resume on
+    // the guest. In a session the mouse never touches a menu (the keys
+    // and controllers still do: they go through the shared input).
+    const bool blocked = net::Configured() || (owner > 0 && a && !a->KeyboardAnswersFor(uint32_t(owner)));
     if (g_mouse_blocked.exchange(blocked) != blocked) {
-      REXLOG_INFO("Mouse in menus: {}", blocked ? fmt::format("off (player {}'s menu)", owner + 1) : "on");
+      REXLOG_INFO("Mouse in menus: {}", !blocked                ? std::string("on")
+                                        : net::Configured() ? std::string("off (online session)")
+                                                            : fmt::format("off (player {}'s menu)", owner + 1));
     }
     if (blocked) {
       if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get()) driver->TakeMenuClick();

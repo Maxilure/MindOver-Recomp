@@ -199,6 +199,20 @@ Open: while one player's menu is up, the other players' HUD disappears too
 (the HUD hides itself when the front end reads "paused", and the front end
 must read the same on every PC).
 
+### The mouse in a menu (a desync found in play)
+
+Two copies on one PC, player 1 paused with the keyboard (START, then A):
+the host's copy went into Options, the guest's resumed the game, and the
+worlds parted two seconds later (player 1 walked on one PC, stood in a menu
+on the other). Both copies read the same START and A. The pointer resting
+over the host's window had moved that copy's cursor: the mouse in menus
+(hover and clicks, src/input/mouse_menus.cpp) acts on its own copy only and
+is not part of the input the PCs share. Online the mouse now leaves menus
+alone (hover, clicks, the wheel); keys and controllers still work, through
+the shared input. A test with the host's pointer moved over its pause menu:
+before, Options on one PC and Resume on the other; after, Resume on both and
+identical worlds.
+
 ## 6e. Only the host saves
 
 Online, only the host saves the session. A guest can't; whenever the host
