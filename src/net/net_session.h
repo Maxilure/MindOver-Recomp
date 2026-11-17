@@ -142,13 +142,15 @@ bool OverridePad(uint32_t socket, uint8_t* gamepad, uint32_t& result);
 // played (the same on every PC): 12-byte big-endian XINPUT_GAMEPAD. False out
 // of a session / no such player. Game main thread.
 bool FrameInput(int player, uint8_t gamepad[12]);
-// THE STICK'S FRAME (net/online_sticks.h): this PC's own camera facing on the
-// ground, as its game turned its player's stick last (65536 steps a turn); it
-// rides along with this PC's next input. And the facing player `player`'s PC
-// sent for the frame being played (false = none known: the local camera then).
-// Game main thread.
-void NoteLocalFacing(uint16_t facing);
+// THE STICK'S FRAME (net/online_sticks.cpp): every input carries its PC's
+// camera facing on the ground (65536 steps a turn). The facing player
+// `player`'s PC sent for the frame being played (false = none known: the
+// local camera then). Game main thread.
 bool FrameFacing(int player, uint16_t& facing);
+// The whole camera pose player `player`'s PC sent for this frame: the game
+// camera's 10 words (position, direction, up = +216..+251, field of view +16)
+// as the game stores them. False = none. Game main thread.
+bool FrameCamera(int player, uint32_t words[10]);
 
 // A PLAYER DISCONNECTED (2026-11-17 rules): the other PC stopped answering
 // (2 s of silence) or left. Nothing pauses: this PC plays on alone, the other

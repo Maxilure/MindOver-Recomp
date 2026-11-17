@@ -74,6 +74,7 @@
 #include <rex/system/xmemory.h>
 
 #include "more_players.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(coop_camera, true, "CrashMoM",
                     "Co-op camera: frame every player in game (centre between them, back off until all "
@@ -111,6 +112,14 @@ REXCVAR_DEFINE_BOOL(coop_camera_walls, true, "CrashMoM",
 // our springs use the step the game handed its camera this frame.
 REXCVAR_DEFINE_BOOL(coop_camera_game_clock, true, "CrashMoM",
                     "Co-op camera: smooth by the game's own frame step (false = the PC clock)");
+// ONLINE OWN CAMERA, EXPERIMENT (online plan M4 / R2, 2026-11-17): in a
+// session each PC's camera follows ONLY its own player (the others count as
+// not in game for the camera). The world must not care: the stick no longer
+// asks the camera (net/online_sticks.cpp); what else does is what this switch
+// is for finding (two copies + the world fingerprint). Needs coop_camera on.
+REXCVAR_DEFINE_BOOL(net_own_camera, false, "CrashMoM",
+                    "Online (experiment): each PC's camera follows only its own player");
+
 REXCVAR_DEFINE_BOOL(debug_coop_camera_trace, false, "CrashMoM",
                     "Debug: log the game camera, the players and the camera volume's numbers (co-op camera)");
 REXCVAR_DEFINE_INT32(debug_coop_camera_trace_every, 10, "CrashMoM",
@@ -425,6 +434,11 @@ bool g_aim_clamped = false; // the centre was outside every volume (trace)
 float g_aim_t = 1.0f;       // how far from the anchor toward the centre it got
 uint32_t g_probe = 0;       // guest buffer (3 floats) for the volume search
 
+// The experiment above is on: a session runs and this PC follows its own player.
+bool OwnCameraOnline() {
+  return REXCVAR_GET(net_own_camera) && net::InSession() && net::LocalPlayer() >= 0;
+}
+
 // Once per frame (from the camera rebuild): who is in game, their weights and
 // the centre. Players in game ramp up to 1, the others down to 0.
 void UpdatePlayers(bool volume_view) {
@@ -445,6 +459,7 @@ void UpdatePlayers(bool volume_view) {
     Vec at;
     bool titan = false;
     pl.in_game = Read32(kPlayerStates + 4 * p) == kInGame && BodyOf(p, at, titan);
+    if (pl.in_game && OwnCameraOnline() && p != net::LocalPlayer()) pl.in_game = false;
     if (pl.in_game) {
       // A first sighting starts fully counted when nobody else is (load, the
       // first player); later joins fade in.
@@ -501,7 +516,8 @@ void UpdatePlayers(bool volume_view) {
   if (!volume_view && more_players::InPlay()) g_after_cutscene = true;
   if (!more_players::InPlay()) g_steady_valid = false;
   g_snap_left = std::max(0.0f, g_snap_left - dt);
-  g_active = volume_view && g_answer && REXCVAR_GET(coop_camera) && more_players::InPlay() && g_in_game >= 2 &&
+  g_active = volume_view && g_answer && REXCVAR_GET(coop_camera) && more_players::InPlay() &&
+             g_in_game >= (OwnCameraOnline() ? 1 : 2) &&
              total > 0.0f;
   if (!g_active) {  // the next take-over starts fresh
     g_aim_valid = false;

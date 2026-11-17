@@ -83,6 +83,8 @@ void EndMenuDraw(uint32_t node);
 // ends at that player's root controller; roots as of the last front-end
 // frame), -1 = none. Game main thread. (net/online_sticks.cpp)
 int PlayerOfController(uint8_t* base, uint32_t controller);
+// Player p's root input controller as of the last front-end frame (0 = none).
+uint32_t RootOf(int p);
 
 void Init();
 

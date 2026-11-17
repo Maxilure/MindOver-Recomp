@@ -254,4 +254,44 @@ std::string Command(const std::vector<std::string_view>& w) {
 
 namespace world_hash {
 uint64_t QuickFingerprint() { return Quick(); }
+
+std::string QuickFingerprintParts() {
+  // The same parts Quick() hashes, as text: per player "p<N> t<titan> b<body>
+  // pos(3 x raw hex) vel(3 x raw hex)", then the random state.
+  std::string out;
+  for (int p = 0; p < 4; ++p) {
+    const uint32_t titan = more_players::TitanOfPlayer(p);
+    const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(p);
+    out += fmt::format("p{} t{} ", p + 1, titan ? 1 : 0);
+    if (body && guest_memory::Readable(body + kActorPhysics, 4)) {
+      const uint32_t physics = Load32(body + kActorPhysics);
+      if (physics && guest_memory::Readable(physics, kPhysicsPosition + 12) &&
+          Load32(physics) == kPhysicsVtable && Load32(physics + kPhysicsActor) == body) {
+        for (uint32_t k = 0; k < 3; ++k) out += fmt::format("{:08X} ", Load32(physics + kPhysicsPosition + 4 * k));
+        for (uint32_t k = 0; k < 3; ++k) out += fmt::format("{:08X} ", Load32(physics + kPhysicsVelocity + 4 * k));
+      } else {
+        out += "no-physics ";
+      }
+      // Its world matrix (actor +44 -> 4 x 4 floats; rotation rows + position
+      // at +48): a hash of the 64 bytes, then the forward row's raw bits.
+      const uint32_t matrix = Load32(body + 44);
+      if (matrix && guest_memory::Readable(matrix, 64)) {
+        out += fmt::format("mat {:016X} fwd {:08X} {:08X} {:08X} ", HashBytes(GuestPtr(Membase(), matrix), 64, 0),
+                           Load32(matrix + 32), Load32(matrix + 36), Load32(matrix + 40));
+      }
+      // The zone the body belongs to (actor +40): loaded state (+596, 2 =
+      // loaded), its flags +672 / +681 (the zone check's bits).
+      const uint32_t zone = Load32(body + 40);
+      if (zone && guest_memory::Readable(zone + 596, 88)) {
+        out += fmt::format("zone{{st {} f672 {:02X} f681 {:02X}}} ", Load32(zone + 596),
+                           *GuestPtr(Membase(), zone + 672), *GuestPtr(Membase(), zone + 681));
+      }
+    } else {
+      out += "no-body ";
+    }
+    out += "| ";
+  }
+  out += fmt::format("rng {:08X} {:08X}", Load32(kRandomState), Load32(kRandomState + 4));
+  return out;
+}
 }  // namespace world_hash

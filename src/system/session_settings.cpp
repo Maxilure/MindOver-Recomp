@@ -65,6 +65,7 @@ constexpr WorldSetting kWorldSettings[] = {
     {"coop_camera_walls", "the shared camera's wall checks"},
     {"coop_camera_pinned_rooms", "the shared camera in pinned rooms"},
     {"coop_camera_game_clock", "the shared camera's springs on game time"},
+    {"net_own_camera", "each PC's camera follows its own player (experiment: the world may still read the camera)"},
 };
 
 }  // namespace

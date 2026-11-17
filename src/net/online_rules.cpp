@@ -219,6 +219,8 @@ void OnFrame(PPCContext& ctx, uint8_t* base) {
   }
 }
 
+uint32_t RootOf(int p) { return p >= 0 && p < kPlayers ? g_roots[p] : 0; }
+
 int PlayerOfController(uint8_t* base, uint32_t controller) {
   constexpr uint32_t kParent = 36;  // input controller: its parent (0 = a root)
   for (int depth = 0; controller && depth < 8; ++depth) {
@@ -269,4 +271,46 @@ extern "C" REX_FUNC(sub_8225DE68) {
   *paused = uint8_t(old | 0x20);
   __imp__sub_8225DE68(ctx, base);
   *paused = uint8_t((*paused & ~0x20) | (old & 0x20));
+}
+
+// ZONES RUN BY THE PLAYERS, NOT BY A CAMERA (2026-11-17, found by the own-
+// camera experiment: player 2 bumped into something on one PC only).
+// sub_822EFFD8 decides each frame whether a zone RUNS (its objects update):
+// always-on flag (+681 0x20), or loaded (+596 == 2) and either this test or
+// "the focus player's zone" (sub_822E7A70); the co-op camera code adds "any
+// player stands in it" (coop_camera.cpp CoopCameraZoneActive, 0x822F003C).
+// THIS test, sub_822F4AA0, asks whether the GAME CAMERA's position
+// (VectorCamera +216..+224) is inside the zone: its bounding sphere (+488..
+// +500, radius squared) and then its walls (planes at *(+376)); it also sets
+// a sticky bit (+681 0x40) in the zone. With a camera per PC each PC would
+// run a different set of zones: objects in a zone only one PC's camera is in
+// move there and stand still on the other. Online the answer is "no" (and the
+// zone isn't touched): a zone runs when it's always on, the focus player's,
+// or holds a player, the same on every PC. (A zone only the camera looks into
+// stands still until a player walks in: watch for that in play.) Offline:
+// the original.
+extern "C" REX_FUNC(__imp__sub_822F4AA0);
+extern "C" REX_FUNC(sub_822F4AA0) {
+  if (net::InSession()) {
+    ctx.r3.u64 = 0;
+    return;
+  }
+  __imp__sub_822F4AA0(ctx, base);
+}
+
+// "AM I OFF SCREEN?" FOR THE FIGHT TREES (2026-11-17, own-camera round 7:
+// player 2's turn started one frame earlier on the PC whose camera showed
+// them; on the other PC they were off screen). sub_821BA090 (r3 = the
+// asking object, its actor at +156) = "the actor's position is NOT in the
+// game camera's view" (camera virtual slot 17), the fight-tree condition
+// registered beside "IsOffScreenInCoOpMode" (0x821BA54C). Like the co-op
+// off-screen test sub_82235978 (players/more_players.cpp): online every
+// Crash counts as on screen, the same on every PC.
+extern "C" REX_FUNC(__imp__sub_821BA090);
+extern "C" REX_FUNC(sub_821BA090) {
+  if (net::InSession()) {
+    ctx.r3.u64 = 0;
+    return;
+  }
+  __imp__sub_821BA090(ctx, base);
 }

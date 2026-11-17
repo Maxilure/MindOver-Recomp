@@ -2311,3 +2311,23 @@ registers = ["r5"]
 address = 0x82271F58
 name = "OnlineStickFacing"
 registers = ["r1", "r28"]
+
+# ONLINE: THE HELD FORWARD (src/net/online_sticks.cpp OnlineHeldFacing). In
+# sub_822718E8 (called first by sub_82271E38) the camera's direction was just
+# copied to r1+88..96 (0x82271914..28); this replaces it with the sender's
+# facing before the normalise call, so "hold the old forward through a camera
+# cut" is decided alike on every PC. r31 = the controller. Verified with xexdis.
+[[entrypoint.midasm_hook]]
+address = 0x8227192C
+name = "OnlineHeldFacing"
+registers = ["r1", "r31"]
+
+# ONLINE: THE STICK'S DIRECTION SECTOR (src/net/online_sticks.cpp
+# OnlineStickSector). sub_8221DD70 passes the game camera's direction (+228)
+# in r5 to sub_822E7F30 here; in a session it becomes the direction the
+# actor's player's PC sent. r31 = the object whose +156 is the actor.
+# Verified with xexdis (0x8221DDFC addi r5,r11,228; 0x8221DE00 bl 0x822e7f30).
+[[entrypoint.midasm_hook]]
+address = 0x8221DE00
+name = "OnlineStickSector"
+registers = ["r5", "r31"]

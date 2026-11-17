@@ -265,9 +265,13 @@ camera per PC, player 2's stick would mean "left" on one PC and "back" on the
 other, and the worlds would part.
 
 The fix (src/net/online_sticks.cpp, a mid-function hook at 0x82271F58): each
-PC notes the forward its game used for its own player and sends it with its
-next input as a 16-bit facing (65,536 steps a turn; network protocol 2). Every
-PC then turns player P's stick by the facing that P's PC sent for this frame.
+PC reads its camera's facing on the ground at the start of every frame and
+sends it with that frame's input as a 16-bit facing (65,536 steps a turn;
+network protocol 2). Every PC then turns player P's stick by the facing that
+P's PC sent for this frame. (Sent with every input, not only while the stick
+is pushed: sub_82271E38 skips the camera while the stick is centred, and an
+earlier version that noted the facing there sent a player's first steps
+without one; see 6g.)
 The cos / sin of the facing come from a fixed series in plain double
 arithmetic (no fused multiply-add), so the result has the same bits on every
 system (a C library's cos can differ in the last bit between Linux and
@@ -287,13 +291,60 @@ cinematic camera) but also world logic: an enemy task that circles the player
 zones that run near the camera (sub_822F1F78, sub_822F4AA0), a Collectable
 method. These decide whether each PC can show its own camera.
 
+## 6g. Each PC's own camera: the experiment
+
+The flag `net_own_camera` (with `coop_camera` on) makes each PC's camera
+follow only its own player in a session: the co-op camera counts the other
+players as absent. Two copies on save 2 (host stands, then walks left; guest
+walks right, then up toward the water), with a per-frame log of the
+fingerprint's parts (`--debug_net_fingerprint_log`: every player's raw
+position and velocity bits, the random state) on both sides:
+
+![Two PCs in one session, each camera following its own player](../images/online-own-cameras.jpg)
+
+| Round | First difference | Cause | Fix |
+| --- | --- | --- | --- |
+| 1 | frame 1036: player 2's velocity, half a degree, the first frame they walk | the facing was only noted while the stick was pushed, so the first frames of a push went out without one and each PC used its own camera | send the camera's facing with every input (6f) |
+| 1 | (found by reading, while chasing round 1; no visible change in this run) | sub_822718E8 decides "hold the old forward through a camera cut" from the local camera, writes the held forward (+464) and the hold bit (+520), sends the controller an event | mid-function hook at 0x8227192C: the sender's facing replaces the camera's direction there |
+| 2 | frame 1885: player 2 deflected on the guest's PC only (velocity turned about 20 degrees, lifted) | zones RUN only when the camera is inside them (sub_822F4AA0, called by the zone check sub_822EFFD8): the guest's camera ran a zone around player 2 that the host's camera didn't | in a session sub_822F4AA0 answers "no" and leaves the zone alone: a zone runs when it is always on, the focus player's zone, or holds a player |
+| 3 | none in that scene: in sync on every frame | | |
+| 4 | a 30-minute random two-player script (jumps, attacks, B), frame 1276: player 1 parked on one PC only | B released 10 units from player 2: the game's off-screen CATCH-UP (off screen + B = forced into a mask) asks the camera whether the Crash is off screen (sub_82235978) | online plan 6.1, "no forced masks": in a session every Crash counts as on screen. A mask by choice doesn't ask the camera (coop_mask_from_anywhere) |
+| 5 | frame 1307: the masked player 1 turned slightly differently on its host (forward row y 0.028 against -0.00006) | the mask turns toward what its player AIMS at; the aim is a ray from the camera through the player's 2D reticle spot (CReticleAimingBehaviour, sub_822AC668) | each input also carries its PC's whole camera pose (position, direction, up, field of view: the camera's own words; protocol 3). While the aim update runs for player P, the game camera holds P's sent pose (camera bytes +16..+251 saved, pose written, matrices marked stale, saved bytes restored after) |
+| 6 | none: the 30-second replay of that script in sync on every frame | | |
+| 7 | the full 30-minute script, frame 9430 (2.6 minutes): player 2 starts the same turn one frame earlier on the PC whose camera shows them; on the other PC they are off screen | not found yet (see below) | three camera reads fixed on the way, none of them this one: the stick's direction sector for the fight trees (sub_8221DD70: camera direction -> the sender's, hook 0x8221DE00), the fight-tree condition "am I off screen" (sub_821BA090: "on screen" online), the held forward written at a controller UNLOCK (sub_82270FE8: camera direction -> the sender's facing) |
+
+Round 7 in detail. Logging each player's controller state per frame (lock
+word, hold bit, held forward, stored stick) shows the stick pipeline equal on
+both PCs from frame 935 on, including every frame around 9430: the difference
+is further along, in what the character does with the same input. Player 2 is
+off screen on the host's PC at that moment (photos of both PCs) and the turn
+comes about 15 frames after a light attack started: the lead is that characters
+the camera doesn't see are updated differently (animation detail, an event
+one frame late). The game's frustum test (sub_822ED0C8) is called only from
+the render manager and zone drawing; what that leaves on a culled character
+for game logic to read is the next question.
+
+The random generator stayed identical in every round. The tool that named
+each cause: `--debug_net_fingerprint_log=<file>` on both PCs (every player's
+raw position / velocity bits, world matrix, zone state, and the random state,
+per frame), then the first line where the two files differ.
+
+The general rule this points to: code that works out something of ONE player
+from the camera uses THAT player's PC camera (sent with the input); code that
+asks the camera about the world as a whole (zones, catch-up) needs a rule that
+doesn't involve a camera. Inputs got bigger for it, so a packet now carries at
+most 20 inputs (about 1.3 KB). The zone rule has a cost:
+a zone that only the camera looks into, with no player in it, stands still
+until a player walks in.
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).
 * Saves: a guest at the totem still gets the "Do you want to save?" question
   (their Yes is refused afterwards).
-* Each PC's own camera following its own player (the plan's milestone M4): the
-  stick part is in (6f); the other camera readers come next.
+* Each PC's own camera following its own player (the plan's milestone M4): an
+  experiment flag for now (6g). The other camera readers in the game (6f) are
+  not all checked yet: views, or world logic that a scene hasn't reached.
 * A session starts at a save load: Host / Join first, then load the same save
   on both. The save itself isn't sent or checked (a different save shows as a
   drift at frame 0).

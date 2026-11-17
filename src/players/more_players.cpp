@@ -2,6 +2,7 @@
 // players/more_players.cpp -- see more_players.h (and findings/26)
 // =============================================================================
 #include "more_players.h"
+#include "../net/net_session.h"
 #include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 #include "outfit_picker.h"
 
@@ -1412,6 +1413,17 @@ bool HasMaskHost(int me) {
 // Only joined players (not joined = the original's own handling of the hidden
 // player-2 Crash at a level start).
 extern "C" REX_FUNC(sub_82235978) {
+  // ONLINE (net/online_rules.h; online plan s.6.1 "no forced masks"): the
+  // test is THIS PC's camera, and each PC shows its own camera: one PC would
+  // force a player into a mask (catch-up) and the other not (found
+  // 2026-11-17: player 1 parked on the host only, B released 10 units from
+  // player 2). In a session every Crash counts as on screen: no catch-up; a
+  // mask by choice (B) goes through sub_82235CB8 below, which doesn't ask the
+  // camera with coop_mask_from_anywhere on.
+  if (net::InSession()) {
+    ctx.r3.u64 = 0;
+    return;
+  }
   const int player = PlayerOf(ctx.r4.u32);
   if (BelongsToAMenu(player)) {
     ctx.r3.u64 = 0;

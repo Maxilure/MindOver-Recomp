@@ -2,6 +2,11 @@
 // players/reticle_idle.cpp -- see reticle_idle.h (findings/26 s.57)
 // =============================================================================
 #include "reticle_idle.h"
+
+namespace online_sticks {  // net/online_sticks.cpp
+bool InAim();
+void OnAimPlayer(int player);
+}  // namespace online_sticks
 #include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 
 #include <chrono>
@@ -185,7 +190,8 @@ extern "C" REX_FUNC(sub_822AD0A0) {
   const uint32_t object = ctx.r4.u32;
   __imp__sub_822AD0A0(ctx, base);
   const uint32_t behaviour = reticle_idle::g_updating;
-  if (!behaviour) return;
+  // (Online, the aim update wants the player too: online_sticks.cpp.)
+  if (!behaviour && !online_sticks::InAim()) return;
   const uint32_t list = reticle_idle::Read32(object + 16);
   const uint32_t first = list ? reticle_idle::Read32(list) : 0;
   if (!first) return;
@@ -203,6 +209,8 @@ extern "C" REX_FUNC(sub_822AD0A0) {
   sub_822661B8(ctx, base);
   const int player = int32_t(ctx.r3.u32);
   ctx = saved;
+  online_sticks::OnAimPlayer(player);
+  if (!behaviour) return;
   reticle_idle::Behaviour& b = reticle_idle::g_behaviours[behaviour];
   if (b.player != player) {
     REXLOG_DEBUG("Reticle: aiming behaviour {:08X} aims for player {}", behaviour, player + 1);

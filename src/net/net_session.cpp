@@ -25,8 +25,11 @@
 //                            12-byte XINPUT_GAMEPAD as the game reads it,
 //                            big-endian; u16 FACING = the sender's camera
 //                            direction the stick is meant in, 65536 steps a
-//                            turn: net/online_sticks.cpp), u8 fingerprint
-//                            count (0-16),
+//                            turn: net/online_sticks.cpp), then if flags
+//                            bit 2: the sender's CAMERA POSE, 10 x u32 =
+//                            the game camera's own words (position, direction,
+//                            up at +216..+251, field of view +16), u8
+//                            fingerprint count (0-16),
 //                            that many x (i32 frame, u64 fingerprint)
 //   PING / PONG              u64 sender's clock (ns); PONG echoes it
 //   BYE                      (nothing): I'm leaving
@@ -35,11 +38,18 @@
 
 #include "net_session.h"
 
+namespace online_sticks {  // online_sticks.cpp
+bool CameraFacing(uint16_t& facing);
+bool CameraPose(uint32_t words[10]);
+std::string ControllerParts();
+}  // namespace online_sticks
+
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <filesystem>
@@ -81,6 +91,9 @@ REXCVAR_DEFINE_BOOL(net_host, false, "CrashMoM",
 REXCVAR_DEFINE_STRING(net_join, "", "CrashMoM",
                       "LAN co-op (test, milestone M1): join the host at this address (e.g. "
                       "127.0.0.1) as player 2. Turns the fixed step on (60)");
+REXCVAR_DEFINE_STRING(debug_net_fingerprint_log, "", "CrashMoM",
+                      "Debug: write every session frame's fingerprint parts (players' raw position / velocity, "
+                      "random state) to this file, to see WHAT drifted");
 REXCVAR_DEFINE_INT32(net_port, 37373, "CrashMoM", "LAN co-op: the UDP port the host listens on");
 REXCVAR_DEFINE_INT32(net_drop_after_s, 30, "CrashMoM",
                      "LAN co-op: a player whose PC stops answering stays in the level (idle) this many "
@@ -97,7 +110,7 @@ using Clock = std::chrono::steady_clock;
 // -----------------------------------------------------------------------------
 // 1. PACKETS
 // -----------------------------------------------------------------------------
-constexpr uint8_t kProtocol = 2;  // 2: inputs carry the sender's camera facing  // bump on any layout change: old copies refuse
+constexpr uint8_t kProtocol = 3;  // 2: inputs carry the sender's camera facing; 3: + its camera pose  // bump on any layout change: old copies refuse
 constexpr char kMagic[4] = {'M', 'O', 'R', 'N'};
 enum Type : uint8_t {
   kHello = 1,
@@ -110,7 +123,11 @@ enum Type : uint8_t {
   kDump = 8,
 };
 constexpr size_t kHeader = 12;
-constexpr int kMaxInputsPerPacket = 64;
+constexpr int kMaxInputsPerPacket = 64;  // the most a packet may carry (checked on receipt)
+// The most we SEND in one packet: with camera poses an input is up to 55
+// bytes; 20 keep a packet near 1.3 KB (one network frame, no fragments).
+// Older unacknowledged ones follow in the next packets.
+constexpr int kMaxInputsSent = 20;
 constexpr int kMaxFingerprintsPerPacket = 16;
 constexpr size_t kBuildLength = 32;
 constexpr int kPlayers = 2;  // M1: two PCs, one player each
@@ -201,9 +218,14 @@ struct PadIn {
   // the stick is meant in. 65536 steps a turn; has_facing 0 = not known yet.
   uint8_t has_facing = 0;
   uint16_t facing = 0;
+  // The sender's whole camera pose (online_sticks.cpp CameraPose): the game
+  // camera's words as it stores them. has_camera 0 = none.
+  uint8_t has_camera = 0;
+  uint32_t camera[10] = {};
   bool operator==(const PadIn& o) const {
     return connected == o.connected && std::memcmp(bytes, o.bytes, 12) == 0 &&
-           has_facing == o.has_facing && facing == o.facing;
+           has_facing == o.has_facing && facing == o.facing && has_camera == o.has_camera &&
+           std::memcmp(camera, o.camera, sizeof(camera)) == 0;
   }
 };
 
@@ -310,7 +332,7 @@ void SendInputsLocked() {
   const int64_t last = int64_t(mine.size()) - 1;
   Writer w;
   Header(w, kInputs);
-  const int count = int(std::clamp<int64_t>(last - first + 1, 0, kMaxInputsPerPacket));
+  const int count = int(std::clamp<int64_t>(last - first + 1, 0, kMaxInputsSent));
   w.U8(uint8_t(g_local));
   w.U8(uint8_t(count));
   w.U16(0);
@@ -318,9 +340,12 @@ void SendInputsLocked() {
   w.U32(uint32_t(int32_t(int64_t(g_inputs[g_remote].size()) - 1)));  // ack
   for (int i = 0; i < count; ++i) {
     const PadIn& in = mine[size_t(first + i)];
-    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0)));
+    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0) | (in.has_camera ? 4 : 0)));
     w.Bytes(in.bytes, 12);
     w.U16(in.facing);
+    if (in.has_camera) {
+      for (uint32_t word : in.camera) w.U32(word);
+    }
   }
   // The newest fingerprints (16 frames: one packet a frame, so each is sent
   // 16 times; how far the PEER compared is its business, not ours).
@@ -551,8 +576,12 @@ void HandlePacket(const uint8_t* data, size_t size, const sockaddr_in& from) {
         const uint8_t flags = r.U8();
         in.connected = flags & 1;
         in.has_facing = (flags >> 1) & 1;
+        in.has_camera = (flags >> 2) & 1;
         r.Bytes(in.bytes, 12);
         in.facing = r.U16();
+        if (in.has_camera) {
+          for (uint32_t& word : in.camera) word = r.U32();
+        }
       }
       const int fp_count = r.U8();
       if (!r.ok || fp_count > kMaxFingerprintsPerPacket) return;
@@ -597,7 +626,7 @@ void SendHello() {
 void NetworkThread() {
   auto next_ping = Clock::now();
   auto next_hello = Clock::now();
-  std::vector<uint8_t> buffer(2048);
+  std::vector<uint8_t> buffer(4096);
   while (!g_stop.load()) {
 #if defined(_WIN32)
     fd_set set;
@@ -905,7 +934,21 @@ void OnPassStart(uint64_t fixed_step_frame) {
   }
   // The world as the previous frame left it.
   if (s >= 1) g_fp_local[s - 1] = world_hash::QuickFingerprint();
-  // This PC's controller (last read) plays on frame s + delay.
+  if (s >= 1 && !REXCVAR_GET(debug_net_fingerprint_log).empty()) {
+    static std::FILE* log = std::fopen(REXCVAR_GET(debug_net_fingerprint_log).c_str(), "w");
+    if (log) {
+      std::fprintf(log, "%lld %016llX %s || %s\n", (long long)(s - 1), (unsigned long long)g_fp_local[s - 1],
+                   world_hash::QuickFingerprintParts().c_str(), online_sticks::ControllerParts().c_str());
+      std::fflush(log);
+    }
+  }
+  // This PC's controller (last read) plays on frame s + delay, with the
+  // facing of this PC's camera now (net/online_sticks.cpp).
+  if (uint16_t facing = 0; online_sticks::CameraFacing(facing)) {
+    g_latest_local.has_facing = 1;
+    g_latest_local.facing = facing;
+  }
+  if (online_sticks::CameraPose(g_latest_local.camera)) g_latest_local.has_camera = 1;
   auto& mine = g_inputs[g_local];
   while (int64_t(mine.size()) <= s + g_delay) mine.push_back(g_latest_local);
   g_last_sent = int64_t(mine.size()) - 1;
@@ -991,12 +1034,6 @@ bool FrameInput(int player, uint8_t gamepad[12]) {
   return true;
 }
 
-void NoteLocalFacing(uint16_t facing) {
-  std::lock_guard lock(g_m);
-  g_latest_local.has_facing = 1;
-  g_latest_local.facing = facing;
-}
-
 bool FrameFacing(int player, uint16_t& facing) {
   if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
   const int64_t s = int64_t(fixed_step::Frame()) - g_base;
@@ -1005,6 +1042,17 @@ bool FrameFacing(int player, uint16_t& facing) {
   const PadIn& in = g_inputs[player][size_t(s)];
   if (!in.has_facing) return false;
   facing = in.facing;
+  return true;
+}
+
+bool FrameCamera(int player, uint32_t words[10]) {
+  if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+  const PadIn& in = g_inputs[player][size_t(s)];
+  if (!in.has_camera) return false;
+  std::memcpy(words, in.camera, sizeof(in.camera));
   return true;
 }
 

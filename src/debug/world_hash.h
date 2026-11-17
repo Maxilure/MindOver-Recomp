@@ -59,5 +59,7 @@ std::string Command(const std::vector<std::string_view>& words);
 // compares it between PCs every frame: cheap enough for that, wide enough to
 // catch a drift within moments (any random draw or movement that differs).
 uint64_t QuickFingerprint();
+// Its parts as one line of text (debug: --debug_net_fingerprint_log).
+std::string QuickFingerprintParts();
 
 }  // namespace world_hash
