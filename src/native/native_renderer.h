@@ -99,8 +99,10 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <condition_variable>
 #include <memory>
@@ -119,6 +121,7 @@
 
 #include "buffer_cache.h"
 #include "frame.h"
+#include "frame_blend.h"
 #include "render_targets.h"
 #include "texture_cache.h"
 
@@ -204,6 +207,61 @@ class NativeRenderer {
 
   static void FrameEndThunk(void* self) { static_cast<NativeRenderer*>(self)->OnFrameEnd(); }
   void OnFrameEnd();
+  // Where our picture goes now (DUAL MODE): the native window, else the main
+  // window if F9 chose ours, else null (nowhere).
+  VulkanPresenter* PictureTarget() const;
+  // frame_ is the frame to draw (out sizes set): prepares it on this thread,
+  // hands the rest to the record thread (or does it here). `start` = when
+  // this frame's work began (cost line).
+  void DrawFrame(VulkanPresenter* target, std::chrono::steady_clock::time_point start);
+
+  // FIXED-RATE LOGIC + BLENDED PICTURES (frame_blend.h, fixed_step.h
+  // logic_rate): the last two logic frames, their pairing, and the
+  // in-between pictures drawn while the game waits for its next frame.
+  bool BlendingWanted() const;
+  // A new logic frame (in frame_): becomes the newest of the two.
+  void KeepForBlending();
+  // frame_ = the picture for wall-clock time `now`.
+  void MakeBlendedFrame(std::chrono::steady_clock::time_point now);
+  static void BetweenFramesThunk(void* self, std::chrono::steady_clock::time_point next_start) {
+    static_cast<NativeRenderer*>(self)->BetweenLogicFrames(next_start);
+  }
+  void BetweenLogicFrames(std::chrono::steady_clock::time_point next_start);
+  native::Frame blend_older_, blend_newer_;
+  native::frame_blend::Pairing blend_pairing_;
+  uint64_t blend_older_logic_ = 0, blend_newer_logic_ = 0;  // fixed_step::Frame() of each
+  // --debug_frame_blend_points: a stable id per object across logic frames
+  // (through the pairings), and the file each picture's screen points go to.
+  std::vector<uint32_t> blend_ids_;
+  uint32_t blend_next_id_ = 1;
+  std::FILE* blend_points_ = nullptr;
+  void WriteBlendPoints(std::chrono::steady_clock::time_point now);
+  bool blend_have_older_ = false, blend_have_newer_ = false;
+  std::chrono::steady_clock::time_point blend_newer_start_;  // the newer frame's logic start
+  double blend_period_s_ = 1.0 / 30.0;                       // one logic frame
+  // PICTURE SLOTS (feel test 4): the pictures are timed to the MONITOR's
+  // refreshes, slot n = origin + n / rate, and each shows the world at its
+  // slot's time (= when it appears), drawn during the slot before. Pictures
+  // made at an uneven 144 a second and shown at the next 180 Hz refresh
+  // showed the world up to a refresh off, a different amount each time:
+  // everything moving jittered.
+  std::chrono::steady_clock::time_point blend_grid_origin_;
+  double blend_grid_rate_ = 0;
+  double blend_logic_work_ms_ = 1.0;
+  uint64_t blend_missed_slots_ = 0;  // refreshes that got no new picture (log line)
+  void TakeSlot(int64_t n) {
+    if (blend_last_slot_ > 0 && n > blend_last_slot_ + 1) blend_missed_slots_ += uint64_t(n - blend_last_slot_ - 1);
+    blend_last_slot_ = n;
+  }  // logic start -> its OnFrameEnd (smoothed)
+  int64_t blend_last_slot_ = -1;
+  double PictureRate() const;
+  std::chrono::steady_clock::time_point SlotTime(int64_t n) const;
+  // The first slot that starts after `now` (re-making the grid if the rate changed).
+  int64_t NextSlot(std::chrono::steady_clock::time_point now);
+  double blend_draw_ms_ = 2.0;     // what one picture costs this thread (smoothed)
+  uint64_t blend_pictures_ = 0, blend_logic_frames_ = 0;    // for the log line
+  uint64_t blend_cuts_ = 0;
+  std::chrono::steady_clock::time_point blend_log_time_;
 
   // RECORD THREAD (2026-11-13, findings/57 s.10): a frame is recorded in two
   // halves. PrepareFrame (game thread): the frame slot, the caches (they read

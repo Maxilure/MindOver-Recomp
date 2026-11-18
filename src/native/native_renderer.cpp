@@ -33,6 +33,9 @@
 #include "scan.h"
 #include "spotter.h"
 #include "../overlay_banner.h"
+#include "../fixed_step.h"
+#include "../frame_rate.h"
+REXCVAR_DECLARE(bool, debug_frame_blend_trace);
 
 REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
                       "Picture shown at start: 'emulated' (ReXGlue's GPU emulation) or "
@@ -69,6 +72,17 @@ REXCVAR_DEFINE_BOOL(emulated_only, false, "CrashMoM",
 REXCVAR_DEFINE_BOOL(native_record_thread, true, "CrashMoM",
                     "Native renderer: record the render passes, the present and the submit on a thread of their "
                     "own while the game goes on with its next frame (false = all on the game's main thread)");
+// FIXED-RATE LOGIC (fixed_step.h logic_rate, frame_blend.h): with the logic
+// at a fixed rate, draw pictures in between at the screen's rate (fps_cap /
+// the monitor with V-sync) by blending the last two logic frames. Off = one
+// picture per logic frame (shows the judder the blending removes).
+// OFF BY DEFAULT (2026-11-18): experimental, see frame_blend.h.
+REXCVAR_DEFINE_BOOL(frame_blending, false, "CrashMoM",
+                    "EXPERIMENTAL. With logic_rate: blend the last two logic frames into pictures in between, "
+                    "at the screen's rate (native picture only). Off = one picture per logic frame");
+REXCVAR_DEFINE_STRING(debug_frame_blend_points, "", "CrashMoM",
+                      "Debug: write every blended picture's 3D draws' screen points to this file "
+                      "(one object id per draw, followed across logic frames)");
 REXCVAR_DEFINE_BOOL(movie_backdrop, true, "CrashMoM",
                     "Widescreen: movies fill the sides with a blurred, darkened, zoomed copy of themselves "
                     "(false = black sides)");
@@ -504,6 +518,7 @@ NativeRenderer::~NativeRenderer() {
   native::spotter::Uninstall();
   native::ab_capture::SetNativeShownCheck(nullptr, nullptr);
   pddi::RemoveFrameEndListener(&FrameEndThunk, this);
+  fixed_step::SetBetweenFrames(nullptr, nullptr);
   // The record thread: its last frame finished, then the thread itself.
   if (record_thread_.joinable()) {
     {
@@ -817,6 +832,8 @@ bool NativeRenderer::Initialize() {
   // frame can be handed to it.
   record_thread_ = std::thread([this] { RecordThreadMain(); });
   pddi::AddFrameEndListener(&FrameEndThunk, this);
+  // FIXED-RATE LOGIC: the in-between pictures, in the wait between frames.
+  fixed_step::SetBetweenFrames(&BetweenFramesThunk, this);
   // Loud log lines when a material we're hunting shows up (spotter.h).
   native::spotter::Install(
       [](void* self) { return static_cast<NativeRenderer*>(self)->native_drawn(); }, this);
@@ -1634,12 +1651,7 @@ void NativeRenderer::OnFrameEnd() {
   // be done before anything it reads changes (sizes, scale, framebuffers,
   // the caches' next frame).
   FinishRecordedFrame();
-  // Where our picture goes this frame (native_renderer.h, DUAL MODE): the
-  // native window, else the main window if F9 chose ours, else nowhere.
-  VulkanPresenter* target = window_presenter_.load(std::memory_order_relaxed);
-  if (!target && show_native()) {
-    target = presenter_;
-  }
+  VulkanPresenter* target = PictureTarget();
   // How often the emulated GPU draws from the next frame on.
   UpdateEmulatedFrameRate(target != nullptr);
   // Take what the game just drew; record the next frame only while our
@@ -1667,6 +1679,35 @@ void NativeRenderer::OnFrameEnd() {
   frame_wide_ = widescreen::Update(wide_allowed) / widescreen::kGameAspect;
   out_width_ = uint32_t(native::ScaleSize(int32_t(kWidth), frame_scale_ * frame_wide_));
   out_height_ = uint32_t(native::ScaleSize(int32_t(kHeight), frame_scale_));
+  // FIXED-RATE LOGIC (frame_blend.h): this logic frame becomes the newer of
+  // the two, and the picture drawn now is the blend for this moment.
+  if (BlendingWanted()) {
+    KeepForBlending();
+    blend_logic_work_ms_ = blend_logic_work_ms_ * 0.9 +
+        0.1 * std::clamp(std::chrono::duration<double, std::milli>(CostClock::now() - blend_newer_start_).count(),
+                         0.0, 30.0);
+    // The picture for the next refresh (PICTURE SLOTS), unless already drawn.
+    const int64_t n = NextSlot(CostClock::now());
+    if (n <= blend_last_slot_) return;
+    TakeSlot(n);
+    MakeBlendedFrame(SlotTime(n));
+  } else {
+    blend_have_older_ = blend_have_newer_ = false;
+  }
+  DrawFrame(target, start);
+}
+
+NativeRenderer::VulkanPresenter* NativeRenderer::PictureTarget() const {
+  // Where our picture goes (native_renderer.h, DUAL MODE): the native
+  // window, else the main window if F9 chose ours, else nowhere.
+  VulkanPresenter* target = window_presenter_.load(std::memory_order_relaxed);
+  if (!target && show_native()) {
+    target = presenter_;
+  }
+  return target;
+}
+
+void NativeRenderer::DrawFrame(VulkanPresenter* target, CostClock::time_point start) {
   // 1st half, here: everything that reads guest memory (PrepareFrame).
   if (!PrepareFrame()) {
     LogCost(MsSince(start));
@@ -1696,6 +1737,188 @@ void NativeRenderer::OnFrameEnd() {
     record_job_ = true;
   }
   record_cv_.notify_all();
+}
+
+// -----------------------------------------------------------------------------
+// FIXED-RATE LOGIC + BLENDED PICTURES (frame_blend.h)
+// -----------------------------------------------------------------------------
+
+bool NativeRenderer::BlendingWanted() const {
+  // Only with the logic_rate setting (not the exact-replay --fixed_step /
+  // `clock fixed`: those tests compare pictures of exact frames).
+  return REXCVAR_GET(logic_rate) > 0 && fixed_step::Active() && REXCVAR_GET(frame_blending) &&
+         !REXCVAR_GET(fixed_step_fast);
+}
+
+void NativeRenderer::KeepForBlending() {
+  // The newer frame becomes the older; this one (frame_, recorded just now)
+  // the newer. Copy-assigning reuses the vectors' storage.
+  std::swap(blend_older_, blend_newer_);
+  blend_have_older_ = blend_have_newer_;
+  blend_newer_ = frame_;
+  blend_have_newer_ = frame_.recorded;
+  blend_newer_start_ = fixed_step::FrameStart();
+  blend_older_logic_ = blend_newer_logic_;
+  blend_newer_logic_ = fixed_step::Frame();
+  blend_period_s_ = 1.0 / double(std::max(fixed_step::Fps(), 1));
+  if (blend_have_older_ && blend_have_newer_) {
+    native::frame_blend::Pair(blend_older_, blend_newer_, blend_pairing_);
+  } else {
+    blend_pairing_ = {};
+  }
+  ++blend_logic_frames_;
+  if (blend_pairing_.cut) ++blend_cuts_;
+  // Object ids (debug_frame_blend_points): a paired draw keeps its pair's id.
+  {
+    std::vector<uint32_t> ids(blend_newer_.draws.size(), 0);
+    for (size_t i = 0; i < ids.size(); ++i) {
+      const int32_t m = i < blend_pairing_.match.size() ? blend_pairing_.match[i] : -1;
+      ids[i] = m >= 0 && size_t(m) < blend_ids_.size() ? blend_ids_[size_t(m)] : blend_next_id_++;
+    }
+    blend_ids_.swap(ids);
+  }
+  if (!blend_pairing_.notes.empty()) {
+    REXLOG_INFO("Frame blending trace: frame {}: {} of {} draws not blended{}", blend_newer_.number,
+                blend_pairing_.notes.size(), blend_newer_.draws.size(), blend_pairing_.cut ? " (CUT)" : "");
+    for (const std::string& n : blend_pairing_.notes) REXLOG_INFO("  {}", n);
+  }
+}
+
+void NativeRenderer::MakeBlendedFrame(CostClock::time_point now) {
+  if (!blend_have_newer_) return;  // frame_ stays as it is
+  if (!blend_have_older_ || blend_pairing_.match.size() != blend_newer_.draws.size()) {
+    frame_ = blend_newer_;
+    return;
+  }
+  // The picture at `now` shows the world one logic frame ago: older at the
+  // newer frame's logic start, newer one logic frame later.
+  const double t = std::chrono::duration<double>(now - blend_newer_start_).count() / blend_period_s_;
+  if (REXCVAR_GET(debug_frame_blend_trace)) {
+    // The timeline (feel test 4): every picture's wall time, the two logic
+    // frames it blends and where between them. Shown game time = older +
+    // t x (newer - older) logic frames: a straight line against wall time
+    // when the blend is right.
+    REXLOG_INFO("Frame blending picture: wall {:.3f} ms, logic {} -> {}, t {:.3f}",
+                std::chrono::duration<double, std::milli>(now.time_since_epoch()).count(),
+                blend_older_logic_, blend_newer_logic_, t);
+  }
+  native::frame_blend::Blend(blend_older_, blend_newer_, blend_pairing_,
+                             float(std::clamp(t, 0.0, 1.0)), frame_);
+  {
+    // (`""`, `off` and `0` count as off too: the debug console can't send an
+    // empty value, and `flag ... ""` once kept the file growing.)
+    const std::string& points = REXCVAR_GET(debug_frame_blend_points);
+    if (!points.empty() && points != "\"\"" && points != "off" && points != "0") {
+      WriteBlendPoints(now);
+    } else if (blend_points_) {
+      std::fclose(blend_points_);
+      blend_points_ = nullptr;
+    }
+  }
+}
+
+void NativeRenderer::WriteBlendPoints(CostClock::time_point now) {
+  if (!blend_points_) {
+    blend_points_ = std::fopen(REXCVAR_GET(debug_frame_blend_points).c_str(), "w");
+    if (!blend_points_) return;
+  }
+  const double wall = std::chrono::duration<double, std::milli>(now.time_since_epoch()).count();
+  // Per 3D draw: its reference point (first vertex for immediate geometry,
+  // the object's origin for a mesh) through the blended matrix -> screen.
+  for (size_t i = 0; i < frame_.draws.size() && i < blend_ids_.size(); ++i) {
+    const native::DrawCommand& d = frame_.draws[i];
+    if (!d.depth_test) continue;
+    const float* m = d.mvp;
+    if (m[3] == 0 && m[7] == 0 && m[11] == 0 && m[15] == 1) continue;  // flat (2D)
+    float p[3] = {0, 0, 0};
+    if (!d.mesh) {
+      if (!d.vertex_count || d.vertex_offset / 4 + 3 > frame_.vertex_data.size()) continue;
+      std::memcpy(p, frame_.vertex_data.data() + d.vertex_offset / 4, sizeof(p));
+    }
+    const float x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+    const float y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+    const float w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+    if (!(w > 0.01f)) continue;
+    std::fprintf(blend_points_, "%.3f %u %d %d %u %.2f %.2f %llu\n", wall, blend_ids_[i], int(d.material),
+                 int(d.mesh), d.mesh ? d.index_count : d.vertex_count, 640.0f * (1 + x / w),
+                 360.0f * (1 - y / w), (unsigned long long)blend_newer_logic_);
+  }
+  std::fprintf(blend_points_, "P %.3f\n", wall);  // (end of a picture)
+  std::fflush(blend_points_);
+}
+
+double NativeRenderer::PictureRate() const {
+  // The monitor's refresh when known (each picture = one refresh), else the
+  // frame-rate cap, else 240.
+  const double refresh = frame_rate::DisplayRefresh();
+  if (refresh >= 30.0) return refresh;
+  const int32_t cap = frame_rate::EffectiveCap();
+  return cap > 0 ? double(cap) : 240.0;
+}
+
+CostClock::time_point NativeRenderer::SlotTime(int64_t n) const {
+  return blend_grid_origin_ + std::chrono::duration_cast<CostClock::duration>(
+                                  std::chrono::duration<double>(double(n) / blend_grid_rate_));
+}
+
+int64_t NativeRenderer::NextSlot(CostClock::time_point now) {
+  const double rate = PictureRate();
+  if (rate != blend_grid_rate_ || blend_grid_origin_.time_since_epoch().count() == 0) {
+    blend_grid_rate_ = rate;
+    blend_grid_origin_ = now;
+    blend_last_slot_ = 0;
+  }
+  const double since = std::chrono::duration<double>(now - blend_grid_origin_).count();
+  return int64_t(std::floor(since * blend_grid_rate_)) + 1;
+}
+
+void NativeRenderer::BetweenLogicFrames(CostClock::time_point next_start) {
+  if (!BlendingWanted() || !blend_have_newer_) return;
+  VulkanPresenter* target = PictureTarget();
+  if (!target || target != last_target_) return;  // OnFrameEnd sets the picture up first
+  if (PictureRate() <= double(fixed_step::Fps())) return;  // no room for pictures in between
+  constexpr auto kAfterRefresh = std::chrono::microseconds(300);
+  for (;;) {
+    const CostClock::time_point now = CostClock::now();
+    int64_t n = std::max(blend_last_slot_ + 1, NextSlot(now));
+    // A slot past the next logic frame's start is the next frame's (its
+    // OnFrameEnd draws it with the newer pair), unless that picture can't
+    // be ready in time (the logic frame's own work first): then it's drawn
+    // here, showing the newest frame (at most that work time early).
+    const auto work = std::chrono::duration_cast<CostClock::duration>(
+        std::chrono::duration<double, std::milli>(blend_logic_work_ms_ + 0.5));
+    if (SlotTime(n) > next_start + work) break;
+    // Drawn just after the refresh before its own (shown at its own).
+    CostClock::time_point at = std::max(now, SlotTime(n - 1) + kAfterRefresh);
+    const auto room = std::chrono::duration_cast<CostClock::duration>(
+        std::chrono::duration<double, std::milli>(blend_draw_ms_ * 1.5 + 1.5));
+    if (at + room >= next_start) break;
+    if (now < at) std::this_thread::sleep_until(at);
+    const CostClock::time_point start = CostClock::now();
+    TakeSlot(n);
+    // The previous picture's second half must be done before frame_ /
+    // pass_frame_ change (as in OnFrameEnd).
+    FinishRecordedFrame();
+    MakeBlendedFrame(SlotTime(n));
+    DrawFrame(target, start);
+    blend_draw_ms_ = blend_draw_ms_ * 0.9 + MsSince(start) * 0.1;
+    ++blend_pictures_;
+  }
+  // A line every ~5 s: how many pictures the blending added.
+  const CostClock::time_point now = CostClock::now();
+  const double since = std::chrono::duration<double>(now - blend_log_time_).count();
+  if (since >= 5.0) {
+    if (blend_log_time_.time_since_epoch().count() != 0 && blend_logic_frames_) {
+      REXLOG_INFO(
+          "Frame blending: {:.1f} logic frames/s + {:.1f} pictures in between/s (pictures timed to {:.0f} Hz), "
+          "{} refreshes without a new picture, {} cuts; last pairing {} draws blended, {} jumped; a picture costs the game thread "
+          "{:.2f} ms",
+          blend_logic_frames_ / since, blend_pictures_ / since, blend_grid_rate_,
+          blend_missed_slots_, blend_cuts_, blend_pairing_.matched, blend_pairing_.snapped, blend_draw_ms_);
+    }
+    blend_log_time_ = now;
+    blend_logic_frames_ = blend_pictures_ = blend_cuts_ = blend_missed_slots_ = 0;
+  }
 }
 
 void NativeRenderer::RefreshAndSubmit(VulkanPresenter* target) {

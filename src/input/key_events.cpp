@@ -42,7 +42,12 @@ extern "C" REX_FUNC(__imp__sub_82275E20);  // an input map's events for this fra
 extern "C" REX_FUNC(__imp__sub_82275DC8);  // reset ONE event of a map (r3 map, r4 event): "consumed"
 extern "C" REX_FUNC(__imp__sub_82275C90);  // reset EVERY event of a map (r3 map)
 extern "C" REX_FUNC(__imp__sub_82273328);  // add a sample to a value channel (r3 channel, f1 value, r5 time ms)
-extern "C" REX_FUNC(__imp__sub_8235ABC8);  // the game's clock in ms (r3)
+// The game's clock in ms (r3), AS THE MAIN THREAD SEES IT: fixed_step.cpp's
+// override, which answers the fixed step's time while the logic runs at a
+// fixed rate (logic_rate). The original (the PC's real clock) stamped the
+// keys' samples on another clock than the controller's: under 30 Hz logic
+// one key press counted two or three times (first feel test, 2026-11-18).
+extern "C" REX_FUNC(sub_8235ABC8);
 extern "C" REX_FUNC(__imp__sub_8235D188);  // Radical's input poll of one socket (r3 = its controller object)
 extern "C" REX_FUNC(__imp__sub_8235CAE8);  // one input object reads its number from the state (r3 object, r4 state)
 extern "C" REX_FUNC(__imp__sub_8235C9F0);  // the sticks' dead zone (f1 size, r3 &x, r4 &y: int16 pairs)
@@ -424,7 +429,7 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_con
   // that closed it).
   if (outfit_picker::IsOpen() || outfit_picker::JustClosed()) image = {};
   PPCContext call = ctx;
-  __imp__sub_8235ABC8(call, base);
+  sub_8235ABC8(call, base);
   const uint32_t now = call.r3.u32;
   for (int v = 4; v < kValueCount; ++v) {
     call = ctx;

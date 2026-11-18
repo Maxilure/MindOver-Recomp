@@ -44,6 +44,7 @@
 #include <immintrin.h>  // _mm_pause
 #endif
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -59,6 +60,18 @@ REXCVAR_DEFINE_INT32(fixed_step, 0, "CrashMoM",
     .range(0, 1000);
 REXCVAR_DEFINE_BOOL(fixed_step_fast, false, "CrashMoM",
                     "With --fixed_step: don't wait between frames (runs as fast as the PC can)");
+// FIXED-RATE LOGIC (feel test, 2026-11-18; notes/plans.md s.2): the game's
+// logic at a fixed rate, paced by the wall clock = the fixed step above in
+// its paced mode. Read at the start of every main-loop pass; a CHANGE turns
+// the fixed step on at that rate (or off at 0), so it can be switched live
+// (console `flag logic_rate 30`). With the native picture shown, the native
+// renderer draws in-between pictures at the screen's rate (frame_blending,
+// native/frame_blend.h) inside the wait between two logic frames.
+REXCVAR_DEFINE_INT32(logic_rate, 0, "CrashMoM",
+                     "Game logic at a fixed rate: 0 = real rate (one logic step per picture, the "
+                     "port's normal way), 30 = the original console's rate, 60. With the native "
+                     "picture, pictures in between are blended (frame_blending)")
+    .range(0, 240);
 
 namespace fixed_step {
 namespace {
@@ -84,6 +97,13 @@ uint32_t g_applied_generation = 0;
 bool g_flags_read = false;
 uint64_t g_next_frame = 0;
 Clock::time_point g_start;  // wall-clock time of frame 0 (paced mode)
+Clock::time_point g_frame_start;  // wall-clock start of the current frame (paced mode)
+int32_t g_seen_logic_rate = 0;    // the logic_rate the fixed step was last set from
+
+// FIXED-RATE LOGIC: who uses the wait between two frames (the native
+// renderer's in-between pictures), and its object.
+std::atomic<BetweenFrames> g_between{nullptr};
+void* g_between_object = nullptr;
 
 constexpr auto kSpin = std::chrono::milliseconds(1);  // spin, don't sleep, this close
 
@@ -112,6 +132,14 @@ constexpr uint64_t kReadsBeforeCreep = 1000;
 uint64_t g_last_virtual_us = 0;    // the last time handed out while fixed
 
 void ApplyRequests() {
+  // logic_rate (file top): a change is a request like the console's.
+  const int32_t rate = REXCVAR_GET(logic_rate);
+  if (rate != g_seen_logic_rate) {
+    g_seen_logic_rate = rate;
+    Set(rate > 0 ? std::clamp(rate, 10, 240) : 0, false);
+    REXLOG_INFO("Fixed-rate logic: {}", rate > 0 ? fmt::format("{} logic frames per second", rate)
+                                                 : std::string("off (real rate)"));
+  }
   if (!g_flags_read) {
     g_flags_read = true;
     if (REXCVAR_GET(fixed_step) > 0 && g_req_generation.load() == 0) {
@@ -153,8 +181,15 @@ void WaitForFrameStart(uint64_t k, int32_t fps) {
   const auto now = Clock::now();
   if (start + std::chrono::duration_cast<Clock::duration>(period) < now) {
     g_start = now - std::chrono::duration_cast<Clock::duration>(period * double(k));
+    g_frame_start = now;
     return;
   }
+  // The time until the frame's start belongs to the in-between pictures, if
+  // anyone draws them (they return early enough to leave the spin below).
+  if (BetweenFrames between = g_between.load(std::memory_order_relaxed)) {
+    between(g_between_object, start);
+  }
+  g_frame_start = start;
   if (start - now > kSpin) std::this_thread::sleep_until(start - kSpin);
   while (Clock::now() < start) {
 #if defined(__x86_64__) || defined(_M_X64)
@@ -174,6 +209,11 @@ uint32_t ClockMs() {
   return uint32_t((g_clock_base_us + g_frame.load() * 1000000ull / uint64_t(fps)) / 1000);
 }
 int32_t Fps() { return g_fps.load(std::memory_order_relaxed); }
+std::chrono::steady_clock::time_point FrameStart() { return g_frame_start; }
+void SetBetweenFrames(BetweenFrames handler, void* object) {
+  g_between_object = object;
+  g_between.store(handler, std::memory_order_release);
+}
 uint64_t Frame() { return g_frame.load(std::memory_order_relaxed); }
 
 std::string Set(int32_t fps, bool fast) {

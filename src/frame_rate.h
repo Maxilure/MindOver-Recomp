@@ -37,6 +37,9 @@ void UpdateDisplayRefresh();
 // The cap the pacer uses: --fps_cap, limited to the monitor's refresh rate
 // with V-sync on.
 int32_t EffectiveCap();
+// The monitor's refresh rate in Hz (UpdateDisplayRefresh's cached value; 0 =
+// unknown). Blended pictures (native/frame_blend.h) are timed to it.
+double DisplayRefresh();
 
 // How long the latest frame waited for its start time (the clock pacer: part
 // of a frame's "game" time that isn't the game working), once per frame:
