@@ -156,6 +156,7 @@
 // state).
 // =============================================================================
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <bit>
@@ -177,6 +178,7 @@
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
 
+REXCVAR_DECLARE(int32_t, character_rate);  // gameplay/character_rate.cpp
 REXCVAR_DEFINE_INT32(ground_grace_ms, 40, "CrashMoM",
                      "Above 30 fps: a ground contact lost for less than this many ms isn't "
                      "reported to the game's move logic, so Crash doesn't 'fall' for a split "
@@ -231,7 +233,22 @@ constexpr uint32_t kFromReachCheck = 0x8217D094;
 // 7 ms) the same 40 ms applies. Real time, not the physics' step sum: the
 // tree asks BEFORE the frame's physics update, so a step sum would lag one
 // frame behind.
-Clock::duration GraceTime() { return std::chrono::milliseconds(REXCVAR_GET(ground_grace_ms)); }
+// CHARACTERS AT 30 HZ (gameplay/character_rate.cpp, 2026-11-18): with
+// --character_rate the grace is part of the rule: at least TWO character
+// steps (+10 ms of slack), whatever ground_grace_ms says (one step wasn't
+// enough: on the same slope the titan sometimes stayed off the ground for
+// two steps and heard "no" at 67 ms; a real fall off a ledge now starts two
+// 30 Hz steps later). A titan walking
+// down an Ice Kingdom slope lost the ground for one 1/30 s step and its fight
+// tree heard "no" 33 ms later = the falling animation (its 1/30 s steps
+// carry it past the slope's surface; the same at the original 30 fps, but
+// far more visible next to a smooth 180 fps world).
+Clock::duration GraceTime() {
+  int ms = REXCVAR_GET(ground_grace_ms);
+  const int rate = REXCVAR_GET(character_rate);
+  if (rate > 0) ms = std::max(ms, 2 * 1000 / rate + 10);
+  return std::chrono::milliseconds(ms);
+}
 
 uint32_t Be32(const uint8_t* base, uint32_t address) {
   uint32_t v;
@@ -271,7 +288,10 @@ struct Loss {
 std::mutex g_loss_mutex;
 std::unordered_map<uint32_t, Loss> g_losses;
 
-bool GraceOn() { return REXCVAR_GET(ground_grace_ms) > 0 && REXCVAR_GET(fps_cap) != 30; }
+bool GraceOn() {
+  if (REXCVAR_GET(character_rate) > 0) return true;  // (part of that rule: GraceTime)
+  return REXCVAR_GET(ground_grace_ms) > 0 && REXCVAR_GET(fps_cap) != 30;
+}
 
 // --- the trace ---------------------------------------------------------------
 
