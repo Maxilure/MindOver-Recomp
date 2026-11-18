@@ -673,8 +673,6 @@ void UpdateDisplayRefresh() {
   }
 }
 
-double DisplayRefresh() { return g_display_refresh.load(std::memory_order_relaxed); }
-
 int32_t EffectiveCap() {
   const int32_t cap = REXCVAR_GET(fps_cap);
   if (cap == 30 || !REXCVAR_GET(present_vsync)) return cap;

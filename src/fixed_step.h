@@ -33,7 +33,6 @@
 // =============================================================================
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 #include <string>
 
@@ -71,14 +70,5 @@ void SetPassListener(void (*listener)());
 std::string Set(int32_t fps, bool fast);
 std::string Status();
 
-// FIXED-RATE LOGIC (logic_rate, fixed_step.cpp): the wall-clock time the
-// current frame started (paced mode; main thread). For the in-between
-// pictures: the frame finished last started here, the next starts 1/Fps() later.
-std::chrono::steady_clock::time_point FrameStart();
-// Called on the main thread while it waits for a frame's start time (paced
-// mode only), with that start time: draw something meanwhile, return before
-// `next_start` (the fixed step spins the rest). One handler (null = none).
-using BetweenFrames = void (*)(void* object, std::chrono::steady_clock::time_point next_start);
-void SetBetweenFrames(BetweenFrames handler, void* object);
 
 }  // namespace fixed_step

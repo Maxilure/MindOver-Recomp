@@ -52,10 +52,6 @@ extern "C" REX_FUNC(__imp__sub_8235D188);  // Radical's input poll of one socket
 extern "C" REX_FUNC(__imp__sub_8235CAE8);  // one input object reads its number from the state (r3 object, r4 state)
 extern "C" REX_FUNC(__imp__sub_8235C9F0);  // the sticks' dead zone (f1 size, r3 &x, r4 &y: int16 pairs)
 
-namespace character_rate {
-void AfterMapUpdate(uint8_t* base, uint32_t map);
-}
-
 namespace key_events {
 namespace {
 
@@ -536,9 +532,6 @@ extern "C" REX_FUNC(sub_82275E20) {
       KeyboardEvents(kb, base, map, controller, root);
     }
   }
-  // Characters at 30 Hz (gameplay/character_rate.cpp): this frame's happened
-  // events, held until the characters' next tick.
-  character_rate::AfterMapUpdate(base, map);
   if (!shadow) return;
   ShadowController& c = g_controllers[controller];
   if (CopyRealValues(base, c, Root(base, controller))) {

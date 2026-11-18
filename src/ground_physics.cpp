@@ -1,6 +1,7 @@
 // =============================================================================
 // ground_physics.cpp -- Crash "falling" for a split second above 30 fps
-//                       (--ground_grace_ms=40 by default; --debug_ground_trace)
+//                       (--ground_grace_ms=40 by default; --ground_triangle_handover, at the
+//                       end of this file: bumpy slopes, findings/22 s.11; --debug_ground_trace)
 // =============================================================================
 //
 // THE BUG (2026-10-01, docs/findings/22): at 60 fps Crash briefly plays his
@@ -103,6 +104,10 @@
 //   C,ms,actor,k,new_object,old_object,caller
 //   S,ms,actor,answer_given,ms_since_contact_lost,lost_by,caller
 //   G,ms,actor,gravity,max_fall_speed      (once per actor, first seen)
+//   R,ms,actor,caller,record,nx,ny,nz,e,vx,vy,vz (before),vx,vy,vz (after)
+//                                          (one collision response, s.10)
+//   H,ms,actor,object,old_triangle,kept_triangle (-1 none),tried,skipped,nx,ny,nz
+//                                          (one triangle handover, s.11)
 // MOVING PLATFORMS ABOVE 30 FPS (2026-10-16, docs/findings/22 s.9): a
 // separate bug, a soft-lock. The space station level's round arena has a
 // floor of rings that SINK at 0.5 units/s while enemies attack; at 180 fps
@@ -156,8 +161,8 @@
 // state).
 // =============================================================================
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <atomic>
 #include <bit>
 #include <chrono>
@@ -174,11 +179,11 @@
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
+#include "fixed_step.h"  // logic_rate
 #include "guest_memory.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
 
-REXCVAR_DECLARE(int32_t, character_rate);  // gameplay/character_rate.cpp
 REXCVAR_DEFINE_INT32(ground_grace_ms, 40, "CrashMoM",
                      "Above 30 fps: a ground contact lost for less than this many ms isn't "
                      "reported to the game's move logic, so Crash doesn't 'fall' for a split "
@@ -187,6 +192,10 @@ REXCVAR_DEFINE_BOOL(platform_move_fix, true, "CrashMoM",
                     "Above 30 fps: moving floors and platforms (e.g. the space station's sinking "
                     "arena) keep moving; the game drops steps under a fixed size, which every "
                     "step is at high fps (src/ground_physics.cpp)");
+REXCVAR_DEFINE_BOOL(ground_triangle_handover, true, "CrashMoM",
+                    "Above 30 fps: walking over uneven ground, the ground contact moves on to the next "
+                    "triangle instead of being dropped, so Crash doesn't 'fall' on bumpy slopes "
+                    "(findings/22 s.11; src/ground_physics.cpp)");
 REXCVAR_DEFINE_STRING(debug_ground_trace, "", "CrashMoM",
                       "Debug: write ground contact changes, physics updates of moving "
                       "characters and the 'not on ground' answers the game logic gets to this CSV file "
@@ -233,22 +242,7 @@ constexpr uint32_t kFromReachCheck = 0x8217D094;
 // 7 ms) the same 40 ms applies. Real time, not the physics' step sum: the
 // tree asks BEFORE the frame's physics update, so a step sum would lag one
 // frame behind.
-// CHARACTERS AT 30 HZ (gameplay/character_rate.cpp, 2026-11-18): with
-// --character_rate the grace is part of the rule: at least TWO character
-// steps (+10 ms of slack), whatever ground_grace_ms says (one step wasn't
-// enough: on the same slope the titan sometimes stayed off the ground for
-// two steps and heard "no" at 67 ms; a real fall off a ledge now starts two
-// 30 Hz steps later). A titan walking
-// down an Ice Kingdom slope lost the ground for one 1/30 s step and its fight
-// tree heard "no" 33 ms later = the falling animation (its 1/30 s steps
-// carry it past the slope's surface; the same at the original 30 fps, but
-// far more visible next to a smooth 180 fps world).
-Clock::duration GraceTime() {
-  int ms = REXCVAR_GET(ground_grace_ms);
-  const int rate = REXCVAR_GET(character_rate);
-  if (rate > 0) ms = std::max(ms, 2 * 1000 / rate + 10);
-  return std::chrono::milliseconds(ms);
-}
+Clock::duration GraceTime() { return std::chrono::milliseconds(REXCVAR_GET(ground_grace_ms)); }
 
 uint32_t Be32(const uint8_t* base, uint32_t address) {
   uint32_t v;
@@ -288,9 +282,11 @@ struct Loss {
 std::mutex g_loss_mutex;
 std::unordered_map<uint32_t, Loss> g_losses;
 
+// Off at the original's 30 fps: the frame-rate cap at 30, or the game logic
+// at the console's fixed 30 (logic_rate 30: frames of exactly 1/30 s, the
+// original's physics, whatever the cap says).
 bool GraceOn() {
-  if (REXCVAR_GET(character_rate) > 0) return true;  // (part of that rule: GraceTime)
-  return REXCVAR_GET(ground_grace_ms) > 0 && REXCVAR_GET(fps_cap) != 30;
+  return REXCVAR_GET(ground_grace_ms) > 0 && REXCVAR_GET(fps_cap) != 30 && REXCVAR_GET(logic_rate) != 30;
 }
 
 // --- the trace ---------------------------------------------------------------
@@ -326,7 +322,9 @@ bool TraceOn() {
                        "vy_before,vx,vy,vz\n"
                        "# C,ms,actor,k,new_object,old_object,caller\n"
                        "# S,ms,actor,answer_given,ms_since_contact_lost,lost_by,caller\n"
-                       "# G,ms,actor,gravity,max_fall_speed\n",
+                       "# G,ms,actor,gravity,max_fall_speed\n"
+                       "# R,ms,actor,caller,record,nx,ny,nz,e,vx,vy,vz,vx_after,vy_after,vz_after\n"
+                       "# H,ms,actor,object,old_triangle,kept_triangle,tried,skipped,nx,ny,nz\n",
                        REXCVAR_GET(ground_grace_ms), REXCVAR_GET(fps_cap));
           g_trace.start = g_trace.last_flush = Clock::now();
           REXLOG_INFO("ground_physics: writing the ground trace to {}", path);
@@ -445,6 +443,41 @@ extern "C" REX_FUNC(sub_8217D0A0) {
   FlushNowAndThen();
 }
 
+// The COLLISION RESPONSE (sub_8217F068, findings/22 s.8): r3 = this
+// (CPhysicsBehaviour), r5 = the contact record (+68 surface normal, +84
+// restitution e). It slides the velocity along the surface (v - (1+e)(n.v)n,
+// sub_822EB850) and sets it (sub_821829E0). Wrapped only for the trace: one
+// "R" line per response with the normal and the vertical speed before and
+// after = which surfaces snap a body's falling speed to 0 on a slope.
+// Line: R,ms,this,caller,record,nx,ny,nz,e,vx,vy,vz before,vx,vy,vz after.
+// Found with it (findings/22 s.10): the caller sub_821809C8 (+0x858) hands
+// in the game's own STRAIGHT-UP normal (0,1,0) for slow bodies on walkable
+// ground: the falling speed on a slope becomes exactly 0.
+extern "C" REX_FUNC(__imp__sub_8217F068);
+extern "C" REX_FUNC(sub_8217F068) {
+  using namespace ground_physics;
+  if (!TraceOn()) {
+    __imp__sub_8217F068(ctx, base);
+    return;
+  }
+  const uint32_t self = ctx.r3.u32;
+  const uint32_t record = ctx.r5.u32;
+  std::array<float, 3> normal, v_before;
+  for (int i = 0; i < 3; ++i) {
+    normal[i] = BeFloat(base, record + 68 + 4 * i);
+    v_before[i] = BeFloat(base, self + kVelocity + 4 * i);
+  }
+  const float e = BeFloat(base, record + 84);
+  const uint32_t caller = static_cast<uint32_t>(ctx.lr);
+  __imp__sub_8217F068(ctx, base);
+  std::lock_guard lock(g_trace.mutex);
+  std::fprintf(g_trace.file, "R,%.3f,%08X,%08X,%08X,%.5f,%.5f,%.5f,%.3f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n",
+               TraceMs(), self, caller, record, normal[0], normal[1], normal[2], e, v_before[0], v_before[1],
+               v_before[2], BeFloat(base, self + kVelocity), BeFloat(base, self + kVelocity + 4),
+               BeFloat(base, self + kVelocity + 8));
+  FlushNowAndThen();
+}
+
 // SetContact: r3 = this (CPhysicsBehaviour), r4 = 0 ground / 1 steep,
 // r5 = the collision object (0 = clear). Remembers when and how a ground
 // contact was lost (for the grace) and writes the trace's "C" lines.
@@ -550,4 +583,185 @@ void CrashMomMoveByMinimum(PPCRegister& f7, PPCRegister& r31) {
 // CPhysicsBehaviour. f0 is reloaded (0x8217E9BC) before any other use.
 void CrashMomPlatformMoveMinimum(PPCRegister& f0, PPCRegister& r30) {
   ground_physics::ScaleMinimumStep(f0, ground_physics::PhysicsFrameTime(r30.u32));
+}
+
+// =============================================================================
+// THE TRIANGLE HANDOVER (findings/22 s.11, 2026-11-18): bumpy slopes above 30 fps
+// =============================================================================
+//
+// THE BUG (what a player sees): running down uneven ground above 30 fps,
+// Crash keeps dropping into his fall animation for a split second, as if he
+// tripped over the bumps. Rare at 30 fps. Exact replays at 30 and 180 of the
+// same walk (Ratcicle Kingdom courtyard): 0 ground losses at 30, 5 at 180.
+//
+// WHY: the ground contact remembers ONE collision triangle: contact slot k
+// of the CPhysicsBehaviour = this +0x34 + 12k (+0 object, +8 triangle
+// number). Every frame the reach check sub_8217D668(r3 = this, r4 = k) asks
+// sub_8224E380 whether the body is still within reach (0.25 x its shape
+// size) of THAT triangle; if not, the contact is dropped (and the fight tree
+// hears "not on ground" = the fall). The collision sweep moves the contact
+// to the triangle underneath only when the body actually TOUCHES the
+// surface. At 30 fps one frame of gravity (2 units/s) puts the body back
+// into the slope every frame, so the contact always holds the triangle
+// under Crash. At 180 fps a frame of gravity is 6x smaller: after the
+// collision response has stopped his downward speed (s.10), he hovers a
+// hair above the slope for a few frames without touching it. Walking on
+// meanwhile, he leaves the remembered triangle for the next one (where the
+// slope gets steeper), the check fails, and the contact is dropped while
+// he's still right on the ground. Every loss measured was at such a
+// triangle change.
+//
+// THE FIX (ground_triangle_handover, on by default; only for frames shorter
+// than the original 1/30 s, so 30 fps stays the original): when the GROUND
+// check (k = 0) fails, try the triangles that share a corner with the old
+// one, i.e. the ones Crash can have walked onto, if they're ground by the
+// game's own threshold (normal . up > the float at 0x825A54C4, the one the
+// collision report sorts contacts with). Each is tried by the
+// game's OWN reach check (its triangle number written into the contact
+// first); the first within reach keeps the contact, now on that triangle.
+// None within reach = the original's answer (the contact is dropped: a real
+// ledge or a jump still drops it).
+//
+// THE MESH (read 2026-11-18 from a live game, Ice Kingdom courtyard): the
+// object's collision part = *(object +0x10), its mesh = *(part +0x24):
+// +0x08 corners (3 floats each, 12 bytes), +0x10 triangles, +0x18 u16
+// corner count, +0x1A u16 triangle count, +0x1C byte: triangle entries 16
+// bytes instead of 8. A triangle entry = u16 corner numbers at +0/+2/+4
+// (sub_8224E380 reads them the same way), +6 flags. The corners are read
+// untransformed: the normal test assumes the object isn't tilted (true for
+// level scenery; the game's own reach test still does the real geometry).
+// =============================================================================
+
+namespace ground_physics {
+namespace {
+
+constexpr uint32_t kContactObject = 0x34;    // contact slot 0: object
+constexpr uint32_t kContactTriangle = 0x3C;  // contact slot 0: triangle number
+// Ground vs steep vs wall: the collision report sub_821809C8 calls a contact
+// ground when normal . up > the float at 0x825A54C4 (steep above 0x825A54C0).
+// The neighbour must pass the same test as ground (read live: it's data).
+constexpr uint32_t kGroundThresholdGlobal = 0x825A54C4;
+
+uint16_t Be16(const uint8_t* base, uint32_t address) {
+  uint16_t v;
+  std::memcpy(&v, GuestPtr(const_cast<uint8_t*>(base), address), 2);
+  return __builtin_bswap16(v);
+}
+
+void StoreBe32(uint8_t* base, uint32_t address, uint32_t value) {
+  value = __builtin_bswap32(value);
+  std::memcpy(GuestPtr(base, address), &value, 4);
+}
+
+// A collision mesh as the reach check reads it (header above).
+struct CollisionMesh {
+  uint32_t corners = 0, triangles = 0, corner_count = 0, triangle_count = 0, stride = 8;
+};
+
+bool ReadMesh(const uint8_t* base, uint32_t object, CollisionMesh& m) {
+  if (!object || !guest_memory::Readable(object + 0x10, 4)) return false;
+  const uint32_t part = Be32(base, object + 0x10);
+  if (!part || !guest_memory::Readable(part + 0x24, 4)) return false;
+  const uint32_t mesh = Be32(base, part + 0x24);
+  if (!mesh || !guest_memory::Readable(mesh, 0x20)) return false;
+  m.corners = Be32(base, mesh + 0x08);
+  m.triangles = Be32(base, mesh + 0x10);
+  m.corner_count = Be16(base, mesh + 0x18);
+  m.triangle_count = Be16(base, mesh + 0x1A);
+  m.stride = GuestPtr(const_cast<uint8_t*>(base), mesh + 0x1C)[0] ? 16 : 8;
+  return m.corners && m.triangles && m.corner_count && m.triangle_count &&
+         guest_memory::Readable(m.corners, m.corner_count * 12) &&
+         guest_memory::Readable(m.triangles, m.triangle_count * m.stride);
+}
+
+std::array<uint16_t, 3> Corners(const uint8_t* base, const CollisionMesh& m, uint32_t t) {
+  const uint32_t at = m.triangles + t * m.stride;
+  return {Be16(base, at), Be16(base, at + 2), Be16(base, at + 4)};
+}
+
+// The triangle's unit normal (untransformed corners); false if degenerate
+// or a corner number is out of range.
+bool Normal(const uint8_t* base, const CollisionMesh& m, const std::array<uint16_t, 3>& c,
+            std::array<float, 3>& n) {
+  std::array<std::array<float, 3>, 3> p;
+  for (int i = 0; i < 3; ++i) {
+    if (c[size_t(i)] >= m.corner_count) return false;
+    for (int j = 0; j < 3; ++j) p[size_t(i)][size_t(j)] = BeFloat(base, m.corners + c[size_t(i)] * 12 + 4 * j);
+  }
+  const float ux = p[1][0] - p[0][0], uy = p[1][1] - p[0][1], uz = p[1][2] - p[0][2];
+  const float vx = p[2][0] - p[0][0], vy = p[2][1] - p[0][1], vz = p[2][2] - p[0][2];
+  n = {uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx};
+  const float len = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+  if (!(len > 1e-8f)) return false;
+  for (float& x : n) x /= len;
+  return true;
+}
+
+std::atomic<uint64_t> g_handovers{0};  // contacts kept by the handover (log line)
+
+}  // namespace
+}  // namespace ground_physics
+
+// The reach check of contact slot k: r3 = this (CPhysicsBehaviour), r4 = k
+// (0 ground, 1 steep). Returns r3 = 1 when the contact is still within reach.
+extern "C" REX_FUNC(__imp__sub_8217D668);
+extern "C" REX_FUNC(sub_8217D668) {
+  using namespace ground_physics;
+  const PPCContext entry = ctx;  // to ask again with other triangles
+  __imp__sub_8217D668(ctx, base);
+  const uint32_t self = entry.r3.u32;
+  if ((ctx.r3.u32 & 0xFF) != 0 || entry.r4.u32 != 0 || !REXCVAR_GET(ground_triangle_handover)) return;
+  // Only frames shorter than the original's: 30 fps keeps the original rule.
+  const double dt = PhysicsFrameTime(self);
+  if (!(dt > 0.0) || dt >= 0.9 / 30.0) return;
+  const uint32_t object = Be32(base, self + kContactObject);
+  const uint32_t old_triangle = Be32(base, self + kContactTriangle);
+  CollisionMesh m;
+  if (!ReadMesh(base, object, m) || old_triangle >= m.triangle_count) return;
+  const std::array<uint16_t, 3> old_corners = Corners(base, m, old_triangle);
+  std::array<float, 3> old_normal;
+  if (!Normal(base, m, old_corners, old_normal)) return;
+  const float ground_threshold = BeFloat(base, kGroundThresholdGlobal);
+  // Trace ("H" lines): what the handover tried. tried = neighbours asked,
+  // skipped = neighbours that aren't walkable ground.
+  uint32_t tried = 0, skipped = 0;
+  auto trace = [&](int32_t kept) {
+    if (!TraceOn()) return;
+    std::lock_guard lock(g_trace.mutex);
+    std::fprintf(g_trace.file, "H,%.3f,%08X,%08X,%u,%d,%u,%u,%.3f,%.3f,%.3f\n", TraceMs(), self, object,
+                 old_triangle, kept, tried, skipped, old_normal[0], old_normal[1], old_normal[2]);
+    FlushNowAndThen();
+  };
+  for (uint32_t t = 0; t < m.triangle_count; ++t) {
+    if (t == old_triangle) continue;
+    const std::array<uint16_t, 3> c = Corners(base, m, t);
+    bool shares = false;
+    for (uint16_t a : c)
+      for (uint16_t b : old_corners) shares |= a == b;
+    if (!shares) continue;
+    std::array<float, 3> n;
+    if (!Normal(base, m, c, n)) continue;
+    // Ground like the old one by the game's own test (the winding of the
+    // corners isn't known: the normal's side is taken from the old one's).
+    const float up = old_normal[1] < 0.0f ? -n[1] : n[1];
+    if (!(up > ground_threshold)) {
+      ++skipped;
+      continue;
+    }
+    ++tried;
+    StoreBe32(base, self + kContactTriangle, t);
+    PPCContext again = entry;
+    __imp__sub_8217D668(again, base);
+    if ((again.r3.u32 & 0xFF) != 0) {
+      ctx = again;  // still on the ground, on triangle t
+      trace(int32_t(t));
+      const uint64_t n_kept = ++g_handovers;
+      if (n_kept == 1 || n_kept % 1000 == 0) {
+        REXLOG_INFO("ground_physics: triangle handover kept a ground contact ({} so far)", n_kept);
+      }
+      return;
+    }
+  }
+  StoreBe32(base, self + kContactTriangle, old_triangle);  // none: the original's answer
+  trace(-1);
 }

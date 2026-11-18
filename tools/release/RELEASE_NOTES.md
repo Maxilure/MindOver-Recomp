@@ -106,6 +106,14 @@ and put back when an update fails).
 
 **Fixes**
 
+- **No more tripping on bumpy slopes above 30 fps.** Running down uneven
+  ground at a high frame rate, Crash kept dropping into his fall animation for
+  a split second. The game remembers which triangle of the ground it is
+  standing on; at high frame rates Crash could step onto the next triangle
+  without touching it, and the game let go of the ground. The ground contact
+  now moves on to the next triangle the way it does at 30 fps. Real ledges
+  still drop him. Measured on a slope in the Ratcicle Kingdom: 5 false falls
+  at 180 fps before, none now, none at 30.
 - **Crash when switching to some titans (Windows).** Taking control of
   certain titans, such as the electric one in the ice cave on the way to the
   School of Evil, could crash the game on Windows

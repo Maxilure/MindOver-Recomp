@@ -43,7 +43,6 @@
 #include "../system/command_ring.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);
-REXCVAR_DECLARE(int32_t, logic_rate);
 REXCVAR_DECLARE(bool, native_only);
 REXCVAR_DECLARE(bool, coop_camera);
 
@@ -205,51 +204,6 @@ Row FrameRateRow() {
     const int c = i >= 0 && i < int(caps.size()) ? caps[size_t(i)] : 30;
     return c == 0 || c > 60 ? std::u16string(tr(u"Above 60, jumps and timings may feel different."))
                             : std::u16string();
-  };
-  return r;
-}
-
-// FIXED-RATE LOGIC (feel test, notes/plans.md s.2; fixed_step.h logic_rate,
-// native/frame_blend.h frame_blending): the game's logic at the screen's
-// rate (the port's normal way), or at a fixed 30 / 60 logic frames a second
-// with the pictures in between blended (or not: shows the judder). Live.
-Row GameLogicRow() {
-  struct Choice { int rate; bool blend; };
-  static constexpr Choice kChoices[] = {{0, true}, {30, true}, {60, true}, {30, false}, {60, false}};
-  Row r;
-  r.label = tr(u"Game Logic");
-  r.values = [](Env&) {
-    return std::vector<std::u16string>{tr(u"Every Frame"), tr(u"30 Blended"), tr(u"60 Blended"),
-                                       tr(u"30 Plain"), tr(u"60 Plain")};
-  };
-  r.get = [](Env&) {
-    const int rate = REXCVAR_GET(logic_rate);
-    const bool blend = rex::cvar::Query<bool>("frame_blending");
-    for (int i = 0; i < int(std::size(kChoices)); ++i) {
-      if (kChoices[i].rate == rate && (rate == 0 || kChoices[i].blend == blend)) return i;
-    }
-    return 0;
-  };
-  r.set = [](Env&, int i) {
-    if (i < 0 || i >= int(std::size(kChoices))) return;
-    SetFlag("frame_blending", kChoices[i].blend ? "true" : "false");
-    SetFlag("logic_rate", std::to_string(kChoices[i].rate));
-  };
-  r.describe = [](Env&, int i) {
-    switch (i) {
-      case 1: return std::u16string(tr(u"The game thinks 30 times a second, like the original console, and the "
-                                       u"pictures in between are blended for smooth motion. Adds a little delay."));
-      case 2: return std::u16string(tr(u"The game thinks 60 times a second; the pictures in between are blended "
-                                       u"for smooth motion."));
-      case 3: return std::u16string(tr(u"The game thinks 30 times a second and shows 30 pictures a second."));
-      case 4: return std::u16string(tr(u"The game thinks 60 times a second and shows 60 pictures a second."));
-      default: return std::u16string(tr(u"The game thinks once for every picture it shows, up to the "
-                                        u"frame-rate cap."));
-    }
-  };
-  r.warn = [](Env&, int i) {
-    return i == 0 ? std::u16string()
-                  : std::u16string(tr(u"Experimental. Blending needs the port's renderer."));
   };
   return r;
 }
@@ -1635,7 +1589,7 @@ std::vector<Tab> Build() {
   Row renderer = RendererRow();
   AddDualMode(renderer);
   tabs.push_back({tr(u"Display"),
-                  {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), GameLogicRow(), BrightnessRow(),
+                  {WindowModeRow(), MonitorRow(), VsyncRow(), FrameRateRow(), BrightnessRow(),
                    AspectRatioRow(),
                    Heading(tr(u"HUD")), HudSizeRow(), HudFourPlayersRow(), WidescreenHudRow(), MessageBarRow(),
                    Heading(tr(u"Frame Counter")), FpsCounterRow(), FpsPositionRow(),
