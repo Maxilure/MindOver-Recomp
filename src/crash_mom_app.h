@@ -528,18 +528,18 @@ class CrashMomApp : public rex::ReXApp {
     const bool focused = (window() && window()->HasFocus()) ||
                          native_window_focused_.load(std::memory_order_relaxed);
     if (!focused) {
-      return Driver::kPauseAll;
+      return Driver::kPauseAll | Driver::kPauseWhyFocus;
     }
     // The cheat menu's free camera flies with the keys and mouse: the game
     // gets none of them meanwhile (cheats/free_camera.h).
     if (free_camera::Flying()) {
-      return Driver::kPauseAll;
+      return Driver::kPauseAll | Driver::kPauseWhyFreeCamera;
     }
     rex::ui::ImGuiDrawer* drawer = imgui_drawer();
     if (!drawer) {
       return 0;
     }
-    return (drawer->GetIO().WantCaptureKeyboard ? Driver::kPauseAll : 0) |
+    return (drawer->GetIO().WantCaptureKeyboard ? Driver::kPauseAll | Driver::kPauseWhyImGui : 0) |
            (drawer->GetIO().WantCaptureMouse ? Driver::kPauseMouse : 0);
   }
 

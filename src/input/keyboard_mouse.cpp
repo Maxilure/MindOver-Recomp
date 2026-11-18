@@ -613,6 +613,29 @@ void KeyboardMouseDriver::MergeInto(uint8_t* gamepad) {
   // windows and ImGui wanting the keyboard / mouse.
   const uint32_t pause = paused_check_ ? paused_check_() : 0;
   const bool paused = !debug_tap && (menu_open_.load() || (pause & kPauseAll));
+  // One line whenever the keys start / stop being ignored, with the reason:
+  // a key that "does nothing" in a log is then explained (2026-11-15, keys
+  // not skipping a movie: is the driver even building their input?).
+  {
+    const uint32_t why = !paused ? 0
+                         : (menu_open_.load() ? 1u : 0u) | (pause & (kPauseWhyFocus | kPauseWhyImGui |
+                                                                    kPauseWhyFreeCamera));
+    static uint32_t last_why = 0;
+    if (why != last_why) {
+      if (!why) {
+        REXLOG_INFO("Keyboard: keys reach the game again");
+      } else {
+        std::string reasons;
+        auto add = [&](const char* r) { reasons += reasons.empty() ? r : std::string(", ") + r; };
+        if (why & 1) add("a port menu is open");
+        if (why & kPauseWhyFocus) add("no game window focused");
+        if (why & kPauseWhyImGui) add("an ImGui window wants the keys");
+        if (why & kPauseWhyFreeCamera) add("free camera");
+        REXLOG_INFO("Keyboard: keys ignored ({})", reasons);
+      }
+      last_why = why;
+    }
+  }
   mouse_blocked_ = !debug_tap && (pause & kPauseMouse);
   X_INPUT_GAMEPAD pad{};
   if (paused || mouse_blocked_) {

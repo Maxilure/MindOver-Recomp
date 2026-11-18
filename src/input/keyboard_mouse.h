@@ -111,6 +111,9 @@ class KeyboardMouseDriver final : public rex::input::InputDriver,
   // Returns kPauseAll and/or kPauseMouse (mouse buttons and wheel only, so a
   // pop-up under the pointer doesn't freeze the keyboard player).
   static constexpr uint32_t kPauseAll = 1, kPauseMouse = 2;
+  // Why (only for the log line "Keyboard: keys ignored ..." when it changes):
+  // no game window focused / an ImGui window wants the keys / free camera.
+  static constexpr uint32_t kPauseWhyFocus = 4, kPauseWhyImGui = 8, kPauseWhyFreeCamera = 16;
   void SetPausedCheck(std::function<uint32_t()> paused);
   // The Controls menu is open: game input paused, cursor shown.
   void SetMenuOpen(bool open);

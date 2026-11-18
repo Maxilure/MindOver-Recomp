@@ -219,56 +219,60 @@ using namespace victory_scenes;
 
 extern "C" REX_FUNC(sub_8229E3C8) {
   const uint32_t action = ctx.r3.u32, first = ctx.r4.u32, second = ctx.r5.u32;
+  // Who the ORIGINAL moves (read before it runs, like it does): the focus
+  // player (game object +0x28) to the first spot, "the other one" (focus 0 ->
+  // player 2, else player 1) to the second. No join check: a player 1 or 2
+  // who isn't playing on foot (not joined, a mask: a rider on the host) is
+  // moved along with them, so it never stays behind.
+  const int focus = int(int32_t(Read32(kGameObject + 0x28)));
+  const int other = focus == 0 ? 1 : 0;
   __imp__sub_8229E3C8(ctx, base);
-  REXLOG_INFO("Victory scenes: the players are moved to two spots ({:08X}, {:08X}); {} local players", first,
-              second, more_players::LocalPlayerCount());
+  REXLOG_INFO("Victory scenes: the players are moved to two spots ({:08X}, {:08X}); {} local players, focus "
+              "player {}", first, second, more_players::LocalPlayerCount(), focus + 1);
   if (!first || !second || more_players::LocalPlayerCount() <= 2 || !Scratch()) return;
-  // Players 3-4 BETWEEN the two spots (2026-10-25, findings/26 s.48). The
-  // first version put them 2.5-5 units BEYOND the spots along the line through
-  // them; this same action moves the players at area doors / exits too, and
-  // there the spots sit on a path or a ledge: player 4 was placed over a drop
-  // ((-363.7, 17.0, -244.9), dead 33 units lower a second later). The spots
-  // themselves are designer-placed on solid ground, so the stretch between
-  // them is the safe place: player 3 at a third, player 4 at two thirds; when
-  // player 2 isn't playing, their spot is free and player 4 takes it. Heights
-  // follow the spots, 0.25 higher (they drop onto the ground).
+  // EVERY PLAYER THE ORIGINAL DIDN'T MOVE (2026-11-14). Players 3-4 always;
+  // and once player 1 has dropped out the focus can be player 3 or 4
+  // (findings/26 s.38): then the original moves the focus and player 1, and
+  // nobody moved PLAYER 2 (on foot or hidden).
+  //
+  // * On foot: BETWEEN the two spots (2026-10-25, findings/26 s.48). The
+  //   first version put them 2.5-5 units BEYOND the spots along the line
+  //   through them; this same action moves the players at area doors / exits
+  //   too, and there the spots sit on a path or a ledge: player 4 was placed
+  //   over a drop ((-363.7, 17.0, -244.9), dead 33 units lower a second
+  //   later). The spots themselves are designer-placed on solid ground, so the
+  //   stretch between them is the safe place: the first such player at a
+  //   third, the second at two thirds, or on the second spot itself when "the
+  //   other one" isn't on foot there. 0.25 higher (they drop onto the ground).
+  // * Not on foot (not joined, dropped out, a mask): a RIDER on the host, like
+  //   the original's hidden player 2: to the FIRST spot (the focus player's),
+  //   their mask update puts them back on the shoulder (hidden if not joined).
+  //   Before: hidden players 3-4 stayed where the cutscene began and were
+  //   seen standing there (Ice Kingdom gate; GitHub issue #2; findings/26 s.68).
   const Vec a = ReadVec(first + kSpotPosition), b = ReadVec(second + kSpotPosition);
-  const bool second_free = !InGame(1);
-  int moved = 0;
-  for (int p = 2; p < kMaxPlayers; ++p) {
-    if (!InGame(p)) continue;
+  const bool second_free = !InGame(other);
+  int moved = 0, on_foot = 0;
+  for (int p = 0; p < more_players::LocalPlayerCount() && p < kMaxPlayers; ++p) {
+    if (p == focus || p == other) continue;
     const uint32_t body = BodyOf(ctx, base, p);
     if (!body) {
-      REXLOG_WARN("Victory scenes: player {} is in game but has no body: left where they are", p + 1);
+      if (InGame(p)) REXLOG_WARN("Victory scenes: player {} is in game but has no body: left where they are", p + 1);
       continue;
     }
-    const bool beside_first = p == 2;
-    const float along = p == 3 && second_free ? 1.0f : (p == 2 ? 1.0f / 3.0f : 2.0f / 3.0f);
-    const Vec at = a + (b - a) * along + Vec{0, 0.25f, 0};
-    Teleport(ctx, base, action, beside_first ? first : second, body, at);
-    ++moved;
-    REXLOG_INFO("Victory scenes: player {} placed at ({:.1f} {:.1f} {:.1f})", p + 1, at.x, at.y, at.z);
-  }
-  // HIDDEN PLAYERS 3-4 COME ALONG TOO (2026-11-14, GitHub issue #2 again:
-  // players 3 and 4 found standing at the Ice Kingdom gate, nobody joined).
-  // The original's teleport (above) moves the focus player to the first spot
-  // and "the other one" (player 1 or 2) to the second, WITHOUT a join check:
-  // a player 2 who hasn't joined is a hidden Crash riding the host, and it
-  // is moved along with them, so it never stays behind in a part of the level
-  // that goes to sleep when the camera leaves. Players 3-4 who haven't joined
-  // are hidden riders the same way, and the loop above moved only joined
-  // ones: the hidden ones stayed where the cutscene began. Moved here to the
-  // FIRST spot (the focus player's, their host's), like player 2 to its spot;
-  // their mask update puts them back on the shoulder, hidden.
-  const int focus = int(int32_t(Read32(kGameObject + 0x28)));
-  for (int p = 2; p < kMaxPlayers; ++p) {
-    if (InGame(p) || p == focus) continue;
-    const uint32_t body = BodyOf(ctx, base, p);
-    if (!body) continue;
-    const Vec at = a + Vec{0, 0.25f, 0};
-    Teleport(ctx, base, action, first, body, at);
-    REXLOG_INFO("Victory scenes: player {} (not in game, a hidden rider) moved along to ({:.1f} {:.1f} {:.1f})",
-                p + 1, at.x, at.y, at.z);
+    if (InGame(p)) {
+      const bool beside_first = on_foot == 0;
+      const float along = on_foot == 0 ? 1.0f / 3.0f : (second_free ? 1.0f : 2.0f / 3.0f);
+      ++on_foot;
+      const Vec at = a + (b - a) * along + Vec{0, 0.25f, 0};
+      Teleport(ctx, base, action, beside_first ? first : second, body, at);
+      ++moved;
+      REXLOG_INFO("Victory scenes: player {} placed at ({:.1f} {:.1f} {:.1f})", p + 1, at.x, at.y, at.z);
+    } else {
+      const Vec at = a + Vec{0, 0.25f, 0};
+      Teleport(ctx, base, action, first, body, at);
+      REXLOG_INFO("Victory scenes: player {} (not on foot: a rider) moved along to ({:.1f} {:.1f} {:.1f})", p + 1,
+                  at.x, at.y, at.z);
+    }
   }
   if (moved) {
     g_armed_ms = NowMs();
