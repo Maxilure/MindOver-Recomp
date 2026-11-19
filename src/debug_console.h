@@ -111,4 +111,9 @@ namespace debug_console {
 using UiPoster = std::function<void(std::function<void()>)>;
 void Start(UiPoster run_on_ui_thread, rex::ui::Window* window);
 
+// `goto` from code (the game's main thread, so on a known frame): puts an
+// actor (a player's Crash or titan) at xyz: its world matrix and its
+// physics' own position, velocity zeroed. False if it can't be read.
+bool PutBodyAt(uint32_t body, const float xyz[3]);
+
 }  // namespace debug_console

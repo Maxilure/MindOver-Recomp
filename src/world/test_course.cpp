@@ -45,11 +45,17 @@
 
 #include "../data/data_patcher.h"
 #include "../data/pure3d.h"
+#include "../cheats/spawn.h"
+#include "../debug_console.h"
+#include "../players/more_players.h"
 
 REXCVAR_DEFINE_BOOL(test_course, false, "CrashMoM",
                     "Debug: an invisible test course (ramps, stairs, a bumpy slope) in empty air on Wumpa "
                     "Island, for frame-rate probes; the log lists each lane's start spot "
                     "(src/world/test_course.cpp)");
+REXCVAR_DEFINE_STRING(test_course_start, "", "CrashMoM",
+                      "Debug: with --test_course, put the players at this lane's start (e.g. ropegap) when "
+                      "the course's objects are placed, on a fixed game frame (online: both PCs alike)");
 REXCVAR_DEFINE_STRING(debug_test_course_dump, "", "CrashMoM",
                       "Debug: also write the patched Wumpa Island package to this file (to compare with "
                       "notes/scratch-tools/maps/p3d_patch.py) (src/world/test_course.cpp)");
@@ -60,6 +66,7 @@ namespace {
 using pure3d::Bytes;
 using pure3d::Node;
 
+bool g_course_built = false;  // the patch ran this session (Wumpa Island's piece was loaded)
 constexpr uint32_t kCategoryRoom = 15;            // "room" packages (LevelPackages type 14 + 1)
 constexpr const char* kPackage = "L1/9db06066";   // the Wumpa Island piece the course goes into
 constexpr uint16_t kGroundMaterial = 19;          // the island's usual ground (2,128 of its 3,987 triangles)
@@ -74,19 +81,32 @@ constexpr uint32_t kChunkCollision = 0x07010025, kChunkMesh = 0x0701000A, kChunk
 constexpr double kX0 = 312.0, kZ0 = -420.0, kPitch = 9.0, kWidth = 8.0;   // lanes along +x, side by side in z
 constexpr double kBase = 20.0, kFloor = 12.0, kPad = 6.0;                // end pads at kBase, catch floor below
 
-enum class Kind { kRamp, kStairs, kBumpy };
+enum class Kind { kRamp, kStairs, kBumpy, kGap };
 struct Lane {
   const char* name;
   Kind kind;
-  double p;  // ramp / bumpy: angle in degrees; stairs: step height
+  double p;  // ramp / bumpy: angle in degrees; stairs: step height; gap: its length
 };
 constexpr Lane kLanes[] = {
     {"ramp10", Kind::kRamp, 10},      {"ramp20", Kind::kRamp, 20},      {"ramp30", Kind::kRamp, 30},
     {"ramp40", Kind::kRamp, 40},      {"ramp50", Kind::kRamp, 50},      {"step010", Kind::kStairs, 0.10},
     {"step025", Kind::kStairs, 0.25}, {"step050", Kind::kStairs, 0.50}, {"step100", Kind::kStairs, 1.00},
     {"bumpy15", Kind::kBumpy, 15},
+    // GAPS (2026-11-19): two pads with nothing between them; the course's
+    // OBJECTS (kObjects below) go into them: a rope to swing across, a
+    // platform to land on. A miss falls onto the catch floor.
+    {"ropegap", Kind::kGap, 6},       {"platgap", Kind::kGap, 8},
 };
 constexpr int kStairCount = 10;
+// Where lane k starts (its -x, -z corner). The first ten side by side from
+// (kX0, kZ0); the GAP lanes in their own clear spot, east of the copy of the
+// courtyard descent and south of Wumpa Island's own pieces (2026-11-19: first
+// put next to the others, at z -330..-313, they ran into a Wumpa structure;
+// a scan of every L1 piece's collision found x 340-370, z -470..-440 clear).
+constexpr double kGapX0 = 344.0, kGapZ0 = -470.0;
+constexpr int kFirstGapLane = 10;  // kLanes[10..] are the gap lanes
+double LaneX0(int k) { return k >= kFirstGapLane ? kGapX0 : kX0; }
+double LaneZ0(int k) { return k >= kFirstGapLane ? kGapZ0 + (k - kFirstGapLane) * kPitch : kZ0 + k * kPitch; }
 
 constexpr double kPi = 3.14159265358979323846;
 double Radians(double deg) { return deg * kPi / 180.0; }
@@ -102,6 +122,7 @@ Profile ProfileOf(const Lane& l) {
     case Kind::kRamp: return {12.0, 12.0 * std::tan(Radians(l.p)), 0};
     case Kind::kStairs: return {double(kStairCount), 0, kStairCount * l.p};
     case Kind::kBumpy: return {16.0, 16.0 * std::tan(Radians(l.p)), 0};
+    case Kind::kGap: return {l.p, 0, 0};
   }
   return {};
 }
@@ -109,6 +130,7 @@ double HeightAt(const Lane& l, const Profile& pr, double t) {
   if (l.kind == Kind::kStairs) {
     return pr.top - l.p * std::min<double>(kStairCount, std::floor(t + 1e-9));
   }
+  if (l.kind == Kind::kGap) return 0;
   return pr.drop * (1 - t / pr.run);
 }
 
@@ -132,7 +154,7 @@ std::vector<Triangle> CourseTriangles() {
   for (int k = 0; k < int(std::size(kLanes)); ++k) {
     const Lane& l = kLanes[k];
     const Profile pr = ProfileOf(l);
-    const double z0 = kZ0 + k * kPitch;
+    const double z0 = LaneZ0(k), x0 = LaneX0(k);
     auto y_at = [&](double xl, double zl) {  // xl = 0 .. pad + run + pad along the lane
       if (xl <= kPad) return kBase + HeightAt(l, pr, 0.0);
       if (xl >= kPad + pr.run) return kBase + HeightAt(l, pr, pr.run);
@@ -143,14 +165,15 @@ std::vector<Triangle> CourseTriangles() {
     const int cells_x = int(kPad + pr.run + kPad), cells_z = int(kWidth);
     for (int i = 0; i < cells_x; ++i) {
       const double xa = i, xb = i + 1;
+      if (l.kind == Kind::kGap && xa >= kPad && xb <= kPad + pr.run) continue;  // the gap itself
       for (int j = 0; j < cells_z; ++j) {
         const double za = z0 + j, zb = z0 + j + 1;
         if (l.kind == Kind::kStairs) {  // treads: flat cells at the height of the step under the cell's middle
           const double ym = xa + 0.5 < kPad + pr.run ? y_at(xa + 0.5, za) : kBase;
-          quad({kX0 + xa, ym, za}, {kX0 + xa, ym, zb}, {kX0 + xb, ym, zb}, {kX0 + xb, ym, za});
+          quad({x0 + xa, ym, za}, {x0 + xa, ym, zb}, {x0 + xb, ym, zb}, {x0 + xb, ym, za});
         } else {
-          quad({kX0 + xa, y_at(xa, za), za}, {kX0 + xa, y_at(xa, zb), zb}, {kX0 + xb, y_at(xb, zb), zb},
-               {kX0 + xb, y_at(xb, za), za});
+          quad({x0 + xa, y_at(xa, za), za}, {x0 + xa, y_at(xa, zb), zb}, {x0 + xb, y_at(xb, zb), zb},
+               {x0 + xb, y_at(xb, za), za});
         }
       }
     }
@@ -161,14 +184,20 @@ std::vector<Triangle> CourseTriangles() {
         const double lo = xc + 0.5 > kPad + pr.run ? kBase : y_at(xc + 0.5, z0);
         for (int j = 0; j < cells_z; ++j) {
           const double za = z0 + j, zb = z0 + j + 1;
-          quad({kX0 + xc, lo, za}, {kX0 + xc, hi, za}, {kX0 + xc, hi, zb}, {kX0 + xc, lo, zb});
+          quad({x0 + xc, lo, za}, {x0 + xc, hi, za}, {x0 + xc, hi, zb}, {x0 + xc, lo, zb});
         }
       }
     }
   }
-  const double zmax = kZ0 + double(std::size(kLanes)) * kPitch;  // the catch floor, 4-unit cells
+  const double zmax = kZ0 + double(kFirstGapLane) * kPitch;  // the catch floor, 4-unit cells
   for (double x = kX0; x < kX0 + 32; x += 4) {  // from the lanes on: the descent's copy is west of them
     for (double z = kZ0 - 4; z < zmax; z += 4) {
+      quad({x, kFloor, z}, {x, kFloor, z + 4}, {x + 4, kFloor, z + 4}, {x + 4, kFloor, z});
+    }
+  }
+  // ... and one under the gap lanes (a missed rope / platform lands here).
+  for (double x = kGapX0 - 4; x < kGapX0 + 28; x += 4) {
+    for (double z = kGapZ0 - 4; z < kGapZ0 + (int(std::size(kLanes)) - kFirstGapLane) * kPitch + 4; z += 4) {
       quad({x, kFloor, z}, {x, kFloor, z + 4}, {x + 4, kFloor, z + 4}, {x + 4, kFloor, z});
     }
   }
@@ -378,6 +407,7 @@ bool BuildTree(const std::vector<GridBox>& boxes, std::vector<uint16_t>* words) 
 // The patch (p3d_patch.py's patch())
 // ---------------------------------------------------------------------------
 bool PatchPackage(const Bytes& original, Bytes* patched) {
+  g_course_built = true;  // (the objects' Tick: this session's Wumpa Island has the course)
   pure3d::Chunk root;
   std::vector<pure3d::Chunk> top;
   if (!pure3d::Parse(original, &root, &top)) return false;
@@ -593,7 +623,82 @@ bool PatchPackage(const Bytes& original, Bytes* patched) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// THE COURSE'S OBJECTS (2026-11-19, findings/69 s.8): real game objects in the
+// gap lanes, made by the spawn code (cheats/spawn.h, its exact-spot form) once
+// per level load, 2 s after player 1's Crash first exists (every PC of an
+// online session reaches that frame alike). Both templates have a package of
+// their own in GlobalPackages, so they load anywhere:
+//   * WorldObjects:HangingRope: the rope the levels hang (Ice Kingdom, Junk
+//     have their own variants); ~15 units long, hanging DOWN from its spot,
+//     grabbed by jumping at it (tested on Wumpa Island: Crash slid down it).
+//   * StaticProps:env_Whumpa:prp_pformL1_platformA: a Wumpa platform, still
+//     (its movement comes from the level's own scripts, not the template).
+// ---------------------------------------------------------------------------
+struct CourseObject {
+  const char* lane;      // the gap lane it goes into (its middle)
+  const char* template_name;
+  double height;         // its spot above kBase
+};
+constexpr CourseObject kObjects[] = {
+    {"ropegap", "WorldObjects:HangingRope", 14.0},  // bottom ~1 unit below the pads (15 long)
+    {"platgap", "StaticProps:env_Whumpa:prp_pformL1_platformA", -0.5},
+};
+constexpr double kObjectsAfterSpawn = 2.0;  // seconds of game time after player 1's Crash exists
+
+int g_frames_in_play = -1;     // frames since player 1's Crash appeared, -1 = not in play
+bool g_objects_placed = false;
+
 }  // namespace
+
+void Tick(bool in_play, double frame_seconds, const float* player1) {
+  if (!REXCVAR_GET(test_course) || !g_course_built) return;
+  // The course is only in Wumpa Island's piece; the patch flag stays set
+  // after a level change, so: player 1 within 400 units of the lanes too.
+  const double dx = player1 ? player1[0] - (kX0 + 15) : 1e9, dz = player1 ? player1[2] - (kZ0 + 45) : 1e9;
+  if (in_play && dx * dx + dz * dz > 400.0 * 400.0) in_play = false;
+  if (!in_play) {
+    g_frames_in_play = -1;
+    g_objects_placed = false;
+    return;
+  }
+  static double since = 0.0;
+  if (g_frames_in_play < 0) {
+    g_frames_in_play = 0;
+    since = 0.0;
+  }
+  since += frame_seconds;
+  if (g_objects_placed || since < kObjectsAfterSpawn) return;
+  g_objects_placed = true;
+  // The start lane (test_course_start): every playing player at its start,
+  // 1.5 units apart across it (same frame on every PC of a session).
+  const std::string& start = REXCVAR_GET(test_course_start);
+  for (int k = 0; !start.empty() && k < int(std::size(kLanes)); ++k) {
+    const Lane& l = kLanes[k];
+    if (start != l.name) continue;
+    for (int p = 0; p < 4; ++p) {
+      const uint32_t body = more_players::CharacterOfPlayer(p);
+      if (!body || !menu_input::PlayerPlays(p)) continue;
+      const float at[3] = {float(LaneX0(k) + kPad / 2), float(kBase + HeightAt(l, ProfileOf(l), 0.0) + 0.5),
+                           float(LaneZ0(k) + kWidth / 2 + 1.5 * p)};
+      if (debug_console::PutBodyAt(body, at)) {
+        REXLOG_INFO("Test course: player {} put at lane {}'s start ({:.2f} {:.2f} {:.2f})", p + 1, l.name, at[0],
+                    at[1], at[2]);
+      }
+    }
+  }
+  for (const CourseObject& o : kObjects) {
+    for (int k = 0; k < int(std::size(kLanes)); ++k) {
+      const Lane& l = kLanes[k];
+      if (std::string(l.name) != o.lane) continue;
+      const float at[3] = {float(LaneX0(k) + kPad + ProfileOf(l).run / 2), float(kBase + o.height),
+                           float(LaneZ0(k) + kWidth / 2)};
+      spawn::Request(o.template_name, 0, 1, false, at, /*as_cheat=*/false);
+      REXLOG_INFO("Test course: {} placed in lane {} at {:.2f} {:.2f} {:.2f}", o.template_name, l.name, at[0], at[1],
+                  at[2]);
+    }
+  }
+}
 
 void Register() {
   if (!REXCVAR_GET(test_course)) return;
@@ -601,8 +706,8 @@ void Register() {
   for (int k = 0; k < int(std::size(kLanes)); ++k) {  // where each lane starts (course.py's lanes())
     const Lane& l = kLanes[k];
     const double y = kBase + HeightAt(l, ProfileOf(l), 0.0);
-    REXLOG_INFO("Test course: lane {} starts at {:.2f} {:.2f} {:.2f} (goto 1 ...)", l.name, kX0 + kPad / 2,
-                y + 0.5, kZ0 + k * kPitch + kWidth / 2);
+    REXLOG_INFO("Test course: lane {} starts at {:.2f} {:.2f} {:.2f} (goto 1 ...)", l.name, LaneX0(k) + kPad / 2,
+                y + 0.5, LaneZ0(k) + kWidth / 2);
   }
 }
 

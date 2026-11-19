@@ -59,7 +59,10 @@ const std::vector<Category>& Catalogue();
 // Queue a spawn (any thread): `count` of `template_name` in front of player
 // `player` (0-3), titans down and ready to jack when `knocked_out` (their
 // fight tree starts in StartJackable / Stunned). Done at the next frame.
-void Request(const std::string& template_name, int player, int count, bool knocked_out);
+// at: an exact spot (3 floats) instead of in front of the player, or null.
+// as_cheat false: not a cheat (the test course's own objects): achievements stay.
+void Request(const std::string& template_name, int player, int count, bool knocked_out,
+             const float* at = nullptr, bool as_cheat = true);
 
 // The last spawn's outcome for the menu ("2 Ratcicle spawned", "... not in
 // this level"), empty before any.
