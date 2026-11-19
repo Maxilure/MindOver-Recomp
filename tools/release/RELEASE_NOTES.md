@@ -114,6 +114,12 @@ and put back when an update fails).
   now moves on to the next triangle the way it does at 30 fps. Real ledges
   still drop him. Measured on a slope in the Ratcicle Kingdom: 5 false falls
   at 180 fps before, none now, none at 30.
+- **Fewer split-second falls on stairs above 30 fps.** Walking down steps,
+  Crash's body rides over each step's edge, and at high frame rates the game
+  kept dropping his ground contact between touches of the edge. The contact
+  now stays while he has touched the ground within one of the original's
+  frames. Measured on test stairs: at 60 fps as few as at 30, at 180 fps a
+  third of before (the short ground grace covers the rest).
 - **Crash when switching to some titans (Windows).** Taking control of
   certain titans, such as the electric one in the ice cave on the way to the
   School of Evil, could crash the game on Windows

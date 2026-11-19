@@ -430,3 +430,56 @@ nothing, and high frame rates give more split-second losses than 30 fps
 (walking down 0.25 steps at 180 fps: 21 one-frame losses, at 30: none). The
 grace hides those, so it stays on (40 ms) until a step-down fix at the
 source exists.
+
+## 12. Step edges: the contact the sweep has just touched
+
+**What happens on real stairs** (the test course's stair lanes, findings/69
+s.4; ground trace + the console's `who` on the contact words). Walking down,
+Crash's rounded body rides over each step's edge. The collision sweep keeps
+touching the corner (a ground-type contact, normal about (0.75, 0.65, 0)),
+and the next physics update copies it into contact slot 0; later in the same
+update the reach check calls the upper step's triangle out of reach (the
+body's middle is past its edge) and the contact is cleared. At 30 fps one
+frame's gravity puts the body back onto the corner every frame and the last
+frame lands it on the lower step at once: the move logic never hears a loss
+(0 on the 0.25 stairs, walked). At 180 fps the body moves down only a hair
+per update, so the sweep touches the corner every second or third update:
+in between, the reach check clears the contact and the walk logic hears
+"not on ground" (21 times on the same stairs).
+
+**Where it is:** CPhysicsBehaviour::Update (sub_8217D0A0) at +0xE0 calls
+sub_8217CF78(this, k) for k = 0 and 1. It copies slot k from the sweep's
+result table (`*(this +168) + 56k`) only when that entry's byte +52 has bit
+0x80 (the sweep found a contact of that kind this frame): the object
+(sub_82182FE8 -> `this +0x34 + 12k`), the part (+0x38), the triangle
+(entry +48 >> 3 -> +0x3C), and returns 1. At +0x3D8, sub_8217D008 runs the
+reach check (sub_8217D668) and clears a slot out of reach (sub_8217C888).
+
+**The fix** (`ground_touch_keeps_contact`, on by default; frames shorter
+than 1/30 s only, like the handover): when the reach check calls the ground
+contact out of reach and the handover finds no neighbour, keep it if a
+refresh copied a ground contact from the sweep within the last 1/30 s of
+the body's own physics time, no longer ago than one of the original's
+frames. The contact holds the triangle the sweep last touched. A real ledge
+still drops it once the sweep has touched nothing for 1/30 s (the original
+also decides once per 1/30 s frame). A first version that only looked at
+the same update's refresh kept 17 contacts in a whole run: the touches come
+every second update. Trace line `K` = a contact kept this way.
+
+**Results** (test course, exact replays, ground grace OFF; short losses /
+real falls, as in findings/69 s.5):
+
+| | 30 fps (original) | 60 before | 60 after | 180 before | 180 after |
+|---|---|---|---|---|---|
+| stairs, walking | 3 / 2 | 8 / 2 | **2** / 0 | 36 / 1 | **11** / 0 |
+| stairs, running | 12 / 11 | 19 / 11 | **14** / 10 | 20 / 12 | 20 / 12 |
+| ramps + bumpy slope | 2 / 11 | 0 / 5 | 0 / 9 | 0 / 6 | 0 / 6 |
+| copy of the courtyard descent | 1 / 2 | 0 / 3 | 0 / 3 | 0 / 2 | 0 / 2 |
+
+At 60 fps the stairs now match the original. At 180 fps what's left is
+the first update at each edge: as the body tips over the corner, the gap
+between the sweep's touches grows past 1/30 s (33, 39, 44, 50 ms: each touch
+stops the small fall, the corner slopes away, and a 180 fps step of gravity
+adds little). Running down the 0.25 stairs is a real 50 ms drop per step
+(the original's is one 33 ms frame, heard once there too). The ground grace
+(40 ms) hides what's left, so it stays on.

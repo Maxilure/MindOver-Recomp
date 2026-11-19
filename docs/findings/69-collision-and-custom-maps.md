@@ -159,11 +159,13 @@ the end pads are real and not counted.
   walked at 180 fps: 21 losses of 6 ms, at 30 fps: none). With the ground
   grace off, each is heard by the move logic. So the ground grace still has
   work on real stairs; the next fix belongs at the source, the step-down.
+  (Built: findings/22 s.12, `ground_touch_keeps_contact`: 60 fps stairs now
+  match the original; at 180 fps the walk's losses go from 36 to 11.)
 
 ## 6. Next
 
 1. ~~A copy of a real spot~~ (section 7).
-2. A step-down fix at the source (when the reach check drops the contact
+2. ~~A step-down fix~~ (findings/22 s.12; partly: 180 fps still leans on the grace). A step-down fix at the source (when the reach check drops the contact
    and ground lies within a small step below, as at 30 fps where one frame
    covers the whole drop), checked on the stair lanes against 30 fps.
 3. More lanes: ledges, a moving platform, steep "slide" slopes, an edge

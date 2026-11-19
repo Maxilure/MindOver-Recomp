@@ -202,6 +202,10 @@ REXCVAR_DEFINE_BOOL(ground_triangle_handover, true, "CrashMoM",
                     "Above 30 fps: walking over uneven ground, the ground contact moves on to the next "
                     "triangle instead of being dropped, so Crash doesn't 'fall' on bumpy slopes "
                     "(findings/22 s.11; src/ground_physics.cpp)");
+REXCVAR_DEFINE_BOOL(ground_touch_keeps_contact, true, "CrashMoM",
+                    "Above 30 fps: a ground contact the collision sweep has just touched is kept even when "
+                    "the reach check calls it out of reach, so Crash doesn't 'fall' riding over a step's edge "
+                    "on stairs (findings/22 s.12; src/ground_physics.cpp)");
 REXCVAR_DEFINE_STRING(debug_ground_trace, "", "CrashMoM",
                       "Debug: write ground contact changes, physics updates of moving "
                       "characters and the 'not on ground' answers the game logic gets to this CSV file "
@@ -330,7 +334,8 @@ bool TraceOn() {
                        "# S,ms,actor,answer_given,ms_since_contact_lost,lost_by,caller\n"
                        "# G,ms,actor,gravity,max_fall_speed\n"
                        "# R,ms,actor,caller,record,nx,ny,nz,e,vx,vy,vz,vx_after,vy_after,vz_after\n"
-                       "# H,ms,actor,object,old_triangle,kept_triangle,tried,skipped,nx,ny,nz\n",
+                       "# H,ms,actor,object,old_triangle,kept_triangle,tried,skipped,nx,ny,nz\n"
+                       "# K,ms,actor,object,triangle (kept: the sweep touched ground within 1/30 s)\n",
                        REXCVAR_GET(ground_grace_ms), REXCVAR_GET(fps_cap));
           g_trace.start = g_trace.last_flush = Clock::now();
           REXLOG_INFO("ground_physics: writing the ground trace to {}", path);
@@ -708,6 +713,98 @@ std::atomic<uint64_t> g_handovers{0};  // contacts kept by the handover (log lin
 }  // namespace
 }  // namespace ground_physics
 
+// =============================================================================
+// STEP EDGES: the contact the sweep has JUST touched (findings/22 s.12)
+// =============================================================================
+//
+// THE BUG: walking down real stairs above 30 fps, Crash's rounded body rides
+// over each step's edge. Every frame the collision sweep touches the edge
+// (a ground-type contact, normal about (0.75, 0.65, 0) on the corner) and the
+// next physics update copies it into contact slot 0, then the reach check
+// (sub_8217D668, the same as above) calls the upper step's triangle out of
+// reach: the body's middle is past its edge. The contact flips off and on
+// 7-8 times per 0.25-unit step at 180 fps, and Crash's walk logic hears "not
+// on ground" each time. At 30 fps one frame carries him over the edge and the
+// same frame's sweep lands him on the lower step: never heard (0 losses on the
+// test course's 0.25 stairs walked at 30 fps, 21 at 180; findings/69 s.5).
+//
+// WHERE IT IS: inside CPhysicsBehaviour::Update (sub_8217D0A0), at +0xE0,
+// sub_8217CF78(this, k) refreshes contact slot k from the sweep's result table
+// (*(this +168) + 56k): only when the entry's flag byte +52 has bit 0x80 (the
+// sweep found a contact of that kind this frame) it writes the object
+// (sub_82182FE8 -> this +0x34 + 12k), the part (+0x38) and the triangle
+// (entry +48 >> 3 -> +0x3C), and returns 1. Later in the same update, at
+// +0x3D8, sub_8217D008 runs the reach check and clears a slot out of reach
+// (sub_8217C888). Found with the console's `who` on the contact words.
+//
+// THE FIX (ground_touch_keeps_contact, on by default; frames shorter than
+// 1/30 s only, like the handover): when the reach check (after the handover
+// found no neighbour) calls the ground contact out of reach, keep it if a
+// refresh copied a GROUND contact from the sweep (k = 0 returned 1) within
+// the last 1/30 s of this body's physics time, i.e. no longer ago than one
+// of the original's frames. At 30 fps the sweep refreshes the contact every
+// frame; at 180 fps, riding over an edge, it touches the corner only every
+// other update (the body moves down a hair between touches): a first version
+// that only looked at THIS update's refresh kept 17 contacts in a whole run
+// and halved nothing. The contact holds the triangle the sweep last touched.
+// Walking off a real ledge still drops it once the sweep has touched nothing
+// for 1/30 s (the original decides once per 1/30 s frame too).
+
+namespace ground_physics {
+namespace {
+// Per CPhysicsBehaviour: its physics time (sum of its update steps) and when
+// a refresh last copied a ground contact from the sweep (game thread only:
+// physics runs on the main thread).
+struct Touch {
+  double time = 0.0, touched = -1.0;
+};
+std::unordered_map<uint32_t, Touch> g_touch;
+constexpr double kOriginalFrame = 1.0 / 30.0;
+std::atomic<uint64_t> g_touch_keeps{0};
+}  // namespace
+}  // namespace ground_physics
+
+extern "C" REX_FUNC(__imp__sub_8217CF78);
+extern "C" REX_FUNC(sub_8217CF78) {
+  using namespace ground_physics;
+  const uint32_t self = ctx.r3.u32;
+  const uint32_t k = ctx.r4.u32;
+  __imp__sub_8217CF78(ctx, base);
+  if (k != 0) return;  // once per update (k = 0 comes first): the body's clock and its last touch
+  Touch& t = g_touch[self];
+  const double dt = PhysicsFrameTime(self);
+  if (dt > 0.0 && dt < 1.0) t.time += dt;
+  if ((ctx.r3.u32 & 0xFF) != 0) t.touched = t.time;
+}
+
+namespace ground_physics {
+namespace {
+// The reach check said "out of reach" for ground slot 0: keep the contact if
+// the sweep touched ground within one original frame (STEP EDGES above). Trace
+// line "K,ms,this,object,triangle".
+bool KeepIfTouched(PPCContext& ctx, uint8_t* base, uint32_t self) {
+  if (!REXCVAR_GET(ground_touch_keeps_contact)) return false;
+  const auto it = g_touch.find(self);
+  if (it == g_touch.end() || it->second.touched < 0.0 ||
+      it->second.time - it->second.touched > kOriginalFrame + 1e-6) {
+    return false;
+  }
+  ctx.r3.u64 = 1;
+  if (TraceOn()) {
+    std::lock_guard lock(g_trace.mutex);
+    std::fprintf(g_trace.file, "K,%.3f,%08X,%08X,%u\n", TraceMs(), self, Be32(base, self + kContactObject),
+                 Be32(base, self + kContactTriangle));
+    FlushNowAndThen();
+  }
+  const uint64_t n_kept = ++g_touch_keeps;
+  if (n_kept == 1 || n_kept % 1000 == 0) {
+    REXLOG_INFO("ground_physics: a just-touched ground contact kept over a step's edge ({} so far)", n_kept);
+  }
+  return true;
+}
+}  // namespace
+}  // namespace ground_physics
+
 // The reach check of contact slot k: r3 = this (CPhysicsBehaviour), r4 = k
 // (0 ground, 1 steep). Returns r3 = 1 when the contact is still within reach.
 extern "C" REX_FUNC(__imp__sub_8217D668);
@@ -716,17 +813,26 @@ extern "C" REX_FUNC(sub_8217D668) {
   const PPCContext entry = ctx;  // to ask again with other triangles
   __imp__sub_8217D668(ctx, base);
   const uint32_t self = entry.r3.u32;
-  if ((ctx.r3.u32 & 0xFF) != 0 || entry.r4.u32 != 0 || !REXCVAR_GET(ground_triangle_handover)) return;
+  if ((ctx.r3.u32 & 0xFF) != 0 || entry.r4.u32 != 0) return;
   // Only frames shorter than the original's: 30 fps keeps the original rule.
   const double dt = PhysicsFrameTime(self);
   if (!(dt > 0.0) || dt >= 0.9 / 30.0) return;
+  // First the handover (a neighbour triangle in reach), then the step edges
+  // (the sweep touched this contact just now): KeepIfTouched.
+  if (!REXCVAR_GET(ground_triangle_handover)) {
+    KeepIfTouched(ctx, base, self);
+    return;
+  }
   const uint32_t object = Be32(base, self + kContactObject);
   const uint32_t old_triangle = Be32(base, self + kContactTriangle);
   CollisionMesh m;
-  if (!ReadMesh(base, object, m) || old_triangle >= m.triangle_count) return;
-  const std::array<uint16_t, 3> old_corners = Corners(base, m, old_triangle);
+  std::array<uint16_t, 3> old_corners;
   std::array<float, 3> old_normal;
-  if (!Normal(base, m, old_corners, old_normal)) return;
+  if (!ReadMesh(base, object, m) || old_triangle >= m.triangle_count ||
+      !Normal(base, m, old_corners = Corners(base, m, old_triangle), old_normal)) {
+    KeepIfTouched(ctx, base, self);
+    return;
+  }
   const float ground_threshold = BeFloat(base, kGroundThresholdGlobal);
   // Trace ("H" lines): what the handover tried. tried = neighbours asked,
   // skipped = neighbours that aren't walkable ground.
@@ -768,6 +874,7 @@ extern "C" REX_FUNC(sub_8217D668) {
       return;
     }
   }
-  StoreBe32(base, self + kContactTriangle, old_triangle);  // none: the original's answer
+  StoreBe32(base, self + kContactTriangle, old_triangle);  // no neighbour in reach
   trace(-1);
+  KeepIfTouched(ctx, base, self);  // a step's edge the sweep touched just now; else the original's answer
 }
