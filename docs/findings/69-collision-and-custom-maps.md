@@ -172,7 +172,8 @@ the end pads are real and not counted.
    for titans; drawing the course (a plain mesh, or lines over the picture).
 4. Climbables and other special surfaces (objects with their own
    behaviours, placed by level data), then a level of its own (packages,
-   scripts, a spawn point, a `LevelPackages` entry).
+   scripts, a spawn point, a `LevelPackages` entry). Started: a rope and a
+   platform (section 8).
 
 ## 7. A copy of a real spot: the Ratcicle Kingdom courtyard's descent
 
@@ -226,3 +227,62 @@ parts from the copy's early (the start differs: after a titan in the
 original, a teleport here). Differences left: Crash's facing at the start,
 and anything of the Ice Kingdom that isn't in that one piece (props,
 other pieces' collision).
+
+## 8. Real game objects in the course: a rope and a platform
+
+**Why:** ropes, moving platforms, climbing walls and harpoon targets are
+places a save can't reach, and online each PC's own camera has to be checked
+there (findings/68). The course can hold them.
+
+**How a level places them.** A level folder's `props_*.blua` scripts (Lua 5.1
+bytecode in Radical's layout; `dis50.py` reads them) make every prop with one
+call:
+
+    InstantiateActorFromTemplate('.:', 'L2_Set13_Rope1', 'WorldObjects:HangingRope2D', position, rotation)
+
+The template names its kind of object; its settings come from a template
+script (`script/SpawnableTemplateActor.blua`, or the level's
+`NonSpawnableTemplateActor.blua` for level-only templates), e.g. a rope =
+`newActor(HangingRope, ...)` with `SetBehaviourDataHangingRope` (radius 0.08,
+texture `rope.bmp`; the Ice Kingdom variant adds `axis_locked_state`).
+
+**What can be made anywhere.** A template with a package group of its own in
+`levels/GlobalPackages.p3d` (`package/<Group>_<Name>.p3d`) loads in any level
+through the spawn code (cheats/spawn.cpp: a reference on its inventory
+section loads it, then `sub_82168620` creates the actor). Two such:
+
+| Template | Group package | In the course |
+| --- | --- | --- |
+| `WorldObjects:HangingRope` | yes | grabbed by jumping at it, swings |
+| `StaticProps:env_Whumpa:prp_pformL1_platformA` | yes | solid, Crash stands on it; still |
+| `...:prp_pformL1_spinningPlatformA` (bridge flaps), `WorldObjects:HangingRope2D` | no (inside a level's pieces) | refused: "not in the game's packages" |
+
+A spawned platform stays still: its movement comes from the level's own
+scripts, not from the template.
+
+**The course's objects** (`--test_course`): two GAP lanes (two pads with
+nothing between them: `ropegap` 6 units, `platgap` 8 units) with a catch
+floor at y 12 under them. 2 s of game time after player 1's Crash first
+exists, the course asks the spawn code for the rope (top at y 34, ~15 units
+long, its end just under the pads) and the platform, at exact spots (the
+spawn code's new `at x y z` form; not counted as a cheat).
+`--test_course_start=<lane>` puts the players at that lane's start on the
+same frame. On game time with the fixed step on, so every PC of an online
+session does both on the same frame.
+
+**Where.** First put beside the other lanes (z -330..-313), the gap lanes ran
+into a Wumpa Island structure (photos: Crash walking against grey slabs). A
+map of every L1 piece's collision (corners and triangle middles, y 0..50, 6-unit
+cells) showed everything south of z -434 clear; the gap lanes now start at
+x 344, z -470 (ropegap) and -461 (platgap), east of the courtyard copy.
+
+| Test | Result |
+| --- | --- |
+| Run + jump from `ropegap`'s start | Crash on the rope, swinging, over open sea |
+| Jump from `platgap`'s start | Crash standing on the platform in the gap |
+| Online, two copies, own cameras: host does the rope jump, guest joins | the course and its objects alike on both PCs; player 1 on the rope at the same spot; world and controllers identical on all 1,306 frames |
+
+Still to do: moving platforms (the movement the level scripts give them),
+climbing walls (is "climbable" a surface material?), harpoon targets, a
+second player away from the first in these tests.
+

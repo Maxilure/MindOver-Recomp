@@ -32,6 +32,8 @@
 #include "cheat_menu.h"
 #include "free_camera.h"
 #include "spawn.h"
+#include "../fixed_step.h"
+#include "../world/test_course.h"
 #include "../language/texts.h"
 
 namespace cheats {
@@ -693,6 +695,26 @@ void Tick(PPCContext& ctx, uint8_t* base) {
 
   for (auto it = g_killed.begin(); it != g_killed.end();) {
     it = --it->second <= 0 ? g_killed.erase(it) : std::next(it);
+  }
+
+  // The test course's own objects (world/test_course.h): on GAME time when
+  // the fixed step is on (online sessions, exact runs: every PC places them
+  // on the same frame), else real time.
+  {
+    float p1[3];
+    bool have_p1 = false;
+    if (const uint32_t actor = in_level ? more_players::CharacterOfPlayer(0) : 0) {
+      if (const uint32_t matrix = Read32(actor + 44)) {
+        for (int k = 0; k < 3; ++k) {
+          const uint32_t w = Read32(matrix + 48 + 4 * uint32_t(k));
+          std::memcpy(&p1[k], &w, 4);
+        }
+        have_p1 = true;
+      }
+    }
+    const double frame_seconds = fixed_step::Active() && fixed_step::Fps() > 0 ? 1.0 / fixed_step::Fps()
+                                                                               : tick_seconds;
+    test_course::Tick(in_level && have_p1, frame_seconds, have_p1 ? p1 : nullptr);
   }
 
   // Spawns waiting (spawn.h).

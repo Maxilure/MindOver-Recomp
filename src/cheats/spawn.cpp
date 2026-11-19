@@ -115,6 +115,11 @@ struct Pending {
   int count = 1;
   bool knocked_out = false;
   bool loaded_for_it = false;  // we loaded its section (don't try again)
+  // AT A SPOT (2026-11-19, console only: test props such as a rope, which
+  // hangs DOWN from its spot): the first actor goes exactly here (no
+  // "ahead of the player", no lift), the others in a row beside it.
+  bool at_spot = false;
+  float at[3] = {};
 };
 // A spawn waiting for its section to load (see LOADING in Spawn).
 struct Loading {
@@ -332,7 +337,8 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
     const float side = (float(i) - float(request.count - 1) * 0.5f) * spacing;
     for (int k = 0; k < 3; ++k) {
       WriteFloat(g_scratch + kScratchPosition + 4 * k,
-                 position[k] + forward[k] * ahead + right[k] * side + (k == 1 ? 0.5f : 0.0f));
+                 request.at_spot ? request.at[k] + right[k] * side
+                                 : position[k] + forward[k] * ahead + right[k] * side + (k == 1 ? 0.5f : 0.0f));
     }
     WriteFloat(g_scratch + kScratchPosition + 12, 1.0f);
     // START STATE: a "knocked out" titan is created already down, ready to
@@ -512,11 +518,19 @@ const std::vector<Category>& Catalogue() {
   return catalogue;
 }
 
-void Request(const std::string& template_name, int player, int count, bool knocked_out) {
+void Request(const std::string& template_name, int player, int count, bool knocked_out, const float* at,
+             bool as_cheat) {
   if (template_name.empty() || player < 0 || player > 3) return;
-  cheats::NoteProgressCheat();  // a spawned titan to jack counts as progress: achievements off
+  // A spawned titan to jack counts as progress: achievements off (not for the
+  // test course's own objects).
+  if (as_cheat) cheats::NoteProgressCheat();
   std::lock_guard<std::mutex> lock(g_mutex);
-  g_pending.push_back({template_name, player, std::clamp(count, 1, kMaxCount), knocked_out});
+  Pending request{template_name, player, std::clamp(count, 1, kMaxCount), knocked_out};
+  if (at) {
+    request.at_spot = true;
+    std::copy(at, at + 3, request.at);
+  }
+  g_pending.push_back(request);
 }
 
 std::string LastResult() {
@@ -542,7 +556,7 @@ void Tick(PPCContext& ctx, uint8_t* base, bool in_level) {
 }
 
 bool DebugCommand(std::string_view arguments) {
-  // spawn <template> [player 1-4] [count] [ko]   (template "Characters:Roller", or just "Roller")
+  // spawn <template> [player 1-4] [count] [ko] [at <x> <y> <z>]   (template "Characters:Roller", or just "Roller")
   std::vector<std::string> words;
   size_t at = 0;
   while (at < arguments.size()) {
@@ -553,6 +567,16 @@ bool DebugCommand(std::string_view arguments) {
     at = end;
   }
   if (words.empty()) return false;
+  // "at x y z" (anywhere after the template): the exact spot.
+  float spot[3] = {};
+  bool at_spot = false;
+  for (size_t i = 1; i + 3 < words.size(); ++i) {
+    if (words[i] != "at") continue;
+    for (int k = 0; k < 3; ++k) spot[k] = std::strtof(words[i + 1 + k].c_str(), nullptr);
+    at_spot = true;
+    words.erase(words.begin() + long(i), words.begin() + long(i) + 4);
+    break;
+  }
   const int player = words.size() > 1 ? std::atoi(words[1].c_str()) - 1 : 0;
   const int count = words.size() > 2 ? std::atoi(words[2].c_str()) : 1;
   const bool knocked_out = words.size() > 3 && words[3] == "ko";
@@ -560,7 +584,7 @@ bool DebugCommand(std::string_view arguments) {
   // template names carry their group, and "Phantom" alone matches no section
   // ("can't be spawned here"), an easy slip at the console.
   if (words[0].find(':') == std::string::npos) words[0] = "Characters:" + words[0];
-  Request(words[0], player, count, knocked_out);
+  Request(words[0], player, count, knocked_out, at_spot ? spot : nullptr);
   return true;
 }
 

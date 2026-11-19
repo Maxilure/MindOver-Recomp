@@ -31,5 +31,10 @@ namespace test_course {
 
 // Registers the data patch when --test_course is on (before data_patcher::Install).
 void Register();
+// Every game frame (cheats' Tick): places the course's objects (a rope, a
+// platform) once per level load. in_play = a level plays with player 1's
+// Crash in it; frame_seconds = this frame's game time; player1 = player 1's
+// position (3 floats) or null.
+void Tick(bool in_play, double frame_seconds, const float* player1);
 
 }  // namespace test_course

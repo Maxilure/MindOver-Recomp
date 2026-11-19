@@ -1237,6 +1237,26 @@ void Listen(std::string path) {
 
 }  // namespace
 
+bool PutBodyAt(uint32_t body, const float xyz[3]) {
+  try {
+    const uint32_t m = ReadBE(body + 44, 4);
+    if (!m) return false;
+    const uint32_t physics = PhysicsOf(body);
+    for (int i = 0; i < 3; ++i) {
+      uint32_t bits;
+      std::memcpy(&bits, &xyz[i], 4);
+      WriteBE(m + 48 + 4 * i, 4, bits);
+      if (physics) {
+        WriteBE(physics + kPhysicsPosition + 4 * i, 4, bits);
+        WriteBE(physics + kPhysicsVelocity + 4 * i, 4, 0);
+      }
+    }
+    return true;
+  } catch (const Error&) {
+    return false;
+  }
+}
+
 void Start(UiPoster run_on_ui_thread, rex::ui::Window* window) {
   const std::string& path = REXCVAR_GET(debug_console);
   if (path.empty()) return;
