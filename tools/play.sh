@@ -123,6 +123,11 @@ LAUNCHER OPTIONS (combine freely)
   --ground-trace     record ground contact per character (logs/ground-*.csv)
   --catch            run under gdb; a null-pointer freeze writes logs/fault-*.txt
   --quiet            don't show the live log in this terminal
+  --record-test      record a session for TEST REPLAYS (online tests of ropes, climbs...):
+                     the game on a fixed 60 Hz clock from launch (cap 60, ground grace off),
+                     the input recording in game frames (logs/play-*-inputs.txt, with a
+                     "# spawn" line after each load); F1 Tools -> "Mark this spot" (or
+                     tick its F7) marks a moment in it
   --gdb              run under gdb, interactive: breakpoints on game functions (ghelp)
   --console          debug console: talk to the running game with tools/mom.py -s logs/mom.sock
   -h, --help         this text
@@ -160,6 +165,7 @@ catch=()
 console=""
 interactive=0
 live=1
+record_test=0
 args=()
 for arg in "$@"; do
   case "$arg" in
@@ -178,6 +184,9 @@ for arg in "$@"; do
       export CRASHMOM_FAULT_FILE="$PWD/logs/fault-${stamp}.txt"
       catch=(gdb -q -batch -x tools/gdb/catch_fault.gdb --args) ;;
     --quiet) live=0 ;;
+    --record-test)                                 # src/input_record.h: exact replays of this session
+      record_test=1
+      args+=(--fixed_step=60 --fps_cap=60 --ground_grace_ms=0 --coop_camera=true --debug_camera_player1_only=true) ;;
     --gdb)                                         # tools/gdb/debug.py: breakpoints, registers, memory
       interactive=1
       live=0  # gdb needs the terminal for itself
@@ -259,6 +268,10 @@ fi
 errors=$(grep -c '\[error\]' "$log" 2>/dev/null || true)
 warnings=$(grep -c '\[warning\]' "$log" 2>/dev/null || true)
 echo "Log has ${errors:-0} [error] and ${warnings:-0} [warning] lines: ${log}"
+if [ "$record_test" = 1 ]; then
+  inputs="${log%.log}-inputs.txt"
+  echo "Test recording: ${inputs} ($(grep -c '^# spawn' "$inputs" 2>/dev/null || echo 0) spawn line(s), $(grep -c '^# mark' "$inputs" 2>/dev/null || echo 0) mark(s))"
+fi
 # The session's frame rate: the line logged at exit, or after a crash the
 # last 5-second line's running total (frame_rate.cpp, section 4).
 fps=$(grep -o 'frame_rate: at exit, .*' "$log" 2>/dev/null | tail -1)

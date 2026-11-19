@@ -119,6 +119,15 @@ REXCVAR_DEFINE_BOOL(coop_camera_game_clock, true, "CrashMoM",
 // is for finding (two copies + the world fingerprint). Needs coop_camera on.
 REXCVAR_DEFINE_BOOL(net_own_camera, false, "CrashMoM",
                     "Online (experiment): each PC's camera follows only its own player");
+// THE SAME CAMERA OFFLINE, FOR TEST RECORDINGS (2026-11-19): with this on
+// (and coop_camera, and no session) the camera follows only player 1, the
+// way the host's own camera does online. A recording made like that
+// (tools/play.sh --record-test) replays online with the host's camera, and so
+// player 1's stick directions, the same as when it was recorded: measured,
+// an online replay of a recording made with the usual co-op camera (framing
+// both players) walked ~1 unit off in 15 s; with the shared camera online, 0.03.
+REXCVAR_DEFINE_BOOL(debug_camera_player1_only, false, "CrashMoM",
+                    "Debug: offline, the co-op camera follows only player 1 (like the host's own camera online)");
 
 REXCVAR_DEFINE_BOOL(debug_coop_camera_trace, false, "CrashMoM",
                     "Debug: log the game camera, the players and the camera volume's numbers (co-op camera)");
@@ -436,8 +445,11 @@ uint32_t g_probe = 0;       // guest buffer (3 floats) for the volume search
 
 // The experiment above is on: a session runs and this PC follows its own player.
 bool OwnCameraOnline() {
+  if (REXCVAR_GET(debug_camera_player1_only) && !net::Configured()) return true;  // offline: player 1's
   return REXCVAR_GET(net_own_camera) && net::InSession() && net::LocalPlayer() >= 0;
 }
+// Whose camera it is (OwnCameraOnline true): this PC's player, player 1 offline.
+int OwnCameraPlayer() { return net::Configured() ? net::LocalPlayer() : 0; }
 
 // Once per frame (from the camera rebuild): who is in game, their weights and
 // the centre. Players in game ramp up to 1, the others down to 0.
@@ -459,7 +471,7 @@ void UpdatePlayers(bool volume_view) {
     Vec at;
     bool titan = false;
     pl.in_game = Read32(kPlayerStates + 4 * p) == kInGame && BodyOf(p, at, titan);
-    if (pl.in_game && OwnCameraOnline() && p != net::LocalPlayer()) pl.in_game = false;
+    if (pl.in_game && OwnCameraOnline() && p != OwnCameraPlayer()) pl.in_game = false;
     if (pl.in_game) {
       // A first sighting starts fully counted when nobody else is (load, the
       // first player); later joins fade in.

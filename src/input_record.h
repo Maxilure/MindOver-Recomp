@@ -74,6 +74,14 @@ bool LastRead(uint32_t player, uint8_t gamepad[12]);
 std::string StartReplay(const std::string& path, int64_t from_ms, int64_t to_ms, bool raw = false,
                         bool on_level = false, bool on_spawn = false);
 std::string StopReplay();
+// MARK THIS SPOT (F1 Tools, console `mark [note]`; any thread): a comment line
+// "# mark <ms> <n> <note> | p1 x y z | ..." in the recording, at the next
+// frame. Also written by a recording, with the fixed step on: "# spawn <ms>"
+// = where an `onspawn` replay of it starts (player 1's Crash + 1.5 s). And
+// with the fixed step on, the recording's times are GAME time (frame x
+// 1000 / fps): a recording made with --fixed_step from launch replays on
+// the same game frames. Returns the reply text.
+std::string MarkSpot(const std::string& note = {});
 std::string ReplayStatus();
 bool ReplayRunning();
 
