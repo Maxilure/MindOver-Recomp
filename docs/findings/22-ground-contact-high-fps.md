@@ -13,7 +13,9 @@ that picks Crash's moves never notices. At 60 fps the same moment spans two
 frames, the move logic asks in between, hears "not on ground" and starts the
 fall. The fix (`--ground_grace_ms`, 40 by default) hides a lost ground
 contact from the game logic for a little longer than one original frame.
-The physics itself is untouched.
+On bumpy slopes the real cause turned out to be the reach check holding one
+triangle; section 11's handover fixes that at the source. On real steps the
+grace is still what hides the losses (findings/69 s.5).
 
 ## 1. How the physics keeps a character on the ground
 
@@ -281,3 +283,203 @@ now go to a file: `diff <name> > <file>`) found the objects whose height
 fell while x and z stayed at the arena's centre. Temporary probes on the
 physics position writers gave the call stack into the path follower, and
 Ghidra's pseudo-C plus `xexdis` showed the three minima.
+
+## 10. Where the flat contacts come from: the game's "don't slide" rule
+
+Section 8 left open why a body walking down a slope at 180 fps meets a
+contact with a normal of exactly (0, 1, 0). The ground trace now has an `R`
+line per collision response (`sub_8217F068`): the normal, the restitution and
+the velocity before and after, plus the caller. On the same downhill walk
+(Ratcicle Kingdom courtyard, (262.3, 31, -126.7), stick left, on foot, ground
+grace off) every flat response came from one place, the collision report
+`sub_821809C8` (+0x858), and none of them came from a flat triangle.
+
+What that function does with a contact (Ghidra's pseudo-C, checked against
+`xexdis`):
+
+1. It scales the collision's normal (+0x48..+0x50 of the collision record)
+   and normalises it.
+2. It sorts the contact by `normal · up` into ground / steep / wall, using two
+   thresholds at 0x825A54BC..C4.
+3. **For a ground contact**, when the behaviour's flag `+0xF0` bit 0 is on
+   (Crash's is) and the body's horizontal physics speed is under 4 units/s
+   (`vx² + vz² < 16`), it **replaces the normal with straight up** (the up
+   vector at 0x82507994). A collision flag (`+0xBC` bit 1) changes the test
+   to "normal y > 0.707".
+4. It hands the normal to the response, which slides the velocity along it:
+   with straight up, the vertical speed becomes exactly 0.
+
+It's a deliberate rule: a character standing still on a slope shouldn't
+slide down it. But while Crash RUNS, his physics velocity stays near zero
+horizontally. His run moves him through the "move by" path (section 9),
+not through the physics velocity, so the rule fires while he runs too. Every
+time it does, his falling speed resets to 0. At 30 fps one frame of gravity
+(-2 units/s) follows the slope again at once. At 180 fps the small steps
+leave him short of the slope for tens of milliseconds, the reach check drops
+the contact, and the fight tree hears a fall.
+
+Numbers from the exact-replay probes (same input, same start):
+
+| downhill walk, 3 s | 30 fps | 180 fps |
+|---|---|---|
+| ground contact losses | 0 | 5 (22-150 ms each) |
+| frames with the vertical speed snapped to 0 (1.2 s of the walk) | 1 of 35 | 3 of 215 |
+| running speed going down | 8.25 -> 8.8 | steady 8.0 |
+
+On flat ground the same probes (jump, high jump, double jump, run, run + jump,
+light / heavy / air attacks) agree within one 30 Hz input frame: peaks within
+0.02 units, attack lunges within 1-3 %. The engine's time steps are sound;
+this rule (and the minimum steps of section 9) are the exceptions found so
+far.
+
+The rule itself was left alone (it is also what keeps a character standing
+on a slope). What turned the stopped falling speed into a fall was the reach
+check: section 11 has the fix.
+
+How it was measured: fixed step from launch (`--fixed_step=30` / `180`,
+`--fixed_step_fast`), the console's `goto` + game-frame `replay` per probe,
+`track` CSVs, `--debug_ground_trace` for the `R` lines. The write watch
+(`who`) was no use here: the contact record lives on the stack, and the
+watch caught the stack being reused.
+
+## 11. The fix: the ground contact moves on to the next triangle
+
+Section 10 explains why the falling speed stops. What actually drops the
+contact is the reach check: contact slot k of the `CPhysicsBehaviour`
+(`this +0x34 + 12k`: `+0` object, `+8` triangle number) remembers ONE
+collision triangle, and `sub_8217D668(this, k)` asks `sub_8224E380` whether
+the body is still within reach (0.25 x its shape size) of that triangle. The
+collision sweep moves the contact to another triangle only when the body
+touches the surface.
+
+At 30 fps the body touches the slope every frame (one frame of gravity is
+2 units/s), so the contact always holds the triangle under Crash. At 180 fps
+he hovers a hair above the slope for a few frames (frame by frame: no
+collision response for 4-6 frames in a row), walks onto the next triangle
+meanwhile, and the check fails. **Every ground loss measured was at a
+triangle change**, typically where the slope gets steeper.
+
+**The fix** (`ground_triangle_handover`, on by default; only for frames
+shorter than 1/30 s, so 30 fps keeps the original rule): a wrapper on
+`sub_8217D668`. When the ground check (k = 0) fails, it tries the triangles
+that share a corner with the old one, i.e. the ones he can have walked onto.
+A candidate must be ground by the game's own test: normal · up greater than
+the float at `0x825A54C4`, the threshold the collision report sorts contacts
+with. Each candidate's number is written into the contact and the game's own
+reach check runs again; the first within reach keeps the contact. If none is
+within reach, the original answer stands and the contact is dropped.
+
+The collision mesh, read from a live game: the object's collision part =
+`*(object +0x10)`, its mesh = `*(part +0x24)`: `+0x08` corners (3 floats),
+`+0x10` triangles, `+0x18` u16 corner count, `+0x1A` u16 triangle count,
+`+0x1C` byte = 16-byte triangle entries instead of 8. A triangle entry is u16
+corner numbers at `+0/+2/+4` and flags at `+6`. The courtyard's ground mesh:
+1,310 corners, 2,441 triangles.
+
+Results (exact replays, ground grace off):
+
+| | 180 fps before | 180 fps with the handover |
+|---|---|---|
+| downhill walk (section 10): ground losses | 5 | 0 |
+| a steeper walk across the same slope: ground losses | 3 | 0 |
+| walking off the 5-unit ledge next to it (2 of 5 directions reach it) | falls | falls (1 loss each, lands ~6 units lower) |
+| flat-ground probes (jumps, run, attacks) | | jumps identical, the rest within 0.1 units |
+
+A first version accepted only neighbours with a normal y of 0.7 or more. It
+missed steep parts of the slope that the game still calls ground (old
+triangle at 0.59-0.63), hence the game's own threshold.
+
+The trace has an `H` line per handover (old triangle, the one kept or -1,
+neighbours tried / skipped).
+
+### The stair-like descent is the same slope
+
+The ground traces from the first reports (section 5, the "stairs") put
+every heard loss between (264, 30.6, -126.1) and (268, 25.4, -117.2): the
+same courtyard descent as section 10's slope, seen from other directions.
+So the handover is a fix for the original report too. Checked with exact
+replays from the top of the descent, ground grace OFF, 16 walks (run and
+walk, 8 stick directions, 3.5 s each):
+
+| | 180 fps, no handover | 60 fps, handover | 180 fps, handover |
+|---|---|---|---|
+| walks with split-second ground losses on the slope | 3 of 16 (5 losses on each of the two downhill runs, 22-106 ms) | 0 | 0 |
+| falls off the real ledge (6-8.6 units) | 3 | 4 | 3 |
+
+At 180 fps one walk loses the ground for single frames (6 ms) three times
+right at the ledge lip, a few frames before walking off it, with or
+without the handover: too short to see.
+
+Random play over the courtyard (`gen1.py`: 90 s each, 3 seeds, stick
+wandering, jumps, attacks; ~230 units walked per run, the three frame
+rates following nearly the same path), ground grace off. A "short" loss is
+one under 150 ms that drops less than 0.6 units, the kind that showed as a
+split-second fall:
+
+| | 30 fps (original) | 60 fps | 180 fps |
+|---|---|---|---|
+| short ground losses, 3 runs | 2 (33 and 100 ms) | 0 | 0 |
+
+With the handover, above 30 fps the move logic hears no more split-second
+losses than the original does at 30 fps, without the ground grace. For the
+slopes, the grace is no longer needed.
+
+**But real steps still need it (findings/69 s.5):** the test course has
+REAL stairs, which the courtyard doesn't. On them the handover changes
+nothing, and high frame rates give more split-second losses than 30 fps
+(walking down 0.25 steps at 180 fps: 21 one-frame losses, at 30: none). The
+grace hides those, so it stays on (40 ms) until a step-down fix at the
+source exists.
+
+## 12. Step edges: the contact the sweep has just touched
+
+**What happens on real stairs** (the test course's stair lanes, findings/69
+s.4; ground trace + the console's `who` on the contact words). Walking down,
+Crash's rounded body rides over each step's edge. The collision sweep keeps
+touching the corner (a ground-type contact, normal about (0.75, 0.65, 0)),
+and the next physics update copies it into contact slot 0; later in the same
+update the reach check calls the upper step's triangle out of reach (the
+body's middle is past its edge) and the contact is cleared. At 30 fps one
+frame's gravity puts the body back onto the corner every frame and the last
+frame lands it on the lower step at once: the move logic never hears a loss
+(0 on the 0.25 stairs, walked). At 180 fps the body moves down only a hair
+per update, so the sweep touches the corner every second or third update:
+in between, the reach check clears the contact and the walk logic hears
+"not on ground" (21 times on the same stairs).
+
+**Where it is:** CPhysicsBehaviour::Update (sub_8217D0A0) at +0xE0 calls
+sub_8217CF78(this, k) for k = 0 and 1. It copies slot k from the sweep's
+result table (`*(this +168) + 56k`) only when that entry's byte +52 has bit
+0x80 (the sweep found a contact of that kind this frame): the object
+(sub_82182FE8 -> `this +0x34 + 12k`), the part (+0x38), the triangle
+(entry +48 >> 3 -> +0x3C), and returns 1. At +0x3D8, sub_8217D008 runs the
+reach check (sub_8217D668) and clears a slot out of reach (sub_8217C888).
+
+**The fix** (`ground_touch_keeps_contact`, on by default; frames shorter
+than 1/30 s only, like the handover): when the reach check calls the ground
+contact out of reach and the handover finds no neighbour, keep it if a
+refresh copied a ground contact from the sweep within the last 1/30 s of
+the body's own physics time, no longer ago than one of the original's
+frames. The contact holds the triangle the sweep last touched. A real ledge
+still drops it once the sweep has touched nothing for 1/30 s (the original
+also decides once per 1/30 s frame). A first version that only looked at
+the same update's refresh kept 17 contacts in a whole run: the touches come
+every second update. Trace line `K` = a contact kept this way.
+
+**Results** (test course, exact replays, ground grace OFF; short losses /
+real falls, as in findings/69 s.5):
+
+| | 30 fps (original) | 60 before | 60 after | 180 before | 180 after |
+|---|---|---|---|---|---|
+| stairs, walking | 3 / 2 | 8 / 2 | **2** / 0 | 36 / 1 | **11** / 0 |
+| stairs, running | 12 / 11 | 19 / 11 | **14** / 10 | 20 / 12 | 20 / 12 |
+| ramps + bumpy slope | 2 / 11 | 0 / 5 | 0 / 9 | 0 / 6 | 0 / 6 |
+| copy of the courtyard descent | 1 / 2 | 0 / 3 | 0 / 3 | 0 / 2 | 0 / 2 |
+
+At 60 fps the stairs now match the original. At 180 fps what's left is
+the first update at each edge: as the body tips over the corner, the gap
+between the sweep's touches grows past 1/30 s (33, 39, 44, 50 ms: each touch
+stops the small fall, the corner slopes away, and a 180 fps step of gravity
+adds little). Running down the 0.25 stairs is a real 50 ms drop per step
+(the original's is one 33 ms frame, heard once there too). The ground grace
+(40 ms) hides what's left, so it stays on.

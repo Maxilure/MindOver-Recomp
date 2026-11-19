@@ -106,6 +106,20 @@ and put back when an update fails).
 
 **Fixes**
 
+- **No more tripping on bumpy slopes above 30 fps.** Running down uneven
+  ground at a high frame rate, Crash kept dropping into his fall animation for
+  a split second. The game remembers which triangle of the ground it is
+  standing on; at high frame rates Crash could step onto the next triangle
+  without touching it, and the game let go of the ground. The ground contact
+  now moves on to the next triangle the way it does at 30 fps. Real ledges
+  still drop him. Measured on a slope in the Ratcicle Kingdom: 5 false falls
+  at 180 fps before, none now, none at 30.
+- **Fewer split-second falls on stairs above 30 fps.** Walking down steps,
+  Crash's body rides over each step's edge, and at high frame rates the game
+  kept dropping his ground contact between touches of the edge. The contact
+  now stays while he has touched the ground within one of the original's
+  frames. Measured on test stairs: at 60 fps as few as at 30, at 180 fps a
+  third of before (the short ground grace covers the rest).
 - **Crash when switching to some titans (Windows).** Taking control of
   certain titans, such as the electric one in the ice cave on the way to the
   School of Evil, could crash the game on Windows
@@ -154,6 +168,11 @@ and put back when an update fails).
   The Xbox 360 game does the same: Spike's move data lists the sound twice.
   The port now plays it once (**fix_spike_jack_sound** in `settings.toml`
   brings the original back).
+- **Coco keeps hold of her wrench.** On Wumpa Island, walking up to Coco
+  made the wrench in her hand swing out behind her shoulder until you talked
+  to her or walked away. The Xbox 360 game does the same: the animation she
+  plays when she notices Crash was made without the wrench. It now stays in
+  her hand (**fix_held_props** in `settings.toml` brings the original back).
 - **The level-up screen shows your outfit, in the area's light.** Carbon
   Crash, the coloured Crashes and the coloured looks appeared as plain orange
   Crash on the level-up screen, and the character there (titans too) looked

@@ -43,7 +43,12 @@ extern "C" REX_FUNC(__imp__sub_82275E20);  // an input map's events for this fra
 extern "C" REX_FUNC(__imp__sub_82275DC8);  // reset ONE event of a map (r3 map, r4 event): "consumed"
 extern "C" REX_FUNC(__imp__sub_82275C90);  // reset EVERY event of a map (r3 map)
 extern "C" REX_FUNC(__imp__sub_82273328);  // add a sample to a value channel (r3 channel, f1 value, r5 time ms)
-extern "C" REX_FUNC(__imp__sub_8235ABC8);  // the game's clock in ms (r3)
+// The game's clock in ms (r3), AS THE MAIN THREAD SEES IT: fixed_step.cpp's
+// override, which answers the fixed step's time while the logic runs at a
+// fixed rate (logic_rate). The original (the PC's real clock) stamped the
+// keys' samples on another clock than the controller's: under 30 Hz logic
+// one key press counted two or three times (first feel test, 2026-11-18).
+extern "C" REX_FUNC(sub_8235ABC8);
 extern "C" REX_FUNC(__imp__sub_8235D188);  // Radical's input poll of one socket (r3 = its controller object)
 extern "C" REX_FUNC(__imp__sub_8235CAE8);  // one input object reads its number from the state (r3 object, r4 state)
 extern "C" REX_FUNC(__imp__sub_8235C9F0);  // the sticks' dead zone (f1 size, r3 &x, r4 &y: int16 pairs)
@@ -279,7 +284,7 @@ Image ImageForMap(int type) {
 }
 
 std::unordered_map<uint32_t, ShadowMap> g_kb_maps;               // by the real map
-std::unordered_map<uint64_t, ShadowController> g_kb_controllers;  // by (real root, image)
+std::unordered_map<uint64_t, ShadowController> g_kb_controllers;  // by (real controller, image)
 std::unordered_map<uint64_t, uint32_t> g_kb_fed;                  // ... the real +0x194 it was fed for
 
 // The socket (0-3) whose input controller `root` is, or -1. The front end's
@@ -331,15 +336,38 @@ float ValueOf(const kbm::KeyboardMouseDriver::EventImage& img, Image which, int 
 // (empty: every sample "up" at time 0), then the keys' values added each
 // frame, once (the first map of the frame; the game's own +0x194 tells the
 // frames apart).
-uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_root, Image which) {
-  const uint64_t key = uint64_t(real_root) << 2 | uint32_t(which);
+// ONE PER REAL CONTROLLER (2026-11-15): keyed by the controller the map is
+// updated with, not by its root. The game gives every input controller its
+// own value rings and its own "last update" time (+0x194), and a parent and
+// a child (e.g. a root and the extra controller a 3D cutscene adds under it)
+// update at different moments. Until then one shadow per ROOT, fed on the
+// ROOT's clock, served every map of the family: a press was "new" for only
+// one of them per frame. After a skipped 3D cutscene the movie's MOVIE map
+// on the root lost to a child's (the movie asks the root's): keys showed
+// "Skip" but almost never skipped (findings/62 s.10).
+uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_controller, uint32_t real_root,
+                               Image which) {
+  const uint64_t key = uint64_t(real_controller) << 2 | uint32_t(which);
   ShadowController& c = g_kb_controllers[key];
+  // A controller made where a freed one was (the game adds and removes some,
+  // like the 3D cutscenes' extra one): other ring sizes = a fresh shadow.
+  if (c.block) {
+    for (int v = 0; v < kValueCount; ++v) {
+      if (Read32(base, real_controller + kChannels + uint32_t(v) * kChannelBytes + 4) != c.ring_sizes[v]) {
+        for (uint32_t& r : c.rings) Free(r);
+        Free(c.block);
+        c = ShadowController{};
+        g_kb_fed.erase(key);
+        break;
+      }
+    }
+  }
   if (!c.block) {
     c.block = Alloc(kControllerBytes);
     if (!c.block) return 0;
     std::memset(GuestPtr(base, c.block), 0, kControllerBytes);
     for (int v = 0; v < kValueCount; ++v) {
-      const uint32_t size = Read32(base, real_root + kChannels + uint32_t(v) * kChannelBytes + 4);
+      const uint32_t size = Read32(base, real_controller + kChannels + uint32_t(v) * kChannelBytes + 4);
       if (size == 0 || size > 256) return 0;
       c.rings[v] = Alloc(size * kSampleBytes);
       if (!c.rings[v]) return 0;
@@ -351,9 +379,9 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_roo
       Write32(base, sh + 8, 0);
     }
   }
-  const uint32_t last_update = Read32(base, real_root + kLastUpdate);
+  const uint32_t last_update = Read32(base, real_controller + kLastUpdate);
   Write32(base, c.block + kParent, 0);
-  Write32(base, c.block + kState20, Read32(base, real_root + kState20));
+  Write32(base, c.block + kState20, Read32(base, real_controller + kState20));
   Write32(base, c.block + kLastUpdate, last_update);
   uint32_t& fed = g_kb_fed[key];
   if (fed == last_update && fed != 0) return c.block;  // (this frame's values are in)
@@ -402,7 +430,7 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_roo
   // that closed it).
   if (outfit_picker::IsOpen() || outfit_picker::JustClosed()) image = {};
   PPCContext call = ctx;
-  __imp__sub_8235ABC8(call, base);
+  sub_8235ABC8(call, base);
   const uint32_t now = call.r3.u32;
   for (int v = 4; v < kValueCount; ++v) {
     call = ctx;
@@ -415,7 +443,7 @@ uint32_t FedKeyboardController(PPCContext& ctx, uint8_t* base, uint32_t real_roo
 }
 
 // The keyboard's events for `map` this frame, added to the real map's bits.
-void KeyboardEvents(PPCContext& saved, uint8_t* base, uint32_t map, uint32_t real_root) {
+void KeyboardEvents(PPCContext& saved, uint8_t* base, uint32_t map, uint32_t real_controller, uint32_t real_root) {
   ShadowMap& s = g_kb_maps[map];
   if (!s.block || !StillMatches(base, s, map)) {
     if (!Build(base, s, map)) {
@@ -428,7 +456,7 @@ void KeyboardEvents(PPCContext& saved, uint8_t* base, uint32_t map, uint32_t rea
     reset.r3.u64 = s.block;
     __imp__sub_82275C90(reset, base);
   }
-  const uint32_t controller = FedKeyboardController(saved, base, real_root, ImageForMap(s.type));
+  const uint32_t controller = FedKeyboardController(saved, base, real_controller, real_root, ImageForMap(s.type));
   if (!controller) return;
   PPCContext ours = saved;
   ours.r3.u64 = s.block;
@@ -504,7 +532,7 @@ extern "C" REX_FUNC(sub_82275E20) {
     const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
     if (socket >= 0 && assignment && assignment->KeyboardAnswersFor(uint32_t(socket))) {
       PPCContext kb = saved;
-      KeyboardEvents(kb, base, map, root);
+      KeyboardEvents(kb, base, map, controller, root);
     }
   }
   if (!shadow) return;

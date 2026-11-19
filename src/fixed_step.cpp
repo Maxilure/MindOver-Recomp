@@ -69,6 +69,22 @@ REXCVAR_DEFINE_INT32(fixed_step, 0, "CrashMoM",
     .range(0, 1000);
 REXCVAR_DEFINE_BOOL(fixed_step_fast, false, "CrashMoM",
                     "With --fixed_step: don't wait between frames (runs as fast as the PC can)");
+// FIXED-RATE LOGIC (2026-11-18; notes/plans.md s.2): the game's logic at a
+// fixed rate, paced by the wall clock = the fixed step above in its paced
+// mode, one picture per logic frame. Read at the start of every main-loop
+// pass; a CHANGE turns the fixed step on at that rate (or off at 0), so it
+// can be switched live (console `flag logic_rate 30`). 30 = the original
+// console's own rhythm. No Options row (2026-11-18): a settings.toml /
+// console switch for tests and the online work (lockstep needs a fixed rate).
+// The port's normal way is 0: the logic runs once per picture at the
+// screen's rate, and the few places the game counted per frame are fixed
+// at their source (findings/22, 55, 69). Blending pictures in between two
+// logic frames was tried (frame_blend, 2026-11-18) and removed: matching
+// draws across frames by guesswork left objects jumping back and forth.
+REXCVAR_DEFINE_INT32(logic_rate, 0, "CrashMoM",
+                     "Game logic at a fixed rate, one picture per logic frame: 0 = every picture "
+                     "(the port's normal way, up to the frame-rate cap), 30 = the original console's rate")
+    .range(0, 240);
 
 namespace fixed_step {
 namespace {
@@ -103,6 +119,7 @@ uint32_t g_applied_generation = 0;
 bool g_flags_read = false;
 uint64_t g_next_frame = 0;
 Clock::time_point g_start;  // wall-clock time of frame 0 (paced mode)
+int32_t g_seen_logic_rate = 0;    // the logic_rate the fixed step was last set from
 
 constexpr auto kSpin = std::chrono::milliseconds(1);  // spin, don't sleep, this close
 
@@ -145,6 +162,14 @@ uint64_t FrameUs(uint64_t k, int32_t fps) {
 }
 
 void ApplyRequests() {
+  // logic_rate (file top): a change is a request like the console's.
+  const int32_t rate = REXCVAR_GET(logic_rate);
+  if (rate != g_seen_logic_rate) {
+    g_seen_logic_rate = rate;
+    Set(rate > 0 ? std::clamp(rate, 10, 240) : 0, false);
+    REXLOG_INFO("Fixed-rate logic: {}", rate > 0 ? fmt::format("{} logic frames per second", rate)
+                                                 : std::string("off (real rate)"));
+  }
   if (!g_flags_read) {
     g_flags_read = true;
     if (REXCVAR_GET(fixed_step) > 0 && g_req_generation.load() == 0) {

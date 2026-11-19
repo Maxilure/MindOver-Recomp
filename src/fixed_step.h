@@ -40,6 +40,7 @@
 
 REXCVAR_DECLARE(int32_t, fixed_step);
 REXCVAR_DECLARE(bool, fixed_step_fast);
+REXCVAR_DECLARE(int32_t, logic_rate);
 
 namespace fixed_step {
 
@@ -109,5 +110,6 @@ void SetPassListener(void (*listener)());
 // fps 0 = back to the real clock. Returns the reply text.
 std::string Set(int32_t fps, bool fast);
 std::string Status();
+
 
 }  // namespace fixed_step

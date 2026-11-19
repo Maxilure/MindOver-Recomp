@@ -10,6 +10,7 @@ original behaviour can still be compared. Code: `src/game_bugs/`.
 |-----|---------|---------|
 | Spike's jacking sound plays twice | `fix_spike_jack_sound` | 1 |
 | A new hint line cuts off the one being spoken | `fix_speech_cut_off` | 2 |
+| Coco's wrench swings out of her hand | `fix_held_props` | 3 |
 
 ## 1. Spike's jacking sound plays twice
 
@@ -154,3 +155,71 @@ waited 3.0 s, then its line played whole (log "Speech: a hint line waits
 for the voice still speaking" / "the hint line waited 3.0 s"), no errors.
 A real overlap of two hints in play is still to be seen.
 `fix_speech_cut_off = false` brings back the original cut.
+
+## 3. Coco's wrench swings out of her hand
+
+Coco on Wumpa Island (the villager by the big blue pipe) holds a wrench.
+When Crash walks up and the talk prompt shows, she turns to him, and the
+wrench leaves her hand: it turns about 100 degrees and ends up behind her
+shoulder. Talking to her or walking away brings it back. The emulated
+picture shows the same, at 30 fps too, and with every native replacement
+of game code off: it is in the game.
+
+![Coco near Crash, original vs fixed](../images/held-prop-coco-wrench.jpg)
+
+### How the wrench is carried
+
+The wrench is an actor of its own (model `npc_pr_cocoWrenchShape`, a
+one-joint skeleton). Coco's actor lists a `CAccessoryBehaviour` (vtable
+`0x8202B88C`, derived from `CAttacherBehaviour`). Its message handler
+`sub_82126510` answers Coco's transform message (type 39): it takes the
+world matrix of one joint of Coco's pose (joint index at accessory +44,
+pose = `*(*(accessory +48))`), multiplies it by Coco's own matrix (z row
+negated) and sends the result to the wrench (type 4, sub-type 2, placed by
+`sub_82125610` -> `sub_82125960`, which writes the wrench's matrix).
+
+The joint is 40, `Prop_Root`, a child of 31 `Wrist_R` in the skeleton
+`cocovillager` (57 joints). A pose (`Pose@pure3d`): +0xC bits 21-31 =
+joint count n, +0x1C = its data: n local rotations (16 bytes), n local
+translations (12 bytes), then local and world matrices; the accessory reads
+the world matrices at data + 92 n + 64 j.
+
+### What changes near Crash
+
+Read with the debug console, the wrench sits on `Prop_Root` in both states
+(within a frame), and `Prop_Root` stays on the wrist. What changes is
+`Prop_Root`'s local rotation:
+
+| State | `Prop_Root` local rotation (x, y, z, w) |
+|-------|------------------------------------------|
+| idle (away) | (0.981, -0.017, 0.192, 0.034) |
+| near Crash | (0.685, 0.230, 0.304, -0.621) |
+
+The near value is the skeleton's rest pose for that joint (its matrix
+matches the rest matrix in the skeleton's joint record). The wrist moves
+only a little. The animation writer `sub_823A24F8` (r3 = the animation
+driver, pose at +0x104; r7 = a channel table, 24 bytes per joint: +0
+rotation channel, +4 translation channel, then scale) blends every joint
+toward its channel's value, and a joint without a channel toward the rest
+pose. Coco's "noticed you" animation has no `Prop_Root` channel (made
+without the prop), so the wrench's joint is pulled back to rest.
+
+`CHeadTrackingBehaviour` (vtable `0x8202E484`; two `JointPointingLayer`s
+on joints 41 `Head_Tracking` and 13 `Spine_Tracking`) looked like the
+cause at first, but both layers are off in this scene.
+
+### The fix
+
+`src/game_bugs/held_props.cpp`. The accessory handler is wrapped to note
+which (pose, joint) carries a prop each time it runs (an entry not seen for
+2 s is dropped). The animation writer is wrapped: for such a joint, an
+animation with neither a rotation nor a translation channel leaves the
+joint as it was (its local rotation and translation are saved before the
+original runs and put back after). The prop keeps the last pose an
+animation gave it, in the hand. Animations that key the joint (idle,
+conversation) and joints without a prop behave as before.
+
+Tested from the same spots with the fix on and off: near Crash,
+`Prop_Root` keeps the idle value and the wrench stays upright in her hand,
+from both sides; talking to her still starts the story scene; no errors.
+`fix_held_props = false` brings back the original swing.

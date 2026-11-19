@@ -1088,7 +1088,10 @@ std::string ToolCommand(const std::vector<std::string_view>& w) {
 std::string FlagCommand(const std::vector<std::string_view>& w) {
   if (w.size() < 2) throw Error{"flag <name> [value]"};
   const std::string name(w[1]);
-  if (w.size() >= 3 && !rex::cvar::SetFlagByName(name, std::string(w[2]))) {
+  // `flag <name> -` = an EMPTY value (words can't be empty: `flag x ""` set
+  // the two quote characters, which once kept a debug file growing).
+  const std::string value = w.size() >= 3 ? (w[2] == "-" ? std::string() : std::string(w[2])) : std::string();
+  if (w.size() >= 3 && !rex::cvar::SetFlagByName(name, value)) {
     throw Error{fmt::format("can't set {}", name)};
   }
   return fmt::format("{} = {}\n", name, rex::cvar::GetFlagByName(name));
@@ -1102,7 +1105,7 @@ const char kHelp[] =
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | interactables |\n"
     "inputmaps <socket 1-4 | 0xADDR> [all] |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
-    "track <file> [frames] | track stop | track | xbox | flag <name> [value] |\n"
+    "track <file> [frames] | track stop | track | xbox | flag <name> [value | - = empty] |\n"
     "profile <seconds> [file] [thread] | wait profile [ms] |\n"
     "<any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";

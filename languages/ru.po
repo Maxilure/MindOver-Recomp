@@ -169,15 +169,15 @@ msgstr "Загрузка..."
 msgid "Saving..."
 msgstr "Сохранение..."
 
-#: src/net/net_session.cpp:379
+#: src/net/net_session.cpp:420
 msgid "Disconnected"
 msgstr ""
 
-#: src/net/net_session.cpp:380
+#: src/net/net_session.cpp:421
 msgid "The connection to the host was lost"
 msgstr ""
 
-#: src/net/net_session.cpp:381
+#: src/net/net_session.cpp:422
 msgid "You left the online session"
 msgstr ""
 

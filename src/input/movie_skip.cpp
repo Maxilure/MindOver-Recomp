@@ -5,12 +5,17 @@
 
 #include <atomic>
 #include <chrono>
+#include <string>
+
+#include <rex/cvar.h>
 
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
 #include <rex/ppc/func.h>
 
 #include "../guest_memory.h"
+
+REXCVAR_DECLARE(bool, debug_key_events_trace);
 
 extern "C" REX_FUNC(__imp__sub_82187EF0);  // CMoviePlayerBehaviour: Update (vtable 0x820334E4 slot 4)
 
@@ -55,9 +60,55 @@ bool WaitsForAnyButton() {
 
 // CMoviePlayerBehaviour's Update: runs unchanged; afterwards, note whether a
 // movie is playing in a level with its Skip prompt hidden (movie_skip.h).
+// DEBUG (with --debug_key_events_trace): what the movie's two questions
+// (sub_82274BE8: MOVIE map, PAUSE 36 / BACK 12) will find, BEFORE the
+// Update asks: every controller of the two lists at *(uber+0x38) +8 / +24
+// (the sockets, then others), its lock byte, its MOVIE maps and their
+// events 12 / 36 (h = happened, r = removed). One line per change.
+// (2026-11-15: keys made MOVIE 12 every press, yet a movie after a skipped
+// 3D cutscene would not skip.)
+static void TraceMovieQuestions(uint8_t* base) {
+  using movie_skip::Read32;
+  const uint32_t uber = Read32(base, 0x8259B190);
+  if (!uber) return;
+  const uint32_t lists = Read32(base, uber + 0x38);
+  if (!lists) return;
+  std::string out;
+  for (uint32_t at : {8u, 24u}) {
+    const uint32_t begin = Read32(base, lists + at), end = Read32(base, lists + at + 4);
+    if (end < begin || end - begin > 4 * 16) continue;
+    for (uint32_t c = begin; c < end; c += 4) {
+      const uint32_t ctl = Read32(base, c);
+      if (!ctl) continue;
+      out += fmt::format(" [{}{:08X} lock {}", at == 8 ? "" : "other ", ctl, *GuestPtr(base, ctl + 0x204));
+      const uint32_t mb = Read32(base, ctl + 0x198), me = Read32(base, ctl + 0x19C);
+      for (uint32_t m = mb; m < me && m < mb + 4 * 32; m += 4) {
+        const uint32_t map = Read32(base, m);
+        if (int32_t(Read32(base, map + 0x18)) != 2) continue;
+        out += fmt::format(" MOVIE {:08X}:", map);
+        const uint32_t vec = Read32(base, map + 0x1C);
+        const uint32_t eb = Read32(base, vec), ee = Read32(base, vec + 4);
+        for (uint32_t e = eb; e + 28 <= ee && e < eb + 28 * 64; e += 28) {
+          const int id = int(int32_t(Read32(base, e)));
+          if (id != 12 && id != 36) continue;
+          out += fmt::format(" {}{}{}", id, (*GuestPtr(base, e + 0x14) & 0x80) ? "h" : "",
+                             *GuestPtr(base, e + 0x18) ? "r" : "");
+        }
+      }
+      out += "]";
+    }
+  }
+  static std::string last;
+  if (out != last) {
+    REXLOG_INFO("Movie skip: questions see{}", out);
+    last = out;
+  }
+}
+
 extern "C" REX_FUNC(sub_82187EF0) {
   using namespace movie_skip;
   const uint32_t behaviour = ctx.r3.u32;
+  if (REXCVAR_GET(debug_key_events_trace)) TraceMovieQuestions(base);
   __imp__sub_82187EF0(ctx, base);
   const uint32_t game = Read32(base, kGameGlobal);
   if (!behaviour || !game || Read32(base, game + kGameState) != kInPlay) return;

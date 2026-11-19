@@ -69,6 +69,7 @@ set(CRASHMOM_SOURCES
     src/system/system_messages.cpp   # XMsg*: dashboard music player + rich presence answered by the port
     src/system/system_popups.cpp     # last pop-ups (notification position, disc error box) + WSAStartup answered by the port
     src/world/zone_lists.cpp     # every character in an area drawn: the zones' 32-character lists grow
+    src/world/test_course.cpp    # dev: an invisible test course (ramps, stairs) for frame-rate probes (findings/69)
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/guest_memory.cpp         # guest_memory::Readable: committed pages only (issue #25)
@@ -113,6 +114,7 @@ set(CRASHMOM_SOURCES
     src/gameplay/camera_shake.cpp  # Options -> Accessibility: how much the camera shakes (findings/66)
     src/gameplay/reduce_motion.cpp  # Options -> Accessibility: Reduce Motion (findings/67)
     src/game_bugs/speech_waits.cpp  # bugs of the original game: a hint line cut off by the next (findings/61 s.2)
+    src/game_bugs/held_props.cpp  # bugs of the original game: a held prop swings out of the hand (findings/61 s.3)
     src/game_bugs/spike_jack_sound.cpp  # bugs of the original game: Spike's double jacking sound (findings/61)
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
     src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups

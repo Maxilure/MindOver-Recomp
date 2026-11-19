@@ -402,3 +402,43 @@ dropped out (player 2 on a fake pad playing) and joined again with E.
 (A raw "any button held" reader, `sub_82274968`, looked like a skip check at
 first: its only caller, `sub_820E6CC8`, belongs to `CWiiWarningScreenAction`,
 the Wii build's warning screen.)
+
+## 10. One keyboard shadow per controller, not per root
+
+A movie cutscene that came right after a skipped 3D cutscene would not skip
+on keys: Escape or Space showed "Skip", but further presses almost never
+ended the movie. A controller was fine. A movie with no 3D cutscene before it
+skipped on the first press.
+
+The movie's two questions (`sub_82274BE8`, s.2) ask MOVIE PAUSE (36) and BACK
+(12) of every controller in the two lists at `*(uber + 0x38)`: +8 = the four
+sockets' root controllers, +24 = other controllers (children of a root). Each
+question walks up to the root and reads the root's MOVIE map. A debug line
+in the movie's Update (`input/movie_skip.cpp`, with
+`--debug_key_events_trace`: "Movie skip: questions see ...") listed every
+controller's MOVIE map and its events at the moment the movie asks:
+
+* before the 3D cutscene, one non-socket controller; each key press set
+  BACK on socket 1's root map, and the movie skipped;
+* after it, a second non-socket controller had been added, and the presses
+  set BACK on a CHILD's MOVIE map instead, only now and then on the root's.
+
+The cause was the keyboard's shadow controller (s.7). There was one per root
+(and image), fed on the ROOT's "last update" time (+0x194), and it served the
+maps of every controller under that root. The game gives each controller its
+own value rings and its own update time. A parent and a child update at
+different moments, so a press counted as new for only one map of the family
+per frame. Which map won depended on the update order, and the order changed
+when the cutscene added its controller.
+
+Now there is one shadow per REAL controller (the one the map is updated
+with), sized and timed like that controller. A shadow whose controller's ring
+sizes no longer match (a new controller at a freed one's address) is made
+again. Tested with the debug console on Wumpa Island: the Coco movie skips
+on the first Space after Escape; jump, light attack, held heavy attack,
+pause and unpause on keys as before.
+
+Also added: the line "Keyboard: keys ignored (<reason>)" / "Keyboard: keys
+reach the game again" whenever the keyboard driver stops or starts building
+input (no game window focused, an ImGui window wants the keys, the free
+camera, a port menu open).
