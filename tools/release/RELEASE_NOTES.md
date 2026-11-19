@@ -168,6 +168,11 @@ and put back when an update fails).
   The Xbox 360 game does the same: Spike's move data lists the sound twice.
   The port now plays it once (**fix_spike_jack_sound** in `settings.toml`
   brings the original back).
+- **Coco keeps hold of her wrench.** On Wumpa Island, walking up to Coco
+  made the wrench in her hand swing out behind her shoulder until you talked
+  to her or walked away. The Xbox 360 game does the same: the animation she
+  plays when she notices Crash was made without the wrench. It now stays in
+  her hand (**fix_held_props** in `settings.toml` brings the original back).
 - **The level-up screen shows your outfit, in the area's light.** Carbon
   Crash, the coloured Crashes and the coloured looks appeared as plain orange
   Crash on the level-up screen, and the character there (titans too) looked

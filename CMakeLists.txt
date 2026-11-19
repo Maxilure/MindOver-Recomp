@@ -106,6 +106,7 @@ set(CRASHMOM_SOURCES
     src/gameplay/camera_shake.cpp  # Options -> Accessibility: how much the camera shakes (findings/66)
     src/gameplay/reduce_motion.cpp  # Options -> Accessibility: Reduce Motion (findings/67)
     src/game_bugs/speech_waits.cpp  # bugs of the original game: a hint line cut off by the next (findings/61 s.2)
+    src/game_bugs/held_props.cpp  # bugs of the original game: a held prop swings out of the hand (findings/61 s.3)
     src/game_bugs/spike_jack_sound.cpp  # bugs of the original game: Spike's double jacking sound (findings/61)
     src/cheats/cheats.cpp        # F5 cheats for testing: level ups, mojo, god mode, speed, freeze, HUD
     src/cheats/spawn.cpp         # the cheat menu's Spawn section: titans (knocked out or not), enemies, pickups

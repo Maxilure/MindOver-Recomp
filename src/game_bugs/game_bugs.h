@@ -13,6 +13,9 @@
 //   fix_speech_cut_off     a new Aku Aku hint line stopped the one still
 //                          being spoken; now it waits for it to end
 //                          (speech_waits.cpp, findings/61 s.2).
+//   fix_held_props         a prop a character holds (Coco's wrench) swung out
+//                          of the hand in animations made without it; now it
+//                          stays (held_props.cpp, findings/61 s.3).
 //
 // debug_sound_track_trace (off by default): one log line per sound a fight
 // tree starts ("Sound track: <cue> ..."), the tool that showed the double.
