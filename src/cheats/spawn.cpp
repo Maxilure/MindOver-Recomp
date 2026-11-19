@@ -6,6 +6,7 @@
 #include "../guest_memory.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -34,6 +35,24 @@ extern "C" REX_FUNC(__imp__sub_822E44B8);  // inventory: take a reference on a s
 extern "C" REX_FUNC(__imp__sub_822E4650);  // inventory: give the reference back (unloads at 0)
 extern "C" REX_FUNC(__imp__sub_8213E6D0);  // the next fight tree's START STATE (r3 = name object)
 extern "C" REX_FUNC(__imp__sub_8236ACB8);  // name object (r3 = 8 bytes) from a C string (r4)
+extern "C" REX_FUNC(__imp__sub_820B6C68);  // CActionPlatform message (r3 = 40 bytes, r4 = code)
+extern "C" REX_FUNC(__imp__sub_820B0B70);  // hand an actor message to an actor (r3 actor, r4 message)
+extern "C" REX_FUNC(__imp__sub_823C9A70);  // a message's name part, destroyed
+extern "C" REX_FUNC(__imp__sub_820B8090);  // an actor message, destroyed
+// Paths (the level scripts' WorldManager:CreatePath / AddPathPoint / ...):
+extern "C" REX_FUNC(__imp__sub_8236AC40);  // name object (r3, 16 bytes) from a C string (r4)
+extern "C" REX_FUNC(__imp__sub_822FA4C0);  // WorldManager: the path of that name (r4 name object), or 0
+extern "C" REX_FUNC(__imp__sub_8227E890);  // the game's `new` (r3 bytes)
+extern "C" REX_FUNC(__imp__sub_823574E8);  // set the current heap (r3), returns the old one
+extern "C" REX_FUNC(__imp__sub_822FB960);  // path constructor (r3 memory, r4 name object): room for 100 points
+extern "C" REX_FUNC(__imp__sub_822FA2C8);  // WorldManager: attach path r5 to the actor named r4 (C string)
+extern "C" REX_FUNC(__imp__sub_822FBB90);  // path: type (r4) -> +60
+extern "C" REX_FUNC(__imp__sub_822FBB98);  // path: speed kind (r4) + speed (f1) -> +64, +72
+extern "C" REX_FUNC(__imp__sub_822FBBA8);  // path: rotation type (r4) -> +68
+extern "C" REX_FUNC(__imp__sub_822FBB30);  // path: add a point (r4 -> 3 floats); returns the 24-byte point
+extern "C" REX_FUNC(__imp__sub_822EAB78);  // point: duration (f1) -> +12
+extern "C" REX_FUNC(__imp__sub_82240598);  // point: wait type (r4) -> +20
+extern "C" REX_FUNC(__imp__sub_822FA510);  // WorldManager +8 map: the slot for name object r4 (made if new)
 
 namespace spawn {
 namespace {
@@ -120,6 +139,10 @@ struct Pending {
   // "ahead of the player", no lift), the others in a row beside it.
   bool at_spot = false;
   float at[3] = {};
+  // A PATH for the new actor (MakePath), attached as soon as it exists.
+  std::vector<std::array<float, 3>> path;
+  int path_type = 1, path_wait = 0;
+  float path_speed = 2.0f, path_duration = 0.0f;
 };
 // A spawn waiting for its section to load (see LOADING in Spawn).
 struct Loading {
@@ -135,6 +158,7 @@ struct ToStun {
 };
 
 std::mutex g_mutex;  // guards g_pending and g_result
+uint32_t g_last_spawned = 0;  // the last actor Spawn made (under g_mutex)
 std::vector<Pending> g_pending;
 std::string g_result;
 std::vector<ToStun> g_to_stun;  // game thread only
@@ -368,6 +392,13 @@ void Spawn(PPCContext& ctx, uint8_t* base, const Pending& request) {
     }
     ++made;
     last_actor = actor;
+    if (actor && i == 0 && !request.path.empty()) {
+      MakePath(actor, request.path, request.path_type, 0, request.path_speed, request.path_wait, request.path_duration);
+    }
+    {
+      std::lock_guard<std::mutex> lock(g_mutex);
+      g_last_spawned = actor;
+    }
     // (The start state does it now; the meter route below stays for a
     // template without a start state.)
     if (request.knocked_out && start_state.empty()) g_to_stun.push_back({actor, 0, 0});
@@ -518,6 +549,20 @@ const std::vector<Category>& Catalogue() {
   return catalogue;
 }
 
+void RequestWithPath(const std::string& template_name, const float at[3], const std::vector<std::array<float, 3>>& path,
+                     int type, float speed, int wait, float duration) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  Pending request{template_name, 0, 1, false};
+  request.at_spot = true;
+  std::copy(at, at + 3, request.at);
+  request.path = path;
+  request.path_type = type;
+  request.path_speed = speed;
+  request.path_wait = wait;
+  request.path_duration = duration;
+  g_pending.push_back(request);
+}
+
 void Request(const std::string& template_name, int player, int count, bool knocked_out, const float* at,
              bool as_cheat) {
   if (template_name.empty() || player < 0 || player > 3) return;
@@ -538,6 +583,149 @@ std::string LastResult() {
   return g_result;
 }
 
+// PLATFORM MESSAGES (2026-11-19, the test course's moving platforms): what a
+// level script's DO_PlatformMessage(<platform>, "NEXT_WAIT_POINT" | "PAUSE" |
+// "CONTINUE" | ...) does (CActionPlatformMessage, vtable 0x8203FB5C, run
+// sub_82296B58): an actor message of kind 0x1A (a CActionPlatform, vtable
+// 0x820217EC; built by sub_820B6C68(message, code), code at +0x10) handed to
+// the platform actor by sub_820B0B70(actor, message), then its parts
+// destroyed (sub_823C9A70 on +0x14, sub_820B8090). The code is the name's hash
+// object (sub_8236ACB8, as the platform's own table of names builds them,
+// sub_820B6CE0). Queued from any thread, sent in Tick.
+struct PlatformMessage {
+  uint32_t actor;
+  std::string name;
+};
+std::vector<PlatformMessage> g_platform_messages;  // under g_mutex
+
+void SendPlatformMessages(PPCContext& ctx, uint8_t* base) {
+  std::vector<PlatformMessage> list;
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    list.swap(g_platform_messages);
+  }
+  if (list.empty()) return;
+  static uint32_t scratch = 0;  // 64-byte message + 8-byte name object + 32-byte name text
+  if (!scratch) scratch = rex::system::kernel_memory()->SystemHeapAlloc(128);
+  if (!scratch) return;
+  for (const PlatformMessage& m : list) {
+    if (m.name.size() >= 31 || !m.actor || !Readable(m.actor, 64)) continue;
+    std::memset(Guest(scratch), 0, 128);
+    std::memcpy(Guest(scratch + 96), m.name.c_str(), m.name.size() + 1);
+    CallGame(__imp__sub_8236ACB8, ctx, base, scratch + 64, scratch + 96);
+    const uint32_t code = Read32(scratch + 64);
+    CallGame(__imp__sub_820B6C68, ctx, base, scratch, code);
+    CallGame(__imp__sub_820B0B70, ctx, base, m.actor, scratch);
+    CallGame(__imp__sub_823C9A70, ctx, base, scratch + 0x14);
+    CallGame(__imp__sub_820B8090, ctx, base, scratch);
+    REXLOG_INFO("Cheats: platform message {} (code {:08X}) sent to {:08X}", m.name, code, m.actor);
+  }
+}
+
+// PATHS FOR SPAWNED PLATFORMS (2026-11-19, findings/69 s.9). A moving
+// platform rides a PATH the level's props script builds right after making
+// it (Desert, L4_R1_MovingPlatform2):
+//   WorldManager:CreatePath('.:L4_R1_MovingPlatform2:L4_R1_MovingPlatform2Path1')
+//   SetPathType(1) SetPathSpeed(0, 10) SetPathRotType(0)
+//   per point: AddPathPoint(name, i, {x, y, z}) SetPathPointDuration(3)
+//              SetPathPointWaitType(3) SetPathPointAdditionalSpeed(0) CompletePoint()
+// The script methods (registered by sub_822F98B8) are thin: CreatePath
+// (sub_822FA1D0) splits the name at its last two colons (sub_822FA0B8: actor =
+// the segment before the last), looks the path up (sub_822FA4C0), else makes
+// one (`new` 0x4C, sub_822FB960; vtable 0x82046CFC, slot 0 = add a reference)
+// and attaches it under the ACTOR'S NAME (sub_822FA2C8: WorldManager +8 map,
+// keyed by sub_8236ACB8(name)). The others write the path (+60 type, +64/+72
+// speed kind / speed, +68 rotation type) or the point (sub_822FBB30: 24 bytes,
+// xyz, +12 duration, +16 additional speed, +20 wait type, default 1).
+// WorldManager = *(*(0x8259B190) + 120). The path goes under the actor's own
+// name object (below), not through CreatePath's name splitting. Wait types seen in the levels:
+// 0 (800 points), 1 (25), 3 (165, the "wait for NEXT_WAIT_POINT" platforms).
+struct PathRequest {
+  uint32_t actor = 0;  // the actor (a spawned platform)
+  std::string actor_name;  // for the log
+  std::vector<std::array<float, 3>> points;
+  int type = 1, speed_kind = 0, wait = 0;
+  float speed = 2.0f, duration = 0.0f;
+};
+std::vector<PathRequest> g_paths;  // under g_mutex
+// actor -> its CPathFollowingBehaviour (NotePathFollower; game's main thread).
+std::map<uint32_t, uint32_t> g_followers;
+
+void MakePaths(PPCContext& ctx, uint8_t* base) {
+  std::vector<PathRequest> list;
+  {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    list.swap(g_paths);
+  }
+  if (list.empty()) return;
+  static uint32_t scratch = 0;  // +0 name object (16), +16 path name, +64 actor name, +192 a point, +232 key (16)
+  if (!scratch) scratch = rex::system::kernel_memory()->SystemHeapAlloc(256);
+  const uint32_t game = Read32(0x8259B190);
+  const uint32_t world = game ? Read32(game + 120) : 0;
+  if (!scratch || !world) return;
+  for (const PathRequest& r : list) {
+    if (!r.actor || !Readable(r.actor, 64) || r.points.empty() || r.points.size() > 100) continue;
+    const std::string path_name = fmt::format("TestCoursePath{:08X}", r.actor);  // one per platform
+    std::memset(Guest(scratch), 0, 256);
+    std::memcpy(Guest(scratch + 16), path_name.c_str(), path_name.size() + 1);
+    CallGame(__imp__sub_8236AC40, ctx, base, scratch, scratch + 16);
+    uint32_t path = CallGame(__imp__sub_822FA4C0, ctx, base, world, scratch);
+    const bool existed = path != 0;
+    // The game's `new` asserts while no heap is chosen (heap 0; sub_823574E8
+    // sets the current one, returns the old): heap 1, as the path's own
+    // constructor uses for its points, for the path AND the attach (its map
+    // insertion allocates too: the first tries asserted there).
+    const uint32_t old_heap = CallGame(__imp__sub_823574E8, ctx, base, 1);
+    if (!path) {
+      path = CallGame(__imp__sub_8227E890, ctx, base, 0x4C);
+      if (path) CallGame(__imp__sub_822FB960, ctx, base, path, scratch);
+    }
+    CallGame(__imp__sub_823C9A70, ctx, base, scratch);
+    if (path && !existed) {
+      // ATTACHED UNDER THE ACTOR'S OWN NAME, built the way its path follower
+      // builds it every frame until it finds one (CPathFollowingBehaviour
+      // Update sub_82158830 -> sub_82158758: sub_8236ABC0(actor +8) ->
+      // sub_8236ABA8 -> sub_822FA460 = the +8 map). First try: the attach with
+      // the template NAME string (sub_822FA2C8 -> sub_8236ACB8) made another
+      // key (a spawned actor's +8 isn't its template's hash): never found.
+      // (sub_8236ABC0 returns the name's TWO words in one 64-bit register and
+      // sub_8236ABA8 stores them: the key is just the actor's 8-byte name at
+      // +8, copied here. A first version took sub_8236ABC0's result through
+      // CallGame, which keeps 32 bits: the first word was lost, the follower's
+      // lookup never matched.)
+      Write32(scratch + 232, Read32(r.actor + 8));
+      Write32(scratch + 236, Read32(r.actor + 12));
+      const uint32_t slot = CallGame(__imp__sub_822FA510, ctx, base, world + 8, scratch + 232);
+      if (slot && !Read32(slot)) Write32(slot, path);
+      CallGame(__imp__sub_823C9A70, ctx, base, scratch + 232);
+      // The follower looks ONCE, at its first update, then clears its "look
+      // for a path" byte (+77, at 0x821587F0) found or not: the platform was
+      // already running. Set again, it looks on its next update and finds this.
+      if (const auto it = g_followers.find(r.actor); it != g_followers.end()) {
+        *Guest(it->second + 77) = 1;
+      } else {
+        REXLOG_WARN("Cheats: path: {:08X} has no path follower seen yet (not a path platform?)", r.actor);
+      }
+      Write32(path + 4, Read32(path + 4) + 1);  // CreatePath's reference (vtable slot 0)
+    }
+    CallGame(__imp__sub_823574E8, ctx, base, old_heap);
+    if (!path) continue;
+    CallGame(__imp__sub_822FBB90, ctx, base, path, uint32_t(r.type));
+    CallGame(__imp__sub_822FBB98, ctx, base, path, uint32_t(r.speed_kind), 0, 0, 0, 0, r.speed);
+    CallGame(__imp__sub_822FBBA8, ctx, base, path, 0);
+    for (const auto& p : r.points) {
+      for (int k = 0; k < 3; ++k) WriteFloat(scratch + 192 + 4 * uint32_t(k), p[k]);
+      const uint32_t point = CallGame(__imp__sub_822FBB30, ctx, base, path, scratch + 192);
+      if (!point) continue;
+      CallGame(__imp__sub_822EAB78, ctx, base, point, 0, 0, 0, 0, 0, r.duration);
+      CallGame(__imp__sub_82240598, ctx, base, point, uint32_t(r.wait));
+      WriteFloat(point + 16, 0.0f);  // SetPathPointAdditionalSpeed(0)
+    }
+    REXLOG_INFO("Cheats: path {:08X} ({} points, type {}, speed {} {:.1f}, wait {}) for {}{}", path, r.points.size(),
+                r.type, r.speed_kind, r.speed, r.wait, r.actor_name, existed ? " (it had one: points added)" : "");
+  }
+}
+
 void Tick(PPCContext& ctx, uint8_t* base, bool in_level) {
   std::vector<Pending> pending;
   {
@@ -551,6 +739,8 @@ void Tick(PPCContext& ctx, uint8_t* base, bool in_level) {
     return;
   }
   for (const Pending& request : pending) Spawn(ctx, base, request);
+  SendPlatformMessages(ctx, base);
+  MakePaths(ctx, base);
   CheckLoading(ctx, base);
   StunPending(ctx, base);
 }
@@ -586,6 +776,26 @@ bool DebugCommand(std::string_view arguments) {
   if (words[0].find(':') == std::string::npos) words[0] = "Characters:" + words[0];
   Request(words[0], player, count, knocked_out, at_spot ? spot : nullptr);
   return true;
+}
+
+void SendPlatformMessage(uint32_t actor, const std::string& name) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_platform_messages.push_back({actor, name});
+}
+
+void MakePath(uint32_t actor, const std::vector<std::array<float, 3>>& points, int type, int speed_kind, float speed,
+              int wait, float duration) {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  g_paths.push_back({actor, fmt::format("{:08X}", actor), points, type, speed_kind, wait, speed, duration});
+}
+
+void NotePathFollower(uint32_t follower, uint32_t actor) {
+  if (actor) g_followers[actor] = follower;
+}
+
+uint32_t LastSpawned() {
+  std::lock_guard<std::mutex> lock(g_mutex);
+  return g_last_spawned;
 }
 
 }  // namespace spawn

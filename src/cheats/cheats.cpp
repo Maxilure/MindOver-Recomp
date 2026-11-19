@@ -5,6 +5,7 @@
 #include "cheats.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <atomic>
 #include <cmath>
@@ -14,6 +15,7 @@
 #include <mutex>
 #include <map>
 #include <set>
+#include <sstream>
 
 #include <rex/logging.h>
 #include <rex/memory.h>
@@ -938,6 +940,31 @@ bool DebugCommand(std::string_view command) {
   else if (verb == "freecam") free_camera::SetEnabled(on);
   else if (verb == "freecam_keys") free_camera::SetKeysMoveCamera(on);
   else if (verb == "freecam_reset") free_camera::ResetToGameCamera();
+  else if (verb == "platform") {
+    // platform <actor hex | last> <NEXT_WAIT_POINT | PAUSE | CONTINUE | ...> (spawn.h)
+    std::istringstream words(std::string(original.substr(original.find("platform") + 8)));
+    std::string who, name;
+    words >> who >> name;
+    const uint32_t actor = who == "last" ? spawn::LastSpawned() : uint32_t(std::strtoul(who.c_str(), nullptr, 16));
+    if (!actor || name.empty()) return false;
+    spawn::SendPlatformMessage(actor, name);
+    return true;
+  }
+  else if (verb == "path") {
+    // path <actor hex | last> <type> <speed> <wait> <duration> <x y z> <x y z> ... (spawn.h MakePath, speed kind 0)
+    std::istringstream words(std::string(original.substr(original.find("path") + 4)));
+    std::string name;
+    int type = 1, wait = 0;
+    float speed = 2.0f, duration = 0.0f;
+    words >> name >> type >> speed >> wait >> duration;
+    std::vector<std::array<float, 3>> points;
+    std::array<float, 3> p;
+    while (words >> p[0] >> p[1] >> p[2]) points.push_back(p);
+    const uint32_t actor = name == "last" ? spawn::LastSpawned() : uint32_t(std::strtoul(name.c_str(), nullptr, 16));
+    if (!actor || points.empty()) return false;
+    spawn::MakePath(actor, points, type, 0, speed, wait, duration);
+    return true;
+  }
   else if (verb == "spawn") {
     const size_t at = original.find("spawn");
     return spawn::DebugCommand(original.substr(at + 5));

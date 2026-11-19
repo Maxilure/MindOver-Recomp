@@ -95,7 +95,7 @@ constexpr Lane kLanes[] = {
     // GAPS (2026-11-19): two pads with nothing between them; the course's
     // OBJECTS (kObjects below) go into them: a rope to swing across, a
     // platform to land on. A miss falls onto the catch floor.
-    {"ropegap", Kind::kGap, 6},       {"platgap", Kind::kGap, 8},
+    {"ropegap", Kind::kGap, 6},       {"platgap", Kind::kGap, 8},       {"movegap", Kind::kGap, 12},
 };
 constexpr int kStairCount = 10;
 // Where lane k starts (its -x, -z corner). The first ten side by side from
@@ -639,11 +639,18 @@ struct CourseObject {
   const char* lane;      // the gap lane it goes into (its middle)
   const char* template_name;
   double height;         // its spot above kBase
+  double travel = 0.0;   // a MOVING platform: shuttles this far each way of the gap's middle (along x)
 };
 constexpr CourseObject kObjects[] = {
     {"ropegap", "WorldObjects:HangingRope", 14.0},  // bottom ~1 unit below the pads (15 long)
     {"platgap", "StaticProps:env_Whumpa:prp_pformL1_platformA", -0.5},
+    // MOVING (findings/69 s.9): Desert's floating platform (a plain Platform: it
+    // rides a path, L4_R1_MovingPlatform2 in Desert's props script), top ~0.5
+    // above its spot; shuttles 3 units each way of the gap's middle, 2 units/s.
+    {"movegap", "StaticProps:env_Desert:prp_pformFloating_Desert", -0.5, 3.0},
 };
+constexpr int kMovingPathType = 2;      // SetPathType (0 / 1 / 2 in the levels)
+constexpr float kMovingSpeed = 2.0f;    // SetPathSpeed(0, 2): the levels' most used speed
 constexpr double kObjectsAfterSpawn = 2.0;  // seconds of game time after player 1's Crash exists
 
 int g_frames_in_play = -1;     // frames since player 1's Crash appeared, -1 = not in play
@@ -693,7 +700,19 @@ void Tick(bool in_play, double frame_seconds, const float* player1) {
       if (std::string(l.name) != o.lane) continue;
       const float at[3] = {float(LaneX0(k) + kPad + ProfileOf(l).run / 2), float(kBase + o.height),
                            float(LaneZ0(k) + kWidth / 2)};
-      spawn::Request(o.template_name, 0, 1, false, at, /*as_cheat=*/false);
+      if (o.travel > 0.0) {
+        // A path is followed RELATIVE to where the platform starts (its first
+        // point = its spot), and this type loops by jumping back to the first
+        // point at the end: so it starts at one end (A) and goes A -> B -> A,
+        // the jump back landing where it is (measured: points 352.5 / 359.5 for
+        // a platform made at 356 ran 356.5 -> 362.6, then jumped back).
+        const float a[3] = {at[0] - float(o.travel), at[1], at[2]};
+        const std::vector<std::array<float, 3>> path = {
+            {a[0], a[1], a[2]}, {at[0] + float(o.travel), at[1], at[2]}, {a[0], a[1], a[2]}};
+        spawn::RequestWithPath(o.template_name, a, path, kMovingPathType, kMovingSpeed, 0, 0.0f);
+      } else {
+        spawn::Request(o.template_name, 0, 1, false, at, /*as_cheat=*/false);
+      }
       REXLOG_INFO("Test course: {} placed in lane {} at {:.2f} {:.2f} {:.2f}", o.template_name, l.name, at[0], at[1],
                   at[2]);
     }

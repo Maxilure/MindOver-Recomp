@@ -185,6 +185,7 @@
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
+#include "cheats/spawn.h"  // NotePathFollower (the test course's moving platform)
 #include "fixed_step.h"  // logic_rate
 #include "guest_memory.h"
 
@@ -567,6 +568,7 @@ double PhysicsFrameTime(uint32_t physics) {
 
 extern "C" REX_FUNC(__imp__sub_82158830);
 extern "C" REX_FUNC(sub_82158830) {
+  spawn::NotePathFollower(ctx.r3.u32, ctx.r4.u32);  // (spawned platforms' paths: cheats/spawn.h)
   const double saved = ground_physics::g_path_frame_time;
   ground_physics::g_path_frame_time = ctx.f1.f64;
   __imp__sub_82158830(ctx, base);

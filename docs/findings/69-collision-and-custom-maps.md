@@ -282,7 +282,79 @@ x 344, z -470 (ropegap) and -461 (platgap), east of the courtyard copy.
 | Jump from `platgap`'s start | Crash standing on the platform in the gap |
 | Online, two copies, own cameras: host does the rope jump, guest joins | the course and its objects alike on both PCs; player 1 on the rope at the same spot; world and controllers identical on all 1,306 frames |
 
-Still to do: moving platforms (the movement the level scripts give them),
-climbing walls (is "climbable" a surface material?), harpoon targets, a
+Still to do: ~~moving platforms~~ (section 9), climbing walls (is "climbable" a surface material?), harpoon targets, a
 second player away from the first in these tests.
+
+## 9. A moving platform: a path made by the port
+
+**Why:** moving platforms carry the player at a frame-rate-dependent speed
+(findings/22 s.9 fixed one soft-lock of that kind); the course needs one to
+probe them at 30, 60 and 180 fps.
+
+**How a level moves one.** A plain `Platform` template doesn't move by
+itself: its `CPathFollowingBehaviour` rides a PATH that the level's props
+script builds right after making it (Desert, `L4_R1_MovingPlatform2`):
+
+    WorldManager:CreatePath('.:L4_R1_MovingPlatform2:L4_R1_MovingPlatform2Path1')
+    SetPathType(1) SetPathSpeed(0, 10) SetPathRotType(0)
+    per point: AddPathPoint(name, i, {x, y, z}) SetPathPointDuration(3)
+               SetPathPointWaitType(3) SetPathPointAdditionalSpeed(0) CompletePoint()
+
+The script methods (registered by `sub_822F98B8`) are thin wrappers:
+
+| Script method | Game function | What it does |
+| --- | --- | --- |
+| `CreatePath` | `sub_822FA1D0` | splits the name at its last two colons (actor = the segment before the last), looks the path up (`sub_822FA4C0`), else `new` 0x4C bytes + constructor `sub_822FB960` (vtable `0x82046CFC`, room for 100 points) and attaches it under the actor's name (`sub_822FA2C8`) |
+| `SetPathType` / `SetPathSpeed` / `SetPathRotType` | `sub_822FBB90` / `sub_822FBB98` / `sub_822FBBA8` | path +60 type, +64/+72 speed kind and speed, +68 rotation type |
+| `AddPathPoint` | `sub_822FBB30` | a 24-byte point: xyz, +12 duration, +16 additional speed, +20 wait type (default 1) |
+| `SetPathPointDuration` / `SetPathPointWaitType` | `sub_822EAB78` / `sub_82240598` | the point's +12 / +20 |
+
+The paths live in a map at WorldManager (`*(*(0x8259B190) + 120)`) +8,
+keyed by the actor's 8-byte name object. Wait types in the levels: 0 (800
+points), 1 (25), 3 (165: the platforms that wait for a
+`DO_PlatformMessage(..., "NEXT_WAIT_POINT")`).
+
+**Three traps on the way:**
+
+* The game's `new` asserts while no heap is chosen: the path and its map
+  insertion are made under heap 1 (`sub_823574E8`), as the path's own
+  constructor uses for its points.
+* The key is the actor's own name object (its +8 and +12 words), as the
+  follower builds it every frame (`sub_82158830` -> `sub_82158758`). A
+  spawned actor's name isn't its template's hash, so attaching under the
+  template name never matched. (`sub_8236ABC0` returns those two words in
+  ONE 64-bit register: a call that keeps 32 bits lost the first word.)
+* The follower looks for its path ONCE, at its first update, then clears
+  its "look for a path" byte (+77, at `0x821587F0`) found or not. The
+  platform is already running when the path is made, so the byte is set
+  again; the follower finds the path on its next update.
+
+A path is followed RELATIVE to where the platform starts (its first point =
+its spot). Type 2 loops by jumping back to the first point at the end, so
+the course's path is A -> B -> A with the platform made at A: the jump back
+lands where it already is.
+
+**In the course** (`--test_course`): lane `movegap` (a 12-unit gap), the
+Desert's floating platform `StaticProps:env_Desert:prp_pformFloating_Desert`
+(its own GlobalPackages group, loads anywhere), shuttling 3 units each way
+of the gap's middle at 2 units/s (`SetPathSpeed(0, 2)`, the levels' most
+used speed). The console got `cheat path <actor|last> <type> <speed> <wait>
+<duration> <x y z>...` and `cheat platform <actor|last> <message>` (a level
+script's `DO_PlatformMessage`: the actor message 0x1A built by
+`sub_820B6C68`, handed over by `sub_820B0B70`).
+Sent to the course's platform, PAUSE and CONTINUE arrive (the log names
+their codes) but change nothing: it keeps moving. Which behaviour reads
+them, and whether it needs a waiting path (wait type 3), is still open.
+
+![Crash riding the course's moving platform](../images/test-course-moving-platform.jpg)
+
+| Test (fixed step, console) | 30 fps | 60 fps | 180 fps |
+| --- | --- | --- | --- |
+| Platform's run | 353.07 .. 358.93, 2.0 units/s, one loop 6.6 s | same | same |
+| Crash put on it, 7 s watched | rides, height 20.009 steady, no slip against the platform | same | same |
+| Timed jumps from the start pad (8, stick aimed down the lane) | 2 land on it and ride, 6 fall onto the catch floor | | |
+
+So the platform carries Crash the same way at every frame rate tested. Next:
+what the platform messages need, a platform that waits (wait type 3 + `NEXT_WAIT_POINT`), vertical travel
+(lifts: landing on a rising floor), and the same probes with titans.
 
