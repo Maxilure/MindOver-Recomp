@@ -36,6 +36,7 @@ extern "C" REX_FUNC(__imp__sub_822E4650);  // inventory: give the reference back
 extern "C" REX_FUNC(__imp__sub_8213E6D0);  // the next fight tree's START STATE (r3 = name object)
 extern "C" REX_FUNC(__imp__sub_8236ACB8);  // name object (r3 = 8 bytes) from a C string (r4)
 extern "C" REX_FUNC(__imp__sub_820B6C68);  // CActionPlatform message (r3 = 40 bytes, r4 = code)
+extern "C" REX_FUNC(__imp__sub_820B6CE0);  // platform message NAME object (r3) -> its code (4..21, -1 unknown)
 extern "C" REX_FUNC(__imp__sub_820B0B70);  // hand an actor message to an actor (r3 actor, r4 message)
 extern "C" REX_FUNC(__imp__sub_823C9A70);  // a message's name part, destroyed
 extern "C" REX_FUNC(__imp__sub_820B8090);  // an actor message, destroyed
@@ -589,9 +590,17 @@ std::string LastResult() {
 // sub_82296B58): an actor message of kind 0x1A (a CActionPlatform, vtable
 // 0x820217EC; built by sub_820B6C68(message, code), code at +0x10) handed to
 // the platform actor by sub_820B0B70(actor, message), then its parts
-// destroyed (sub_823C9A70 on +0x14, sub_820B8090). The code is the name's hash
-// object (sub_8236ACB8, as the platform's own table of names builds them,
-// sub_820B6CE0). Queued from any thread, sent in Tick.
+// destroyed (sub_823C9A70 on +0x14, sub_820B8090). The code is a small
+// number, made from the name by sub_820B6CE0 (function-local name objects
+// built by sub_8236ACB8, compared in turn): NEXT_WAIT_POINT 4, PAUSE 5,
+// CONTINUE 6, ROTATION_SPEED1 7, ROTATION_SPEED2 8, RESET 9,
+// IS_CRASH_ATTACHED 10, IS_NPC_ATTACHED 13, ROT_SPEED 14, SOUND 15,
+// GO_NORTH..GO_DOWN 16-21, anything else -1. The path follower's message
+// slot (sub_82158DE8, vtable 0x8202FA1C slot 5) switches on it: 4 -> +0x50 = 1,
+// 5 -> 2, 9 -> 3, 6 -> sub_822922E8, 16-21 -> their moves. (The first
+// version sent the name's HASH word as the code: the follower's switch
+// matched nothing, PAUSE and CONTINUE changed nothing.) Queued from any
+// thread, sent in Tick.
 struct PlatformMessage {
   uint32_t actor;
   std::string name;
@@ -613,12 +622,17 @@ void SendPlatformMessages(PPCContext& ctx, uint8_t* base) {
     std::memset(Guest(scratch), 0, 128);
     std::memcpy(Guest(scratch + 96), m.name.c_str(), m.name.size() + 1);
     CallGame(__imp__sub_8236ACB8, ctx, base, scratch + 64, scratch + 96);
-    const uint32_t code = Read32(scratch + 64);
+    const uint32_t code = CallGame(__imp__sub_820B6CE0, ctx, base, scratch + 64);
+    CallGame(__imp__sub_823C9A70, ctx, base, scratch + 64);  // the name object, destroyed
+    if (code == 0xFFFFFFFFu) {
+      REXLOG_WARN("Cheats: platform message {}: not a name the game knows", m.name);
+      continue;
+    }
     CallGame(__imp__sub_820B6C68, ctx, base, scratch, code);
     CallGame(__imp__sub_820B0B70, ctx, base, m.actor, scratch);
     CallGame(__imp__sub_823C9A70, ctx, base, scratch + 0x14);
     CallGame(__imp__sub_820B8090, ctx, base, scratch);
-    REXLOG_INFO("Cheats: platform message {} (code {:08X}) sent to {:08X}", m.name, code, m.actor);
+    REXLOG_INFO("Cheats: platform message {} (code {}) sent to {:08X}", m.name, code, m.actor);
   }
 }
 

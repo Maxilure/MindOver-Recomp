@@ -342,9 +342,16 @@ used speed). The console got `cheat path <actor|last> <type> <speed> <wait>
 <duration> <x y z>...` and `cheat platform <actor|last> <message>` (a level
 script's `DO_PlatformMessage`: the actor message 0x1A built by
 `sub_820B6C68`, handed over by `sub_820B0B70`).
-Sent to the course's platform, PAUSE and CONTINUE arrive (the log names
-their codes) but change nothing: it keeps moving. Which behaviour reads
-them, and whether it needs a waiting path (wait type 3), is still open.
+The message carries a small CODE, not the name: `sub_820B6CE0` turns the
+name object into it (NEXT_WAIT_POINT 4, PAUSE 5, CONTINUE 6,
+ROTATION_SPEED1 7, ROTATION_SPEED2 8, RESET 9, IS_CRASH_ATTACHED 10,
+IS_NPC_ATTACHED 13, ROT_SPEED 14, SOUND 15, GO_NORTH .. GO_DOWN 16-21, any
+other name -1), and the path follower's message slot (`sub_82158DE8`,
+vtable `0x8202FA1C` slot 5) switches on it: 4 / 5 / 9 set its +0x50 to
+1 / 2 / 3, 6 calls `sub_822922E8`, 16-21 their own moves. (A first version
+sent the name's hash word: nothing matched, nothing happened.) On the
+course's platform: PAUSE holds it still (357.668 for 2.3 s), CONTINUE
+starts it again at 2 units/s; an unknown name is refused in the log.
 
 ![Crash riding the course's moving platform](../images/test-course-moving-platform.jpg)
 
@@ -355,6 +362,6 @@ them, and whether it needs a waiting path (wait type 3), is still open.
 | Timed jumps from the start pad (8, stick aimed down the lane) | 2 land on it and ride, 6 fall onto the catch floor | | |
 
 So the platform carries Crash the same way at every frame rate tested. Next:
-what the platform messages need, a platform that waits (wait type 3 + `NEXT_WAIT_POINT`), vertical travel
+a platform that waits (wait type 3 + `NEXT_WAIT_POINT`), vertical travel
 (lifts: landing on a rising floor), and the same probes with titans.
 
