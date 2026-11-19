@@ -76,6 +76,12 @@
 //     -0.4  tree: on ground     +0.0  reach check drops the contact
 //    +15.3  tree: NOT on ground -> fall      +16.5  sweep: ground again
 //
+// WHY IT STAYS ON (2026-11-19, findings/69 s.5): slopes are fixed at the source
+// by ground_triangle_handover (end of this file), but REAL STEPS are not: on
+// the test course's stairs, with the grace off, walking down 0.25-unit steps at
+// 180 fps loses the ground 21 times for one frame each, at 30 fps never. The
+// grace hides those until a step-down fix at the source exists.
+//
 // THE FIX (--ground_grace_ms, default 40, 0 = off; nothing changes at
 // --fps_cap=30): for up to that long (see GraceTime) after the reach
 // check drops a character's ground contact, every caller of IsOnGround

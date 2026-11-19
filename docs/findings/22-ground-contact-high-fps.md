@@ -13,7 +13,9 @@ that picks Crash's moves never notices. At 60 fps the same moment spans two
 frames, the move logic asks in between, hears "not on ground" and starts the
 fall. The fix (`--ground_grace_ms`, 40 by default) hides a lost ground
 contact from the game logic for a little longer than one original frame.
-The physics itself is untouched.
+On bumpy slopes the real cause turned out to be the reach check holding one
+triangle; section 11's handover fixes that at the source. On real steps the
+grace is still what hides the losses (findings/69 s.5).
 
 ## 1. How the physics keeps a character on the ground
 
@@ -388,6 +390,43 @@ missed steep parts of the slope that the game still calls ground (old
 triangle at 0.59-0.63), hence the game's own threshold.
 
 The trace has an `H` line per handover (old triangle, the one kept or -1,
-neighbours tried / skipped). The ground grace (section 5) stays on for now:
-it also covers real small step-downs (stairs), which the handover doesn't
-touch. Whether it can go is the next playtest question.
+neighbours tried / skipped).
+
+### The stair-like descent is the same slope
+
+The ground traces from the first reports (section 5, the "stairs") put
+every heard loss between (264, 30.6, -126.1) and (268, 25.4, -117.2): the
+same courtyard descent as section 10's slope, seen from other directions.
+So the handover is a fix for the original report too. Checked with exact
+replays from the top of the descent, ground grace OFF, 16 walks (run and
+walk, 8 stick directions, 3.5 s each):
+
+| | 180 fps, no handover | 60 fps, handover | 180 fps, handover |
+|---|---|---|---|
+| walks with split-second ground losses on the slope | 3 of 16 (5 losses on each of the two downhill runs, 22-106 ms) | 0 | 0 |
+| falls off the real ledge (6-8.6 units) | 3 | 4 | 3 |
+
+At 180 fps one walk loses the ground for single frames (6 ms) three times
+right at the ledge lip, a few frames before walking off it, with or
+without the handover: too short to see.
+
+Random play over the courtyard (`gen1.py`: 90 s each, 3 seeds, stick
+wandering, jumps, attacks; ~230 units walked per run, the three frame
+rates following nearly the same path), ground grace off. A "short" loss is
+one under 150 ms that drops less than 0.6 units, the kind that showed as a
+split-second fall:
+
+| | 30 fps (original) | 60 fps | 180 fps |
+|---|---|---|---|
+| short ground losses, 3 runs | 2 (33 and 100 ms) | 0 | 0 |
+
+With the handover, above 30 fps the move logic hears no more split-second
+losses than the original does at 30 fps, without the ground grace. For the
+slopes, the grace is no longer needed.
+
+**But real steps still need it (findings/69 s.5):** the test course has
+REAL stairs, which the courtyard doesn't. On them the handover changes
+nothing, and high frame rates give more split-second losses than 30 fps
+(walking down 0.25 steps at 180 fps: 21 one-frame losses, at 30: none). The
+grace hides those, so it stays on (40 ms) until a step-down fix at the
+source exists.

@@ -90,6 +90,7 @@
 #include "options/options_settings.h"
 #include "saves/rename_screen.h"
 #include "game_bugs/game_bugs.h"
+#include "world/test_course.h"
 #include "saves/save_library.h"
 #include "saves/save_screen_waits.h"
 #include "native/native_window.h"
@@ -319,6 +320,8 @@ class CrashMomApp : public rex::ReXApp {
     font_letters::Register();
     // Bugs of the original game fixed in its data (game_bugs/game_bugs.h).
     game_bugs::Register();
+    // The invisible test course for frame-rate probes, when --test_course is on (world/test_course.h).
+    test_course::Register();
     data_patcher::Install();
     // The frame-rate counter (fps_overlay.h): its frame listener.
     fps_overlay::Install();

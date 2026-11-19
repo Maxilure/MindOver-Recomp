@@ -61,6 +61,7 @@ set(CRASHMOM_SOURCES
     src/system/system_messages.cpp   # XMsg*: dashboard music player + rich presence answered by the port
     src/system/system_popups.cpp     # last pop-ups (notification position, disc error box) + WSAStartup answered by the port
     src/world/zone_lists.cpp     # every character in an area drawn: the zones' 32-character lists grow
+    src/world/test_course.cpp    # dev: an invisible test course (ramps, stairs) for frame-rate probes (findings/69)
     src/ground_physics.cpp       # above 30 fps: keeps characters on bumpy ground; --debug_ground_trace
     src/png_writer.cpp           # tiny dependency-free PNG writer (F10 photos)
     src/guest_memory.cpp         # guest_memory::Readable: committed pages only (issue #25)

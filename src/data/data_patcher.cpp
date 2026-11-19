@@ -199,7 +199,50 @@ bool ReadArchiveFile(std::string_view name, Bytes* out, std::string* error) {
                          error);
 }
 
+}  // namespace data_patcher
+
+// DEV: a whole data file replaced by a prepared one (2026-11-19, findings/69: the test course was first made by
+// notes/scratch-tools/maps/p3d_patch.py before it became C++). "<category>:<name>=<file>", several separated by
+// ';', e.g. "15:L1/9db06066=/tmp/course.p3d" (category + name as --debug_data_paths logs them). The file must be
+// made from the player's own disc data (never shipped). Off = empty.
+REXCVAR_DEFINE_STRING(debug_data_file, "", "CrashMoM",
+                      "Debug: serve prepared files in place of game data files: "
+                      "\"<category>:<name>=<file>[;...]\" (src/data/data_patcher.cpp)");
+
+namespace data_patcher {
+
+// Registers one "replace with this file" patch per --debug_data_file entry.
+static void RegisterFileReplacements() {
+  std::string spec = REXCVAR_GET(debug_data_file);
+  size_t start = 0;
+  while (start < spec.size()) {
+    size_t end = spec.find(';', start);
+    if (end == std::string::npos) end = spec.size();
+    const std::string entry = spec.substr(start, end - start);
+    start = end + 1;
+    const size_t colon = entry.find(':'), equals = entry.find('=');
+    if (colon == std::string::npos || equals == std::string::npos || equals < colon) {
+      REXLOG_WARN("Data patch: --debug_data_file entry '{}' isn't <category>:<name>=<file>", entry);
+      continue;
+    }
+    const uint32_t category = uint32_t(std::strtoul(entry.substr(0, colon).c_str(), nullptr, 10));
+    const std::string name = entry.substr(colon + 1, equals - colon - 1);
+    const std::string file = entry.substr(equals + 1);
+    Register("file " + file, category, name, [file](const Bytes&, Bytes* patched) {
+      std::ifstream in(file, std::ios::binary);
+      if (!in) {
+        REXLOG_WARN("Data patch: can't read {}", file);
+        return false;
+      }
+      patched->assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+      return !patched->empty();
+    });
+    REXLOG_INFO("Data patch: {} {} will be {}", category, name, file);
+  }
+}
+
 void Install() {
+  RegisterFileReplacements();
   auto* runtime = rex::Runtime::instance();
   auto* vfs = runtime ? runtime->file_system() : nullptr;
   if (!vfs || runtime->cache_root().empty() || g_patches.empty()) {
