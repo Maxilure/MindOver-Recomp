@@ -387,3 +387,33 @@ load's many commits read a longer file. `mprotect` already refuses (ENOMEM,
 changing nothing) a range with unmapped pages, so the check went: SDK patch
 `0018-commit-without-proc-maps`. The same load now takes 0.37 s.
 
+## 8. Test recordings: marks, spawn lines, game-time stamps (2026-11-19)
+
+Some places can't be reached from a save (a rope, a climbing wall, a moving
+platform: the totems are far from them). For those a PLAYED session is the
+test: recorded, then replayed, offline or online on two copies.
+
+* `tools/play.sh --record-test` runs the game on a fixed 60 Hz clock from
+  launch (`--fixed_step=60 --fps_cap=60`, ground grace off, the co-op camera
+  following only player 1: `debug_camera_player1_only`, online branch).
+* With the fixed step on, the recording's times are GAME time
+  (frame x 1000 / 60), not wall-clock ms: every change lands on the frame
+  it was read in.
+* After each load the recording gets `# spawn <ms>`: where an `onspawn`
+  replay of it starts (player 1's Crash + 1.5 s).
+* F1 Tools -> **Mark this spot** (quick key F7) or console `mark [note]`
+  writes `# mark <ms> <n> <note> | p1 x y z | ...`. A game-frame replay
+  passing a mark logs `Input replay: at mark ...: player 1 at ..., recorded
+  ... (N units apart)`: whether the replay still follows the session.
+
+| Replay of a 15 s two-player recording (save 5) | Player 1 off at the last mark |
+| --- | --- |
+| offline, same build | 0.00-0.01 units |
+| online, shared camera | 0.04 |
+| online, own cameras, recorded with the usual co-op camera | 0.69-0.96 |
+| online, own cameras, recorded with the camera on player 1 only | 0.07 |
+
+The third row: online, player 1's stick turns by the host's own camera,
+which frames only player 1; the recording's camera framed both players.
+Recording with that same camera removes the difference.
+

@@ -1125,6 +1125,12 @@ std::string Run(std::string_view line) {
   if (verb == "wait") return Wait(w);
   if (verb == "photo") return Photo();
   if (verb == "replay") return ReplayCommand(w);
+  if (verb == "mark") {  // mark [note]: a "# mark" line in the input recording (input_record.h)
+    const size_t at = line.find("mark");
+    std::string note = at == std::string::npos ? "" : std::string(line.substr(at + 4));
+    note.erase(0, note.find_first_not_of(' '));
+    return input_record::MarkSpot(note);
+  }
   if (verb == "watch") return WatchCommand(w);
   if (verb == "pos") return PosCommand(w);
   if (verb == "who") return WhoCommand(w);

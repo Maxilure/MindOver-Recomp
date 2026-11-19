@@ -8,6 +8,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -52,6 +53,29 @@ struct Pad {
 
 // --- recording (game thread only) ---------------------------------------------
 
+// A line's time. With the fixed step on (fixed_step.h) it is GAME time:
+// frame x 1000 / fps, so a recording made with --fixed_step from launch puts
+// every change on the frame it was read in and a replay of it (counted in game
+// frames) gets it on that same game time. Without it: real ms since launch.
+int64_t RecordMs() {
+  const int32_t fps = fixed_step::Fps();
+  if (fixed_step::Active() && fps > 0) return int64_t(fixed_step::Frame()) * 1000 / fps;
+  return NowMs();
+}
+
+// MARKS (2026-11-19, for online test replays of hard-to-save places: a rope,
+// a climbing wall): F1 Tools "Mark this spot" / console `mark [note]` (any
+// thread) queue one; the game thread writes it as a comment line (replays skip
+// "#" lines) with the players' positions:
+//     # mark <ms> <number> <note> | p1 <x> <y> <z> | p2 ...
+std::mutex g_marks_mutex;
+std::vector<std::string> g_pending_marks;
+int g_marks = 0;
+// SPAWN LINES: "# spawn <ms>" = where an `onspawn` replay of this recording
+// starts (kSpawnLead after player 1's Crash first exists after a load; fixed
+// step on). Watched by OnPass.
+bool g_rec_spawn_seen = false;
+
 std::FILE* g_file = nullptr;
 bool g_tried_open = false;
 Pad g_last[kPlayers];
@@ -60,6 +84,9 @@ uint32_t g_fe_exits = 0;
 int64_t g_last_flush_ms = 0;
 
 uint16_t U16(const uint8_t* p) { return uint16_t(p[0] << 8 | p[1]); }
+
+void OnPass();
+void WritePendingMarks();
 
 void Open() {
   g_tried_open = true;
@@ -77,12 +104,14 @@ void Open() {
                "# <ms since launch> <player> <buttons> <LT> <RT> <LX> <LY> <RX> <RY> | <ms> <player> off"
                " | <ms> fe <front end state>\n");
   REXLOG_INFO("Input record: {}", path.string());
+  fixed_step::SetPassListener(&OnPass);  // spawn lines + marks (fixed step on)
 }
 
 void Record(uint32_t player, const Pad& pad) {
   if (!g_tried_open) Open();
   if (!g_file) return;
-  const int64_t now = NowMs();
+  WritePendingMarks();
+  const int64_t now = RecordMs();
   // The front end's position first (an exit since the last line).
   const auto fe = fight_tree::CurrentFrontEnd();
   if (fe.exits != g_fe_exits) {
@@ -100,9 +129,9 @@ void Record(uint32_t player, const Pad& pad) {
                  b[2], b[3], int16_t(U16(b + 4)), int16_t(U16(b + 6)), int16_t(U16(b + 8)),
                  int16_t(U16(b + 10)));
   }
-  if (now - g_last_flush_ms > 1000) {  // a crash loses at most a second
+  if (NowMs() - g_last_flush_ms > 1000) {  // a crash loses at most a second
     std::fflush(g_file);
-    g_last_flush_ms = now;
+    g_last_flush_ms = NowMs();
   }
 }
 
@@ -114,9 +143,20 @@ struct Entry {
 };
 
 std::mutex g_replay_mutex;
+// A "# mark" line of the recording (MarkSpot): when a game-frame replay passes
+// its time, the log shows where player 1 is now next to where they were then.
+struct Mark {
+  int64_t ms = 0;
+  std::string text;      // "<number> <note>"
+  bool have_p1 = false;
+  float p1[3] = {};
+};
+
 struct Replay {
   bool running = false;
   std::string path;
+  std::vector<Mark> marks;  // in time order
+  size_t next_mark = 0;
   std::vector<Entry> entries[kPlayers];  // per player, in time order
   size_t cursor[kPlayers] = {};          // the entry in force
   int64_t from_ms = 0, to_ms = 0;        // recording times
@@ -158,11 +198,29 @@ void SetBE16(uint8_t* p, int v) {
   p[1] = uint8_t(v);
 }
 
-void Load(const std::string& path, std::vector<Entry> (&out)[kPlayers]) {
+void Load(const std::string& path, std::vector<Entry> (&out)[kPlayers], std::vector<Mark>* marks = nullptr) {
   std::ifstream in(path);
   if (!in) throw std::runtime_error("can't read " + path);
   std::string line;
   while (std::getline(in, line)) {
+    if (marks && line.rfind("# mark ", 0) == 0) {
+      // "# mark <ms> <n> <note> | p1 x y z | ..."
+      Mark m;
+      std::istringstream words(line.substr(7));
+      long long ms;
+      if (!(words >> ms)) continue;
+      m.ms = ms;
+      std::string rest;
+      std::getline(words, rest);
+      const size_t bar = rest.find(" | p1 ");
+      m.text = rest.substr(rest.find_first_not_of(' '), bar == std::string::npos ? std::string::npos : bar - 1);
+      if (bar != std::string::npos) {
+        std::istringstream xyz(rest.substr(bar + 6));
+        m.have_p1 = bool(xyz >> m.p1[0] >> m.p1[1] >> m.p1[2]);
+      }
+      marks->push_back(m);
+      continue;
+    }
     if (line.empty() || line[0] == '#') continue;
     std::istringstream words(line);
     long long ms;
@@ -251,11 +309,89 @@ void RestartPadPollRhythm() {
 // Every main-loop pass while the fixed step is on (fixed_step::SetPassListener):
 // an on_spawn replay notes the frame player 1's Crash first exists. Checked
 // every frame: the game doesn't read the pads every frame.
+// A player's position (their character's world matrix: actor +44, position
+// at +48), or false.
+bool PlayerPosition(int p, float xyz[3]) {
+  uint8_t* base = g_base.load(std::memory_order_relaxed);
+  const uint32_t actor = more_players::CharacterOfPlayer(p);
+  if (!base || !actor) return false;
+  auto load32 = [&](uint32_t a) {
+    uint32_t v;
+    std::memcpy(&v, GuestPtr(base, a), 4);
+    return __builtin_bswap32(v);
+  };
+  const uint32_t matrix = load32(actor + 44);
+  if (!matrix) return false;
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = load32(matrix + 48 + 4 * i);
+    std::memcpy(&xyz[i], &w, 4);
+  }
+  return true;
+}
+
+void WritePendingMarks() {
+  if (!g_file) return;
+  std::vector<std::string> notes;
+  {
+    std::lock_guard lock(g_marks_mutex);
+    notes.swap(g_pending_marks);
+  }
+  for (const std::string& note : notes) {
+    std::string where;
+    for (int p = 0; p < kPlayers; ++p) {
+      float xyz[3];
+      if (PlayerPosition(p, xyz)) where += fmt::format(" | p{} {:.2f} {:.2f} {:.2f}", p + 1, xyz[0], xyz[1], xyz[2]);
+    }
+    const int64_t ms = RecordMs();
+    ++g_marks;
+    std::fprintf(g_file, "# mark %lld %d %s%s\n", (long long)ms, g_marks, note.empty() ? "-" : note.c_str(),
+                 where.c_str());
+    std::fflush(g_file);
+    REXLOG_INFO("Input record: mark {} at {} ms ({}){}", g_marks, ms, note.empty() ? "no note" : note, where);
+  }
+}
+
 void OnPass() {
+  // The recording's own part (spawn lines, marks).
+  if (g_file) {
+    WritePendingMarks();
+    if (!more_players::InPlay()) {
+      g_rec_spawn_seen = false;
+    } else if (!g_rec_spawn_seen && more_players::CharacterOfPlayer(0)) {
+      g_rec_spawn_seen = true;
+      const int32_t fps = fixed_step::Fps();
+      if (fps > 0) {
+        const int64_t start = (int64_t(fixed_step::Frame()) + int64_t(kSpawnLead * fps)) * 1000 / fps;
+        std::fprintf(g_file, "# spawn %lld (an onspawn replay of this recording starts here; fixed step %d)\n",
+                     (long long)start, fps);
+        std::fflush(g_file);
+        REXLOG_INFO("Input record: player 1's Crash is here: onspawn replays of this recording start at {} ms", start);
+      }
+    }
+  }
   if (!g_replay_running.load(std::memory_order_relaxed)) return;
   std::lock_guard lock(g_replay_mutex);
   Replay& r = g_replay;
-  if (!r.running || !r.on_spawn) return;
+  if (!r.running) return;
+  // The recording's marks this replay has reached (game-frame replays).
+  if (r.fps && r.base_frame >= 0) {
+    const int64_t t = r.from_ms + (int64_t(fixed_step::Frame()) - r.base_frame) * 1000 / r.fps;
+    while (r.next_mark < r.marks.size() && r.marks[r.next_mark].ms <= t) {
+      const Mark& m = r.marks[r.next_mark++];
+      if (m.ms < r.from_ms) continue;
+      float now[3];
+      if (m.have_p1 && PlayerPosition(0, now)) {
+        const float dx = now[0] - m.p1[0], dy = now[1] - m.p1[1], dz = now[2] - m.p1[2];
+        REXLOG_INFO("Input replay: at mark {}: player 1 at {:.2f} {:.2f} {:.2f}, recorded {:.2f} {:.2f} {:.2f} "
+                    "({:.2f} units apart)",
+                    m.text, now[0], now[1], now[2], m.p1[0], m.p1[1], m.p1[2],
+                    std::sqrt(dx * dx + dy * dy + dz * dz));
+      } else {
+        REXLOG_INFO("Input replay: at mark {}", m.text);
+      }
+    }
+  }
+  if (!r.on_spawn) return;
   if (r.spawn_frame >= 0) {
     // The replay's first frame: the pads' poll rhythm starts here too.
     if (int64_t(fixed_step::Frame()) == r.spawn_frame + int64_t(kSpawnLead * r.fps)) {
@@ -396,7 +532,7 @@ std::string StartReplay(const std::string& path, int64_t from_ms, int64_t to_ms,
   r.aligned = !raw;
   r.on_level = on_level;
   r.on_spawn = on_spawn;
-  Load(path, r.entries);
+  Load(path, r.entries, &r.marks);
   int64_t first = INT64_MAX, last = INT64_MIN;
   int players = 0;
   for (const auto& list : r.entries) {
@@ -437,6 +573,15 @@ std::string StartReplay(const std::string& path, int64_t from_ms, int64_t to_ms,
   }
   REXLOG_INFO("Input replay: {}", reply.substr(0, reply.size() - 1));
   return reply;
+}
+
+std::string MarkSpot(const std::string& note) {
+  if (!g_file) return "not recording (no session log, or --debug_input_record=false)\n";
+  {
+    std::lock_guard lock(g_marks_mutex);
+    g_pending_marks.push_back(note);
+  }
+  return "marked (written at the next frame)\n";
 }
 
 std::string StopReplay() {

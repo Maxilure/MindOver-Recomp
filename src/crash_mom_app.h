@@ -75,6 +75,7 @@
 #include "input/players.h"
 #include "native/native_renderer.h"
 #include "overlay_banner.h"
+#include "input_record.h"
 #include "achievements/achievements.h"
 #include "achievements/achievements_screen.h"
 #include "fps_overlay.h"
@@ -232,6 +233,14 @@ class CrashMomApp : public rex::ReXApp {
     // cheat (ui/hud_hide.h).
     rex::ui::RegisterBind("bind_hide_hud", "F2", "Hide / show the HUD (not a cheat)",
                           [] { hud_hide::Toggle(); });
+    // MARK THIS SPOT (2026-11-19): a "# mark" line in the session's input
+    // recording (input_record.h), to find a moment (a rope, a climb) in a
+    // recording made for test replays. No key (Tools menu; quick key F7).
+    rex::ui::RegisterBind("bind_mark_spot", "", "Mark this spot in the input recording (for test replays)",
+                          [] {
+                            const std::string reply = input_record::MarkSpot();
+                            overlay_banner::Show("SPOT MARKED", reply.substr(0, reply.find('\n')));
+                          });
     // F11: fullscreen on / off (borderless, ui/window_mode.h), remembered in
     // settings.toml like the Options row.
     rex::ui::RegisterBind("bind_fullscreen", "F11", "Fullscreen on / off", [] {

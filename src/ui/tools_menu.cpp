@@ -79,6 +79,12 @@ constexpr Tool kTools[] = {
      "to user/saves/Deleted saves, never really deleted.",
      true},
 
+    {"Testing", "Mark this spot (for a test replay)", "bind_mark_spot", "-",
+     "Writes a mark with every player's position into this session's input\n"
+     "recording (user/logs/<session>-inputs.txt), so a moment (a rope, a climb)\n"
+     "can be found in it later. Tick F7 to mark with a key while playing.",
+     false, nullptr, "F7"},
+
     {"Developer", "Debug overlay", "bind_debug_overlay", "F3",
      "The SDK's frame times and threads.", false},
     {"Developer", "Log console", "bind_console", "`",
