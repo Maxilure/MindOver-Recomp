@@ -54,12 +54,12 @@ msgstr "ANZEIGE {0}"
 msgid "Achievement Unlocked"
 msgstr "Erfolg freigeschaltet"
 
-#: src/achievements/achievements_screen.cpp:33 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1597
+#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1597
 #, fuzzy
 msgid "Achievements"
 msgstr "Erfolge"
 
-#: src/achievements/achievements_screen.cpp:44 launcher/settings_page.cpp:501
+#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:501
 #, fuzzy
 msgid "Players"
 msgstr "Spieler"
@@ -126,27 +126,27 @@ msgstr ""
 msgid "This is how the subtitles look."
 msgstr "So sehen die Untertitel aus."
 
-#: src/saves/save_library.cpp:769
+#: src/saves/save_library.cpp:771
 #, fuzzy
 msgid "Create New Save"
 msgstr "Neuer Spielstand"
 
-#: src/saves/save_library.cpp:853
+#: src/saves/save_library.cpp:855
 #, fuzzy
 msgid "Delete"
 msgstr "Löschen"
 
-#: src/saves/save_library.cpp:855
+#: src/saves/save_library.cpp:857
 #, fuzzy
 msgid "Rename"
 msgstr "Umbenennen"
 
-#: src/saves/save_library.cpp:1120
+#: src/saves/save_library.cpp:1122
 #, fuzzy
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr "Diesen Spielstand wirklich löschen? Er wird in den Ordner Deleted saves verschoben."
 
-#: src/saves/save_library.cpp:1973
+#: src/saves/save_library.cpp:1979
 #, fuzzy
 msgid "Backspace"
 msgstr "Löschen"
@@ -179,16 +179,6 @@ msgstr ""
 
 #: src/net/net_session.cpp:422
 msgid "You left the online session"
-msgstr ""
-
-#. Online co-op: a guest tried to save; card heading
-#: src/net/online_saves.cpp:44
-msgid "Saving"
-msgstr ""
-
-#. Online co-op: a guest tried to save; card line
-#: src/net/online_saves.cpp:46
-msgid "Only the host can save online"
 msgstr ""
 
 #: src/cheats/cheats.cpp:245

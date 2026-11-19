@@ -2,7 +2,6 @@
 // achievements/achievements_screen.cpp -- see achievements_screen.h
 // =============================================================================
 #include "achievements_screen.h"
-#include "../net/online_saves.h"
 
 #include <atomic>
 #include <string>
@@ -160,7 +159,6 @@ extern "C" REX_FUNC(sub_82121B48) {
   subtitles::NoteMenuFrame();
   if (!options_page::PauseAchievementsAvailable()) {
     __imp__sub_82121B48(ctx, base);
-    ctx.r3.u64 = uint32_t(online_saves::AfterPauseDecision(ctx, base, int32_t(ctx.r3.u32)));
     return;
   }
   g_in_pause_decision = true;
@@ -173,11 +171,7 @@ extern "C" REX_FUNC(sub_82121B48) {
   const int32_t exit = options_page::PauseDropOutRemoved()
                            ? pause_drop_out::AfterPauseDecision(ctx, base, game_exit, pause_drop_out::kDropOutExit)
                            : game_exit;
-  // Online: Save Game saves straight to the session's file, a guest's is
-  // refused (net/online_saves.h).
-  const int32_t exit_after_online = online_saves::AfterPauseDecision(ctx, base, exit);
-  ctx.r3.u64 = uint32_t(exit_after_online);
-  if (exit_after_online != exit) g_picked = -1;
+  ctx.r3.u64 = uint32_t(exit);
   if (exit != game_exit) g_picked = -1;
   if (g_picked >= 0 && (exit == kPausePages[0].options_exit || exit == kPausePages[1].options_exit)) {
     if (g_picked == 0) {

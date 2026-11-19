@@ -213,10 +213,15 @@ the shared input. A test with the host's pointer moved over its pause menu:
 before, Options on one PC and Resume on the other; after, Resume on both and
 identical worlds.
 
-## 6e. Only the host saves
+## 6e. Each player saves on their own PC
 
-Online, only the host saves the session. A guest can't; whenever the host
-saves, the guest's PC keeps a copy of that save in its own list.
+Online, a save is written only on the PC of the player who made it. The
+host's save overwrites the save the session was loaded from, on the host's
+PC. A guest's save goes into that guest's own copy (a new number in their
+list, made at their first save), on the guest's PC; the host's files aren't
+touched. A guest keeps a copy of the session only by saving. (Until the
+round in 6h a guest's save was refused and every host save left a copy on
+the guest's PC.)
 
 Both PCs run the same game, so both run the save flow on the same frames. The
 original flow opens the save list (totem "Do you want to save?" Yes = exit 837
@@ -236,10 +241,12 @@ shows:
   (the first save of a game copies the loaded file to a new number, so both PCs
   overwrite an existing file; later saves overwrite that copy). The guest's own
   save is never written.
-* A guest's own save is refused: the totem's Yes becomes No (838), the pause
-  menu's Save Game becomes Resume. Because the same decision runs on both PCs,
-  both show the message bar card "Only the host can save online". The menu's
-  owner decides (the totem = who used it, the pause menu = who paused).
+* Who made the save: the menu's owner (the totem = who used it, the pause
+  menu = who paused; unknown = the host). On every other PC the save drive runs every step and answers like a write that worked, but
+  leaves the disk alone: no write, no file moved to Backups, and a file the
+  game deletes counts as gone for the rest of that save without being
+  touched. The game's memory takes the same steps on both PCs; only the
+  disks differ.
 
 First try, dropped: the original's unused "ExitAutoSaveScreen" exits (totem
 836, pause 885 / 896) go straight into 326. They skip BeginAccess, and the
@@ -249,8 +256,8 @@ EndAccess at the end freed a slot table that was never made (a write to
 | Test (save 2, two windows) | Result |
 | --- | --- |
 | Host: totem Yes | host's save written; the guest's copy byte-identical; same exits; in sync |
-| Guest: pause -> Save Game | refused, card on both, no file written; in sync |
-| Guest: totem Yes | refused (answered as No), card on both; in sync |
+| Guest: pause -> Save Game | (first version: refused, card on both; in sync) |
+| Guest: totem Yes | (first version: refused); now see 6h |
 | Host: pause -> Save Game twice | copy made once, then overwritten; same exits; in sync |
 | Offline: totem Yes | the save list opens as before |
 
@@ -417,14 +424,58 @@ most 20 inputs (about 1.3 KB). The zone rule has a cost:
 a zone that only the camera looks into, with no player in it, stands still
 until a player walks in.
 
+## 6h. Someone else's mojo, a guest at the totem
+
+**A collected mojo flies only on its collector's PC.** A mojo first flies
+into the player who picked it up (a path in the world, the same on every PC),
+then to that player's HUD portrait: the Collectable update (`sub_82198738`,
+state 5) places it 4 units in front of the game camera every frame, toward
+the portrait's corner, shrinking by `1 - 0.5 x progress` (`0x82198F7C`).
+Progress is `sqrt(2 x time)`; at 1 the mojo counts (the HUD pulse
+`sub_8226AB78`). With a camera per PC, a mojo player 2 collected crossed
+player 1's screen toward a corner that isn't player 2's on that PC. Online, a
+HUD flight to ANOTHER player is now drawn at 1/1000 of its size on this PC
+(a mid-function hook at `0x82198F80`, after the shrink is made: out of sight,
+not zero, so nothing that reads the actor's size can get a NaN). The time,
+the end and the count don't read that value, so both PCs still count the
+mojo on the same frame. Collectable types 3, 4, 7 and 8 don't aim at the HUD
+and are left alone. A 2-minute random fight on two copies (mojo collected,
+the hook logging on the other player's PC): the game state in sync on every
+frame.
+
+The only part of the per-frame fingerprint that differed in that run (and in
+the totem runs below) is player 2's platform-rider dump: the dump reads 64
+words from the behaviour, which is only 0x50 bytes long, so its tail is the
+NEXT object in memory, a `CSoundDialogueBehaviour` whose listener distance
+comes from each PC's camera (sound only, the same as in 6g's titan scene).
+
+**A guest saves on their own PC.** The first version of this round kept
+guests from saving: GameRunning's exit into the totem's question was refused
+for a guest, with a card. The rule is now wider (6e): a guest may save, and
+the save lands only on the guest's PC. The first test of that found a trap:
+the host's PC ran the same steps and its save drive, opening the host's save
+to replace it, MOVED the old file to Backups before the (dropped) write, so
+the host's save left its list. The drive's "don't write" mode now covers
+that move and the game's deletes too.
+
+| Test (save 5, at the totem, two copies) | Result |
+| --- | --- |
+| Guest joins, B at the totem, Yes | the question on the guest's PC; the guest's copy written there; the host's save folder byte-identical; in sync |
+| Host: B at the totem, Yes | the host's save written; the guest's save folder byte-identical; in sync |
+| Guest: pause -> Save Game (save 2) | the guest's copy written; the host's folder byte-identical; in sync |
+
+The box's Yes is the stick pushed left, then A (A alone = No). In the
+save-2 run one more part of player 2's behaviour dump differed for a frame:
+its `CCameraInterestBehaviour`, part of each PC's own camera (world and
+controller parts identical on every frame).
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).
-* Saves: a guest at the totem still gets the "Do you want to save?" question
-  (their Yes is refused afterwards).
 * Each PC's own camera following its own player (the plan's milestone M4): an
   experiment flag for now (6g). The other camera readers in the game (6f) are
-  not all checked yet: views, or world logic that a scene hasn't reached.
+  not all checked yet: views, or world logic that a scene hasn't reached
+  (wall climbs, ropes, harpoons, moving platforms, an enemy that circles).
 * A session starts at a save load: Host / Join first, then load the same save
   on both. The save itself isn't sent or checked (a different save shows as a
   drift at frame 0).

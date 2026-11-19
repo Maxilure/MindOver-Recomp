@@ -4,6 +4,8 @@
 // Each override below says what the ORIGINAL method did (findings/32) and how
 // ours does the same with a plain file. Argument registers are the original's.
 #include "pc_save_drive.h"
+
+#include <atomic>
 #include "../cheats/cheats.h"
 #include "../players/outfits.h"
 
@@ -122,9 +124,25 @@ bool SafeName(const std::string& name) {
          name != "." && name != "..";
 }
 
+// ONLINE: another PC's save (SetDiscardWrites): nothing reaches the disk.
+std::atomic<bool> g_discard_writes{false};
+// ...and the files the game "deleted" meanwhile: they stay on disk but count
+// as gone for this save's later Opens / Deletes, so the game hears the same
+// answers as on the PC that really deleted them (under save_files::Lock()).
+std::vector<fs::path> g_pretend_deleted;
+bool PretendDeleted(const fs::path& path) {
+  return std::find(g_pretend_deleted.begin(), g_pretend_deleted.end(), path) != g_pretend_deleted.end();
+}
+
 // Writes the file to disk (temp + rename). False on failure.
 bool Flush(OpenFile& f) {
   if (!f.dirty) return true;
+  if (g_discard_writes.load()) {
+    f.dirty = false;  // the game hears a write that worked
+    REXLOG_INFO("PC save drive: {} not written (online: another PC's player made this save)",
+                f.path.filename().string());
+    return true;
+  }
   std::string error;
   // The game's bytes, then the port's trailer: the current outfit picks (and
   // the "made with cheats" mark while cheats are on, cheats.h) for a file
@@ -228,7 +246,7 @@ extern "C" REX_FUNC(sub_823690D8) {
   }
   const fs::path path = save_files::FileOf(name);
   std::error_code ec;
-  const bool exists = fs::is_regular_file(path, ec);
+  const bool exists = fs::is_regular_file(path, ec) && !PretendDeleted(path);
 
   OpenFile f;
   f.name = name;
@@ -268,7 +286,14 @@ extern "C" REX_FUNC(sub_823690D8) {
     return;
   } else {
     // A new save (or a replaced one: the old file goes to Backups first).
-    if (exists) {
+    // ONLINE, another PC's save (SetDiscardWrites): the old file stays where
+    // it is; the game still gets an empty file to fill, and Flush drops it.
+    // (Found in the first test of a guest's save: the host's own save was
+    // moved to Backups here and nothing was written in its place.)
+    if (exists && g_discard_writes.load()) {
+      REXLOG_INFO("PC save drive: {} kept as it is (online: another PC's player made this save)",
+                  path.filename().string());
+    } else if (exists) {
       fs::path moved;
       std::string error;
       if (!save_files::MoveToBackups(path, &moved, &error)) {
@@ -400,7 +425,7 @@ extern "C" REX_FUNC(sub_823699D0) {
   ctx.r3.u64 = 0;
   const fs::path path = save_files::FileOf(name);
   std::error_code ec;
-  if (!SafeName(name) || !fs::is_regular_file(path, ec)) {
+  if (!SafeName(name) || !fs::is_regular_file(path, ec) || PretendDeleted(path)) {
     SetError(base, drive, kNotFound);
     return;
   }
@@ -409,6 +434,13 @@ extern "C" REX_FUNC(sub_823699D0) {
       SetError(base, drive, kFailure);
       return;
     }
+  }
+  if (g_discard_writes.load()) {  // online, another PC's save: only pretend
+    g_pretend_deleted.push_back(path);
+    REXLOG_INFO("PC save drive: the game deleted {}: kept (online: another PC's player made this save)", name);
+    SetError(base, drive, kNone);
+    ctx.r3.u64 = 1;
+    return;
   }
   fs::path moved;
   std::string error;
@@ -510,3 +542,12 @@ extern "C" REX_FUNC(sub_823002D8) {
 extern "C" REX_FUNC(sub_823007D0) {
   ctx.r3.u64 = 0;
 }
+
+namespace pc_save_drive {
+void SetDiscardWrites(bool on) {
+  std::lock_guard guard(save_files::Lock());
+  g_discard_writes.store(on);
+  if (!on) g_pretend_deleted.clear();
+}
+}  // namespace pc_save_drive
+

@@ -395,3 +395,38 @@ extern "C" REX_FUNC(sub_822B6608) {
   __imp__sub_822B6608(ctx, base);
   *flags = uint8_t((*flags & ~0x40) | (before & 0x40));
 }
+
+// SOMEONE ELSE'S MOJO DOESN'T FLY ON THIS PC (2026-11-19, a design decision
+// for online play). A collected mojo (Collectable update sub_82198738) first
+// flies into its collector (state 4, a world path: the same on every PC),
+// then to the collector's HUD portrait (state 5): every frame it is placed
+// 4 units in front of the GAME CAMERA, toward the portrait's corner, and
+// shrunk by f10 = 1 - 0.5 x progress (0x82198F7C, progress = sqrt(2 x time),
+// done at 1: the HUD count and pulse, sub_8226AB78). Online each PC has its
+// own camera and shows only its own player's HUD view, so on player 1's PC a
+// mojo player 2 collected flew across player 1's screen toward a corner that
+// isn't player 2's. Online, a HUD flight whose collector (r25, the player
+// from sub_8226FCD8) isn't this PC's player is drawn at 1/1000 of its size:
+// out of sight (a few units from the camera that is below a pixel). Not 0: a
+// zero matrix could make a NaN somewhere that reads the actor's size. The
+// flight's time, its end and the count are untouched (they never read f10),
+// so both PCs still count the mojo on the same frame; the actor's position
+// already differed between PCs (own cameras) and nothing in the world reads
+// it (checked with the per-frame fingerprints, findings/68). Types (r23,
+// collectable +0xB4 +0x20) 3, 4, 7, 8 don't aim at the HUD (path 0x82198F70,
+// a point from the stack): left alone. Found by reading the state-5 code
+// (xexdis 0x82198D6C-0x82199000). Offline (one shared screen): the original.
+void OnlineMojoFlightHidden(PPCRegister& r23, PPCRegister& r25, PPCRegister& f10) {
+  if (!net::InSession()) return;
+  const int local = net::LocalPlayer();
+  const int32_t collector = int32_t(r25.u32);
+  const int32_t type = int32_t(r23.u32);
+  if (local < 0 || collector < 0 || collector == local) return;
+  if (type == 3 || type == 4 || type == 7 || type == 8) return;
+  static uint64_t hidden = 0;
+  if (hidden++ % 600 == 0) {
+    REXLOG_INFO("Online: player {}'s mojo flies to their HUD: not shown on player {}'s PC ({} frames so far)",
+                collector + 1, local + 1, hidden);
+  }
+  f10.f64 = 0.001 * f10.f64;
+}

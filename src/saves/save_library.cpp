@@ -42,6 +42,8 @@
 #include "../input/players.h"
 #include "../input/title_any_button.h"
 #include "../net/net_session.h"
+#include "pc_save_drive.h"
+#include "../net/online_saves.h"
 #include "../input/name_typing.h"
 #include "../overlay_banner.h"
 #include "../gameplay/game_mods.h"
@@ -1011,7 +1013,7 @@ void TakeCreateJump(PPCContext& ctx, uint8_t* base, bool in_game) {
   ctx.r3.u64 = uint32_t(exit);
 }
 
-// ONLINE, a guest's PC (net/online_saves.h): the file a save of the session
+// ONLINE, a guest's PC (net/online_saves.h): the file the guest's OWN save
 // writes here. The host overwrites the save the session was loaded from; so
 // that this PC's save manager takes the SAME steps (overwriting an existing
 // file, not creating one), the first save of a game copies the loaded save to
@@ -1031,7 +1033,7 @@ int OnlineCopyFile() {
   }
   g.online_copy = number;
   save_files::MarkPlayed(number);
-  REXLOG_INFO("Saves: online: this PC keeps the host's saves in save {} (a copy of save {})",
+  REXLOG_INFO("Saves: online: this PC's saves of the session go to save {} (a copy of save {})",
               number, g.game_number);
   return number;
 }
@@ -1443,15 +1445,20 @@ extern "C" REX_FUNC(sub_822598D8) {
       }
     } else {
       g.op_number = g.game_number ? g.game_number : PanelFile(slot);
-      // ONLINE (net/online_saves.h): a guest never writes the session's
-      // save; its PC keeps a copy of what the host saves.
-      if (net::InSession() && net::LocalPlayer() != 0 && g.game_number > 0) {
+      // ONLINE (net/online_saves.h): a save another PC's player made runs
+      // every step here, but the drive writes nothing (until EndAccess); the
+      // file stays the game in progress's (an existing file on every PC, so
+      // the steps match). A guest's OWN save goes into its own copy: a guest's
+      // PC never writes the session's save.
+      if (net::InSession() && !online_saves::ThisPcWritesSave(ctx, base)) {
+        pc_save_drive::SetDiscardWrites(true);
+      } else if (net::InSession() && net::LocalPlayer() != 0 && g.game_number > 0) {
         g.op_number = OnlineCopyFile();
       }
     }
     g.picked = false;
     REXLOG_INFO("Saves: saving to save {}{}{}", g.op_number, g.in_autosave ? " (AutoSaveGame)" : "",
-                g.op_number == g.online_copy ? " (a copy of the host's save)" : "");
+                g.op_number == g.online_copy ? " (this PC's copy of the online session)" : "");
   }
   __imp__sub_822598D8(ctx, base);
 }
@@ -1768,6 +1775,7 @@ extern "C" REX_FUNC(sub_822596D8) {
     g.picked = false;
   }
   __imp__sub_822596D8(ctx, base);
+  pc_save_drive::SetDiscardWrites(false);  // (online: another PC's save is over)
 }
 
 // The difficulty screen's decision (node 107): Mild / Tricky / Bonkers (109-

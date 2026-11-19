@@ -1961,6 +1961,15 @@ registers = ["r25", "r27", "f11", "f12", "f13"]
 address = 0x82198F6C
 name = "MorePlayersMojoFlightToHud"
 registers = ["r25", "r27", "f11", "f12", "f13"]
+# 0x82198F80 (2026-11-19, ONLINE): f10 = the HUD flight's shrink (1 - 0.5 x progress), just made by
+# the fnmsubs at 0x82198F7C; r25 = the collector's player, r23 = the collectable's type. Online, a
+# flight to ANOTHER player's HUD is drawn tiny on this PC (src/net/online_rules.cpp
+# OnlineMojoFlightHidden: each PC shows its own player's view). Why + how found: design decision for
+# online (mojo collected by player 2 flew across player 1's screen); xexdis 0x82198D6C-0x82199000.
+[[entrypoint.midasm_hook]]
+address = 0x82198F80
+name = "OnlineMojoFlightHidden"
+registers = ["r23", "r25", "f10"]
 
 # =============================================================================
 # THE FRONT END'S PER-PLAYER OBJECTS FOR PLAYERS 3-4 (src/players/more_players_frontend.cpp,

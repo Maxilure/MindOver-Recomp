@@ -56,3 +56,12 @@
 // exist. The overrides are the whole interface (nothing to call from C++).
 // =============================================================================
 #pragma once
+
+namespace pc_save_drive {
+// ONLINE (net/online_saves.h): while on, the drive takes every step of a save
+// and answers like a write that worked, but leaves the files on disk alone
+// (another PC's player made this save). The save library turns it on for a
+// save another PC makes and off when the save manager's access ends.
+void SetDiscardWrites(bool on);
+}  // namespace pc_save_drive
+
