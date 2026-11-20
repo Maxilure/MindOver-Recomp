@@ -670,10 +670,14 @@ when the players left have all voted.
 | Local, 4 players vote one by one | 1/4, 2/4, 3/4 (prompt kept up), skipped at 4/4 |
 | Local, 4 players: players 1 and 2 vote, player 2's pad unplugged | player 2's vote drops: the prompt goes from 2/4 to 1/3; players 3 and 4 finish it at 3/3 |
 | Local, 3 players: player 1 votes, player 2's pad unplugged before voting | 1/3 becomes 1/2; player 3's vote skips (2/2) |
+| Local, 3 players: player 1 votes, player 2's pad unplugged, then plugged back in | 1/2, back to 1/3 (player 2 counts again), 2/3, skipped when player 2 votes (3/3) |
 
 Who has a say is counted again every frame: a player who leaves during the
 cutscene isn't waited for, and a vote they gave before leaving stops
-counting (the prompt shows both numbers anew).
+counting (the prompt shows both numbers anew); one who comes back (pad
+plugged in again) counts again. Joining the game during a cutscene stays as
+in the original: not possible (START shows the Skip prompt there; the join
+works once play is back), so the count never grows by a new player mid-scene.
 
 ## 7. Not yet
 
