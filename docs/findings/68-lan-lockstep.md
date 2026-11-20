@@ -469,13 +469,46 @@ save-2 run one more part of player 2's behaviour dump differed for a frame:
 its `CCameraInterestBehaviour`, part of each PC's own camera (world and
 controller parts identical on every frame).
 
+## 6i. Ropes and platforms online (the test course)
+
+**Why:** ropes, moving platforms and platforms that tip under a player are
+world logic that could read a camera or the frame time in a way the earlier
+scenes never reached (section 7's list). The test course (findings/69
+sections 8-10) puts them side by side, so both PCs can be sent into them with
+`--test_course=true --test_course_start=<lane>`.
+
+**How:** two copies, own cameras, save 2. The guest joins (START, then B out
+of the mask), then both play scripts: run down the lane and jump (a double
+jump for the iceberg and the wheel: their tops are 2-4 units above the start
+pad). The objects are placed by the course on a fixed game frame after
+player 1's spawn, so both PCs make them on the same frame.
+
+| Lane (findings/69) | What happened | Frames | World and controllers |
+| --- | --- | --- | --- |
+| `ropegap` | player 1 on the rope, player 2 away off the course (own views) | 1,306 / 1,785 | identical |
+| `movegap` (a platform on a path, 2 units/s) | player 1 lands on it and rides | 1,908 | identical |
+| `tiltgap` (the Ice iceberg) | player 1 alone, then BOTH players standing on it, tipped | 1,908 | identical |
+| `rollgap` (the stone wheel) | player 1 lands in the wheel and rolls with it | 1,908 | identical |
+
+![The stone wheel and the iceberg online, each PC with its own camera](../images/online-tilting-platforms.jpg)
+
+So none of these objects reads a camera in a way that changes the world, and
+the tilt fix of findings/69 s.10 (a 1/60-s slice is untouched) runs the same
+on both PCs. Player 2's behaviour dump differed as before (6h: the dump
+reading past its object into a `CSoundDialogueBehaviour`) and in one more
+place: the `CIntersectionBehaviour` dump reads on into the next objects, a
+`CGameplayCursorBehaviour` and its `CVolumeSphere`, whose spot follows each
+PC's camera. That cursor (the 360 Crash's aim point, the one that can pull in
+mojo) is switched on only by the mouse reticle, and the mouse reticle is off
+online (`mouse_reticle` answers 0 in a session), so nothing reads that sphere.
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).
 * Each PC's own camera following its own player (the plan's milestone M4): an
   experiment flag for now (6g). The other camera readers in the game (6f) are
   not all checked yet: views, or world logic that a scene hasn't reached
-  (wall climbs, ropes, harpoons, moving platforms, an enemy that circles).
+  (wall climbs, harpoons, an enemy that circles; ropes and platforms: 6i).
 * A session starts at a save load: Host / Join first, then load the same save
   on both. The save itself isn't sent or checked (a different save shows as a
   drift at frame 0).
