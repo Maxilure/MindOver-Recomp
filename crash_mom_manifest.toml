@@ -2248,6 +2248,19 @@ address = 0x8217E984
 name = "CrashMomPlatformMoveMinimum"
 registers = ["f0", "r30"]
 
+# TILTING AND ROLLING PLATFORMS ABOVE 60 FPS (src/world/tilting_platforms.cpp, docs/findings/69
+# s.10, 2026-11-20). CBounceBehaviour's tilt physics (icebergs, tilty props, rolling logs) steps
+# in slices of at most 1/60 s; the per-slice step sub_8212B7F8 does v += push x dt where push
+# already holds x dt (dt twice) -> at 180 fps a third of the push per second (iceberg tipped
+# half as fast in the test course). The hook scales f0 (push) by (1/60)/dt for slices under
+# 1/60 s. Verified with xexdis 0x8212B7F8-0x8212B8B0: f0 loaded at 0x8212B820, read only by
+# this fmadds, written again at 0x8212B860; f29 = dt (0x8212B818). Callers: 0x8212B94C (x),
+# 0x8212B9F4 (z), 0x8212BAC8 (scripted turn), 0x8212BD48 (rolling log), all sliced <= 1/60.
+[[entrypoint.midasm_hook]]
+address = 0x8212B84C
+name = "CrashMomTiltSliceStep"
+registers = ["f0", "f29"]
+
 # OUTFITS FOR PLAYERS 1-4 (src/players/outfits.cpp, docs/findings/46, 2026-10-16). The chest's skin
 # screen (CSkinScreenAction) keeps its page's player at this +0x84 (0/1), which also picks the page's
 # layout. OPENING: the player at the chest (front end +0x2230, sub_82263638) is stored here; we keep

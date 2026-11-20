@@ -120,6 +120,15 @@ and put back when an update fails).
   now stays while he has touched the ground within one of the original's
   frames. Measured on test stairs: at 60 fps as few as at 30, at 180 fps a
   third of before (the short ground grace covers the rest).
+- **Tilting and rolling platforms behave the same above 60 fps.** The
+  icebergs that tip under Crash's weight and the platforms that roll as he
+  walks on them (the Ice Kingdom's stone wheel and "donut", Wumpa Island's
+  tilting prop, the spinning sphere and gears...) reacted much more slowly
+  at high frame rates: their physics counted the frame time twice. At 180
+  fps an iceberg tipped half as fast and the stone wheel turned a third as
+  fast as at 30 or 60. They now move the same at every frame rate; at 30
+  and 60 nothing changes. `tilting_platform_fix = false` in
+  `settings.toml` brings the old behaviour back.
 - **Crash when switching to some titans (Windows).** Taking control of
   certain titans, such as the electric one in the ice cave on the way to the
   School of Evil, could crash the game on Windows

@@ -282,7 +282,165 @@ x 344, z -470 (ropegap) and -461 (platgap), east of the courtyard copy.
 | Jump from `platgap`'s start | Crash standing on the platform in the gap |
 | Online, two copies, own cameras: host does the rope jump, guest joins | the course and its objects alike on both PCs; player 1 on the rope at the same spot; world and controllers identical on all 1,306 frames |
 
-Still to do: moving platforms (the movement the level scripts give them),
-climbing walls (is "climbable" a surface material?), harpoon targets, a
+Still to do: ~~moving platforms~~ (section 9), climbing walls (is "climbable" a surface material?), harpoon targets, a
 second player away from the first in these tests.
 
+## 9. A moving platform: a path made by the port
+
+**Why:** moving platforms carry the player at a frame-rate-dependent speed
+(findings/22 s.9 fixed one soft-lock of that kind); the course needs one to
+probe them at 30, 60 and 180 fps.
+
+**How a level moves one.** A plain `Platform` template doesn't move by
+itself: its `CPathFollowingBehaviour` rides a PATH that the level's props
+script builds right after making it (Desert, `L4_R1_MovingPlatform2`):
+
+    WorldManager:CreatePath('.:L4_R1_MovingPlatform2:L4_R1_MovingPlatform2Path1')
+    SetPathType(1) SetPathSpeed(0, 10) SetPathRotType(0)
+    per point: AddPathPoint(name, i, {x, y, z}) SetPathPointDuration(3)
+               SetPathPointWaitType(3) SetPathPointAdditionalSpeed(0) CompletePoint()
+
+The script methods (registered by `sub_822F98B8`) are thin wrappers:
+
+| Script method | Game function | What it does |
+| --- | --- | --- |
+| `CreatePath` | `sub_822FA1D0` | splits the name at its last two colons (actor = the segment before the last), looks the path up (`sub_822FA4C0`), else `new` 0x4C bytes + constructor `sub_822FB960` (vtable `0x82046CFC`, room for 100 points) and attaches it under the actor's name (`sub_822FA2C8`) |
+| `SetPathType` / `SetPathSpeed` / `SetPathRotType` | `sub_822FBB90` / `sub_822FBB98` / `sub_822FBBA8` | path +60 type, +64/+72 speed kind and speed, +68 rotation type |
+| `AddPathPoint` | `sub_822FBB30` | a 24-byte point: xyz, +12 duration, +16 additional speed, +20 wait type (default 1) |
+| `SetPathPointDuration` / `SetPathPointWaitType` | `sub_822EAB78` / `sub_82240598` | the point's +12 / +20 |
+
+The paths live in a map at WorldManager (`*(*(0x8259B190) + 120)`) +8,
+keyed by the actor's 8-byte name object. Wait types in the levels: 0 (800
+points), 1 (25), 3 (165: the platforms that wait for a
+`DO_PlatformMessage(..., "NEXT_WAIT_POINT")`).
+
+**Three traps on the way:**
+
+* The game's `new` asserts while no heap is chosen: the path and its map
+  insertion are made under heap 1 (`sub_823574E8`), as the path's own
+  constructor uses for its points.
+* The key is the actor's own name object (its +8 and +12 words), as the
+  follower builds it every frame (`sub_82158830` -> `sub_82158758`). A
+  spawned actor's name isn't its template's hash, so attaching under the
+  template name never matched. (`sub_8236ABC0` returns those two words in
+  ONE 64-bit register: a call that keeps 32 bits lost the first word.)
+* The follower looks for its path ONCE, at its first update, then clears
+  its "look for a path" byte (+77, at `0x821587F0`) found or not. The
+  platform is already running when the path is made, so the byte is set
+  again; the follower finds the path on its next update.
+
+A path is followed RELATIVE to where the platform starts (its first point =
+its spot). Type 2 loops by jumping back to the first point at the end, so
+the course's path is A -> B -> A with the platform made at A: the jump back
+lands where it already is.
+
+**In the course** (`--test_course`): lane `movegap` (a 12-unit gap), the
+Desert's floating platform `StaticProps:env_Desert:prp_pformFloating_Desert`
+(its own GlobalPackages group, loads anywhere), shuttling 3 units each way
+of the gap's middle at 2 units/s (`SetPathSpeed(0, 2)`, the levels' most
+used speed). The console got `cheat path <actor|last> <type> <speed> <wait>
+<duration> <x y z>...` and `cheat platform <actor|last> <message>` (a level
+script's `DO_PlatformMessage`: the actor message 0x1A built by
+`sub_820B6C68`, handed over by `sub_820B0B70`).
+The message carries a small CODE, not the name: `sub_820B6CE0` turns the
+name object into it (NEXT_WAIT_POINT 4, PAUSE 5, CONTINUE 6,
+ROTATION_SPEED1 7, ROTATION_SPEED2 8, RESET 9, IS_CRASH_ATTACHED 10,
+IS_NPC_ATTACHED 13, ROT_SPEED 14, SOUND 15, GO_NORTH .. GO_DOWN 16-21, any
+other name -1), and the path follower's message slot (`sub_82158DE8`,
+vtable `0x8202FA1C` slot 5) switches on it: 4 / 5 / 9 set its +0x50 to
+1 / 2 / 3, 6 calls `sub_822922E8`, 16-21 their own moves. (A first version
+sent the name's hash word: nothing matched, nothing happened.) On the
+course's platform: PAUSE holds it still (357.668 for 2.3 s), CONTINUE
+starts it again at 2 units/s; an unknown name is refused in the log.
+
+![Crash riding the course's moving platform](../images/test-course-moving-platform.jpg)
+
+| Test (fixed step, console) | 30 fps | 60 fps | 180 fps |
+| --- | --- | --- | --- |
+| Platform's run | 353.07 .. 358.93, 2.0 units/s, one loop 6.6 s | same | same |
+| Crash put on it, 7 s watched | rides, height 20.009 steady, no slip against the platform | same | same |
+| Timed jumps from the start pad (8, stick aimed down the lane) | 2 land on it and ride, 6 fall onto the catch floor | | |
+
+So the platform carries Crash the same way at every frame rate tested. Next:
+a platform that waits (wait type 3 + `NEXT_WAIT_POINT`), vertical travel
+(lifts: landing on a rising floor), and the same probes with titans.
+Tilting and rolling platforms: section 10.
+
+
+## 10. Tilting and rolling platforms: the frame time counted twice
+
+**Why:** some platforms move because Crash stands on them: icebergs and
+props that tip under his weight and spring back, and "rolling logs" that
+spin as he walks on them, where the player has to keep his balance. Above
+60 fps they react much more slowly.
+
+**Which platforms.** In the template scripts they are `Platform` actors
+whose data sets a `m_BounceBehaviour` (C++ `CBounceBehaviour`, vtable
+`0x8202C2D4`): `mass_number`, `spring_coef_x/z_number`,
+`rotation_dampening_coef_x/z_number`, `rotation_min/max_x/z_angle_number`,
+`rotation_max_speed_number`, `rotation_x/z_on_state`, and for the rolling
+ones `rotation_type_enumvalue = ERotType_ROLLING_LOG_Z`. Among them:
+
+| Template | Kind | Where | Own package (spawnable anywhere) |
+| --- | --- | --- | --- |
+| `StaticProps:env_Ice:prp_pformTilty_iceburg_A` | tilts (x and z, 38 / 30 degrees) | Ice levels | yes |
+| `StaticProps:env_Ice:prp_pformL2_C_shaped_wheel` | rolls (z, up to 180 degrees) | Ratcicle Kingdom | yes |
+| `StaticProps:env_Ice:prp_pformdonut` | rolls (z) | Ratcicle Kingdom | no |
+| `StaticProps:env_Whumpa:prp_pformWhumpaTiltyProp1` | tilts | Wumpa Island | no |
+| `StaticProps:env_Desert:prp_pformCoop_tilting_propB`, `env_Phantom:...propC` | tilts | Desert, (name TBD) | B yes, C no |
+| `StaticProps:env_Nina:prp_pformL5_tiltyPlatformA` | tilts | (name TBD) | yes |
+| `StaticProps:env_Junk:prp_pformL6_spinningSphere`, `..._rotatingGearA` | rolls / turns | (name TBD) | no |
+
+**How they move.** Update (slot 4, `sub_8212ABB0`) runs the tilt physics
+`sub_8212BDC0`, which cuts the frame time into slices: 1/60 s
+(`0x8201FB80`) while more than 0.0183 s is left, then the rest (30 fps =
+two slices of 1/60, 60 fps = one, 180 fps = one of 1/180). Per slice and
+axis (x `sub_8212B8B8`, z `sub_8212B988`, rolling log `sub_8212BCD8`,
+scripted turn `sub_8212BA08`) the behaviour builds a push in +0x130 (x) /
++0x138 (z):
+
+    push = torque x dt + (1/mass) x -(damping x v + spring x angle) x dt
+
+(torques arrive by message, `sub_8212AF10` -> `sub_8212C890`: force at a
+point -> torque x 1/mass, added up during the frame), then steps
+(`sub_8212B7F8`):
+
+    v     = v + push x dt          (0x8212B84C fmadds f11,f0,f29,f12)
+    v     = clamp(v, +-max speed)
+    angle = angle + v x dt, held at its limits
+
+Layout: angles +0x118 (x) / +0x11C / +0x120 (z), angular speeds +0x124 /
++0x12C, 1/mass +0x164, springs +0x168 / +0x16C, damping +0x170 / +0x174,
+limits +0x178 / +0x17C (x) +0x180 / +0x184 (z), max speed +0x14C, mode
++0x190.
+
+**The bug:** dt counts twice in the velocity change. Over a second the
+speed gains a x dt (the sum of a x dt^2 over the slices): with 1/60-s
+slices (30 and 60 fps) the intended amount, with 1/180-s slices a third of
+it. The motion is the one the designers tuned at 30 fps only while the
+slices stay 1/60 s.
+
+**The fix** (`src/world/tilting_platforms.cpp`, midasm hook
+`CrashMomTiltSliceStep` at `0x8212B84C`, `--tilting_platform_fix`): a slice
+shorter than 1/60 s gets its push scaled by (1/60)/dt, so the speed gains
+push x 1/60 per slice: the same per second as at 30/60, while the angle
+still moves every frame. Slices of 1/60 s are untouched (30 and 60 fps
+stay bit for bit the original).
+
+**In the course:** lanes `tiltgap` (the iceberg) and `rollgap` (the stone
+wheel), 12-unit gaps, objects placed like section 8's. Probe: Crash put on
+the object off its middle (1 unit for the iceberg, 0.7 for the wheel), the
+behaviour's angle read every game frame with the console's `watch`, fixed
+step:
+
+| Angle after 3 s of game time | 30 fps | 60 fps | 180 fps, original | 180 fps, fixed |
+| --- | --- | --- | --- | --- |
+| Iceberg tipping (z) | -21.9 degrees | -22.3 | -12.2 | -22.4 |
+| Stone wheel rolling (z) | -59.3 | -61.9 | -19.2 | -63.3 |
+
+30 and 60 fps are unchanged by the fix (same numbers to the last digit).
+
+![The stone wheel 2.5 s after Crash lands off its middle: 60 fps, 180 fps original, 180 fps fixed](../images/rolling-wheel-high-fps.jpg)
+
+Still to check: walking on a rolling log to keep balance (the player's feel,
+not only the passive roll), the same with titans on them.

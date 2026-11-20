@@ -34,6 +34,7 @@
 // =============================================================================
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -67,6 +68,25 @@ void Request(const std::string& template_name, int player, int count, bool knock
 // The last spawn's outcome for the menu ("2 Ratcicle spawned", "... not in
 // this level"), empty before any.
 std::string LastResult();
+// A platform message ("NEXT_WAIT_POINT", "PAUSE", "CONTINUE"...: a level
+// script's DO_PlatformMessage) to that actor, sent at the next Tick. Any thread.
+void SendPlatformMessage(uint32_t actor, const std::string& name);
+// A PATH for that actor (a spawned platform), what a level script's
+// CreatePath + AddPathPoint... do; made at the next Tick (its path follower
+// is told to look again: it looks only once by itself, findings/69 s.9).
+// type / speed_kind / speed / wait as the scripts' SetPathType / SetPathSpeed /
+// SetPathPointWaitType; duration = SetPathPointDuration (s). Any thread.
+void MakePath(uint32_t actor, const std::vector<std::array<float, 3>>& points, int type, int speed_kind, float speed,
+              int wait, float duration);
+// Every CPathFollowingBehaviour update (ground_physics.cpp's sub_82158830
+// wrapper; game's main thread): which follower belongs to which actor.
+void NotePathFollower(uint32_t follower, uint32_t actor);
+// A spawn at an exact spot whose actor gets a path (MakePath) the moment it
+// exists (not a cheat: the test course's moving platform). Any thread.
+void RequestWithPath(const std::string& template_name, const float at[3], const std::vector<std::array<float, 3>>& path,
+                     int type, float speed, int wait, float duration);
+// The last actor a spawn made (0 = none yet). Any thread.
+uint32_t LastSpawned();
 
 // Game thread, once per frame (cheats.cpp's tick).
 void Tick(PPCContext& ctx, uint8_t* base, bool in_level);
