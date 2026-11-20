@@ -60,6 +60,7 @@
 // =============================================================================
 #include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "more_players.h"
+#include "skip_vote.h"
 #include "game_time.h"  // game time (exact runs / online lockstep), game_time.h
 #include "outfit_picker.h"
 #include "../data/fight_tree.h"
@@ -314,6 +315,9 @@ bool CanAskAs(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
 
 extern "C" REX_FUNC(sub_822652B0) {
   const uint32_t fe = ctx.r3.u32, button = ctx.r4.u32, lr = uint32_t(ctx.lr);
+  // A cutscene's "skip?" question with several players: their vote
+  // (players/skip_vote.h) answers it.
+  if (skip_vote::AnswerSceneSkip(ctx, base)) return;
   if (more_players::InPlay()) KeepOwnerInGame(ctx, base, fe);
   const int32_t asked = int32_t(ctx.r6.u32);
   const char* why = "";
@@ -545,3 +549,31 @@ extern "C" REX_FUNC(sub_820CDAD0) {
   // The Options screen's card: the glass panel moves left (options_menu.h).
   options_menu::MoveGlassForCard(ctx, base, action);
 }
+
+namespace menu_input {
+// Did player p press `button` (an IsButtonPressed number) this frame? Asked
+// AS the menu's owner (the same way as the level-up screen above: the game's
+// owner check refuses anyone else while an owner is set), owner put back
+// after. A player without a controller entry isn't asked (CanAskAs).
+bool PressedBy(PPCContext& ctx, uint8_t* base, uint32_t fe, uint32_t button, int p) {
+  const PPCContext saved = ctx;
+  if (!CanAskAs(ctx, base, fe, p)) {
+    ctx = saved;
+    return false;
+  }
+  ctx = saved;
+  ctx.r3.u64 = fe;
+  ctx.r4.u64 = button;
+  ctx.r5.u64 = 0;
+  ctx.r6.u64 = uint32_t(p);
+  ctx.r7.u64 = 0;
+  ctx.r8.u64 = 0;
+  const uint32_t game_owner = Read32(fe + kOwner);
+  Write32(fe + kOwner, uint32_t(p));
+  __imp__sub_822652B0(ctx, base);
+  Write32(fe + kOwner, game_owner);
+  const bool heard = (ctx.r3.u32 & 0xFF) != 0;
+  ctx = saved;
+  return heard;
+}
+}  // namespace menu_input

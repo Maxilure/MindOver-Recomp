@@ -606,6 +606,75 @@ joins were refused for two reasons of the test set-up: test windows without
 a sound device made that shot last 26 s (the shot waits for its sound), and
 a teleport straight to the box started the 3D scene right after the shot.
 
+## 6k. Skipping a cutscene together: a vote
+
+**Why:** in the original, anyone's A on a cutscene's Skip prompt skips it for
+everyone. With players on different PCs (and on one couch too) that cuts the
+scene short for players still watching. The rule now (co-op design): START
+brings up the game's "Skip (A)" prompt as before; each playing player's A is
+one vote, in any order; the prompt stays up and counts ("Skip (A) 1/2",
+"2/3", "3/4"); the cutscene is skipped when every playing player has voted. A
+player alone skips at once, as in the original. Setting `coop_skip_vote`
+(default on); local co-op follows the same rule.
+
+**How the game skips:**
+
+* In-engine scenes and camera shots: the cutscene step's playing state
+  (`sub_82242D50`). With the prompt hidden and the scene skippable (+428 bit
+  0x08), START from anyone (the front end's IsButtonPressed `sub_822652B0`,
+  button 36, player -1) shows it (+428 bit 0x01, timer +420 = 2 s); while it
+  shows, button 1 (A) from anyone (the call returning to 0x82242E1C) sends the
+  step to state 4, the skip.
+* Movies: `CMoviePlayerBehaviour`'s update (`sub_82187EF0`) in play asks the
+  input manager "did any controller press ..." (`sub_82274BE8`): START (back
+  at 0x82188028) shows the prompt (player +296 bit 0x20, timer behaviour +52)
+  or hides it again; A (back at 0x82188040) while it shows stops the movie.
+
+**Ours** (`players/skip_vote.*`): those "A from anyone?" questions are
+answered by the vote. Each playing player is asked on their own (the front
+end's button check per player, `menu_input::PressedBy`), a press counts once
+per cutscene (keyed by the step / the movie behaviour), and the answer is
+"yes" only when everyone has voted. While a vote is open the prompt's timer
+is kept up, a movie's START no longer hides the prompt, and the prompt's text
+(page `InGame_MovieSkip`, text `Skip`) gets the count; a movie's A counts
+only while its prompt shows (it asks every frame). Online the votes come from
+the shared inputs, so both PCs count them on the same frame.
+
+![The skip prompt counting votes](../images/cutscene-skip-vote.jpg)
+
+| Test | Result |
+| --- | --- |
+| Local, 2 players, Coco's cartoon: player 1 votes, then player 2 | 1/2 shown, the cartoon goes on; skipped at 2/2 |
+| Local, 2 players, the NV-mail 3D scene | the same; the cartoon after it starts normally |
+| Local, 3 players, Coco's cartoon | 1/3, 2/3 (prompt kept up), skipped at 3/3 |
+| Online, host votes then guest | both PCs log the same votes and skip on the same frame; identical on every frame, the camera shot after the cartoon too |
+
+**With players leaving** (a copy killed with `kill -KILL` mid-scene, a pad
+unplugged). The first version of both rules waited for a player who could no
+longer answer. Once the other PC is gone the session plays on "alone" and
+fills its inputs with "nothing", so the cutscene steps and the movie's end
+(6j point 4) waited forever for its "done", and the vote counted a player
+who couldn't press for as long as their character stays (30 s by default).
+Now a PC that is gone has no say in "every PC" (`net::PlayerAway`), and the
+vote counts only players who can press: not a gone PC's player online, not a
+player without a controller locally (online the controller rule isn't used:
+the other PC's player has no device on this PC). A vote already open finishes
+when the players left have all voted.
+
+| Test (player 2 leaves) | Result |
+| --- | --- |
+| Online, Coco's cartoon: host votes, guest killed 1 s later | the vote finishes 3 s later (2 s to notice the silence), skipped; the host plays on |
+| Online, Coco's cartoon, no vote, guest killed 3 s in | the cartoon runs to its end on the host, then play |
+| Online, NV-mail save: guest killed 3 s into the 3D scene | the host gets through the scene, the cartoon and back to play |
+| Local, Coco's cartoon: player 1 votes, player 2's pad unplugged | skipped at once; then the game's "no controller" box for player 2 |
+| Local, 4 players vote one by one | 1/4, 2/4, 3/4 (prompt kept up), skipped at 4/4 |
+| Local, 4 players: players 1 and 2 vote, player 2's pad unplugged | player 2's vote drops: the prompt goes from 2/4 to 1/3; players 3 and 4 finish it at 3/3 |
+| Local, 3 players: player 1 votes, player 2's pad unplugged before voting | 1/3 becomes 1/2; player 3's vote skips (2/2) |
+
+Who has a say is counted again every frame: a player who leaves during the
+cutscene isn't waited for, and a vote they gave before leaving stops
+counting (the prompt shows both numbers anew).
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).

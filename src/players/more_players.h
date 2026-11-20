@@ -134,6 +134,10 @@ namespace menu_input {
 int CurrentMenuOwner(PPCContext& ctx, uint8_t* base);
 // Does player p (0-3) play right now? (Player 1 always does.)
 bool PlayerPlays(int p);
+// Did player p (0-3) press `button` (the front end's IsButtonPressed number:
+// 1 = A, 36 = START, ...) this frame? Asked as the menu's owner, so it works
+// while a menu has one. Game main thread.
+bool PressedBy(PPCContext& ctx, uint8_t* base, uint32_t fe, uint32_t button, int p);
 // Is one of the game's menus on screen: the front end (title, main menus),
 // or in a level the pause / totem / save menus, a question box, the level-up
 // screen? Any thread (reads the front end's flags). The keyboard's keys

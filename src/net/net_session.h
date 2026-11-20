@@ -122,6 +122,9 @@ uint32_t PlayerMask();
 bool InSession();
 // This PC's player (0-based) in the session, -1 = none. Any thread.
 int LocalPlayer();
+// Player `player`'s PC is gone (the session plays on alone; their character
+// stays a while, then drops out): they can't press anything any more.
+bool PlayerAway(int player);
 
 // --- hooks (the game's main thread) ------------------------------------------
 // fixed_step::StartSession, after the clock / generators were reset.

@@ -108,6 +108,7 @@ set(CRASHMOM_SOURCES
     src/players/more_players.cpp  # room for 4 players in the co-op tables, --local_players (findings/26)
     src/players/more_players_hud.cpp  # players 3-4's HUD in the bottom corners (findings/26)
     src/players/more_players_frontend.cpp  # players 3-4's combo meters, lock-on arrows, counter prompts, reticles
+    src/players/skip_vote.cpp  # co-op: a cutscene is skipped when every player votes (players/skip_vote.h)
     src/players/reticle_idle.cpp  # a mask's aiming reticle shows only while its player aims
     src/players/more_players_loading.cpp  # players 3-4's paw prints on the loading screen (findings/26)
     src/players/more_players_markers.cpp  # players 3-4's own marker pictures (findings/26)

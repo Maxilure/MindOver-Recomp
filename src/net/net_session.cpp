@@ -897,6 +897,7 @@ void DroppedOut(int player) {
 }
 bool InSession() { return g_in_session.load(); }
 int LocalPlayer() { return Configured() ? g_local : -1; }
+bool PlayerAway(int player) { return g_in_session.load() && g_alone.load() && player == g_remote; }
 
 // =============================================================================
 // 3. THE GAME'S SIDE (main thread)
@@ -1104,6 +1105,10 @@ bool FrameCutsceneReadyEverywhere() {
   const int64_t s = int64_t(fixed_step::Frame()) - g_base;
   std::lock_guard lock(g_m);
   for (const int player : {g_local, g_remote}) {
+    // A PC that is gone (alone: its inputs are "nothing" from then on) has
+    // no say: else the one left would wait forever (2026-11-20, tested by
+    // killing a copy mid-cutscene).
+    if (player == g_remote && g_alone.load()) continue;
     if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
     if (!g_inputs[player][size_t(s)].cutscene_ready) return false;
   }
@@ -1115,6 +1120,10 @@ bool FrameMovieDoneEverywhere() {
   const int64_t s = int64_t(fixed_step::Frame()) - g_base;
   std::lock_guard lock(g_m);
   for (const int player : {g_local, g_remote}) {
+    // A PC that is gone (alone: its inputs are "nothing" from then on) has
+    // no say: else the one left would wait forever (2026-11-20, tested by
+    // killing a copy mid-cutscene).
+    if (player == g_remote && g_alone.load()) continue;
     if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
     if (!g_inputs[player][size_t(s)].movie_done) return false;
   }
