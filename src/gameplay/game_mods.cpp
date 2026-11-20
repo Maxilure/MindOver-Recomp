@@ -20,6 +20,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../players/more_players.h"
+#include "../net/net_session.h"
 
 REXCVAR_DEFINE_BOOL(friendly_fire, true, "CrashMoM",
                     "Co-op: players' attacks hurt each other, as in the original game. false = a "
@@ -232,7 +233,11 @@ void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   // Outside the lock: the keyboard driver and the menu check take their own.
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
-  const bool key_held = driver && assignment && assignment->KeyboardAnswersFor(user) && driver->SpinHeld();
+  // Online the held Spin key is already LB in the shared bytes (keyboard_mouse
+  // MergeInto); this PC's keyboard must not add its own say (it would keep
+  // a spin going on this copy of the world only).
+  const bool key_held = !net::Configured() && driver && assignment && assignment->KeyboardAnswersFor(user) &&
+                        driver->SpinHeld();
   // In a level, no menu: LB is Spin (on foot or riding a titan: titans have
   // spin moves too, e.g. the Spin Dismount). Keep spinning: on foot only.
   const bool playing = more_players::InPlay() && !more_players::Loading() && !menu_input::MenuOnScreen() &&

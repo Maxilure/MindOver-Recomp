@@ -3,6 +3,7 @@
 // =============================================================================
 
 #include "input_record.h"
+#include "net/net_session.h"
 
 #include <algorithm>
 #include <array>
@@ -291,6 +292,14 @@ std::atomic<uint8_t*> g_base{nullptr};
 // an exact frame resets it there: "last poll" 17 ms ago = a poll this frame.
 constexpr uint32_t kUber = 0x8259B190, kUberInput = 56, kInputLastPollMs = 76;
 void RestartPadPollRhythm() {
+  // ONLINE: never. A replay drives one PC's own player (tests), and both
+  // writes below change the WORLD on that PC only: the clock's base and the
+  // pads' last-poll time. With one copy replaying and the other on the
+  // keyboard, the two read the controllers on frames one apart and parted
+  // at the first key press (2026-11-20). The session's start already lines
+  // both up: the clock restarts there on every PC (fixed_step StartSession),
+  // and the first poll after it falls on the same frame everywhere.
+  if (net::Configured()) return;
   // The clock first: its ms readings from here on must not depend on which
   // frame number the replay started on (fixed_step.h RestartClockAtWholeMs).
   fixed_step::RestartClockAtWholeMs();

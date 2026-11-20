@@ -679,6 +679,35 @@ plugged in again) counts again. Joining the game during a cutscene stays as
 in the original: not possible (START shows the Skip prompt there; the join
 works once play is back), so the count never grows by a new player mid-scene.
 
+## 6l. The Spin key and simple spinning online
+
+**What was wrong.** With Simple Spinning on, a player on the keyboard spun only on their own copy of the game.
+The Spin key never went through the controller bytes. It handed "a full circle" to the fight trees straight
+from the keyboard driver (`TakeSpinCircle`), and "keep spinning" asked the driver whether the key was still
+held. That queue exists on the PC with the keyboard only. On the other PC the same player stood still, and
+the two worlds parted (a real two-window session drifted about 2 minutes in).
+
+**Fix.** Online, the keyboard reaches the game as controller bytes anyway (`key_events` is off there). So the
+held Spin key goes in as simple spinning's own button, LB (`KeyboardMouseDriver::MergeInto`, play only, not
+while a menu is up). Every PC then turns LB into circles the same way, in `game_mods::FilterPad`, whose timers
+already run on game time (`game_time::Clock`). This PC's own queue of key circles is emptied but never answers
+online (`sub_8221E200` wrapper), and its "key held" is ignored online (`FilterPad`). Offline nothing changes.
+
+**A trap in the test kit.** A replay that starts "onspawn" resets two pieces of world state: the game's clock
+base and the pads' last-poll time (`input_record.cpp RestartPadPollRhythm`). The game reads the pads only when
+its millisecond clock is more than 16 ms past the last read, so at 60 fps some frames get no read. When only
+one PC replayed (the guest) and the other played on keys, the two read the controllers on frames one apart.
+The host's input then landed on the guest's copy one frame late (logged on both sides: same stored frame,
+different read frame). Online that reset is now skipped. The session start already lines both PCs up: the
+clock restarts there on every PC, and the first read after it falls on the same frame everywhere.
+
+**Checked** (save 2, two copies, own cameras, simple + keep spinning on). The host spins with the Spin key
+(held 2 s, then 4 taps) through the debug console's key taps. The guest joins and spins with LB (held 2 s,
+then 4 taps). Player 1 walked away first, or spun right next to player 2 (the spin hits them). World and
+controllers were identical on every frame (1,815), with the same spin, hold and "spin goes on" counts on both
+PCs. With both players on recorded controllers (LB held + taps, keep spinning, a walk): identical on 2,175
+frames. Guest killed mid-spin: the host plays on, its held spin continues, player 2 drops after the timer.
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).

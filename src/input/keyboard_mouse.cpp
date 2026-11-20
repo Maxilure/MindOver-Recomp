@@ -11,6 +11,7 @@
 #include "../players/more_players.h"
 #include "../gameplay/game_mods.h"
 #include "../guest_memory.h"
+#include "../net/net_session.h"
 
 #include <algorithm>
 #include <cmath>
@@ -32,6 +33,8 @@ REXCVAR_DEFINE_BOOL(debug_kbm_trace, false, "CrashMoM",
 
 using namespace rex;
 using namespace rex::input;
+
+REXCVAR_DECLARE(bool, simple_spinning);  // gameplay/game_mods.cpp
 
 namespace kbm {
 namespace {
@@ -650,6 +653,19 @@ void KeyboardMouseDriver::MergeInto(uint8_t* gamepad) {
     spin_circles_.clear();
   } else {
     BuildState(now, pad);
+    // ONLINE, THE SPIN KEY IS LB (2026-11-20, a player's report: simple
+    // spinning didn't match between the PCs). Offline the key hands circles
+    // to the fight trees straight from this driver (TakeSpinCircle), but
+    // that queue lives on THIS PC only: online the key spun player 1 on the
+    // host's copy of the world and nowhere else. Online the keyboard reaches
+    // the game as controller bytes (key_events off), and those bytes are
+    // what travels to every PC: so the held key goes in as simple spinning's
+    // own button, LB, and every PC turns it into circles the same way
+    // (game_mods::FilterPad, on game time). Play only: a menu keeps its LB
+    // (tabs) for real LB presses.
+    if (spin_held_ && net::Configured() && REXCVAR_GET(simple_spinning) && !MenuOnScreen()) {
+      pad.buttons = uint16_t(uint16_t(pad.buttons) | X_INPUT_GAMEPAD_LEFT_SHOULDER);
+    }
   }
   // Mouse pulses (a click's A, a right click's B, a wheel notch's D-pad):
   // each held 60 ms, then a 40 ms gap before the next: menus read presses as
@@ -916,7 +932,6 @@ X_RESULT KeyboardMouseDriver::GetDeviceKeystroke(DeviceId id, uint32_t flags,
 // circle ONCE (measured: true for one question, false at the next), so a
 // waiting circle from the Spin key is the same answer.
 // -----------------------------------------------------------------------------
-REXCVAR_DECLARE(bool, simple_spinning);  // gameplay/game_mods.cpp
 extern "C" REX_FUNC(__imp__sub_8221E200);
 // An actor (CActor) holds its behaviour controller (here class "Crash", a
 // CScriptBehaviourController) at +0x40: that's what the question gets
@@ -986,7 +1001,15 @@ extern "C" REX_FUNC(sub_8221E200) {
   if (game_mods::Holding(player)) return;
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
-  const bool keyboard = driver && assignment && assignment->KeyboardAnswersFor(uint32_t(player));
+  // Online the Spin key travels as LB (MergeInto) and comes back through
+  // TakeButtonSpin on every PC: this PC's own queue of key circles is
+  // emptied but never answers (it would spin a player on this copy only).
+  const bool online = net::Configured();
+  if (online && driver) {
+    while (driver->TakeSpinCircle()) {
+    }
+  }
+  const bool keyboard = !online && driver && assignment && assignment->KeyboardAnswersFor(uint32_t(player));
   // Our circles (the keyboard's Spin key, simple spinning's LB) obey the
   // game's own lock, like the stick's: no spins in cutscenes.
   if (keyboard && !REXCVAR_GET(simple_spinning)) driver->TakeSpinCircle();  // off: dropped
