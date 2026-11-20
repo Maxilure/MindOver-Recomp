@@ -15,6 +15,7 @@
 #include <rex/ppc/func.h>
 
 #include "../pddi/intercept.h"
+#include "../players/coop_camera.h"
 
 REXCVAR_DEFINE_INT32(aspect_ratio, 0, "CrashMoM",
                      "Picture shape (native renderer, Native Only): 0 = match the window, 1 = 16:9 "
@@ -227,6 +228,9 @@ extern "C" REX_FUNC(sub_82381E78) {
   const float aspect = CurrentAspect();
   const float wide = aspect / kGameAspect;
   const bool from_vertical = camera && *Guest(camera + kCamFovFromVertical) != 0;
+  // Online, during a cutscene's camera shot: the render's view set-up takes
+  // the field of view the shared rule gives (coop_camera.h SharedShotFov).
+  if (double shared = ctx.f1.f64; coop_camera::SharedShotFov(uint32_t(ctx.lr), shared)) ctx.f1.f64 = shared;
   const float game_fov = float(ctx.f1.f64);
   const bool widen = camera && wide > 1.001f && !from_vertical && game_fov > 0.05f && game_fov < 3.0f;
   if (widen) ctx.f1.f64 = 2.0 * std::atan(std::tan(0.5 * game_fov) * wide);

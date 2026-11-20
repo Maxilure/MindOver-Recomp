@@ -2366,3 +2366,16 @@ registers = ["r5", "r31"]
 address = 0x822719D8
 name = "OnlineHoldQuery"
 registers = ["r30", "r31"]
+
+# ONLINE: THE UNLOCK AFTER A CUTSCENE (src/net/online_sticks.cpp
+# OnlineUnlockSettled). sub_82270FE8 lowers a controller's lock count only
+# when the game camera says "settled" (sub_8223B2F0 = byte +588 bit 0x80 of
+# *(game)+44); with each PC's own camera that answer differs per PC and the
+# unlock came 2 frames apart (NV-mail box shot, 2026-11-20). In a session r3
+# (the answer, right after `bl 0x8223b2f0`) becomes the controller's player's
+# sent answer. r10 = the controller (mr r10,r3 at 0x82270FF4). Verified with
+# xexdis (0x8227101C clrlwi r6,r3,24).
+[[entrypoint.midasm_hook]]
+address = 0x8227101C
+name = "OnlineUnlockSettled"
+registers = ["r3", "r10"]

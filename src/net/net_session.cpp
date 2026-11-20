@@ -43,6 +43,9 @@ namespace online_sticks {  // online_sticks.cpp
 bool CameraFacing(uint16_t& facing);
 bool CameraPose(uint32_t words[10]);
 bool TakeCameraCut(uint8_t& cut);
+bool CameraSettled(uint8_t& settled);
+uint8_t TakeCutsceneReady();
+uint8_t TakeMovieDone();
 std::string ControllerParts();
 std::string BehaviourParts();
 }  // namespace online_sticks
@@ -113,7 +116,7 @@ using Clock = std::chrono::steady_clock;
 // -----------------------------------------------------------------------------
 // 1. PACKETS
 // -----------------------------------------------------------------------------
-constexpr uint8_t kProtocol = 4;  // 2: inputs carry the sender's camera facing; 3: + its camera pose; 4: + its camera's hold answer  // bump on any layout change: old copies refuse
+constexpr uint8_t kProtocol = 6;  // 2: inputs carry the sender's camera facing; 3: + its camera pose; 4: + its camera's hold answer; 5: + its camera's "settled" bit; 6: + "a cutscene step has a held change" + "the movie is done here"  // bump on any layout change: old copies refuse
 constexpr char kMagic[4] = {'M', 'O', 'R', 'N'};
 enum Type : uint8_t {
   kHello = 1,
@@ -228,10 +231,22 @@ struct PadIn {
   // The sender's camera's answer to "event 9" (online_sticks.cpp
   // OnlineHoldQuery: the hold logic's camera question). Flag bit 8.
   uint8_t camera_cut = 0;
+  // The sender's camera's "settled" bit (online_sticks.cpp CameraSettled /
+  // OnlineUnlockSettled: the controller unlock after a cutscene waits for
+  // it). Flag bit 16.
+  uint8_t camera_settled = 0;
+  // "A cutscene step has a state change held back here" (online_sticks.cpp
+  // CUTSCENES AND MOVIES MOVE ON TOGETHER). Flag bit 32.
+  uint8_t cutscene_ready = 0;
+  // "The movie is done here" (same place: the MoviePlaying decision answered
+  // "done" last frame). Flag bit 64.
+  uint8_t movie_done = 0;
   bool operator==(const PadIn& o) const {
     return connected == o.connected && std::memcmp(bytes, o.bytes, 12) == 0 &&
            has_facing == o.has_facing && facing == o.facing && has_camera == o.has_camera &&
-           std::memcmp(camera, o.camera, sizeof(camera)) == 0 && camera_cut == o.camera_cut;
+           std::memcmp(camera, o.camera, sizeof(camera)) == 0 && camera_cut == o.camera_cut &&
+           camera_settled == o.camera_settled && cutscene_ready == o.cutscene_ready &&
+           movie_done == o.movie_done;
   }
 };
 
@@ -346,7 +361,9 @@ void SendInputsLocked() {
   w.U32(uint32_t(int32_t(int64_t(g_inputs[g_remote].size()) - 1)));  // ack
   for (int i = 0; i < count; ++i) {
     const PadIn& in = mine[size_t(first + i)];
-    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0) | (in.has_camera ? 4 : 0) | (in.camera_cut ? 8 : 0)));
+    w.U8(uint8_t((in.connected ? 1 : 0) | (in.has_facing ? 2 : 0) | (in.has_camera ? 4 : 0) | (in.camera_cut ? 8 : 0) |
+                     (in.camera_settled ? 16 : 0) | (in.cutscene_ready ? 32 : 0) |
+                     (in.movie_done ? 64 : 0)));
     w.Bytes(in.bytes, 12);
     w.U16(in.facing);
     if (in.has_camera) {
@@ -584,6 +601,9 @@ void HandlePacket(const uint8_t* data, size_t size, const sockaddr_in& from) {
         in.has_facing = (flags >> 1) & 1;
         in.has_camera = (flags >> 2) & 1;
         in.camera_cut = (flags >> 3) & 1;
+        in.camera_settled = (flags >> 4) & 1;
+        in.cutscene_ready = (flags >> 5) & 1;
+        in.movie_done = (flags >> 6) & 1;
         r.Bytes(in.bytes, 12);
         in.facing = r.U16();
         if (in.has_camera) {
@@ -958,6 +978,9 @@ void OnPassStart(uint64_t fixed_step_frame) {
   }
   if (online_sticks::CameraPose(g_latest_local.camera)) g_latest_local.has_camera = 1;
   if (uint8_t cut = 0; online_sticks::TakeCameraCut(cut)) g_latest_local.camera_cut = cut;
+  if (uint8_t settled = 0; online_sticks::CameraSettled(settled)) g_latest_local.camera_settled = settled;
+  g_latest_local.cutscene_ready = online_sticks::TakeCutsceneReady();
+  g_latest_local.movie_done = online_sticks::TakeMovieDone();
   auto& mine = g_inputs[g_local];
   while (int64_t(mine.size()) <= s + g_delay) mine.push_back(g_latest_local);
   g_last_sent = int64_t(mine.size()) - 1;
@@ -1062,6 +1085,39 @@ bool FrameCameraCut(int player, uint8_t& cut) {
   const PadIn& in = g_inputs[player][size_t(s)];
   if (!in.has_facing) return false;  // (sent together with the facing)
   cut = in.camera_cut;
+  return true;
+}
+
+bool FrameCameraSettled(int player, uint8_t& settled) {
+  if (!g_in_session.load() || player < 0 || player >= kPlayers) return false;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+  const PadIn& in = g_inputs[player][size_t(s)];
+  if (!in.has_facing) return false;  // (sent together with the facing)
+  settled = in.camera_settled;
+  return true;
+}
+
+bool FrameCutsceneReadyEverywhere() {
+  if (!g_in_session.load()) return true;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  for (const int player : {g_local, g_remote}) {
+    if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+    if (!g_inputs[player][size_t(s)].cutscene_ready) return false;
+  }
+  return true;
+}
+
+bool FrameMovieDoneEverywhere() {
+  if (!g_in_session.load()) return true;
+  const int64_t s = int64_t(fixed_step::Frame()) - g_base;
+  std::lock_guard lock(g_m);
+  for (const int player : {g_local, g_remote}) {
+    if (s < 0 || s >= int64_t(g_inputs[player].size())) return false;
+    if (!g_inputs[player][size_t(s)].movie_done) return false;
+  }
   return true;
 }
 

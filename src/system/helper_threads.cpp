@@ -427,3 +427,26 @@ void WaitUntilQuiet() {
 }
 
 }  // namespace helper_threads
+
+// FILE WAITS INSIDE A FRAME (2026-11-20). sub_82358410 = the game's file
+// system service (a jump to sub_8235DBB0: runs the queued file requests'
+// steps). Besides the main loop's once-per-pass call (0x8227AA24), it is
+// called at the head of every BUSY-WAIT on a file request: the Bink player's
+// open (sub_8242B068, loop 0x8242B0DC..0x8242B114) and read (sub_8242A898,
+// loop 0x8242A8CC..0x8242A904), sub_8242A688 / A738 / ACA0, the movie player's
+// update sub_822C42A0 ... Those loops neither wait nor read a clock, so with
+// the helpers held between frames (HELPERS WORK ONLY BETWEEN FRAMES, header)
+// the helper thread doing the request was held forever: the first in-level
+// movie of an online session (Coco's cartoon on Wumpa Island, front end
+// 489 -> 491) froze both PCs (console `profile`: 100% of the main thread in
+// sub_8242A898's loop; --helper_threads_between_frames=false = no hang).
+// Now, on the main thread inside a frame, each such call first lets the
+// helpers finish all their work (LetHelpersFinish), the same work on every
+// PC, so a request completes on the same pass everywhere. The main loop's own
+// call is at the frame boundary (gate open): untouched. Off the fixed step /
+// without gating LetHelpersFinish returns at once (offline play unchanged).
+extern "C" REX_FUNC(__imp__sub_82358410);
+extern "C" REX_FUNC(sub_82358410) {
+  if (fixed_step::OnMainThread() && uint32_t(ctx.lr) != 0x8227AA28) helper_threads::LetHelpersFinish();
+  __imp__sub_82358410(ctx, base);
+}

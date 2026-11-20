@@ -75,6 +75,7 @@
 
 #include "more_players.h"
 #include "../net/net_session.h"
+#include "../data/fight_tree.h"
 
 REXCVAR_DEFINE_BOOL(coop_camera, true, "CrashMoM",
                     "Co-op camera: frame every player in game (centre between them, back off until all "
@@ -136,6 +137,21 @@ REXCVAR_DEFINE_INT32(debug_coop_camera_trace_every, 10, "CrashMoM",
 
 namespace coop_camera {
 namespace {
+// A CUTSCENE OR CAMERA SHOT IS ON (2026-11-20): the front end sits in one of
+// its "Cinematics" states (node 517 and everything under it, 518..729 in
+// Frontend.bfig: the per-level groups L1..L9 with every nis_* / cam_* state;
+// all states in that number range are in it, checked with fig_tree.py). Why:
+// online with each PC's own camera, the guest's volume camera still ran
+// during N. Gin's lab shot (cam_l1_r5_ngin, save "N.Gin After Mail") and our
+// fit widened the SHOT's field of view on the guest's PC only (camera +16:
+// 1.31 against the host's 1.01, same position and direction). A shot's view
+// is never ours: everything below stands aside while one is on.
+bool InCinematicState() {
+  constexpr int32_t kFirstCinematic = 517, kLastCinematic = 729;
+  const int32_t state = fight_tree::CurrentFrontEnd().state;
+  return state >= kFirstCinematic && state <= kLastCinematic;
+}
+
 
 constexpr int kMaxPlayers = 4;
 constexpr uint32_t kPlayerStates = 0x8259B11C;  // u32 per player (4 entries since more_players)
@@ -874,7 +890,7 @@ void OnGameCameraRebuilt(uint32_t camera) {
   // PINNED ROOMS: our wider view goes in before the rebuild (the game sets
   // +16 again every frame, so it never piles up). Eased; off at once when
   // ours isn't in charge (a cutscene's own view is never touched).
-  if (g_volume_ran && g_active && Finite(g_view.position)) {
+  if (g_volume_ran && g_active && !InCinematicState() && Finite(g_view.position)) {
     const float rate = g_fov_want > g_fov_scale ? kFovOut : kFovIn;
     g_fov_scale += (g_fov_want - g_fov_scale) * std::min(1.0f, g_frame_dt * rate);
     if (std::fabs(g_fov_scale - g_fov_want) < 0.002f) g_fov_scale = g_fov_want;
@@ -887,7 +903,7 @@ void OnGameCameraRebuilt(uint32_t camera) {
   }
   g_view.fov_scale = g_fov_scale;
   // A view only counts when the volume camera built it (see g_volume_ran).
-  const bool volume_view = g_volume_ran;
+  const bool volume_view = g_volume_ran && !InCinematicState();
   g_volume_ran = false;
   g_view.valid = volume_view && Finite(g_view.position) && Finite(g_view.direction) && Finite(g_view.up);
   // Our answer's home in guest memory (once): the volume code reads the
@@ -897,6 +913,30 @@ void OnGameCameraRebuilt(uint32_t camera) {
   UpdateOffset();  // (around the centre this view was built on: before it moves)
   UpdatePlayers(volume_view);
   UpdateUrgency();
+}
+
+bool SharedShotFov(uint32_t lr, double& fov) {
+  constexpr uint32_t kRenderViewSetUp = 0x82381B64;  // return address in sub_82381B38
+  constexpr uint32_t kGameGlobal = 0x8259B190, kFocus = 40;
+  if (lr != kRenderViewSetUp || !OwnCameraOnline() || !net::InSession() || !InCinematicState()) return false;
+  const uint32_t game = Read32(kGameGlobal);
+  if (!game) return false;
+  int focus = int32_t(Read32(game + kFocus));
+  if (focus < 0 || focus > 3) focus = 0;
+  if (focus == net::LocalPlayer()) return false;  // this PC already follows the focus player
+  uint32_t words[10];
+  if (!net::FrameCamera(focus, words)) return false;
+  float f = 0.0f;
+  std::memcpy(&f, &words[9], 4);  // the sent field of view (+16, the game's 16:9 one)
+  if (!(f > 0.05f && f < 3.0f)) return false;
+  static bool told = false;
+  if (!told) {
+    told = true;
+    REXLOG_INFO("Co-op camera: a cutscene shot online: the field of view player {}'s PC sent ({:.3f}) instead of "
+                "this PC's own camera's ({:.3f})", focus + 1, f, fov);
+  }
+  fov = f;
+  return true;
 }
 
 }  // namespace coop_camera

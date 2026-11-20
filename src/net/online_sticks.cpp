@@ -36,6 +36,8 @@
 // EVERY PC, still in sync).
 // =============================================================================
 
+#include <algorithm>
+#include <vector>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -525,4 +527,147 @@ void OnlineHoldQuery(PPCRegister& r30, PPCRegister& r31) {
   uint8_t sent = 0;  // a free controller: player 1's answer (as at the unlock)
   if (!net::FrameCameraCut(owner < 0 ? 0 : owner, sent)) return;
   r30.u64 = sent;
+}
+
+// THE UNLOCK AFTER A CUTSCENE (2026-11-20; the NV-mail box's opening camera
+// shot on Wumpa Island, save "NV Mail"). sub_82270FE8 lowers a controller's
+// lock count (+516) only while the game camera object (*(game)+44) has bit
+// 0x80 of its byte +588 set (sub_8223B2F0, called at 0x82271018; cleared by
+// sub_8223B300): the camera has settled back after the shot. With each PC's
+// own camera the bit came up on different frames, so the guest's Crash was
+// let go 2 frames after the host's: his turn at the shot's end and every
+// cutscene event after it happened 2 frames apart (world fingerprint frames
+// 632, 975, ...; with one shared camera the same run stayed identical). Like
+// the hold question above: this PC's bit goes out with each input
+// (CameraSettled, read when the input is made), and at the unlock (r3 right
+// after the call, 0x8227101C; r10 = the controller) the bit the controller's
+// player's PC sent replaces it; a controller nobody plays: player 1's.
+namespace online_sticks {
+bool CameraSettled(uint8_t& settled) {
+  uint8_t* base = Base();
+  constexpr uint32_t kGameGlobal = 0x8259B190, kCameraObject = 44, kSettledByte = 588;
+  if (!guest_memory::Readable(kGameGlobal, 4)) return false;
+  uint32_t game = 0, camera = 0;
+  std::memcpy(&game, GuestPtr(base, kGameGlobal), 4);
+  game = __builtin_bswap32(game);
+  if (!game || !guest_memory::Readable(game + kCameraObject, 4)) return false;
+  std::memcpy(&camera, GuestPtr(base, game + kCameraObject), 4);
+  camera = __builtin_bswap32(camera);
+  if (!camera || !guest_memory::Readable(camera + kSettledByte, 1)) return false;
+  settled = (*GuestPtr(base, camera + kSettledByte) >> 7) & 1;
+  return true;
+}
+}  // namespace online_sticks
+void OnlineUnlockSettled(PPCRegister& r3, PPCRegister& r10) {
+  if (!net::InSession()) return;
+  const int owner = online_rules::PlayerOfController(Base(), r10.u32);
+  uint8_t sent = 0;
+  if (!net::FrameCameraSettled(owner < 0 ? 0 : owner, sent)) return;
+  if (sent != ((r3.u32 & 0xFF) != 0 ? 1 : 0)) {
+    static int told = 0;
+    if (told++ < 10) {
+      REXLOG_INFO("Online: player {}'s unlock: their PC's camera says {}settled, this PC's {}", (owner < 0 ? 0 : owner) + 1,
+                  sent ? "" : "not ", sent ? "not yet" : "already");
+    }
+  }
+  r3.u64 = sent;
+}
+
+// CUTSCENES AND MOVIES MOVE ON TOGETHER (2026-11-20). Some cutscene moments
+// end on a frame set by timing outside the game frames: a cutscene step's
+// files finishing loading (the NV-mail box's opening shot started 2 frames
+// apart in about one run in three), its streamed dialogue / animation coming
+// to an end (the NV-mail 3D scene ended 1 frame apart), a movie's last
+// picture (after the cartoon, player 1 turned a frame apart and the world
+// split). Online, those moments now happen only on a frame where EVERY PC has
+// reported them with its input (net::FrameCutsceneReadyEverywhere /
+// FrameMovieDoneEverywhere), so they land on the same frame everywhere, a few
+// frames after the slowest PC is there.
+//
+// 1. A cutscene step (CMasterCinematicAction, vtable 0x82038754) changes
+//    state through sub_82241698(this, state). The calls made from its update
+//    and the helpers it runs (the return addresses below: kPolled) are held
+//    back: remembered per step (the latest wins) and applied at the start of
+//    that step's next update (slot 5, sub_82241C60) on a frame where every
+//    PC has a held change. Remembering (not just refusing) keeps one-time
+//    events (a press) from being lost. The step's Enter / set-up calls are
+//    left alone.
+// 2. The front end's MoviePlaying decision (sub_8211EB48, state 492) answers
+//    exit 494 "movie done" only on a frame where every PC's movie is done
+//    (else -1 = stay; the movie stays finished meanwhile).
+namespace {
+constexpr uint32_t kPolled[] = {0x82241D74, 0x82241E08, 0x82242E34, 0x82242F44,
+                                0x82242F80, 0x82242FA0, 0x8224313C, 0x822431DC};
+struct HeldStateChange {
+  uint32_t step;
+  uint32_t state;
+  uint64_t since;  // fixed-step frame it was first held (stale ones dropped)
+};
+std::vector<HeldStateChange> g_held_changes;
+bool g_movie_done_seen = false;
+}  // namespace
+namespace online_sticks {
+uint8_t TakeCutsceneReady() {
+  // (stale: a step that no longer updates, e.g. freed; 10 s)
+  const uint64_t now = fixed_step::Frame();
+  std::erase_if(g_held_changes, [&](const HeldStateChange& h) { return now > h.since + 600; });
+  return g_held_changes.empty() ? 0 : 1;
+}
+uint8_t TakeMovieDone() {
+  const uint8_t done = g_movie_done_seen ? 1 : 0;
+  g_movie_done_seen = false;
+  return done;
+}
+}  // namespace online_sticks
+
+extern "C" REX_FUNC(__imp__sub_82241698);
+extern "C" REX_FUNC(sub_82241698) {
+  const uint32_t lr = uint32_t(ctx.lr);
+  if (!net::InSession() || std::find(std::begin(kPolled), std::end(kPolled), lr) == std::end(kPolled)) {
+    __imp__sub_82241698(ctx, base);
+    return;
+  }
+  const uint32_t step = ctx.r3.u32, state = ctx.r4.u32;
+  for (HeldStateChange& h : g_held_changes) {
+    if (h.step == step) {
+      h.state = state;
+      return;
+    }
+  }
+  g_held_changes.push_back({step, state, fixed_step::Frame()});
+  static int told = 0;
+  if (told++ < 5) {
+    REXLOG_INFO("Online: cutscene step {:08X} wants state {}: held until every PC is there", step, state);
+  }
+}
+
+extern "C" REX_FUNC(__imp__sub_82241C60);
+extern "C" REX_FUNC(sub_82241C60) {
+  if (net::InSession() && !g_held_changes.empty()) {
+    const uint32_t step = ctx.r3.u32;
+    auto it = std::find_if(g_held_changes.begin(), g_held_changes.end(),
+                           [&](const HeldStateChange& h) { return h.step == step; });
+    if (it != g_held_changes.end() && net::FrameCutsceneReadyEverywhere()) {
+      const uint32_t state = it->state;
+      g_held_changes.erase(it);
+      PPCContext saved = ctx;  // the update's own arguments (r3, f1, f2) stay as they were
+      ctx.r4.u64 = state;
+      __imp__sub_82241698(ctx, base);
+      ctx = saved;
+    }
+  }
+  __imp__sub_82241C60(ctx, base);
+}
+
+extern "C" REX_FUNC(__imp__sub_8211EB48);
+extern "C" REX_FUNC(sub_8211EB48) {
+  __imp__sub_8211EB48(ctx, base);
+  constexpr uint32_t kExitMovieDone = 494;
+  if (!net::InSession() || ctx.r3.u32 != kExitMovieDone) return;
+  g_movie_done_seen = true;
+  if (!net::FrameMovieDoneEverywhere()) {
+    static int told = 0;
+    if (told++ < 5) REXLOG_INFO("Online: the movie is done here: waiting for every PC's");
+    ctx.r3.u64 = 0xFFFFFFFFull;  // -1: stay in MoviePlaying this frame
+  }
 }

@@ -502,6 +502,110 @@ PC's camera. That cursor (the 360 Crash's aim point, the one that can pull in
 mojo) is switched on only by the mouse reticle, and the mouse reticle is off
 online (`mouse_reticle` answers 0 in a session), so nothing reads that sphere.
 
+## 6j. Cutscenes and movies online
+
+**Why:** the story's scenes are where both PCs must agree on the most at
+once: a movie that stops the world, camera shots that hold the controllers,
+in-engine scenes that move the players. Three of them were played online
+(two copies, own cameras): talking to Coco on Wumpa Island (a cartoon
+movie), the NV-mail box (an opening camera shot, the 3D scene with its 5.1
+dialogue, then a cartoon) and N. Gin's lab (a camera shot, both players in
+the level). The flag `--debug_start_at=x,y,z` puts the players at a spot 2 s
+of game time after player 1's Crash appears, on the same frame on both PCs
+(a console `goto` acts on one PC only).
+
+**1. The first movie froze both PCs.** B at Coco moves the front end from
+GameRunning (489) to MoviePlaying (491), and both games stopped there: the
+display kept running, the game frames didn't. Console `profile` in the
+frozen game: all of the main thread inside the Bink player's file open
+(`sub_8242B068`) and read (`sub_8242A898`), each a busy loop that polls the
+file request. Online the game's helper threads (loading, sound) only work
+between frames (6g, `helper_threads.h`), so both PCs see their results on the
+same frame. Those two loops neither wait nor read a clock, the only two
+things that let the helpers finish inside a frame, so the helper doing the
+open was held until a frame boundary that never came. The same freeze
+happens offline with `--fixed_step` alone (exact runs).
+Every such loop starts each pass with `sub_82358410` (a jump to
+`sub_8235DBB0`, the file system's service step), and so does the main loop
+once per frame (0x8227AA24, at the frame boundary). `sub_82358410` is now
+wrapped: on the main thread, except from the main loop, it first lets the
+helpers finish all their work, the same work on every PC, so a request
+completes on the same pass everywhere. Coco's cartoon (`Crash_02_51.bik`)
+then played to its end on both PCs (492 -> 494) and play went on: world and
+controllers identical on all 6,587 frames.
+
+(Who may start the talk: with two players, the B over Coco belongs to the
+player nearest to her; the other's B does nothing. The same offline: the
+game's rule.)
+
+**2. Released 2 frames apart after a camera shot.** In the NV-mail save the
+level opens with a camera shot of the box (`cam_l1_r1_mail`, front end 547).
+With the host's stick pushed while the shot held the controllers, every event
+after it happened 2 frames later on the guest: player 1's turn at the shot's
+end (fingerprint frame 632), the 3D scene putting him in place (975), and so
+on; with one shared camera the same inputs stayed identical. The shot's end
+lowers each controller's lock count in `sub_82270FE8`, but only while the
+game camera object (`*(game)+44`) has bit 0x80 of byte +588 set
+(`sub_8223B2F0` at 0x82271018: the camera has settled after the shot). Each
+PC's own camera settled on its own frame. Like the hold question (6g), this
+PC's bit now goes out with every input (protocol 5, flag bit 16) and the
+unlock of player P's controller uses the bit P's PC sent (a controller nobody
+plays: player 1's), midasm hook at 0x8227101C. Found by naming the shot
+object's "playing" byte (+120) with a temporary log and `who` on it on both
+PCs: written by the cutscene director's step (`CMasterCinematicAction`
+exit, slot 6 `sub_82241ED0`), then the unlock read above.
+
+**3. The guest saw the shot zoomed out.** In N. Gin's lab shot
+(`cam_l1_r5_ngin`) both PCs had the same camera position and direction, but
+the guest's field of view was 1.31 against the host's 1.01. The render's
+view set-up (`sub_822B37D0` -> `sub_823793C8` -> `sub_82381B38` -> the
+camera's SetView `sub_82381E78`) hands the camera its field of view every
+frame, and during a shot that is the game's volume camera's, which keeps
+running: on the guest it had followed player 2, far away. Two changes: the
+co-op camera stands aside while the front end is in any cutscene / camera
+shot state (node 517 "Cinematics" and everything under it, numbers 517..729
+in Frontend.bfig), and online during such a shot that SetView call takes the
+field of view the game's focus player's PC sent with its input (the camera
+pose every input carries since protocol 3): what one shared camera shows.
+
+**4. Cutscene and movie endings a frame apart.** With both players in the
+NV-mail save, the NV-mail scene's end came 1 frame apart now and then
+(fingerprint frame 2703: both players put back a frame apart), and after the
+cartoon player 1 turned a frame apart and the world split (positions apart
+by frame 9000; the session flagged "DRIFTED"). Before the opening shot even
+started, the same kind of race: its step waited for its files, and the load
+finished 2 frames later on one PC in about one run in three. A temporary log
+of the cutscene step's state (+412) with game frames on both PCs showed the
+pattern: state 2 -> 3 (files loaded) at frame 1409 on the host and 1411 on
+the guest, every later change the same 2 frames apart. These moments end on
+timing outside the game frames (loader threads, a streamed dialogue track, the
+movie player's last picture). The rule now: they happen only on a frame where
+EVERY PC has reported them with its input (protocol 6, flag bits 32 / 64):
+
+* a cutscene step (`CMasterCinematicAction`) changes state through
+  `sub_82241698(this, state)`; the calls made from its update and the helpers
+  it runs (8 return addresses) are held, remembered per step (so a one-time
+  press isn't lost) and applied at the start of that step's next update
+  (slot 5, `sub_82241C60`) on a frame where every PC has one held;
+* the front end's MoviePlaying decision (`sub_8211EB48`) answers "movie done"
+  (exit 494) only on a frame where every PC's movie is done (else -1, stay).
+
+Both PCs then move on together, a few frames after the slowest one.
+
+| Scene (two copies, own cameras) | Result |
+| --- | --- |
+| Coco on Wumpa Island, guest's B: the cartoon to its end, then play | identical on all 6,588 frames (was: both PCs frozen) |
+| NV-mail save, both players in: opening shot, the 3D scene, the cartoon, play again | identical on all 9,583 frames (was: a frame or two apart at the shot's start and the scene's end, then a split after the cartoon) |
+| The same opening shot alone, 25 runs | identical in 24; one run (before the endings were held too) had player 1's release 1 frame apart |
+| N. Gin's lab shot, both players in, player 2 far away | identical on every frame; the guest's shot at the host's field of view |
+
+**Joining in the NV-mail save works** (offline and online): the opening shot
+lasts 6.5 s and nobody can join during a shot (the front end isn't in its
+"game running" step then: the original's rule). In the first runs here the
+joins were refused for two reasons of the test set-up: test windows without
+a sound device made that shot last 26 s (the shot waits for its sound), and
+a teleport straight to the box started the 3D scene right after the shot.
+
 ## 7. Not yet
 
 * Coming back after a disconnect (late join / reconnect: the plan's milestone M5).

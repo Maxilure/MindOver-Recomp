@@ -27,6 +27,7 @@
 // into the nodes), exact on small ones.
 // =============================================================================
 
+#include <cstdio>
 #include "test_course.h"
 
 #include <algorithm>
@@ -56,6 +57,10 @@ REXCVAR_DEFINE_BOOL(test_course, false, "CrashMoM",
 REXCVAR_DEFINE_STRING(test_course_start, "", "CrashMoM",
                       "Debug: with --test_course, put the players at this lane's start (e.g. ropegap) when "
                       "the course's objects are placed, on a fixed game frame (online: both PCs alike)");
+REXCVAR_DEFINE_STRING(debug_start_at, "", "CrashMoM",
+                      "Debug: \"x y z\" (or x,y,z) = put every playing player there (1.5 units apart in z) 2 s of game time "
+                      "after player 1's Crash appears in a level, on a fixed game frame (online: both PCs alike; "
+                      "works without --test_course) (src/world/test_course.cpp)");
 REXCVAR_DEFINE_STRING(debug_test_course_dump, "", "CrashMoM",
                       "Debug: also write the patched Wumpa Island package to this file (to compare with "
                       "notes/scratch-tools/maps/p3d_patch.py) (src/world/test_course.cpp)");
@@ -673,7 +678,43 @@ bool g_objects_placed = false;
 
 }  // namespace
 
+// debug_start_at: the players put at a spot once per level start, counted in
+// GAME time like the course's objects (so both PCs of an online session move
+// them on the same frame: a console `goto` acts on one PC only and drifts).
+// Why: online tests that need a far spot (Coco on Wumpa Island, a cutscene's
+// trigger) without minutes of scripted walking.
+void StartAtTick(bool in_play, double frame_seconds) {
+  static bool done = false;
+  static double since = 0.0;
+  const std::string& spot = REXCVAR_GET(debug_start_at);
+  if (spot.empty()) return;
+  if (!in_play) {
+    done = false;
+    since = 0.0;
+    return;
+  }
+  since += frame_seconds;
+  if (done || since < kObjectsAfterSpawn) return;
+  done = true;
+  float at[3] = {};
+  std::string text = spot;  // "x,y,z" works too (no spaces to quote on a command line)
+  for (char& c : text) c = c == ',' ? ' ' : c;
+  if (std::sscanf(text.c_str(), "%f %f %f", &at[0], &at[1], &at[2]) != 3) {
+    REXLOG_WARN("Start at: \"{}\" isn't \"x y z\"", spot);
+    return;
+  }
+  for (int p = 0; p < 4; ++p) {
+    const uint32_t body = more_players::CharacterOfPlayer(p);
+    if (!body || !menu_input::PlayerPlays(p)) continue;
+    const float here[3] = {at[0], at[1], at[2] + 1.5f * p};
+    if (debug_console::PutBodyAt(body, here)) {
+      REXLOG_INFO("Start at: player {} put at {:.2f} {:.2f} {:.2f}", p + 1, here[0], here[1], here[2]);
+    }
+  }
+}
+
 void Tick(bool in_play, double frame_seconds, const float* player1) {
+  StartAtTick(in_play, frame_seconds);
   if (!REXCVAR_GET(test_course) || !g_course_built) return;
   // The course is only in Wumpa Island's piece; the patch flag stays set
   // after a level change, so: player 1 within 400 units of the lanes too.
