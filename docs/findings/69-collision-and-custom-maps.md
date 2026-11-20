@@ -364,4 +364,83 @@ starts it again at 2 units/s; an unknown name is refused in the log.
 So the platform carries Crash the same way at every frame rate tested. Next:
 a platform that waits (wait type 3 + `NEXT_WAIT_POINT`), vertical travel
 (lifts: landing on a rising floor), and the same probes with titans.
+Tilting and rolling platforms: section 10.
 
+
+## 10. Tilting and rolling platforms: the frame time counted twice
+
+**Why:** some platforms move because Crash stands on them: icebergs and
+props that tip under his weight and spring back, and "rolling logs" that
+spin as he walks on them, where the player has to keep his balance. Above
+60 fps they react much more slowly.
+
+**Which platforms.** In the template scripts they are `Platform` actors
+whose data sets a `m_BounceBehaviour` (C++ `CBounceBehaviour`, vtable
+`0x8202C2D4`): `mass_number`, `spring_coef_x/z_number`,
+`rotation_dampening_coef_x/z_number`, `rotation_min/max_x/z_angle_number`,
+`rotation_max_speed_number`, `rotation_x/z_on_state`, and for the rolling
+ones `rotation_type_enumvalue = ERotType_ROLLING_LOG_Z`. Among them:
+
+| Template | Kind | Where | Own package (spawnable anywhere) |
+| --- | --- | --- | --- |
+| `StaticProps:env_Ice:prp_pformTilty_iceburg_A` | tilts (x and z, 38 / 30 degrees) | Ice levels | yes |
+| `StaticProps:env_Ice:prp_pformL2_C_shaped_wheel` | rolls (z, up to 180 degrees) | Ratcicle Kingdom | yes |
+| `StaticProps:env_Ice:prp_pformdonut` | rolls (z) | Ratcicle Kingdom | no |
+| `StaticProps:env_Whumpa:prp_pformWhumpaTiltyProp1` | tilts | Wumpa Island | no |
+| `StaticProps:env_Desert:prp_pformCoop_tilting_propB`, `env_Phantom:...propC` | tilts | Desert, (name TBD) | B yes, C no |
+| `StaticProps:env_Nina:prp_pformL5_tiltyPlatformA` | tilts | (name TBD) | yes |
+| `StaticProps:env_Junk:prp_pformL6_spinningSphere`, `..._rotatingGearA` | rolls / turns | (name TBD) | no |
+
+**How they move.** Update (slot 4, `sub_8212ABB0`) runs the tilt physics
+`sub_8212BDC0`, which cuts the frame time into slices: 1/60 s
+(`0x8201FB80`) while more than 0.0183 s is left, then the rest (30 fps =
+two slices of 1/60, 60 fps = one, 180 fps = one of 1/180). Per slice and
+axis (x `sub_8212B8B8`, z `sub_8212B988`, rolling log `sub_8212BCD8`,
+scripted turn `sub_8212BA08`) the behaviour builds a push in +0x130 (x) /
++0x138 (z):
+
+    push = torque x dt + (1/mass) x -(damping x v + spring x angle) x dt
+
+(torques arrive by message, `sub_8212AF10` -> `sub_8212C890`: force at a
+point -> torque x 1/mass, added up during the frame), then steps
+(`sub_8212B7F8`):
+
+    v     = v + push x dt          (0x8212B84C fmadds f11,f0,f29,f12)
+    v     = clamp(v, +-max speed)
+    angle = angle + v x dt, held at its limits
+
+Layout: angles +0x118 (x) / +0x11C / +0x120 (z), angular speeds +0x124 /
++0x12C, 1/mass +0x164, springs +0x168 / +0x16C, damping +0x170 / +0x174,
+limits +0x178 / +0x17C (x) +0x180 / +0x184 (z), max speed +0x14C, mode
++0x190.
+
+**The bug:** dt counts twice in the velocity change. Over a second the
+speed gains a x dt (the sum of a x dt^2 over the slices): with 1/60-s
+slices (30 and 60 fps) the intended amount, with 1/180-s slices a third of
+it. The motion is the one the designers tuned at 30 fps only while the
+slices stay 1/60 s.
+
+**The fix** (`src/world/tilting_platforms.cpp`, midasm hook
+`CrashMomTiltSliceStep` at `0x8212B84C`, `--tilting_platform_fix`): a slice
+shorter than 1/60 s gets its push scaled by (1/60)/dt, so the speed gains
+push x 1/60 per slice: the same per second as at 30/60, while the angle
+still moves every frame. Slices of 1/60 s are untouched (30 and 60 fps
+stay bit for bit the original).
+
+**In the course:** lanes `tiltgap` (the iceberg) and `rollgap` (the stone
+wheel), 12-unit gaps, objects placed like section 8's. Probe: Crash put on
+the object off its middle (1 unit for the iceberg, 0.7 for the wheel), the
+behaviour's angle read every game frame with the console's `watch`, fixed
+step:
+
+| Angle after 3 s of game time | 30 fps | 60 fps | 180 fps, original | 180 fps, fixed |
+| --- | --- | --- | --- | --- |
+| Iceberg tipping (z) | -21.9 degrees | -22.3 | -12.2 | -22.4 |
+| Stone wheel rolling (z) | -59.3 | -61.9 | -19.2 | -63.3 |
+
+30 and 60 fps are unchanged by the fix (same numbers to the last digit).
+
+![The stone wheel 2.5 s after Crash lands off its middle: 60 fps, 180 fps original, 180 fps fixed](../images/rolling-wheel-high-fps.jpg)
+
+Still to check: walking on a rolling log to keep balance (the player's feel,
+not only the passive roll), the same with titans on them.

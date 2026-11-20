@@ -96,6 +96,12 @@ constexpr Lane kLanes[] = {
     // OBJECTS (kObjects below) go into them: a rope to swing across, a
     // platform to land on. A miss falls onto the catch floor.
     {"ropegap", Kind::kGap, 6},       {"platgap", Kind::kGap, 8},       {"movegap", Kind::kGap, 12},
+    // TILTING (2026-11-20, findings/69 s.10): a platform that tips under
+    // Crash's weight and springs back (CBounceBehaviour), to balance on.
+    {"tiltgap", Kind::kGap, 12},
+    // ROLLING (same day): a "rolling log" platform that spins as Crash walks
+    // on it (CBounceBehaviour, ERotType_ROLLING_LOG_Z), to keep balance on.
+    {"rollgap", Kind::kGap, 12},
 };
 constexpr int kStairCount = 10;
 // Where lane k starts (its -x, -z corner). The first ten side by side from
@@ -648,6 +654,15 @@ constexpr CourseObject kObjects[] = {
     // rides a path, L4_R1_MovingPlatform2 in Desert's props script), top ~0.5
     // above its spot; shuttles 3 units each way of the gap's middle, 2 units/s.
     {"movegap", "StaticProps:env_Desert:prp_pformFloating_Desert", -0.5, 3.0},
+    // TILTING (findings/69 s.10): the Ice Kingdom's tilting iceberg (a Platform
+    // with a CBounceBehaviour: mass 30, springs 800 on x and z, tilts up to
+    // 38 / 30 degrees; its own GlobalPackages group, loads anywhere).
+    {"tiltgap", "StaticProps:env_Ice:prp_pformTilty_iceburg_A", -0.5},
+    // ROLLING (findings/69 s.10): the Ice Kingdom's C-shaped wheel (a rolling
+    // log: mass 20, free spin on z up to +-180 degrees, spring 7000 on z;
+    // its own GlobalPackages group). The Ice Kingdom's "donut" is the other
+    // rolling log there, but it lives inside a level piece (not spawnable).
+    {"rollgap", "StaticProps:env_Ice:prp_pformL2_C_shaped_wheel", -0.5},
 };
 constexpr int kMovingPathType = 2;      // SetPathType (0 / 1 / 2 in the levels)
 constexpr float kMovingSpeed = 2.0f;    // SetPathSpeed(0, 2): the levels' most used speed
