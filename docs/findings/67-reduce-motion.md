@@ -153,8 +153,9 @@ until the factor is back to 1 (the time shift's own ease back), the game's
 value is left as it is. A script asking for slow motion again (`+8` below 1)
 makes it a slow-motion moment again.
 
-Not yet playtested: the Phantom's special with the setting on (the fix is
-built from the disassembly), a scripted slow motion during a time shift.
+Playtested on Windows with the setting on: the Phantom's special slows the
+world as in the original. Not tested: a scripted slow motion during a time
+shift, Linux, co-op.
 
 ### 2.4 Motion blur
 
