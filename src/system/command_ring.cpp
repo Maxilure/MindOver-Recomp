@@ -86,14 +86,14 @@
 #include "command_ring.h"
 #include "vblank.h"
 
-REXCVAR_DEFINE_BOOL(command_ring_native, false, "CrashMoM",
-                    "Launch setting: the port reads the game's GPU command ring itself "
-                    "instead of the emulated GPU. Native Only for the whole session (no "
-                    "emulated picture, no dual window)")
+REXCVAR_DEFINE_BOOL(command_ring_native, true, "CrashMoM",
+                    "Launch setting: the port reads the game's GPU command ring itself instead of the "
+                    "emulated GPU (on by default; --renderer=emulated turns it off for that session)")
     .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
 
 REXCVAR_DECLARE(bool, vblank_native);
 REXCVAR_DECLARE(bool, emulated_only);
+REXCVAR_DECLARE(std::string, renderer);  // native/native_renderer.cpp: "emulated" = the emulated GPU runs
 
 namespace {
 
@@ -463,7 +463,7 @@ namespace command_ring {
 
 bool Wanted() {
   return REXCVAR_GET(command_ring_native) && REXCVAR_GET(vblank_native) &&
-         !REXCVAR_GET(emulated_only);
+         !REXCVAR_GET(emulated_only) && REXCVAR_GET(renderer) != "emulated";
 }
 
 bool Active() { return g.active.load(std::memory_order_acquire); }

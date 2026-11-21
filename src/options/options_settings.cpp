@@ -218,8 +218,9 @@ Row RendererRow() {
   r.label = tr(u"Renderer");
   // Without a native renderer (not Vulkan) there is one value.
   auto none = [] { return !g_hooks.native_shown; };
-  // --command_ring_native (graphics driver step 4, system/command_ring.h):
-  // the emulated GPU gets no commands this session: one value, Native Only.
+  // The default session (renderer = "native", system/command_ring.h): the
+  // emulated GPU gets no commands: one value, Native Only. The four choices
+  // only with the launch option renderer = "emulated".
   // (Index 0 then; Dual Mode's X is only offered on Emulated / Native.)
   auto ring = [] { return command_ring::Wanted(); };
   r.values = [none, ring](Env&) {
@@ -270,7 +271,7 @@ Row RendererRow() {
     }
   };
   r.warn = [none, ring](Env&, int i) {
-    if (ring()) return std::u16string(tr(u"Still being finished: an effect may look wrong."));
+    if (ring()) return std::u16string();  // the default: no warning
     return !none() && (i == kNative || i == kNativeOnly)
                ? std::u16string(tr(u"Still being finished: an effect may look wrong."))
                : std::u16string();

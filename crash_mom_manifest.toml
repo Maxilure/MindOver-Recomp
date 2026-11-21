@@ -2288,3 +2288,14 @@ registers = ["r7"]
 address = 0x82433BEC
 name = "D3DRingSecondarySize"
 registers = ["r5"]
+
+# MEMORY STEP 2 (2026-11-21, docs/findings/71 s.4, src/system/game_memory.cpp): the game's `new`
+# (sub_8227E890) asserts (DbgBreakPoint = the game ends) on any PERMANENT-heap (id 3) allocation once
+# the level heap exists: "( allocator != GAME_ALLOCATOR_PERMANENT ) || s_LevelHeapAllocated == false"
+# (byMemory.cpp, flag byte 0x8259B182 loaded into r10 at 0x8227E928). Found reading `new`'s code with
+# xexdis 0x8227E890..0x8227E9C8 after split screen's zone-list growth hit it. The hook reads the flag as
+# 0 at the compare (`cmplwi cr6,r10,0`), so the permanent heap takes the allocation like before a level.
+[[entrypoint.midasm_hook]]
+address = 0x8227E92C
+name = "CrashMomPermanentAfterLevel"
+registers = ["r10"]

@@ -1,7 +1,18 @@
 # Native Vulkan renderer: kickoff notes (roadmap phase 4)
 
 Written 2026-09-25, when work on the native renderer started; the
-milestones at the end record the progress since. Read
+milestones at the end record the progress since.
+
+> **Status (2026-11-21):** the native renderer is the ONLY renderer by
+> default. The port reads the game's GPU commands itself (findings/32
+> s.13-14) and the SDK's emulated GPU does no work; the game's main heap
+> moved out of the console's physical memory (findings/71). The emulated
+> GPU is a launch option, `--renderer=emulated` (or `renderer = "emulated"`
+> in settings.toml): it brings back the Renderer row's four choices, the
+> Tools menu's switch, the dual window, photo pairs, the same-frame A/B
+> captures, `--debug_native_emulated_resolves`, `--debug_gamma_check` and
+> `tools/play.sh --trace`'s shader dumps. Every research recipe below that
+> compares with the emulated picture needs it. Read
 [03-roadmap.md](03-roadmap.md) phase 4 and findings 06 and 07 first.
 
 ## Why now

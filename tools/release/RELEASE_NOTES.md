@@ -191,6 +191,21 @@ and put back when an update fails).
 
 **Changes**
 
+- **No emulated Xbox 360 GPU any more.** The port's own renderer is now the
+  only one: the port reads the game's graphics commands itself, and the
+  emulated GPU does no work at all. The **Renderer** row in Options shows
+  **Native Only**. The emulated picture is still there for comparing, as a
+  launch setting: `renderer = "emulated"` in `user\settings.toml` (then
+  Options and the **F1** Tools menu switch pictures and open the second window
+  as before).
+- **Much more memory for the game's graphics.** On the Xbox 360 every one of
+  the game's memory pools sat inside the console's 512 MB of graphics-capable
+  memory. With the port's renderer the game's main memory now lives
+  elsewhere, leaving 135 MB more for textures and models: all of Wumpa
+  Island can now be loaded at once with room to spare (it used to run out
+  of memory and crash). And none of the game's own memory pools can run out
+  any more: one that fills up grows into spare memory instead of failing.
+  With the emulated picture the console's limits stay.
 - **Native Only is faster and uses less CPU.** While the port's own renderer
   shows the game, the game no longer builds Xbox GPU commands for its draws
   and the emulated GPU no longer works through them: about 10% more frames

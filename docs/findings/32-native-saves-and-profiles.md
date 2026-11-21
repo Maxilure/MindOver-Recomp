@@ -646,3 +646,22 @@ More tests with the ring on:
 Not tested yet: Windows, and other areas than Wumpa Island. The README
 progress bar keeps counting the two ring calls as the SDK's until the setting
 is on by default (step 5).
+
+## 14. The graphics driver, step 5: no emulated GPU by default
+
+Since 2026-11-21 the command ring of section 13 is read by the port by
+default, and the renderer is a launch setting: `renderer = "native"` (the
+default) or `"emulated"`. Native = the port's ring, Native Only all session,
+the SDK's GPU never gets a command; the game's main heap also leaves the
+physical memory (findings/71). Emulated = everything as before 2026-11-21:
+the SDK's GPU reads the ring, the session starts on the emulated picture, the
+Options Renderer row offers its four choices, the Tools menu switches and
+opens the second window, photos are pairs. `command_ring_native` stays as a
+switch (on).
+
+Checked (copy of the saves, 30 fps): default launch into Wumpa Island =
+0 calls to the SDK's two ring services, photos of the native picture alone;
+4 players, two Quit -> Load Game cycles into other levels and a real level
+change: 0 errors; `--renderer=emulated`: starts on the emulated picture, main
+heap physical, the Tools switch goes to the native picture. The README
+progress bar now counts both ring calls: 66 of 66.

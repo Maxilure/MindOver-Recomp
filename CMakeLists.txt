@@ -43,6 +43,9 @@ set(CRASHMOM_SOURCES
     src/debug/slow_load_sampler.cpp  # a crawling title load: sample the main thread, log where it is
     src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
     src/debug/xbox_calls.cpp     # the Xbox calls meter: which Xbox services the game calls (Linux)
+    src/debug/memory_survey.cpp  # console `memory` + "Memory:" log: the game's heaps, guest physical memory
+    src/system/game_memory.cpp   # the game's main heap in virtual memory (native) + refused allocations named
+    src/system/guest_pool.cpp    # the port's own memory pool in guest virtual memory (full heaps grow into it)
     src/session_log.cpp          # every log: version/system header, event logs on, old logs cleaned
     src/frame_rate.cpp           # --fps_cap=60: lifts the game's 30 fps pacing; --debug_log_fps lows
     src/fixed_step.cpp           # --fixed_step=N / console `clock`: every frame exactly 1/N s (exact replays)

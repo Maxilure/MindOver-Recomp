@@ -41,13 +41,13 @@ Warning WarningFor(const std::string& name, const std::string& value, Get&& get)
               "looks wrong, try 60 and report it.")};
     }
   } else if (name == "picture") {
-    if (value == "native") {
-      return {trsn("In development"),
-              trsn("The native renderer draws nearly everything, but an effect may still be missing "
-              "or look different. F9 switches back to the emulated picture while playing.")};
+    // Native = the default and the only renderer since 2026-11-21: no warning.
+    if (value == "emulated") {
+      return {trsn("For comparing"),
+              trsn("The Xbox 360's graphics chip is imitated as well: heavier on the PC, and the console's "
+              "512 MB memory limits come back (split screen far apart may run out). The game starts on "
+              "the emulated picture; the Tools menu (F1) switches.")};
     }
-    // native_only = the default since 2026-10-10 (the player's pick): no
-    // warning on the default; Native (both renderers drawing) keeps its note.
     if (value == "dual") {
       return {trsn("Heavy on the GPU"),
               trsn("Two windows: the emulated picture and the native one, both drawn live. Meant for "
@@ -159,12 +159,13 @@ struct PictureChoice {
   const char* id;
   const char* label;
 };
+// Since 2026-11-21 the port's renderer is the only one by default (no
+// emulated GPU at all); the emulated Xbox 360 GPU is a launch option
+// (renderer = "emulated") for comparisons.
 constexpr PictureChoice kPictures[] = {
-    {"emulated", trsn("Emulated (the default)")},
-    {"native", trsn("Native renderer")},
-    {"native_only", trsn("Native only (fastest, default)")},
+    {"native", trsn("Native (the default)")},
+    {"emulated", trsn("Emulated Xbox 360 GPU (for comparing)")},
     {"dual", trsn("Both, in two windows")},
-    {"emulated_only", trsn("Emulated only")},
 };
 
 // Not offered in All settings: load_save / log_file are given per session by
@@ -390,18 +391,12 @@ void Page::DrawMain() {
   if (section(trsn("Picture"))) {
     columns();
     Row(trs("Renderer"),
-        trs("Emulated = the Xbox 360's graphics chip, emulated (the reference picture). Native = this "
-        "port's own renderer drawing the game directly (in development). F9 switches between "
-        "them while playing, F8 opens the second window."));
-    std::string picture = "emulated";
-    if (settings::AsBool(Value("emulated_only"))) {
-      picture = "emulated_only";
-    } else if (settings::AsBool(Value("native_only"))) {
-      picture = "native_only";
-    } else if (settings::AsBool(Value("native_window"))) {
-      picture = "dual";
-    } else if (Value("renderer") == "native") {
-      picture = "native";
+        trs("Native = this port's own renderer, the only one by default. Emulated = the Xbox 360's "
+        "graphics chip imitated as well (the original's picture, for comparing; the console's memory "
+        "limits apply), with the Tools menu switching pictures and opening the second window."));
+    std::string picture = "native";
+    if (Value("renderer") == "emulated") {
+      picture = settings::AsBool(Value("native_window")) ? "dual" : "emulated";
     }
     const char* shown = picture.c_str();
     for (const auto& choice : kPictures) {
@@ -414,9 +409,9 @@ void Page::DrawMain() {
         if (ImGui::Selectable(trs(choice.label), picture == choice.id)) {
           const std::string id = choice.id;
           SetValue("renderer", id == "native" ? "native" : "emulated");
-          SetValue("native_only", id == "native_only" ? "true" : "false");
+          SetValue("native_only", "true");
           SetValue("native_window", id == "dual" ? "true" : "false");
-          SetValue("emulated_only", id == "emulated_only" ? "true" : "false");
+          SetValue("emulated_only", "false");
         }
       }
       ImGui::EndCombo();

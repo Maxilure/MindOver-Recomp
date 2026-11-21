@@ -67,6 +67,7 @@
 #include "session_log.h"
 #include "crash_report.h"
 #include "debug/slow_load_sampler.h"
+#include "debug/memory_survey.h"
 #include "debug/write_watchpoints.h"
 #include "input/name_typing.h"
 #include "input/controls_menu.h"
@@ -194,6 +195,9 @@ class CrashMomApp : public rex::ReXApp {
     write_watchpoints::Install();
     // A crawling title load names itself in the log (src/debug/slow_load_sampler.h).
     slow_load_sampler::Install();
+    // The game's heaps + guest memory: console `memory`, "Memory:" log lines,
+    // refused allocations named (src/debug/memory_survey.h).
+    memory_survey::Install();
     // Debug screenshots, only with --debug_capture_dir (see
     // debug_frame_capture.h). The presenter is the SDK object that holds
     // the final picture the emulated GPU sends to the "TV".
@@ -502,7 +506,7 @@ class CrashMomApp : public rex::ReXApp {
     // --command_ring_native (graphics driver step 4): no emulated picture to
     // put in the main window (system/command_ring.h).
     if (command_ring::Wanted()) {
-      overlay_banner::Show("NATIVE ONLY", "No second window with --command_ring_native");
+      overlay_banner::Show("NATIVE ONLY", "No emulated GPU this session (launch with renderer = emulated)");
       return;
     }
     if (!native_window_) {

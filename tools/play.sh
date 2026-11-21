@@ -16,14 +16,16 @@
 # that killed it (a crash), so a silent crash doesn't go unnoticed.
 #
 # Usage:
-#   tools/play.sh                        normal play
+#   tools/play.sh                        normal play (the port's renderer only:
+#                                        no emulated GPU at all, since 2026-11-21)
+#   tools/play.sh --emulated             the emulated Xbox 360 GPU runs too
+#                                        (--renderer=emulated): starts on its
+#                                        picture, F1 Tools switches pictures
 #   tools/play.sh --dual                 two windows: emulated picture in the
 #                                        main one, our native renderer's in a
-#                                        second one (= --native_window; F8 in
-#                                        the game opens/closes it any time).
-#                                        The emulated window then moves at half
-#                                        rate (--emulated_draw_every=2, ~40%
-#                                        less GPU work; =1 = every frame)
+#                                        second one (= --renderer=emulated
+#                                        --native_window). The emulated window
+#                                        moves at half rate (--emulated_draw_every=2)
 #   tools/play.sh --trace                for hunting a picture bug: each F10
 #                                        photo also records every renderer call
 #                                        of its frame (2 frames), and the game's
@@ -33,15 +35,9 @@
 #                                        native renderer can't draw shows up, the
 #                                        game does the same by itself (a recording
 #                                        + photo; src/native/scan.h)
-#   tools/play.sh --native-only          EXPERIMENT: only our renderer draws.
-#                                        The emulated GPU skips all its drawing
-#                                        while our picture is shown (F9 back to
-#                                        emulated turns it on again); shows what
-#                                        fps the finished port could reach. F10
-#                                        photos' emulated half is stale there.
-#   tools/play.sh --emulated-only        the mirror image: only the emulated
-#                                        GPU's picture, F9/F8 locked, our renderer
-#                                        never draws (the baseline to compare with)
+#   tools/play.sh --native-only          (the default now; accepted, does nothing)
+#   tools/play.sh --emulated-only        only the emulated GPU's picture (our
+#                                        renderer never draws; the baseline)
 #   tools/play.sh --mangohud             the MangoHud overlay, with OUR layouts
 #                                        (tools/mangohud/: Right Shift + F1 hide,
 #                                        + F2 next layout, + F5 record a log)
@@ -114,9 +110,10 @@ if [[ " $* " == *" -h "* || " $* " == *" --help "* ]]; then
 tools/play.sh: play the game with a fresh log per session (logs/play-<date>_<time>.log)
 
 LAUNCHER OPTIONS (combine freely)
-  --dual             two windows: emulated picture + our native renderer's (F8 toggles)
-  --native-only      only our renderer draws (the emulated GPU rests): best fps
-  --emulated-only    only the emulated picture (F9/F8 locked)
+  --emulated        the emulated Xbox 360 GPU runs too (starts on its picture; F1 Tools switches)
+  --dual             two windows: emulated picture + our native renderer's
+  --native-only      (the default now: only our renderer, no emulated GPU)
+  --emulated-only    only the emulated picture (our renderer never draws)
   --trace            F10 photos also record the frame's renderer calls (logs/trace-*/)
                      + automatic photo the first time something isn't drawn natively
   --mangohud         MangoHud overlay (Right Shift + F1 hide, F2 next layout, F5 log)
@@ -169,16 +166,17 @@ record_test=0
 args=()
 for arg in "$@"; do
   case "$arg" in
-    --dual) args+=(--native_window=true) ;;  # src/native/native_window.h
+    --dual) args+=(--renderer=emulated --native_window=true) ;;  # src/native/native_window.h
     --trace)                                 # src/pddi/trace.cpp; --dump_shaders is the SDK's
       trace="logs/trace-${stamp}"
       args+=(--debug_pddi_trace_dir="$PWD/$trace" --debug_pddi_trace_frames=2
              --dump_shaders="$PWD/$trace/shaders") ;;
-    --native-only) args+=(--native_only=true) ;;  # src/native/native_renderer.cpp, SDK 0009
+    --emulated) args+=(--renderer=emulated) ;;
+    --native-only) ;;  # the default since 2026-11-21 (no emulated GPU at all); kept so old commands work  # src/native/native_renderer.cpp, SDK 0009
     --ground-trace)                               # src/ground_physics.cpp
       ground="logs/ground-${stamp}.csv"
       args+=(--debug_ground_trace="$PWD/$ground") ;;
-    --emulated-only) args+=(--emulated_only=true) ;;  # src/native/native_renderer.cpp
+    --emulated-only) args+=(--renderer=emulated --emulated_only=true) ;;  # src/native/native_renderer.cpp
     --mangohud) export MANGOHUD=1 ;;  # MangoHud's Vulkan layer switches on by this
     --catch)                                       # tools/gdb/catch_fault.py
       export CRASHMOM_FAULT_FILE="$PWD/logs/fault-${stamp}.txt"

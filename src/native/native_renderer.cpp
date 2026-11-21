@@ -34,9 +34,22 @@
 #include "spotter.h"
 #include "../overlay_banner.h"
 
-REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
-                      "Picture shown at start: 'emulated' (ReXGlue's GPU emulation) or "
-                      "'native' (our Vulkan renderer, in development). Tools menu (F1) switches");
+// THE RENDERER, A LAUNCH SETTING (2026-11-21, findings/71 + findings/32 s.14):
+// "native" (default) = the port's renderer is the only one: the port reads the
+// game's GPU commands itself (system/command_ring.h), the SDK's emulated GPU
+// gets none and does no work, and the game's main heap leaves the console's
+// physical memory (system/game_memory.cpp). "emulated" = the emulated Xbox 360
+// GPU runs too, like before: the session starts on its picture, the Options
+// Renderer row offers Emulated Only / Emulated / Native / Native Only, the Tools
+// menu switches pictures and opens the second window (dual mode), photos are
+// pairs; the console's 512 MB memory limits apply. For comparing with the
+// original's picture and the renderer research tools (A/B captures, emulated
+// resolves, the gamma check).
+REXCVAR_DEFINE_STRING(renderer, "native", "CrashMoM",
+                      "Launch setting: 'native' = only the port's own renderer, no emulated GPU (default); "
+                      "'emulated' = the emulated Xbox 360 GPU runs too (the original's picture, renderer switch, "
+                      "second window; the console's 512 MB memory limits)")
+    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
 // NATIVE ONLY (2026-09-30, experimental): a preview of
 // the finish line, where our renderer replaces the emulated GPU. The emulated
 // GPU normally keeps drawing every frame even while nobody sees its picture,
@@ -51,8 +64,8 @@ REXCVAR_DEFINE_STRING(renderer, "emulated", "CrashMoM",
 // one), and anything the game READS BACK from an emulated resolve (none
 // known) would go stale.
 REXCVAR_DEFINE_BOOL(native_only, true, "CrashMoM",
-                    "Start on the native picture and stop the emulated GPU's drawing while "
-                    "the native picture is in the main window (switching back turns it on again)");
+                    "With --renderer=emulated: stop the emulated GPU's drawing while the native picture is in the "
+                    "main window (switching back turns it on again)");
 // EMULATED ONLY (2026-09-30, the mirror image of --native_only): the plain
 // emulated game as a clean baseline to compare
 // with. Starts on the emulated picture and locks it there: F9 and F8 (dual
@@ -772,7 +785,7 @@ bool NativeRenderer::Initialize() {
                           // of its own to switch to (system/command_ring.h).
                           if (command_ring::Wanted()) {
                             overlay_banner::Show("NATIVE ONLY",
-                                                 "No emulated picture with --command_ring_native");
+                                                 "No emulated GPU this session (launch with renderer = emulated)");
                             return;
                           }
                           // Dual mode: each window already shows one picture.
@@ -801,17 +814,20 @@ bool NativeRenderer::Initialize() {
                         });
   const std::string& start = REXCVAR_GET(renderer);
   if (start != "emulated" && start != "native") {
-    REXLOG_WARN("NativeRenderer: unknown --renderer=\"{}\" (emulated or native)", start);
+    REXLOG_WARN("NativeRenderer: unknown --renderer=\"{}\" (native or emulated): native", start);
   }
   if (REXCVAR_GET(native_only) && emulated_only()) {
     REXLOG_WARN("NativeRenderer: --native_only and --emulated_only together: emulated only wins");
   }
-  // --command_ring_native (graphics driver step 4): Native Only all session.
-  if (command_ring::Wanted() && !REXCVAR_GET(native_only)) {
-    rex::cvar::SetFlagByName("native_only", "true");
-    REXLOG_INFO("NativeRenderer: --command_ring_native: Native Only for the whole session");
-  }
-  SetShowNative(!emulated_only() && (start == "native" || REXCVAR_GET(native_only)));
+  // renderer = "native" (the default): the port reads the GPU commands
+  // (command_ring.h), the emulated GPU gets none: Native Only all session.
+  // renderer = "emulated": the emulated GPU runs, the session starts on its
+  // picture (Options / the Tools menu switch from there).
+  const bool ring = command_ring::Wanted();
+  if (ring && !REXCVAR_GET(native_only)) rex::cvar::SetFlagByName("native_only", "true");
+  REXLOG_INFO("NativeRenderer: {}", ring ? "the only renderer this session (no emulated GPU)"
+                                         : "the emulated GPU runs too this session (--renderer=emulated)");
+  SetShowNative(ring || (!emulated_only() && start == "native"));
   native::recorder::Install();
   // The record thread (native_renderer.h, RECORD THREAD), before the first
   // frame can be handed to it.
@@ -1537,11 +1553,9 @@ void NativeRenderer::AnnouncePicture() {
     const std::string key = rex::cvar::GetFlagByName("bind_renderer");
     const std::string switches = key.empty() ? "   F1 Tools switches" : "   " + key + " or F1 Tools switches";
     if (show_native()) {
-      if (command_ring::Wanted()) {
-        overlay_banner::Show("NATIVE ONLY (Vulkan)",
-                             "the port reads the GPU commands itself: no emulated GPU this session");
-        return;
-      }
+      // The default session (no emulated GPU): one picture, nothing to
+      // announce (the banner used to greet every launch).
+      if (command_ring::Wanted()) return;
       overlay_banner::Show("NATIVE (Vulkan)",
                            std::string(REXCVAR_GET(native_only)
                                            ? "native only: the emulated GPU is off"

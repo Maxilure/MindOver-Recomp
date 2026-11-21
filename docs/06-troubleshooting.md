@@ -423,19 +423,19 @@ with the log.
 
 ### Black movies, title screen or menus
 
-The default **emulated** picture needs a Vulkan feature called *fragment
-shader interlock*. Most NVIDIA cards have it; some others (likely AMD's)
-don't, and then those screens stay black. Only NVIDIA has been tested so far.
+The game is drawn by the port's own renderer. The **emulated** Xbox 360
+picture (a launch option, `renderer = "emulated"` in `user\settings.toml`, for
+comparing) needs a Vulkan feature called *fragment shader interlock*. Most
+NVIDIA cards have it; some others (likely AMD's) don't, and then those screens
+stay black there. Only NVIDIA has been tested so far.
 
-**Fix:** use the port's own renderer: in the game, **Options → Graphics →
-Renderer** (or **F1** → Switch renderer). It's still in progress, so a few
-effects may be missing in later levels.
+**Fix:** remove the `renderer` line from `user\settings.toml` (the port's own
+renderer is the default).
 
 ### Slow or stuttering
 
-1. Check **Options → Graphics → Renderer** is set to **Native only** (the
-   default). It draws the game with the port's own renderer and stops the
-   heavy emulated one.
+1. Check `user\settings.toml` has no `renderer = "emulated"` line: the
+   emulated Xbox 360 GPU is much heavier than the port's own renderer.
 2. Check the frame rate cap isn't higher than your computer can keep up with.
 
 ### Odd movement above 60 fps
@@ -635,10 +635,11 @@ are welcome).
   60 or 30 is the safe choice.
 * **Three or four players and the co-op camera are experimental.**
 * **Only NVIDIA graphics cards have been tested.** Other cards may show black
-  movies or menus in the emulated picture ([fix](#black-movies-title-screen-or-menus)).
-* **The native renderer may miss effects** in areas not checked yet. The
-  emulated picture is the reference: a report with a screenshot of both
-  (**F1** → Switch renderer) helps.
+  movies or menus in the emulated picture, a launch option
+  ([fix](#black-movies-title-screen-or-menus)).
+* **The port's renderer may miss effects** in areas not checked yet. The
+  emulated picture (launch with `renderer = "emulated"`) is the reference: a
+  report with a screenshot of both (**F1** → Switch renderer there) helps.
 * **Windows is less tested than Linux.** Gameplay, keyboard and mouse,
   controllers, co-op, the native renderer and 120 fps have been tried. Not
   confirmed yet: the installer's update and uninstall, renaming and deleting

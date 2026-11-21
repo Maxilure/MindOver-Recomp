@@ -53,6 +53,8 @@
 #include "debug/slow_load_sampler.h"
 #include "debug/write_watchpoints.h"
 #include "debug/xbox_calls.h"
+#include "debug/memory_survey.h"
+#include "system/game_memory.h"
 #include "fixed_step.h"
 #include "data/fight_tree.h"
 #include "pddi/intercept.h"
@@ -1102,7 +1104,7 @@ const char kHelp[] =
     "wait replay [ms] | watch <ms> <expr>:<type> ... | pos [p] | goto <p> <x> <y> <z> | interactables |\n"
     "inputmaps <socket 1-4 | 0xADDR> [all] |\n"
     "who <expr> [bytes] | who | who stop | wait who [ms] | clock [fixed <fps> [fast] | real] |\n"
-    "track <file> [frames] | track stop | track | xbox | flag <name> [value | - = empty] |\n"
+    "track <file> [frames] | track stop | track | xbox | memory | flag <name> [value | - = empty] |\n"
     "profile <seconds> [file] [thread] | wait profile [ms] |\n"
     "<any FIFO input line>\n"
     "types: u8 u16 u32 s32 f32 vec3 str wstr bytes; names: uber game p1-p4 t1-t4; [x] = word at x\n";
@@ -1144,6 +1146,11 @@ std::string Run(std::string_view line) {
   if (verb == "flag") return FlagCommand(w);
   if (verb == "clock") return ClockCommand(w);
   if (verb == "track") return TrackCommand(w);
+  if (verb == "memory") {
+    if (w.size() >= 3 && w[1] == "neighbours-all") return memory_survey::NeighboursAll(uint32_t(Eval(w[2])));
+    if (w.size() >= 2 && w[1] == "physical") return game_memory::PhysicalReport();  // --debug_physical_callers
+    return memory_survey::Report();
+  }  // the game's heaps + guest memory (debug/memory_survey.h)
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
   if (verb == "profile") {
     // `profile <seconds> [file] [thread name...]`: where the main thread's (or

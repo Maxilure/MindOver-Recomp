@@ -37,7 +37,7 @@ from pathlib import Path
 # -----------------------------------------------------------------------------
 PIECES = [
     ("Graphics driver",
-     "the port's own Vulkan renderer, then the emulated GPU off",
+     "the port's own Vulkan renderer; the emulated GPU off (a launch option)",
      ["VdCallGraphicsNotificationRoutines", "VdEnableDisableClockGating",
       "VdEnableRingBufferRPtrWriteBack", "VdGetCurrentDisplayGamma",
       "VdGetCurrentDisplayInformation", "VdGetSystemCommandBuffer", "VdInitializeEngines",
@@ -238,8 +238,11 @@ DONE = {
     "VdPersistDisplay": "display_swap.cpp: 0x823112B0 (0 = nothing kept, nothing to free)",
     # Graphics driver STEP 4 (2026-11-13, src/system/command_ring.cpp,
     # findings/32 s.13): VdInitializeRingBuffer + VdEnableRingBufferRPtrWriteBack
-    # are answered ONLY with the launch setting --command_ring_native (off by
-    # default): not counted here until it's on by default (step 5).
+    # are answered by the port's "Command Ring" thread. ON BY DEFAULT since
+    # 2026-11-21 (step 5, findings/32 s.14): the emulated GPU gets no commands
+    # unless the game is launched with --renderer=emulated. Meter: 0 calls.
+    "VdInitializeRingBuffer": "command_ring.cpp: 0x82309E20",
+    "VdEnableRingBufferRPtrWriteBack": "command_ring.cpp: 0x82309E58",
 }
 
 BEGIN = "<!-- native-progress:begin -->"
