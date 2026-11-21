@@ -14,7 +14,8 @@
 //        the player.
 //     2c. The character on the Level Up / upgrade screen (Crash spinning or
 //        kicking, a titan) stays on one frame of its animation.
-//     3. The game's slow-motion moments run at normal speed.
+//     3. The game's slow-motion moments run at normal speed (the scripted
+//        ones; the Phantom's time shift, an ability, keeps its slowdown).
 //     4. The port's motion blur stays off whatever its own row says.
 //   Research and what is not covered: docs/findings/67-reduce-motion.md.
 //
@@ -37,8 +38,14 @@
 //      pulsing (it still turns yellow).
 //   3. CTimeManager::GetScale (sub_822FFA40, cheats/cheats.cpp wraps it and
 //      asks GameTimeScale below) returns a per-mode base x the slow-motion
-//      factor at manager +4 (unless bit 0x80 of +0x18). A factor between 0
-//      and 1 is divided back out.
+//      factor at manager +4 (unless bit 0x80 of +0x18). Two things ease that
+//      factor (the manager's update, vtable slot 10, sub_822FF7B8): a
+//      scripted slow motion (EnableSlowMotion, sub_822FF8A8: target at +8)
+//      and the TIME SHIFT, a gameplay ability (the Phantom's special; pushed
+//      and popped by sub_822FF8F0: counter +0xC, its factor +0x10). Only the
+//      scripted one is a "slow-motion moment": a factor between 0 and 1 is
+//      divided back out while it comes from a script, never while a time
+//      shift is or was last behind it (findings/67 s.2.3).
 //   4. native/recorder.cpp asks MotionBlurLevel() instead of reading
 //      `motion_blur` itself.
 // =============================================================================
@@ -88,6 +95,13 @@ constexpr uint32_t kSlowMotion = 0x04;      // CTimeManager: the slow-motion fac
 // `bne` past the multiply), so there is nothing to undo then.
 constexpr uint32_t kTimeFlags = 0x18;
 constexpr uint8_t kIgnoreSlowMotion = 0x80;
+// CTimeManager +0x18 bit 0x40: a time shift is active. The update
+// (sub_822FF7B8) copies it from the time-shift counter at +0xC (> 0) each
+// frame; while it is set the factor at +4 eases toward the time shift's
+// factor (+0x10) instead of the scripted target (+8).
+constexpr uint8_t kTimeShiftActive = 0x40;
+constexpr uint32_t kTimeShiftCount = 0x0C;  // CTimeManager: time shifts pushed (sub_822FF8F0)
+constexpr uint32_t kSlowMotionTarget = 0x08;  // CTimeManager: EnableSlowMotion's target factor
 constexpr uint32_t kIconWobble = 0x6C;      // CIconBehaviour: its wobble's timer
 constexpr uint32_t kCollectableTimer = 0xC4;  // Collectable: the current state's timer (seconds)
 constexpr uint32_t kCollectableState = 0xC8;  // Collectable: its state (4 = flying to the player)
@@ -109,11 +123,30 @@ bool On() { return REXCVAR_GET(reduce_motion); }
 int MotionBlurLevel() { return On() ? 0 : int(REXCVAR_GET(motion_blur)); }
 
 double GameTimeScale(const uint8_t* base, uint32_t manager, double scale) {
-  if (!On() || manager == 0) return scale;
+  // Who is behind the slowdown now: a script's slow-motion moment (undone)
+  // or a time shift (the Phantom's special: gameplay, kept). Remembered
+  // until the factor is back to normal, so a time shift's ease back to 1
+  // after it ends stays the game's own too. (One time manager; this runs
+  // on the game's main thread, from GetScale.)
+  static bool s_time_shift_behind = false;
+  if (manager == 0) return scale;
+  const uint8_t flags = *GuestPtr(base, manager + kTimeFlags);
+  const float factor = LoadFloat(base, manager + kSlowMotion);
+  const bool time_shift = (flags & kTimeShiftActive) || int32_t(LoadWord(base, manager + kTimeShiftCount)) > 0;
+  if (time_shift) {
+    s_time_shift_behind = true;
+  } else if (!(factor > 0.0f && factor < 1.0f) || LoadFloat(base, manager + kSlowMotionTarget) < 1.0f) {
+    // Back to normal, or a script asked for slow motion since: the
+    // slowdown is no longer the time shift's.
+    s_time_shift_behind = false;
+  }
+  if (!On()) return scale;
   // The game left the factor out of `scale` (flag set): dividing it back out
   // would run the game FASTER than normal (e.g. 4x for a stored 0.25).
-  if (*GuestPtr(base, manager + kTimeFlags) & kIgnoreSlowMotion) return scale;
-  const float factor = LoadFloat(base, manager + kSlowMotion);
+  if (flags & kIgnoreSlowMotion) return scale;
+  // The time shift is an ability the player uses: its slowdown is how it
+  // plays, not a cinematic moment. Left as it is.
+  if (s_time_shift_behind) return scale;
   // Only a real slowdown is undone; 0 (stopped) and >= 1 stay as they are.
   return factor > 0.0f && factor < 1.0f ? scale / double(factor) : scale;
 }

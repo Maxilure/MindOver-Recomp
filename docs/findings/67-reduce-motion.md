@@ -129,6 +129,34 @@ normal speed. While bit 0x80 of `+0x18` is set the game itself left the
 factor out, so nothing is divided then (a first version did, which would
 have run those moments faster than normal).
 
+**The time shift is not a slow-motion moment.** A playtest found that the
+setting also took the slowdown out of the Phantom's special (its time shift:
+the world slows while the player keeps going). The factor at `+4` has two
+sources, both eased by the manager's update (vtable `0x82046E64` slot 10,
+`sub_822FF7B8`):
+
+| Source | Set by | Target the factor eases to |
+|---|---|---|
+| Scripted slow motion | `EnableSlowMotion` (script binding to `sub_822FF8A8`: enable flag, factor) | `+8` |
+| Time shift | `CTimeShiftBehaviour` (vtable `0x82031A64`; script methods `ActivateTimeShift` / `ActivateTimeShiftIndividual`) through `sub_822FF8F0` (push / pop: count at `+0xC`, factors at `+0x10` and `+0x14`); its update (slot 4, `sub_82173FD8`) pops it when its timer runs out | `+0x10` |
+
+The update copies "a time shift is pushed" (`+0xC` > 0) into bit 0x40 of
+`+0x18` every frame, and while it is set the factor eases toward `+0x10`
+instead of `+8`. Found by disassembling the manager's functions next to the
+`EnableSlowMotion` / `IsTimeShiftActive` strings (`0x82046E38`,
+`0x82046E4C`) and the callers of `sub_822FF8F0` (no code calls
+`sub_822FF8A8` directly: only the script binding at `0x822FFB54`).
+
+**Change:** the slowdown is undone only while it comes from a script. While
+a time shift is pushed (bit 0x40, or the count at `+0xC`), and afterwards
+until the factor is back to 1 (the time shift's own ease back), the game's
+value is left as it is. A script asking for slow motion again (`+8` below 1)
+makes it a slow-motion moment again.
+
+Playtested on Windows with the setting on: the Phantom's special slows the
+world as in the original. Not tested: a scripted slow motion during a time
+shift, Linux, co-op.
+
 ### 2.4 Motion blur
 
 The port's own motion blur (findings/34, native renderer only, off by
