@@ -186,6 +186,10 @@ struct WorldSyncState {
   std::unordered_map<uint32_t, HostEntityState> remote_by_id;
   // Host: pending client damage requests keyed by `net_id`.
   std::vector<PendingDamage> pending_damage;
+  // PLAYERS' TITANS (2026-11-27): actor -> last time it was ridden by a player
+  // or sat in the pocket slot. Those are never synced as enemies (see
+  // OnDamageableUpdate); a titan someone just left stays out for kOwnedGrace.
+  std::unordered_map<uint32_t, Clock::time_point> player_titans;
 
   uint32_t snapshot_seq = 0;
   Clock::time_point last_broadcast{};
@@ -242,6 +246,7 @@ void Reset() {
   g_ws.dmg_to_actor.clear();
   g_ws.remote_by_id.clear();
   g_ws.pending_damage.clear();
+  g_ws.player_titans.clear();
   g_ws.snapshot_seq = 0;
   g_ws.last_broadcast = {};
   g_ws.snapshots_sent = 0;
@@ -251,9 +256,46 @@ void Reset() {
   g_ws.entity_physics_applied = 0;
 }
 
+// A titan a player rode or pocketed in the last kOwnedGrace stays a PLAYER's
+// titan here: pocketing, taking out, swapping and dismount/remount flicker it
+// in and out of "ridden", and in between it must not join the enemy list.
+constexpr auto kOwnedGrace = std::chrono::seconds(10);
+constexpr uint32_t kPocketSlot = 0x825B0008 + 32;  // game object: THE pocketed titan (one slot)
+
 void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t actor) {
   if (!net::Active() || !more_players::InPlay() || more_players::Loading()) return;
-  if (!dmg || !actor || IsPlayerActor(actor)) return;
+  if (!dmg || !actor) return;
+  // PLAYERS' TITANS ARE NOT ENEMIES (2026-11-27 playtest): when a player's
+  // Ratcicle was left riderless for a moment (pocket, take-out), it entered
+  // this list; the client bound its copy to the host's entity, steered it like
+  // an enemy, and player 2's hits on it went to the host as enemy damage and
+  // landed on player 1's own titan (70 -> 66). A player's titan is synced by
+  // state_sync / session_sync (owner, position, health) and nowhere else.
+  {
+    const auto now = Clock::now();
+    uint32_t pocketed = 0;
+    ReadU32(base, kPocketSlot, pocketed);
+    std::lock_guard lock(g_ws.mutex);
+    const bool owned_now = IsPlayerActor(actor) || actor == pocketed;
+    if (owned_now) g_ws.player_titans[actor] = now;
+    const auto it = g_ws.player_titans.find(actor);
+    if (it != g_ws.player_titans.end()) {
+      if (owned_now || now - it->second < kOwnedGrace) {
+        // Forget it as an entity, both ways (host: no snapshot, no damage
+        // requests applied; client: unbound, never steered or intercepted).
+        const auto e = g_ws.local_by_actor.find(actor);
+        if (e != g_ws.local_by_actor.end()) {
+          for (auto& [id, hs] : g_ws.remote_by_id) {
+            if (hs.bound_actor == actor) hs.bound_actor = 0;
+          }
+          g_ws.local_by_actor.erase(e);
+        }
+        g_ws.dmg_to_actor.erase(dmg);
+        return;
+      }
+      g_ws.player_titans.erase(it);  // left alone long enough: an ordinary titan again
+    }
+  }
 
   uint32_t hash = 0;
   if (!ReadU32(base, actor + kActorNameHash, hash) || !hash) return;

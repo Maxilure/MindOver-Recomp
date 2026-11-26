@@ -98,6 +98,7 @@ extern "C" REX_FUNC(__imp__sub_82275C90);  // CInputMap::ResetAllEvents(map)
 
 namespace net {
 void SendToHost(const uint8_t* data, size_t size, bool reliable);
+bool DebugTraceOn();  // state_sync.cpp: --debug_online_trace
 void BroadcastFromHost(const uint8_t* data, size_t size, bool reliable);
 void SendToPeerFromHost(uint32_t peer, const uint8_t* data, size_t size, bool reliable);
 
@@ -851,8 +852,15 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
       continue;
     }
 
-    // Give natural B / RB animations 450 ms to finish on their own first.
-    if (now - mismatch_since < std::chrono::milliseconds(450)) continue;
+    // Give the game's own B / RB animations time to finish first. Pocketing
+    // and taking a titan back out now happen HERE too, from the owner's own
+    // decisions (kMsgPocket, CheckInputEvent hook below), and the take-out
+    // animation lasts longer than the old 450 ms wait (2026-11-27 playtest:
+    // the repair spawned a second Ratcicle 0.47 s after the owner's take-out,
+    // then the puppet's own take-out brought the original out too: two
+    // Ratcicles, the riderless one treated as an enemy).
+    const auto waited = now - mismatch_since;
+    if (waited < std::chrono::milliseconds(1500)) continue;
 
     // Case A: Remote player currently rides a titan locally that they no longer
     // ride on their own PC (pocketed, swapped to a different titan, or dismounted).
@@ -864,6 +872,15 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
 
     // Case B: Remote player is on foot locally, but rides `want_ridden` on their
     // own PC (e.g. swapped from pocket or unpocketed a titan this PC didn't have).
+    // Last resort only: a titan of that kind already in this PC's pocket slot
+    // (game object +32, the one the puppet pocketed) is about to come out by
+    // itself; spawning a copy then makes two. Spawn only after 3 s, or 8 s
+    // while the pocket holds that kind.
+    const uint32_t pocketed = ReadU32(base, kGameObject + 32);
+    const bool same_kind_pocketed =
+        pocketed && QueryActorTemplate(ctx, base, pocketed) == want_ridden;
+    const auto spawn_after = same_kind_pocketed ? std::chrono::seconds(8) : std::chrono::seconds(3);
+    if (waited < spawn_after) continue;
     if (!want_ridden.empty() && now - last_attempt > std::chrono::seconds(2)) {
       {
         std::lock_guard lock(g_ss.mutex);
@@ -1871,9 +1888,35 @@ int ControllerSlot(uint8_t* base, uint32_t controller) {
   const uint32_t uber = net::session_sync::ReadU32(base, net::session_sync::kUberGlobal);
   const uint32_t input_mgr = uber ? net::session_sync::ReadU32(base, uber + 56) : 0;
   const uint32_t list = input_mgr ? net::session_sync::ReadU32(base, input_mgr + 8) : 0;
-  if (!list || !guest_memory::Readable(list, 16)) return -1;
-  for (int slot = 0; slot < 4; ++slot) {
-    if (net::session_sync::ReadU32(base, list + 4 * uint32_t(slot)) == root) return slot;
+  if (list && guest_memory::Readable(list, 16)) {
+    for (int slot = 0; slot < 4; ++slot) {
+      if (net::session_sync::ReadU32(base, list + 4 * uint32_t(slot)) == root) return slot;
+    }
+  }
+  // Not a socket's controller: a body's own one. Crash's behaviour controller
+  // is actor +0x40 (findings/40), a ridden titan's too; match the root of
+  // every player's Crash and titan. (2026-11-27: on a guest PC the host
+  // player's puppet riding a titan asked the pocket event through such a
+  // controller, the socket match failed, and raw RB presses pocketed.)
+  for (int p = 0; p < 4; ++p) {
+    for (const uint32_t body : {more_players::TitanOfPlayer(p), more_players::CharacterOfPlayer(p)}) {
+      if (!body || !guest_memory::Readable(body + 0x40, 4)) continue;
+      uint32_t r = net::session_sync::ReadU32(base, body + 0x40);
+      for (int guard = 0; r && guard < 16; ++guard) {
+        if (!guest_memory::Readable(r + 0x24, 4)) break;
+        const uint32_t parent = net::session_sync::ReadU32(base, r + 0x24);
+        if (!parent) break;
+        r = parent;
+      }
+      if (r && r == root) return p;
+    }
+  }
+  if (net::DebugTraceOn()) {
+    static uint32_t logged_root = 0;
+    if (logged_root != root) {
+      logged_root = root;
+      REXLOG_INFO("OnlineTrace: controller {:08X} (root {:08X}) belongs to no player", controller, root);
+    }
   }
   return -1;
 }
