@@ -41,6 +41,8 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/title_any_button.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 #include "../input/name_typing.h"
 #include "../overlay_banner.h"
 #include "../gameplay/game_mods.h"
@@ -1416,6 +1418,9 @@ extern "C" REX_FUNC(sub_822598D8) {
     g.picked = false;
     REXLOG_INFO("Saves: saving to save {}{}", g.op_number, g.in_autosave ? " (AutoSaveGame)" : "");
   }
+  if (net::Active() && !net::IsHost()) {
+    net::session_sync::RequestHostSaveSnapshot();
+  }
   __imp__sub_822598D8(ctx, base);
 }
 
@@ -1464,6 +1469,9 @@ extern "C" REX_FUNC(sub_820CC188) {
     g.prompts_shown = -1;
     g_screen_showing = true;
     g_key_request = kKeyNone;
+    if (net::Active() && !net::IsHost()) {
+      net::session_sync::RequestHostSaveSnapshot();
+    }
   }
   const uint32_t manager = visit ? Manager(base) : 0;
   const Preview preview = manager ? FillPreview(ctx, base, manager) : Preview{};
@@ -1815,7 +1823,7 @@ extern "C" REX_FUNC(sub_824742F0) {
       std::memcpy(kb_before, GuestPtr(base, state + 4), 12);
       kbm_driver->MergeInto(GuestPtr(base, state + 4));
       std::memcpy(kb_after, GuestPtr(base, state + 4), 12);
-      kb_merged = key_events::Active();
+      kb_merged = key_events::Active() && !net::Active();
     }
   }
   // A replay of recorded presses replaces what the device said (input_record.h).
@@ -1827,7 +1835,9 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
     std::memset(GuestPtr(base, state + 4), 0, 12);
   }
-  if (state) lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  if (state && (!net::Active() || int(user) == net::LocalSlot())) {
+    lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
+  }
   // The co-op outfit picker reads every controller itself (players/outfit_picker.h).
   if (state) outfit_picker::FilterPad(user, GuestPtr(base, state + 4));
   // The title screen starts on any button (input/title_any_button.h).
@@ -1842,6 +1852,15 @@ extern "C" REX_FUNC(sub_824742F0) {
   // The Options screen waits for a key: the controllers are quiet (its B =
   // cancel was seen by SeePad above), and stay so until let go.
   if (state) options_menu::FilterPad(user, GuestPtr(base, state + 4));
+  // Online state-sync co-op (net/state_sync.h): poll/send snapshots on user 0,
+  // route local input exclusively to local_slot (so a client never drives P1),
+  // and feed remote players' replicated controls BEFORE game_mods::FilterPad
+  // so simple spinning / keep spinning runs on the right player slot.
+  if (state && net::Active()) {
+    uint32_t res = ctx.r3.u32;
+    net::FilterControllerState(user, GuestPtr(base, state + 4), res, base);
+    ctx.r3.u64 = res;
+  }
   // LAST: simple spinning takes LB, keep spinning adds Light attack presses
   // (gameplay/game_mods.h). After the prompts' SeePad (LB still counts as
   // using the controller; our presses don't make a keyboard player's prompts

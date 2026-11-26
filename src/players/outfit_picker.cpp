@@ -117,6 +117,7 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
+#include "../net/state_sync.h"
 #include "../ui/game_font.h"
 #include "../ui/marquee.h"
 #include "../ui/scrooby.h"
@@ -711,14 +712,19 @@ struct Pad {
 };
 Pad ReadPad(int p) {
   Pad pad;
+  // Online co-op: each client PC has 1 local player whose physical gamepads and
+  // Keyboard+Mouse all route through physical socket 0!
+  if (net::Active() && p != net::LocalSlot()) return pad;
+  const uint32_t sock = net::Active() ? 0u : uint32_t(p);
   rex::input::X_INPUT_STATE state{};
-  if (native_controllers::Read(uint32_t(p), &state) == 0) {
+  if (native_controllers::Read(sock, &state) == 0) {
     pad.buttons = uint16_t(state.gamepad.buttons);
     pad.x = float(int16_t(state.gamepad.thumb_lx)) / 32767.0f;
     pad.y = float(int16_t(state.gamepad.thumb_ly)) / 32767.0f;
   }
   const auto* assignment = kbm::PlayerAssignment::Get();
-  if (auto* driver = kbm::KeyboardMouseDriver::Get(); driver && assignment && assignment->KeyboardAnswersFor(uint32_t(p))) {
+  if (auto* driver = kbm::KeyboardMouseDriver::Get();
+      driver && assignment && assignment->KeyboardAnswersFor(sock)) {
     const rex::input::X_INPUT_GAMEPAD k = driver->last_pad();
     pad.buttons |= uint16_t(k.buttons);
     if (std::fabs(float(int16_t(k.thumb_lx))) > std::fabs(pad.x * 32767.0f)) pad.x = float(int16_t(k.thumb_lx)) / 32767.0f;
@@ -1640,6 +1646,9 @@ void Keep(PPCContext& ctx, uint8_t* base, int p) {
 // Does player p have a device (a controller, or the keyboard) right now?
 bool HasController(int p) {
   const kbm::PlayerAssignment* a = kbm::PlayerAssignment::Get();
+  if (net::Active()) {
+    return p == net::LocalSlot() && (!a || a->HasDeviceFor(0));
+  }
   return !a || a->HasDeviceFor(p);  // (no assignment yet: as before)
 }
 void Unready(PPCContext& ctx, uint8_t* base, int p) {
@@ -1674,7 +1683,9 @@ void Mouse(PPCContext& ctx, uint8_t* base) {
   auto* driver = kbm::KeyboardMouseDriver::Get();
   if (!driver || !assignment) return;
   for (int p = 0; p < kMaxPlayers; ++p) {
-    if (g.players[p].joined && assignment->KeyboardAnswersFor(uint32_t(p))) {
+    const uint32_t sock = (net::Active() && p == net::LocalSlot()) ? 0u : uint32_t(p);
+    if (g.players[p].joined && (!net::Active() || p == net::LocalSlot()) &&
+        assignment->KeyboardAnswersFor(sock)) {
       g.mouse_player = p;
       break;
     }
@@ -1757,15 +1768,30 @@ void Open(PPCContext& ctx, uint8_t* base, uint32_t screen) {
   g.screen = screen;
   g.opened_at = Clock::now();
   int count = 0;
-  for (int p = 0; p < kMaxPlayers && p < more_players::LocalPlayerCount(); ++p) {
-    Player& pl = g.players[p];
-    pl.joined = Read32(kCoOpState + 4 * p) != 0;
-    if (!pl.joined) continue;
-    ++count;
-    pl.pick = PickOfOutfit(outfits::OutfitOf(p));
+  if (net::Active()) {
+    // Online co-op: open the Outfit Chest in solo 1-player mode exclusively for
+    // THIS PC's local player (`net::LocalSlot()`), using the game's single-player
+    // page & 3D preview model so players appear properly and never wait on remote
+    // players' Ready confirmation!
+    const int local = std::clamp(net::LocalSlot(), 0, kMaxPlayers - 1);
+    Player& pl = g.players[local];
+    pl.joined = true;
+    count = 1;
+    pl.pick = PickOfOutfit(outfits::OutfitOf(local));
     pl.row = HasColour(pl.pick) ? kRowColour : kRowOutfit;
-    pl.held = ReadPad(p).buttons;  // (the press that opened the chest isn't a press here)
+    pl.held = ReadPad(local).buttons;
     pl.stick_dir = 99;
+  } else {
+    for (int p = 0; p < kMaxPlayers && p < more_players::LocalPlayerCount(); ++p) {
+      Player& pl = g.players[p];
+      pl.joined = Read32(kCoOpState + 4 * p) != 0;
+      if (!pl.joined) continue;
+      ++count;
+      pl.pick = PickOfOutfit(outfits::OutfitOf(p));
+      pl.row = HasColour(pl.pick) ? kRowColour : kRowOutfit;
+      pl.held = ReadPad(p).buttons;  // (the press that opened the chest isn't a press here)
+      pl.stick_dir = 99;
+    }
   }
   if (count == 0) {  // (nobody? player 1 then)
     g.players[0].joined = true;

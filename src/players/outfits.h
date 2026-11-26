@@ -187,4 +187,9 @@ void AfterLightWrite();
 // build).
 void NoteMojoCollector(int player);
 
+// Online co-op outfit replication: streams `outfit`'s package if needed and
+// applies `outfit` to remote player `p` (returns true once applied, false while
+// waiting for the inventory manager to finish streaming the package).
+bool ApplyRemoteOutfit(PPCContext& ctx, uint8_t* base, int p, int outfit);
+
 }  // namespace outfits

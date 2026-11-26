@@ -118,6 +118,10 @@ set(CRASHMOM_SOURCES
     src/cheats/cheat_menu.cpp    # F5: the Cheats menu
     src/players/coop_camera.cpp  # the co-op camera: frames every player (camera rework)
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
+    src/net/udp_transport.cpp   # online co-op: pluggable IPv4 UDP transport with reliable ACKs
+    src/net/state_sync.cpp      # online co-op: host-authoritative state synchronization (Phase 1)
+    src/net/world_sync.cpp      # online co-op: host-authoritative enemies, titans & combat (Phase 2)
+    src/net/session_sync.cpp    # online co-op: non-pausing menus, pickups, saves, areas & pocketed titans
     src/players/outfits.cpp     # every player picks an outfit at the chest (findings/46)
     src/players/players_setup.cpp  # the Players screen's rules: who plays with which device
     src/players/outfit_picker.cpp  # the co-op outfit picker: everyone at once, a panel each

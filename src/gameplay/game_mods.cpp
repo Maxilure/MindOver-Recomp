@@ -3,6 +3,8 @@
 // partner's hit, simple spinning (what each does and why: game_mods.h)
 // =============================================================================
 #include "game_mods.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 
 #include <algorithm>
 #include <chrono>
@@ -205,12 +207,14 @@ void TrackStick(Spin& s, const uint8_t* gamepad, Clock::time_point now) {
 
 void SpinStarted(int p) {
   if (p < 0 || p >= 4) return;
+  net::NoteLocalSpin(p);
   std::lock_guard<std::mutex> lock(g_mutex);
   g_spin[p].started = Clock::now();
 }
 
 bool TakeButtonSpin(int p) {
   if (p < 0 || p >= 4) return false;
+  if (net::TakeRemoteSpin(p)) return true;
   std::lock_guard<std::mutex> lock(g_mutex);
   Spin& s = g_spin[p];
   if (s.button_circle == Clock::time_point{} || Clock::now() - s.button_circle > kCircleLife) return false;
@@ -220,6 +224,7 @@ bool TakeButtonSpin(int p) {
 
 bool Holding(int p) {
   if (p < 0 || p >= 4) return false;
+  if (net::RemoteSpinHolding(p)) return true;
   std::lock_guard<std::mutex> lock(g_mutex);
   return g_spin[p].holding;
 }
@@ -227,6 +232,10 @@ bool Holding(int p) {
 void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   if (user >= 4 || !gamepad) return;
   const int p = int(user);
+  // Online state-sync co-op: never interpret a remote player's raw LB button
+  // using THIS PC's simple_spinning setting! Only the owner PC decides whether
+  // they spun, and replicates it explicitly via kFlagSpinPulse / kFlagSpinHold.
+  if (net::Active() && p != net::LocalSlot()) return;
   const auto now = Clock::now();
   // Outside the lock: the keyboard driver and the menu check take their own.
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
@@ -235,6 +244,7 @@ void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   // In a level, no menu: LB is Spin (on foot or riding a titan: titans have
   // spin moves too, e.g. the Spin Dismount). Keep spinning: on foot only.
   const bool playing = more_players::InPlay() && !more_players::Loading() && !menu_input::MenuOnScreen() &&
+                       !(net::Active() && net::session_sync::IsLocalMenuOpenCached()) &&
                        (more_players::CharacterOfPlayer(p) != 0 || more_players::TitanOfPlayer(p) != 0);
   const bool on_foot = playing && more_players::TitanOfPlayer(p) == 0;
 
@@ -274,6 +284,7 @@ void FilterPad(uint32_t user, uint8_t* gamepad, bool connected) {
   if (s.holding != was_holding && REXCVAR_GET(debug_coop_trace)) {
     REXLOG_INFO("Gameplay: keep spinning {} for player {}", s.holding ? "holds the spin" : "let go", p + 1);
   }
+  net::SetLocalSpinHolding(p, s.holding);
   // Nothing is pressed for the player: the spin state's own question is
   // answered instead (input/keyboard_mouse.cpp, sub_8221E1C8).
 }
@@ -290,12 +301,29 @@ extern "C" REX_FUNC(sub_82132FF8) {
   const bool friendly_fire = REXCVAR_GET(friendly_fire);
   const bool keep_combo = !REXCVAR_GET(friendly_hits_break_combo);
   const uint32_t victim = ctx.r4.u32, message = ctx.r5.u32;
-  if ((friendly_fire && !keep_combo) || !message) {
+  if (!message) {
     __imp__sub_82132FF8(ctx, base);
     return;
   }
   const int type = int32_t(Read32(base, message + kMsgType));
   const int subtype = int32_t(Read32(base, message + kMsgSubtype));
+  // Online co-op immunity:
+  //   1. Any player currently inside an in-game menu (Outfit Chest, Pause,
+  //      Save Totem/List, Upgrade screen) is invulnerable & unstaggerable.
+  //   2. Remote player actors are owner-authoritative for their own health/deaths,
+  //      so local hazards or enemy hits on this PC never kill or stagger them.
+  if (net::Active() && type == kMsgDamage &&
+      (subtype == kDamageHit || subtype == kDamageChange || subtype == kDamageBreakCombo)) {
+    const int hurt_online = PlayerOf(ctx, base, victim);
+    if (hurt_online >= 0 &&
+        (net::IsPlayerInMenu(hurt_online, base) || net::session_sync::IsRemotePlayerActor(victim))) {
+      return;
+    }
+  }
+  if (friendly_fire && !keep_combo) {
+    __imp__sub_82132FF8(ctx, base);
+    return;
+  }
   if (type != kMsgDamage || (subtype != kDamageHit && subtype != kDamageChange)) {
     __imp__sub_82132FF8(ctx, base);
     return;

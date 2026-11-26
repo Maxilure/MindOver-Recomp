@@ -21,10 +21,13 @@
 
 #include "../guest_memory.h"
 #include "players.h"
+#include "../net/state_sync.h"
 
 REXCVAR_DEFINE_BOOL(native_controller_state, true, "CrashMoM",
                     "Use the port's SDL controller backend (false = original ReXGlue input)")
     .lifecycle(rex::cvar::Lifecycle::kInitOnly);
+REXCVAR_DEFINE_BOOL(debug_no_gamepads, false, "CrashMoM",
+                    "Testing: ignore all physical SDL gamepads (for two-window one-PC testing)");
 REXCVAR_DECLARE(bool, guide_button);
 
 // VIBRATION STRENGTH (Options -> Controls -> Vibration). The game itself only
@@ -324,7 +327,7 @@ void Start(std::unique_ptr<kbm::PlayerAssignment> assignment, std::unique_ptr<In
   g_assignment = std::move(assignment);
   g_keyboard = std::move(keyboard);
   g_scripted = std::move(scripted);
-  g_sdl = SDL_InitSubSystem(SDL_INIT_GAMEPAD);
+  g_sdl = REXCVAR_GET(debug_no_gamepads) ? false : SDL_InitSubSystem(SDL_INIT_GAMEPAD);
   if (g_sdl) {
     // Read snapshots directly and avoid queuing input events nobody consumes.
     SDL_SetGamepadEventsEnabled(false);
@@ -404,6 +407,23 @@ extern "C" REX_FUNC(sub_824742E8) {
   rex::input::X_INPUT_CAPABILITIES caps{};
   if (!Writable(address, sizeof(caps))) {
     ctx.r3.u64 = X_ERROR_BAD_ARGUMENTS;
+    return;
+  }
+  // Online state-sync co-op: remote players appear as standard connected pads
+  // so Radical's input manager creates controller objects for their slots.
+  if (net::HasVirtualController(ctx.r3.u32)) {
+    caps.type = 0x01;      // XINPUT_DEVTYPE_GAMEPAD
+    caps.sub_type = 0x01;  // XINPUT_DEVSUBTYPE_GAMEPAD
+    caps.flags = 0;
+    caps.gamepad.buttons = 0xF3FF;
+    caps.gamepad.left_trigger = 0xFF;
+    caps.gamepad.right_trigger = 0xFF;
+    caps.gamepad.thumb_lx = -64;
+    caps.gamepad.thumb_ly = -64;
+    caps.gamepad.thumb_rx = -64;
+    caps.gamepad.thumb_ry = -64;
+    std::memcpy(GuestPtr(base, address), &caps, sizeof(caps));
+    ctx.r3.u64 = X_ERROR_SUCCESS;
     return;
   }
   ctx.r3.u64 = Capabilities(ctx.r3.u32, ctx.r4.u32, caps);

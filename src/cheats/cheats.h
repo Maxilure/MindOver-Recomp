@@ -86,6 +86,8 @@
 #include <string>
 #include <string_view>
 
+struct PPCContext;
+
 namespace cheats {
 
 constexpr int kPlayers = 4;
@@ -124,6 +126,14 @@ void RequestLevelUp(int player);   // one upgrade for the character it plays now
 void RequestMaxLevel(int player);  // every upgrade left (Crash: one per frame)
 void RequestAddMojo(int player, int amount);  // like picking up that much mojo
 void RequestRefillHealth(int player);
+
+// ONLINE HEALTH MIRROR (net/state_sync.cpp, game thread only). Player p's
+// current body (titan, else Crash; not a mask): its hitpoints. False = none.
+bool PlayerHealth(int player, float& hitpoints, float& max_hitpoints);
+// Sets player p's body to `hitpoints` through the game's own change routine
+// (sub_821349E0's original: health bar, knockdown, death all follow), past the
+// online "remote players take no damage here" filter in our wrapper.
+void SetPlayerHealthFromNetwork(PPCContext& ctx, uint8_t* base, int player, float hitpoints);
 // Kills what the player is on now: in a titan the titan dies (Crash is thrown
 // out), on foot Crash dies (the game's death: back at the checkpoint).
 // Works with god mode on.

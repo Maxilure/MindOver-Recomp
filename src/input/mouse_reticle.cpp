@@ -20,6 +20,7 @@
 #include "prompt_icons.h"
 #include "../players/more_players.h"
 #include "../players/reticle_idle.h"
+#include "../net/state_sync.h"
 #include "../ui/wii_cursor.h"
 
 // DEFAULT 2 = Crosshair (2026-11-06, the port's out-of-the-box setting).
@@ -104,8 +105,31 @@ void FollowPointer(PPCContext& ctx, uint8_t* base, uint32_t reticle) {
   const uint32_t game = Read32(base, kGameGlobal);
   if (!game || (*GuestPtr(base, game + kPausedByte) & kPaused)) return;
   if (menu_input::MenuOnScreen()) return;
-  const kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get();
-  if (!players || !players->KeyboardAnswersFor(player)) return;
+  // Online state-sync co-op: mouse aiming ONLY drives this PC's own local slot
+  // (never Player 1 on a client's screen!). Remote players' reticles are driven
+  // by their owner's networked aim coordinates below so their mask rotates and
+  // shoots where they aim without showing their crosshair here.
+  if (net::Active()) {
+    const int local_slot = net::LocalSlot();
+    if (local_slot < 0) return;
+    if (int(player) != local_slot) {
+      float rx = 0.0f, ry = 0.0f;
+      if (net::GetRemoteReticle(int(player), rx, ry)) {
+        static uint32_t net_pair = 0;
+        if (!net_pair) net_pair = rex::system::kernel_memory()->SystemHeapAlloc(8);
+        if (net_pair) {
+          WriteFloat(base, net_pair, rx);
+          WriteFloat(base, net_pair + 4, ry);
+          CallGame(__imp__sub_82255360, ctx, base, reticle, net_pair);
+          CallGame(__imp__sub_822EAA18, ctx, base, reticle + kSmoother, net_pair);
+        }
+      }
+      return;
+    }
+  } else {
+    const kbm::PlayerAssignment* players = kbm::PlayerAssignment::Get();
+    if (!players || !players->KeyboardAnswersFor(player)) return;
+  }
   kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
   float px = 0, py = 0;
   uint32_t moves = 0;
@@ -151,9 +175,15 @@ extern "C" REX_FUNC(sub_82255160) {
   const float y0 = mouse_reticle::ReadFloat(base, reticle + 0x28);
   __imp__sub_82255160(ctx, base);
   mouse_reticle::FollowPointer(ctx, base, reticle);
-  const float dx = mouse_reticle::ReadFloat(base, reticle + 0x14) - x0;
-  const float dy = mouse_reticle::ReadFloat(base, reticle + 0x28) - y0;
+  const float x1 = mouse_reticle::ReadFloat(base, reticle + 0x14);
+  const float y1 = mouse_reticle::ReadFloat(base, reticle + 0x28);
+  const int32_t reticle_player = int32_t(mouse_reticle::Read32(base, reticle + 44));
+  if (net::Active() && reticle_player == net::LocalSlot()) {
+    net::SetLocalReticle(reticle_player, x1, y1);
+  }
+  const float dx = x1 - x0;
+  const float dy = y1 - y0;
   const bool on = (*GuestPtr(base, reticle + 48) & 0x80) != 0;
-  reticle_idle::NoteReticleUpdate(ctx, base, int32_t(mouse_reticle::Read32(base, reticle + 44)), on,
+  reticle_idle::NoteReticleUpdate(ctx, base, reticle_player, on,
                                   dx * dx + dy * dy > 0.25f * 0.25f);
 }

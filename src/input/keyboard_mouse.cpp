@@ -11,6 +11,8 @@
 #include "../players/more_players.h"
 #include "../gameplay/game_mods.h"
 #include "../guest_memory.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 
 #include <algorithm>
 #include <cmath>
@@ -989,7 +991,9 @@ extern "C" REX_FUNC(sub_8221E200) {
   // Our circles (the keyboard's Spin key, simple spinning's LB) obey the
   // game's own lock, like the stick's: no spins in cutscenes.
   if (keyboard && !REXCVAR_GET(simple_spinning)) driver->TakeSpinCircle();  // off: dropped
-  if (ControllerLocked(ctx, base, character)) {
+  if (ControllerLocked(ctx, base, character) ||
+      (net::Active() && player == net::LocalSlot() &&
+       net::session_sync::ShouldBlockLocalGameplayInput(base))) {
     // Drop what's waiting (it would start a spin the moment the scene ends).
     const bool dropped = (keyboard && driver->TakeSpinCircle()) | game_mods::TakeButtonSpin(player);
     if (dropped && REXCVAR_GET(debug_kbm_trace)) {

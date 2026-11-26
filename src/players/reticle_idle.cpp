@@ -13,6 +13,7 @@
 
 #include "more_players.h"
 #include "../input_record.h"
+#include "../net/state_sync.h"
 
 REXCVAR_DEFINE_INT32(reticle_hide_idle_ms, 2000, "CrashMoM",
                      "Co-op: a mask's aiming reticle shows only while its player aims (moves it or "
@@ -157,12 +158,16 @@ void NoteReticleUpdate(PPCContext&, uint8_t*, int player, bool on, bool moved) {
 }
 
 bool Hidden(uint32_t behaviour) {
-  const int32_t idle_ms = REXCVAR_GET(reticle_hide_idle_ms);
-  if (idle_ms <= 0) return false;
   const auto it = g_behaviours.find(behaviour);
   if (it == g_behaviours.end()) return false;
   const int p = it->second.player;
   if (p < 0 || p >= kPlayers) return false;
+  // Online state-sync co-op: never draw another player's aiming crosshair on
+  // this PC's screen (their mask still rotates and shoots using their synced
+  // reticle coordinates in input/mouse_reticle.cpp).
+  if (net::Active() && net::LocalSlot() >= 0 && p != net::LocalSlot()) return true;
+  const int32_t idle_ms = REXCVAR_GET(reticle_hide_idle_ms);
+  if (idle_ms <= 0) return false;
   // Only a plain mask: its player is a mask (co-op state 1) and the reticle's
   // host is not a titan (then it aims the mutant's abilities: original).
   if (Read32(kCoopState + 4 * uint32_t(p)) != 1) return false;

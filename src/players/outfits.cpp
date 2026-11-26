@@ -83,6 +83,8 @@
 #include "../pddi/intercept.h"
 #include "../native/recorder.h"
 #include "../ui/scrooby.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 #include "more_players.h"
 #include "outfit_picker.h"
 #include "outfit_previews.h"
@@ -2055,3 +2057,102 @@ extern "C" REX_FUNC(sub_822665B0) {
   }
   ctx = call;
 }
+
+extern "C" REX_FUNC(__imp__sub_822E3FC8);  // inventory: does section exist?
+extern "C" REX_FUNC(__imp__sub_822E4D88);  // inventory: is section loaded?
+
+namespace outfits {
+namespace {
+uint32_t g_remote_loading_skin[kMaxPlayers] = {kNone, kNone, kNone, kNone};
+}  // namespace
+
+bool ApplyRemoteOutfit(PPCContext& ctx, uint8_t* base, int p, int outfit) {
+  if (p < 0 || p >= kMaxPlayers || !ValidOutfit(outfit)) return true;
+  if (OutfitOf(p) == outfit && g_remote_loading_skin[p] == kNone) return true;
+  // Wait if our local player currently has the Outfit Chest open or a respawn
+  // is already in flight so we never collide with local preview state.
+  if (outfit_picker::IsOpen() || PreviewHeld() || more_players::Loading() || !more_players::InPlay()) {
+    return false;
+  }
+  const uint32_t game = Read32(kGameGlobal);
+  const uint32_t front_end = game ? Read32(game + kFrontEndOf) : 0;
+  const uint32_t actor = more_players::CharacterOfPlayer(p);
+  if (!game || !front_end || !actor) return false;
+
+  const uint32_t new_skin = GameSkin(outfit);
+  if (g_remote_loading_skin[p] != new_skin) {
+    if (g_remote_loading_skin[p] != kNone) {
+      SkinPackageReference(ctx, base, g_remote_loading_skin[p], false);
+    }
+    SkinPackageReference(ctx, base, new_skin, true);
+    g_remote_loading_skin[p] = new_skin;
+    CallGame(__imp__sub_822E7880, ctx, base, Read32(game + kInventoryOf));
+  }
+
+  // Check whether `new_skin`'s inventory section has finished streaming in.
+  static uint32_t handle = 0;
+  if (!handle) handle = rex::system::kernel_memory()->SystemHeapAlloc(16);
+  if (!handle) return false;
+  const uint32_t pkg_name = CallGame(__imp__sub_8229F810, ctx, base, new_skin);
+  CallGame(__imp__sub_8236AC90, ctx, base, handle, pkg_name);
+  const uint32_t inventory = CallGame(__imp__sub_822E3FA8, ctx, base, 0, handle);
+  const bool has_sec = (CallGame(__imp__sub_822E3FC8, ctx, base, inventory, handle) & 0xFFu) != 0;
+  const bool ready = !has_sec ||
+                     ((CallGame(__imp__sub_822E4D88, ctx, base, inventory, handle) & 0xFFu) != 0 &&
+                      CallGame(__imp__sub_822E4680, ctx, base, inventory, handle) != 0);
+  if (!ready) {
+    CallGame(__imp__sub_823C9A70, ctx, base, handle);
+    CallGame(__imp__sub_822E7880, ctx, base, Read32(game + kInventoryOf));
+    return false;
+  }
+
+  const uint32_t old_skin = GameSkin(OutfitOf(p));
+  if (IsCoco(old_skin) != IsCoco(new_skin) && net::session_sync::IsLocalMenuOpen(base)) {
+    // Hold Crash <-> Coco respawn until our local player closes their menu!
+    CallGame(__imp__sub_823C9A70, ctx, base, handle);
+    return false;
+  }
+
+  g_wearing_player = p;
+  g_wearing_outfit = outfit;
+  bool rebind = false;
+  if (IsCarbon(outfit) && g_colours_added && g_render_of[p]) {
+    const uint32_t key = CarbonKey(ctx, base, outfit);
+    rebind = key && std::memcmp(Guest(g_render_of[p] + kRenderCarbonName), Guest(key), 8) != 0;
+  }
+  if (IsCoco(old_skin) != IsCoco(new_skin)) {
+    PreviewAwayForRespawn(ctx, base, p);
+    RespawnWhereTheyStand(std::max(0, net::LocalSlot()));
+    CallGame(__imp__sub_8227C5A0, ctx, base, game, uint32_t(p));
+  } else if (old_skin != new_skin || rebind) {
+    CallGame(__imp__sub_820B0E98, ctx, base, actor);
+    uint32_t inv = CallGame(__imp__sub_822E3FA8, ctx, base, 0, handle);
+    uint32_t section = CallGame(__imp__sub_822E4680, ctx, base, inv, handle);
+    CallGame(__imp__sub_820B09C8, ctx, base, actor, section);
+    inv = CallGame(__imp__sub_822E3FA8, ctx, base, 0, handle);
+    const uint32_t a = CallGame(__imp__sub_822E4680, ctx, base, inv, handle);
+    const PPCContext saved = ctx;
+    ctx.r3.u64 = actor;
+    ctx.r4.u64 = a;
+    ctx.r5.u64 = 8;
+    __imp__sub_820B0DF8(ctx, base);
+    ctx = saved;
+  }
+  CallGame(__imp__sub_823C9A70, ctx, base, handle);
+
+  g_applying = p;
+  g_applying_outfit = outfit;
+  CallGame(sub_822665B0, ctx, base, front_end, uint32_t(p), new_skin);
+  g_applying = -1;
+  g_wearing_player = -1;
+
+  if (g_remote_loading_skin[p] != kNone) {
+    SkinPackageReference(ctx, base, g_remote_loading_skin[p], false);
+    g_remote_loading_skin[p] = kNone;
+  }
+  CallGame(__imp__sub_822E7880, ctx, base, Read32(game + kInventoryOf));
+  REXLOG_INFO("Online: applied remote player {} outfit {} (skin {} -> {})", p + 1, outfit,
+              old_skin, new_skin);
+  return true;
+}
+}  // namespace outfits

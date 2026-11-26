@@ -188,6 +188,8 @@
 #include "cheats/spawn.h"  // NotePathFollower (the test course's moving platform)
 #include "fixed_step.h"  // logic_rate
 #include "guest_memory.h"
+#include "net/state_sync.h"
+#include "net/world_sync.h"
 
 REXCVAR_DECLARE(int32_t, fps_cap);  // frame_rate.cpp
 
@@ -381,7 +383,21 @@ extern "C" REX_FUNC(sub_82182B18) {
   const uint32_t caller = static_cast<uint32_t>(ctx.lr);
   const bool from_physics = caller >= kPhysicsCodeStart && caller < kPhysicsCodeEnd;
   __imp__sub_82182B18(ctx, base);
-  if (from_physics || ctx.r3.u32 != 0) {
+  if (from_physics) {
+    return;
+  }
+  // Online co-op: for remote players (Crash or ridden titan), give the fight
+  // tree the owner's authoritative ground-contact state so downhill slopes
+  // never trigger false falling animations and jump-attacks enter airborne
+  // state immediately when the owner jumps.
+  if (net::Active()) {
+    const int remote_ground = net::RemoteOnGroundOverride(base, self);
+    if (remote_ground >= 0) {
+      ctx.r3.u64 = uint64_t(remote_ground);
+      return;
+    }
+  }
+  if (ctx.r3.u32 != 0) {
     return;
   }
   const bool grace_on = GraceOn();
@@ -414,20 +430,41 @@ extern "C" REX_FUNC(sub_82182B18) {
 }
 
 // CPhysicsBehaviour::Update (vtable slot 4): r3 = this, f1 = time step.
-// Wrapped only for the trace.
+// Also drives remote players' interpolated physics/world-matrix state while
+// online (net/state_sync.h).
 extern "C" REX_FUNC(__imp__sub_8217D0A0);
 extern "C" REX_FUNC(sub_8217D0A0) {
   using namespace ground_physics;
+  const uint32_t self = ctx.r3.u32;
+  const double dt = ctx.f1.f64;
   if (!TraceOn()) {
+    if (net::Active()) {
+      net::NotePhysicsBehaviour(base, self);
+      net::PrepareRemotePhysics(base, self, float(dt));
+      net::world_sync::PrepareRemoteEntityPhysics(base, self, float(dt));
+    }
     __imp__sub_8217D0A0(ctx, base);
+    if (net::Active()) {
+      net::NoteLocalGroundState(base, self, Contact(base, self, kGroundIndex) != 0);
+      net::FinishRemotePhysics(base, self);
+      net::world_sync::FinishRemoteEntityPhysics(base, self);
+    }
     return;
   }
   // Read everything before the call: it changes the registers.
-  const uint32_t self = ctx.r3.u32;
-  const double dt = ctx.f1.f64;
   const uint32_t ground_before = Contact(base, self, kGroundIndex);
   const float vy_before = BeFloat(base, self + kVelocity + 4);
+  if (net::Active()) {
+    net::NotePhysicsBehaviour(base, self);
+    net::PrepareRemotePhysics(base, self, float(dt));
+    net::world_sync::PrepareRemoteEntityPhysics(base, self, float(dt));
+  }
   __imp__sub_8217D0A0(ctx, base);
+  if (net::Active()) {
+    net::NoteLocalGroundState(base, self, Contact(base, self, kGroundIndex) != 0);
+    net::FinishRemotePhysics(base, self);
+    net::world_sync::FinishRemoteEntityPhysics(base, self);
+  }
 
   const uint32_t ground_after = Contact(base, self, kGroundIndex);
   std::array<float, 3> position, velocity;

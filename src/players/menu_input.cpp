@@ -60,6 +60,8 @@
 // =============================================================================
 #include "../gameplay/reduce_motion.h"  // Reduce Motion: the level-up screen's character
 #include "more_players.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 #include "outfit_picker.h"
 #include "../data/fight_tree.h"
 
@@ -153,6 +155,25 @@ bool Plays(int p) {
 int MenuOwner(PPCContext& ctx, uint8_t* base, uint32_t fe, const char** why) {
   *why = "nobody";
   if (!more_players::InPlay() || (*Guest(fe + kFrontEndFlags2) & kInMainMenus)) return -1;
+  if (net::Active()) {
+    const bool confirm_showing = (*Guest(fe + kConfirmBox) & kConfirmShowing) != 0;
+    const uint8_t menus = *Guest(fe + kMenuFlags);
+    const int32_t fe_state = fight_tree::CurrentFrontEnd().state;
+    // Any FrontEnd state other than plain gameplay (489/486), FMV movie (492),
+    // or 3D cutscene (543) while InPlay() is an active menu flow (including
+    // Save Slot List 386, Overwrite 412, Saving 326/329, Rename Screen, etc.).
+    const bool in_fe_menu = fe_state > 0 && fe_state != 489 && fe_state != 486 &&
+                            fe_state != 492 && fe_state != 543;
+    const bool menu_up = confirm_showing || (*Guest(fe + kFrontEndFlags2) & kMenuOnScreen) ||
+                         (menus & 0x2Fu) != 0 || g_upgrade_screen.load() ||
+                         outfit_picker::IsOpen() || int32_t(Read32(fe + kOwner)) >= 0 ||
+                         in_fe_menu;
+    if (menu_up) {
+      *why = "online local player";
+      return std::max(0, net::LocalSlot());
+    }
+    return -1;
+  }
   int owner = -1;
   if (owner < 0) {
     owner = int(int32_t(Read32(fe + kOwner)));
@@ -304,6 +325,12 @@ bool CanAskAs(PPCContext& ctx, uint8_t* base, uint32_t fe, int p) {
 
 extern "C" REX_FUNC(sub_822652B0) {
   const uint32_t fe = ctx.r3.u32, button = ctx.r4.u32, lr = uint32_t(ctx.lr);
+  // Online: another PC skipped (or finished) the cutscene we're in; ours skips
+  // through its own prompt (net/session_sync.h AnswerRemoteSceneSkip).
+  if (net::session_sync::AnswerRemoteSceneSkip(lr, button)) {
+    ctx.r3.u64 = 1;
+    return;
+  }
   if (more_players::InPlay()) KeepOwnerInGame(ctx, base, fe);
   const int32_t asked = int32_t(ctx.r6.u32);
   const char* why = "";
@@ -332,6 +359,7 @@ extern "C" REX_FUNC(sub_822652B0) {
     const uint32_t game_owner = Read32(fe + kOwner);
     bool heard = false;
     for (int p = 0; p < more_players::LocalPlayerCount() && !heard; ++p) {
+      if (net::Active() && p != net::LocalSlot()) continue;
       if (!Plays(p)) continue;
       ctx = saved;
       if (!CanAskAs(ctx, base, fe, p)) {
@@ -407,10 +435,21 @@ extern "C" REX_FUNC(sub_82266120) {
 extern "C" REX_FUNC(sub_8214A9A8) {
   const uint32_t self = ctx.r3.u32;
   const uint32_t actor = Read32(self + 28), target = Read32(self + 32);
+  const uint32_t interactor_flag = Read32(self + 36);
+  const int pre_player = (net::Active() && target) ? PlayerOfActor(ctx, base, actor) : -1;
+  if (net::Active() && target) {
+    net::session_sync::BeginPlayerInteract(pre_player);
+  }
   __imp__sub_8214A9A8(ctx, base);
+  if (net::Active() && target) {
+    net::session_sync::EndPlayerInteract(ctx, base, pre_player, actor, target, interactor_flag);
+  }
   if (!target) return;
-  const int player = PlayerOfActor(ctx, base, actor);
+  const int player = pre_player >= 0 ? pre_player : PlayerOfActor(ctx, base, actor);
   if (player < 0) return;
+  // Online co-op: only record g_last_interactor for our local player so remote
+  // players never claim local menu/confirm-box ownership on this PC.
+  if (net::Active() && player != net::LocalSlot()) return;
   g_interacted_at = std::chrono::steady_clock::now();
   if (player != g_last_interactor.exchange(player) && Tracing()) {
     REXLOG_INFO("Menu input: player {} interacted with {:08X}", player + 1, target);

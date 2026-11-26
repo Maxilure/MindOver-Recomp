@@ -74,6 +74,7 @@
 #include <rex/system/xmemory.h>
 
 #include "more_players.h"
+#include "../net/state_sync.h"
 
 REXCVAR_DEFINE_BOOL(coop_camera, true, "CrashMoM",
                     "Co-op camera: frame every player in game (centre between them, back off until all "
@@ -871,6 +872,15 @@ void OnGameCameraRebuilt(uint32_t camera) {
   UpdateUrgency();
 }
 
+bool GetForwardXZ(float& out_x, float& out_z) {
+  if (!Finite(g_view.direction)) return false;
+  const float len = std::hypot(g_view.direction.x, g_view.direction.z);
+  if (len < 1e-4f) return false;
+  out_x = g_view.direction.x / len;
+  out_z = g_view.direction.z / len;
+  return true;
+}
+
 }  // namespace coop_camera
 
 extern "C" REX_FUNC(sub_82107490);
@@ -1074,9 +1084,16 @@ extern "C" REX_FUNC(sub_82105538) {
         g_players[p].point_frame = g_frame;
       }
       if (g_aim_frame != g_frame) UpdateAim(ctx, base);  // once per camera frame
-      WriteFloat(g_answer, g_aim.x);
-      WriteFloat(g_answer + 4, g_aim.y);
-      WriteFloat(g_answer + 8, g_aim.z);
+      // Online state-sync co-op: each PC's camera follows its own local player
+      // (single-player view) instead of stretching between distant online players.
+      const int local_slot = net::LocalSlot();
+      const Vec cam_target =
+          (local_slot >= 0 && local_slot < 4 && g_players[local_slot].point_frame + 5 >= g_frame)
+              ? g_players[local_slot].point
+              : g_aim;
+      WriteFloat(g_answer, cam_target.x);
+      WriteFloat(g_answer + 4, cam_target.y);
+      WriteFloat(g_answer + 8, cam_target.z);
       ctx.r3.u64 = g_answer;
       return;
     }
@@ -1196,7 +1213,9 @@ void CoopCameraDistance(PPCRegister& f1, PPCRegister& r31) {
   using namespace coop_camera;
   g_game_zoom = float(f1.f64);
   g_our_zoom = g_game_zoom;
-  if (!g_active || !std::isfinite(g_game_zoom) || g_game_zoom <= 0.0f) return;
+  // Online state-sync co-op: each PC has its own single-player camera following
+  // only its local player (sub_82105538 above), so never zoom out for remote players.
+  if (!g_active || net::Active() || !std::isfinite(g_game_zoom) || g_game_zoom <= 0.0f) return;
   // Just after a level change / teleport: the game's own distance until its
   // camera has glided in (kJumpUnits).
   if (g_hold_for_still) return;

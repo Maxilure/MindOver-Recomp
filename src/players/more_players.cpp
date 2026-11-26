@@ -3,6 +3,7 @@
 // =============================================================================
 #include "more_players.h"
 #include "outfit_picker.h"
+#include "../net/state_sync.h"
 
 #include <algorithm>
 #include <atomic>
@@ -432,6 +433,12 @@ bool MorePlayersLoopEndPlayer(PPCRegister& p) { return int32_t(p.u32) < LocalPla
 // player 1 either).
 bool MorePlayersJoinPick(PPCRegister& controller, PPCRegister& player) {
   const int c = int(int32_t(controller.u32));
+  // Online co-op: strictly 1 player per client PC! Only slots corresponding to
+  // connected online peers in ConnectedMask() may join -- local split-screen
+  // joins on P2-P4 of the same PC are never allowed while online.
+  if (net::Active() && (c < 0 || c >= 4 || (net::ConnectedMask() & (1u << c)) == 0)) {
+    return false;
+  }
   bool someone_else = false;
   for (int p = 0; p < LocalPlayers(); ++p) {
     someone_else = someone_else || (p != c && Read32(kState + 4 * p) != 0);
@@ -1412,7 +1419,7 @@ bool HasMaskHost(int me) {
 // player-2 Crash at a level start).
 extern "C" REX_FUNC(sub_82235978) {
   const int player = PlayerOf(ctx.r4.u32);
-  if (BelongsToAMenu(player)) {
+  if (BelongsToAMenu(player) || net::BlockRemoteMaskEntry(player)) {
     ctx.r3.u64 = 0;
     return;
   }
@@ -1427,7 +1434,11 @@ extern "C" REX_FUNC(sub_82235CB8) {
   const int n = LocalPlayers();
   const bool anywhere = REXCVAR_GET(coop_mask_from_anywhere);
   // The B that opened a menu / the outfit picker: no (see BelongsToAMenu).
-  if (BelongsToAMenu(PlayerOf(Read32(ctx.r3.u32 + 32)))) {
+  // Online co-op: also refuse turning a remote player into a mask unless their
+  // own PC confirmed coop_state == 1 (mask) or 3 (entering mask), so pressing B
+  // near a totem/NPC on their PC never accidentally masks them on ours.
+  const int req_player = PlayerOf(Read32(ctx.r3.u32 + 32));
+  if (BelongsToAMenu(req_player) || net::BlockRemoteMaskEntry(req_player)) {
     ctx.r3.u64 = 0;
     return;
   }
@@ -1678,6 +1689,9 @@ void MorePlayersBarrierNearest(PPCRegister& f0, PPCRegister& r11) {
 // players: when I'm in game and not 5 / 6, EVERY other player in game who isn't
 // 5 / 6 gets 5 (three masks fit on one Crash).
 extern "C" REX_FUNC(sub_82235B70) {
+  // Online co-op: interacting with an NPC, chest, or totem must NEVER force
+  // other connected players into masks on your shoulders!
+  if (net::Active()) return;
   if (LocalPlayers() <= 2) {
     __imp__sub_82235B70(ctx, base);
     return;
@@ -2124,6 +2138,9 @@ extern "C" REX_FUNC(sub_82263620) {
 extern "C" REX_FUNC(__imp__sub_82234F40);
 extern "C" REX_FUNC(__imp__sub_82234E60);
 extern "C" REX_FUNC(sub_82234F40) {
+  // Online co-op: each player explores independently with their own camera/zones;
+  // unloading a far zone on this PC must never pull a remote player into a mask!
+  if (net::Active()) return;
   if (LocalPlayers() <= 2) {
     __imp__sub_82234F40(ctx, base);
     return;
@@ -2266,6 +2283,17 @@ extern "C" REX_FUNC(__imp__sub_82295B08);
 extern "C" REX_FUNC(sub_82295B08) {
   const uint32_t event = ctx.r3.u32;
   const int32_t named = int32_t(Read32(event + 8));
+  // Online co-op: digging areas NEVER force other players into masks or
+  // teleport them -- every player stays independent and any player can hop into
+  // or out of digging patches freely (CUndergroundViewerBehaviour below already
+  // supports all 4 Crashes underground at once).
+  if (net::Active()) {
+    g_dig_trigger = -1;
+    Write32(event + 8, uint32_t(-1));
+    __imp__sub_82295B08(ctx, base);
+    Write32(event + 8, uint32_t(named));
+    return;
+  }
   int keeper = g_dig_trigger;
   // the trigger is the same frame as the event (same game thread moment)
   if (std::chrono::steady_clock::now() - g_dig_trigger_at > std::chrono::milliseconds(100)) keeper = -1;

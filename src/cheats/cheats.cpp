@@ -30,6 +30,9 @@
 #include "../data/fight_tree.h"
 #include "../gameplay/reduce_motion.h"
 #include "../players/more_players.h"
+#include "../net/state_sync.h"
+#include "../net/world_sync.h"
+#include "../net/session_sync.h"
 #include "../ui/hud_scale.h"
 #include "cheat_menu.h"
 #include "free_camera.h"
@@ -775,6 +778,35 @@ void RequestKillEnemies(float range) {
   std::lock_guard<std::mutex> lock(g_mutex);
   g_requests.kill_enemies = range > 0.0f ? range : 60.0f;
 }
+bool PlayerHealth(int player, float& hitpoints, float& max_hitpoints) {
+  if (player < 0 || player >= kPlayers) return false;
+  const uint32_t body = BodyOf(player, nullptr);
+  const uint32_t dmg = body ? DamageableOf(body) : 0;
+  if (!dmg) return false;
+  const uint32_t hp = Read32(dmg + kDmgHitpoints), max = Read32(dmg + kDmgMaxHitpoints);
+  if (!Readable(hp, 4) || !Readable(max, 4)) return false;
+  hitpoints = ReadFloat(hp);
+  max_hitpoints = ReadFloat(max);
+  return std::isfinite(hitpoints) && std::isfinite(max_hitpoints);
+}
+
+void SetPlayerHealthFromNetwork(PPCContext& ctx, uint8_t* base, int player, float hitpoints) {
+  float now = 0.0f, max = 0.0f;
+  if (!PlayerHealth(player, now, max)) return;
+  const float target = std::clamp(hitpoints, 0.0f, max);
+  const float delta = target - now;
+  if (std::fabs(delta) < 0.05f) return;
+  const uint32_t dmg = DamageableOf(BodyOf(player, nullptr));
+  // The original routine, NOT our sub_821349E0 wrapper: the wrapper drops
+  // every loss of a remote player online (their own PC decides their health;
+  // this IS that decision arriving).
+  const PPCContext saved = ctx;
+  ctx.r3.u64 = dmg;
+  ctx.f1.f64 = double(delta);
+  __imp__sub_821349E0(ctx, base);
+  ctx = saved;
+}
+
 void RequestRefillHealth(int player) {
   MarkCheated();
   std::lock_guard<std::mutex> lock(g_mutex);
@@ -1002,6 +1034,9 @@ bool DebugCommand(std::string_view command) {
 extern "C" REX_FUNC(__imp__sub_820B8688);
 extern "C" REX_FUNC(sub_820B8688) {
   if (cheats::g_no_ai.load()) return;
+  // Online Phase 2: host runs all enemy/titan AI authoritatively; clients
+  // suppress local AI decisions and receive synced enemy transforms & HP.
+  if (net::Active() && !net::IsHost()) return;
   __imp__sub_820B8688(ctx, base);
 }
 
@@ -1017,6 +1052,7 @@ extern "C" REX_FUNC(sub_822FFA40) {
   const double scale = reduce_motion::GameTimeScale(base, manager, ctx.f1.f64);
   if (frame_function) {
     cheats::Tick(ctx, base);
+    if (net::Active()) net::session_sync::TickFrame(ctx, base);
   }
   ctx.f1.f64 = scale * double(cheats::g_speed.load());
 }
@@ -1033,6 +1069,7 @@ extern "C" REX_FUNC(sub_82132F88) {
     if (g_god.load() && !g_killed.count(self)) RefillDamageable(ctx, base, self);
   } else {
     g_player_damageables.erase(self);
+    if (net::Active()) net::world_sync::OnDamageableUpdate(ctx, base, self, actor);
   }
 }
 
@@ -1041,6 +1078,28 @@ extern "C" REX_FUNC(sub_82132F88) {
 extern "C" REX_FUNC(sub_821349E0) {
   using namespace cheats;
   if (g_god.load() && ctx.f1.f64 < 0.0 && g_player_damageables.count(ctx.r3.u32)) {
+    return;
+  }
+  // Online co-op: remote players are owner-authoritative for their own health
+  // and deaths, and any player currently inside an in-game menu (Outfit Chest,
+  // Save Totem/List, Pause, Upgrade) is invulnerable.
+  if (net::Active() && ctx.f1.f64 < 0.0 && g_player_damageables.count(ctx.r3.u32)) {
+    for (const auto& [actor, dmg] : g_damageable_of) {
+      if (dmg != ctx.r3.u32) continue;
+      if (net::session_sync::IsRemotePlayerActor(actor)) return;
+      for (int p = 0; p < 4; ++p) {
+        if ((actor == more_players::CharacterOfPlayer(p) ||
+             actor == more_players::TitanOfPlayer(p)) &&
+            net::IsPlayerInMenu(p, base)) {
+          return;
+        }
+      }
+    }
+  }
+  // Online Phase 2: on a client, hits on non-player enemies/titans are
+  // forwarded as reliable kMsgDamageReq RPCs to the host instead of mutating
+  // local HP directly.
+  if (net::Active() && net::world_sync::InterceptHitpointsChange(base, ctx.r3.u32, float(ctx.f1.f64))) {
     return;
   }
   // One-hit kills: an enemy's damage becomes more than any health.

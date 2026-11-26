@@ -20,6 +20,8 @@
 #include "../input/keyboard_mouse.h"
 #include "../input/players.h"
 #include "../input/prompt_icons.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 #include "more_players.h"
 #include "../language/texts.h"
 
@@ -723,6 +725,9 @@ void FilterPad(int user, uint8_t* gamepad, bool connected) {
 // stays the game's.
 extern "C" REX_FUNC(sub_82262D78) {
   using namespace lost_controller;
+  // Online co-op: never pop up the blocking "Reconnect controller" pause box
+  // in a live online level.
+  if (net::Active() && more_players::InPlay()) return;
   if (!REXCVAR_GET(lost_controller) || !more_players::InPlay() ||
       ctx.r3.u32 != Read32(Read32(kGameGlobal) + kFrontEnd)) {
     __imp__sub_82262D78(ctx, base);
@@ -784,6 +789,10 @@ extern "C" REX_FUNC(sub_8221F1E8) {
   if (ctx.r3.u32 & 0xFF) return;
   const bool dismount = (map == 4 && event == 2) || (map == 6 && event == 23);
   if (!dismount) return;
+  if (net::Active() && net::session_sync::ShouldForceDismountTitan(Read32(controller + kNpcTitan))) {
+    ctx.r3.u64 = 1;
+    return;
+  }
   for (int p = 0; p < kMaxPlayers; ++p) {
     const uint32_t titan = g_unjacking[p] ? more_players::TitanOfPlayer(p) : 0;
     if (titan && Read32(controller + kNpcTitan) == titan) {

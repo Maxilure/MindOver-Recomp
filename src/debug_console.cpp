@@ -63,6 +63,7 @@
 #include "input/prompt_icons.h"
 #include "native/ab_capture.h"
 #include "players/more_players.h"
+#include "net/state_sync.h"
 
 REXCVAR_DEFINE_STRING(debug_console, "", "CrashMoM",
                       "Debug: a Unix socket at this path answers questions about the running game "
@@ -1152,6 +1153,24 @@ std::string Run(std::string_view line) {
     return memory_survey::Report();
   }  // the game's heaps + guest memory (debug/memory_survey.h)
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
+  if (verb == "online") {
+    if (w.size() >= 2 && w[1] == "host") {
+      const uint16_t port = w.size() >= 3 ? uint16_t(Number(w[2], "port"))
+                                          : uint16_t(REXCVAR_GET(online_port));
+      return net::StartHost(port) ? fmt::format("hosting on UDP {}\n", port) : "host failed\n";
+    }
+    if (w.size() >= 3 && w[1] == "join") {
+      const uint16_t port = w.size() >= 4 ? uint16_t(Number(w[3], "port"))
+                                          : uint16_t(REXCVAR_GET(online_port));
+      return net::StartJoin(w[2], port) ? fmt::format("joining {}:{}\n", w[2], port) : "join failed\n";
+    }
+    if (w.size() >= 2 && w[1] == "leave") {
+      net::Leave();
+      return "left online session\n";
+    }
+    auto* mem = rex::system::kernel_memory();
+    return net::DebugStatus(mem ? mem->virtual_membase() : nullptr);
+  }
   if (verb == "profile") {
     // `profile <seconds> [file] [thread name...]`: where the main thread's (or
     // the named thread's, e.g. GPU Commands) time goes (debug/slow_load_sampler.h).

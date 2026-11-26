@@ -5,6 +5,8 @@
 // ours does the same with a plain file. Argument registers are the original's.
 #include "pc_save_drive.h"
 #include "../cheats/cheats.h"
+#include "../net/session_sync.h"
+#include "../net/state_sync.h"
 #include "../players/outfits.h"
 
 #include <algorithm>
@@ -131,9 +133,38 @@ bool Flush(OpenFile& f) {
   // the game wrote (a save), the file's own for any other write.
   std::vector<uint8_t> out = f.data;
   const bool game_save = f.writable && f.data.size() == save_files::kGameFileSize;
-  const bool cheated = game_save && cheats::AchievementsBlocked();
+  std::array<int8_t, 4> save_outfits = outfits::CurrentPickBytes();
+  bool cheated = game_save && cheats::AchievementsBlocked();
+
+  // Online co-op client save: when a connected client saves locally, write the
+  // Host's authoritative 20,174-byte campaign save block into this client's
+  // local save file while preserving the client's chosen save name (+24..+88)
+  // and timestamp (+16..+24)!
+  if (game_save && net::Active() && !net::IsHost()) {
+    std::vector<uint8_t> host_block;
+    std::array<int8_t, 4> host_outfits{};
+    bool host_cheated = false;
+    if (net::session_sync::GetHostSaveForClient(host_block, host_outfits, host_cheated) &&
+        host_block.size() == 20174 && out.size() >= 4 + 20174) {
+      uint8_t client_date_and_name[72] = {};
+      std::memcpy(client_date_and_name, out.data() + 16, 72);  // block +12..+84 (date + 32-char UTF-16 name)
+      std::memcpy(out.data() + 4, host_block.data(), 20174);
+      // Keep the client's typed/selected slot name if non-empty, plus fresh date.
+      bool has_client_name = false;
+      for (size_t i = 8; i < 72; ++i) has_client_name |= (client_date_and_name[i] != 0);
+      std::memcpy(out.data() + 16, client_date_and_name, 8);
+      if (has_client_name) {
+        std::memcpy(out.data() + 24, client_date_and_name + 8, 64);
+      }
+      save_outfits = host_outfits;
+      cheated = cheated || host_cheated;
+      REXLOG_INFO("PC save drive: saved Host's campaign progress to local file {}",
+                  f.path.filename().string());
+    }
+  }
+
   const std::vector<uint8_t> trailer =
-      game_save ? save_files::MakeTrailer(outfits::CurrentPickBytes(),
+      game_save ? save_files::MakeTrailer(save_outfits,
                                           cheated ? save_files::kTrailerMadeWithCheats : 0)
                 : f.trailer;
   out.insert(out.end(), trailer.begin(), trailer.end());

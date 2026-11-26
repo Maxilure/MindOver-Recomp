@@ -142,6 +142,10 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // Is the device with this key ("pad:<guid>[:n]", "debug-pad-N",
   // "keyboard") connected now? Any thread.
   bool IsConnected(const std::string& key) const;
+  // Tells the game when the set of players with a device changed (a "sign-in
+  // changed" notification; also called on online host/join/leave so device
+  // routing immediately switches between 1-player online and 4-player local).
+  void AnnounceIfChanged();
 
  private:
   struct Known {
@@ -155,9 +159,6 @@ class PlayerAssignment final : public rex::input::DeviceAssignment {
   // Bit N = a real device (keyboard or pad) plays as player N (mutex held).
   uint32_t PresentMask() const;
   void UpdateDevices(const std::vector<rex::input::DeviceInfo>& devices);
-  // Tells the game when the set of players with a device changed (a
-  // "sign-in changed" notification). Without the lock held.
-  void AnnounceIfChanged();
 
   const rex::input::DeviceId keyboard_id_;
   mutable std::mutex mutex_;

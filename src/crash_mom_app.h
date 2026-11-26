@@ -97,6 +97,7 @@
 #include "saves/save_screen_waits.h"
 #include "native/native_window.h"
 #include "native/widescreen.h"
+#include "net/state_sync.h"
 #include "decomp/matrices.h"
 #include "players/lost_controller.h"
 #include "players/more_players.h"
@@ -375,6 +376,14 @@ class CrashMomApp : public rex::ReXApp {
     // Room for four players in the game's co-op tables (players/more_players.h):
     // the tables move before any game code runs.
     more_players::Install();
+    // Online state-sync co-op (net/state_sync.h): starts hosting or joining
+    // if --online_host or --online_join was passed; off by default.
+    net::Install();
+    if (window() && net::Active()) {
+      const std::string base_title(window()->GetTitle());
+      const std::string suffix = net::IsHost() ? " [P1 - HOST]" : " [P2 - CLIENT]";
+      app_context().CallInUIThread([w = window(), title = base_title + suffix] { w->SetTitle(title); });
+    }
     // Debug fake controller, only with --debug_input_script and/or
     // --debug_input_fifo (see debug_input_script.h). Created here so its
     // timeline starts at launch. ReXApp's own code casts input_system() the

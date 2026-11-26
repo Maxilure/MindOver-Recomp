@@ -4,6 +4,8 @@
 #include "spawn.h"
 
 #include "../guest_memory.h"
+#include "../net/state_sync.h"
+#include "../net/world_sync.h"
 
 #include <algorithm>
 #include <array>
@@ -569,7 +571,12 @@ void Request(const std::string& template_name, int player, int count, bool knock
   if (template_name.empty() || player < 0 || player > 3) return;
   // A spawned titan to jack counts as progress: achievements off (not for the
   // test course's own objects).
-  if (as_cheat) cheats::NoteProgressCheat();
+  if (as_cheat) {
+    cheats::NoteProgressCheat();
+    if (net::Active()) {
+      net::world_sync::BroadcastCheatSpawn(template_name, player, count, knocked_out);
+    }
+  }
   std::lock_guard<std::mutex> lock(g_mutex);
   Pending request{template_name, player, std::clamp(count, 1, kMaxCount), knocked_out};
   if (at) {

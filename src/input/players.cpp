@@ -11,6 +11,7 @@
 #include <rex/runtime.h>
 
 #include "../players/who_plays.h"
+#include "../net/state_sync.h"
 
 using rex::input::DeviceId;
 using rex::input::DeviceInfo;
@@ -98,6 +99,11 @@ uint32_t PlayerAssignment::PresentMask() const {
     if (!d.key.empty()) {
       const int player = PlayerOf(d);
       if (player >= 0) mask |= 1u << player;
+    }
+  }
+  if (net::Active()) {
+    for (uint32_t p = 0; p < 4; ++p) {
+      if (net::HasVirtualController(p)) mask |= 1u << p;
     }
   }
   return mask;
@@ -193,6 +199,10 @@ int PlayerAssignment::PlayerOf(const Known& d) const {
   auto it = choices_.find(d.key);
   int choice = it != choices_.end() ? it->second : kPlayerAuto;
   if (d.keyboard) {
+    // Online co-op: keyboard + mouse ALWAYS drives this PC's single local player
+    // (socket 0 -> forwarded to net::LocalSlot()), reverting automatically when
+    // leaving online without touching controls.toml.
+    if (net::Active()) return 0;
     // THE KEYBOARD AND MOUSE ARE ALWAYS PLAYER 1 (2026-11-08). Every
     // keyboard and mouse on the PC is this ONE device (SDL merges them), so a
     // choice of player 2-4 (an old controls.toml line, or the Controls
@@ -204,6 +214,13 @@ int PlayerAssignment::PlayerOf(const Known& d) const {
   }
   if (fake_pad && choice == kPlayerAuto) {
     return d.key.back() - '1';  // "debug-pad-3" = player 3
+  }
+  // Online state-sync co-op: ALL local controllers on this PC merge onto
+  // socket 0 (which state_sync routes to this PC's single online player),
+  // never spawning local players 2-4 on a single client and reverting cleanly
+  // to controls.toml's local assignments as soon as net::Active() turns off.
+  if (net::Active() && !fake_pad) {
+    return 0;
   }
   if (choice == kPlayerAuto) {
     // Keyboard: player 1. Controllers: the SDK's rule, Nth connected = player N.

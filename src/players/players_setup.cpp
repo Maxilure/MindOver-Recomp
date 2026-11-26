@@ -27,6 +27,7 @@
 #include "../options/options_menu.h"
 #include "../options/options_settings.h"
 #include "../ui/menu_pictures.h"
+#include "../net/state_sync.h"
 #include "lost_controller.h"
 #include "more_players.h"
 
@@ -51,8 +52,11 @@ uint32_t Read32(const uint8_t* base, uint32_t a) {
 
 bool InGame(const uint8_t* base, int p) { return Read32(base, kCoOpState + 4 * uint32_t(p)) != 0; }
 
-// The players a level makes room for (2-4).
-int Room() { return std::clamp(more_players::LocalPlayerCount(), 1, kPlayers); }
+// The players a level makes room for (2-4; strictly 1 local player per PC while online).
+int Room() {
+  if (net::Active()) return 1;
+  return std::clamp(more_players::LocalPlayerCount(), 1, kPlayers);
+}
 
 // Is a controller ("pad:..." or a fake "debug-pad-2".."4")? NOT the debug
 // tools' own input ("debug-pad-1", "Debug input script": the console /
@@ -235,6 +239,8 @@ void Closed() {
 }
 
 int PollJoins(PPCContext& ctx, uint8_t* base, uint16_t* buttons) {
+  // Online co-op: strictly 1 local player per client -- never join local P2-P4.
+  if (net::Active()) return -1;
   PlayerAssignment* a = PlayerAssignment::Get();
   if (!a) return -1;
   for (const PlayerAssignment::Device& d : a->Devices()) {
