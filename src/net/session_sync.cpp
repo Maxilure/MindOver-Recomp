@@ -45,13 +45,14 @@
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
+#include "../achievements/achievements.h"
 #include "../cheats/cheats.h"
 #include "../cheats/spawn.h"
 #include "../data/fight_tree.h"
 #include "../guest_memory.h"
 #include "../input/keyboard_mouse.h"
+#include "../language/texts.h"
 #include "../input/prompt_icons.h"
-#include "../overlay_banner.h"
 #include "../players/more_players.h"
 #include "../players/outfit_picker.h"
 #include "../players/outfits.h"
@@ -79,6 +80,8 @@ extern "C" REX_FUNC(__imp__sub_8229CB78);  // StorePlayersBeforeLevelChange()
 extern "C" REX_FUNC(__imp__sub_820B3430);  // CMasterCinematicAction: notify all players/titans
 extern "C" REX_FUNC(__imp__sub_821991B0);  // Collectable::SetState(collectable, actor, new_state)
 extern "C" REX_FUNC(__imp__sub_8225A7D0);  // CSaveGameManager::PackSaveBuffer(save_mgr)
+extern "C" REX_FUNC(__imp__sub_82293850);  // CActionBeginChangeLevel "ready?" (vt slot 1)
+extern "C" REX_FUNC(__imp__sub_82293D48);  // CActionChangeLevel "ready?" (vt slot 1)
 extern "C" REX_FUNC(__imp__sub_82270608);  // GetGameObject() -> 0x825B0008
 extern "C" REX_FUNC(sub_822705D0);         // SetCarriedActorName(game_obj, player, name_ptr)
 extern "C" REX_FUNC(__imp__sub_8235AA10);  // FillCurrentSaveDate(date_ptr)
@@ -236,6 +239,18 @@ struct State {
   bool prev_menu_open = false;
   bool fe_hooks_registered = false;
   Clock::time_point last_menu_block_banner{};
+  // A level exit waiting for open menus (HoldExitForOpenMenu): until when, and
+  // where the local player is held meanwhile.
+  Clock::time_point exit_waiting_until{};
+  bool exit_hold_valid = false;
+  uint32_t exit_hold_body = 0;
+  float exit_hold_pos[3] = {};
+  // Host: a guest's exit request that came while a menu was open (sent on later).
+  PendingTransition queued_request{};
+  uint8_t queued_initiator = 0;
+  // Guest: our last exit request to the host, resent until the host answers.
+  PendingTransition sent_request{};
+  Clock::time_point sent_request_at{};
 
   // Area, NPC interaction & cutscene sync.
   uint32_t transition_epoch = 0;
@@ -1044,15 +1059,80 @@ void EnsureFrontEndHooksRegistered() {
       });
 }
 
-bool BlockTransitionForOpenMenu(uint8_t* base) {
+// EXITS WAIT FOR OPEN MENUS (2026-11-27 rework). A level exit in this game is a
+// level objective: a trigger volume (CRequirementTriggerVolume) followed by
+// CActionBeginChangeLevel (vtable 0x8203F2E8) and CActionChangeLevel (0x8203F36C).
+// Every event of an objective is asked "ready?" (vtable slot 1) before it runs
+// (slot 2); the objective waits on an event that answers 0. Both level-change
+// events answer through sub_822938A8, which already waits while game +0x110 bit
+// 0x80 is set and while either player can't take the change. Begin's run
+// (sub_82293878) sets game +0x110 bit 0x40 (players held, fade starts);
+// ChangeLevel's run (sub_82293D70) loads the level and clears it.
+//
+// The FIRST online lock skipped ChangeLevel's RUN instead: Begin had already set
+// bit 0x40 and started the fade, the run never came back (events run once), so the
+// loading screen stayed up forever and the players stayed frozen after the menu
+// closed. It also skipped CActionRegisterCheckPoint's run (sub_822975A8): no
+// checkpoint. Now the lock answers the game's own "ready?" with "not yet" BEFORE
+// Begin, so nothing has started: no fade, no lock, no lost run. The exit fires by
+// itself once every menu is closed.
+bool HoldExitForOpenMenu(uint8_t* base) {
   if (!net::Active() || !more_players::InPlay() || g_ss.applying_transition) return false;
   if (!net::AnyPlayerInMenu(base)) return false;
   const auto now = Clock::now();
-  if (now - g_ss.last_menu_block_banner > std::chrono::seconds(2)) {
+  // One card per wait (a new wait = none in the last 300 ms): the bar queues
+  // every card it is given, so a card every few seconds would pile up.
+  const bool new_wait = now >= g_ss.exit_waiting_until;
+  g_ss.exit_waiting_until = now + std::chrono::milliseconds(300);
+  if (new_wait && now - g_ss.last_menu_block_banner > std::chrono::seconds(2)) {
     g_ss.last_menu_block_banner = now;
-    overlay_banner::Show("Area Exit Locked", "Waiting for a player to close their menu");
+    int who = -1;
+    for (int p = 0; p < kMaxPlayers && who < 0; ++p) {
+      if (net::IsPlayerInMenu(p, base)) who = p;
+    }
+    const std::u16string player(1, char16_t(u'1' + std::max(0, who)));
+    achievements::ShowNotice(tr(u"Exit on Hold"),
+                             trf(u"Waiting for Player {0} to close their menu.", {player}));
+    REXLOG_INFO("Online: level exit waits: player {} has a menu open", who + 1);
   }
   return true;
+}
+
+// While an exit waits, the local player (if not in a menu) is held where the wait
+// began: no walking out past the exit, no other trigger on the way. The hold ends
+// the moment the menus close; the objective then runs its Begin and the level
+// changes the game's way.
+// Guest: an exit request went to the host (resent by TickFrame until answered).
+void NoteExitRequestSent(int8_t level, int8_t entry) {
+  std::lock_guard lock(g_ss.mutex);
+  g_ss.sent_request = {true, level, entry, 0};
+  g_ss.sent_request_at = Clock::now();
+}
+
+void HoldPlayerAtWaitingExit(uint8_t* base, const Clock::time_point& now) {
+  const int slot = net::LocalSlot();
+  const bool waiting = now < g_ss.exit_waiting_until && slot >= 0 && slot < kMaxPlayers &&
+                       !IsLocalMenuOpen(base);
+  if (!waiting) {
+    g_ss.exit_hold_valid = false;
+    return;
+  }
+  const uint32_t titan = more_players::TitanOfPlayer(slot);
+  const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(slot);
+  uint32_t phys = body ? ReadU32(base, body + 308) : 0;
+  if (!phys || ReadU32(base, phys) != 0x82032FC4u || ReadU32(base, phys + 88) != body) {
+    phys = net::LookupCachedPhysics(base, body);
+  }
+  if (!phys || !guest_memory::Readable(phys + 104, 48)) return;
+  if (!g_ss.exit_hold_valid || g_ss.exit_hold_body != body) {
+    g_ss.exit_hold_valid = true;
+    g_ss.exit_hold_body = body;
+    for (int i = 0; i < 3; ++i) g_ss.exit_hold_pos[i] = ReadF32(base, phys + 140 + 4 * i);
+  }
+  WriteF32(base, phys + 140, g_ss.exit_hold_pos[0]);  // x, z: held; y: the game's (ground)
+  WriteF32(base, phys + 148, g_ss.exit_hold_pos[2]);
+  WriteF32(base, phys + 104, 0.0f);
+  WriteF32(base, phys + 112, 0.0f);
 }
 
 void TickOutfitsAndRemoteInteracts(PPCContext& ctx, uint8_t* base, const Clock::time_point& now) {
@@ -1168,6 +1248,10 @@ void Reset() {
   g_ss.transition_epoch = 0;
   g_ss.pending_transition = {};
   g_ss.applying_transition = false;
+  g_ss.exit_waiting_until = {};
+  g_ss.exit_hold_valid = false;
+  g_ss.queued_request = {};
+  g_ss.sent_request = {};
   g_ss.was_loading = false;
   g_ss.grace_until_ns = 0;
   g_ss.active_interact_player = -1;
@@ -1197,6 +1281,18 @@ void Reset() {
   g_ss.rx_save_staging.clear();
   g_ss.client_ready_save.clear();
   g_ss.client_has_host_save = false;
+}
+
+// The level change of CActionChangeLevel's run (sub_82293D70), done by us: the
+// respawn place (game +244/+248), the players stored (sub_8229CB78), the change
+// (sub_8227B640), then game +0x110 bit 0x40 cleared (set by Begin = players held).
+void ChangeLevelLikeTheGame(PPCContext& ctx, uint8_t* base, uint32_t uber, int8_t level,
+                            int8_t entry) {
+  WriteU32(base, kGameObject + 244, uint32_t(int32_t(level)));
+  WriteU32(base, kGameObject + 248, uint32_t(int32_t(entry)));
+  CallGame(__imp__sub_8229CB78, ctx, base);
+  CallGame(__imp__sub_8227B640, ctx, base, uber, uint32_t(int32_t(level)), uint32_t(int32_t(entry)));
+  *GuestPtr(base, kGameObject + 0x110) &= uint8_t(~0x40u);
 }
 
 void TickFrame(PPCContext& ctx, uint8_t* base) {
@@ -1302,15 +1398,54 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
                   int(trans.entry));
       ExtendGrace(4.0);
       g_ss.applying_transition = true;
-      WriteU32(base, kGameObject + 244, uint32_t(int32_t(trans.level)));
-      WriteU32(base, kGameObject + 248, uint32_t(int32_t(trans.entry)));
-      CallGame(__imp__sub_8229CB78, ctx, base);
-      CallGame(__imp__sub_8227B640, ctx, base, uber, uint32_t(int32_t(trans.level)),
-               uint32_t(int32_t(trans.entry)));
+      ChangeLevelLikeTheGame(ctx, base, uber, trans.level, trans.entry);
       g_ss.applying_transition = false;
       world_sync::Reset();
       net::enemy_input::Reset();
       return;
+    }
+  }
+
+  // 2b. Exits waiting for open menus: hold the local player there; the host sends
+  //     on a guest's request that came while a menu was open; a guest resends its
+  //     request every 3 s until the host answers (a reliable message can still
+  //     arrive while the host is between states).
+  HoldPlayerAtWaitingExit(base, now);
+  if (!loading && !net::AnyPlayerInMenu(base)) {
+    std::lock_guard lock(g_ss.mutex);
+    if (net::IsHost() && g_ss.queued_request.pending) {
+      const PendingTransition q = g_ss.queued_request;
+      g_ss.queued_request.pending = false;
+      const uint32_t epoch = ++g_ss.transition_epoch;
+      g_ss.pending_transition = {true, q.level, q.entry, epoch};
+      uint8_t out[8] = {kMsgAreaTransition, uint8_t(q.level), uint8_t(q.entry),
+                        g_ss.queued_initiator};
+      PutLE32(out + 4, epoch);
+      BroadcastFromHost(out, sizeof(out), /*reliable=*/true);
+      REXLOG_INFO("Online: sent on P{}'s held exit -> level {} entry {}",
+                  int(g_ss.queued_initiator) + 1, int(q.level), int(q.entry));
+    }
+    if (!net::IsHost() && g_ss.sent_request.pending && net::LocalSlot() < 0) {
+      // The host left after our ChangeLevel asked it (the run already returned,
+      // game +0x110 bit 0x40 still set = players held): change level here, the
+      // way ChangeLevel's run does, so nobody is left frozen.
+      const PendingTransition q = g_ss.sent_request;
+      g_ss.sent_request.pending = false;
+      REXLOG_WARN("Online: host gone with our exit request out: changing level here ({} / {})",
+                  int(q.level), int(q.entry));
+      g_ss.applying_transition = true;
+      ChangeLevelLikeTheGame(ctx, base, uber, q.level, q.entry);
+      g_ss.applying_transition = false;
+      return;
+    }
+    if (!net::IsHost() && g_ss.sent_request.pending &&
+        now - g_ss.sent_request_at > std::chrono::seconds(3)) {
+      g_ss.sent_request_at = now;
+      uint8_t pkt[8] = {kMsgAreaTransition, uint8_t(g_ss.sent_request.level),
+                        uint8_t(g_ss.sent_request.entry), uint8_t(std::max(0, net::LocalSlot()))};
+      SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
+      REXLOG_INFO("Online: exit request resent (level {} entry {})", int(g_ss.sent_request.level),
+                  int(g_ss.sent_request.entry));
     }
   }
 
@@ -1348,9 +1483,16 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
       const uint8_t initiator = data[3];
       uint32_t epoch = GetLE32(data + 4);
       if (is_host) {
-        if (net::AnyPlayerInMenu(nullptr)) break;
-        // Client walked into a door/area trigger: Host adopts & broadcasts to all!
         std::lock_guard lock(g_ss.mutex);
+        if (net::AnyPlayerInMenu(nullptr)) {
+          // A menu opened in between (the guest's own exit waited while it saw
+          // one): kept and sent on once the menus close (TickFrame), never
+          // dropped: the guest's ChangeLevel has already run and waits for it.
+          g_ss.queued_request = {true, level, entry, 0};
+          g_ss.queued_initiator = initiator;
+          break;
+        }
+        // Client walked into a door/area trigger: Host adopts & broadcasts to all!
         epoch = ++g_ss.transition_epoch;
         g_ss.pending_transition = {true, level, entry, epoch};
         uint8_t out[8] = {kMsgAreaTransition, uint8_t(level), uint8_t(entry), initiator};
@@ -1358,6 +1500,7 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
         BroadcastFromHost(out, sizeof(out), /*reliable=*/true);
       } else {
         std::lock_guard lock(g_ss.mutex);
+        g_ss.sent_request.pending = false;  // the host answered
         if (epoch > g_ss.transition_epoch) {
           g_ss.transition_epoch = epoch;
           g_ss.pending_transition = {true, level, entry, epoch};
@@ -1810,51 +1953,67 @@ extern "C" REX_FUNC(sub_8225DE68) {
 }
 
 // 3. Door / Portal / Hub Area Transitions (sub_82293D70, sub_822975A8, sub_8227B640):
-//    Sync moving to new areas across all players, and block area transitions
-//    while ANY connected player has an in-game menu open!
-extern "C" REX_FUNC(sub_82293D70) {
-  if (net::session_sync::BlockTransitionForOpenMenu(base)) {
+//    Sync moving to new areas across all players. An open menu holds exits at the
+//    level-change events' "ready?" checks (below), never in these runs: a run that
+//    is skipped never comes back (see HoldExitForOpenMenu).
+//
+//    CActionBeginChangeLevel "ready?" (vtable 0x8203F2E8 slot 1): not yet while a
+//    menu is open anywhere.
+extern "C" REX_FUNC(sub_82293850) {
+  if (net::session_sync::HoldExitForOpenMenu(base)) {
+    ctx.r3.u64 = 0;
     return;
   }
+  __imp__sub_82293850(ctx, base);
+}
+
+//    CActionChangeLevel "ready?" (0x8203F36C slot 1): an exit with no Begin event
+//    waits the same way; after a Begin (game +0x110 bit 0x40 set: fade under way,
+//    players held) it goes on, so a menu opened in that moment never strands it.
+extern "C" REX_FUNC(sub_82293D48) {
+  const bool begun = (*GuestPtr(base, net::session_sync::kGameObject + 0x110) & 0x40) != 0;
+  if (!begun && net::session_sync::HoldExitForOpenMenu(base)) {
+    ctx.r3.u64 = 0;
+    return;
+  }
+  __imp__sub_82293D48(ctx, base);
+}
+
+extern "C" REX_FUNC(sub_82293D70) {
   const uint32_t action = ctx.r3.u32;
   if (net::Active() && more_players::InPlay() && !net::session_sync::g_ss.applying_transition &&
       action && guest_memory::Readable(action + 8, 2)) {
     const int8_t level = int8_t(*GuestPtr(base, action + 8));
     const int8_t entry = int8_t(*GuestPtr(base, action + 9));
     net::session_sync::ExtendGrace(4.0);
-    if (!net::IsHost()) {
+    if (!net::IsHost() && net::LocalSlot() >= 0) {  // (no host any more: change here)
       // Client walked into door: ask Host to transition everyone together!
       uint8_t pkt[8] = {net::kMsgAreaTransition, uint8_t(level), uint8_t(entry),
                         uint8_t(std::max(0, net::LocalSlot()))};
       net::SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
+      net::session_sync::NoteExitRequestSent(level, entry);
       return;
     }
   }
   __imp__sub_82293D70(ctx, base);
 }
 
+// CActionRegisterCheckPoint run (vtable 0x8203FC94 slot 2): writes the respawn
+// place (game +244 level / +248 entry) and stores the players. It used to send
+// that place to the host as an AREA CHANGE from a guest, so every checkpoint a
+// guest's level registered (one fires right after most level loads) made the
+// host load the level AGAIN at the checkpoint's entry: two loading screens in a
+// row ("level 1 entry 1" then "level 1 entry 25", seen 2026-11-27). A checkpoint
+// is not a level change: each PC registers its own (the same objective runs on
+// every PC); only the cutscene/void grace is kept.
 extern "C" REX_FUNC(sub_822975A8) {
-  if (net::session_sync::BlockTransitionForOpenMenu(base)) {
-    ctx.r3.u64 = 0;
-    return;
-  }
   __imp__sub_822975A8(ctx, base);
   if (net::Active() && more_players::InPlay() && !net::session_sync::g_ss.applying_transition) {
-    const int8_t level = int8_t(net::session_sync::ReadU32(base, net::session_sync::kGameObject + 244));
-    const int8_t entry = int8_t(net::session_sync::ReadU32(base, net::session_sync::kGameObject + 248));
     net::session_sync::ExtendGrace(4.0);
-    if (!net::IsHost()) {
-      uint8_t pkt[8] = {net::kMsgAreaTransition, uint8_t(level), uint8_t(entry),
-                        uint8_t(std::max(0, net::LocalSlot()))};
-      net::SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
-    }
   }
 }
 
 extern "C" REX_FUNC(sub_8227B640) {
-  if (net::session_sync::BlockTransitionForOpenMenu(base)) {
-    return;
-  }
   if (net::Active() && more_players::InPlay() && !net::session_sync::g_ss.applying_transition) {
     const int8_t level = int8_t(ctx.r4.u32);
     const int8_t entry = int8_t(ctx.r5.u32);
@@ -1870,14 +2029,68 @@ extern "C" REX_FUNC(sub_8227B640) {
       net::BroadcastFromHost(pkt, sizeof(pkt), /*reliable=*/true);
       net::world_sync::Reset();
       net::enemy_input::Reset();
-    } else {
+    } else if (net::LocalSlot() >= 0) {  // (no host any more: change here)
       uint8_t pkt[8] = {net::kMsgAreaTransition, uint8_t(level), uint8_t(entry),
                         uint8_t(std::max(0, net::LocalSlot()))};
       net::SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
+      net::session_sync::NoteExitRequestSent(level, entry);
       return;  // Wait for Host's kMsgAreaTransition so everyone enters together!
     }
   }
   __imp__sub_8227B640(ctx, base);
+}
+
+// 3a. CCameraManager update (vtable 0x820383C4 slot 10, sub_8223A280): MENU MODELS.
+//     The chest's outfit preview (also the level-up screen's model and the tiki
+//     face's enemy) stands in front of a camera the screen sets up. The original
+//     PAUSES the game there (uber +168 bit 0x20), and this update, which runs
+//     every camera actor in its list (+0x234..+0x244, sub_820B0A70), does nothing
+//     while paused, so the screen's camera stays put. Online the world never
+//     pauses (TickFrame clears the bit), so the gameplay camera took over again
+//     the next frame: the chest showed no Crash or Coco. Found by showing the
+//     pause bit to one reader at a time (CCameraManager's update was the one; the
+//     render manager, zone manager and HUD readers were not). While THIS PC's
+//     player has such a screen open, the update is skipped the way a pause skips
+//     it; the game itself keeps running, and the other PCs are untouched.
+extern "C" REX_FUNC(__imp__sub_8223A280);
+extern "C" REX_FUNC(sub_8223A280) {
+  if (net::Active() && more_players::InPlay()) {
+    const int32_t fe_state = fight_tree::CurrentFrontEnd().state;
+    if (outfit_picker::IsOpen() || fe_state == 847 /* chest */ ||
+        fe_state == 839 /* level up */ || fe_state == 860 /* tiki face */) {
+      return;  // (the paused original: no camera update)
+    }
+  }
+  __imp__sub_8223A280(ctx, base);
+}
+
+// 3b. CRequirementTriggerVolume "ready?" (vtable 0x82041300 slot 1, sub_822A6188):
+//     with --debug_online_trace, each volume's change to "someone is inside" is
+//     logged with this PC's player's position at that moment, so a test can find
+//     a level exit (or any story trigger) without walking around blind. Answer
+//     untouched. (The volume's own place isn't at its +44 matrix: read as 0.)
+extern "C" REX_FUNC(__imp__sub_822A6188);
+extern "C" REX_FUNC(sub_822A6188) {
+  const uint32_t req = ctx.r3.u32;
+  __imp__sub_822A6188(ctx, base);
+  if (!net::DebugTraceOn() || !req) return;
+  static std::unordered_map<uint32_t, bool> inside;  // requirement -> last answer
+  const bool now_in = (ctx.r3.u32 & 0xFF) != 0;
+  bool& was = inside[req];
+  if (now_in && !was) {
+    const uint32_t vol = net::session_sync::ReadU32(base, req + 8);
+    const int32_t who = int32_t(net::session_sync::ReadU32(base, req + 0x14));
+    const int slot = std::max(0, net::LocalSlot());
+    const uint32_t body = more_players::CharacterOfPlayer(slot);
+    const uint32_t mat = body ? net::session_sync::ReadU32(base, body + 44) : 0;
+    float at[3] = {};
+    if (mat && guest_memory::Readable(mat + 48, 12)) {
+      for (int i = 0; i < 3; ++i) at[i] = net::session_sync::ReadF32(base, mat + 48 + 4 * i);
+    }
+    REXLOG_INFO("OnlineTrace: trigger volume {:08X} (requirement {:08X}, who {}) entered; P{} "
+                "at ({:.2f}, {:.2f}, {:.2f})", vol, req, who, slot + 1, at[0], at[1], at[2]);
+  }
+  was = now_in;
 }
 
 // 4. StorePlayersBeforeLevelChange (sub_8229CB78):

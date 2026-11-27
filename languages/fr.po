@@ -126,27 +126,27 @@ msgstr ""
 msgid "This is how the subtitles look."
 msgstr "Voici à quoi ressemblent les sous-titres."
 
-#: src/saves/save_library.cpp:764
+#: src/saves/save_library.cpp:766
 #, fuzzy
 msgid "Create New Save"
 msgstr "Nouvelle sauvegarde"
 
-#: src/saves/save_library.cpp:848
+#: src/saves/save_library.cpp:850
 #, fuzzy
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src/saves/save_library.cpp:850
+#: src/saves/save_library.cpp:852
 #, fuzzy
 msgid "Rename"
 msgstr "Renommer"
 
-#: src/saves/save_library.cpp:1090
+#: src/saves/save_library.cpp:1092
 #, fuzzy
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr "Supprimer ce fichier de sauvegarde ? Il sera déplacé dans le dossier Deleted saves."
 
-#: src/saves/save_library.cpp:1913
+#: src/saves/save_library.cpp:1932
 #, fuzzy
 msgid "Backspace"
 msgstr "Effacer"
@@ -169,27 +169,31 @@ msgstr "Chargement..."
 msgid "Saving..."
 msgstr "Sauvegarde..."
 
-#: src/cheats/cheats.cpp:248
+#: src/net/session_sync.cpp:1095
+msgid "Exit on Hold"
+msgstr ""
+
+#: src/cheats/cheats.cpp:252
 #, fuzzy
 msgid "Cheats Enabled"
 msgstr "Triches activées"
 
-#: src/cheats/cheats.cpp:248
+#: src/cheats/cheats.cpp:252
 #, fuzzy
 msgid "No achievements until a save is loaded"
 msgstr "Pas de succès avant le chargement d'une sauvegarde"
 
-#: src/cheats/cheats.cpp:821
+#: src/cheats/cheats.cpp:854
 #, fuzzy
 msgid "Save Made With Cheats"
 msgstr "Sauvegarde faite avec des triches"
 
-#: src/cheats/cheats.cpp:821
+#: src/cheats/cheats.cpp:854
 #, fuzzy
 msgid "No achievements while playing this save"
 msgstr "Pas de succès en jouant cette sauvegarde"
 
-#: src/players/lost_controller.cpp:280
+#: src/players/lost_controller.cpp:282
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -204,7 +208,7 @@ msgstr ""
 "une touche pour jouer au clavier.\n"
 "Ou {0} pour faire abandonner le joueur 1."
 
-#: src/players/lost_controller.cpp:287
+#: src/players/lost_controller.cpp:289
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -218,7 +222,7 @@ msgstr ""
 "une touche pour jouer au clavier."
 
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:295
+#: src/players/lost_controller.cpp:297
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -228,7 +232,7 @@ msgstr ""
 "Rebranche ta manette pour continuer."
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:301
+#: src/players/lost_controller.cpp:303
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -237,7 +241,7 @@ msgstr ""
 "La manette du joueur {0} est débranchée.\n"
 "Rebranche-la, ou joueur {1} : appuie sur {2} pour prendre le relais."
 
-#: src/players/lost_controller.cpp:305
+#: src/players/lost_controller.cpp:307
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -246,7 +250,7 @@ msgstr ""
 "Manette rebranchée.\n"
 "Appuie sur un bouton pour reprendre."
 
-#: src/players/lost_controller.cpp:306
+#: src/players/lost_controller.cpp:308
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -256,7 +260,7 @@ msgstr ""
 "Rebranche ta manette pour continuer."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:310
+#: src/players/lost_controller.cpp:312
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -266,7 +270,7 @@ msgstr ""
 "Joueur {0} : appuie sur un bouton pour reprendre."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:317
+#: src/players/lost_controller.cpp:319
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -275,174 +279,174 @@ msgstr ""
 "La manette du joueur {0} est débranchée.\n"
 "Rebranche-la, ou appuie sur {1} pour faire abandonner le joueur {0}."
 
-#: src/players/outfit_picker.cpp:514
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Normal"
 msgstr "Normal"
 
-#: src/players/outfit_picker.cpp:514
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Greeny"
 msgstr "En vert"
 
-#: src/players/outfit_picker.cpp:514
+#: src/players/outfit_picker.cpp:515
 #, fuzzy
 msgid "Bluey"
 msgstr "En bleu"
 
-#: src/players/outfit_picker.cpp:515
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Reddy"
 msgstr "En rouge"
 
-#: src/players/outfit_picker.cpp:515
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Snipe"
 msgstr "Râpeur"
 
-#: src/players/outfit_picker.cpp:515
+#: src/players/outfit_picker.cpp:516
 #, fuzzy
 msgid "Ratcicle"
 msgstr "Frigirat"
 
-#: src/players/outfit_picker.cpp:516
+#: src/players/outfit_picker.cpp:517
 #, fuzzy
 msgid "Magmadon"
 msgstr "Magmadon"
 
-#: src/players/outfit_picker.cpp:516
+#: src/players/outfit_picker.cpp:517
 #, fuzzy
 msgid "Skeleton"
 msgstr "Squelette"
 
-#: src/players/outfit_picker.cpp:516
+#: src/players/outfit_picker.cpp:517
 #, fuzzy
 msgid "Spike"
 msgstr "Spike"
 
 #. the heroes' names, as the game writes them in this language.
-#: src/players/outfit_picker.cpp:517 src/players/outfit_picker.cpp:531
+#: src/players/outfit_picker.cpp:518 src/players/outfit_picker.cpp:532
 #, fuzzy
 msgid "Coco"
 msgstr "Coco"
 
-#: src/players/outfit_picker.cpp:517
+#: src/players/outfit_picker.cpp:518
 #, fuzzy
 msgid "Old School"
 msgstr "Vieille école"
 
-#: src/players/outfit_picker.cpp:528
+#: src/players/outfit_picker.cpp:529
 #, fuzzy
 msgid "Orange"
 msgstr "Orange"
 
 #. the heroes' names, as the game writes them in this language.
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfit_picker.cpp:531 src/players/outfit_picker.cpp:553 src/players/outfits.cpp:857
+#: src/players/outfit_picker.cpp:532 src/players/outfit_picker.cpp:554 src/players/outfits.cpp:859
 #, fuzzy
 msgid "Crash"
 msgstr "Crash"
 
-#: src/players/outfit_picker.cpp:1100 src/options/options_menu.cpp:1390 src/options/options_menu.cpp:1404 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
+#: src/players/outfit_picker.cpp:1106 src/options/options_menu.cpp:1390 src/options/options_menu.cpp:1404 launcher/installer.cpp:806 launcher/installer.cpp:913 launcher/installer.cpp:977
 #, fuzzy
 msgid "Back"
 msgstr "Retour"
 
-#: src/players/outfit_picker.cpp:1101
+#: src/players/outfit_picker.cpp:1107
 #, fuzzy
 msgid "Wear"
 msgstr "Porter"
 
 #. the chest: this player has picked an outfit.
-#: src/players/outfit_picker.cpp:1368 src/players/outfit_picker.cpp:1476
+#: src/players/outfit_picker.cpp:1374 src/players/outfit_picker.cpp:1482
 #, fuzzy
 msgid "Ready!"
 msgstr "Prêt !"
 
 #. {0} = the B button's picture (change the pick again).
-#: src/players/outfit_picker.cpp:1370 src/players/outfit_picker.cpp:1478
+#: src/players/outfit_picker.cpp:1376 src/players/outfit_picker.cpp:1484
 #, fuzzy
 msgid "{0} Change"
 msgstr "{0} Changer"
 
-#: src/players/outfit_picker.cpp:1409 src/players/outfit_picker.cpp:1504
+#: src/players/outfit_picker.cpp:1415 src/players/outfit_picker.cpp:1510
 #, fuzzy
 msgid "Loading"
 msgstr "Chargement"
 
 #. {0} = the A button's picture (wear this outfit).
-#: src/players/outfit_picker.cpp:1417 src/players/outfit_picker.cpp:1507
+#: src/players/outfit_picker.cpp:1423 src/players/outfit_picker.cpp:1513
 #, fuzzy
 msgid "{0} Wear"
 msgstr "{0} Porter"
 
-#: src/players/outfits.cpp:221
+#: src/players/outfits.cpp:223
 #, fuzzy
 msgid "Ruby"
 msgstr "Rubis"
 
-#: src/players/outfits.cpp:221
+#: src/players/outfits.cpp:223
 #, fuzzy
 msgid "Exactly the same in every way but red"
 msgstr "Exactement pareil, mais en rouge"
 
-#: src/players/outfits.cpp:223
+#: src/players/outfits.cpp:225
 #, fuzzy
 msgid "Topaz"
 msgstr "Topaze"
 
-#: src/players/outfits.cpp:223
+#: src/players/outfits.cpp:225
 #, fuzzy
 msgid "Exactly the same in every way but yellow"
 msgstr "Exactement pareil, mais en jaune"
 
-#: src/players/outfits.cpp:225
+#: src/players/outfits.cpp:227
 #, fuzzy
 msgid "Jade"
 msgstr "Jade"
 
-#: src/players/outfits.cpp:225
+#: src/players/outfits.cpp:227
 #, fuzzy
 msgid "Exactly the same in every way but green"
 msgstr "Exactement pareil, mais en vert"
 
-#: src/players/outfits.cpp:227
+#: src/players/outfits.cpp:229
 #, fuzzy
 msgid "Sapphire"
 msgstr "Saphir"
 
-#: src/players/outfits.cpp:227
+#: src/players/outfits.cpp:229
 #, fuzzy
 msgid "Exactly the same in every way but blue"
 msgstr "Exactement pareil, mais en bleu"
 
-#: src/players/outfits.cpp:229
+#: src/players/outfits.cpp:231
 #, fuzzy
 msgid "Amethyst"
 msgstr "Améthyste"
 
-#: src/players/outfits.cpp:229
+#: src/players/outfits.cpp:231
 #, fuzzy
 msgid "Exactly the same in every way but purple"
 msgstr "Exactement pareil, mais en violet"
 
-#: src/players/outfits.cpp:231
+#: src/players/outfits.cpp:233
 #, fuzzy
 msgid "Rose Quartz"
 msgstr "Quartz rose"
 
-#: src/players/outfits.cpp:231
+#: src/players/outfits.cpp:233
 #, fuzzy
 msgid "Exactly the same in every way but pink"
 msgstr "Exactement pareil, mais en rose"
 
-#: src/players/outfits.cpp:241
+#: src/players/outfits.cpp:243
 #, fuzzy
 msgid "Carbon"
 msgstr "Carbone"
 
 #. an outfit's name: {0} = its fur colour ("Ruby"), {1} = the look ("Crash", "Ratcicle"). Swap them if your language puts the colour after.
-#: src/players/outfits.cpp:857
+#: src/players/outfits.cpp:859
 #, fuzzy
 msgctxt "outfit name"
 msgid "{0} {1}"
