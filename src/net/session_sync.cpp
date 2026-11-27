@@ -206,6 +206,10 @@ struct PlayerTitanState {
   int32_t level = 0;
   Clock::time_point mismatch_since{};
   Clock::time_point last_spawn_attempt{};
+  // True once this player's own PC told us what they ride (kMsgTitanOwnership).
+  // Until then the titan repair leaves them alone: "nothing heard" is not
+  // "rides nothing".
+  bool known = false;
 };
 
 struct PendingRemoteInteract {
@@ -262,6 +266,7 @@ struct State {
   // Titan ownership, pocket sync & 1.25 s swap debounce.
   std::array<PlayerTitanState, kMaxPlayers> titans{};
   std::string local_last_ridden;
+  Clock::time_point local_titan_sent{};  // last kMsgTitanOwnership we sent
   std::string local_last_pocket;
   Clock::time_point next_pocket_allowed{};
   // An accepted pocket press keeps answering yes this long (same frame asks
@@ -770,7 +775,14 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     my_pocket = ReadCString(base, kGameObject + 44, 64);
   }
 
-  if (my_ridden != g_ss.local_last_ridden || my_pocket != g_ss.local_last_pocket) {
+  // SENT AGAIN EVERY SECOND, not only on a change (2026-11-27 playtest): a save
+  // that starts on a titan announced it ONCE, at the level start, before the
+  // other PC was even connected; that PC took "nothing heard" for "rides
+  // nothing", and its titan repair pulled player 1 off the Ratcicle there (the
+  // titan then dies, as in the original). Reliable and tiny (142 bytes / s).
+  const bool changed = my_ridden != g_ss.local_last_ridden || my_pocket != g_ss.local_last_pocket;
+  if (changed || now - g_ss.local_titan_sent > std::chrono::seconds(1)) {
+    g_ss.local_titan_sent = now;
     g_ss.local_last_ridden = my_ridden;
     g_ss.local_last_pocket = my_pocket;
     {
@@ -793,8 +805,10 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     } else {
       SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
     }
-    REXLOG_INFO("Online: P{} titan state -> ridden='{}' pocket='{}'", local + 1, my_ridden,
-                my_pocket);
+    if (changed) {
+      REXLOG_INFO("Online: P{} titan state -> ridden='{}' pocket='{}'", local + 1, my_ridden,
+                  my_pocket);
+    }
   }
 
   // Complete any pending spawned-titan mount from last frame.
@@ -824,6 +838,7 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     Clock::time_point last_attempt{};
     {
       std::lock_guard lock(g_ss.mutex);
+      if (!g_ss.titans[size_t(p)].known) continue;  // their PC hasn't said yet
       want_ridden = g_ss.titans[size_t(p)].ridden_template;
       mismatch_since = g_ss.titans[size_t(p)].mismatch_since;
       last_attempt = g_ss.titans[size_t(p)].last_spawn_attempt;
@@ -838,11 +853,10 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
         std::lock_guard lock(g_ss.mutex);
         g_ss.titans[size_t(p)].mismatch_since = {};
       }
-      // Restore OUR local pocket name at kGameObject + 44 in case a remote RB
-      // animation overwrote this PC's single global pocket slot!
-      if (ReadCString(base, kGameObject + 44, 64) != g_ss.local_last_pocket) {
-        WriteCString64(base, kGameObject + 44, g_ss.local_last_pocket);
-      }
+      // (Antigravity's version wrote OUR pocket name back into the pocket slot
+      // here after another player pocketed. The pocket is ONE for everyone, as
+      // in the original game (user, 2026-11-27): whoever pockets fills it, on
+      // every PC, through the game's own pocketing (kMsgPocket). Removed.)
       continue;
     }
 
@@ -1339,14 +1353,20 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
       for (size_t i = 0; i < 64 && data[66 + i] != 0; ++i) pocket.push_back(char(data[66 + i]));
       std::lock_guard lock(g_ss.mutex);
       auto& st = g_ss.titans[slot];
+      // The same state comes again every second: only a CHANGE restarts the
+      // repair's wait (else the repeats would keep it waiting forever).
+      const bool changed = !st.known || st.ridden_template != ridden || st.pocket_template != pocket;
+      st.known = true;
       st.ridden_template = std::move(ridden);
       st.pocket_template = std::move(pocket);
       st.hp = GetWireF32(data + 130);
       st.mojo = int32_t(GetLE32(data + 134));
       st.level = int32_t(GetLE32(data + 138));
-      st.mismatch_since = {};
-      REXLOG_INFO("Online: RX P{} titan ownership -> ridden='{}' pocket='{}'", slot + 1,
-                  st.ridden_template, st.pocket_template);
+      if (changed) {
+        st.mismatch_since = {};
+        REXLOG_INFO("Online: RX P{} titan ownership -> ridden='{}' pocket='{}'", slot + 1,
+                    st.ridden_template, st.pocket_template);
+      }
       break;
     }
 

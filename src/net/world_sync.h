@@ -74,6 +74,10 @@ void TickHostBroadcast(uint8_t* base);
 // Handle incoming kMsgWorldSnapshot (client) or kMsgDamageReq (host).
 void HandlePacket(const uint8_t* data, size_t size, bool is_host);
 
+// Host: true if `actor` is an enemy/titan in this PC's synced list (not a
+// player's, not a prop) -- an attacker whose hits on a remote player count.
+bool IsSyncedEnemy(uint32_t actor);
+
 // Append Phase 2 enemy/titan sync summary to the `online` debug console command.
 std::string DebugStatus();
 

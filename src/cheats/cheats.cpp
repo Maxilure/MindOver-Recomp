@@ -1086,7 +1086,6 @@ extern "C" REX_FUNC(sub_821349E0) {
   if (net::Active() && ctx.f1.f64 < 0.0 && g_player_damageables.count(ctx.r3.u32)) {
     for (const auto& [actor, dmg] : g_damageable_of) {
       if (dmg != ctx.r3.u32) continue;
-      if (net::session_sync::IsRemotePlayerActor(actor)) return;
       for (int p = 0; p < 4; ++p) {
         if ((actor == more_players::CharacterOfPlayer(p) ||
              actor == more_players::TitanOfPlayer(p)) &&
@@ -1094,7 +1093,27 @@ extern "C" REX_FUNC(sub_821349E0) {
           return;
         }
       }
+      if (net::session_sync::IsRemotePlayerActor(actor)) {
+        // Another PC's player: their PC decides their health. The hit still
+        // plays here (hurt animation; game_mods.cpp), with damage FOR SHOW
+        // only, never below 1 (no death here: it comes from their PC), and
+        // the shown health is set back to their PC's number next frame.
+        net::NoteRemotePlayerDamage(float(ctx.f1.f64));
+        const uint32_t hp = Read32(ctx.r3.u32 + kDmgHitpoints);
+        const float now_hp = Readable(hp, 4) ? ReadFloat(hp) : 0.0f;
+        const double room = double(now_hp) - 1.0;
+        if (!(room > 0.0)) return;
+        ctx.f1.f64 = std::max(ctx.f1.f64, -room);
+      }
+      break;
     }
+  }
+  // Online, host: an enemy hit by another PC's player's copy here. That PC
+  // sent the same hit (kMsgDamageReq), applied below by world_sync: this
+  // copy's damage would be the second one (double damage; playtest).
+  if (net::Active() && ctx.f1.f64 < 0.0 && !g_player_damageables.count(ctx.r3.u32) &&
+      net::HitByRemotePlayerOnEnemy()) {
+    return;
   }
   // Online Phase 2: on a client, hits on non-player enemies/titans are
   // forwarded as reliable kMsgDamageReq RPCs to the host instead of mutating

@@ -5,12 +5,14 @@
 #include "game_mods.h"
 #include "../net/session_sync.h"
 #include "../net/state_sync.h"
+#include "../net/world_sync.h"
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <mutex>
+#include <optional>
 
 #include <rex/cvar.h>
 #include <rex/logging.h>
@@ -307,17 +309,39 @@ extern "C" REX_FUNC(sub_82132FF8) {
   }
   const int type = int32_t(Read32(base, message + kMsgType));
   const int subtype = int32_t(Read32(base, message + kMsgSubtype));
-  // Online co-op immunity:
-  //   1. Any player currently inside an in-game menu (Outfit Chest, Pause,
-  //      Save Totem/List, Upgrade screen) is invulnerable & unstaggerable.
-  //   2. Remote player actors are owner-authoritative for their own health/deaths,
-  //      so local hazards or enemy hits on this PC never kill or stagger them.
+  // ONLINE HITS (reworked 2026-11-27; findings: the online notes).
+  //   * A player inside an in-game menu (Outfit Chest, Pause, Save Totem/List,
+  //     Upgrade screen) is invulnerable and unstaggerable, as before.
+  //   * A hit on ANOTHER PC's player (a puppet here) now PLAYS: hurt animation,
+  //     knockback, combo messages. Antigravity's version dropped the whole
+  //     message, so an attacker never saw their partner flinch (playtest). The
+  //     damage here is only for show (cheats.cpp's sub_821349E0 wrapper keeps
+  //     the puppet above 0); the owner's PC decides the real health, which
+  //     state_sync then shows here (kFlagHasHealth).
+  //   * On the HOST, a remote player's puppet hitting an enemy: that player's
+  //     own PC already sent the same hit as kMsgDamageReq, so the copy's damage
+  //     here is dropped (reaction kept) = no double damage.
+  //   * On the HOST, an enemy hitting a remote player's puppet: guests run no
+  //     enemy AI, so the hit would never reach that player at all; its damage
+  //     is sent to their PC (kMsgPlayerHit).
+  std::optional<net::OnlineHitScope> online_hit;
   if (net::Active() && type == kMsgDamage &&
       (subtype == kDamageHit || subtype == kDamageChange || subtype == kDamageBreakCombo)) {
     const int hurt_online = PlayerOf(ctx, base, victim);
-    if (hurt_online >= 0 &&
-        (net::IsPlayerInMenu(hurt_online, base) || net::session_sync::IsRemotePlayerActor(victim))) {
-      return;
+    if (hurt_online >= 0 && net::IsPlayerInMenu(hurt_online, base)) return;
+    const uint32_t record = Read32(base, message + kMsgData);
+    const uint32_t hit_rec = record && guest_memory::Readable(record + 4, 4) ? Read32(base, record + 4) : 0;
+    const bool rec_ok = hit_rec && guest_memory::Readable(hit_rec + kHitScorer, 4);
+    const uint32_t from_actor = rec_ok ? Read32(base, hit_rec + kHitFrom) : 0;
+    int by = PlayerOf(ctx, base, from_actor);
+    if (by < 0 && rec_ok) by = PlayerOf(ctx, base, Read32(base, hit_rec + kHitScorer));
+    const int local = net::LocalSlot();
+    const bool remote_hitter_on_enemy = net::IsHost() && hurt_online < 0 && by >= 0 && by != local;
+    const int remote_victim = hurt_online >= 0 && hurt_online != local ? hurt_online : -1;
+    const bool forward = net::IsHost() && remote_victim >= 0 && by < 0 &&
+                         net::world_sync::IsSyncedEnemy(from_actor);
+    if (remote_hitter_on_enemy || remote_victim >= 0) {
+      online_hit.emplace(remote_hitter_on_enemy, remote_victim, forward);
     }
   }
   if (friendly_fire && !keep_combo) {

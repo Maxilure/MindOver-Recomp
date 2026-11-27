@@ -87,6 +87,7 @@ enum MsgType : uint8_t {
   kMsgPing = 5,         // bidirectional (unreliable @ 1 Hz): [1..8] timestamp_us
   kMsgPong = 6,         // reply to Ping: [1..8] echoed timestamp_us
   kMsgSpin = 7,         // Owner -> H -> others (immediate unreliable): [1] slot
+  kMsgPlayerHit = 9,    // Host -> all (reliable): [1] slot [2..5] f32 damage = an enemy's hit on that player
   kMsgPocket = 8,       // Owner -> H -> others (reliable): [1] slot [2] event = one accepted titan pocket press
 };
 
@@ -157,6 +158,9 @@ struct RemoteSlot {
   // Titan pocket/swap presses the owner's game accepted, not yet used by the
   // puppet here (TakeRemotePocket). Counted, not a bool: two quick accepted
   // swaps (1.25 s apart) must both happen. Old ones expire (kPocketLifetime).
+  // ONLY for our own slot: enemy damage the host saw land on us (kMsgPlayerHit),
+  // applied on the game thread by ApplyRemoteHealth.
+  float incoming_hit = 0.0f;
   // [0] = riding event 37 (pocket / swap), [1] = on-foot event 14 (take out).
   std::array<int, 2> pending_pockets{};
   std::array<Clock::time_point, 2> pocket_at{};
@@ -505,6 +509,20 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       rs.pocket_at[e] = now;
       if (REXCVAR_GET(debug_online_trace)) {
         REXLOG_INFO("OnlineTrace: RX kMsgPocket for P{} (event {})", slot + 1, ev.data[2]);
+      }
+      break;
+    }
+
+    case kMsgPlayerHit: {
+      if (ev.size < 6) break;
+      const uint8_t slot = ev.data[1];
+      if (slot >= kMaxPlayers) break;
+      if (g_net.is_host) break;  // the host only sends these
+      const float dmg = GetF32(ev.data + 2);
+      if (int(slot) != g_net.local_slot || !std::isfinite(dmg) || dmg >= 0.0f) break;
+      g_net.slots[slot].incoming_hit += std::max(dmg, -1000.0f);
+      if (REXCVAR_GET(debug_online_trace)) {
+        REXLOG_INFO("OnlineTrace: RX kMsgPlayerHit for P{} ({:.1f})", slot + 1, dmg);
       }
       break;
     }
@@ -1332,9 +1350,16 @@ void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base) {
   };
   Want wants[kMaxPlayers];
   int count = 0;
+  float my_hit = 0.0f;
+  int my_slot = -1;
   {
     std::lock_guard lock(g_net.mutex);
     if (!g_net.active || !more_players::InPlay()) return;
+    if (g_net.local_slot >= 0 && g_net.local_slot < kMaxPlayers) {
+      my_slot = g_net.local_slot;
+      my_hit = g_net.slots[my_slot].incoming_hit;
+      g_net.slots[my_slot].incoming_hit = 0.0f;
+    }
     for (int p = 0; p < kMaxPlayers; ++p) {
       if (p == g_net.local_slot) continue;
       const RemoteSlot& rs = g_net.slots[p];
@@ -1352,10 +1377,62 @@ void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base) {
     }
   }
   if (session_sync::InTransitionOrCutsceneGrace()) return;
+  // An enemy's hit the host saw land on us: our own health, through the
+  // game's change routine (health bar, death); no hurt animation (the enemy
+  // swung on the host's screen only).
+  if (my_slot >= 0 && my_hit < 0.0f) {
+    float hp = 0.0f, max_hp = 0.0f;
+    if (cheats::PlayerHealth(my_slot, hp, max_hp)) {
+      cheats::SetPlayerHealthFromNetwork(ctx, base, my_slot, hp + my_hit);
+    }
+  }
   // Outside the lock: the game's routine runs our hooks (and maybe a death).
   for (int i = 0; i < count; ++i) {
     cheats::SetPlayerHealthFromNetwork(ctx, base, wants[i].player, wants[i].hitpoints);
   }
+}
+
+namespace {
+thread_local int t_hit_depth = 0;
+thread_local bool t_remote_hitter_on_enemy = false;
+thread_local int t_remote_victim = -1;
+thread_local bool t_forward = false;
+thread_local float t_victim_damage = 0.0f;
+}  // namespace
+
+OnlineHitScope::OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward) {
+  if (t_hit_depth++ > 0) return;  // a message inside a message: the outer one counts
+  t_remote_hitter_on_enemy = remote_hitter_on_enemy;
+  t_remote_victim = remote_victim;
+  t_forward = forward;
+  t_victim_damage = 0.0f;
+}
+
+OnlineHitScope::~OnlineHitScope() {
+  if (--t_hit_depth > 0) return;
+  const bool send = t_forward && t_remote_victim >= 0 && t_victim_damage < -1e-4f;
+  const int victim = t_remote_victim;
+  const float damage = t_victim_damage;
+  t_remote_hitter_on_enemy = false;
+  t_remote_victim = -1;
+  t_forward = false;
+  t_victim_damage = 0.0f;
+  if (!send) return;
+  std::lock_guard lock(g_net.mutex);
+  if (!g_net.active || !g_net.is_host || !g_net.transport || !g_net.transport->IsOpen()) return;
+  uint8_t msg[6] = {kMsgPlayerHit, uint8_t(victim)};
+  PutF32(msg + 2, damage);
+  g_net.transport->Broadcast(msg, sizeof(msg), /*reliable=*/true);
+  g_net.packets_sent++;
+  if (REXCVAR_GET(debug_online_trace)) {
+    REXLOG_INFO("OnlineTrace: TX kMsgPlayerHit for P{} ({:.1f}): an enemy hit them here", victim + 1, damage);
+  }
+}
+
+bool HitByRemotePlayerOnEnemy() { return t_hit_depth > 0 && t_remote_hitter_on_enemy; }
+
+void NoteRemotePlayerDamage(float delta) {
+  if (t_hit_depth > 0 && t_remote_victim >= 0 && delta < 0.0f) t_victim_damage += delta;
 }
 
 void SetLocalSpinHolding(int player, bool holding) {

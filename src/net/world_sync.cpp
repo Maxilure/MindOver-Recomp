@@ -372,6 +372,12 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
   }
 }
 
+bool IsSyncedEnemy(uint32_t actor) {
+  if (!actor) return false;
+  std::lock_guard lock(g_ws.mutex);
+  return g_ws.local_by_actor.count(actor) != 0;
+}
+
 bool InterceptHitpointsChange(uint8_t* /*base*/, uint32_t dmg, float delta) {
   if (g_applying_net_hp || !net::Active() || net::IsHost()) return false;
   if (!more_players::InPlay() || more_players::Loading()) return false;
@@ -633,6 +639,20 @@ void BroadcastCheatSpawn(const std::string& template_name, int player, int count
               player + 1);
 }
 
+// The `online` console command's enemy lines: every synced enemy/titan seen
+// in the last second here, with its id, position and health (tests: double
+// damage = the host's health drop vs the hits sent). Called with g_ws.mutex held.
+std::string EnemyList() {
+  std::string out;
+  const auto now = Clock::now();
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (now - e.last_seen > std::chrono::seconds(1)) continue;
+    out += fmt::format("    enemy {:08X} net_id={} hash={:08X} hp={:.1f} at ({:.1f}, {:.1f}, {:.1f})\n", actor,
+                       e.net_id, e.hash, e.hp, e.pos[0], e.pos[1], e.pos[2]);
+  }
+  return out;
+}
+
 std::string DebugStatus() {
   std::lock_guard lock(g_ws.mutex);
   size_t bound = 0;
@@ -644,7 +664,7 @@ std::string DebugStatus() {
       "dmg_tx={} dmg_applied={} | entity_phys={}\n",
       g_ws.local_by_actor.size(), g_ws.remote_by_id.size(), bound, g_ws.snapshots_sent,
       g_ws.snapshots_recv, g_ws.damage_reqs_sent, g_ws.damage_reqs_applied,
-      g_ws.entity_physics_applied);
+      g_ws.entity_physics_applied) + EnemyList();
 }
 
 }  // namespace world_sync

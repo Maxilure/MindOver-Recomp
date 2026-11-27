@@ -129,6 +129,22 @@ bool TakeRemotePocket(int player, uint8_t event);
 // here is set to the health their own PC reported (kFlagHasHealth).
 void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base);
 
+// ONLINE HITS (gameplay/game_mods.cpp sub_82132FF8, cheats.cpp sub_821349E0).
+// One hit message being handled on the game thread: who is involved.
+//   remote_hitter_on_enemy: host, another PC's player hit an enemy here;
+//   remote_victim: another PC's player (0-3) was hit here, else -1;
+//   forward: host, that hit came from an enemy -> its damage goes to the
+//   victim's PC (kMsgPlayerHit) when the scope ends.
+class OnlineHitScope {
+ public:
+  OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward);
+  ~OnlineHitScope();
+  OnlineHitScope(const OnlineHitScope&) = delete;
+  OnlineHitScope& operator=(const OnlineHitScope&) = delete;
+};
+bool HitByRemotePlayerOnEnemy();          // inside a scope of that kind
+void NoteRemotePlayerDamage(float delta);  // a remote victim's damage (before the "for show" clamp)
+
 // Mask aiming reticle sync (input/mouse_reticle.cpp): the owner records their
 // 2D canvas reticle spot (reticle +0x14 / +0x28), and remote PCs apply it to
 // that player's CReticleController so their mask looks and shoots where they
