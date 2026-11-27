@@ -123,6 +123,7 @@ set(CRASHMOM_SOURCES
     src/net/state_sync.cpp      # online co-op: host-authoritative state synchronization (Phase 1)
     src/net/action_sync.cpp   # online players by actions (fight-tree states), not buttons
     src/net/aim_sync.cpp      # online mask aiming: the owner's world aim segment
+    src/net/mask_sync.cpp     # online masks: the owner announces mask / on foot, copies follow
     src/net/world_sync.cpp      # online co-op: host-authoritative enemies, titans & combat (Phase 2)
     src/net/enemy_input.cpp     # online co-op: guests' enemies driven by the host's AI inputs (puppets)
     src/net/session_sync.cpp    # online co-op: non-pausing menus, pickups, saves, areas & pocketed titans

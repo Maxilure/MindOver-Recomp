@@ -46,6 +46,7 @@
 #include "enemy_input.h"
 #include "world_sync.h"
 #include "action_sync.h"
+#include "mask_sync.h"
 #include "aim_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_host, false, "CrashMoM",
@@ -365,6 +366,7 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       if (s > 0) {
         REXLOG_INFO("Online: Player {} (peer {}) disconnected", s + 1, ev.peer);
         g_net.slots[s] = RemoteSlot{};
+        mask_sync::Forget(s);  // their last "mask" no longer holds the copy
         HostBroadcastRosterLocked();
       }
     } else {
@@ -428,6 +430,7 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
         const bool now_conn = (g_net.connected_mask & (1u << s)) != 0;
         if (!now_conn && g_net.slots[s].connected) {
           g_net.slots[s] = RemoteSlot{};
+          mask_sync::Forget(s);
         } else {
           g_net.slots[s].connected = now_conn;
         }
@@ -559,6 +562,18 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
     case action_sync::kMsgEnemyState: {  // the host's enemy states (guests only)
       if (g_net.is_host) break;
       action_sync::OnReceiveEnemy(ev.data, ev.size);
+      break;
+    }
+
+    case mask_sync::kMsgMask: {  // an owner's co-op state change: mask / on foot (mask_sync.h)
+      if (ev.size < mask_sync::kMaskSize) break;
+      const uint8_t slot = ev.data[1];
+      if (slot >= kMaxPlayers || int(slot) == g_net.local_slot) break;
+      if (g_net.is_host) {
+        if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
+        g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/true, /*exclude=*/ev.peer);
+      }
+      mask_sync::OnReceive(ev.data, ev.size);
       break;
     }
 
@@ -875,6 +890,7 @@ bool StartHost(uint16_t port) {
     world_sync::Reset();
     enemy_input::Reset();
     session_sync::Reset();
+    mask_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
   return true;
@@ -905,6 +921,7 @@ bool StartJoin(std::string_view address, uint16_t port) {
     world_sync::Reset();
     enemy_input::Reset();
     session_sync::Reset();
+    mask_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
   return true;
@@ -925,6 +942,7 @@ void Leave() {
     world_sync::Reset();
     action_sync::Reset();
     aim_sync::Reset();
+    mask_sync::Reset();
     enemy_input::Reset();
     session_sync::Reset();
   }
@@ -1102,6 +1120,17 @@ void FilterControllerState(uint32_t user, uint8_t* gamepad_be12, uint32_t& xinpu
       }
     }
     uint16_t btns = GetBeButtons(gamepad_be12) & ~uint16_t(kBtnStart | kBtnBack);
+    if (mask_sync::On()) {
+      // MASKS BY ANNOUNCEMENT (mask_sync.h): no B for other players' copies at
+      // all. Its jobs online are all announced or answered elsewhere: the mask
+      // round trip (mask_sync), titan get-off / jack-from-a-titan (session_sync's
+      // CheckInputEvent answers, kMsgPocket), the on-foot jack (fight-tree
+      // states + the mount by net id). A replayed B could only do the copy's
+      // OWN thing with it (a mask, a totem, a villager) at the wrong moment.
+      SetBeButtons(gamepad_be12, uint16_t(btns & ~kBtnB));
+      rs.mask_pulse_frames = 0;
+      return;
+    }
     const bool remote_wants_mask = (latest.coop_state == 1 || latest.coop_state == 3);
     const bool mask_mismatch =
         (local_state == 2 && remote_wants_mask) ||
@@ -1585,6 +1614,8 @@ bool BlockRemoteMaskEntry(int player) {
   if (!g_net.active || player == g_net.local_slot) return false;
   const RemoteSlot& rs = g_net.slots[player];
   if (!rs.connected) return false;
+  // Masks by announcement (mask_sync.h): only when the owner's PC said so.
+  if (mask_sync::On()) return !mask_sync::WantsMask(player);
   // Block mask entry on other PCs unless the owner's own PC has actually
   // transitioned into state 3 (entering mask) or 1 (mask).
   if (!rs.has_snapshot || rs.history.empty()) return true;
@@ -1656,6 +1687,9 @@ bool DebugTraceOn() { return REXCVAR_GET(debug_online_trace); }
 
 bool PuppetOnFoot(int p) {
   if (p < 0 || p >= kMaxPlayers || !more_players::InPlay() || more_players::Loading()) return false;
+  // Their PC said "mask": the copy's own tree must be free to take the forced
+  // switch's CoOpBecomeMask (a driven copy decides nothing; mask_sync.h).
+  if (mask_sync::WantsMask(p)) return false;
   if (session_sync::InTransitionOrCutsceneGrace()) return false;
   uint8_t* base = rex::system::kernel_memory()->virtual_membase();
   std::lock_guard lock(g_net.mutex);

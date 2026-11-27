@@ -59,6 +59,7 @@
 #include "state_sync.h"
 #include "world_sync.h"
 #include "action_sync.h"
+#include "mask_sync.h"
 
 // Recompiled game functions we override or invoke on the main guest thread.
 extern "C" REX_FUNC(__imp__sub_8211AF40);  // FrontEnd fight-tree decision dispatcher
@@ -1198,6 +1199,7 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
   EnsureFrontEndHooksRegistered();
   if (!net::Active()) return;
   net::ApplyRemoteHealth(ctx, base);  // other players' health, as their own PCs say
+  net::mask_sync::Tick(ctx, base);    // masks: announce ours, copies follow theirs
   const auto now = Clock::now();
   const uint32_t uber = ReadU32(base, kUberGlobal);
   if (!uber) return;

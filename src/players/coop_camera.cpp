@@ -1086,11 +1086,33 @@ extern "C" REX_FUNC(sub_82105538) {
       if (g_aim_frame != g_frame) UpdateAim(ctx, base);  // once per camera frame
       // Online state-sync co-op: each PC's camera follows its own local player
       // (single-player view) instead of stretching between distant online players.
+      // OUR PLAYER IS A MASK (2026-11-27 playtest: player 3's camera wandered off
+      // as a mask with players 1 and 2 on foot): a mask gets no camera point of
+      // its own, so after 5 frames this fell back to g_aim = the centre of ALL
+      // players, drifting between them. Now a mask's camera follows the player
+      // CARRYING it (the "who rides whom" record, more_players::MaskHostOf),
+      // like the camera of the one it rides. Entering a mask (3) keeps its own
+      // point while it still has one.
       const int local_slot = net::LocalSlot();
-      const Vec cam_target =
-          (local_slot >= 0 && local_slot < 4 && g_players[local_slot].point_frame + 5 >= g_frame)
-              ? g_players[local_slot].point
-              : g_aim;
+      int follow = local_slot;
+      if (local_slot >= 0 && local_slot < 4) {
+        const uint32_t state = Read32(kPlayerStates + 4 * uint32_t(local_slot));
+        const bool own_fresh = g_players[local_slot].point_frame + 5 >= g_frame;
+        const int host = more_players::MaskHostOf(local_slot);
+        if ((state == 1 || (state == 3 && !own_fresh)) && host >= 0 && host < 4 && host != local_slot) {
+          follow = host;
+        }
+      }
+      const Vec cam_target = (follow >= 0 && follow < 4 && g_players[follow].point_frame + 5 >= g_frame)
+                                 ? g_players[follow].point
+                                 : g_aim;
+      if (net::DebugTraceOn() && follow != local_slot) {
+        static int traced = -1;
+        if (traced != follow) {
+          traced = follow;
+          REXLOG_INFO("OnlineTrace: our mask's camera follows P{}", follow + 1);
+        }
+      }
       WriteFloat(g_answer, cam_target.x);
       WriteFloat(g_answer + 4, cam_target.y);
       WriteFloat(g_answer + 8, cam_target.z);

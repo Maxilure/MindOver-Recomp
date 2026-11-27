@@ -67,6 +67,9 @@ void OnStateEntered(uint32_t tree, uint32_t exit, bool with_slave = false);
 bool BlockStateChange(uint32_t tree);
 
 // --- network side (state_sync, under its lock) --------------------------------
+// Queue another reliable message in OUR order (mask_sync: a co-op state
+// change must reach the others in order with the fight-tree states around it).
+void QueueMessage(std::vector<uint8_t> msg);
 // Messages waiting to be sent (moved out).
 std::vector<std::vector<uint8_t>> TakeOutgoing();
 // A message for a remote player's copy.

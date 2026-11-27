@@ -100,6 +100,15 @@ void ReparkHiddenCrashes(PPCContext& ctx, uint8_t* base);
 // findings/26 s.60). Returns how many moved. Game main thread.
 int MoveMasks(PPCContext& ctx, uint8_t* base, int from, int to);
 
+// The player whose Crash carries player p's mask, -1 = none / not known
+// (the "who rides whom" record, kept by player number; online mask_sync).
+int MaskHostOf(int p);
+
+// Moves ONE mask (player `rider`) from the Crash carrying it onto player `to`'s
+// (on foot), the same detach + attach messages as MoveMasks. Online: a copy's
+// mask rode another Crash than its owner's (mask_sync). True = attached there.
+bool MoveMaskTo(PPCContext& ctx, uint8_t* base, int rider, int to);
+
 // Is a level being played (game state 5, its pause and menus included)?
 // Safe from any thread.
 bool InPlay();

@@ -5,6 +5,7 @@
 #include "outfit_picker.h"
 #include "../net/state_sync.h"
 #include "../net/action_sync.h"
+#include "../net/mask_sync.h"
 
 #include <algorithm>
 #include <atomic>
@@ -898,7 +899,13 @@ extern "C" REX_FUNC(sub_82235B10) {
   float me[3];
   uint32_t best = 0;
   float best_distance = 0;
-  if (auto it = g_host_of.find(mine); LocalPlayers() > 2 && it != g_host_of.end()) {
+  // Online: another player's copy turning into a mask rides the Crash its
+  // OWNER's mask rides (net/mask_sync.h), when that one is on foot here.
+  const int wanted_host = net::mask_sync::WantedHost(PlayerOf(mine));
+  if (wanted_host >= 0 && CharacterOf(wanted_host) && CharacterOf(wanted_host) != mine &&
+      Read32(kState + 4 * wanted_host) == 2) {
+    best = CharacterOf(wanted_host);
+  } else if (auto it = g_host_of.find(mine); LocalPlayers() > 2 && it != g_host_of.end()) {
     best = Read32(it->second + kHolderOwner);  // my host
   } else if (LocalPlayers() > 2 && PositionOf(mine, me)) {
     for (int p = 0; p < LocalPlayers(); ++p) {
@@ -2189,6 +2196,40 @@ void MorePlayersOffScreenGate(PPCRegister& r11) {
     in_game += state == 2 || state == 3;
   }
   r11.u64 = in_game >= 2 ? 1 : 0;
+}
+
+// Online helpers (net/mask_sync.h): whose Crash carries p's mask; move one mask.
+int more_players::MaskHostOf(int p) {
+  if (p < 0 || p >= kMaxPlayers) return -1;
+  // The holder record first (exact: set at every attach / detach), else the
+  // by-number memory (kept across levels).
+  if (const uint32_t crash = CharacterOf(p)) {
+    if (auto it = g_host_of.find(crash); it != g_host_of.end()) {
+      const int host = PlayerOf(Read32(it->second + kHolderOwner));
+      if (host >= 0) return host;
+    }
+  }
+  return g_host_player[p];
+}
+
+bool more_players::MoveMaskTo(PPCContext& ctx, uint8_t* base, int rider, int to) {
+  const int from = MaskHostOf(rider);
+  if (from < 0 || from == to || rider == to) return false;
+  const uint32_t old_host = CharacterOf(from), new_host = CharacterOf(to), crash = CharacterOf(rider);
+  if (!old_host || !new_host || !crash || !HolderOf(new_host)) return false;
+  static uint32_t scratch = 0;  // one message (80 B), guest memory
+  if (!scratch) scratch = rex::system::kernel_memory()->SystemHeapAlloc(128);
+  if (!scratch) return false;
+  std::memset(Guest(scratch), 0, 128);
+  CallGame(__imp__sub_820B44D0, ctx, base, scratch, 5, old_host, crash);  // old holder lets go
+  CallGame(__imp__sub_820B0B70, ctx, base, old_host, scratch);
+  CallGame(__imp__sub_820B45C8, ctx, base, scratch);
+  std::memset(Guest(scratch), 0, 128);
+  CallGame(__imp__sub_820B44D0, ctx, base, scratch, 4, new_host, crash);  // onto the new one
+  CallGame(__imp__sub_820B0B70, ctx, base, crash, scratch);
+  CallGame(__imp__sub_820B0B70, ctx, base, new_host, scratch);
+  CallGame(__imp__sub_820B45C8, ctx, base, scratch);
+  return g_host_of.count(crash) && Read32(g_host_of[crash] + kHolderOwner) == new_host;
 }
 
 // MASKS CHANGE HOSTS (2026-11-05, findings/26 s.60): the disconnect box's

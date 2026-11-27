@@ -35,6 +35,7 @@
 
 #include "../guest_memory.h"
 #include "../players/more_players.h"
+#include "mask_sync.h"
 #include "state_sync.h"
 #include "session_sync.h"
 #include "world_sync.h"
@@ -340,6 +341,11 @@ void AllowOwnDecisions(int p, int ms) {
   g_free_until[p] = std::chrono::steady_clock::now() + std::chrono::milliseconds(ms);
 }
 
+void QueueMessage(std::vector<uint8_t> msg) {
+  std::lock_guard lock(g_mutex);
+  g_outgoing.push_back(std::move(msg));
+}
+
 std::vector<std::vector<uint8_t>> TakeOutgoing() {
   std::lock_guard lock(g_mutex);
   std::vector<std::vector<uint8_t>> out;
@@ -514,7 +520,15 @@ extern "C" REX_FUNC(sub_820C1170) {
     }
     if (w.valid && w.seq != g_applied[p][body & 1]) {
       g_applied[p][body & 1] = w.seq;
-      ForceState(ctx, base, tree, w, "P" + std::to_string(p + 1));
+      // A player's mask round trip (enter 995 / mask 999 / leave 1037) is played
+      // on the copy by the game's forced switch (net/mask_sync.h), not forced
+      // here: the owner sends 995 while still on foot, so a copy got it before
+      // its co-op code had any reason to be a mask.
+      if (body == 0 && net::mask_sync::On() && net::mask_sync::IsMaskTransitionNode(w.node)) {
+        if (Trace()) REXLOG_INFO("OnlineTrace: P{} mask state {} left to the mask switch", p + 1, w.node);
+      } else {
+        ForceState(ctx, base, tree, w, "P" + std::to_string(p + 1));
+      }
     }
   }
   if (drive) {
