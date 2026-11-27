@@ -121,6 +121,7 @@ set(CRASHMOM_SOURCES
     src/net/udp_transport.cpp   # online co-op: pluggable IPv4 UDP transport with reliable ACKs
     src/net/state_sync.cpp      # online co-op: host-authoritative state synchronization (Phase 1)
     src/net/world_sync.cpp      # online co-op: host-authoritative enemies, titans & combat (Phase 2)
+    src/net/enemy_input.cpp     # online co-op: guests' enemies driven by the host's AI inputs (puppets)
     src/net/session_sync.cpp    # online co-op: non-pausing menus, pickups, saves, areas & pocketed titans
     src/players/outfits.cpp     # every player picks an outfit at the chest (findings/46)
     src/players/players_setup.cpp  # the Players screen's rules: who plays with which device

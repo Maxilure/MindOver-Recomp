@@ -41,6 +41,7 @@
 #include "../players/more_players.h"
 #include "session_sync.h"
 #include "transport.h"
+#include "enemy_input.h"
 #include "world_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_host, false, "CrashMoM",
@@ -527,6 +528,11 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       break;
     }
 
+    case kMsgEnemyInput: {
+      if (!g_net.is_host) enemy_input::HandlePacket(ev.data, ev.size);
+      break;
+    }
+
     case kMsgWorldSnapshot:
     case kMsgDamageReq:
     case kMsgCheatSpawn: {
@@ -805,6 +811,7 @@ bool StartHost(uint16_t port) {
     g_net.packets_recv = 0;
     g_net.remote_physics_applied = 0;
     world_sync::Reset();
+    enemy_input::Reset();
     session_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
@@ -834,6 +841,7 @@ bool StartJoin(std::string_view address, uint16_t port) {
     g_net.packets_recv = 0;
     g_net.remote_physics_applied = 0;
     world_sync::Reset();
+    enemy_input::Reset();
     session_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
@@ -853,6 +861,7 @@ void Leave() {
     g_net.connected_mask = 0;
     g_net.slots = {};
     world_sync::Reset();
+    enemy_input::Reset();
     session_sync::Reset();
   }
   // Immediately restore normal local multi-controller routing (P1..P4) on leave!
@@ -1588,6 +1597,7 @@ std::string DebugStatus(uint8_t* base) {
     }
   }
   out += world_sync::DebugStatus();
+  out += enemy_input::DebugStatus();
   out += session_sync::DebugStatus() + "\n";
   return out;
 }

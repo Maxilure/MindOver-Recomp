@@ -33,6 +33,7 @@
 #include "../net/state_sync.h"
 #include "../net/world_sync.h"
 #include "../net/session_sync.h"
+#include "../net/enemy_input.h"
 #include "../ui/hud_scale.h"
 #include "cheat_menu.h"
 #include "free_camera.h"
@@ -1037,6 +1038,16 @@ extern "C" REX_FUNC(sub_820B8688) {
   // Online Phase 2: host runs all enemy/titan AI authoritatively; clients
   // suppress local AI decisions and receive synced enemy transforms & HP.
   // (online_guest_enemy_ai, default on: guests run it too; world_sync.)
+  if (net::Active() && !net::IsHost() && net::world_sync::EnemyPuppets()) {
+    // Enemy puppets (net/enemy_input.h): our AI still runs (it keeps each
+    // copy in the right state: in combat, near its target, so its move
+    // system asks "attack?"), but every move it presses on a copy is dropped
+    // (enemy_input's sub_82273E48 wrapper); right after it, the HOST's
+    // presses go in, at the same point of the frame as on the host.
+    __imp__sub_820B8688(ctx, base);
+    net::enemy_input::ApplyGuest(ctx, base);
+    return;
+  }
   if (net::Active() && !net::IsHost() && !net::world_sync::GuestEnemyAi()) return;
   __imp__sub_820B8688(ctx, base);
 }

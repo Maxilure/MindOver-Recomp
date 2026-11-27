@@ -78,8 +78,28 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host);
 // player's, not a prop) -- an attacker whose hits on a remote player count.
 bool IsSyncedEnemy(uint32_t actor);
 
-// online_guest_enemy_ai: enemies run their own AI on guests too.
+// online_guest_enemy_ai: enemies run their own AI on guests too (and are
+// only reined in when they drift). Never while online_enemy_puppets is on.
 bool GuestEnemyAi();
+// online_enemy_puppets: guests' enemies are driven by the host's AI inputs.
+bool EnemyPuppets();
+// Enemies attack on guests' screens (either mode): each PC's enemies hurt
+// that PC's own player, the host forwards nothing.
+bool GuestEnemiesAttack();
+
+// ENEMY INPUTS (net/enemy_input.cpp). Host: the synced enemy whose input
+// object owns this value channel (its net_id, `index` 0-17), 0 = none.
+uint32_t HostEnemyOfChannel(uint32_t channel, int& index);
+// Host: the synced enemy owning this input object (its net_id), 0 = none.
+uint32_t HostEnemyOfInput(uint32_t input);
+// Guest: true if this input object is a bound (puppet) enemy's.
+bool IsPuppetEnemyInput(uint32_t input);
+// Guest: the input object of the enemy bound to net_id, 0 = none.
+uint32_t PuppetInputOf(uint32_t net_id);
+// Guest: true if this value channel belongs to a bound (puppet) enemy.
+bool IsPuppetEnemyChannel(uint32_t channel);
+// Guest: the address of channel `index` of the enemy bound to net_id, 0 = none.
+uint32_t PuppetChannelOf(uint32_t net_id, int index);
 
 // Append Phase 2 enemy/titan sync summary to the `online` debug console command.
 std::string DebugStatus();

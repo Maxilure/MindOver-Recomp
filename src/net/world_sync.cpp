@@ -41,12 +41,18 @@
 #include "../cheats/spawn.h"
 #include "../guest_memory.h"
 #include "../players/more_players.h"
+#include "enemy_input.h"
 #include "state_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_guest_enemy_ai, true, "CrashMoM",
                     "Online: enemies run their own AI on every PC (they walk, aim and attack on every screen; each "
                     "PC's enemies hurt that PC's own player); the host keeps their health and pulls them back when "
                     "they drift. false = guests copy the host's enemies only (no attacks seen there)");
+REXCVAR_DEFINE_BOOL(online_enemy_puppets, true, "CrashMoM",
+                    "Online: guests' enemies are PUPPETS of the host's: the host's AI drives them, its virtual "
+                    "gamepad values (input channels) are sent, so they attack at the same moment and at the same "
+                    "player on every screen (net/enemy_input.h). Off = online_guest_enemy_ai decides");
+
 
 extern "C" REX_FUNC(__imp__sub_821349E0);  // CDamageableBehaviour: change hitpoints by f1
 
@@ -81,6 +87,10 @@ constexpr auto kStaleAfter = std::chrono::milliseconds(600);
 // has wandered further than this from it (and then gently, kDriftRate per
 // second), so the local AI walks, turns and swings by itself.
 constexpr float kDriftAllowed = 2.5f;
+// An input object's value channels (findings/62 s.1): +0x2C, 18 of 12 bytes.
+constexpr uint32_t kInputChannels = 0x2C;
+constexpr uint32_t kInputChannelSize = 12;
+constexpr uint32_t kInputChannelCount = 18;
 constexpr float kDriftRate = 3.0f;
 
 thread_local bool g_applying_net_hp = false;
@@ -142,6 +152,23 @@ bool IsPlayerActor(uint32_t actor) {
   return false;
 }
 
+// An NPC's input object: its behaviour controller (actor +0x1C, the same slot
+// the free-jack code uses for Crash; a Znu's = class Fodder, read 2026-11-27)
+// is an NPCBase
+// (or a kind of it) when its "which input object?" slot 23 (+0x5C) is
+// NPCBase's own sub_821B9720 = `return **(this + 0xB4)` (Ghidra). The move
+// system asks every "pressed?" through that object (CheckInputEvent
+// sub_8221F1E8 -> slot 23 -> sub_82272338), like a player's gamepad.
+uint32_t InputOfActor(uint8_t* base, uint32_t actor) {
+  uint32_t ctrl = 0, vt = 0, slot = 0, holder = 0, input = 0;
+  if (!ReadU32(base, actor + 0x1C, ctrl) || !ctrl) return 0;
+  if (!ReadU32(base, ctrl, vt) || !vt || !ReadU32(base, vt + 0x5C, slot)) return 0;
+  if (slot != 0x821B9720u) return 0;
+  if (!ReadU32(base, ctrl + 0xB4, holder) || !holder) return 0;
+  if (!ReadU32(base, holder, input) || !input) return 0;
+  return guest_memory::Readable(input + kInputChannels, kInputChannelCount * kInputChannelSize) ? input : 0;
+}
+
 uint32_t FindPhysicsOf(uint8_t* base, uint32_t actor) {
   if (!actor) return 0;
   uint32_t phys = 0, vtbl = 0, owner = 0;
@@ -164,6 +191,9 @@ struct LocalEntity {
   uint32_t actor = 0;
   uint32_t dmg = 0;
   uint32_t hash = 0;
+  // Its INPUT OBJECT (the enemy's virtual gamepad: value channels at +0x2C,
+  // 18 x 12 bytes; findings/62), 0 = not an AI-driven NPC. See InputOfActor.
+  uint32_t input = 0;
   float pos[3] = {0, 0, 0};
   float vel[3] = {0, 0, 0};
   float yaw = 0.0f;
@@ -321,6 +351,7 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
   sample.hash = hash;
   sample.hp = hp;
   sample.last_seen = now;
+  sample.input = InputOfActor(base, actor);
 
   const uint32_t phys = FindPhysicsOf(base, actor);
   if (phys) {
@@ -389,7 +420,66 @@ bool IsSyncedEnemy(uint32_t actor) {
   return g_ws.local_by_actor.count(actor) != 0;
 }
 
-bool GuestEnemyAi() { return REXCVAR_GET(online_guest_enemy_ai); }
+bool EnemyPuppets() { return REXCVAR_GET(online_enemy_puppets); }
+bool GuestEnemyAi() { return !EnemyPuppets() && REXCVAR_GET(online_guest_enemy_ai); }
+bool GuestEnemiesAttack() { return EnemyPuppets() || REXCVAR_GET(online_guest_enemy_ai); }
+
+uint32_t HostEnemyOfChannel(uint32_t channel, int& index) {
+  std::lock_guard lock(g_ws.mutex);
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (!e.input || !e.net_id || channel < e.input + kInputChannels) continue;
+    const uint32_t off = channel - e.input - kInputChannels;
+    if (off >= kInputChannelCount * kInputChannelSize || off % kInputChannelSize) continue;
+    index = int(off / kInputChannelSize);
+    return e.net_id;
+  }
+  return 0;
+}
+
+uint32_t HostEnemyOfInput(uint32_t input) {
+  if (!input) return 0;
+  std::lock_guard lock(g_ws.mutex);
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (e.input == input && e.net_id) return e.net_id;
+  }
+  return 0;
+}
+
+bool IsPuppetEnemyInput(uint32_t input) {
+  if (!input) return false;
+  std::lock_guard lock(g_ws.mutex);
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (e.input == input && e.net_id) return true;
+  }
+  return false;
+}
+
+uint32_t PuppetInputOf(uint32_t net_id) {
+  std::lock_guard lock(g_ws.mutex);
+  const auto it = g_ws.remote_by_id.find(net_id);
+  if (it == g_ws.remote_by_id.end() || !it->second.bound_actor) return 0;
+  const auto e = g_ws.local_by_actor.find(it->second.bound_actor);
+  return e == g_ws.local_by_actor.end() ? 0 : e->second.input;
+}
+
+bool IsPuppetEnemyChannel(uint32_t channel) {
+  std::lock_guard lock(g_ws.mutex);
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (!e.input || !e.net_id || channel < e.input + kInputChannels) continue;
+    if (channel - e.input - kInputChannels < kInputChannelCount * kInputChannelSize) return true;
+  }
+  return false;
+}
+
+uint32_t PuppetChannelOf(uint32_t net_id, int index) {
+  if (index < 0 || index >= int(kInputChannelCount)) return 0;
+  std::lock_guard lock(g_ws.mutex);
+  const auto it = g_ws.remote_by_id.find(net_id);
+  if (it == g_ws.remote_by_id.end() || !it->second.bound_actor) return 0;
+  const auto e = g_ws.local_by_actor.find(it->second.bound_actor);
+  if (e == g_ws.local_by_actor.end() || !e->second.input) return 0;
+  return e->second.input + kInputChannels + kInputChannelSize * uint32_t(index);
+}
 
 bool InterceptHitpointsChange(uint8_t* /*base*/, uint32_t dmg, float delta) {
   if (g_applying_net_hp || !net::Active() || net::IsHost()) return false;
@@ -537,6 +627,8 @@ void TickHostBroadcast(uint8_t* /*base*/) {
   if (!net::Active() || !net::IsHost() || !more_players::InPlay() || more_players::Loading()) {
     return;
   }
+  // The frame's enemy AI inputs go out every frame (net/enemy_input.h).
+  enemy_input::FlushHost();
   const auto now = Clock::now();
   std::vector<LocalEntity> active;
   uint32_t seq = 0;

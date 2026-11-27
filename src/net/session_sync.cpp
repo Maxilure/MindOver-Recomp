@@ -24,6 +24,7 @@
 //   0x8259B11C     u32[4] ECoOpPlayerState (0=out, 1=mask, 2=on foot/titan, 3=entering)
 // =============================================================================
 #include "session_sync.h"
+#include "enemy_input.h"
 
 #include <algorithm>
 #include <array>
@@ -1231,6 +1232,7 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
                uint32_t(int32_t(trans.entry)));
       g_ss.applying_transition = false;
       world_sync::Reset();
+      net::enemy_input::Reset();
       return;
     }
   }
@@ -1776,6 +1778,7 @@ extern "C" REX_FUNC(sub_8227B640) {
       net::session_sync::PutLE32(pkt + 4, epoch);
       net::BroadcastFromHost(pkt, sizeof(pkt), /*reliable=*/true);
       net::world_sync::Reset();
+      net::enemy_input::Reset();
     } else {
       uint8_t pkt[8] = {net::kMsgAreaTransition, uint8_t(level), uint8_t(entry),
                         uint8_t(std::max(0, net::LocalSlot()))};
@@ -1959,6 +1962,25 @@ extern "C" REX_FUNC(sub_82272338) {
   if (net::Active() && more_players::InPlay()) {
     const int32_t map_type = int32_t(ctx.r4.u32);
     const int32_t event_id = int32_t(ctx.r5.u32);
+    // ENEMY PUPPETS (net/enemy_input.h): a guest's copy of an enemy asks
+    // whether a move was pressed. The host's AI presses are replayed for one
+    // frame; the copy may ask a little later: a waiting replayed press of
+    // that move answers yes (once).
+    if (!net::IsHost() && net::world_sync::EnemyPuppets() &&
+        net::world_sync::IsPuppetEnemyInput(ctx.r3.u32)) {
+      const uint32_t asked_input = ctx.r3.u32;
+      __imp__sub_82272338(ctx, base);
+      const bool heard = (ctx.r3.u32 & 0xFF) != 0;
+      if (net::enemy_input::TakeWaitingPress(asked_input, uint32_t(map_type), uint32_t(event_id), heard) &&
+          !heard) {
+        ctx.r3.u64 = 1;
+        if (net::DebugTraceOn()) {
+          REXLOG_INFO("OnlineTrace: puppet input {:08X} heard {}/{} late (replayed press kept)", asked_input,
+                      map_type, event_id);
+        }
+      }
+      return;
+    }
     if (map_type != 1 && map_type != 2 &&
         net::session_sync::ShouldBlockLocalGameplayInput(base) &&
         IsLocalOnlineController(base, ctx.r3.u32)) {

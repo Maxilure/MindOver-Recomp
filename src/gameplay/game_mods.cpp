@@ -341,11 +341,16 @@ extern "C" REX_FUNC(sub_82132FF8) {
     // With online_guest_enemy_ai every PC's enemies attack that PC's own
     // player there (a real hit), so the host forwards nothing (double).
     const bool forward = net::IsHost() && remote_victim >= 0 && by < 0 &&
-                         !net::world_sync::GuestEnemyAi() &&
+                         !net::world_sync::GuestEnemiesAttack() &&
                          net::world_sync::IsSyncedEnemy(from_actor);
     // Every damage message online gets a scope (guests: who hit an enemy
     // decides whether that hit goes to the host, world_sync).
     online_hit.emplace(remote_hitter_on_enemy, remote_victim, forward, by);
+    // Test trace: when an enemy hits a player, on every PC (the puppets'
+    // attacks should land at about the same moment on every screen).
+    if (net::DebugTraceOn() && hurt_online >= 0 && by < 0 && subtype == kDamageHit) {
+      REXLOG_INFO("OnlineTrace: enemy {:08X} hit P{}", from_actor, hurt_online + 1);
+    }
   }
   if (friendly_fire && !keep_combo) {
     __imp__sub_82132FF8(ctx, base);

@@ -135,6 +135,9 @@ void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base);
 //   remote_victim: another PC's player (0-3) was hit here, else -1;
 //   forward: host, that hit came from an enemy -> its damage goes to the
 //   victim's PC (kMsgPlayerHit) when the scope ends.
+// --debug_online_trace (state_sync.cpp).
+bool DebugTraceOn();
+
 class OnlineHitScope {
  public:
   // `by` = the hitting player (0-3), -1 = an enemy / the world.
