@@ -128,6 +128,12 @@ void BeginBehaviourUpdate(PPCContext& ctx, uint8_t* base, uint32_t behaviour, ui
   b.wanted_saved = *wanted;
   if (b.hiding) *wanted &= uint8_t(~kOn);
 }
+int AimingPlayer() {
+  if (!g_updating) return -1;
+  const auto it = g_behaviours.find(g_updating);
+  return it == g_behaviours.end() ? -1 : it->second.player;
+}
+
 void EndBehaviourUpdate() {
   const uint32_t behaviour = g_updating;
   g_updating = 0;
@@ -139,6 +145,11 @@ void EndBehaviourUpdate() {
 
 bool SkipDraw(uint32_t behaviour) {
   const auto it = g_behaviours.find(behaviour);
+  // Online: another PC's player's crosshair is never drawn on this screen.
+  if (it != g_behaviours.end() && net::Active() && net::LocalSlot() >= 0 && it->second.player >= 0 &&
+      it->second.player != net::LocalSlot()) {
+    return true;
+  }
   // Ours to hide: drawn only during its lock out. Not switched yet (its first
   // frames as a mask, before the Update knows its player): not drawn.
   if (it != g_behaviours.end() && it->second.hiding) return !(*Guest(behaviour + kFlags) & kClosing);
@@ -162,10 +173,12 @@ bool Hidden(uint32_t behaviour) {
   if (it == g_behaviours.end()) return false;
   const int p = it->second.player;
   if (p < 0 || p >= kPlayers) return false;
-  // Online state-sync co-op: never draw another player's aiming crosshair on
-  // this PC's screen (their mask still rotates and shoots using their synced
-  // reticle coordinates in input/mouse_reticle.cpp).
-  if (net::Active() && net::LocalSlot() >= 0 && p != net::LocalSlot()) return true;
+  // Online: another PC's player is never "hidden" here: hiding switches the
+  // mask's aiming OFF (wanted bit cleared, lock out), and their copy then
+  // never turned or shot toward their target (2026-11-27 playtest). Their
+  // crosshair is still not DRAWN here (SkipDraw); whether they aim comes from
+  // their own PC (net/aim_sync.h, more_players_frontend.cpp).
+  if (net::Active() && net::LocalSlot() >= 0 && p != net::LocalSlot()) return false;
   const int32_t idle_ms = REXCVAR_GET(reticle_hide_idle_ms);
   if (idle_ms <= 0) return false;
   // Only a plain mask: its player is a mask (co-op state 1) and the reticle's

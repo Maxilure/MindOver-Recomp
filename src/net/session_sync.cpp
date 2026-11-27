@@ -23,6 +23,7 @@
 //     +248  s32    transition target entry ID
 //   0x8259B11C     u32[4] ECoOpPlayerState (0=out, 1=mask, 2=on foot/titan, 3=entering)
 // =============================================================================
+#include <map>
 #include "session_sync.h"
 #include "enemy_input.h"
 
@@ -57,6 +58,7 @@
 #include "../saves/save_files.h"
 #include "state_sync.h"
 #include "world_sync.h"
+#include "action_sync.h"
 
 // Recompiled game functions we override or invoke on the main guest thread.
 extern "C" REX_FUNC(__imp__sub_8211AF40);  // FrontEnd fight-tree decision dispatcher
@@ -207,6 +209,10 @@ struct PlayerTitanState {
   int32_t level = 0;
   Clock::time_point mismatch_since{};
   Clock::time_point last_spawn_attempt{};
+  Clock::time_point last_forced_off{};  // Case A: last own-decisions window opened (at most every 3 s)
+  // The host net id of the titan they ride (0 = not a synced entity / unknown):
+  // the other PCs mount THEIR COPY of that titan instead of spawning one.
+  uint32_t ridden_net_id = 0;
   // True once this player's own PC told us what they ride (kMsgTitanOwnership).
   // Until then the titan repair leaves them alone: "nothing heard" is not
   // "rides nothing".
@@ -272,8 +278,8 @@ struct State {
   Clock::time_point next_pocket_allowed{};
   // An accepted pocket press keeps answering yes this long (same frame asks
   // twice): [0] = riding event 37, [1] = on-foot event 14. Local + per remote.
-  std::array<Clock::time_point, 2> pocket_yes_until{};
-  std::array<std::array<Clock::time_point, 2>, kMaxPlayers> remote_pocket_yes_until{};
+  std::array<Clock::time_point, 4> pocket_yes_until{};
+  std::array<std::array<Clock::time_point, 4>, kMaxPlayers> remote_pocket_yes_until{};
   uint32_t dismounting_titan = 0;
   Clock::time_point dismount_until{};
   uint32_t pending_mount_player = ~0u;
@@ -791,7 +797,7 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
       g_ss.titans[size_t(local)].ridden_template = my_ridden;
       g_ss.titans[size_t(local)].pocket_template = my_pocket;
     }
-    uint8_t pkt[142] = {};
+    uint8_t pkt[146] = {};
     pkt[0] = kMsgTitanOwnership;
     pkt[1] = uint8_t(local);
     if (!my_ridden.empty()) {
@@ -801,6 +807,10 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
       std::memcpy(pkt + 66, my_pocket.data(), std::min<size_t>(63, my_pocket.size()));
     }
     PutWireF32(pkt + 130, 100.0f);
+    // [142..145] the ridden titan's net id (world_sync), so the other PCs
+    // mount their copy of THAT titan (2026-11-27: they spawned a second one).
+    const uint32_t ridden_id = my_titan ? net::world_sync::LastNetIdOf(my_titan) : 0;
+    for (int i = 0; i < 4; ++i) pkt[142 + i] = uint8_t(ridden_id >> (8 * i));
     if (net::IsHost()) {
       BroadcastFromHost(pkt, sizeof(pkt), /*reliable=*/true);
     } else {
@@ -835,12 +845,14 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     if (ReadU32(base, kCoOpState + 4 * uint32_t(p)) != 2) continue;
 
     std::string want_ridden;
+    uint32_t want_id = 0;
     Clock::time_point mismatch_since{};
     Clock::time_point last_attempt{};
     {
       std::lock_guard lock(g_ss.mutex);
       if (!g_ss.titans[size_t(p)].known) continue;  // their PC hasn't said yet
       want_ridden = g_ss.titans[size_t(p)].ridden_template;
+      want_id = g_ss.titans[size_t(p)].ridden_net_id;
       mismatch_since = g_ss.titans[size_t(p)].mismatch_since;
       last_attempt = g_ss.titans[size_t(p)].last_spawn_attempt;
     }
@@ -849,7 +861,13 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     const std::string cur_ridden =
         cur_titan ? QueryActorTemplate(ctx, base, cur_titan) : std::string();
 
-    if (cur_ridden == want_ridden) {
+    // Same KIND isn't enough: jacking a second Ratcicle while riding one is
+    // "Ratcicle" both times. With the owner's titan id known, it must be our
+    // copy of THAT titan (2026-11-27 playtest: the other PC kept the old one).
+    const uint32_t cur_id = cur_titan ? net::world_sync::LastNetIdOf(cur_titan) : 0;
+    const bool other_titan = cur_titan && want_id && cur_id && cur_id != want_id &&
+                             net::world_sync::ActorOfNetId(want_id) != 0;
+    if (cur_ridden == want_ridden && !other_titan) {
       if (mismatch_since.time_since_epoch().count() != 0) {
         std::lock_guard lock(g_ss.mutex);
         g_ss.titans[size_t(p)].mismatch_since = {};
@@ -875,13 +893,65 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     // then the puppet's own take-out brought the original out too: two
     // Ratcicles, the riderless one treated as an enemy).
     const auto waited = now - mismatch_since;
+    // HANDS OFF while the copy's own game is still playing out a replayed titan
+    // press (RB pocket / swap / take-out, B get off / jack): those animations
+    // take longer than this repair's first step (2026-11-27 playtest: the RB
+    // swap was halfway when a 0.3 s mount put player 1 on a titan a second
+    // time; the half-linked rider then heard no more presses, the rejack never
+    // took, and player 1 was finally dropped there). The repair only steps in
+    // when the game didn't sort it out by itself.
+    if (now - net::LastRemoteTitanPress(p) < std::chrono::milliseconds(1500)) continue;
+    // THE SAME TITAN: on foot here, riding a synced titan there whose copy we
+    // have = mount that copy now (the game's own mount), as the owner's jack
+    // did. A copy makes no decisions, so it never holds the titan's jack
+    // opportunity itself (the jack state alone found nothing to mount), and
+    // the spawn below made a SECOND titan (2026-11-27 playtest: "fake" titans).
+    if (cur_titan == 0 && want_id && waited >= std::chrono::milliseconds(300) &&
+        now - last_attempt > std::chrono::seconds(1)) {
+      const uint32_t copy = net::world_sync::ActorOfNetId(want_id);
+      const uint32_t crash = more_players::CharacterOfPlayer(p);
+      if (copy && crash && guest_memory::Readable(copy, 0x40)) {
+        NativeMountPlayerOnTitan(ctx, base, crash, copy);
+        {
+          std::lock_guard lock(g_ss.mutex);
+          g_ss.titans[size_t(p)].last_spawn_attempt = now;
+        }
+        REXLOG_INFO("Online: P{} mounted on their titan's copy here (net id {}, {:08X})", p + 1, want_id, copy);
+        continue;
+      }
+    }
     if (waited < std::chrono::milliseconds(1500)) continue;
 
     // Case A: Remote player currently rides a titan locally that they no longer
     // ride on their own PC (pocketed, swapped to a different titan, or dismounted).
+        // (A first version KILLED our copy of the old titan here: wrong, the
+    // owner's game had POCKETED it (jacking B while riding A pockets A; RB with
+    // one pocketed swaps them). Removed: the owner's press is replayed into the
+    // copy's own decision instead (kMsgPocket), and this repair is the late
+    // fallback: dismount below, then the id mount.)
     if (cur_titan != 0) {
       g_ss.dismounting_titan = cur_titan;
       g_ss.dismount_until = now + std::chrono::milliseconds(600);
+      // The forced dismount is answered to the copy's own B decision (lost
+      // controller's CheckInputEvent hook): a copy driven by its owner's states
+      // makes no decisions, so it never got off (2026-11-27: letting go of a
+      // titan stayed mounted on the other PC). Decisions on for that moment.
+      // ONCE per 3 s, not every frame: called each frame, it kept the copy
+      // deciding for itself as long as the mismatch lasted (2026-11-27
+      // playtest: 12 s in which player 2's copy ignored their states, attacked
+      // and even re-jacked the titan by itself from the replayed buttons).
+      bool open_window = false;
+      {
+        std::lock_guard lock(g_ss.mutex);
+        if (now - g_ss.titans[size_t(p)].last_forced_off > std::chrono::seconds(3)) {
+          g_ss.titans[size_t(p)].last_forced_off = now;
+          open_window = true;
+        }
+      }
+      if (open_window) {
+        net::action_sync::AllowOwnDecisions(p, 800);
+        REXLOG_INFO("Online: P{} rides a titan here but not on their PC: forced dismount (own decisions 0.8 s)", p + 1);
+      }
       continue;
     }
 
@@ -1362,6 +1432,7 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
       st.ridden_template = std::move(ridden);
       st.pocket_template = std::move(pocket);
       st.hp = GetWireF32(data + 130);
+      st.ridden_net_id = size >= 146 ? GetLE32(data + 142) : 0;
       st.mojo = int32_t(GetLE32(data + 134));
       st.level = int32_t(GetLE32(data + 138));
       if (changed) {
@@ -2003,24 +2074,67 @@ extern "C" REX_FUNC(sub_82272338) {
     // is never heard for these two: the event answers "yes" once per kMsgPocket.
     // A "yes" stays yes for kPocketSameFrame, so a fight tree that asks the same
     // event twice in one frame hears the same answer both times.
-    const bool pocket_event = (map_type == 6 && event_id == 37) || (map_type == 5 && event_id == 14);
+    // (test trace, 2026-11-27: which events does our player's game ACCEPT
+    // while riding / jacking; each distinct pair once a second at most)
+    if (net::DebugTraceOn() && map_type >= 4 && IsLocalOnlineController(base, ctx.r3.u32)) {
+      const uint32_t r3 = ctx.r3.u32, r4 = ctx.r4.u32, r5 = ctx.r5.u32;
+      __imp__sub_82272338(ctx, base);
+      const bool yes = (ctx.r3.u32 & 0xFF) != 0;
+      ctx.r3.u64 = r3; ctx.r4.u64 = r4; ctx.r5.u64 = r5;
+      static std::map<int, net::session_sync::Clock::time_point> last;
+      const auto t = net::session_sync::Clock::now();
+      if (yes && t - last[map_type * 100 + event_id] > std::chrono::seconds(1)) {
+        last[map_type * 100 + event_id] = t;
+        REXLOG_INFO("OnlineTrace: {}: our game heard map {} event {}",
+                    more_players::TitanOfPlayer(net::LocalSlot()) ? "riding" : "on foot", map_type, event_id);
+      }
+    }
+    // B WHILE RIDING (2026-11-27 playtest, titan swap): the same B gets off the
+    // titan, or jacks a stunned titan in reach (the game then POCKETS the one
+    // ridden; with the pocket full that one dies). A copy decides nothing, so
+    // it is replayed like RB: ENEMY 6 / 23 and GENERAL 4 / 2 (both asked for one
+    // press), only while that player rides a titan.
+    const int asker = ControllerSlot(base, ctx.r3.u32);
+    const bool riding_b = asker >= 0 && asker < 4 && more_players::TitanOfPlayer(asker) &&
+                          ((map_type == 6 && event_id == 23) || (map_type == 4 && event_id == 2));
+    // OUR B on foot at a jack target that is a host-driven enemy copy here: the
+    // copy decides for itself for a moment, so the game's jack goes through
+    // (being jacked is the titan's own decision; net/action_sync.h).
+    // (on foot the jack B is PLAYER map 5 / event 23: traced 2026-11-27)
+    if (!net::IsHost() && map_type == 5 && event_id == 23 && asker >= 0 && asker == net::LocalSlot() &&
+        !more_players::TitanOfPlayer(asker)) {
+      const uint32_t r3 = ctx.r3.u32, r4 = ctx.r4.u32, r5 = ctx.r5.u32;
+      __imp__sub_82272338(ctx, base);
+      const bool pressed = (ctx.r3.u32 & 0xFF) != 0;
+      if (pressed) {
+        if (const uint32_t target = prompt_icons::JackTarget(base, asker)) {
+          net::action_sync::FreeEnemyCopy(target, 3000);
+          if (net::DebugTraceOn()) REXLOG_INFO("OnlineTrace: our B jacks {:08X}: its copy decides itself", target);
+        }
+      }
+      return;  // (answered by the original above)
+    }
+    const bool pocket_event =
+        (map_type == 6 && event_id == 37) || (map_type == 5 && event_id == 14) || riding_b;
     if (pocket_event) {
-      const int slot = ControllerSlot(base, ctx.r3.u32);
+      const int slot = asker;
       const auto now = net::session_sync::Clock::now();
       auto& ss = net::session_sync::g_ss;
-      const size_t e = map_type == 6 ? 0 : 1;
+      const size_t e = size_t(std::max(0, net::PocketKind(uint8_t(event_id))));
       if (slot >= 0 && slot == net::LocalSlot()) {
         if (now < ss.pocket_yes_until[e]) {
           ctx.r3.u64 = 1;
           return;
         }
-        if (now < ss.next_pocket_allowed) {
+        // (the RB anti-mash cooldown is RB's only: the riding B's two events
+        // come in the same frame and must both be heard)
+        if (!riding_b && now < ss.next_pocket_allowed) {
           ctx.r3.u64 = 0;
           return;
         }
         __imp__sub_82272338(ctx, base);
         if ((ctx.r3.u32 & 0xFFu) != 0) {
-          ss.next_pocket_allowed = now + std::chrono::milliseconds(1250);
+          if (!riding_b) ss.next_pocket_allowed = now + std::chrono::milliseconds(1250);
           ss.pocket_yes_until[e] = now + net::session_sync::kPocketSameFrame;
           net::NoteLocalPocket(slot, uint8_t(event_id));
         }

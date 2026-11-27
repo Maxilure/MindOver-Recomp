@@ -56,6 +56,11 @@ void NoteReticleUpdate(PPCContext& ctx, uint8_t* base, int player, bool on, bool
 
 // Game thread: true = this behaviour's reticle should be hidden now (rule).
 bool Hidden(uint32_t behaviour);
+
+// The player whose aiming behaviour is inside its Update right now (its ray's
+// screen spot was read for them by sub_822AD0A0); -1 = none / not known yet.
+// Online mask aiming (net/aim_sync.h) uses it to know whose aim ray is cast.
+int AimingPlayer();
 // Game thread, in the draw: true = don't draw it (hidden, lock out finished).
 bool SkipDraw(uint32_t behaviour);
 

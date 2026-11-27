@@ -43,6 +43,7 @@ set(CRASHMOM_SOURCES
     src/debug/slow_load_sampler.cpp  # a crawling title load: sample the main thread, log where it is
     src/debug/write_watchpoints.cpp  # debug console `who`: which code writes a memory range
     src/debug/xbox_calls.cpp     # the Xbox calls meter: which Xbox services the game calls (Linux)
+    src/debug/tree_probe.cpp     # research: force a fight tree state (console `tree`)
     src/debug/memory_survey.cpp  # console `memory` + "Memory:" log: the game's heaps, guest physical memory
     src/system/game_memory.cpp   # the game's main heap in virtual memory (native) + refused allocations named
     src/system/guest_pool.cpp    # the port's own memory pool in guest virtual memory (full heaps grow into it)
@@ -120,6 +121,8 @@ set(CRASHMOM_SOURCES
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/net/udp_transport.cpp   # online co-op: pluggable IPv4 UDP transport with reliable ACKs
     src/net/state_sync.cpp      # online co-op: host-authoritative state synchronization (Phase 1)
+    src/net/action_sync.cpp   # online players by actions (fight-tree states), not buttons
+    src/net/aim_sync.cpp      # online mask aiming: the owner's world aim segment
     src/net/world_sync.cpp      # online co-op: host-authoritative enemies, titans & combat (Phase 2)
     src/net/enemy_input.cpp     # online co-op: guests' enemies driven by the host's AI inputs (puppets)
     src/net/session_sync.cpp    # online co-op: non-pausing menus, pickups, saves, areas & pocketed titans

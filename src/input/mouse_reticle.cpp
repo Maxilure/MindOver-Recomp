@@ -1,6 +1,7 @@
 // =============================================================================
 // input/mouse_reticle.cpp -- see mouse_reticle.h (findings/47)
 // =============================================================================
+#include <algorithm>
 #include "mouse_reticle.h"
 
 #include <rex/cvar.h>
@@ -21,6 +22,7 @@
 #include "../players/more_players.h"
 #include "../players/reticle_idle.h"
 #include "../net/state_sync.h"
+#include "../net/aim_sync.h"
 #include "../ui/wii_cursor.h"
 
 // DEFAULT 2 = Crosshair (2026-11-06, the port's out-of-the-box setting).
@@ -134,7 +136,16 @@ void FollowPointer(PPCContext& ctx, uint8_t* base, uint32_t reticle) {
   float px = 0, py = 0;
   uint32_t moves = 0;
   if (!driver || !driver->Pointer(&px, &py, &moves)) return;
-  if (prompt_icons::PadActivity(int(player)) > g_mouse_used) return;  // the stick aims (WHO AIMS)
+  // WHO AIMS: the stick when a controller was used more recently than the
+  // mouse; a mouse that never moved never aims. Online, the local player plays
+  // on this PC's FIRST controller (state_sync copies it into their slot), so
+  // that one's activity counts too (2026-11-27 playtest: the guest's player 2
+  // could not aim with a controller: socket 2 never showed activity, and the
+  // unmoved pointer, canvas (0, 0), took the crosshair every frame).
+  if (g_mouse_used == 0) return;
+  int64_t pad = prompt_icons::PadActivity(int(player));
+  if (net::Active()) pad = std::max(pad, prompt_icons::PadActivity(0));
+  if (pad > g_mouse_used) return;
   // The pointer (0..1 over the 16:9 picture) on the 640 x 480 canvas drawn
   // 4:3 in its middle (x = 160 + 1.5 cx of 1280, y = 720 - 1.5 cy of 720;
   // the same mapping as the menu mouse, mouse_menus.h).
@@ -174,16 +185,34 @@ extern "C" REX_FUNC(sub_82255160) {
   const float x0 = mouse_reticle::ReadFloat(base, reticle + 0x14);
   const float y0 = mouse_reticle::ReadFloat(base, reticle + 0x28);
   __imp__sub_82255160(ctx, base);
+  const float xg = mouse_reticle::ReadFloat(base, reticle + 0x14);
+  const float yg = mouse_reticle::ReadFloat(base, reticle + 0x28);
   mouse_reticle::FollowPointer(ctx, base, reticle);
   const float x1 = mouse_reticle::ReadFloat(base, reticle + 0x14);
   const float y1 = mouse_reticle::ReadFloat(base, reticle + 0x28);
   const int32_t reticle_player = int32_t(mouse_reticle::Read32(base, reticle + 44));
+  if (net::Active() && net::DebugTraceOn()) {  // online aim test trace (2026-11-27)
+    static uint32_t n[8] = {};
+    const bool on = (*GuestPtr(base, reticle + 48) & 0x80) != 0;
+    if (on && (n[reticle_player & 7]++ % 30) == 0) {
+      REXLOG_INFO("OnlineTrace: reticle {:08X} P{} on: game {:.1f},{:.1f} -> after ours {:.1f},{:.1f} (local slot P{})",
+                  reticle, reticle_player + 1, xg, yg, x1, y1, net::LocalSlot() + 1);
+    }
+  }
   if (net::Active() && reticle_player == net::LocalSlot()) {
     net::SetLocalReticle(reticle_player, x1, y1);
   }
   const float dx = x1 - x0;
   const float dy = y1 - y0;
   const bool on = (*GuestPtr(base, reticle + 48) & 0x80) != 0;
-  reticle_idle::NoteReticleUpdate(ctx, base, reticle_player, on,
-                                  dx * dx + dy * dy > 0.25f * 0.25f);
+  bool moved = dx * dx + dy * dy > 0.25f * 0.25f;
+  // Online: another PC's player "aims" while their own PC runs their aim (it
+  // sends its aim line then, net/aim_sync.h): their crosshair here showed only
+  // while it MOVED and hid 2 s after they held still on a target, and a hidden
+  // crosshair runs no aim = the copy stopped turning and shooting there
+  // (2026-11-27 playtest: the guest's mask aim didn't show on the host).
+  if (net::Active() && reticle_player != net::LocalSlot() && reticle_player >= 0) {
+    moved = net::aim_sync::RemoteAimFresh(reticle_player);
+  }
+  reticle_idle::NoteReticleUpdate(ctx, base, reticle_player, on, moved);
 }

@@ -4,6 +4,7 @@
 #include "more_players.h"
 #include "outfit_picker.h"
 #include "../net/state_sync.h"
+#include "../net/action_sync.h"
 
 #include <algorithm>
 #include <atomic>
@@ -2276,7 +2277,12 @@ extern "C" REX_FUNC(sub_820C1578) {
       }
     }
   }
+  // Online: a copy driven by its owner's actions refuses its own state changes;
+  // our player's new state goes out (net/action_sync.h).
+  const uint32_t tree = ctx.r3.u32, exit = ctx.r5.u32;
+  if (net::action_sync::BlockStateChange(tree)) return;
   __imp__sub_820C1578(ctx, base);
+  net::action_sync::OnStateEntered(tree, exit);
 }
 
 extern "C" REX_FUNC(__imp__sub_82295B08);

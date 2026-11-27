@@ -44,6 +44,15 @@
 #include "enemy_input.h"
 #include "state_sync.h"
 
+REXCVAR_DEFINE_BOOL(online_enemy_states, true, "CrashMoM",
+                    "Online: ONE AI for every screen: only the host runs the enemies' AI; guests' enemies copy the "
+                    "host's fight-tree STATES (net/action_sync.h) plus its positions, and make no decisions. Wins over "
+                    "online_enemy_puppets / online_guest_enemy_ai");
+// ENEMY STATES (2026-11-27 playtest, 5 Znus + titans): with every PC running
+// its own enemy AI (puppets or guest AI), enemies chased different players,
+// swung at nothing, died on one screen only, titans wandered apart. Now the
+// guests' AI update is skipped (cheats.cpp sub_820B8688) and each enemy copy
+// is put into the host's states the way players' copies are.
 REXCVAR_DEFINE_BOOL(online_guest_enemy_ai, true, "CrashMoM",
                     "Online: enemies run their own AI on every PC (they walk, aim and attack on every screen; each "
                     "PC's enemies hurt that PC's own player); the host keeps their health and pulls them back when "
@@ -82,6 +91,7 @@ constexpr size_t kEntityWireBytes = 36;       // net_id(4)+hash(4)+pos(12)+vel(8
 constexpr float kSnapDistSq = 24.0f * 24.0f;  // smooth catch-up instead of snapping during titan sprints
 constexpr float kBlendRate = 18.0f;
 constexpr auto kStaleAfter = std::chrono::milliseconds(600);
+constexpr auto kRebindAfter = std::chrono::seconds(3);  // client: silent binding -> match again
 // GUEST ENEMY AI (online_guest_enemy_ai, 2026-11-27): with the enemies' own AI
 // running on a guest, the host's position only pulls an enemy back once it
 // has wandered further than this from it (and then gently, kDriftRate per
@@ -199,6 +209,7 @@ struct LocalEntity {
   float yaw = 0.0f;
   float hp = 0.0f;
   bool has_pos = false;
+  bool died_sent = false;  // host: kMsgEntityHp sent for this death (AfterHitpointsChange)
   Clock::time_point last_seen{};
 };
 
@@ -216,11 +227,28 @@ struct HostEntityState {
 struct PendingDamage {
   uint32_t net_id = 0;
   float delta = 0.0f;
+  Clock::time_point when{};  // arrival: a request not applied within kDamageLife is dropped
 };
+// A client's hit the host couldn't apply soon (its entity not in the list for
+// a while: a player's titan in its grace, unloaded, dead) is dropped, not
+// applied seconds later (2026-11-27 playtest: two hits on a titan player 2 had
+// just left landed 7 s late, after its own death).
+constexpr auto kDamageLife = std::chrono::milliseconds(1500);
 
 struct WorldSyncState {
   std::mutex mutex;
   uint32_t next_net_id = 1;
+  // Host: an actor's net id for as long as it exists (until Reset), keyed by
+  // actor with its name hash (a pooled actor reused as something else = new id).
+  // Was: an entity not updated for kStaleAfter (pause menu, out of range) was
+  // dropped and came back with a NEW id, while clients kept the old one: their
+  // hits went to ids the host no longer had (2026-11-27 playtest: player 2
+  // could not break plants after 25 area changes / pauses; host 41 = guest 12).
+  std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> stable_ids;  // actor -> {hash, id}
+  // Both: the last net id each actor had here, KEPT after the entity leaves the
+  // list (a jacked titan becomes a player's and is forgotten as an entity): so
+  // a titan's owner can name it, and the other PCs find their copy of it.
+  std::unordered_map<uint32_t, uint32_t> last_net_id;  // actor -> id
   std::unordered_map<uint32_t, LocalEntity> local_by_actor;
   std::unordered_map<uint32_t, uint32_t> dmg_to_actor;
   // Client: authoritative entities from host, keyed by unique `net_id`.
@@ -252,6 +280,9 @@ void ApplyHitpointDelta(PPCContext& ctx, uint8_t* base, uint32_t dmg, float delt
   __imp__sub_821349E0(ctx, base);
   g_applying_net_hp = false;
   ctx = saved;
+  // Host: a client's hit that just broke / killed it -> tell every client now
+  // (this path calls the original directly, not the cheats.cpp wrapper).
+  AfterHitpointsChange(base, dmg);
 }
 
 // Client helper: bind `ent` (currently unbound) to the nearest unbound HostEntityState
@@ -272,6 +303,37 @@ void TryBindClientEntityLocked(LocalEntity& ent, Clock::time_point now) {
       best = &hs;
     }
   }
+  // SAME NAME FAMILY (2026-11-27 playtest: spawned titans never synced): an
+  // actor's name hash is h*31+c of its instance name, and spawned actors are
+  // numbered by a counter of their own PC ("...9A" on the host, "...99" on the
+  // guest: only the trailing counter differs = a small hash difference). With
+  // no exact match, the nearest unbound host entity of the same family (within
+  // kFamilyReach) is taken; from then on the copy follows it like any other.
+  if (!best) {
+    constexpr uint32_t kFamilyDiff = 1024;     // a 1-2 character counter suffix
+    constexpr float kFamilyReach = 80.0f * 80.0f;
+    for (auto& [id, hs] : g_ws.remote_by_id) {
+      if (hs.bound_actor != 0 || hs.hash == ent.hash) continue;
+      const uint32_t diff = hs.hash > ent.hash ? hs.hash - ent.hash : ent.hash - hs.hash;
+      if (diff >= kFamilyDiff || now - hs.recv_time > kStaleAfter) continue;
+      // Not one of our own local entities' exact twin (that one binds itself).
+      bool twin = false;
+      for (const auto& [a, other] : g_ws.local_by_actor) {
+        if (a != ent.actor && other.hash == hs.hash) { twin = true; break; }
+      }
+      if (twin) continue;
+      const float dx = hs.pos[0] - ent.pos[0], dy = hs.pos[1] - ent.pos[1], dz = hs.pos[2] - ent.pos[2];
+      const float d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < kFamilyReach && d2 < best_dist_sq) {
+        best_dist_sq = d2;
+        best = &hs;
+      }
+    }
+    if (best && DebugTraceOn()) {
+      REXLOG_INFO("OnlineTrace: entity {:08X} (hash {:08X}) bound to host {} (hash {:08X}) by name family", ent.actor,
+                  ent.hash, best->net_id, best->hash);
+    }
+  }
   if (best) {
     best->bound_actor = ent.actor;
     ent.net_id = best->net_id;
@@ -283,6 +345,8 @@ void TryBindClientEntityLocked(LocalEntity& ent, Clock::time_point now) {
 void Reset() {
   std::lock_guard lock(g_ws.mutex);
   g_ws.next_net_id = 1;
+  g_ws.stable_ids.clear();
+  g_ws.last_net_id.clear();
   g_ws.local_by_actor.clear();
   g_ws.dmg_to_actor.clear();
   g_ws.remote_by_id.clear();
@@ -300,7 +364,11 @@ void Reset() {
 // A titan a player rode or pocketed in the last kOwnedGrace stays a PLAYER's
 // titan here: pocketing, taking out, swapping and dismount/remount flicker it
 // in and out of "ridden", and in between it must not join the enemy list.
-constexpr auto kOwnedGrace = std::chrono::seconds(10);
+// 2.5 s (was 10): a titan a player GOT OFF stayed "a player's titan" for 10 s
+// and every hit on it was dropped, so it never went down and could not be
+// jacked again (2026-11-27 playtest). Pocket / take-out flicker lasts well
+// under a second, and a titan IN the pocket is owned anyway (kPocketSlot).
+constexpr auto kOwnedGrace = std::chrono::milliseconds(2500);
 constexpr uint32_t kPocketSlot = 0x825B0008 + 32;  // game object: THE pocketed titan (one slot)
 
 void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t actor) {
@@ -379,14 +447,25 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
   {
     std::lock_guard lock(g_ws.mutex);
     auto& ent = g_ws.local_by_actor[actor];
+    if (ent.net_id) g_ws.last_net_id[actor] = ent.net_id;
     const uint32_t prev_net_id = ent.net_id;
+    const bool prev_died = ent.died_sent && hp <= 0.0f;  // revived / reused = may die again
     ent = sample;
     ent.net_id = prev_net_id;
+    ent.died_sent = prev_died;
     g_ws.dmg_to_actor[dmg] = actor;
 
     if (net::IsHost()) {
-      if (ent.net_id == 0) ent.net_id = g_ws.next_net_id++;
+      if (ent.net_id == 0) {
+        auto& stable = g_ws.stable_ids[actor];
+        if (stable.second == 0 || stable.first != hash) stable = {hash, g_ws.next_net_id++};
+        ent.net_id = stable.second;
+      }
       for (auto it = g_ws.pending_damage.begin(); it != g_ws.pending_damage.end();) {
+        if (now - it->when > kDamageLife) {  // too late to be that hit (kDamageLife)
+          it = g_ws.pending_damage.erase(it);
+          continue;
+        }
         if (it->net_id == ent.net_id) {
           hp_delta_to_apply += it->delta;
           g_ws.damage_reqs_applied++;
@@ -396,6 +475,16 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
         }
       }
     } else {
+      // A binding the host has been silent about for kRebindAfter (its id
+      // gone: an older host build renumbered, the entity died there, a reload)
+      // is dropped so the entity can be matched again by name + nearest.
+      if (ent.net_id != 0) {
+        const auto it = g_ws.remote_by_id.find(ent.net_id);
+        if (it == g_ws.remote_by_id.end() || now - it->second.recv_time > kRebindAfter) {
+          if (it != g_ws.remote_by_id.end() && it->second.bound_actor == actor) it->second.bound_actor = 0;
+          ent.net_id = 0;
+        }
+      }
       TryBindClientEntityLocked(ent, now);
       if (ent.net_id != 0) {
         const auto it = g_ws.remote_by_id.find(ent.net_id);
@@ -420,9 +509,41 @@ bool IsSyncedEnemy(uint32_t actor) {
   return g_ws.local_by_actor.count(actor) != 0;
 }
 
-bool EnemyPuppets() { return REXCVAR_GET(online_enemy_puppets); }
-bool GuestEnemyAi() { return !EnemyPuppets() && REXCVAR_GET(online_guest_enemy_ai); }
-bool GuestEnemiesAttack() { return EnemyPuppets() || REXCVAR_GET(online_guest_enemy_ai); }
+bool EnemyStates() { return REXCVAR_GET(online_enemy_states); }
+bool EnemyPuppets() { return !EnemyStates() && REXCVAR_GET(online_enemy_puppets); }
+bool GuestEnemyAi() { return !EnemyStates() && !EnemyPuppets() && REXCVAR_GET(online_guest_enemy_ai); }
+// With enemy states, the copies attack the host's way at the host's spot: each
+// PC's copies hit that PC's own player (owner decides its health), the host
+// forwards nothing (it would be a second hit).
+bool GuestEnemiesAttack() {
+  return EnemyStates() || EnemyPuppets() || REXCVAR_GET(online_guest_enemy_ai);
+}
+
+uint32_t LastNetIdOf(uint32_t actor) {
+  if (!actor) return 0;
+  std::lock_guard lock(g_ws.mutex);
+  const auto it = g_ws.last_net_id.find(actor);
+  return it == g_ws.last_net_id.end() ? 0 : it->second;
+}
+
+uint32_t ActorOfNetId(uint32_t net_id) {
+  if (!net_id) return 0;
+  std::lock_guard lock(g_ws.mutex);
+  for (const auto& [actor, e] : g_ws.local_by_actor) {
+    if (e.net_id == net_id) return actor;
+  }
+  for (const auto& [actor, id] : g_ws.last_net_id) {
+    if (id == net_id) return actor;
+  }
+  return 0;
+}
+
+uint32_t NetIdOfActor(uint32_t actor) {
+  if (!actor) return 0;
+  std::lock_guard lock(g_ws.mutex);
+  const auto it = g_ws.local_by_actor.find(actor);
+  return it == g_ws.local_by_actor.end() ? 0 : it->second.net_id;
+}
 
 uint32_t HostEnemyOfChannel(uint32_t channel, int& index) {
   std::lock_guard lock(g_ws.mutex);
@@ -513,6 +634,31 @@ bool InterceptHitpointsChange(uint8_t* /*base*/, uint32_t dmg, float delta) {
     }
   }
   return true;
+}
+
+void AfterHitpointsChange(uint8_t* base, uint32_t dmg) {
+  if (!net::Active() || !net::IsHost() || !more_players::InPlay()) return;
+  float hp = 0.0f;
+  if (!ReadDamageableHP(base, dmg, hp) || hp > 0.0f) return;
+  uint32_t net_id = 0;
+  {
+    std::lock_guard lock(g_ws.mutex);
+    const auto it_a = g_ws.dmg_to_actor.find(dmg);
+    if (it_a == g_ws.dmg_to_actor.end()) return;
+    const auto it_e = g_ws.local_by_actor.find(it_a->second);
+    if (it_e == g_ws.local_by_actor.end() || it_e->second.net_id == 0) return;
+    LocalEntity& e = it_e->second;
+    if (e.died_sent) return;  // once per death
+    e.died_sent = true;
+    e.hp = hp;
+    net_id = e.net_id;
+  }
+  uint8_t msg[9];
+  msg[0] = kMsgEntityHp;
+  PutLE32(msg + 1, net_id);
+  PutF32(msg + 5, hp);
+  BroadcastFromHost(msg, sizeof(msg), /*reliable=*/true);
+  if (DebugTraceOn()) REXLOG_INFO("OnlineTrace: TX entity {} died (hp {:.1f})", net_id, hp);
 }
 
 void PrepareRemoteEntityPhysics(uint8_t* base, uint32_t physics_behaviour, float dt) {
@@ -711,6 +857,20 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host) {
     return;
   }
 
+  if (type == kMsgEntityHp && !is_host) {
+    if (size < 9) return;
+    const uint32_t net_id = GetLE32(data + 1);
+    const float hp = GetF32(data + 5);
+    if (!net_id || !std::isfinite(hp)) return;
+    std::lock_guard lock(g_ws.mutex);
+    const auto it = g_ws.remote_by_id.find(net_id);
+    if (it == g_ws.remote_by_id.end()) return;  // never bound here: nothing to break
+    it->second.hp = hp;
+    it->second.recv_time = Clock::now();  // fresh: the next local update applies it
+    if (DebugTraceOn()) REXLOG_INFO("OnlineTrace: RX entity {} died (hp {:.1f})", net_id, hp);
+    return;
+  }
+
   if (type == kMsgDamageReq && is_host) {
     if (size < 9) return;
     const uint32_t net_id = GetLE32(data + 1);
@@ -718,7 +878,7 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host) {
     if (!net_id || !std::isfinite(delta) || delta >= 0.0f) return;
     {
       std::lock_guard lock(g_ws.mutex);
-      g_ws.pending_damage.push_back({net_id, delta});
+      g_ws.pending_damage.push_back({net_id, delta, Clock::now()});
     }
     if (DebugTraceOn()) {
       REXLOG_INFO("OnlineTrace: RX kMsgDamageReq net_id={} delta={:.1f}", net_id, delta);

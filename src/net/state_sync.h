@@ -26,6 +26,7 @@
 // =============================================================================
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -124,6 +125,11 @@ bool RemoteSpinHolding(int player);
 void NoteLocalPocket(int player, uint8_t event);
 
 bool TakeRemotePocket(int player, uint8_t event);
+// The replayed titan presses (2026-11-27: B while riding joined RB): index 0-3
+// for events 37, 14, 23, 2; -1 = not one of them.
+int PocketKind(uint8_t event);
+// When the last replayed titan press (RB / riding B) of a remote player arrived.
+std::chrono::steady_clock::time_point LastRemoteTitanPress(int player);
 
 // Once per game frame (session_sync::TickFrame): every remote player's body
 // here is set to the health their own PC reported (kFlagHasHealth).
@@ -137,6 +143,11 @@ void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base);
 //   victim's PC (kMsgPlayerHit) when the scope ends.
 // --debug_online_trace (state_sync.cpp).
 bool DebugTraceOn();
+
+// Is remote player p's copy "ours to drive by actions" right now (action_sync.cpp)?
+// On foot / riding on BOTH PCs (co-op state 2 here and in their snapshot), same
+// area, no loading / cutscene grace. Takes the network lock: never call with it held.
+bool PuppetOnFoot(int p);
 
 class OnlineHitScope {
  public:

@@ -29,7 +29,10 @@
 // shoot but not move the reticle (no reticle controller), and their combos
 // went nowhere (the combo meter of "player 3" was other front end fields).
 // =============================================================================
+#include <map>
 #include "more_players.h"
+#include "../net/state_sync.h"
+#include "../net/aim_sync.h"
 #include "more_players_hud.h"
 #include "reticle_idle.h"
 #include "../input/mouse_menus.h"
@@ -588,7 +591,30 @@ void ForgetReticle(uint32_t reticle) {
 extern "C" REX_FUNC(sub_82161B40) {
   const uint32_t reticle = ctx.r3.u32, owner = ctx.r4.u32;
   // (reticle_idle.h: its aim ray, inside, tells which player it aims for.)
+  // ONLINE: a remote player's mask aims exactly while its owner's does. The
+  // "wanted" bit (+292 0x80) is set by the mask's own tree scripts, and a
+  // copy's mask tree, deciding for itself, never set it: the copy's aim never
+  // ran = no turning toward the target, no shots there (2026-11-27 playtest).
+  // The owner's aim runs while theirs is on (aim lines arriving: aim_sync).
+  if (net::Active()) {
+    int p = -1;
+    for (int q = 0; q < 4; ++q) {
+      if (owner && (owner == more_players::CharacterOfPlayer(q) || owner == more_players::TitanOfPlayer(q))) p = q;
+    }
+    if (p >= 0 && p != net::LocalSlot()) {
+      const uint32_t w = Read32(reticle + 292);
+      const bool want = net::aim_sync::RemoteAimFresh(p);
+      Write32(reticle + 292, want ? (w | 0x80000000u) : (w & ~0x80000000u));
+    }
+  }
   reticle_idle::BeginBehaviourUpdate(ctx, base, reticle, owner);
+  if (net::DebugTraceOn()) {  // online aim test trace (2026-11-27)
+    static std::map<uint32_t, uint32_t> n;
+    if (n[reticle]++ % 60 == 0) {
+      REXLOG_INFO("OnlineTrace: aiming behaviour {:08X} owner {:08X}: +264 {:02X} +292 {:02X}", reticle, owner,
+                  Read32(reticle + 264) >> 24, Read32(reticle + 292) >> 24);
+    }
+  }
   __imp__sub_82161B40(ctx, base);
   reticle_idle::EndBehaviourUpdate();
   if (more_players::LocalPlayerCount() <= 2) return;

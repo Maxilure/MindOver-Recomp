@@ -39,6 +39,7 @@
 #include "../input/players.h"
 #include "../pddi/intercept.h"
 #include "../players/more_players.h"
+#include "../net/aim_sync.h"
 
 // stb_image (from the SDK's source tree), private to this file.
 #define STB_IMAGE_STATIC
@@ -628,6 +629,8 @@ void KeepSpotSane(uint8_t* base, uint32_t result) {
 }
 
 extern "C" REX_FUNC(sub_8224C6C0) {
+  // Online: a mask's aim cast goes through the owner's WORLD segment (net/aim_sync.h).
+  if (net::aim_sync::HandleAimRay(ctx, base)) return;
   const bool cursor = uint32_t(ctx.lr) == 0x82140124;
   const uint32_t world = ctx.r3.u32, spot = ctx.r4.u32, query = ctx.r5.u32, cursor_result = ctx.r6.u32;
   __imp__sub_8224C6C0(ctx, base);

@@ -57,6 +57,7 @@
 #include "system/game_memory.h"
 #include "fixed_step.h"
 #include "data/fight_tree.h"
+namespace tree_probe { std::string Command(const std::vector<std::string_view>& w); }
 #include "pddi/intercept.h"
 #include "debug_input_script.h"
 #include "input_record.h"
@@ -1152,6 +1153,7 @@ std::string Run(std::string_view line) {
     if (w.size() >= 2 && w[1] == "physical") return game_memory::PhysicalReport();  // --debug_physical_callers
     return memory_survey::Report();
   }  // the game's heaps + guest memory (debug/memory_survey.h)
+  if (verb == "tree") return tree_probe::Command(w);  // debug/tree_probe.cpp (research)
   if (verb == "xbox") return xbox_calls::Report();  // the Xbox calls meter (debug/xbox_calls.h)
   if (verb == "online") {
     if (w.size() >= 2 && w[1] == "host") {

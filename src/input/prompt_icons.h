@@ -273,4 +273,9 @@ int PadIconsSetting(int p);
 // console's `interactables` (where are the things a player can use?).
 std::vector<uint32_t> KnownInteractables();
 
+// The titan player p's B would jack right now (0 = none): the game's own pick
+// (its jack scripts' checks, nearest first). Online: net/session_sync.cpp lets
+// that titan's copy decide for itself during a local jack.
+uint32_t JackTarget(uint8_t* base, int p);
+
 }  // namespace prompt_icons

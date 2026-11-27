@@ -32,6 +32,8 @@
 
 #include <fmt/format.h>
 #include <rex/logging.h>
+#include <rex/system/kernel_state.h>
+#include <rex/system/xmemory.h>
 
 #include "../cheats/cheats.h"     // PlayerHealth / SetPlayerHealthFromNetwork
 #include "../data/fight_tree.h"  // CurrentFrontEnd: GameRunning vs a real level load
@@ -43,6 +45,8 @@
 #include "transport.h"
 #include "enemy_input.h"
 #include "world_sync.h"
+#include "action_sync.h"
+#include "aim_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_host, false, "CrashMoM",
                     "Online co-op (state sync): host a LAN session on --online_port as Player 1");
@@ -163,8 +167,8 @@ struct RemoteSlot {
   // applied on the game thread by ApplyRemoteHealth.
   float incoming_hit = 0.0f;
   // [0] = riding event 37 (pocket / swap), [1] = on-foot event 14 (take out).
-  std::array<int, 2> pending_pockets{};
-  std::array<Clock::time_point, 2> pocket_at{};
+  std::array<int, 4> pending_pockets{};  // by kind: PocketKind() (37 / 14 / 23 / 2)
+  std::array<Clock::time_point, 4> pocket_at{};
   bool spin_holding = false;
 };
 
@@ -452,8 +456,14 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       snap.recv_time = now;
       rs.latest_seq = snap.seq;
       rs.has_snapshot = true;
-      if (snap.flags & kFlagSpinPulse) rs.pending_spin = true;
-      rs.spin_holding = (snap.flags & kFlagSpinHold) != 0;
+      // The OLD spin channel (pulse + hold flag -> game_mods TakeButtonSpin /
+      // Holding) is off while copies obey their owner's states
+      // (action_sync.h): its pulse waited unasked (the driven copy makes no
+      // decisions) and fired a SECOND spin once the copy decided again (2026-11-27
+      // playtest: simple spinning while walking).
+      const bool old_spin = !REXCVAR_GET(online_action_sync);
+      if (old_spin && (snap.flags & kFlagSpinPulse)) rs.pending_spin = true;
+      rs.spin_holding = old_spin && (snap.flags & kFlagSpinHold) != 0;
       rs.history.push_back(snap);
       while (rs.history.size() > 8) rs.history.pop_front();
       break;
@@ -488,7 +498,7 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
         if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
         g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/false, /*exclude=*/ev.peer);
       }
-      g_net.slots[slot].pending_spin = true;
+      if (!REXCVAR_GET(online_action_sync)) g_net.slots[slot].pending_spin = true;  // see the snapshot
       if (REXCVAR_GET(debug_online_trace)) {
         REXLOG_INFO("OnlineTrace: RX kMsgSpin for P{}", slot + 1);
       }
@@ -499,15 +509,16 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       if (ev.size < 3) break;
       const uint8_t slot = ev.data[1];
       if (slot >= kMaxPlayers || int(slot) == g_net.local_slot) break;
-      if (ev.data[2] != 37 && ev.data[2] != 14) break;
+      if (PocketKind(ev.data[2]) < 0) break;
       if (g_net.is_host) {
         if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
         g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/true, /*exclude=*/ev.peer);
       }
       RemoteSlot& rs = g_net.slots[slot];
-      const size_t e = ev.data[2] == 37 ? 0 : 1;
+      const size_t e = size_t(PocketKind(ev.data[2]));
       rs.pending_pockets[e] = std::min(rs.pending_pockets[e] + 1, 2);
       rs.pocket_at[e] = now;
+      action_sync::AllowOwnDecisions(slot, 700);  // the copy decides the pocket itself (action_sync.h)
       if (REXCVAR_GET(debug_online_trace)) {
         REXLOG_INFO("OnlineTrace: RX kMsgPocket for P{} (event {})", slot + 1, ev.data[2]);
       }
@@ -533,8 +544,39 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       break;
     }
 
+    case aim_sync::kMsgAim: {  // an owner's mask aim segment (aim_sync.h)
+      if (ev.size < aim_sync::kAimSize) break;
+      const uint8_t slot = ev.data[1];
+      if (slot >= kMaxPlayers || int(slot) == g_net.local_slot) break;
+      if (g_net.is_host) {
+        if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
+        g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/false, /*exclude=*/ev.peer);
+      }
+      aim_sync::OnReceive(ev.data, ev.size);
+      break;
+    }
+
+    case action_sync::kMsgEnemyState: {  // the host's enemy states (guests only)
+      if (g_net.is_host) break;
+      action_sync::OnReceiveEnemy(ev.data, ev.size);
+      break;
+    }
+
+    case action_sync::kMsgTreeState: {  // an owner's fight-tree state (action_sync.h)
+      if (ev.size < action_sync::kTreeStateSize) break;
+      const uint8_t slot = ev.data[1];
+      if (slot >= kMaxPlayers || int(slot) == g_net.local_slot) break;
+      if (g_net.is_host) {
+        if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
+        g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/true, /*exclude=*/ev.peer);
+      }
+      action_sync::OnReceive(ev.data, ev.size);
+      break;
+    }
+
     case kMsgWorldSnapshot:
     case kMsgDamageReq:
+    case kMsgEntityHp:
     case kMsgCheatSpawn: {
       world_sync::HandlePacket(ev.data, ev.size, g_net.is_host);
       break;
@@ -764,6 +806,26 @@ void TickNetworkLocked(uint8_t* base) {
     }
   }
 
+  // Our mask's aim segments (aim_sync.h): unreliable, newest wins.
+  for (const auto& msg : aim_sync::TakeOutgoing()) {
+    if (g_net.is_host) {
+      g_net.transport->Broadcast(msg.data(), msg.size(), /*reliable=*/false);
+    } else {
+      g_net.transport->Send(g_net.host_peer, msg.data(), msg.size(), /*reliable=*/false);
+    }
+    g_net.packets_sent++;
+  }
+
+  // Our player's fight-tree states (action_sync.h): reliable, in the order taken.
+  for (const auto& msg : action_sync::TakeOutgoing()) {
+    if (g_net.is_host) {
+      g_net.transport->Broadcast(msg.data(), msg.size(), /*reliable=*/true);
+    } else {
+      g_net.transport->Send(g_net.host_peer, msg.data(), msg.size(), /*reliable=*/true);
+    }
+    g_net.packets_sent++;
+  }
+
   SendLocalSnapshotLocked(base, now);
 }
 
@@ -861,6 +923,8 @@ void Leave() {
     g_net.connected_mask = 0;
     g_net.slots = {};
     world_sync::Reset();
+    action_sync::Reset();
+    aim_sync::Reset();
     enemy_input::Reset();
     session_sync::Reset();
   }
@@ -1334,12 +1398,31 @@ void NoteLocalPocket(int player, uint8_t event) {
   }
 }
 
+Clock::time_point LastRemoteTitanPress(int player) {
+  if (player < 0 || player >= kMaxPlayers) return {};
+  std::lock_guard lock(g_net.mutex);
+  Clock::time_point last{};
+  for (const auto& t : g_net.slots[player].pocket_at) last = std::max(last, t);
+  return last;
+}
+
+int PocketKind(uint8_t event) {
+  switch (event) {
+    case 37: return 0;  // ENEMY map 6: riding RB = pocket / swap
+    case 14: return 1;  // PLAYER map 5: on foot RB = take the pocketed one out
+    case 23: return 2;  // ENEMY map 6: riding B = get off, or jack the next titan (pockets the old one)
+    case 2: return 3;   // GENERAL map 4: the same B, asked through the titan's controller
+    default: return -1;
+  }
+}
+
 bool TakeRemotePocket(int player, uint8_t event) {
   if (player < 0 || player >= kMaxPlayers) return false;
   std::lock_guard lock(g_net.mutex);
   if (!g_net.active || player == g_net.local_slot) return false;
   RemoteSlot& rs = g_net.slots[player];
-  const size_t e = event == 37 ? 0 : 1;
+  if (PocketKind(event) < 0) return false;
+  const size_t e = size_t(PocketKind(event));
   if (rs.pending_pockets[e] <= 0) return false;
   if (Clock::now() - rs.pocket_at[e] > kPocketLifetime) {
     rs.pending_pockets[e] = 0;
@@ -1570,6 +1653,20 @@ void SendToPeerFromHost(uint32_t peer, const uint8_t* data, size_t size, bool re
 }
 
 bool DebugTraceOn() { return REXCVAR_GET(debug_online_trace); }
+
+bool PuppetOnFoot(int p) {
+  if (p < 0 || p >= kMaxPlayers || !more_players::InPlay() || more_players::Loading()) return false;
+  if (session_sync::InTransitionOrCutsceneGrace()) return false;
+  uint8_t* base = rex::system::kernel_memory()->virtual_membase();
+  std::lock_guard lock(g_net.mutex);
+  if (!g_net.active || p == g_net.local_slot) return false;
+  const RemoteSlot& rs = g_net.slots[p];
+  if (!rs.connected || !rs.has_snapshot || rs.history.empty()) return false;
+  const PlayerSnapshot& latest = rs.history.back();
+  if (latest.coop_state != 2 || ReadCoOpState(base, p) != 2) return false;
+  const int here = session_sync::CurrentLevelId(base);
+  return latest.level_id < 0 || here < 0 || int(latest.level_id) == here;
+}
 
 std::string DebugStatus(uint8_t* base) {
   std::lock_guard lock(g_net.mutex);

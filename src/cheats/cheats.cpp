@@ -1038,6 +1038,9 @@ extern "C" REX_FUNC(sub_820B8688) {
   // Online Phase 2: host runs all enemy/titan AI authoritatively; clients
   // suppress local AI decisions and receive synced enemy transforms & HP.
   // (online_guest_enemy_ai, default on: guests run it too; world_sync.)
+  // Enemy states (default): ONE AI, the host's. Guests' enemies only copy its
+  // states and positions (net/action_sync.h, world_sync.cpp).
+  if (net::Active() && !net::IsHost() && net::world_sync::EnemyStates()) return;
   if (net::Active() && !net::IsHost() && net::world_sync::EnemyPuppets()) {
     // Enemy puppets (net/enemy_input.h): our AI still runs (it keeps each
     // copy in the right state: in combat, near its target, so its move
@@ -1137,7 +1140,10 @@ extern "C" REX_FUNC(sub_821349E0) {
   if (g_one_hit.load() && ctx.f1.f64 < 0.0 && !g_player_damageables.count(ctx.r3.u32)) {
     ctx.f1.f64 = -1.0e6;
   }
+  const uint32_t changed = ctx.r3.u32;
   __imp__sub_821349E0(ctx, base);
+  // Online host: a synced entity that just reached 0 tells the clients at once.
+  if (net::Active()) net::world_sync::AfterHitpointsChange(base, changed);
 }
 
 // The achievement writer (sub_82292938) lives in achievements/achievements.cpp

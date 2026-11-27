@@ -38,6 +38,13 @@ namespace net {
 constexpr uint8_t kMsgWorldSnapshot = 10;  // Host -> Clients (unreliable @ 20 Hz)
 constexpr uint8_t kMsgDamageReq = 11;      // Client -> Host (reliable): hit an enemy/titan
 constexpr uint8_t kMsgCheatSpawn = 12;     // Any -> Host -> All (reliable): F5 cheat spawn
+// Host -> Clients (reliable): [1..4] net_id [5..8] f32 hitpoints = an entity's
+// health just reached 0 on the host. Breakable props (crates, plants) vanish the
+// moment they break: they stopped updating before the next 20 Hz snapshot, so
+// clients never heard "0" and kept them whole (2026-11-27 playtest: player 2's
+// hits broke a prop on player 1's screen only). Enemies were fine: their death
+// animation keeps them updating.
+constexpr uint8_t kMsgEntityHp = 15;
 
 namespace world_sync {
 
@@ -61,6 +68,10 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
 // an enemy locally and forwarded a kMsgDamageReq to the host instead).
 bool InterceptHitpointsChange(uint8_t* base, uint32_t dmg, float delta);
 
+// Called right after a hitpoints change ran (cheats.cpp sub_821349E0): on the
+// host, a synced entity whose health just reached 0 -> kMsgEntityHp to all.
+void AfterHitpointsChange(uint8_t* base, uint32_t dmg);
+
 // Called from ground_physics.cpp around CPhysicsBehaviour::Update (sub_8217D0A0)
 // for non-player actors on clients: smoothly blends enemy/titan positions &
 // facing toward the host's interpolated snapshots.
@@ -83,6 +94,16 @@ bool IsSyncedEnemy(uint32_t actor);
 bool GuestEnemyAi();
 // online_enemy_puppets: guests' enemies are driven by the host's AI inputs.
 bool EnemyPuppets();
+// online_enemy_states (default): only the host runs enemy AI; guests' enemies
+// copy its fight-tree states (net/action_sync.h). Wins over the two above.
+bool EnemyStates();
+// The net id of a synced entity actor on this PC (host: its id; client: the
+// host id it is bound to); 0 = not synced / not bound.
+uint32_t NetIdOfActor(uint32_t actor);
+// The last net id an actor had here (kept after it left the entity list, e.g.
+// a titan a player jacked), and this PC's actor for a net id (0 = none).
+uint32_t LastNetIdOf(uint32_t actor);
+uint32_t ActorOfNetId(uint32_t net_id);
 // Enemies attack on guests' screens (either mode): each PC's enemies hurt
 // that PC's own player, the host forwards nothing.
 bool GuestEnemiesAttack();
