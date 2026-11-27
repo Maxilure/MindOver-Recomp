@@ -675,6 +675,92 @@ void Update(PPCContext& ctx, uint8_t* base, uint32_t fe) {
 
 }  // namespace
 
+// =============================================================================
+// ONLINE: A PLAYER WHOSE PC LEFT DROPS OUT (2026-11-27). Online the game's own
+// controller check is off (no "reconnect" box in a live online level), and
+// nothing dropped a player whose PC was gone: their copy stayed forever, a
+// mask on someone's shoulders or a Crash standing still (both seen in a two-PC
+// test: the guest's game killed while a mask). Decided before: a disconnected
+// player = the normal game's Drop Out. Every PC does the same, from the same
+// facts (who rides whom is the same everywhere: net/mask_sync.h):
+//   * a mask, or a player on foot with someone else on foot = Drop Out at once;
+//   * riding a titan = off it first (UNJACK FIRST above), then Drop Out;
+//   * the LAST Crash on foot carrying masks = its lowest-numbered rider steps
+//     in (forced out of the mask, sub-state 4), the other masks move onto that
+//     one (MoveMasks), then Drop Out (STEPPING IN above, without the box).
+// A player whose PC is back (connected again) before that is left alone.
+// =============================================================================
+namespace {
+std::array<std::atomic<bool>, kMaxPlayers> g_net_gone{};
+std::array<int, kMaxPlayers> g_net_stepin{-1, -1, -1, -1};  // gone player -> the rider stepping in
+std::array<std::chrono::steady_clock::time_point, kMaxPlayers> g_net_next_try{};
+constexpr auto kNetRetry = std::chrono::seconds(4);
+
+void DropGonePlayer(PPCContext& ctx, uint8_t* base, int g) {
+  const auto now = std::chrono::steady_clock::now();
+  if (g_dropping[g]) return;                            // under way
+  if (const int q = g_net_stepin[g]; q >= 0) {           // a rider is stepping in
+    if (Read32(kCoOpState + 4 * q) != 2) {                // not on foot yet: wait, up to the retry time
+      if (now < g_net_next_try[g]) return;
+      g_net_stepin[g] = -1;
+      REXLOG_WARN("Online: player {} didn't step in on foot for player {}: trying again", q + 1, g + 1);
+      return;
+    }
+    g_net_stepin[g] = -1;
+    g_net_next_try[g] = {};
+    const int moved = more_players::MoveMasks(ctx, base, g, q);
+    REXLOG_INFO("Online: player {} stepped in on foot for player {} ({} mask(s) moved)", q + 1, g + 1, moved);
+  }
+  if (now < g_net_next_try[g]) return;  // wait before the next try
+  if (MayLeave(g)) {
+    g_net_next_try[g] = now + kNetRetry;
+    DropOut(ctx, base, g, "their PC left the online game");
+    return;
+  }
+  if (!SomeoneElse(g)) return;  // nobody else in game here: nothing to hand over to
+  // The last Crash on foot: its lowest-numbered settled rider steps in.
+  for (int q = 0; q < more_players::LocalPlayerCount(); ++q) {
+    if (q == g || Read32(kCoOpState + 4 * q) != 1 || more_players::MaskHostOf(q) != g) continue;
+    Write32(kSubState + 4 * q, kSubForcedOutOfMask);
+    g_net_stepin[g] = q;
+    g_net_next_try[g] = now + kNetRetry;
+    REXLOG_INFO("Online: player {}'s PC left while carrying masks: player {} steps in on foot", g + 1, q + 1);
+    return;
+  }
+  g_net_next_try[g] = now + kNetRetry;
+  REXLOG_WARN("Online: player {}'s PC left, but they can't drop out yet (state {})", g + 1,
+              Read32(kCoOpState + 4 * g));
+}
+
+}  // namespace
+
+void NetworkLeft(int p) {
+  if (p >= 0 && p < kMaxPlayers) g_net_gone[p] = true;
+}
+
+void TickOnline(PPCContext& ctx, uint8_t* base) {
+  const uint32_t game = Read32(kGameGlobal);
+  const uint32_t fe = game ? Read32(game + kFrontEnd) : 0;
+  if (!fe || more_players::Loading()) return;
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    if (g_unjacking[p]) continue;  // (counts as dropping until it's off the titan)
+    if (!InGame(p)) g_dropping[p] = false;
+  }
+  TickUnjacking(ctx, base, fe);
+  if (net::session_sync::InTransitionOrCutsceneGrace()) return;  // (the game moves everyone then)
+  for (int g = 0; g < kMaxPlayers; ++g) {
+    if (!g_net_gone[g]) continue;
+    if (!InGame(g) || (net::ConnectedMask() & (1u << g)) || g == net::LocalSlot()) {
+      if (!InGame(g)) REXLOG_INFO("Online: player {} is out of the game here", g + 1);
+      g_net_gone[g] = false;
+      g_net_stepin[g] = -1;
+      g_net_next_try[g] = {};
+      continue;
+    }
+    DropGonePlayer(ctx, base, g);
+  }
+}
+
 bool Active() { return g_phase.load() != kNone; }
 
 bool CanDropOut(int p) { return p >= 0 && p < kMaxPlayers && InGame(p) && !g_dropping[p] && MayLeave(p); }
@@ -727,7 +813,10 @@ extern "C" REX_FUNC(sub_82262D78) {
   using namespace lost_controller;
   // Online co-op: never pop up the blocking "Reconnect controller" pause box
   // in a live online level.
-  if (net::Active() && more_players::InPlay()) return;
+  if (net::Active() && more_players::InPlay()) {
+    TickOnline(ctx, base);  // players whose PC left drop out (ONLINE above)
+    return;
+  }
   if (!REXCVAR_GET(lost_controller) || !more_players::InPlay() ||
       ctx.r3.u32 != Read32(Read32(kGameGlobal) + kFrontEnd)) {
     __imp__sub_82262D78(ctx, base);

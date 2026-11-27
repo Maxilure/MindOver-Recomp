@@ -338,7 +338,9 @@ void FreeEnemyCopy(uint32_t actor, int ms) {
 void AllowOwnDecisions(int p, int ms) {
   if (p < 0 || p >= kPlayers) return;
   std::lock_guard lock(g_mutex);
-  g_free_until[p] = std::chrono::steady_clock::now() + std::chrono::milliseconds(ms);
+  // Extends, never shortens: a titan press's hold (1.2 s) must outlast the
+  // shorter window its answer opens a frame later (titan_sync.h).
+  g_free_until[p] = std::max(g_free_until[p], std::chrono::steady_clock::now() + std::chrono::milliseconds(ms));
 }
 
 void QueueMessage(std::vector<uint8_t> msg) {

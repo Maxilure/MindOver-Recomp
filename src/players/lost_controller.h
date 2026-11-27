@@ -90,4 +90,14 @@ bool DropOut(PPCContext& ctx, uint8_t* base, int p, const char* why);
 // Game main thread.
 bool CanDropOut(int p);
 
+// ONLINE: player p's PC left the session (disconnected: host's peer gone /
+// a guest's roster lost the slot). Network thread; any thread. The next
+// TickOnline drops p's copy out the way the normal game's Drop Out does.
+void NetworkLeft(int p);
+
+// Online, once per game frame in a level (the game's controller check is
+// switched off online): drops out the players whose PC left (NetworkLeft)
+// and finishes a titan rider's "off first, then drop out". Game main thread.
+void TickOnline(PPCContext& ctx, uint8_t* base);
+
 }  // namespace lost_controller

@@ -125,6 +125,10 @@ bool RemoteSpinHolding(int player);
 void NoteLocalPocket(int player, uint8_t event);
 
 bool TakeRemotePocket(int player, uint8_t event);
+// Titans by outcome (titan_sync.h): player p's copy is let to hear ONE titan
+// press `event` (37 RB riding = pocket, 14 RB on foot = take out) through
+// TakeRemotePocket, as a received kMsgPocket did; its own decisions on 0.7 s.
+void GrantRemotePress(int player, uint8_t event);
 // The replayed titan presses (2026-11-27: B while riding joined RB): index 0-3
 // for events 37, 14, 23, 2; -1 = not one of them.
 int PocketKind(uint8_t event);

@@ -79,6 +79,13 @@ void Reset();
 // Called once per game frame on the main guest thread (from cheats.cpp GetScale).
 void TickFrame(PPCContext& ctx, uint8_t* base);
 
+// TITANS BY OUTCOME (net/titan_sync.h): player p's copy mounts `titan` here
+// now (the game's own spawn-time mount, two messages); and player p's copy
+// gets off its titan the game's own B way (the titan's dismount question
+// answered for 0.6 s, the copy deciding for 0.8 s). Game main thread.
+void MountPlayerOnTitan(PPCContext& ctx, uint8_t* base, int p, uint32_t titan);
+void ForceDismount(int p, uint32_t titan);
+
 // Handle incoming protocol messages 20..28 (called from state_sync.cpp).
 void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sender_peer);
 

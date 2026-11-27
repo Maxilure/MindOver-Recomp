@@ -47,6 +47,8 @@
 #include "world_sync.h"
 #include "action_sync.h"
 #include "mask_sync.h"
+#include "titan_sync.h"
+#include "../players/lost_controller.h"
 #include "aim_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_host, false, "CrashMoM",
@@ -367,6 +369,8 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
         REXLOG_INFO("Online: Player {} (peer {}) disconnected", s + 1, ev.peer);
         g_net.slots[s] = RemoteSlot{};
         mask_sync::Forget(s);  // their last "mask" no longer holds the copy
+        titan_sync::Forget(s);
+        lost_controller::NetworkLeft(s);  // their copy drops out (lost_controller.h ONLINE)
         HostBroadcastRosterLocked();
       }
     } else {
@@ -431,6 +435,8 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
         if (!now_conn && g_net.slots[s].connected) {
           g_net.slots[s] = RemoteSlot{};
           mask_sync::Forget(s);
+          titan_sync::Forget(s);
+          lost_controller::NetworkLeft(s);
         } else {
           g_net.slots[s].connected = now_conn;
         }
@@ -519,6 +525,18 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       }
       RemoteSlot& rs = g_net.slots[slot];
       const size_t e = size_t(PocketKind(ev.data[2]));
+      if (titan_sync::On()) {
+        // Titans by outcome (titan_sync.h): the press is a HOLD only: the copy
+        // decides for itself meanwhile (no forced states: a pocket keeps rider
+        // and titan linked), and hears nothing until the owner's announced
+        // result picks its answer (GrantRemotePress).
+        rs.pocket_at[e] = now;  // (session_sync's repair keeps out meanwhile)
+        action_sync::AllowOwnDecisions(slot, 1200);
+        if (REXCVAR_GET(debug_online_trace)) {
+          REXLOG_INFO("OnlineTrace: RX titan press hold for P{} (event {})", slot + 1, ev.data[2]);
+        }
+        break;
+      }
       rs.pending_pockets[e] = std::min(rs.pending_pockets[e] + 1, 2);
       rs.pocket_at[e] = now;
       action_sync::AllowOwnDecisions(slot, 700);  // the copy decides the pocket itself (action_sync.h)
@@ -574,6 +592,18 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
         g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/true, /*exclude=*/ev.peer);
       }
       mask_sync::OnReceive(ev.data, ev.size);
+      break;
+    }
+
+    case titan_sync::kMsgTitan: {  // an owner's titans: ridden + pocketed (titan_sync.h)
+      if (ev.size < titan_sync::kTitanSize) break;
+      const uint8_t slot = ev.data[1];
+      if (slot >= kMaxPlayers || int(slot) == g_net.local_slot) break;
+      if (g_net.is_host) {
+        if (slot == 0 || !g_net.slots[slot].connected || g_net.slots[slot].peer != ev.peer) break;
+        g_net.transport->Broadcast(ev.data, ev.size, /*reliable=*/true, /*exclude=*/ev.peer);
+      }
+      titan_sync::OnReceive(ev.data, ev.size);
       break;
     }
 
@@ -891,6 +921,7 @@ bool StartHost(uint16_t port) {
     enemy_input::Reset();
     session_sync::Reset();
     mask_sync::Reset();
+    titan_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
   return true;
@@ -922,6 +953,7 @@ bool StartJoin(std::string_view address, uint16_t port) {
     enemy_input::Reset();
     session_sync::Reset();
     mask_sync::Reset();
+    titan_sync::Reset();
   }
   if (auto* pa = kbm::PlayerAssignment::Get()) pa->AnnounceIfChanged();
   return true;
@@ -943,6 +975,7 @@ void Leave() {
     action_sync::Reset();
     aim_sync::Reset();
     mask_sync::Reset();
+    titan_sync::Reset();
     enemy_input::Reset();
     session_sync::Reset();
   }
@@ -1408,6 +1441,19 @@ void NoteLocalSpin(int player) {
 // A pocket the puppet never got to use (it was mid-animation, a cutscene
 // started) must not fire seconds later out of nowhere.
 constexpr auto kPocketLifetime = std::chrono::milliseconds(1500);
+
+void GrantRemotePress(int player, uint8_t event) {
+  if (player < 0 || player >= kMaxPlayers || PocketKind(event) < 0) return;
+  {
+    std::lock_guard lock(g_net.mutex);
+    if (!g_net.active || player == g_net.local_slot) return;
+    RemoteSlot& rs = g_net.slots[player];
+    const size_t e = size_t(PocketKind(event));
+    rs.pending_pockets[e] = std::min(rs.pending_pockets[e] + 1, 2);
+    rs.pocket_at[e] = Clock::now();
+  }
+  action_sync::AllowOwnDecisions(player, 700);
+}
 
 void NoteLocalPocket(int player, uint8_t event) {
   std::lock_guard lock(g_net.mutex);

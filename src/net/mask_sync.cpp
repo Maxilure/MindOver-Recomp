@@ -63,6 +63,11 @@ struct Wanted {           // the newest co-op state an owner announced
   uint8_t host = kNoHost;
   Clock::time_point since;  // when it arrived (for the "slow" note)
   bool slow_noted = false;
+  // The copy got there once: this announcement is DONE. Not enforced after
+  // that: the game may move the copy itself (a disconnected carrier's rider
+  // stepping in, lost_controller ONLINE), and the owner's PC, doing the same,
+  // announces the result. Enforcing forever fought those.
+  bool done = false;
 };
 
 std::mutex g_mutex;
@@ -110,6 +115,7 @@ void SendOurChanges(int local) {
 
 // COPY: make player p's copy follow its owner's announced state.
 void Follow(PPCContext& ctx, uint8_t* base, int p, Wanted& w) {
+  if (w.done) return;
   const uint32_t here = CoOp(p), sub = Sub(p);
   if (here == 0) {  // not joined here yet: the join comes first (state_sync)
     w.since = Clock::now();  // (the "slow" clock starts once the copy can follow)
@@ -150,6 +156,7 @@ void Follow(PPCContext& ctx, uint8_t* base, int p, Wanted& w) {
   }
   if (matched) {
     w.slow_noted = false;
+    w.done = true;
   } else if (!w.slow_noted && Clock::now() - w.since > kSlow) {
     w.slow_noted = true;
     REXLOG_WARN("Online: P{}'s copy still isn't {} (state {}, sub-state {}) {} s after their PC said so", p + 1,
@@ -195,6 +202,7 @@ void Tick(PPCContext& ctx, uint8_t* base) {
     if (g_wanted[p].seq == wanted[p].seq) {
       g_wanted[p].slow_noted = wanted[p].slow_noted;
       g_wanted[p].since = wanted[p].since;
+      g_wanted[p].done = wanted[p].done;
     }
   }
 }
@@ -217,6 +225,7 @@ void OnReceive(const uint8_t* data, size_t size) {
   w.host = host;
   w.since = Clock::now();
   w.slow_noted = false;
+  w.done = false;
   if (Trace()) {
     REXLOG_INFO("OnlineTrace: P{} says co-op state {} (host {}) (#{})", p + 1, w.state,
                 w.host != kNoHost ? int(w.host) + 1 : 0, seq);

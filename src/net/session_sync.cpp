@@ -60,6 +60,7 @@
 #include "world_sync.h"
 #include "action_sync.h"
 #include "mask_sync.h"
+#include "titan_sync.h"
 
 // Recompiled game functions we override or invoke on the main guest thread.
 extern "C" REX_FUNC(__imp__sub_8211AF40);  // FrontEnd fight-tree decision dispatcher
@@ -902,6 +903,9 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
     // took, and player 1 was finally dropped there). The repair only steps in
     // when the game didn't sort it out by itself.
     if (now - net::LastRemoteTitanPress(p) < std::chrono::milliseconds(1500)) continue;
+    // Titans by outcome (titan_sync.h) is matching this player right now: the
+    // repair is the late fallback only.
+    if (net::titan_sync::Busy(p)) continue;
     // THE SAME TITAN: on foot here, riding a synced titan there whose copy we
     // have = mount that copy now (the game's own mount), as the owner's jack
     // did. A copy makes no decisions, so it never holds the titan's jack
@@ -1200,6 +1204,7 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
   if (!net::Active()) return;
   net::ApplyRemoteHealth(ctx, base);  // other players' health, as their own PCs say
   net::mask_sync::Tick(ctx, base);    // masks: announce ours, copies follow theirs
+  net::titan_sync::Tick(ctx, base);   // titans: announce ours, copies follow theirs
   const auto now = Clock::now();
   const uint32_t uber = ReadU32(base, kUberGlobal);
   if (!uber) return;
@@ -1742,6 +1747,19 @@ std::string DebugStatus() {
       "  session_sync: epoch={} grace={} host_save={} | local_titan=('{}' / pocket '{}')",
       g_ss.transition_epoch, InTransitionOrCutsceneGrace() ? "yes" : "no",
       g_ss.client_has_host_save ? "ready" : "n/a", g_ss.local_last_ridden, g_ss.local_last_pocket);
+}
+
+void MountPlayerOnTitan(PPCContext& ctx, uint8_t* base, int p, uint32_t titan) {
+  const uint32_t crash = more_players::CharacterOfPlayer(p);
+  if (!crash || !titan || !guest_memory::Readable(titan, 0x40)) return;
+  NativeMountPlayerOnTitan(ctx, base, crash, titan);
+}
+
+void ForceDismount(int p, uint32_t titan) {
+  if (p < 0 || p >= kMaxPlayers || !titan) return;
+  g_ss.dismounting_titan = titan;  // lost_controller's CheckInputEvent hook answers its dismount
+  g_ss.dismount_until = Clock::now() + std::chrono::milliseconds(600);
+  net::action_sync::AllowOwnDecisions(p, 800);  // the copy's titan tree must ask (decides itself)
 }
 
 }  // namespace session_sync
