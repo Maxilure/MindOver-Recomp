@@ -437,6 +437,18 @@ extern "C" REX_FUNC(sub_8214A9A8) {
   const uint32_t actor = Read32(self + 28), target = Read32(self + 32);
   const uint32_t interactor_flag = Read32(self + 36);
   const int pre_player = (net::Active() && target) ? PlayerOfActor(ctx, base, actor) : -1;
+  // ONLINE: ANOTHER PC'S PLAYER NEVER USES THINGS HERE (2026-11-28 playtest).
+  // Every player counts as "near" on every PC (session_sync sub_82149C60: the
+  // reactions are shared), so the other player's COPY, put into its owner's
+  // "use" state by action_sync, sent this message here too: the host using the
+  // save totem opened "Save your game?" on the guest's screen as well, and the
+  // host opening the chest ran the house's fade on the guest's screen. Their
+  // own PC does the use; what other PCs must see of it comes as the owner's
+  // kMsgWorldInteract replay (TickOutfitsAndRemoteInteracts sends the message
+  // itself, not through here), and screens/menus are never sent at all.
+  if (pre_player >= 0 && pre_player != net::LocalSlot()) {
+    return;
+  }
   if (net::Active() && target) {
     net::session_sync::BeginPlayerInteract(pre_player);
   }

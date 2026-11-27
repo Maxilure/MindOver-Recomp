@@ -34,8 +34,10 @@
 #include <cmath>
 #include <cstring>
 #include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <fmt/format.h>
@@ -80,6 +82,8 @@ extern "C" REX_FUNC(__imp__sub_8229CB78);  // StorePlayersBeforeLevelChange()
 extern "C" REX_FUNC(__imp__sub_820B3430);  // CMasterCinematicAction: notify all players/titans
 extern "C" REX_FUNC(__imp__sub_821991B0);  // Collectable::SetState(collectable, actor, new_state)
 extern "C" REX_FUNC(__imp__sub_8225A7D0);  // CSaveGameManager::PackSaveBuffer(save_mgr)
+extern "C" REX_FUNC(__imp__sub_8214A080);  // (see below)
+extern "C" REX_FUNC(__imp__sub_82175708);  // is actor r4 inside trigger volume r3?  // handle -> object (requirement +8)
 extern "C" REX_FUNC(__imp__sub_82293850);  // CActionBeginChangeLevel "ready?" (vt slot 1)
 extern "C" REX_FUNC(__imp__sub_82293D48);  // CActionChangeLevel "ready?" (vt slot 1)
 extern "C" REX_FUNC(__imp__sub_82270608);  // GetGameObject() -> 0x825B0008
@@ -242,9 +246,6 @@ struct State {
   // A level exit waiting for open menus (HoldExitForOpenMenu): until when, and
   // where the local player is held meanwhile.
   Clock::time_point exit_waiting_until{};
-  bool exit_hold_valid = false;
-  uint32_t exit_hold_body = 0;
-  float exit_hold_pos[3] = {};
   // Host: a guest's exit request that came while a menu was open (sent on later).
   PendingTransition queued_request{};
   uint8_t queued_initiator = 0;
@@ -324,6 +325,14 @@ struct State {
 };
 
 State g_ss;
+// Requirement -> "starts a level exit" (RequirementLeadsToExit), forgotten at every load.
+std::unordered_map<uint32_t, bool> g_exit_requirements;
+// Exits refused while a menu was open and still SHUT (RefuseExitTrigger): one
+// stays shut, menu closed or not, until its volume is empty on this PC; then a
+// player has to walk in again to use it (design rule, 2026-11-28 playtest:
+// standing in the doorway while the other player unpaused moved everyone).
+// Forgotten at every load with g_exit_requirements.
+std::unordered_set<uint32_t> g_exit_shut;
 
 // --- Safe big-endian guest memory helpers ------------------------------------
 uint32_t ReadU32(uint8_t* base, uint32_t addr) {
@@ -1076,32 +1085,44 @@ void EnsureFrontEndHooksRegistered() {
 // checkpoint. Now the lock answers the game's own "ready?" with "not yet" BEFORE
 // Begin, so nothing has started: no fade, no lock, no lost run. The exit fires by
 // itself once every menu is closed.
+// The card for THIS PC's player who walked into an exit while someone is in a
+// menu: one per try (a new try = none in the last 300 ms; the bar queues every
+// card it is given, so one every few seconds would pile up).
+void ShowExitRefusedCard(uint8_t* base) {
+  const auto now = Clock::now();
+  const bool new_try = now >= g_ss.exit_waiting_until;
+  g_ss.exit_waiting_until = now + std::chrono::milliseconds(300);
+  if (!new_try || now - g_ss.last_menu_block_banner < std::chrono::seconds(2)) return;
+  g_ss.last_menu_block_banner = now;
+  int who = -1;
+  for (int p = 0; p < kMaxPlayers && who < 0; ++p) {
+    if (net::IsPlayerInMenu(p, base)) who = p;
+  }
+  const std::u16string player(1, char16_t(u'1' + std::max(0, who)));
+  achievements::ShowNotice(tr(u"Exit on Hold"),
+                           trf(u"Waiting for Player {0} to close their menu.", {player}));
+  REXLOG_INFO("Online: level exit refused: player {} has a menu open", who + 1);
+}
+
+// The level-change events' "ready?": the rare fallback (an exit whose trigger was
+// already passed when a menu opened). The usual case never gets this far: the
+// exit's TRIGGER answers "nobody inside" while a menu is open (sub_822A6188), so
+// the player is told and simply isn't moved; they walk in again later.
 bool HoldExitForOpenMenu(uint8_t* base) {
   if (!net::Active() || !more_players::InPlay() || g_ss.applying_transition) return false;
   if (!net::AnyPlayerInMenu(base)) return false;
-  const auto now = Clock::now();
-  // One card per wait (a new wait = none in the last 300 ms): the bar queues
-  // every card it is given, so a card every few seconds would pile up.
-  const bool new_wait = now >= g_ss.exit_waiting_until;
-  g_ss.exit_waiting_until = now + std::chrono::milliseconds(300);
-  if (new_wait && now - g_ss.last_menu_block_banner > std::chrono::seconds(2)) {
-    g_ss.last_menu_block_banner = now;
-    int who = -1;
-    for (int p = 0; p < kMaxPlayers && who < 0; ++p) {
-      if (net::IsPlayerInMenu(p, base)) who = p;
-    }
-    const std::u16string player(1, char16_t(u'1' + std::max(0, who)));
-    achievements::ShowNotice(tr(u"Exit on Hold"),
-                             trf(u"Waiting for Player {0} to close their menu.", {player}));
-    REXLOG_INFO("Online: level exit waits: player {} has a menu open", who + 1);
+  // Reaching here = the doorway check (RefuseExitTrigger) didn't know this exit:
+  // this hold WAITS and then lets the move through by itself, which is not the
+  // rule (refuse; walk in again later). Logged so such exits can be found.
+  static Clock::time_point last{};
+  if (Clock::now() - last > std::chrono::seconds(2)) {
+    last = Clock::now();
+    REXLOG_WARN("Online: an exit got past the doorway check (held by the level-change step instead)");
   }
+  ShowExitRefusedCard(base);
   return true;
 }
 
-// While an exit waits, the local player (if not in a menu) is held where the wait
-// began: no walking out past the exit, no other trigger on the way. The hold ends
-// the moment the menus close; the objective then runs its Begin and the level
-// changes the game's way.
 // Guest: an exit request went to the host (resent by TickFrame until answered).
 void NoteExitRequestSent(int8_t level, int8_t entry) {
   std::lock_guard lock(g_ss.mutex);
@@ -1109,32 +1130,10 @@ void NoteExitRequestSent(int8_t level, int8_t entry) {
   g_ss.sent_request_at = Clock::now();
 }
 
-void HoldPlayerAtWaitingExit(uint8_t* base, const Clock::time_point& now) {
-  const int slot = net::LocalSlot();
-  const bool waiting = now < g_ss.exit_waiting_until && slot >= 0 && slot < kMaxPlayers &&
-                       !IsLocalMenuOpen(base);
-  if (!waiting) {
-    g_ss.exit_hold_valid = false;
-    return;
-  }
-  const uint32_t titan = more_players::TitanOfPlayer(slot);
-  const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(slot);
-  uint32_t phys = body ? ReadU32(base, body + 308) : 0;
-  if (!phys || ReadU32(base, phys) != 0x82032FC4u || ReadU32(base, phys + 88) != body) {
-    phys = net::LookupCachedPhysics(base, body);
-  }
-  if (!phys || !guest_memory::Readable(phys + 104, 48)) return;
-  if (!g_ss.exit_hold_valid || g_ss.exit_hold_body != body) {
-    g_ss.exit_hold_valid = true;
-    g_ss.exit_hold_body = body;
-    for (int i = 0; i < 3; ++i) g_ss.exit_hold_pos[i] = ReadF32(base, phys + 140 + 4 * i);
-  }
-  WriteF32(base, phys + 140, g_ss.exit_hold_pos[0]);  // x, z: held; y: the game's (ground)
-  WriteF32(base, phys + 148, g_ss.exit_hold_pos[2]);
-  WriteF32(base, phys + 104, 0.0f);
-  WriteF32(base, phys + 112, 0.0f);
-}
 
+}  // namespace
+bool InteractionOpensScreen(PPCContext& ctx, uint8_t* base, uint32_t object);  // below
+namespace {
 void TickOutfitsAndRemoteInteracts(PPCContext& ctx, uint8_t* base, const Clock::time_point& now) {
   const int local = net::LocalSlot();
   if (local < 0 || !more_players::InPlay() || more_players::Loading()) return;
@@ -1208,6 +1207,23 @@ void TickOutfitsAndRemoteInteracts(PPCContext& ctx, uint8_t* base, const Clock::
       }
     }
     if (!best_obj) continue;
+    {  // one replay per use (a sender that still sent it twice)
+      static uint32_t last_obj = 0;
+      static int last_slot = -1;
+      static Clock::time_point last_at{};
+      if (best_obj == last_obj && int(ev.slot) == last_slot &&
+          now - last_at < std::chrono::milliseconds(500)) {
+        continue;
+      }
+      last_obj = best_obj;
+      last_slot = int(ev.slot);
+      last_at = now;
+    }
+    if (InteractionOpensScreen(ctx, base, best_obj)) {  // (a sender without that check)
+      REXLOG_INFO("Online: P{}'s interaction on {:08X} opens their own screen: not replayed",
+                  ev.slot + 1, best_obj);
+      continue;
+    }
 
     REXLOG_INFO("Online: replaying shared world interaction from P{} on object {:08X} (hash {:08X})",
                 ev.slot + 1, best_obj, ev.hash);
@@ -1249,7 +1265,8 @@ void Reset() {
   g_ss.pending_transition = {};
   g_ss.applying_transition = false;
   g_ss.exit_waiting_until = {};
-  g_ss.exit_hold_valid = false;
+  g_exit_requirements.clear();
+  g_exit_shut.clear();
   g_ss.queued_request = {};
   g_ss.sent_request = {};
   g_ss.was_loading = false;
@@ -1373,6 +1390,16 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
   // Track loading screen exits -> extend void-death / snap grace by 2.5 s so
   // players finishing an area load at slightly different instants never die.
   const bool loading = more_players::Loading();
+  if (loading) {  // objects are rebuilt by a load
+    g_exit_requirements.clear();
+    // Shut exits: only after a REAL load (loading for 20+ frames in a row).
+    // Closing the chest reads as "loading" for a frame or two, which emptied
+    // this list and let a player standing in a shut doorway through
+    // (2026-11-28 test). A requirement address can only be reused after a load.
+    static int loading_frames = 0;
+    if (!g_ss.was_loading) loading_frames = 0;
+    if (++loading_frames == 20) g_exit_shut.clear();
+  }
   if (loading) {
     ExtendGrace(2.5);
   } else if (g_ss.was_loading) {
@@ -1406,11 +1433,10 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
     }
   }
 
-  // 2b. Exits waiting for open menus: hold the local player there; the host sends
+  // 2b. Exits and open menus: the host sends
   //     on a guest's request that came while a menu was open; a guest resends its
   //     request every 3 s until the host answers (a reliable message can still
   //     arrive while the host is between states).
-  HoldPlayerAtWaitingExit(base, now);
   if (!loading && !net::AnyPlayerInMenu(base)) {
     std::lock_guard lock(g_ss.mutex);
     if (net::IsHost() && g_ss.queued_request.pending) {
@@ -1446,6 +1472,32 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
       SendToHost(pkt, sizeof(pkt), /*reliable=*/true);
       REXLOG_INFO("Online: exit request resent (level {} entry {})", int(g_ss.sent_request.level),
                   int(g_ss.sent_request.entry));
+    }
+  }
+
+  // TRACE (debug_online_trace): objectives stepping on (current event +0x14), to
+  // find which level script does what near an NPC.
+  if (net::DebugTraceOn() && !loading) {
+    static std::unordered_map<uint32_t, uint32_t> current;
+    const uint32_t mgr = ReadU32(base, uber + 68);  // objective manager (kObjectiveManagerSlot)
+    if (mgr && ReadU32(base, mgr) == 0x8203F10Cu) {
+      for (uint32_t list : {16u, 32u}) {
+        const uint32_t b = ReadU32(base, mgr + list), e = ReadU32(base, mgr + list + 4);
+        if (!b || e < b || e - b > 4096 || !guest_memory::Readable(b, e - b)) continue;
+        for (uint32_t at = b; at < e; at += 4) {
+          const uint32_t obj = ReadU32(base, at);
+          if (!obj || !guest_memory::Readable(obj + 0x10, 8)) continue;
+          const uint32_t cur = ReadU32(base, obj + 0x14);
+          auto [it, fresh] = current.try_emplace(obj, cur);
+          if (!fresh && it->second != cur) {
+            const uint32_t prev = it->second;
+            it->second = cur;
+            REXLOG_INFO("OnlineTrace: objective {:08X} steps: {:08X} (vt {:08X}) -> {:08X} (vt {:08X})", obj,
+                        prev, prev && guest_memory::Readable(prev, 4) ? ReadU32(base, prev) : 0, cur,
+                        cur && guest_memory::Readable(cur, 4) ? ReadU32(base, cur) : 0);
+          }
+        }
+      }
     }
   }
 
@@ -1829,6 +1881,164 @@ bool GetHostSaveForClient(std::vector<uint8_t>& out_block_20174,
   return true;
 }
 
+// PERSONAL SCREENS (2026-11-27). Crash's house's chest, TV, tiki face and comic
+// table are each a level OBJECTIVE: a CRequirementInteraction (vtable
+// 0x82040E2C; +8 a handle the game resolves with sub_8214A080 to the
+// interactable) followed by a fade and a CActionGoToFEScreenFromIngame (vtable
+// 0x8203F96C: opens front-end screen +8 for player +12). An objective keeps its
+// events as a list (+0x10 first, event +4 next; +0x14 the current one); the
+// objective manager is the game object's manager of type 11 (uber +68) with its
+// objectives in two lists (+16..+20, +32..+36). Such an interaction is one
+// player's own screen: sent to the other PCs it ran the whole objective there
+// (the fade on everyone's screen, the screen itself skipped).
+constexpr uint32_t kObjectiveManagerSlot = 68;
+constexpr uint32_t kRequirementInteractionVt = 0x82040E2Cu;
+constexpr uint32_t kGoToFEScreenVt = 0x8203F96Cu;
+
+bool InteractionOpensScreen(PPCContext& ctx, uint8_t* base, uint32_t object) {
+  const uint32_t uber = ReadU32(base, kUberGlobal);
+  const uint32_t mgr = uber ? ReadU32(base, uber + kObjectiveManagerSlot) : 0;
+  if (!mgr || ReadU32(base, mgr) != 0x8203F10Cu || !object) return false;
+  const uint32_t behaviour = prompt_icons::InteractableOf(base, object);
+  for (uint32_t list : {16u, 32u}) {
+    const uint32_t begin = ReadU32(base, mgr + list), end = ReadU32(base, mgr + list + 4);
+    if (!begin || end < begin || end - begin > 4 * 1024 || !guest_memory::Readable(begin, end - begin)) {
+      continue;
+    }
+    for (uint32_t at = begin; at < end; at += 4) {
+      const uint32_t objective = ReadU32(base, at);
+      if (!objective || !guest_memory::Readable(objective + 0x10, 8)) continue;
+      bool ours = false, screen = false;
+      uint32_t e = ReadU32(base, objective + 0x10);
+      for (int n = 0; e && n < 64 && guest_memory::Readable(e, 16); ++n, e = ReadU32(base, e + 4)) {
+        const uint32_t vt = ReadU32(base, e);
+        // A screen of one player's own: house screens, the save totem's prompt
+        // (CActionDisplaySavePrompt 0x8203F838: sent along, it asked EVERY PC "save?",
+        // twice when the send was doubled), the map (CActionDisplayMapScreen 0x8203F6FC).
+        if (vt == kGoToFEScreenVt || vt == 0x8203F838u || vt == 0x8203F6FCu) screen = true;
+        if (vt == kRequirementInteractionVt && !ours) {
+          // The handle resolves to a part INSIDE the interactable (its +0x44:
+          // TV 42828070 -> 428280B4, seen with --debug_online_trace).
+          const uint32_t it = CallGame(__imp__sub_8214A080, ctx, base, e + 8);
+          ours = it && (it == object || (behaviour && it >= behaviour && it < behaviour + 0x100));
+        }
+      }
+      if (ours && screen) return true;
+      if (screen && net::DebugTraceOn()) {  // what a screen objective holds (once each)
+        static std::set<uint32_t> told;
+        if (told.insert(objective).second) {
+          std::string events;
+          for (uint32_t ev = ReadU32(base, objective + 0x10), n = 0;
+               ev && n < 64 && guest_memory::Readable(ev, 16); ++n, ev = ReadU32(base, ev + 4)) {
+            events += fmt::format(" {:08X}", ReadU32(base, ev));
+            if (ReadU32(base, ev) == kRequirementInteractionVt) {
+              events += fmt::format("(->{:08X})", CallGame(__imp__sub_8214A080, ctx, base, ev + 8));
+            }
+          }
+          REXLOG_INFO("OnlineTrace: screen objective {:08X} (list +{}) events:{} (asked for {:08X})",
+                      objective, list, events, object);
+        }
+      }
+    }
+  }
+  if (net::DebugTraceOn()) {
+    REXLOG_INFO("OnlineTrace: interaction on {:08X}: no screen objective found (manager {:08X}, "
+                "lists {} + {})", object, mgr,
+                (ReadU32(base, mgr + 20) - ReadU32(base, mgr + 16)) / 4,
+                (ReadU32(base, mgr + 36) - ReadU32(base, mgr + 32)) / 4);
+  }
+  return false;
+}
+
+// EXITS ARE REFUSED, NOT HELD (2026-11-27 design rule after a playtest: the
+// player gets the message and is not moved). A level exit is an objective
+// whose events include CActionBeginChangeLevel (vtable 0x8203F2E8) or
+// CActionChangeLevel (0x8203F36C), started by a trigger volume requirement. While
+// any player is in a menu, that requirement answers "nobody inside": nothing
+// starts, nobody is held, the walker gets the card and can change their mind;
+// walking in again after the menu closes works as usual. Which requirements lead
+// to an exit = a scan of the objective lists (see InteractionOpensScreen), cached
+// per requirement and forgotten at every load (objects are rebuilt then).
+constexpr uint32_t kBeginChangeLevelVt = 0x8203F2E8u, kChangeLevelVt = 0x8203F36Cu;
+
+// Is `req` this objective event, or inside it? A requirement can sit inside
+// a CObjectiveBoolean (And 0x820413DC / Not 0x82041408 / Or 0x82041434): its
+// parts at +8 and +0xC (sub_822A7208 asks part i at +(i+2)*4). Found
+// 2026-11-28: Crash's house's front door = CBooleanAnd(trigger volume, ...)
+// -> CActionBeginChangeLevel; the old one-level scan missed it, so that exit
+// was only caught by the fallback hold, which then let the move through by
+// itself when the menu closed.
+bool EventHolds(uint8_t* base, uint32_t e, uint32_t req, int depth = 0) {
+  if (!e || depth > 6) return false;
+  if (e == req) return true;
+  if (!guest_memory::Readable(e, 0x10)) return false;
+  const uint32_t vt = ReadU32(base, e);
+  if (vt != 0x820413DCu && vt != 0x82041408u && vt != 0x82041434u) return false;
+  return EventHolds(base, ReadU32(base, e + 8), req, depth + 1) ||
+         EventHolds(base, ReadU32(base, e + 0xC), req, depth + 1);
+}
+
+bool RequirementLeadsToExit(uint8_t* base, uint32_t req) {
+  if (auto it = g_exit_requirements.find(req); it != g_exit_requirements.end()) return it->second;
+  bool exit = false;
+  const uint32_t uber = ReadU32(base, kUberGlobal);
+  const uint32_t mgr = uber ? ReadU32(base, uber + kObjectiveManagerSlot) : 0;
+  if (mgr && ReadU32(base, mgr) == 0x8203F10Cu) {
+    for (uint32_t list : {16u, 32u}) {
+      const uint32_t begin = ReadU32(base, mgr + list), end = ReadU32(base, mgr + list + 4);
+      if (!begin || end < begin || end - begin > 4 * 1024 || !guest_memory::Readable(begin, end - begin)) continue;
+      for (uint32_t at = begin; at < end && !exit; at += 4) {
+        const uint32_t objective = ReadU32(base, at);
+        if (!objective || !guest_memory::Readable(objective + 0x10, 8)) continue;
+        bool has_req = false, changes_level = false;
+        uint32_t e = ReadU32(base, objective + 0x10);
+        for (int n = 0; e && n < 64 && guest_memory::Readable(e, 8); ++n, e = ReadU32(base, e + 4)) {
+          if (EventHolds(base, e, req)) has_req = true;
+          const uint32_t vt = ReadU32(base, e);
+          if (vt == kBeginChangeLevelVt || vt == kChangeLevelVt) changes_level = true;
+        }
+        exit = has_req && changes_level;
+      }
+    }
+  }
+  g_exit_requirements[req] = exit;
+  return exit;
+}
+
+// The volume answered "nobody inside" (the game's own answer): a shut exit opens again.
+void NoteTriggerEmpty(uint32_t req) {
+  if (g_exit_shut.erase(req)) REXLOG_INFO("Online: exit {:08X} open again (volume empty)", req);
+}
+
+bool RefuseExitTrigger(PPCContext& ctx, uint8_t* base, uint32_t req) {
+  if (!net::Active() || g_ss.applying_transition) return false;
+  // A SHUT exit stays shut in EVERY frame: the frame a menu closes (chest:
+  // front end 847 -> 852 -> 486) is briefly "not in play", and that one frame
+  // let a player standing in the doorway through (2026-11-28 test).
+  if (g_exit_shut.count(req)) {
+    if (!net::AnyPlayerInMenu(base)) return true;  // no new card: they know
+  } else if (!more_players::InPlay() || more_players::Loading()) {
+    return false;
+  }
+  const bool menu_open = net::AnyPlayerInMenu(base);
+  if (!menu_open && !g_exit_shut.count(req)) return false;
+  if (!RequirementLeadsToExit(base, req)) return false;
+  if (g_exit_shut.insert(req).second) {
+    REXLOG_INFO("Online: exit {:08X} shut until its volume is empty", req);
+  }
+  if (!menu_open) return true;  // menu closed, but they haven't stepped out yet: no new card
+  // The card only for THIS PC's player standing in it (another player's copy
+  // walking in is their PC's business: their own PC tells them).
+  const int slot = net::LocalSlot();
+  const uint32_t vol = ReadU32(base, req + 8);
+  const uint32_t titan = slot >= 0 ? more_players::TitanOfPlayer(slot) : 0;
+  const uint32_t body = titan ? titan : (slot >= 0 ? more_players::CharacterOfPlayer(slot) : 0);
+  if (vol && body && (CallGame(__imp__sub_82175708, ctx, base, vol, body) & 0xFF) != 0) {
+    ShowExitRefusedCard(base);
+  }
+  return true;
+}
+
 void BeginPlayerInteract(int player) {
   g_ss.active_interact_player = player;
   g_ss.local_interact_opened_menu = false;
@@ -1838,7 +2048,7 @@ void BeginPlayerInteract(int player) {
   }
 }
 
-void EndPlayerInteract(PPCContext& /*ctx*/, uint8_t* base, int player, uint32_t /*actor*/,
+void EndPlayerInteract(PPCContext& ctx, uint8_t* base, int player, uint32_t /*actor*/,
                        uint32_t target, uint32_t interactor_flag) {
   const bool opened_local_menu = g_ss.local_interact_opened_menu;
   g_ss.active_interact_player = -1;
@@ -1849,6 +2059,20 @@ void EndPlayerInteract(PPCContext& /*ctx*/, uint8_t* base, int player, uint32_t 
   }
   if (opened_local_menu) {
     // Local-only interactable (e.g. Save Tiki Totem): never broadcast!
+    return;
+  }
+  // ONE SEND PER USE: the game ends one interaction through two behaviours, so
+  // this ran twice and the other PCs replayed it twice (two save prompts).
+  {
+    static uint32_t last_target = 0;
+    static Clock::time_point last_at{};
+    const auto now = Clock::now();
+    if (target == last_target && now - last_at < std::chrono::milliseconds(500)) return;
+    last_target = target;
+    last_at = now;
+  }
+  if (InteractionOpensScreen(ctx, base, target)) {
+    REXLOG_INFO("Online: interaction on {:08X} opens a screen: this PC's only, not sent", target);
     return;
   }
   const uint32_t mat = ReadU32(base, target + kActorMatrix);
@@ -2064,6 +2288,66 @@ extern "C" REX_FUNC(sub_8223A280) {
   __imp__sub_8223A280(ctx, base);
 }
 
+// 3c. CInteractableBehaviour "add to my in-range list" (sub_82149C60, r3 = the
+//     interactable, r5 = the actor; from its message handler, vtable 0x8202EA6C
+//     slot 5: message 18 subtype 2 / message 9). That list (+0x20..+0x40,
+//     8-byte entries) is "who stands near": it drives the thing's REACTION (the
+//     save totem's paw stone rising + glow: its CStatePropBehaviour goes to state
+//     6; a villager's "noticed" state, which hides the "!" above its head:
+//     decision sub_82222AE8) and the floating button.
+//     DESIGN RULE (2026-11-28): the reaction is SHARED (every PC sees the totem
+//     wake up / Coco notice when ANY player walks up), only the BUTTON PICTURE is
+//     personal. So every player's body goes into the list on every PC, like the
+//     original; the button is limited to this PC's player where it is drawn
+//     (prompt_icons WorldButtonSwap: other slots never count online, no local
+//     player in the list = the coin drawn at scale 0).
+//     History: s.14 (2026-11-27) kept remote players OUT of the list here, which
+//     made the reactions per PC too: the totem woke only on the walker's screen.
+//     Passed through untouched; kept as the documented spot for this rule.
+extern "C" REX_FUNC(__imp__sub_82149C60);
+extern "C" REX_FUNC(sub_82149C60) {
+  __imp__sub_82149C60(ctx, base);
+}
+
+// 3d. "Is anyone near me?" (sub_8214A060, r3 = an interactable: its in-range
+//     list +0x20..[+0x40] not empty) ASKED BY A VILLAGER. A villager's (Coco's)
+//     fight tree uses it to switch between idle (state 3, the "!" over her head)
+//     and "noticed" (197, the "!" gone, B shown): decisions sub_82222AE8 (lr
+//     0x82222E28), sub_82224958 (0x822249F8), sub_82224AD8 (0x82224AFC),
+//     sub_82224BF8 (0x82224C24), and sub_82229048 (0x8222906C, same layout:
+//     +0xC0 interactable, +0xCC flags) which switches a part at +0xBC with it.
+//     DESIGN RULE (2026-11-28, 3 rounds): the "!" is PERSONAL like the button
+//     (each player keeps seeing it until THEY walk up), while the in-range list
+//     stays shared for everything else (the totem waking up, sub_821B4618's
+//     objects...). So for these callers only, "near" = THIS PC's player in the
+//     list. With action_sync IsUsableNpc (each PC runs villager trees itself)
+//     the guest's Coco notices the guest, the host's notices the host.
+//     Was broken twice: s.15 shared the tree state from the host; round 2 put
+//     every player back in the list, so the host's approach hid the guest's "!".
+extern "C" REX_FUNC(__imp__sub_8214A060);
+extern "C" REX_FUNC(sub_8214A060) {
+  const uint32_t lr = uint32_t(ctx.lr);
+  const bool villager = lr == 0x82222E28u || lr == 0x822249F8u || lr == 0x82224AFCu ||
+                        lr == 0x82224C24u || lr == 0x8222906Cu;
+  const int local = net::LocalSlot();
+  if (!villager || !net::Active() || local < 0 || !more_players::InPlay()) {
+    __imp__sub_8214A060(ctx, base);
+    return;
+  }
+  const uint32_t it = ctx.r3.u32;
+  const uint32_t mine = more_players::CharacterOfPlayer(local);
+  const uint32_t mine_titan = more_players::TitanOfPlayer(local);
+  const uint32_t end = net::session_sync::ReadU32(base, it + 0x40);
+  bool near_me = false;
+  if (end >= it + 0x20 && end <= it + 0x20 + 4 * 8) {
+    for (uint32_t e = it + 0x20; e < end && !near_me; e += 8) {
+      const uint32_t body = net::session_sync::ReadU32(base, e);
+      near_me = body && (body == mine || body == mine_titan);
+    }
+  }
+  ctx.r3.u64 = near_me ? 1 : 0;
+}
+
 // 3b. CRequirementTriggerVolume "ready?" (vtable 0x82041300 slot 1, sub_822A6188):
 //     with --debug_online_trace, each volume's change to "someone is inside" is
 //     logged with this PC's player's position at that moment, so a test can find
@@ -2073,6 +2357,10 @@ extern "C" REX_FUNC(__imp__sub_822A6188);
 extern "C" REX_FUNC(sub_822A6188) {
   const uint32_t req = ctx.r3.u32;
   __imp__sub_822A6188(ctx, base);
+  if (req && (ctx.r3.u32 & 0xFF) == 0) net::session_sync::NoteTriggerEmpty(req);
+  if (req && (ctx.r3.u32 & 0xFF) != 0 && net::session_sync::RefuseExitTrigger(ctx, base, req)) {
+    ctx.r3.u64 = 0;  // an exit while someone is in a menu: "nobody inside"
+  }
   if (!net::DebugTraceOn() || !req) return;
   static std::unordered_map<uint32_t, bool> inside;  // requirement -> last answer
   const bool now_in = (ctx.r3.u32 & 0xFF) != 0;
@@ -2424,12 +2712,30 @@ extern "C" REX_FUNC(sub_8225F718) {
 
 extern "C" REX_FUNC(sub_82295E20) {
   const uint32_t action = ctx.r3.u32;
+  if (net::DebugTraceOn() && action && guest_memory::Readable(action + 8, 9) &&
+      (*GuestPtr(base, action + 0x10) & 0x80) == 0) {
+    REXLOG_INFO("OnlineTrace: FE screen action {:08X}: screen {} player {} (last interact P{}, "
+                "replaying {})", action, int32_t(net::session_sync::ReadU32(base, action + 8)),
+                int32_t(net::session_sync::ReadU32(base, action + 12)),
+                net::session_sync::g_ss.last_interact_player + 1,
+                net::session_sync::g_ss.replaying_remote_interact);
+  }
   if (net::Active() && more_players::InPlay() && action && guest_memory::Readable(action + 12, 5)) {
     int target_player = int32_t(net::session_sync::ReadU32(base, action + 12));
-    if (net::session_sync::g_ss.last_interact_player >= 0 &&
-        net::session_sync::Clock::now() - net::session_sync::g_ss.last_interact_time <
-            std::chrono::milliseconds(1200) &&
-        (net::session_sync::g_ss.last_interact_player & 1) == target_player) {
+    // A negative player (the TV, tiki face, comic table: -2) = the game's "whoever
+    // used it": the player who just interacted on THIS PC (it was only 0/1 here
+    // before, so those screens closed at once: a fade and nothing).
+    const bool recent = net::session_sync::g_ss.last_interact_player >= 0 &&
+                        net::session_sync::Clock::now() - net::session_sync::g_ss.last_interact_time <
+                            std::chrono::milliseconds(1200);
+    if ((*GuestPtr(base, action + 0x10) & 0x80) != 0) {
+      // The screen is already asked for (+16 bit 0x80, set by the original's first
+      // call, which only this PC's own player ever reaches): it stays ours until
+      // it closes, however long the player stays in it.
+      target_player = net::LocalSlot();
+    } else if (target_player < 0) {
+      target_player = recent ? net::session_sync::g_ss.last_interact_player : -1;
+    } else if (recent && (net::session_sync::g_ss.last_interact_player & 1) == target_player) {
       target_player = net::session_sync::g_ss.last_interact_player;
     }
     if (net::session_sync::g_ss.replaying_remote_interact || target_player != net::LocalSlot()) {

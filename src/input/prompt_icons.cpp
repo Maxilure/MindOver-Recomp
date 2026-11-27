@@ -34,6 +34,7 @@
 #include "../data/pure3d.h"
 #include "../guest_memory.h"
 #include "../pddi/intercept.h"
+#include "../net/state_sync.h"
 #include "../players/more_players.h"
 #include "../ui/game_font.h"
 #include "../ui/scrooby.h"
@@ -3042,7 +3043,11 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
     float body[3];
     // (not "near": Windows' headers define near and far as empty macros)
     bool can_use = false;
-    if (!menu_input::PlayerPlays(p)) {
+    if (net::Active() && p != net::LocalSlot()) {
+      // ONLINE (2026-11-27): each PC shows the buttons of ITS OWN player only.
+      // Another player walking up to a titan, a totem, a chest or an NPC is
+      // that player's business: no B on this screen for it.
+    } else if (!menu_input::PlayerPlays(p)) {
     } else if (interactable) {
       can_use = InInteractableList(base, interactable, p);
     } else if (jackable || jackers) {
@@ -3075,6 +3080,12 @@ bool WorldButtonSwap(uint8_t* base, uint32_t shader, uint32_t xn_context, uint32
       g_coins.scale = kJackSymbolScale;
       g_coins.flat = true;
     }
+    else if (net::Active()) {
+      // Online, nobody on THIS PC may use it (another PC's player stands there):
+      // the coin is drawn at scale 0 = nothing (native renderer).
+      g_coins.xn[count++] = original->xn;
+      g_coins.scale = 0.0f;
+    }
     else if (copy[owner]) g_coins.xn[count++] = copy[owner];
   }
   g_coins.count = count;
@@ -3106,6 +3117,59 @@ void WorldButtonRestore(uint8_t* base) {
   }
   g_coin_shader = 0;
 }
+// Would player p alone see this floating button? In its interactable's list
+// (the game's own "who may use it"), in jack reach of a stunned titan (a
+// titan's B or "can be jacked" symbol shows from anywhere: yes), else within
+// the range it appeared at (+15%): the same rules as the coins in
+// WorldButtonSwap. (Same helper as the main branch's split screen.)
+bool IconShownFor(uint8_t* base, uint32_t icon, int p) {
+  float range = 0;
+  {
+    std::lock_guard<std::mutex> lock(g_icons_mutex);
+    for (const IconOwner& o : g_icons) {
+      if (o.icon == icon) range = o.range;
+    }
+  }
+  const uint32_t object = Load32(base, icon + kIconObject);
+  if (object < 0x40000000) return true;
+  if (const uint32_t interactable = InteractableOf(base, object)) return InInteractableList(base, interactable, p);
+  bool jackable = false;
+  if (JackersOf(base, object, &jackable) || jackable) return true;
+  const uint32_t m = Load32(base, object + 44);
+  float body[3];
+  if (m < 0x40000000 || !BodyAt(base, p, body)) return false;
+  float d2 = 0;
+  for (int i = 0; i < 3; ++i) {
+    const uint32_t w = Load32(base, m + 48 + 4 * i);
+    float c;
+    std::memcpy(&c, &w, 4);
+    d2 += (body[i] - c) * (body[i] - c);
+  }
+  const float r = range > 0 ? range * 1.15f : kCoinRange;
+  return d2 <= r * r;
+}
+
+// ONLINE: THE BUTTON IS PERSONAL, THE REACTION IS SHARED (design rule,
+// 2026-11-28). Every player counts as "near" on every PC, so a totem wakes up
+// (paw stone, glowing eyes) and a villager notices whoever walks up, on every
+// screen. The floating button over it is only for the player who is near:
+// WorldButtonSwap already draws no coin for other PCs' players, but the
+// button's GLOW (a green star drawn with the same icon matrix) still showed.
+// Called right after the icon's update (CIconBehaviour slot 4 sub_82178ED8,
+// reduce_motion.cpp): an icon shown here but not for THIS PC's player gets
+// its matrix's 3x3 (+32, rows 16 bytes) zeroed, so the coin and everything
+// drawn with it shrink to nothing this frame. Its next update rebuilds it.
+// Position (+80) untouched: the coin matching above still finds it.
+void HideOthersButton(uint8_t* base, uint32_t icon) {
+  if (!net::Active() || !icon || Load32(base, icon) != kIconVtable) return;
+  if (!*GuestPtr(base, icon + kIconShown)) return;
+  const int local = net::LocalSlot();
+  if (local < 0 || IconShownFor(base, icon, local)) return;
+  for (uint32_t row = 0; row < 3; ++row) {
+    for (uint32_t col = 0; col < 3; ++col) Store32(base, icon + 32 + 16 * row + 4 * col, 0);
+  }
+}
+
 bool KeysLookFor(int p) { return p >= 0 && p < 4 && LookOf(uint32_t(p)).keys; }
 int PadIconsSetting(int p) { return p >= 0 && p < 4 ? PadIconsSettingOf(uint32_t(p)) : 0; }
 

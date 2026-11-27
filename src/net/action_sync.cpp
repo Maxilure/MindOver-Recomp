@@ -34,6 +34,7 @@
 #include <rex/system/xmemory.h>
 
 #include "../guest_memory.h"
+#include "../input/prompt_icons.h"
 #include "../players/more_players.h"
 #include "mask_sync.h"
 #include "state_sync.h"
@@ -167,6 +168,22 @@ bool Driving(int p, uint8_t body) {
 
 bool Trace() { return net::DebugTraceOn(); }
 
+// Something players TALK TO or USE (a villager like Coco: it owns a
+// CInteractableBehaviour, vtable 0x8202EA6C) is not an enemy, even though it
+// can be hit and so sits in world_sync's entity list. Its fight tree only
+// reacts to who stands near it ON THIS PC (idle state 3 -> "noticed" 197 when
+// its in-range list +0x20..+0x40 holds someone: villager decision
+// sub_82222AE8, which also checks a "Waving" animation): the "!" over its head
+// goes away and the player's B shows. 2026-11-28 playtest: the host sent
+// Coco's states to the guest like an enemy's, so the HOST walking up to her
+// switched her to "noticed" on the guest's screen too ("!" gone, no B for the
+// guest), and the guest walking up did nothing there (state 3 forced back).
+// Found with `tree actor` + the online trace line "enemy 27 copy put in
+// state 197". Each PC now runs such an NPC's tree itself, for its own player.
+bool IsUsableNpc(uint32_t actor) {
+  return actor && prompt_icons::InteractableOf(Guest(0), actor) != 0;
+}
+
 // Guest: is this tree an enemy copy we drive (host net id in `net_id`)? Its
 // actor is synced (bound to a host entity), not a player's body, and the host
 // has told us a state for it; play is on, no loading / cutscene grace.
@@ -179,6 +196,7 @@ bool EnemyDriving(uint32_t tree, uint32_t& net_id) {
   const uint32_t actor = Read32(tree + kTreeActor);
   uint8_t body = 0;
   if (!actor || PlayerOfActor(actor, body) >= 0) return false;
+  if (IsUsableNpc(actor)) return false;  // villagers: this PC decides (IsUsableNpc)
   {
     std::lock_guard lock(g_mutex);
     const auto f = g_enemy_free_until.find(actor);
@@ -262,6 +280,7 @@ void OnStateEntered(uint32_t tree, uint32_t exit, bool with_slave) {
   if (owner < 0) {
     // HOST: a synced enemy's state goes to the guests (online_enemy_states).
     if (!net::IsHost() || !net::world_sync::EnemyStates() || !guest_memory::Readable(tree, 0xA0)) return;
+    if (IsUsableNpc(Read32(tree + kTreeActor))) return;  // villagers: each PC decides
     const uint32_t net_id = net::world_sync::NetIdOfActor(Read32(tree + kTreeActor));
     const int enode = NodeNumber(Read32(tree + kTreeState));
     if (!net_id || enode <= 0) return;
@@ -509,6 +528,24 @@ extern "C" REX_FUNC(sub_820C1170) {
       ForceState(ctx, base, tree, ew, "enemy " + std::to_string(enemy_id));
     }
   }
+  // LEAVING A MASK THE OWNER'S WAY (2026-11-27): a copy that is a mask here isn't
+  // driven (not on foot), so its owner's leave state 1037 (B: the backflip) was
+  // never replayed and the forced switch popped it out plainly. That one state
+  // is put on the copy here, once, while it is fresh; the forced switch in
+  // mask_sync waits 0.6 s for it and stays the fallback.
+  if (!drive && p >= 0 && body == 0 && p != net::LocalSlot() && net::Active() &&
+      net::mask_sync::On() && net::mask_sync::CopyIsMask(p) && !IsSlave(tree)) {
+    Wanted w;
+    {
+      std::lock_guard lock(g_mutex);
+      w = g_wanted[p][0];
+    }
+    if (w.valid && w.node == 1037 && w.seq != g_applied[p][0] &&
+        std::chrono::steady_clock::now() - w.received <= kTooOld) {
+      g_applied[p][0] = w.seq;
+      ForceState(ctx, base, tree, w, "P" + std::to_string(p + 1) + " (leaving the mask)");
+    }
+  }
   if (drive && p >= 0) {
     Wanted w;
     {
@@ -526,7 +563,14 @@ extern "C" REX_FUNC(sub_820C1170) {
       // on the copy by the game's forced switch (net/mask_sync.h), not forced
       // here: the owner sends 995 while still on foot, so a copy got it before
       // its co-op code had any reason to be a mask.
-      if (body == 0 && net::mask_sync::On() && net::mask_sync::IsMaskTransitionNode(w.node)) {
+      // EXCEPT leaving a mask (1037) while the copy IS a mask here: that state is the
+      // owner's own way out (B: the backflip, variant 1039); the forced switch
+      // (sub-state 4) took the copy 999 -> 316 instead = a plain pop-out on the
+      // other screens (2026-11-27 playtest). Replayed, the copy flips like its owner;
+      // mask_sync's forced switch stays the fallback (net/mask_sync.cpp Follow).
+      const bool leave_as_owner = w.node == 1037 && net::mask_sync::CopyIsMask(p);
+      if (body == 0 && net::mask_sync::On() && net::mask_sync::IsMaskTransitionNode(w.node) &&
+          !leave_as_owner) {
         if (Trace()) REXLOG_INFO("OnlineTrace: P{} mask state {} left to the mask switch", p + 1, w.node);
       } else {
         ForceState(ctx, base, tree, w, "P" + std::to_string(p + 1));

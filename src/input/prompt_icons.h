@@ -272,10 +272,16 @@ int PadIconsSetting(int p);
 // Update ran; some may have gone away: check before reading). For the debug
 // console's `interactables` (where are the things a player can use?).
 std::vector<uint32_t> KnownInteractables();
+// The interactable (CInteractableBehaviour) on a world object, 0 = none known.
+uint32_t InteractableOf(uint8_t* base, uint32_t object);
 
 // The titan player p's B would jack right now (0 = none): the game's own pick
 // (its jack scripts' checks, nearest first). Online: net/session_sync.cpp lets
 // that titan's copy decide for itself during a local jack.
 uint32_t JackTarget(uint8_t* base, int p);
+
+// Online: zero a shown floating button's matrix when this PC's player isn't
+// the one near it (its glow too); call right after the icon's update.
+void HideOthersButton(uint8_t* base, uint32_t icon);
 
 }  // namespace prompt_icons

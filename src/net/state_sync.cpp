@@ -1074,7 +1074,11 @@ void FilterControllerState(uint32_t user, uint8_t* gamepad_be12, uint32_t& xinpu
   const uint32_t local_state = ReadCoOpState(base, int(user));
   if (rs.has_snapshot && !rs.history.empty()) {
     const PlayerSnapshot& latest = rs.history.back();
-    if (user > 0 && local_state == 0 && latest.coop_state >= 1 && !more_players::Loading()) {
+    // Player 1 too (was `user > 0`): the host's player 1 who died or dropped
+    // out and came back (as a mask or on foot) never rejoined on the other PCs
+    // (2026-11-27 test: "P1 says co-op state 1" heard, copy stayed not joined).
+    // START from a not-joined socket 0 is the game's own rejoin (findings/26 s.31).
+    if (local_state == 0 && latest.coop_state >= 1 && !more_players::Loading()) {
       ++rs.join_pulse_frames;
       if ((rs.join_pulse_frames % 16) < 4) {
         SetBeButtons(gamepad_be12, kBtnStart);

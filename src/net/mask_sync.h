@@ -62,6 +62,8 @@ int WantedHost(int p);
 // Fight-tree states of the mask round trip, played by the forced switch
 // on copies (never forced by action_sync).
 bool IsMaskTransitionNode(int node);
+// Player p's copy is a mask on this PC right now (co-op state 1).
+bool CopyIsMask(int p);
 // Player p's PC left: their announcement no longer holds (the copy is
 // neither kept a mask nor kept from one by it).
 void Forget(int p);

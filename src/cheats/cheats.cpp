@@ -1096,18 +1096,12 @@ extern "C" REX_FUNC(sub_821349E0) {
     return;
   }
   // Online co-op: remote players are owner-authoritative for their own health
-  // and deaths, and any player currently inside an in-game menu (Outfit Chest,
-  // Save Totem/List, Pause, Upgrade) is invulnerable.
+  // and deaths. (A player in a menu used to be invulnerable here to EVERYTHING;
+  // since 2026-11-27 only other players' hits are kept off them, in
+  // game_mods.cpp's sub_82132FF8: enemies still hurt a paused player.)
   if (net::Active() && ctx.f1.f64 < 0.0 && g_player_damageables.count(ctx.r3.u32)) {
     for (const auto& [actor, dmg] : g_damageable_of) {
       if (dmg != ctx.r3.u32) continue;
-      for (int p = 0; p < 4; ++p) {
-        if ((actor == more_players::CharacterOfPlayer(p) ||
-             actor == more_players::TitanOfPlayer(p)) &&
-            net::IsPlayerInMenu(p, base)) {
-          return;
-        }
-      }
       if (net::session_sync::IsRemotePlayerActor(actor)) {
         // Another PC's player: their PC decides their health. The hit still
         // plays here (hurt animation; game_mods.cpp), with damage FOR SHOW

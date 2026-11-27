@@ -311,7 +311,7 @@ extern "C" REX_FUNC(sub_82132FF8) {
   const int subtype = int32_t(Read32(base, message + kMsgSubtype));
   // ONLINE HITS (reworked 2026-11-27; findings: the online notes).
   //   * A player inside an in-game menu (Outfit Chest, Pause, Save Totem/List,
-  //     Upgrade screen) is invulnerable and unstaggerable, as before.
+  //     Upgrade screen) can't be hit by other PLAYERS; enemies still hit them.
   //   * A hit on ANOTHER PC's player (a puppet here) now PLAYS: hurt animation,
   //     knockback, combo messages. Antigravity's version dropped the whole
   //     message, so an attacker never saw their partner flinch (playtest). The
@@ -328,13 +328,18 @@ extern "C" REX_FUNC(sub_82132FF8) {
   if (net::Active() && type == kMsgDamage &&
       (subtype == kDamageHit || subtype == kDamageChange || subtype == kDamageBreakCombo)) {
     const int hurt_online = PlayerOf(ctx, base, victim);
-    if (hurt_online >= 0 && net::IsPlayerInMenu(hurt_online, base)) return;
     const uint32_t record = Read32(base, message + kMsgData);
     const uint32_t hit_rec = record && guest_memory::Readable(record + 4, 4) ? Read32(base, record + 4) : 0;
     const bool rec_ok = hit_rec && guest_memory::Readable(hit_rec + kHitScorer, 4);
     const uint32_t from_actor = rec_ok ? Read32(base, hit_rec + kHitFrom) : 0;
     int by = PlayerOf(ctx, base, from_actor);
     if (by < 0 && rec_ok) by = PlayerOf(ctx, base, Read32(base, hit_rec + kHitScorer));
+    // A player in a menu (pause, chest, save totem / list, level-up screen) can't
+    // be hit by ANOTHER PLAYER: the whole message is dropped (no damage, no
+    // flinch). Enemies still hit them (2026-11-27 decision: pausing must not be
+    // a shield against enemies; a death in a menu was tested and is the game's
+    // ordinary co-op death once the menu closes).
+    if (hurt_online >= 0 && by >= 0 && by != hurt_online && net::IsPlayerInMenu(hurt_online, base)) return;
     const int local = net::LocalSlot();
     const bool remote_hitter_on_enemy = net::IsHost() && hurt_online < 0 && by >= 0 && by != local;
     const int remote_victim = hurt_online >= 0 && hurt_online != local ? hurt_online : -1;

@@ -36,6 +36,7 @@
 // =============================================================================
 
 #include <algorithm>
+#include <cstdlib>
 #include <array>
 #include <map>
 #include <atomic>
@@ -84,6 +85,7 @@ std::array<uint32_t, kPlayers> g_tree{};       // last tree seen per player body
 std::map<uint32_t, int> g_last_state;  // per TREE (a rider and their titan = two)
 std::array<int, kPlayers> g_force{-1, -1, -1, -1};  // queued node per player
 std::atomic<bool> g_trace{false};
+std::atomic<uint32_t> g_watch_actor{0};  // `tree actor <addr>`: one more actor traced (an NPC)
 
 int PlayerOfActor(uint32_t actor) {
   if (!actor) return -1;
@@ -98,6 +100,10 @@ int PlayerOfActor(uint32_t actor) {
 // Console entry (debug_console.cpp "tree").
 std::string Command(const std::vector<std::string_view>& w) {
   std::lock_guard lock(g_mutex);
+  if (w.size() >= 3 && w[1] == "actor") {
+    g_watch_actor = uint32_t(std::strtoul(std::string(w[2]).c_str(), nullptr, 0));
+    return fmt::format("tree: also tracing actor {:08X}\n", g_watch_actor.load());
+  }
   if (w.size() >= 3 && w[1] == "trace") {
     g_trace = w[2] == "on";
     return fmt::format("tree trace {}\n", g_trace ? "on" : "off");
@@ -149,6 +155,20 @@ void BeforeUpdate(PPCContext& ctx, uint8_t* base, uint32_t tree) {
 }
 
 void AfterUpdate(uint32_t tree) {
+  const uint32_t watch = g_watch_actor;
+  if (watch && guest_memory::Readable(tree + kTreeActor, 4) && Read32(tree + kTreeActor) == watch) {
+    const int state = NodeNumber(Read32(tree + kTreeState));
+    const int now = state * 4096 + std::max(0, NodeNumber(Read32(tree + 0x4C)));
+    std::lock_guard lock(g_mutex);
+    const auto it = g_last_state.find(tree);
+    const int was = it == g_last_state.end() ? -1 : it->second;
+    if (now != was) {
+      REXLOG_INFO("Tree probe: actor {:08X} (tree {:08X}, decision {:08X}) state {} -> {} (variant {} -> {})",
+                  watch, tree, Read32(tree + 0x28), was < 0 ? -1 : was / 4096, state,
+                  was < 0 ? -1 : was % 4096, now % 4096);
+      g_last_state[tree] = now;
+    }
+  }
   if (!g_trace) return;
   const int p = guest_memory::Readable(tree + kTreeActor, 4) ? PlayerOfActor(Read32(tree + kTreeActor)) : -1;
   if (p < 0) return;

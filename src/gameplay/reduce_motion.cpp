@@ -43,6 +43,7 @@
 //      `motion_blur` itself.
 // =============================================================================
 #include "reduce_motion.h"
+#include "../input/prompt_icons.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -174,16 +175,18 @@ extern "C" REX_FUNC(sub_823730B0) {
 // animation stays on its first frame. f1 is put back afterwards.
 extern "C" REX_FUNC(__imp__sub_82178ED8);
 extern "C" REX_FUNC(sub_82178ED8) {
+  const uint32_t icon = ctx.r3.u32;
   if (!reduce_motion::On()) {
     __imp__sub_82178ED8(ctx, base);
+    prompt_icons::HideOthersButton(base, icon);  // online: another PC's player's button
     return;
   }
-  const uint32_t icon = ctx.r3.u32;
   const double step = ctx.f1.f64;
   reduce_motion::StoreFloat(base, icon + reduce_motion::kIconWobble, 0.0f);
   ctx.f1.f64 = 0.0;
   __imp__sub_82178ED8(ctx, base);
   ctx.f1.f64 = step;
+  prompt_icons::HideOthersButton(base, icon);
 }
 
 // Collectable::Update (vtable 0x82034DF4, slot 21): r3 = this, r4 = its

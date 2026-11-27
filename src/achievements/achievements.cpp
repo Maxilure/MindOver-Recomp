@@ -394,7 +394,15 @@ struct Notice {
   uint32_t picture = 0;    // an achievement whose picture the card shows (0 = none: test cards)
   bool game_look = false;  // the bar's OWN wide look (glass, title, message, counter) instead of our card
   std::u16string counter;  // game look: the counter's text ("2/5"), empty = hidden
+  // The sound it arrives with: "" = the achievement jingle (g_cue). Plain
+  // notices (exit on hold, cheats on, HUD hidden...) use the game's own
+  // message-bar sound instead: the jingle was a reward sound and annoying on a
+  // card that only says "wait" (2026-11-28 playtest: keep it for achievements).
+  std::string cue;
 };
+// FE_SFX "back" = what the game's bar plays itself when one of ITS messages
+// arrives (add sub_8226C5E8, findings/51): the plain notices sound the same.
+constexpr const char* kNoticeCue = "back";
 std::deque<Notice> g_notices;  // asked for, not yet in the bar's queue
 Notice g_notice_up;            // the one the bar shows (or showed last)
 uint32_t g_showing_id = 0;          // the achievement the bar shows now (0 = none)
@@ -552,6 +560,7 @@ int PictureFrame(uint32_t id) {
 void ShowNotice(std::u16string heading, std::u16string line) {
   Notice n;
   n.heading = std::move(heading), n.line = std::move(line);
+  n.cue = kNoticeCue;
   QueueNotice(std::move(n));
 }
 
@@ -801,7 +810,7 @@ void FrontEndFrame(PPCContext& ctx, uint8_t* base) {
         std::string cue;
         {
           std::lock_guard lock(g_mutex);
-          cue = g_cue;
+          cue = id == kNoticeId && !g_notice_up.cue.empty() ? g_notice_up.cue : g_cue;
         }
         scrooby::PlayCue(ctx, base, cue);
       }

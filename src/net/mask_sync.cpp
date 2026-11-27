@@ -146,6 +146,10 @@ void Follow(PPCContext& ctx, uint8_t* base, int p, Wanted& w) {
     }
   } else if (w.state == 2) {
     if (here == 1) {
+      // First the owner's own leave state (1037, the backflip) gets its chance:
+      // action_sync replays it on the copy (CopyIsMask). The forced switch below
+      // is the fallback, after 0.6 s (it plays a plain pop-out, not the flip).
+      if (Clock::now() - w.since < std::chrono::milliseconds(600)) return;
       if (sub != kSubForcedOutOfMask) {
         Write32(kSubState + 4 * uint32_t(p), kSubForcedOutOfMask);
         if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy forced out of its mask (owner's #{})", p + 1, w.seq);
@@ -243,6 +247,10 @@ int WantedHost(int p) {
   std::lock_guard lock(g_mutex);
   const Wanted& w = g_wanted[p];
   return w.valid && IsMaskState(w.state) && w.host != kNoHost ? int(w.host) : -1;
+}
+
+bool CopyIsMask(int p) {
+  return p >= 0 && p < kPlayers && On() && CoOp(p) == 1;
 }
 
 bool IsMaskTransitionNode(int node) {
