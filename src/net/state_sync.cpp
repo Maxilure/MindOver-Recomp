@@ -1398,10 +1398,12 @@ thread_local bool t_remote_hitter_on_enemy = false;
 thread_local int t_remote_victim = -1;
 thread_local bool t_forward = false;
 thread_local float t_victim_damage = 0.0f;
+thread_local int t_by = -1;
 }  // namespace
 
-OnlineHitScope::OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward) {
+OnlineHitScope::OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward, int by) {
   if (t_hit_depth++ > 0) return;  // a message inside a message: the outer one counts
+  t_by = by;
   t_remote_hitter_on_enemy = remote_hitter_on_enemy;
   t_remote_victim = remote_victim;
   t_forward = forward;
@@ -1417,6 +1419,7 @@ OnlineHitScope::~OnlineHitScope() {
   t_remote_victim = -1;
   t_forward = false;
   t_victim_damage = 0.0f;
+  t_by = -1;
   if (!send) return;
   std::lock_guard lock(g_net.mutex);
   if (!g_net.active || !g_net.is_host || !g_net.transport || !g_net.transport->IsOpen()) return;
@@ -1430,6 +1433,7 @@ OnlineHitScope::~OnlineHitScope() {
 }
 
 bool HitByRemotePlayerOnEnemy() { return t_hit_depth > 0 && t_remote_hitter_on_enemy; }
+bool HitByNonLocalOnThisPc() { return t_hit_depth > 0 && t_by != g_net.local_slot; }
 
 void NoteRemotePlayerDamage(float delta) {
   if (t_hit_depth > 0 && t_remote_victim >= 0 && delta < 0.0f) t_victim_damage += delta;

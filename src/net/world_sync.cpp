@@ -43,6 +43,11 @@
 #include "../players/more_players.h"
 #include "state_sync.h"
 
+REXCVAR_DEFINE_BOOL(online_guest_enemy_ai, true, "CrashMoM",
+                    "Online: enemies run their own AI on every PC (they walk, aim and attack on every screen; each "
+                    "PC's enemies hurt that PC's own player); the host keeps their health and pulls them back when "
+                    "they drift. false = guests copy the host's enemies only (no attacks seen there)");
+
 extern "C" REX_FUNC(__imp__sub_821349E0);  // CDamageableBehaviour: change hitpoints by f1
 
 namespace net {
@@ -71,6 +76,12 @@ constexpr size_t kEntityWireBytes = 36;       // net_id(4)+hash(4)+pos(12)+vel(8
 constexpr float kSnapDistSq = 24.0f * 24.0f;  // smooth catch-up instead of snapping during titan sprints
 constexpr float kBlendRate = 18.0f;
 constexpr auto kStaleAfter = std::chrono::milliseconds(600);
+// GUEST ENEMY AI (online_guest_enemy_ai, 2026-11-27): with the enemies' own AI
+// running on a guest, the host's position only pulls an enemy back once it
+// has wandered further than this from it (and then gently, kDriftRate per
+// second), so the local AI walks, turns and swings by itself.
+constexpr float kDriftAllowed = 2.5f;
+constexpr float kDriftRate = 3.0f;
 
 thread_local bool g_applying_net_hp = false;
 thread_local bool g_applying_net_spawn = false;
@@ -378,6 +389,8 @@ bool IsSyncedEnemy(uint32_t actor) {
   return g_ws.local_by_actor.count(actor) != 0;
 }
 
+bool GuestEnemyAi() { return REXCVAR_GET(online_guest_enemy_ai); }
+
 bool InterceptHitpointsChange(uint8_t* /*base*/, uint32_t dmg, float delta) {
   if (g_applying_net_hp || !net::Active() || net::IsHost()) return false;
   if (!more_players::InPlay() || more_players::Loading()) return false;
@@ -392,7 +405,10 @@ bool InterceptHitpointsChange(uint8_t* /*base*/, uint32_t dmg, float delta) {
     net_id = it_e->second.net_id;
   }
 
-  if (delta < -1e-4f) {
+  // Only OUR player's hits go to the host. Another player's copy hitting it
+  // here (their real hit is sent by their own PC), an enemy or the world:
+  // the host decides those; here they change nothing (else double damage).
+  if (delta < -1e-4f && !net::HitByNonLocalOnThisPc()) {
     uint8_t msg[9];
     msg[0] = kMsgDamageReq;
     PutLE32(msg + 1, net_id);
@@ -434,7 +450,29 @@ void PrepareRemoteEntityPhysics(uint8_t* base, uint32_t physics_behaviour, float
                         ReadF32(base, physics_behaviour + kPhysicsPosition + 8, cur_pos[2]);
 
   float new_pos[3] = {target.pos[0], target.pos[1], target.pos[2]};
-  if (have_cur) {
+  if (have_cur && GuestEnemyAi()) {
+    // The local AI moves it; the host's spot only reins it in past
+    // kDriftAllowed (a gentle pull, never its velocity), and a real teleport
+    // (past kSnapDistSq) still snaps.
+    const float dx = target.pos[0] - cur_pos[0];
+    const float dy = target.pos[1] - cur_pos[1];
+    const float dz = target.pos[2] - cur_pos[2];
+    const float dist_sq = dx * dx + dy * dy + dz * dz;
+    if (dist_sq < kSnapDistSq) {
+      const float dist = std::sqrt(dist_sq);
+      if (dist <= kDriftAllowed) return;
+      const float clamped_dt = std::clamp(dt, 0.001f, 0.1f);
+      const float excess = (dist - kDriftAllowed) / dist;  // only the part past the allowance
+      const float alpha = 1.0f - std::exp(-kDriftRate * clamped_dt);
+      new_pos[0] = cur_pos[0] + dx * excess * alpha;
+      new_pos[1] = cur_pos[1];
+      new_pos[2] = cur_pos[2] + dz * excess * alpha;
+      for (int i = 0; i < 3; ++i) WriteF32(base, physics_behaviour + kPhysicsPosition + 4 * i, new_pos[i]);
+      std::lock_guard lock(g_ws.mutex);
+      g_ws.entity_physics_applied++;
+      return;
+    }
+  } else if (have_cur) {
     const float dx = target.pos[0] - cur_pos[0];
     const float dy = target.pos[1] - cur_pos[1];
     const float dz = target.pos[2] - cur_pos[2];
@@ -469,6 +507,7 @@ void FinishRemoteEntityPhysics(uint8_t* base, uint32_t physics_behaviour) {
   if (!ReadU32(base, physics_behaviour + kPhysicsActor, actor) || !actor) return;
   if (IsPlayerActor(actor)) return;
 
+  if (GuestEnemyAi()) return;  // the local AI turns it to face its own target
   float yaw = 0.0f;
   {
     std::lock_guard lock(g_ws.mutex);

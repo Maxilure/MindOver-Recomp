@@ -78,6 +78,9 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host);
 // player's, not a prop) -- an attacker whose hits on a remote player count.
 bool IsSyncedEnemy(uint32_t actor);
 
+// online_guest_enemy_ai: enemies run their own AI on guests too.
+bool GuestEnemyAi();
+
 // Append Phase 2 enemy/titan sync summary to the `online` debug console command.
 std::string DebugStatus();
 

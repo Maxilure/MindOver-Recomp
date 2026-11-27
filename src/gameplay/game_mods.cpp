@@ -338,11 +338,14 @@ extern "C" REX_FUNC(sub_82132FF8) {
     const int local = net::LocalSlot();
     const bool remote_hitter_on_enemy = net::IsHost() && hurt_online < 0 && by >= 0 && by != local;
     const int remote_victim = hurt_online >= 0 && hurt_online != local ? hurt_online : -1;
+    // With online_guest_enemy_ai every PC's enemies attack that PC's own
+    // player there (a real hit), so the host forwards nothing (double).
     const bool forward = net::IsHost() && remote_victim >= 0 && by < 0 &&
+                         !net::world_sync::GuestEnemyAi() &&
                          net::world_sync::IsSyncedEnemy(from_actor);
-    if (remote_hitter_on_enemy || remote_victim >= 0) {
-      online_hit.emplace(remote_hitter_on_enemy, remote_victim, forward);
-    }
+    // Every damage message online gets a scope (guests: who hit an enemy
+    // decides whether that hit goes to the host, world_sync).
+    online_hit.emplace(remote_hitter_on_enemy, remote_victim, forward, by);
   }
   if (friendly_fire && !keep_combo) {
     __imp__sub_82132FF8(ctx, base);

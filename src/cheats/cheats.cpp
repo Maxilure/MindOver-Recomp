@@ -1036,7 +1036,8 @@ extern "C" REX_FUNC(sub_820B8688) {
   if (cheats::g_no_ai.load()) return;
   // Online Phase 2: host runs all enemy/titan AI authoritatively; clients
   // suppress local AI decisions and receive synced enemy transforms & HP.
-  if (net::Active() && !net::IsHost()) return;
+  // (online_guest_enemy_ai, default on: guests run it too; world_sync.)
+  if (net::Active() && !net::IsHost() && !net::world_sync::GuestEnemyAi()) return;
   __imp__sub_820B8688(ctx, base);
 }
 

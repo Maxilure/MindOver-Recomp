@@ -137,12 +137,14 @@ void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base);
 //   victim's PC (kMsgPlayerHit) when the scope ends.
 class OnlineHitScope {
  public:
-  OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward);
+  // `by` = the hitting player (0-3), -1 = an enemy / the world.
+  OnlineHitScope(bool remote_hitter_on_enemy, int remote_victim, bool forward, int by);
   ~OnlineHitScope();
   OnlineHitScope(const OnlineHitScope&) = delete;
   OnlineHitScope& operator=(const OnlineHitScope&) = delete;
 };
 bool HitByRemotePlayerOnEnemy();          // inside a scope of that kind
+bool HitByNonLocalOnThisPc();             // inside a scope whose hitter isn't our player
 void NoteRemotePlayerDamage(float delta);  // a remote victim's damage (before the "for show" clamp)
 
 // Mask aiming reticle sync (input/mouse_reticle.cpp): the owner records their
