@@ -462,7 +462,12 @@ extern "C" REX_FUNC(sub_820C1170) {
   // A copy's rider still linked to its titan here, while its OWNER has sent a
   // state for the rider since (the owner sends a rider's states only when it
   // is free) = the link is over there: unlink here the game's way, then drive.
-  if (p >= 0 && body == 0 && IsSlave(tree) && Driving(p, 0)) {
+  // ONLY once the game itself has let go of the titan (TitanOfPlayer 0): cut
+  // while the titan still holds its rider, the titan's next message reads the
+  // rider through freed state (guest crash, read of 0x34 in sub_820CD6B8 under
+  // sub_8212EE90; 2026-11-28 two-PC test). A copy still riding gets off by a
+  // titan_sync step (the game's own dismount), not by this.
+  if (p >= 0 && body == 0 && IsSlave(tree) && Driving(p, 0) && more_players::TitanOfPlayer(p) == 0) {
     Wanted w;
     {
       std::lock_guard lock(g_mutex);

@@ -865,7 +865,11 @@ void TickTitanOwnership(PPCContext& ctx, uint8_t* base, const Clock::time_point&
 
   // 2. Reconcile remote players' ridden titans (covers RB pocket-swap, unpocket,
   //    respawn desync, or missed B jack).
-  const uint32_t conn_mask = net::ConnectedMask();
+  // OFF while titan_sync's steps run (online_titan_events, titan_sync.h): this
+  // repair compared titans by template + id, then spawned copies and forced
+  // dismounts; with a titan that has no id it fought the steps and its forced
+  // dismount + unlink crashed the guest (2026-11-28 two-PC test).
+  const uint32_t conn_mask = net::titan_sync::On() ? 0u : net::ConnectedMask();
   for (int p = 0; p < kMaxPlayers; ++p) {
     if (p == local || !(conn_mask & (1u << p))) continue;
     if (ReadU32(base, kCoOpState + 4 * uint32_t(p)) != 2) continue;

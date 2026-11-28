@@ -1,15 +1,18 @@
 // =============================================================================
-// net/titan_sync.cpp -- online titans by outcome, not by presses (see the .h).
+// net/titan_sync.cpp -- online titans: the owner says WHAT HAPPENED, every
+// other PC replays that one step through the game's own question (see the .h).
 // =============================================================================
 #include "titan_sync.h"
 
 #include <array>
 #include <chrono>
+#include <deque>
 #include <mutex>
 #include <vector>
 
 #include <rex/logging.h>
 #include <rex/ppc/context.h>
+#include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 #include <rex/system/xmemory.h>
 
@@ -21,32 +24,58 @@
 #include "world_sync.h"
 
 REXCVAR_DEFINE_BOOL(online_titan_events, true, "CrashMoM",
-                    "Online co-op: other players' titans (ridden, pocketed) follow what their own PC says "
-                    "happened, through the game's own mount / pocket / take-out / dismount, not their presses");
+                    "Online co-op: other players' titans (ridden, pocketed) follow the steps their own PC "
+                    "reports (pocket, take out, swap, get off, mount), each made with the game's own code");
 
 namespace net::titan_sync {
 namespace {
 
 using Clock = std::chrono::steady_clock;
 constexpr int kPlayers = 4;
-constexpr uint32_t kCoOpState = 0x8259B11C;  // u32 per player (more_players.h)
-constexpr uint32_t kPocketSlot = 0x825B0028; // game object 0x825B0008 +32: the pocketed CActor* (one for all)
-constexpr uint8_t kEventPocket = 37;         // ENEMY map 6: RB riding (pocket / swap)
-constexpr uint8_t kEventTakeOut = 14;        // PLAYER map 5: RB on foot (take the pocketed one out)
-constexpr auto kStepEvery = std::chrono::milliseconds(800);  // one step, then let it play out
-// THE PRESS STILL TRAVELS, AS A "HOLD" ONLY (2026-11-27 two-PC tests): the
-// owner's titan fight-tree states for an RB / B (e.g. Ratcicle / Spike 2206 exit
-// 1511, then 835 exit 2205 for a swap) reach a copy ~60 ms BEFORE this
-// announcement (the pocket slot changes only once the state's script ran).
-// Forced on the copy they ran the swap once, our answer then swapped back; and
-// while a pocket plays out the game keeps rider and titan LINKED: a copy
-// driven by forced states got unlinked early -> a titan message read freed
-// memory (guest crash, read of 0x34 in sub_820CD6B8 under sub_8212EE90). So the
-// owner's accepted press (kMsgPocket, state_sync) now only opens the copy's own
-// decisions (no forced states, nothing pressed), and THIS message picks the
-// answer its decision hears.
-constexpr auto kGiveUp = std::chrono::seconds(4);            // then session_sync's repair decides
-constexpr auto kRepeat = std::chrono::seconds(2);
+constexpr uint32_t kCoOpState = 0x8259B11C;  // u32 per player (more_players.h): 2 = in the game
+// The game object 0x825B0008: +24 / +28 players 1-2's titans (more_players
+// TitanOfPlayer), +32 THE POCKET: the pocketed CActor*, one for everyone. The
+// game's pocket is really a two-place stack at 0x825A5474 / 0x825A5480 (12 B
+// each; pocket = sub_8216D1D0 pushes the old entry down and puts the ridden
+// titan on top + sets +32; take out = sub_8216D548 takes the OLDER entry when
+// there are two, which is how a swap brings the other titan back).
+constexpr uint32_t kPocketSlot = 0x825B0028;
+constexpr uint8_t kEventPocket = 37;   // ENEMY map 6: RB riding (pocket, or swap with one pocketed)
+constexpr uint8_t kEventTakeOut = 14;  // PLAYER map 5: RB on foot (take the pocketed one out)
+
+// What happened to the owner's titans between two steady states.
+enum Kind : uint8_t {
+  kSnapshot = 0,  // no step: the state itself (every change + every 2 s), for the late check
+  kPocket = 1,    // ridden -> pocket, now on foot
+  kTakeOut = 2,   // pocket -> ridden
+  kSwap = 3,      // ridden <-> pocketed (RB with one pocketed)
+  kGetOff = 4,    // ridden one left in the world, on foot
+  kMount = 5,     // mounted titan <target> (a jack, on foot)
+};
+const char* KindName(uint8_t k) {
+  switch (k) {
+    case kPocket: return "pocket";
+    case kTakeOut: return "take out";
+    case kSwap: return "swap";
+    case kGetOff: return "get off";
+    case kMount: return "mount";
+    default: return "state";
+  }
+}
+
+// The owner's values must hold for this many game frames before they count:
+// the original's own swap has ONE frame with nothing ridden between the two
+// titans (2026-11-28 single-player watch: (A, B) -> (0, A) -> (B, A) on some
+// presses, one atomic (A, B) -> (B, A) frame on others). A 1-frame state is
+// never a step.
+constexpr int kSteadyFrames = 2;
+constexpr auto kSnapshotEvery = std::chrono::seconds(2);
+// A step that hasn't shown its result by then is dropped (logged); the
+// late check below then compares states.
+constexpr auto kStepTimeout = std::chrono::milliseconds(3000);
+// The late check: the copy's riding / pocket state differs from the owner's
+// for this long with no step under way = one step to fix it.
+constexpr auto kLateCheck = std::chrono::seconds(4);
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
 uint32_t Read32(uint32_t a) {
@@ -58,143 +87,231 @@ uint32_t Le32(const uint8_t* d) { return d[0] | d[1] << 8 | d[2] << 16 | uint32_
 void PutLe32(std::vector<uint8_t>& m, size_t at, uint32_t v) {
   for (int i = 0; i < 4; ++i) m[at + i] = uint8_t(v >> (8 * i));
 }
-
-struct Wanted {             // the newest titan state an owner announced
-  bool valid = false;
-  uint32_t seq = 0;
-  bool rides = false;
-  uint32_t ridden = 0;      // host net id (0 = not synced / none)
-  bool pocket = false;
-  uint32_t pocketed = 0;
-  Clock::time_point since;  // when this state arrived
-  Clock::time_point next_step{};
-  bool done = false;        // the copy got there once (not enforced after)
-  bool slow_noted = false;
-  // An RB answer (pocket / swap / take out) was given for this announcement:
-  // never again for it. A swap's animation outlasts any step interval, and a
-  // second answer swapped back (2026-11-27 two-PC test: flip-flops every 0.8 s).
-  bool pressed = false;
-};
-
-std::mutex g_mutex;
-std::array<Wanted, kPlayers> g_wanted{};
-// Owner side: what we last announced.
-bool g_sent_valid = false;
-uint32_t g_sent_ridden = 0, g_sent_pocketed = 0;
-bool g_sent_rides = false, g_sent_pocket = false;
-Clock::time_point g_sent_at{};
-uint32_t g_seq = 0;
-
 bool Trace() { return net::DebugTraceOn(); }
 
-void SendOurs(int local) {
-  const uint32_t titan = more_players::TitanOfPlayer(local);
-  const uint32_t pocket = Read32(kPocketSlot);
-  const bool rides = titan != 0, has_pocket = pocket != 0;
-  const uint32_t ridden = IdOf(titan), pocketed = IdOf(pocket);
-  const auto now = Clock::now();
-  const bool changed = !g_sent_valid || rides != g_sent_rides || ridden != g_sent_ridden ||
-                       has_pocket != g_sent_pocket || pocketed != g_sent_pocketed;
-  if (!changed && now - g_sent_at < kRepeat) return;
-  g_sent_valid = true;
-  g_sent_rides = rides;
-  g_sent_ridden = ridden;
-  g_sent_pocket = has_pocket;
-  g_sent_pocketed = pocketed;
-  g_sent_at = now;
+// ---- owner side ------------------------------------------------------------
+struct Owner {
+  bool init = false;
+  uint32_t cur_ridden = 0, cur_pocket = 0;  // this frame's values
+  int same_frames = 0;                      // how long they held
+  uint32_t ridden = 0, pocket = 0;          // the last STEADY state (what the others know)
+  Clock::time_point last_sent{};
+  uint32_t seq = 0;
+};
+Owner g_own;
+std::mutex g_mutex;
+
+void Send(int local, uint8_t kind, uint32_t target) {
   std::vector<uint8_t> msg(kTitanSize, 0);
   msg[0] = kMsgTitan;
   msg[1] = uint8_t(local);
-  PutLe32(msg, 2, ridden);
-  PutLe32(msg, 6, pocketed);
-  msg[10] = uint8_t((rides ? 1 : 0) | (has_pocket ? 2 : 0));
+  PutLe32(msg, 2, IdOf(g_own.ridden));
+  PutLe32(msg, 6, IdOf(g_own.pocket));
+  msg[10] = uint8_t((g_own.ridden ? 1 : 0) | (g_own.pocket ? 2 : 0));
   uint32_t seq;
   {
     std::lock_guard lock(g_mutex);
-    seq = ++g_seq;
+    seq = ++g_own.seq;
   }
   PutLe32(msg, 11, seq);
+  msg[15] = kind;
+  PutLe32(msg, 16, target);
   action_sync::QueueMessage(std::move(msg));  // in order with our fight-tree states
-  if (Trace() && changed) {
-    REXLOG_INFO("OnlineTrace: P{} titans announced: rides {} (id {}), pocket {} (id {}) (#{})", local + 1,
-                rides ? "yes" : "no", ridden, has_pocket ? "yes" : "no", pocketed, seq);
+  g_own.last_sent = Clock::now();
+  if (Trace() && kind != kSnapshot) {
+    REXLOG_INFO("OnlineTrace: P{} titan step sent: {}{} (now rides {}, pocket {}) (#{})", local + 1,
+                KindName(kind), kind == kMount ? " id " + std::to_string(target) : std::string(),
+                g_own.ridden ? "yes" : "no", g_own.pocket ? "yes" : "no", seq);
   }
 }
 
-// One step of player p's copy toward the owner's titans (the .h's four steps).
-void Follow(PPCContext& ctx, uint8_t* base, int p, Wanted& w) {
-  if (w.done) return;
+// Steady (R0, P0) -> steady (R1, P1): the steps that lead there. The pocket
+// changing alone (another player's copy pocketed here: the slot is shared) is
+// not this player's step.
+void SendSteps(int local, uint32_t r0, uint32_t p0, uint32_t r1, uint32_t p1) {
+  if (r0 && !r1) {
+    Send(local, p1 == r0 ? kPocket : kGetOff, 0);
+  } else if (!r0 && r1) {
+    if (r1 == p0 && p1 != p0) Send(local, kTakeOut, 0);
+    else Send(local, kMount, IdOf(r1));
+  } else if (r0 && r1 && r0 != r1) {
+    if (r1 == p0 && p1 == r0) {
+      Send(local, kSwap, 0);
+    } else if (p1 == r0) {  // jacked another while riding: the old one pocketed
+      Send(local, kPocket, 0);
+      Send(local, kMount, IdOf(r1));
+    } else {
+      Send(local, kGetOff, 0);
+      Send(local, kMount, IdOf(r1));
+    }
+  }
+}
+
+void OwnerTick(int local) {
+  const uint32_t r = more_players::TitanOfPlayer(local);
+  const uint32_t pk = Read32(kPocketSlot);
+  if (!g_own.init) {
+    g_own = Owner{true, r, pk, kSteadyFrames, r, pk, {}, g_own.seq};
+    Send(local, kSnapshot, 0);
+    return;
+  }
+  if (r == g_own.cur_ridden && pk == g_own.cur_pocket) {
+    ++g_own.same_frames;
+  } else {
+    g_own.cur_ridden = r;
+    g_own.cur_pocket = pk;
+    g_own.same_frames = 1;
+  }
+  if (g_own.same_frames >= kSteadyFrames && (r != g_own.ridden || pk != g_own.pocket)) {
+    const uint32_t r0 = g_own.ridden, p0 = g_own.pocket;
+    g_own.ridden = r;
+    g_own.pocket = pk;
+    SendSteps(local, r0, p0, r, pk);
+    Send(local, kSnapshot, 0);
+    return;
+  }
+  if (Clock::now() - g_own.last_sent >= kSnapshotEvery) Send(local, kSnapshot, 0);
+}
+
+// ---- the other PCs ---------------------------------------------------------
+struct Step {
+  uint8_t kind = kSnapshot;
+  uint32_t target = 0;
+};
+struct Remote {
+  bool valid = false;
+  uint32_t seq = 0;
+  // the owner's newest state
+  bool rides = false, has_pocket = false;
+  uint32_t ridden_id = 0;
+  std::deque<Step> steps;  // steps not started yet, in order
+  // the step under way
+  bool active = false;
+  Step step;
+  Clock::time_point started{};
+  uint32_t titan_before = 0;
+  int tries = 0;
+  Clock::time_point last_step_at{};  // a step arrived / ended: the late check waits
+  Clock::time_point mismatch_since{};
+};
+std::array<Remote, kPlayers> g_remote{};
+
+// The step's result is there?
+bool StepDone(const Remote& r, uint32_t titan) {
+  switch (r.step.kind) {
+    case kPocket:
+    case kGetOff: return titan == 0;
+    case kSwap: return titan != 0 && titan != r.titan_before;
+    case kTakeOut:
+    case kMount: return titan != 0;
+    default: return true;
+  }
+}
+
+// Start one step on player p's copy. False = nothing to do / can't (logged).
+bool StartStep(PPCContext& ctx, uint8_t* base, int p, Remote& r) {
+  const uint32_t titan = more_players::TitanOfPlayer(p);
+  const uint32_t pocket = Read32(kPocketSlot);
+  const char* why = nullptr;
+  switch (r.step.kind) {
+    case kPocket:
+      if (!titan) { why = "already on foot"; break; }
+      if (pocket) { why = "our pocket is full (RB would swap)"; break; }
+      net::GrantRemotePress(p, kEventPocket);
+      break;
+    case kSwap:
+      if (!titan) { why = "on foot here"; break; }
+      if (!pocket) { why = "our pocket is empty (RB would only pocket)"; break; }
+      net::GrantRemotePress(p, kEventPocket);
+      break;
+    case kTakeOut:
+      if (titan) { why = "riding here"; break; }
+      if (!pocket) { why = "our pocket is empty"; break; }
+      net::GrantRemotePress(p, kEventTakeOut);
+      break;
+    case kGetOff:
+      if (!titan) { why = "already on foot"; break; }
+      // The titan's own dismount question answered yes (lost_controller's
+      // CheckInputEvent hook). B riding can also mean "jack the next titan":
+      // never for a copy (CheckOpportunity answers nothing for other PCs'
+      // players, below), so this is a get off and nothing else.
+      session_sync::ForceDismount(p, titan);
+      break;
+    case kMount: {
+      if (titan) { why = "riding here"; break; }
+      const uint32_t copy = r.step.target ? net::world_sync::ActorOfNetId(r.step.target) : 0;
+      if (!copy) { why = "no copy of that titan here"; break; }
+      if (copy == pocket) { why = "that titan is in our pocket"; break; }
+      for (int q = 0; q < kPlayers; ++q) {
+        if (more_players::TitanOfPlayer(q) == copy) why = "another player rides it here";
+      }
+      if (why) break;
+      session_sync::MountPlayerOnTitan(ctx, base, p, copy);
+      break;
+    }
+    default: return false;
+  }
+  if (why) {
+    REXLOG_INFO("Online: P{}'s titan step '{}' skipped here: {}", p + 1, KindName(r.step.kind), why);
+    return false;
+  }
+  r.active = true;
+  r.started = Clock::now();
+  r.titan_before = titan;
+  r.tries = 1;
+  if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy titan step: {}", p + 1, KindName(r.step.kind));
+  return true;
+}
+
+void Follow(PPCContext& ctx, uint8_t* base, int p, Remote& r) {
   const auto now = Clock::now();
   const uint32_t titan = more_players::TitanOfPlayer(p);
-  const uint32_t titan_id = IdOf(titan);
-  const bool matched = w.rides ? (titan && (titan_id == w.ridden || w.ridden == 0)) : titan == 0;
-  if (matched) {
-    w.done = true;
-    if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy's titans match their PC (#{})", p + 1, w.seq);
-    return;
-  }
-  if (now - w.since > kGiveUp) {
-    if (!w.slow_noted) {
-      w.slow_noted = true;
-      REXLOG_WARN("Online: P{}'s copy doesn't ride what their PC says (here titan id {}, there {} {}) after {} s: "
-                  "left to the titan repair", p + 1, titan_id, w.rides ? "rides" : "rides nothing", w.ridden,
-                  std::chrono::duration_cast<std::chrono::seconds>(kGiveUp).count());
-    }
-    return;
-  }
-  if (now < w.next_step) return;  // the last step is still playing out
-  w.next_step = now + kStepEvery;
-  if (titan) {
-    // Riding something the owner doesn't: pocketed there -> RB here, the
-    // game's own RB riding: our pocket empty = it pockets the titan; our pocket
-    // holding the other one = it SWAPS (pockets this one, takes that one out),
-    // which is what the owner's RB did (a swap arrives as "rides nothing,
-    // pocket X", then "rides Y" one frame later, or both at once; 2026-11-27
-    // two-PC test: refusing a full pocket left the copy on the old titan).
-    if (w.pocket && titan_id && w.pocketed == titan_id) {
-      if (w.pressed) return;  // its own RB is playing out (or failed: the repair after kGiveUp)
-      w.pressed = true;
-      net::GrantRemotePress(p, kEventPocket);
-      if (Trace()) {
-        REXLOG_INFO("OnlineTrace: P{} copy {} its titan (id {})", p + 1,
-                    Read32(kPocketSlot) ? "swaps (RB with a full pocket)" : "pockets", titan_id);
-      }
-    } else {
+  if (r.active) {
+    if (StepDone(r, titan)) {
+      r.active = false;
+      r.last_step_at = now;
+      if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy titan step '{}' done", p + 1, KindName(r.step.kind));
+    } else if (r.step.kind == kGetOff && r.tries == 1 && now - r.started > std::chrono::milliseconds(1200)) {
+      r.tries = 2;  // the dismount question may have come mid-animation: ask once more
       session_sync::ForceDismount(p, titan);
-      if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy gets off its titan (id {})", p + 1, titan_id);
+    } else if (now - r.started > kStepTimeout) {
+      r.active = false;
+      r.last_step_at = now;
+      REXLOG_WARN("Online: P{}'s titan step '{}' didn't happen here in {} s", p + 1, KindName(r.step.kind),
+                  std::chrono::duration_cast<std::chrono::seconds>(kStepTimeout).count());
     }
     return;
   }
-  // On foot here, riding there.
-  if (!w.ridden) {  // not a synced titan (unknown id): nothing to mount by
-    w.done = true;
+  while (!r.steps.empty()) {
+    r.step = r.steps.front();
+    r.steps.pop_front();
+    r.last_step_at = now;
+    if (StartStep(ctx, base, p, r)) return;
+  }
+  // THE LATE CHECK: riding / not riding (and pocket full / empty) compared,
+  // never titan ids (a titan ridden since a save load never had one).
+  const bool rides_here = titan != 0;
+  if (rides_here == r.rides) {
+    r.mismatch_since = {};
     return;
   }
-  const uint32_t pocket = Read32(kPocketSlot);
-  const uint32_t copy_of_ridden = net::world_sync::ActorOfNetId(w.ridden);
-  if (pocket && (IdOf(pocket) == w.ridden || pocket == copy_of_ridden)) {
-    if (w.pressed) return;
-    w.pressed = true;
-    net::GrantRemotePress(p, kEventTakeOut);
-    if (Trace()) REXLOG_INFO("OnlineTrace: P{} copy takes its titan out of the pocket (id {})", p + 1, w.ridden);
-    return;
+  if (r.mismatch_since == Clock::time_point{}) r.mismatch_since = now;
+  if (now - r.mismatch_since < kLateCheck || now - r.last_step_at < kLateCheck) return;
+  r.mismatch_since = now;  // one try per kLateCheck
+  const bool pocket_here = Read32(kPocketSlot) != 0;
+  Step fix;
+  if (r.rides) {
+    if (pocket_here && !r.has_pocket) fix = {kTakeOut, 0};
+    else if (r.ridden_id) fix = {kMount, r.ridden_id};
+  } else {
+    fix = {(r.has_pocket && !pocket_here) ? kPocket : kGetOff, 0};
   }
-  const uint32_t copy = copy_of_ridden;
-  if (!copy) {
-    if (Trace()) REXLOG_INFO("OnlineTrace: P{} rides titan id {} there, no copy of it here yet", p + 1, w.ridden);
-    return;
-  }
-  for (int q = 0; q < kPlayers; ++q) {
-    if (q != p && more_players::TitanOfPlayer(q) == copy) {
-      REXLOG_WARN("Online: P{} rides titan id {} there, P{} rides it here: left to the repair", p + 1, w.ridden,
-                  q + 1);
-      w.next_step = now + kGiveUp;
-      return;
-    }
-  }
-  session_sync::MountPlayerOnTitan(ctx, base, p, copy);
-  REXLOG_INFO("Online: P{} mounted on their titan's copy here (id {}, {:08X}), as their PC says", p + 1, w.ridden,
-              copy);
+  if (fix.kind == kSnapshot) return;
+  REXLOG_WARN("Online: P{}'s copy {} a titan here but not on their PC for {} s: '{}'", p + 1,
+              rides_here ? "rides" : "doesn't ride", std::chrono::duration_cast<std::chrono::seconds>(kLateCheck).count(),
+              KindName(fix.kind));
+  r.step = fix;
+  StartStep(ctx, base, p, r);
 }
 
 }  // namespace
@@ -204,24 +321,14 @@ bool On() { return REXCVAR_GET(online_titan_events) && net::Active(); }
 void Tick(PPCContext& ctx, uint8_t* base) {
   if (!On() || !more_players::InPlay() || more_players::Loading()) return;
   const int local = net::LocalSlot();
-  if (local >= 0 && local < kPlayers && Read32(kCoOpState + 4 * uint32_t(local)) == 2) SendOurs(local);
+  if (local >= 0 && local < kPlayers && Read32(kCoOpState + 4 * uint32_t(local)) == 2) OwnerTick(local);
   if (session_sync::InTransitionOrCutsceneGrace()) return;
-  std::array<Wanted, kPlayers> wanted;
-  {
-    std::lock_guard lock(g_mutex);
-    wanted = g_wanted;
-  }
   for (int p = 0; p < kPlayers; ++p) {
-    if (p == local || !wanted[p].valid || Read32(kCoOpState + 4 * uint32_t(p)) != 2) continue;
-    Follow(ctx, base, p, wanted[p]);
+    if (p == local || Read32(kCoOpState + 4 * uint32_t(p)) != 2) continue;
     std::lock_guard lock(g_mutex);
-    Wanted& w = g_wanted[p];
-    if (w.seq == wanted[p].seq) {
-      w.done = wanted[p].done;
-      w.next_step = wanted[p].next_step;
-      w.slow_noted = wanted[p].slow_noted;
-      w.pressed = wanted[p].pressed;
-    }
+    Remote& r = g_remote[p];
+    if (!r.valid) continue;
+    Follow(ctx, base, p, r);
   }
 }
 
@@ -230,54 +337,108 @@ void OnReceive(const uint8_t* data, size_t size) {
   const int p = data[1];
   if (p >= kPlayers) return;
   const uint32_t seq = Le32(data + 11);
-  const bool rides = data[10] & 1, pocket = (data[10] & 2) != 0;
-  const uint32_t ridden = Le32(data + 2), pocketed = Le32(data + 6);
   std::lock_guard lock(g_mutex);
-  Wanted& w = g_wanted[p];
-  if (w.valid && int32_t(seq - w.seq) <= 0) return;
-  const bool changed = !w.valid || w.rides != rides || w.ridden != ridden || w.pocket != pocket ||
-                       w.pocketed != pocketed;
-  w.valid = true;
-  w.seq = seq;
-  if (!changed) return;  // a repeat
-  // A SWAP comes as two announcements a frame apart ("rides nothing, pocket X",
-  // then "rides Y, pocket X"): the RB answered for the first IS the second's
-  // too (the game's swap does both). Same pocket, now riding = kept.
-  const bool same_swap = w.valid && w.pressed && !w.rides && rides && w.pocket && pocket &&
-                         w.pocketed == pocketed && Clock::now() - w.since < std::chrono::milliseconds(500);
-  w.rides = rides;
-  w.ridden = ridden;
-  w.pocket = pocket;
-  w.pocketed = pocketed;
-  w.since = Clock::now();
-  w.next_step = {};
-  w.done = false;
-  w.slow_noted = false;
-  w.pressed = same_swap;
-  if (Trace()) {
-    REXLOG_INFO("OnlineTrace: P{} says titans: rides {} (id {}), pocket {} (id {}) (#{})", p + 1,
-                rides ? "yes" : "no", ridden, pocket ? "yes" : "no", pocketed, seq);
+  Remote& r = g_remote[p];
+  if (r.valid && int32_t(seq - r.seq) <= 0) return;  // old / repeated
+  r.valid = true;
+  r.seq = seq;
+  r.rides = data[10] & 1;
+  r.has_pocket = (data[10] & 2) != 0;
+  r.ridden_id = Le32(data + 2);
+  const uint8_t kind = data[15];
+  if (kind != kSnapshot && kind <= kMount) {
+    r.steps.push_back({kind, Le32(data + 16)});
+    r.last_step_at = Clock::now();
+    if (Trace()) REXLOG_INFO("OnlineTrace: P{} titan step heard: {} (#{})", p + 1, KindName(kind), seq);
   }
 }
 
 bool Busy(int p) {
   if (p < 0 || p >= kPlayers || !On()) return false;
   std::lock_guard lock(g_mutex);
-  const Wanted& w = g_wanted[p];
-  return w.valid && !w.done && Clock::now() - w.since < kGiveUp;
+  const Remote& r = g_remote[p];
+  return r.valid && (r.active || !r.steps.empty() || Clock::now() - r.last_step_at < kLateCheck);
 }
 
 void Forget(int p) {
   if (p < 0 || p >= kPlayers) return;
   std::lock_guard lock(g_mutex);
-  g_wanted[p] = {};
+  g_remote[p] = {};
 }
 
 void Reset() {
   std::lock_guard lock(g_mutex);
-  g_wanted = {};
-  g_sent_valid = false;
-  g_sent_at = {};
+  g_remote = {};
+  g_own.init = false;
+}
+
+bool IsOtherPcsPlayer(uint32_t actor) {
+  if (!On() || !actor) return false;
+  const int local = net::LocalSlot();
+  for (int q = 0; q < kPlayers; ++q) {
+    if (q != local && more_players::CharacterOfPlayer(q) == actor) return true;
+  }
+  return false;
 }
 
 }  // namespace net::titan_sync
+
+// CheckOpportunity (sub_82157058; r3 = the asking Crash's COpportunityBehaviour,
+// its actor at +0x1C; r4 the name's hash, f1 the range): "is there a titan I
+// may jack within range?" -- asked by Crash's own B on foot and, through the
+// ridden titan's CheckOpportunitySlave, by B while riding (prompt_icons.cpp
+// has the full read). ANOTHER PC'S PLAYER NEVER PICKS A TITAN HERE: their own
+// PC jacks and reports "mount titan N" (titan_sync step kMount). Without this,
+// the copy's forced get-off (the titan's B question answered yes) turned into
+// a JACK of whatever knocked-out titan stood nearby (2026-11-28 two-PC test:
+// the guest's copy of player 1 jacked a spawned Ratcicle instead of getting
+// off, the repair fought it and the guest crashed).
+// BUT an offer made FOR that player alone stays theirs: a titan coming out of
+// the pocket (take out, the second half of a swap) offers itself only to its
+// taker (COpportunity +0x10 = that Crash) and the swap script jacks it through
+// this same check. Hiding everything left the copy on foot after a swap (same
+// test). So for other PCs' players only the "anyone" offers (+0x10 = 0: a
+// knocked-out enemy) are hidden, for this one call: their +0x10 is set to a
+// value no actor has, then put back. Table: 0x825A5418 = a binary tree (root
+// word, sentinel = table + 4; node +0 left, +4 right, +0x14 a list: entry +0
+// next, +8 the COpportunity).
+namespace net::titan_sync {
+namespace {
+constexpr uint32_t kOpportunityTable = 0x825A5418;
+constexpr uint32_t kNoOne = 0xFFFFFFF0u;
+void Write32(uint32_t a, uint32_t v) {
+  uint8_t* p = Guest(a);
+  p[0] = uint8_t(v >> 24), p[1] = uint8_t(v >> 16), p[2] = uint8_t(v >> 8), p[3] = uint8_t(v);
+}
+// Every open "anyone" offer -> hidden (their addresses into `out`).
+void HideAnyoneOffers(uint32_t node, int depth, std::vector<uint32_t>& out) {
+  const uint32_t sentinel = kOpportunityTable + 4;
+  if (!node || node == sentinel || depth > 32 || !guest_memory::Readable(node, 0x18)) return;
+  int n = 0;
+  for (uint32_t e = Read32(node + 0x14); e && n < 64 && guest_memory::Readable(e, 12); e = Read32(e), ++n) {
+    const uint32_t opp = Read32(e + 8);
+    if (opp && guest_memory::Readable(opp + 0x10, 4) && Read32(opp + 0x10) == 0) {
+      Write32(opp + 0x10, kNoOne);
+      out.push_back(opp);
+    }
+  }
+  HideAnyoneOffers(Read32(node), depth + 1, out);
+  HideAnyoneOffers(Read32(node + 4), depth + 1, out);
+}
+}  // namespace
+}  // namespace net::titan_sync
+
+extern "C" REX_FUNC(__imp__sub_82157058);
+extern "C" REX_FUNC(sub_82157058) {
+  using namespace net::titan_sync;
+  const uint32_t beh = ctx.r3.u32;
+  const uint32_t actor = On() && beh && guest_memory::Readable(beh + 0x1C, 4) ? Read32(beh + 0x1C) : 0;
+  if (!IsOtherPcsPlayer(actor)) {
+    __imp__sub_82157058(ctx, base);
+    return;
+  }
+  std::vector<uint32_t> hidden;
+  HideAnyoneOffers(Read32(kOpportunityTable), 0, hidden);
+  __imp__sub_82157058(ctx, base);
+  for (const uint32_t opp : hidden) Write32(opp + 0x10, 0);
+}

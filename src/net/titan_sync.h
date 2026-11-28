@@ -1,38 +1,44 @@
 // =============================================================================
-// net/titan_sync.h -- ONLINE TITANS BY OUTCOME, NOT BY PRESSES (2026-11-27)
+// net/titan_sync.h -- ONLINE TITANS: THE OWNER SAYS WHAT HAPPENED (2026-11-28)
 //
-// Before: pocketing (RB riding), taking a titan out (RB on foot), swapping
-// (RB with one pocketed), getting off (B riding) and jacking the next titan
-// while riding (B riding next to a knocked-out one) went to the other PCs as
-// "their game accepted RB / B" (kMsgPocket). Each copy then heard that press
-// and DECIDED for itself what it meant: with a knocked-out titan in reach on
-// one PC and not on the other, the same B got off here and jacked there. A
-// jack on foot reached the others only through session_sync's titan repair,
-// 0.3 s or more later, and the repair spawned second titans when it misread.
+// History: first the owner's accepted RB / B presses were replayed (each copy
+// decided what they meant: the same B got off on one PC and jacked on
+// another); then (2026-11-27) the owner announced its STATE by titan net id
+// and the copies were stepped toward it. That second version failed with
+// titans that have NO net id (one ridden since a save load never was an enemy
+// entity: "pocket yes (id 0)"): the copy couldn't match, fell back to "get
+// off", whose B question JACKED a knocked-out titan nearby, the repair fought
+// that, unlinked the rider mid-animation and the guest crashed (read of 0x34
+// in sub_820CD6B8 under sub_8212EE90). 2026-11-28 two-PC test, reproducible.
 //
-// Now the owner's PC ANNOUNCES the result: which titan its player rides and
-// which titan the pocket holds (host net ids, world_sync), on every change and
-// every 2 s. The game itself changes these one step at a time (jacking B while
-// riding A = A pocketed, then B mounted, frames apart; a swap = the ridden one
-// pocketed, then the other taken out), so every action is a sequence of four
-// steps the other PCs make with the game's own code:
-//   * MOUNT a titan that isn't in our pocket = the game's own mount of our copy
-//     of it (CActionSpawnPlayer's two messages, session_sync);
-//   * TAKE OUT the titan our pocket holds = the copy's own RB-on-foot question
-//     answered yes once (PLAYER map 5 / event 14): the game's take-out;
-//   * POCKET the ridden titan (the owner's pocket now holds it) = the copy's
-//     RB-riding question answered yes once (ENEMY map 6 / event 37);
-//   * GET OFF (ridden titan neither ridden nor pocketed there) = the titan's
-//     own dismount question answered (lost_controller's CheckInputEvent hook).
-// Each answer is given only when it leads to the announced result; the riding
-// B is never replayed (its two meanings were the ambiguity). The pocket is ONE
-// slot for everyone, as in the original: the game object +32 (CActor*).
-// session_sync's titan repair stays as the late fallback (spawn after 3 s).
-// Found: who writes the pocket slot (console `who 0x825B0028`, save 10 on a
-// Ratcicle): pocket = script method sub_8216DAC0 -> sub_8216D508 ->
-// sub_8216D1D0 (stores the actor, sub_820B1D10); take out = sub_8216DB00 ->
-// sub_8216D668 -> sub_8216D548 -> sub_8216D6B0 (clears it). Both run from the
-// fight trees' Lua, i.e. from those two questions' answers.
+// THE ORIGINAL (single-player watch of 0x825B0020 ridden + 0x825B0028 pocket):
+// one RB with a titan pocketed = ONE swap, ridden and pocket trade places in
+// one frame (sometimes with one frame of "nothing ridden" between). The
+// pocket is a two-place stack shared by everyone (0x825A5474 / 0x825A5480):
+// pocket = sub_8216DAC0 -> sub_8216D508 -> sub_8216D1D0 (pushes, sets +32);
+// take out = sub_8216DB00 -> sub_8216D668 -> sub_8216D548 -> sub_8216D6B0
+// (takes the older entry). The swap script does both, then mounts Crash.
+//
+// NOW: the owner's PC watches its own ridden / pocket values; once they held
+// 2 frames (the original's 1-frame in-between doesn't count) it names WHAT
+// HAPPENED, as steps: POCKET, TAKE OUT, SWAP, GET OFF, MOUNT <titan id> (a
+// jack; jacking while riding = POCKET then MOUNT). Every other PC replays each
+// step through the game's own question for it, checks the result, in order:
+//   * POCKET / SWAP = the copy's RB-riding question answered yes once (ENEMY
+//     map 6 / event 37); the game pockets with an empty pocket, swaps with a
+//     full one, exactly as the owner's did (the shared pocket matches);
+//   * TAKE OUT = the RB-on-foot question (PLAYER map 5 / event 14);
+//   * GET OFF = the titan's own dismount question (lost_controller's
+//     CheckInputEvent hook). A copy NEVER picks a titan to jack
+//     (CheckOpportunity sub_82157058 answers "none" for other PCs' players),
+//     so that B can only mean get off;
+//   * MOUNT = the game's own mount of our copy of that titan (only titans
+//     that were enemies have ids, and those are exactly the jacked ones).
+// A step whose start doesn't fit (riding where the owner was on foot...) is
+// skipped and logged; one that shows no result in 3 s is dropped. Then the
+// LATE CHECK compares riding / not riding and pocket full / empty (never ids)
+// after 4 s quiet and makes one step to fix it. session_sync's old titan
+// repair (spawning copies, forced unlinks) stays off while this is on.
 // Switch: online_titan_events (default on; off = the old press replay).
 // =============================================================================
 #pragma once
@@ -51,9 +57,11 @@ namespace net::titan_sync {
 // Owner -> Host -> others (reliable, in the fight-tree states' queue):
 // [0] 19, [1] slot, [2..5] u32 LE ridden titan's host net id (0 = none / not a
 // synced entity), [6..9] u32 LE pocketed titan's net id (0 = empty / unknown),
-// [10] bit 0 rides a titan, bit 1 the pocket holds one, [11..14] u32 LE seq.
+// [10] bit 0 rides a titan, bit 1 the pocket holds one, [11..14] u32 LE seq,
+// [15] the step (0 none = state only, 1 pocket, 2 take out, 3 swap, 4 get off,
+// 5 mount), [16..19] u32 LE the mounted titan's net id (mount).
 constexpr uint8_t kMsgTitan = 19;
-constexpr size_t kTitanSize = 15;
+constexpr size_t kTitanSize = 20;
 
 bool On();
 // Game thread, once per frame (session_sync TickFrame).
@@ -66,5 +74,7 @@ bool Busy(int p);
 // Player p's PC left / new session.
 void Forget(int p);
 void Reset();
+// Another PC's player (their Crash copy here): never picks a titan to jack.
+bool IsOtherPcsPlayer(uint32_t actor);
 
 }  // namespace net::titan_sync
