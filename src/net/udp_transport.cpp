@@ -35,6 +35,10 @@
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
+// Winsock's functions (socket, bind, sendto, recvfrom, getaddrinfo...) live in
+// ws2_32.lib; nothing else in the build links it, so the linker is told here,
+// like the other Windows libraries (session_log.cpp, crash_report.cpp).
+#pragma comment(lib, "ws2_32.lib")
 using SocketHandle = SOCKET;
 constexpr SocketHandle kInvalidSocket = INVALID_SOCKET;
 #else
