@@ -339,7 +339,22 @@ extern "C" REX_FUNC(sub_82132FF8) {
     // flinch). Enemies still hit them (2026-11-27 decision: pausing must not be
     // a shield against enemies; a death in a menu was tested and is the game's
     // ordinary co-op death once the menu closes).
-    if (hurt_online >= 0 && by >= 0 && by != hurt_online && net::IsPlayerInMenu(hurt_online, base)) return;
+    // PLAYTEST LOGS (2026-11-28, "attacks on the guest usually don't land"):
+    // every player-on-player hit message on THIS PC, landed or dropped and
+    // why; one line per pair per 0.25 s (a punch is several messages).
+    const bool pvp = hurt_online >= 0 && by >= 0 && by != hurt_online;
+    const bool menu_shield = pvp && net::IsPlayerInMenu(hurt_online, base);
+    if (pvp && net::DebugTraceOn()) {
+      static Clock::time_point last[4][4];
+      const auto now = Clock::now();
+      if (now - last[by][hurt_online] > std::chrono::milliseconds(250)) {
+        last[by][hurt_online] = now;
+        REXLOG_INFO("Hits: P{} hit P{} here (message {}/{}, P{} is {}): {}", by + 1, hurt_online + 1, type, subtype,
+                    hurt_online + 1, hurt_online == net::LocalSlot() ? "ours" : "a copy",
+                    menu_shield ? "DROPPED (they're in a menu)" : friendly_fire ? "plays" : "friendly fire off");
+      }
+    }
+    if (menu_shield) return;
     const int local = net::LocalSlot();
     const bool remote_hitter_on_enemy = net::IsHost() && hurt_online < 0 && by >= 0 && by != local;
     const int remote_victim = hurt_online >= 0 && hurt_online != local ? hurt_online : -1;

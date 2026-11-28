@@ -159,6 +159,15 @@ namespace more_players_frontend {
 void SetUpInGame(PPCContext& ctx, uint8_t* base);
 // One hit on player p's (0-3) combo meter, like a landed hit (debug FIFO).
 void AddComboHit(PPCContext& ctx, uint8_t* base, int player);
+// ONLINE COMBOS (2026-11-28): each player's combo is counted on THEIR OWN PC
+// only. ComboOf = player p's meter here (hits in a row, 0 once the combo has
+// broken; level = the multiplier step, meter +3136); false = no meter.
+// SetComboFromOwner = another PC's player: their meter here follows the
+// count their PC sent (the game's own add-hit / break, so it animates the
+// same); hits landed by their copy HERE no longer count (the meter's two
+// functions are wrapped). Game thread.
+bool ComboOf(int player, int& hits, int& level);
+void SetComboFromOwner(PPCContext& ctx, uint8_t* base, int player, int hits);
 // Shows player p's (0-3) "counter now" prompt, as a titan's heavy attack does (debug FIFO).
 void ShowCounterPrompt(PPCContext& ctx, uint8_t* base, int player);
 }  // namespace more_players_frontend

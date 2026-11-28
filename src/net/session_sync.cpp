@@ -413,7 +413,19 @@ uint32_t CallGame(void (*fn)(PPCContext&, uint8_t*), PPCContext& ctx, uint8_t* b
   return ret;
 }
 
-void ExtendGrace(double seconds) {
+// THE GRACE WINDOW: while it runs, other players' copies here are neither
+// driven by their owner's states nor pulled to their owner's position
+// (PuppetOnFoot / PrepareRemotePhysics), so a scene / load can move everyone.
+// A grace that isn't needed = the copies wander freely = DESYNC (2026-11-28,
+// see sub_822975A8). So every start is logged with its reason (trace).
+void ExtendGrace(double seconds, const char* why) {
+  {
+    const int64_t now_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now().time_since_epoch()).count();
+    if (net::DebugTraceOn() && g_ss.grace_until_ns.load() < now_ns) {
+      REXLOG_INFO("OnlineTrace: grace {:.1f} s ({}): other players' copies left alone", seconds, why);
+    }
+  }
   const auto until = Clock::now() + std::chrono::duration_cast<Clock::duration>(
                                         std::chrono::duration<double>(seconds));
   const int64_t ns =
@@ -1060,7 +1072,7 @@ void EnsureFrontEndHooksRegistered() {
         const bool is_start = (from == 489 && (exit == 491 || exit == 767));
         const bool is_skip = (from == 492 && exit == 494) || (from == 543 && exit == 544);
         if (!is_start && !is_skip) return;
-        ExtendGrace(5.0);
+        ExtendGrace(5.0, "cutscene / movie start or skip");
         uint8_t pkt[6] = {kMsgCutsceneSync, uint8_t(CurrentLevelId(base))};
         PutLE16(pkt + 2, uint16_t(from));
         PutLE16(pkt + 4, uint16_t(exit));
@@ -1231,7 +1243,7 @@ void TickOutfitsAndRemoteInteracts(PPCContext& ctx, uint8_t* base, const Clock::
 
     REXLOG_INFO("Online: replaying shared world interaction from P{} on object {:08X} (hash {:08X})",
                 ev.slot + 1, best_obj, ev.hash);
-    ExtendGrace(4.0);
+    ExtendGrace(4.0, "replayed world interaction");
     g_ss.replaying_remote_interact = true;
     g_ss.active_interact_player = int(ev.slot);
     g_ss.last_interact_player = int(ev.slot);
@@ -1320,6 +1332,7 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
   EnsureFrontEndHooksRegistered();
   if (!net::Active()) return;
   net::ApplyRemoteHealth(ctx, base);  // other players' health, as their own PCs say
+  net::ApplyRemoteCombos(ctx, base);  // ... and their combo meters
   net::mask_sync::Tick(ctx, base);    // masks: announce ours, copies follow theirs
   net::titan_sync::Tick(ctx, base);   // titans: announce ours, copies follow theirs
   const auto now = Clock::now();
@@ -1405,9 +1418,9 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
     if (++loading_frames == 20) g_exit_shut.clear();
   }
   if (loading) {
-    ExtendGrace(2.5);
+    ExtendGrace(2.5, "loading");
   } else if (g_ss.was_loading) {
-    ExtendGrace(2.5);
+    ExtendGrace(2.5, "loading");
   }
   g_ss.was_loading = loading;
 
@@ -1427,7 +1440,7 @@ void TickFrame(PPCContext& ctx, uint8_t* base) {
     if (cur_lvl != int(trans.level) || cur_ent != int(trans.entry)) {
       REXLOG_INFO("Online: applying synced area transition -> level {} entry {}", int(trans.level),
                   int(trans.entry));
-      ExtendGrace(4.0);
+      ExtendGrace(4.0, "area transition");
       g_ss.applying_transition = true;
       ChangeLevelLikeTheGame(ctx, base, uber, trans.level, trans.entry);
       g_ss.applying_transition = false;
@@ -1562,7 +1575,7 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
           g_ss.pending_transition = {true, level, entry, epoch};
         }
       }
-      ExtendGrace(4.0);
+      ExtendGrace(4.0, "area transition from the host");
       break;
     }
 
@@ -1583,7 +1596,7 @@ void HandlePacket(const uint8_t* data, size_t size, bool is_host, uint32_t sende
         g_ss.remote_scene_skip_at = Clock::now();
         g_ss.remote_scene_skip = true;
       }
-      ExtendGrace(5.0);
+      ExtendGrace(5.0, "remote cutscene skip");
       break;
     }
 
@@ -1787,6 +1800,17 @@ bool IsLocalMenuOpen(uint8_t* base) {
     g_ss.menu_button_block_until_ns.store(ns, std::memory_order_relaxed);
   }
   return open;
+}
+
+std::string DescribeLocalMenu(uint8_t* base) {
+  const uint32_t uber = base ? ReadU32(base, kUberGlobal) : 0;
+  const uint32_t fe = uber ? ReadU32(base, uber + kUberFrontEnd) : 0;
+  const bool kbm_menu = kbm::KeyboardMouseDriver::Get() && kbm::KeyboardMouseDriver::Get()->menu_open();
+  if (!fe || !guest_memory::Readable(fe + kFeFlags2, 1)) return "no front end";
+  return fmt::format("fe state {}, overlay 0x{:02X}, flags 0x{:02X}, box 0x{:02X}, owner {}, picker {}, menu_input {}, keyboard menu {}",
+                     fight_tree::CurrentFrontEnd().state, *GuestPtr(base, fe + 8592), *GuestPtr(base, fe + kFeFlags2),
+                     *GuestPtr(base, fe + kFeConfirmBoxFlags), int32_t(ReadU32(base, fe + kFeOwner)),
+                     outfit_picker::IsOpen() ? 1 : 0, menu_input::MenuOnScreen() ? 1 : 0, kbm_menu ? 1 : 0);
 }
 
 bool IsLocalMenuOpenCached() {
@@ -2213,7 +2237,7 @@ extern "C" REX_FUNC(sub_82293D70) {
       action && guest_memory::Readable(action + 8, 2)) {
     const int8_t level = int8_t(*GuestPtr(base, action + 8));
     const int8_t entry = int8_t(*GuestPtr(base, action + 9));
-    net::session_sync::ExtendGrace(4.0);
+    net::session_sync::ExtendGrace(4.0, "level exit");
     if (!net::IsHost() && net::LocalSlot() >= 0) {  // (no host any more: change here)
       // Client walked into door: ask Host to transition everyone together!
       uint8_t pkt[8] = {net::kMsgAreaTransition, uint8_t(level), uint8_t(entry),
@@ -2234,10 +2258,23 @@ extern "C" REX_FUNC(sub_82293D70) {
 // row ("level 1 entry 1" then "level 1 entry 25", seen 2026-11-27). A checkpoint
 // is not a level change: each PC registers its own (the same objective runs on
 // every PC); only the cutscene/void grace is kept.
+// 2026-11-28 PLAYTEST (desync): the 4 s grace it kept froze the OTHER
+// players' copies out of step for 4 s at every checkpoint registered. In
+// Wumpa Island's start area a trigger volume re-registers one each time a
+// player walks through it (objective 42865BE0, 20 times in 5 minutes): the
+// host's Crash wandered 8-16 units off on the guest's screen and the host's
+// hits on the guest stopped landing there. A checkpoint moves nobody: no
+// grace any more (a respawn at it is a separate, real move).
 extern "C" REX_FUNC(sub_822975A8) {
   __imp__sub_822975A8(ctx, base);
-  if (net::Active() && more_players::InPlay() && !net::session_sync::g_ss.applying_transition) {
-    net::session_sync::ExtendGrace(4.0);
+  // Each PC registers its own checkpoints (its own trigger volumes): logged,
+  // to compare the PCs when a death restarts them differently (playtest).
+  if (net::Active() && net::DebugTraceOn()) {
+    const uint32_t uber = net::session_sync::ReadU32(base, net::session_sync::kUberGlobal);
+    if (uber) {
+      REXLOG_INFO("OnlineTrace: checkpoint registered here: level {} entry {}", int32_t(net::session_sync::ReadU32(base, uber + 244)),
+                  int32_t(net::session_sync::ReadU32(base, uber + 248)));
+    }
   }
 }
 
@@ -2245,7 +2282,7 @@ extern "C" REX_FUNC(sub_8227B640) {
   if (net::Active() && more_players::InPlay() && !net::session_sync::g_ss.applying_transition) {
     const int8_t level = int8_t(ctx.r4.u32);
     const int8_t entry = int8_t(ctx.r5.u32);
-    net::session_sync::ExtendGrace(4.0);
+    net::session_sync::ExtendGrace(4.0, "level change");
     if (net::IsHost()) {
       uint32_t epoch = 0;
       {
@@ -2413,7 +2450,7 @@ extern "C" REX_FUNC(sub_8229CB78) {
 //    Extend cutscene grace & notify peers so cutscenes never cause void deaths!
 extern "C" REX_FUNC(sub_820B3430) {
   if (net::Active() && more_players::InPlay()) {
-    net::session_sync::ExtendGrace(4.0);
+    net::session_sync::ExtendGrace(4.0, "cinematic starts");
     uint8_t pkt[6] = {net::kMsgCutsceneSync,
                       uint8_t(net::session_sync::CurrentLevelId(base))};
     if (net::IsHost()) {

@@ -126,7 +126,13 @@ enum MsgType : uint8_t {
 //   +57 u8       digging_byte (0x8259B124 + slot per-player digging flag)
 //   +58 f32      hitpoints of the owner's body (valid with kFlagHasHealth)
 // (58-byte packets of an older build are still read: no health in them.)
-constexpr size_t kPlayerStateWireSize = 62;
+//   +62 u16      combo hits of the owner's combo meter (2026-11-28, with kFlag2HasCombo)
+//   +64 u8       combo level (the multiplier step, meter +3136)
+//   +65 u8       flags2 (bit 0 = has combo)
+// (62-byte packets: no combo.)
+constexpr size_t kPlayerStateWireSize = 66;
+constexpr size_t kPlayerStateHealthWireSize = 62;
+constexpr uint8_t kFlag2HasCombo = 1u << 0;
 constexpr size_t kPlayerStateOldWireSize = 58;
 constexpr int32_t kFrontEndGameRunning = 489;  // Frontend.bfig "GameRunning"
 constexpr uint32_t kDiggingFlagTable = 0x8259B124;
@@ -153,7 +159,7 @@ constexpr uint8_t kFlagHasHealth = 1u << 7;
 // The host compares all three and answers kMsgRefuse on any difference (an
 // old build's 1-byte Hello = "older version"). Two different builds of the
 // same version with the same protocol number play together (by design).
-constexpr uint16_t kProtocolVersion = 1;
+constexpr uint16_t kProtocolVersion = 2;  // 2: combo in the player snapshot (66 bytes)
 constexpr uint32_t kCodeStart = 0x820B0000, kCodeEnd = 0x824D0000;
 enum RefuseReason : uint8_t { kRefuseFull = 1, kRefuseVersion = 2, kRefuseProtocol = 3, kRefuseDisc = 4 };
 
@@ -175,6 +181,9 @@ struct PlayerSnapshot {
   int8_t level_id = -1;
   uint8_t digging_byte = 0;
   float hitpoints = 0.0f;  // with kFlagHasHealth
+  uint8_t flags2 = 0;
+  uint16_t combo_hits = 0;   // with kFlag2HasCombo
+  uint8_t combo_level = 0;
   float pos[3] = {0, 0, 0};
   float vel[3] = {0, 0, 0};
   float yaw = 0.0f;
@@ -345,6 +354,10 @@ void SerializePlayerState(uint8_t* out, uint8_t slot, const PlayerSnapshot& snap
   out[56] = uint8_t(snap.level_id);
   out[57] = snap.digging_byte;
   PutF32(out + 58, snap.hitpoints);
+  out[62] = uint8_t(snap.combo_hits);
+  out[63] = uint8_t(snap.combo_hits >> 8);
+  out[64] = snap.combo_level;
+  out[65] = snap.flags2;
 }
 
 bool DeserializePlayerState(const uint8_t* data, size_t size, uint8_t& slot, PlayerSnapshot& out) {
@@ -371,11 +384,16 @@ bool DeserializePlayerState(const uint8_t* data, size_t size, uint8_t& slot, Pla
   }
   out.level_id = int8_t(data[56]);
   out.digging_byte = data[57];
-  if (size >= kPlayerStateWireSize) {
+  if (size >= kPlayerStateHealthWireSize) {
     out.hitpoints = GetF32(data + 58);
     if (!std::isfinite(out.hitpoints)) out.flags &= ~kFlagHasHealth;
   } else {
     out.flags &= ~kFlagHasHealth;
+  }
+  if (size >= kPlayerStateWireSize) {
+    out.combo_hits = uint16_t(data[62] | data[63] << 8);
+    out.combo_level = data[64];
+    out.flags2 = data[65];
   }
   return true;
 }
@@ -637,6 +655,11 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       rs.connected = true;
       if (rs.has_snapshot && !SeqNewer32(snap.seq, rs.latest_seq)) break;  // out-of-order/old
       snap.recv_time = now;
+      // PLAYTEST LOGS (2026-11-28): their menu opening / closing, as they say it.
+      if (rs.has_snapshot && !rs.history.empty() &&
+          ((rs.history.back().flags ^ snap.flags) & kFlagInMenu)) {
+        REXLOG_INFO("Online: P{} says their menu is {}", slot + 1, (snap.flags & kFlagInMenu) ? "OPEN" : "closed");
+      }
       rs.latest_seq = snap.seq;
       rs.has_snapshot = true;
       // The OLD spin channel (pulse + hold flag -> game_mods TakeButtonSpin /
@@ -891,6 +914,97 @@ bool SampleRemoteStateLocked(int slot, Clock::time_point now, float out_pos[3], 
   return true;
 }
 
+// Where player p's body is on THIS PC (titan when riding, else Crash):
+// physics position, else the world matrix. False = no body / not readable.
+bool BodyPositionHere(uint8_t* base, int p, float out[3]) {
+  const uint32_t titan = more_players::TitanOfPlayer(p);
+  const uint32_t body = titan ? titan : more_players::CharacterOfPlayer(p);
+  if (!body) return false;
+  if (const uint32_t phys = FindPhysicsOf(base, body)) {
+    if (ReadGuestF32(base, phys + kPhysicsPosition, out[0]) && ReadGuestF32(base, phys + kPhysicsPosition + 4, out[1]) &&
+        ReadGuestF32(base, phys + kPhysicsPosition + 8, out[2])) {
+      return true;
+    }
+  }
+  uint32_t mat = 0;
+  return ReadGuestU32(base, body + kActorMatrix, mat) && mat && ReadGuestF32(base, mat + 48, out[0]) &&
+         ReadGuestF32(base, mat + 52, out[1]) && ReadGuestF32(base, mat + 56, out[2]);
+}
+
+// SYNC CHECK (playtest logs, 2026-11-28: "add more logs to see where they
+// were"). Once a second (with --debug_online_trace) one line per PC:
+//   Sync: P1 me (x, y, z) s2 menu 0 | P2 copy (x, y, z) owner (x, y, z) off 0.4 u s2/2 menu 0 age 18 ms
+// = every player's body HERE, and for the other players what their own PC
+// last said (owner), how far apart (off), co-op state here/theirs, their menu
+// flag, the snapshot's age. Compare the two PCs' lines by time. Always (trace
+// or not): a WARNING when a copy stays > 3 units from its owner's word, or in
+// another co-op state, for 1 s ("drifted"), and an INFO when it's back.
+struct DriftWatch {
+  Clock::time_point since{};
+  bool warned = false;
+};
+std::array<DriftWatch, kMaxPlayers> g_drift{};
+Clock::time_point g_last_sync_line{};
+
+void SyncCheckLocked(uint8_t* base, Clock::time_point now) {
+  if (!base || g_net.local_slot < 0 || !more_players::InPlay() || more_players::Loading()) return;
+  const bool line_due = DebugTraceOn() && now - g_last_sync_line >= std::chrono::seconds(1);
+  std::string line;
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    const uint32_t here_state = ReadCoOpState(base, p);
+    const RemoteSlot& rs = g_net.slots[p];
+    if (p != g_net.local_slot && !rs.connected) continue;
+    float here[3] = {0, 0, 0};
+    const bool have_here = here_state != 0 && BodyPositionHere(base, p, here);
+    if (p == g_net.local_slot) {
+      if (line_due) {
+        line += fmt::format("{}P{} me ({:.1f}, {:.1f}, {:.1f}) s{} menu {}", line.empty() ? "" : " | ", p + 1, here[0],
+                            here[1], here[2], here_state, session_sync::IsLocalMenuOpenCached() ? 1 : 0);
+      }
+      continue;
+    }
+    if (!rs.has_snapshot || rs.history.empty()) continue;
+    const PlayerSnapshot& last = rs.history.back();
+    const float dx = here[0] - last.pos[0], dy = here[1] - last.pos[1], dz = here[2] - last.pos[2];
+    const float off = std::sqrt(dx * dx + dy * dy + dz * dz);
+    const int age_ms = int(std::chrono::duration_cast<std::chrono::milliseconds>(now - last.recv_time).count());
+    if (line_due) {
+      line += fmt::format("{}P{} copy ({:.1f}, {:.1f}, {:.1f}) owner ({:.1f}, {:.1f}, {:.1f}) off {:.1f} u s{}/{} menu {} age {} ms",
+                          line.empty() ? "" : " | ", p + 1, here[0], here[1], here[2], last.pos[0], last.pos[1],
+                          last.pos[2], have_here ? off : -1.0f, here_state, last.coop_state,
+                          (last.flags & kFlagInMenu) ? 1 : 0, age_ms);
+    }
+    // Drift: same level, both have a body, fresh word from the owner.
+    const bool comparable = have_here && (last.flags & kFlagHasActor) && age_ms < 500 &&
+                            last.level_id == int8_t(session_sync::CurrentLevelId(base));
+    // (Distance only while on foot on both: a mask's place comes from its
+    // carrier, and a respawn moves the carrier first; a state mismatch counts.)
+    const bool bad = comparable && ((off > 3.0f && here_state == 2 && last.coop_state == 2) ||
+                                    here_state != last.coop_state);
+    DriftWatch& w = g_drift[p];
+    if (!bad) {
+      if (w.warned) {
+        REXLOG_INFO("Online: P{}'s copy is back in step after {:.1f} s", p + 1,
+                    std::chrono::duration<double>(now - w.since).count());
+      }
+      w = DriftWatch{};
+      continue;
+    }
+    if (w.since == Clock::time_point{}) w.since = now;
+    if (!w.warned && now - w.since >= std::chrono::seconds(1)) {
+      w.warned = true;
+      REXLOG_WARN("Online: P{}'s copy DRIFTED: here ({:.1f}, {:.1f}, {:.1f}) co-op state {}, their PC says "
+                  "({:.1f}, {:.1f}, {:.1f}) state {} = {:.1f} units apart (menu {}, ground {})",
+                  p + 1, here[0], here[1], here[2], here_state, last.pos[0], last.pos[1], last.pos[2],
+                  last.coop_state, off, (last.flags & kFlagInMenu) ? 1 : 0, (last.flags & kFlagOnGround) ? 1 : 0);
+    }
+  }
+  if (line_due) {
+    g_last_sync_line = now;
+    REXLOG_INFO("Sync: {}", line);
+  }
+}
+
 void SendLocalSnapshotLocked(uint8_t* base, Clock::time_point now) {
   if (g_net.local_slot < 0 || !g_net.transport || !g_net.transport->IsOpen()) return;
   const int hz = std::clamp(REXCVAR_GET(online_rate), 10, 60);
@@ -922,6 +1036,13 @@ void SendLocalSnapshotLocked(uint8_t* base, Clock::time_point now) {
     g_net.latched_local_buttons = 0;
   }
   if (session_sync::IsLocalMenuOpen(base)) snap.flags |= kFlagInMenu;
+  // PLAYTEST LOGS: our own menu as we tell the others (and why "open").
+  static bool was_open = false;
+  if (bool(snap.flags & kFlagInMenu) != was_open) {
+    was_open = (snap.flags & kFlagInMenu) != 0;
+    REXLOG_INFO("Online: my menu is {} (we tell the others) [{}]", was_open ? "OPEN" : "closed",
+                session_sync::DescribeLocalMenu(base));
+  }
   if (g_net.latched_local_spin) {
     snap.flags |= kFlagSpinPulse;
     g_net.latched_local_spin = false;
@@ -978,6 +1099,14 @@ void SendLocalSnapshotLocked(uint8_t* base, Clock::time_point now) {
       if (cheats::PlayerHealth(g_net.local_slot, hp, max_hp)) {
         snap.hitpoints = hp;
         snap.flags |= kFlagHasHealth;
+      }
+      // COMBO (2026-11-28 playtest: "the combo multiplier isn't synced"): our
+      // own meter is the true one (players/more_players_frontend.h ComboOf).
+      int hits = 0, level = 0;
+      if (more_players_frontend::ComboOf(g_net.local_slot, hits, level)) {
+        snap.combo_hits = uint16_t(std::clamp(hits, 0, 65535));
+        snap.combo_level = uint8_t(std::clamp(level, 0, 255));
+        snap.flags2 |= kFlag2HasCombo;
       }
     }
   }
@@ -1063,6 +1192,7 @@ void TickNetworkLocked(uint8_t* base) {
   }
 
   SendLocalSnapshotLocked(base, now);
+  SyncCheckLocked(base, now);
 }
 
 void SetBeButtons(uint8_t* gamepad_be12, uint16_t buttons) {
@@ -1766,6 +1896,33 @@ bool TakeRemotePocket(int player, uint8_t event) {
     REXLOG_INFO("OnlineTrace: P{} puppet used an accepted pocket press (event {})", player + 1, event);
   }
   return true;
+}
+
+// ONLINE COMBOS (2026-11-28): every other player's combo meter here follows
+// the count their own PC sent (players/more_players.h SetComboFromOwner).
+void ApplyRemoteCombos(PPCContext& ctx, uint8_t* base) {
+  std::array<int, kMaxPlayers> hits{};
+  std::array<bool, kMaxPlayers> have{};
+  {
+    std::lock_guard lock(g_net.mutex);
+    if (!g_net.active || g_net.local_slot < 0) return;
+    for (int p = 0; p < kMaxPlayers; ++p) {
+      const RemoteSlot& rs = g_net.slots[p];
+      if (p == g_net.local_slot || !rs.connected || !rs.has_snapshot || rs.history.empty()) continue;
+      const PlayerSnapshot& last = rs.history.back();
+      if (!(last.flags2 & kFlag2HasCombo)) continue;
+      hits[p] = last.combo_hits;
+      have[p] = true;
+    }
+  }
+  for (int p = 0; p < kMaxPlayers; ++p) {
+    if (!have[p]) continue;
+    int here = 0, level = 0;
+    if (DebugTraceOn() && more_players_frontend::ComboOf(p, here, level) && here != hits[p]) {
+      REXLOG_INFO("OnlineTrace: P{} combo here {} -> their PC's {}", p + 1, here, hits[p]);
+    }
+    more_players_frontend::SetComboFromOwner(ctx, base, p, hits[p]);
+  }
 }
 
 void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base) {

@@ -138,6 +138,8 @@ std::chrono::steady_clock::time_point LastRemoteTitanPress(int player);
 // Once per game frame (session_sync::TickFrame): every remote player's body
 // here is set to the health their own PC reported (kFlagHasHealth).
 void ApplyRemoteHealth(PPCContext& ctx, uint8_t* base);
+// ... and their combo meters to the counts their PCs sent (game thread).
+void ApplyRemoteCombos(PPCContext& ctx, uint8_t* base);
 
 // ONLINE HITS (gameplay/game_mods.cpp sub_82132FF8, cheats.cpp sub_821349E0).
 // One hit message being handled on the game thread: who is involved.

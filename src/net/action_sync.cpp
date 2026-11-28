@@ -154,6 +154,7 @@ int PlayerOfTree(uint32_t tree, uint8_t& body) {
 // Crash tree) and state_sync's "on foot on both PCs, same area, no cutscene".
 bool IsSlave(uint32_t tree) { return Read32(tree + kTreeMode) == kModeSlave; }
 
+std::array<bool, kPlayers> g_was_driven_trace{};  // trace: driven since the last "not driven" line
 bool Free(int p) { return std::chrono::steady_clock::now() < g_free_until[p]; }
 
 bool Driving(int p, uint8_t body) {
@@ -499,9 +500,8 @@ extern "C" REX_FUNC(sub_820C1170) {
       wanted = g_wanted[p][0].valid;
     }
     const int reason = Free(p) ? 1 : IsSlave(tree) ? 2 : !wanted ? 3 : !net::PuppetOnFoot(p) ? 4 : 5;
-    static std::array<bool, kPlayers> was_driven{};
-    if (reason != last_reason[p] || was_driven[p]) {
-      was_driven[p] = false;
+    if (reason != last_reason[p] || g_was_driven_trace[p]) {
+      g_was_driven_trace[p] = false;
       last_reason[p] = reason;
       static const char* names[] = {"", "own decisions window", "linked to a titan (slave)", "no state yet",
                                     "not on foot on both PCs / area / cutscene", "?"};
@@ -511,6 +511,10 @@ extern "C" REX_FUNC(sub_820C1170) {
   if (p >= 0 && body == 0 && p != net::LocalSlot() && net::Active() && Trace()) {
     static std::array<int, kPlayers> was{-1, -1, -1, -1};
     if (drive && was[p] != 1) REXLOG_INFO("OnlineTrace: P{} copy driven again", p + 1);
+    // (The "not driven: <reason>" line above repeats only on a new reason or
+    // after being driven; it never knew the latter: every later stop of the
+    // same kind went unlogged, 2026-11-28.)
+    if (drive) g_was_driven_trace[p] = true;
     was[p] = drive ? 1 : 0;
   }
   uint32_t enemy_id = 0;

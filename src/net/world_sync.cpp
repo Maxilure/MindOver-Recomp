@@ -211,6 +211,10 @@ struct LocalEntity {
   bool has_pos = false;
   bool died_sent = false;  // host: kMsgEntityHp sent for this death (AfterHitpointsChange)
   Clock::time_point last_seen{};
+  // Client: since when this live AI enemy has matched nothing of the host's
+  // (ONLY HERE, see the warning in OnDamageableUpdate), and whether it was said.
+  Clock::time_point unbound_since{};
+  bool unbound_warned = false;
 };
 
 struct HostEntityState {
@@ -450,9 +454,13 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
     if (ent.net_id) g_ws.last_net_id[actor] = ent.net_id;
     const uint32_t prev_net_id = ent.net_id;
     const bool prev_died = ent.died_sent && hp <= 0.0f;  // revived / reused = may die again
+    const auto prev_unbound_since = ent.unbound_since;
+    const bool prev_unbound_warned = ent.unbound_warned;
     ent = sample;
     ent.net_id = prev_net_id;
     ent.died_sent = prev_died;
+    ent.unbound_since = prev_unbound_since;
+    ent.unbound_warned = prev_unbound_warned;
     g_ws.dmg_to_actor[dmg] = actor;
 
     if (net::IsHost()) {
@@ -486,6 +494,29 @@ void OnDamageableUpdate(PPCContext& ctx, uint8_t* base, uint32_t dmg, uint32_t a
         }
       }
       TryBindClientEntityLocked(ent, now);
+      // ENEMIES ONLY HERE (playtest 2026-11-28: after the guest died with the
+      // host masked on them, enemies came back on the guest's screen only and
+      // stood still: a guest's enemy copies only move as the host's do). A
+      // live AI enemy matched to nothing of the host's for 3 s, while the
+      // host IS sending its world, is reported once with where it is.
+      if (ent.net_id == 0 && ent.input != 0 && hp > 0.0f && ent.has_pos) {
+        bool host_streaming = false;
+        for (const auto& [id, hs] : g_ws.remote_by_id) {
+          if (now - hs.recv_time < std::chrono::seconds(1)) { host_streaming = true; break; }
+        }
+        if (!host_streaming) {
+          ent.unbound_since = {};
+        } else if (ent.unbound_since == Clock::time_point{}) {
+          ent.unbound_since = now;
+        } else if (!ent.unbound_warned && now - ent.unbound_since > std::chrono::seconds(3)) {
+          ent.unbound_warned = true;
+          REXLOG_WARN("Online: enemy {:08X} (name hash {:08X}) at ({:.1f}, {:.1f}, {:.1f}), health {:.1f}, exists only "
+                      "on this PC: the host has nothing like it (3 s). It stands still here.",
+                      actor, hash, ent.pos[0], ent.pos[1], ent.pos[2], hp);
+        }
+      } else {
+        ent.unbound_since = {};
+      }
       if (ent.net_id != 0) {
         const auto it = g_ws.remote_by_id.find(ent.net_id);
         if (it != g_ws.remote_by_id.end() && now - it->second.recv_time < kStaleAfter) {

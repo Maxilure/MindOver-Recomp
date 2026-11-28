@@ -101,6 +101,9 @@ bool ShouldSuppressMenuOpen();
 // actions while letting the local player navigate their menu normally.
 bool IsLocalMenuOpen(uint8_t* base);
 bool IsLocalMenuOpenCached();
+// Why IsLocalMenuOpen says what it says (playtest logs): front-end state, the
+// overlay / on-screen / box flags, the menu owner, the port's own menus.
+std::string DescribeLocalMenu(uint8_t* base);
 bool ShouldBlockLocalGameplayInput(uint8_t* base);
 
 // Another PC left a 3D cutscene: answers our cutscene step's own Skip questions

@@ -29,6 +29,7 @@
 // shoot but not move the reticle (no reticle controller), and their combos
 // went nowhere (the combo meter of "player 3" was other front end fields).
 // =============================================================================
+#include <algorithm>
 #include <map>
 #include "more_players.h"
 #include "../net/state_sync.h"
@@ -69,6 +70,7 @@ extern "C" REX_FUNC(__imp__sub_8226CE20);  // CPlayerIdentifierArrow constructor
 extern "C" REX_FUNC(__imp__sub_8226CEC0);  // CPlayerIdentifierArrow destructor
 
 namespace more_players_frontend {
+bool g_combo_from_owner = false;  // our own replay of the owner's count (game thread)
 namespace {
 
 uint8_t* Guest(uint32_t a) { return rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(a); }
@@ -335,6 +337,23 @@ extern "C" REX_FUNC(sub_821661E8) {
   const uint32_t fe = Read32(Read32(0x8259B190) + 52);
   if (const uint32_t meter = ObjectOf(kCombo, fe, p)) CallGame(__imp__sub_8225D948, ctx, base, meter);
 }
+// ONLINE COMBOS: the meter's own hit / break run only for THIS PC's player
+// (and our replay of another PC's count, SetComboFromOwner); another
+// player's copy landing a hit here, or the meter's timeout, leaves their
+// meter to their own PC's word.
+bool ComboIsOthers(uint32_t meter) {
+  if (!net::Active() || more_players_frontend::g_combo_from_owner || !meter) return false;
+  const int p = int(int32_t(Read32(meter + 3148)));
+  return p >= 0 && p != net::LocalSlot() && net::LocalSlot() >= 0;
+}
+extern "C" REX_FUNC(sub_8225D840) {
+  if (ComboIsOthers(ctx.r3.u32)) return;
+  __imp__sub_8225D840(ctx, base);
+}
+extern "C" REX_FUNC(sub_8225D948) {
+  if (ComboIsOthers(ctx.r3.u32)) return;
+  __imp__sub_8225D948(ctx, base);
+}
 extern "C" REX_FUNC(sub_82166240) {
   const int p = PlayerOfActor(ctx, base, ctx.r4.u32);
   if (p < 2) { __imp__sub_82166240(ctx, base); return; }
@@ -376,6 +395,45 @@ void AddComboHit(PPCContext& ctx, uint8_t* base, int player) {
   const uint32_t fe = Read32(Read32(0x8259B190) + 52);
   if (const uint32_t meter = ObjectOf(kCombo, fe, player)) CallGame(__imp__sub_8225D840, ctx, base, meter);
 }
+// ONLINE COMBOS (more_players.h). The meter (CComboCounter, findings/26
+// s.25): +3112 state (5 = broken / ending: the next hit starts again from 0),
+// +3132 hits in a row, +3136 level (the multiplier step: up when hits reach
+// the table 0x8201F818 [level]), +3148 its player. sub_8225D840 = one hit,
+// sub_8225D948 = break (also the meter's own timeout, sub_8225CD68).
+// Before: every PC counted every player's combo from the hits on ITS screen,
+// so player 1's multiplier on player 2's PC was another number (playtest).
+constexpr uint32_t kComboState = 3112, kComboHits = 3132, kComboLevel = 3136, kComboPlayer = 3148;
+constexpr uint32_t kComboBroken = 5;
+
+bool ComboOf(int player, int& hits, int& level) {
+  const uint32_t game = Read32(0x8259B190);
+  const uint32_t fe = game ? Read32(game + 52) : 0;
+  const uint32_t meter = fe ? ObjectOf(kCombo, fe, player) : 0;
+  if (!meter) return false;
+  hits = Read32(meter + kComboState) == kComboBroken ? 0 : int(Read32(meter + kComboHits));
+  level = int(Read32(meter + kComboLevel));
+  return true;
+}
+
+void SetComboFromOwner(PPCContext& ctx, uint8_t* base, int player, int hits) {
+  const uint32_t game = Read32(0x8259B190);
+  const uint32_t fe = game ? Read32(game + 52) : 0;
+  const uint32_t meter = fe ? ObjectOf(kCombo, fe, player) : 0;
+  if (!meter) return;
+  const bool broken = Read32(meter + kComboState) == kComboBroken;
+  int here = broken ? 0 : int(Read32(meter + kComboHits));
+  if (hits == here) return;
+  g_combo_from_owner = true;
+  if (hits < here) {  // their combo broke (maybe a new one began since)
+    CallGame(__imp__sub_8225D948, ctx, base, meter);
+    here = 0;
+  }
+  // The rest one hit at a time (each animates + levels up as on their PC);
+  // a big jump (joined mid-combo) catches up over a few frames.
+  for (int i = 0; i < std::min(hits - here, 30); ++i) CallGame(__imp__sub_8225D840, ctx, base, meter);
+  g_combo_from_owner = false;
+}
+
 // Debug FIFO "cheat counter <player>" (cheats.cpp): show a player's "counter
 // now" prompt (the Y of a titan's dodge-counter) for 4 s, to see the four
 // prompts' places without a titan fight. The game's show (sub_8225E760(prompt,
