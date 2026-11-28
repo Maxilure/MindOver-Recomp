@@ -2,6 +2,7 @@
 // input/background_input.cpp -- see background_input.h
 // =============================================================================
 #include "background_input.h"
+#include "../net/leave_session.h"
 
 #include <atomic>
 #include <cstring>
@@ -121,6 +122,12 @@ bool Focused() {
 extern "C" REX_FUNC(sub_8211E850) {
   using namespace background_input;
   __imp__sub_8211E850(ctx, base);
+  // ONLINE: a guest going back to the main menu (net/leave_session.h) opens
+  // the pause screen first, the game's own way out.
+  if (net::leave_session::Wanted()) {
+    ctx.r3.u64 = uint32_t(net::leave_session::GameRunningExit(int32_t(ctx.r3.u32)));
+    return;
+  }
   // The setting may have changed from the debug console's `flag`: keep SDL
   // in step (no-op when unchanged).
   Apply();

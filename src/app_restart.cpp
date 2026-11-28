@@ -2,6 +2,7 @@
 // app_restart.cpp -- close the game and start it again (see app_restart.h)
 // =============================================================================
 #include "app_restart.h"
+#include "net/state_sync.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -88,6 +89,7 @@ void RestartNow() {
   }
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
+  net::Shutdown();  // online: say goodbye first (crash_mom_app.h OnWindowCloseRequested)
   std::_Exit(0);  // as closing the window does (ReXApp::OnClosing)
 }
 

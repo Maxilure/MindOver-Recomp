@@ -2,6 +2,8 @@
 // achievements/achievements_screen.cpp -- see achievements_screen.h
 // =============================================================================
 #include "achievements_screen.h"
+#include "../net/leave_session.h"
+#include "../net/state_sync.h"
 
 #include <atomic>
 #include <string>
@@ -159,6 +161,7 @@ extern "C" REX_FUNC(sub_82121B48) {
   subtitles::NoteMenuFrame();
   if (!options_page::PauseAchievementsAvailable()) {
     __imp__sub_82121B48(ctx, base);
+    if (net::Active()) ctx.r3.u64 = uint32_t(net::leave_session::PauseExit(int32_t(ctx.r3.u32), false));
     return;
   }
   g_in_pause_decision = true;
@@ -173,6 +176,14 @@ extern "C" REX_FUNC(sub_82121B48) {
                            : game_exit;
   ctx.r3.u64 = uint32_t(exit);
   if (exit != game_exit) g_picked = -1;
+  // ONLINE (net/leave_session.h): the way out, or out of the host box's way.
+  if (net::Active()) {
+    if (const int32_t online = net::leave_session::PauseExit(exit, false); online != exit) {
+      ctx.r3.u64 = uint32_t(online);
+      g_picked = -1;
+      return;
+    }
+  }
   if (g_picked >= 0 && (exit == kPausePages[0].options_exit || exit == kPausePages[1].options_exit)) {
     if (g_picked == 0) {
       players_setup::OpenNext();
@@ -192,6 +203,7 @@ extern "C" REX_FUNC(sub_82121EA8) {
   subtitles::NoteMenuFrame();
   if (!options_page::PauseNoSaveDropOutRemoved()) {
     __imp__sub_82121EA8(ctx, base);
+    if (net::Active()) ctx.r3.u64 = uint32_t(net::leave_session::PauseExit(int32_t(ctx.r3.u32), true));
     return;
   }
   g_in_pause_decision = true;
@@ -199,4 +211,5 @@ extern "C" REX_FUNC(sub_82121EA8) {
   g_in_pause_decision = false;
   const int32_t exit = int32_t(ctx.r3.u32);
   ctx.r3.u64 = uint32_t(pause_drop_out::AfterPauseDecision(ctx, base, exit, pause_drop_out::kNoSaveDropOutExit));
+  if (net::Active()) ctx.r3.u64 = uint32_t(net::leave_session::PauseExit(int32_t(ctx.r3.u32), true));
 }

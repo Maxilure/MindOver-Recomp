@@ -22,6 +22,8 @@
 #include "../input/prompt_icons.h"
 #include "../net/session_sync.h"
 #include "../net/state_sync.h"
+#include "../net/leave_session.h"
+#include "../achievements/achievements.h"
 #include "more_players.h"
 #include "../language/texts.h"
 
@@ -117,7 +119,9 @@ constexpr char16_t kGlyphStart = u'¶';  // drawn in player 1's look (prompt_ico
 constexpr auto kJoinWindow = std::chrono::seconds(2);  // the press's chance to be taken
 
 // What the box says (game's main thread writes, input poll reads).
-enum Phase : int { kNone, kLost, kBack };
+// kNetwork (2026-11-28, ONLINE, stage S1): the box is about the HOST, not a
+// controller (HOST GONE below).
+enum Phase : int { kNone, kLost, kBack, kNetwork };
 std::atomic<int> g_phase{kNone};
 std::atomic<int> g_lost{-1};          // the player concerned
 std::atomic<bool> g_can_drop{false};  // someone else is in game: "drop out" offered
@@ -738,10 +742,136 @@ void NetworkLeft(int p) {
   if (p >= 0 && p < kMaxPlayers) g_net_gone[p] = true;
 }
 
+// HOST GONE (2026-11-28, stage S1, notes/online-coop.md s.16.6). A guest whose
+// host goes quiet gets the same question box (game paused HERE; the host's
+// world is its own):
+//   silent 3 s:  "Connection to the host was lost. / Waiting for the host... 12"
+//                (back within 15 s: the box closes, play goes on);
+//   15 s:        "The host isn't responding. / Press any button to return to
+//                 the main menu.";
+//   the host quit (its goodbye): "The host ended the session. / ...";
+// a press (after the box's usual 1 s) = back to the main menu through the
+// game's own pause -> Quit (net/leave_session.h). The box waits for a menu on
+// screen like the controller box (the pause menu closes itself for it:
+// achievements_screen.cpp). Any key counts as well as any button.
+int64_t g_network_key_seen = 0;  // the keyboard's last_key_down() when the box opened
+
+std::u16string Digits(int n) {
+  const std::string d = std::to_string(n);
+  return std::u16string(d.begin(), d.end());
+}
+
+std::u16string NetworkText(net::HostLink link, int seconds) {
+  switch (link) {
+    case net::HostLink::kSilent:
+      return trf(tr(u"Connection to the host was lost.\nWaiting for the host... {0}"), {Digits(seconds)});
+    case net::HostLink::kEnded:
+      return tr(u"The host ended the session.\nPress any button to return to the main menu.");
+    case net::HostLink::kRefused:
+      return net::RefusedReason() + u"\n" + tr(u"Press any button to return to the main menu.");
+    default:
+      return tr(u"The host isn't responding.\nPress any button to return to the main menu.");
+  }
+}
+
+void OpenNetworkBox(PPCContext& ctx, uint8_t* base, uint32_t fe, const std::u16string& text) {
+  const uint32_t manager = Read32(kGameGlobal);
+  g_we_paused = !(*Guest(manager + kPauseBits) & kGamePaused);
+  if (g_we_paused) CallGame(__imp__sub_8227C8E8, ctx, base, manager, 1);
+  const uint32_t heap = UseHeap(ctx, base, kFrontEndHeap);
+  CallGame(__imp__sub_8225F758, ctx, base, fe, kAnyTextName, kNoTimer);
+  UseHeap(ctx, base, heap);
+  HideMenu(fe, true);
+  for (uint16_t& held : g_held) held = 0xFFFF;  // wait for every button to be let go first
+  g_want_resume = false;
+  g_listen_from = (std::chrono::steady_clock::now() + kListenDelay).time_since_epoch().count();
+  if (const auto* driver = kbm::KeyboardMouseDriver::Get()) g_network_key_seen = driver->last_key_down();
+  g_phase = kNetwork;
+  g_shown_text = text;
+  SetText(ctx, base, fe, text);
+  REXLOG_INFO("Online: host box opened (game paused here)");
+}
+
+void CloseNetworkBox(PPCContext& ctx, uint8_t* base, uint32_t fe, const char* why) {
+  REXLOG_INFO("Online: host box closed ({})", why);
+  const uint32_t heap = UseHeap(ctx, base, kFrontEndHeap);
+  CallGame(__imp__sub_8225E1D8, ctx, base, fe + kBox);
+  UseHeap(ctx, base, heap);
+  HideMenu(fe, false);
+  g_phase = kNone;
+  g_shown_text.clear();
+  g_want_resume = false;
+  if (g_we_paused) CallGame(__imp__sub_8227C8E8, ctx, base, Read32(kGameGlobal), 0);
+  g_we_paused = false;
+  for (int p = 0; p < kMaxPlayers; ++p) g_muted[p] = g_held[p];  // the closing press stays in the box
+}
+
+// THIS PC'S CONTROLLER UNPLUGGED ONLINE (S1, notes/online-coop.md s.16.8):
+// no pause and no box (the session's world can't stop for one PC): the player
+// just stands still, and the message bar says so; again when it's back. The
+// keyboard keeps working meanwhile.
+std::string g_online_pad;       // the controller this PC's player played with
+bool g_online_pad_lost = false;
+void WatchOnlinePad() {
+  const kbm::PlayerAssignment* assignment = kbm::PlayerAssignment::Get();
+  if (!assignment) return;
+  const std::string pad = assignment->PadKeyFor(0);  // (online: every device plays as socket 0)
+  if (!pad.empty()) {
+    if (g_online_pad_lost) {
+      g_online_pad_lost = false;
+      REXLOG_INFO("Online: this PC's controller is back ({})", pad);
+      achievements::ShowNotice(tr(u"Controller reconnected"), tr(u"Carry on playing"));
+    }
+    g_online_pad = pad;
+    return;
+  }
+  if (g_online_pad.empty() || g_online_pad_lost || assignment->IsConnected(g_online_pad)) return;
+  g_online_pad_lost = true;
+  REXLOG_INFO("Online: this PC's controller ({}) was unplugged: no pause online", g_online_pad);
+  achievements::ShowNotice(tr(u"Controller disconnected"), tr(u"Reconnect it, or carry on with the keyboard"));
+}
+
+// True while the host box is up (TickOnline then does nothing else).
+bool TickNetworkBox(PPCContext& ctx, uint8_t* base, uint32_t fe) {
+  int seconds = 0;
+  const net::HostLink link = net::GetHostLink(&seconds);
+  const bool bad = link == net::HostLink::kSilent || link == net::HostLink::kGone ||
+                   link == net::HostLink::kEnded || link == net::HostLink::kRefused;
+  if (g_phase.load() == kNetwork) {
+    if (!bad) {
+      CloseNetworkBox(ctx, base, fe, "the host answers again");
+      return false;
+    }
+    const std::u16string text = NetworkText(link, seconds);
+    if (text != g_shown_text) {
+      g_shown_text = text;
+      SetText(ctx, base, fe, text);
+    }
+    bool pressed = g_want_resume.exchange(false);
+    if (const auto* driver = kbm::KeyboardMouseDriver::Get(); driver && Listening() &&
+        driver->last_key_down() != g_network_key_seen) {
+      pressed = true;  // any key
+    }
+    if (pressed && link != net::HostLink::kSilent) {
+      CloseNetworkBox(ctx, base, fe, "the player goes back to the main menu");
+      net::leave_session::Request("the host is gone");
+    }
+    return true;
+  }
+  if (!bad || g_phase.load() != kNone || net::leave_session::Wanted()) return false;
+  // Not over another box / a menu (the pause menu gives way by itself).
+  if (*Guest(fe + kBox + kBoxFlags) & kBoxShowing) return false;
+  if (*Guest(fe + kMenuOnScreen) & kMenuOnScreenBit) return false;
+  OpenNetworkBox(ctx, base, fe, NetworkText(link, seconds));
+  return true;
+}
+
 void TickOnline(PPCContext& ctx, uint8_t* base) {
   const uint32_t game = Read32(kGameGlobal);
   const uint32_t fe = game ? Read32(game + kFrontEnd) : 0;
   if (!fe || more_players::Loading()) return;
+  if (TickNetworkBox(ctx, base, fe)) return;  // HOST GONE above
+  WatchOnlinePad();
   for (int p = 0; p < kMaxPlayers; ++p) {
     if (g_unjacking[p]) continue;  // (counts as dropping until it's off the titan)
     if (!InGame(p)) g_dropping[p] = false;
@@ -797,6 +927,7 @@ void FilterPad(int user, uint8_t* gamepad, bool connected) {
     g_want_drop = true;
   }
   if (phase == kBack && pressed && user == g_lost.load()) g_want_resume = true;  // that player
+  if (phase == kNetwork && pressed) g_want_resume = true;  // HOST GONE: any button
   // Taking over: the offered player's START (TAKING OVER above).
   if (phase == kLost && user == g_offered_joiner.load() && (pressed & kButtonStart)) g_want_takeover = true;
   std::memset(gamepad, 0, 12);  // the game sees a connected, untouched pad

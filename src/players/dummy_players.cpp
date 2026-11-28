@@ -18,6 +18,7 @@
 #include "../input_record.h"
 #include "../pddi/intercept.h"
 #include "more_players.h"
+#include "../net/state_sync.h"
 
 namespace dummy_players {
 namespace {
@@ -151,6 +152,11 @@ void Copy(int target, ScriptedInputDriver::LiveState& out) {
 void OnFrameEnd(void*) {
   ScriptedInputDriver* driver = ScriptedInputDriver::Live();
   if (!driver) return;
+  // ONLINE (stage S1, notes/online-coop.md s.16.8): one player per PC, so no
+  // dummy players: they'd steer a 2nd local player the session never has.
+  // (The fake controllers themselves stay: online test runs drive THIS PC's
+  // player with one.)
+  if (net::Active()) return;
   const int count = std::min(kMaxDummies, driver->PadCount() - 1);
   for (int i = 0; i < count; ++i) {
     Dummy& d = g_dummies[i];

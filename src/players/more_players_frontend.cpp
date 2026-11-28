@@ -44,6 +44,7 @@
 #include "../achievements/achievements_screen.h"
 #include "../ui/wii_cursor.h"
 #include "../options/global_options.h"
+#include "../net/leave_session.h"
 
 #include <cstring>
 
@@ -208,6 +209,7 @@ extern "C" REX_FUNC(sub_82261C40) {
   title_any_button::FrontEndFrame(ctx, base);
   // The main menu's "Quit Game" words (ui/quit_game.h).
   quit_game::FrontEndFrame(ctx, base);
+  net::leave_session::FrontEndFrame();  // online guest back in the menus: session closes
   // The main menu's "Extras" set (ui/main_menu_extras.h).
   main_menu_extras::FrontEndFrame(ctx, base);
   // A waiting achievement notification starts (achievements/achievements.h).

@@ -40,6 +40,12 @@ struct PeerEvent {
   const uint8_t* data = nullptr;
   size_t size = 0;
   bool reliable = false;
+  // kDisconnected only: true = the peer said goodbye (its Close() sent the
+  // disconnect notice: it quit on purpose); false = it went SILENT for the
+  // transport's timeout (crash, network gone, PC switched off). The session
+  // tells players which one happened ("left" vs "lost connection",
+  // notes/online-coop.md s.16.6).
+  bool closed_by_peer = false;
 };
 
 using EventCallback = std::function<void(const PeerEvent&)>;

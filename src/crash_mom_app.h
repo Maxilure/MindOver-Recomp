@@ -452,6 +452,16 @@ class CrashMomApp : public rex::ReXApp {
     frame_capture_.Stop();
   }
 
+  // The window is about to close (the X, Alt+F4, SIGTERM via SDL's quit
+  // event). ReXApp's OnClosing then hard-exits (_Exit: no OnShutdown), so an
+  // online session says GOODBYE here: the other PCs hear "the host ended the
+  // session" / "Player 2 left the game" at once instead of 15 s of silence
+  // (net/state_sync.h HOST LINK, notes/online-coop.md s.16.6).
+  bool OnWindowCloseRequested() override {
+    if (net::Active()) net::Shutdown();
+    return true;
+  }
+
   // Letters beyond Latin-1 for the translated tool windows (ui/imgui_fonts.h).
   void OnConfigureFonts(ImFontAtlas* atlas) override { imgui_fonts::AddExtraLetters(atlas); }
 

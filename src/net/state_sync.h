@@ -180,6 +180,33 @@ bool GetRemoteReticle(int player, float& out_x, float& out_y);
 // interactions and mounting completely untouched.
 bool BlockRemoteMaskEntry(int player);
 
+// ---------------------------------------------------------------------------
+// HOST LINK (2026-11-28, notes/online-coop.md s.16.6 / stage S1): how a GUEST
+// hears its host. Any packet from the host = fine. Silent 3 s = "waiting for
+// the host" (players/lost_controller.cpp shows the game's question box, the
+// game paused here); 15 s = gone (box: "The host isn't responding"); the
+// host's goodbye (its Close()) = ended at once. Host / not online = kNone.
+enum class HostLink { kNone, kFine, kSilent, kGone, kEnded, kRefused };
+// `seconds_left` (may be null): while kSilent, whole seconds until kGone.
+HostLink GetHostLink(int* seconds_left = nullptr);
+// kRefused: why the host turned us away (version check, session full),
+// one English line for the box / banner. Any thread.
+std::u16string RefusedReason();
+
+// SESSION RULES the host owns, sent to every guest (kMsgSessionInfo):
+//   cheats allowed = setting online_allow_cheats (HOST's value; off = the F5
+//     cheat menu refuses on every PC);
+//   cheats used = someone in the session used one (each PC then counts as
+//     "with cheats": no achievements anywhere, cheats.h CHEAT RULE).
+bool CheatsAllowed();
+// A cheat was used on THIS PC (cheats.cpp marks its own flag first): tells the
+// host, which tells everyone. Any thread.
+void NoteCheatsUsed();
+bool SessionCheatsUsed();
+
+// The port's version line the version check compares (VERSION.txt).
+const char* PortVersion();
+
 // One-line / multi-line status string for the debug console (`online` command)
 // and ImGui diagnostics.
 std::string DebugStatus(uint8_t* base);

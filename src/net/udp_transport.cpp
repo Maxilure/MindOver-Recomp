@@ -64,7 +64,12 @@ constexpr uint8_t kFlagAckOnly = 1u << 1;
 constexpr uint8_t kFlagDisconnect = 1u << 2;
 
 constexpr auto kResendInterval = std::chrono::milliseconds(120);
-constexpr auto kPeerTimeout = std::chrono::seconds(8);
+// A peer silent this long is gone. 16 s (was 8, 2026-11-28): a guest shows
+// "waiting for the host" from 3 s and gives up at 15 s on its own clock
+// (state_sync.cpp HOST LINK); the transport must not drop the host first. The
+// host uses the same timeout for a silent guest (a short network hiccup on
+// either side survives).
+constexpr auto kPeerTimeout = std::chrono::seconds(16);
 
 void CloseSocket(SocketHandle s) {
   if (s == kInvalidSocket) return;
@@ -291,6 +296,7 @@ class UdpTransport final : public ITransport {
           PeerEvent ev;
           ev.type = PeerEvent::Type::kDisconnected;
           ev.peer = gone;
+          ev.closed_by_peer = true;  // it said goodbye (Close())
           cb(ev);
         }
         continue;

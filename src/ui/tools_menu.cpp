@@ -19,6 +19,7 @@
 #include "../cheats/cheats.h"
 #include "../options/options_settings.h"
 #include "../overlay_banner.h"
+#include "../net/state_sync.h"
 
 namespace tools_menu {
 namespace {
@@ -204,6 +205,15 @@ class ToolsDialog : public rex::ui::ImGuiDialog {
           ImGui::TextColored(kWarnColour, "Achievements are off: %s", cheats::BlockReason());
         } else {
           ImGui::TextDisabled("%s", "Opening it turns achievements off until a save is loaded.");
+        }
+        // ONLINE (notes/online-coop.md s.16.7): the host's rule, and a warning.
+        if (net::Active()) {
+          if (!net::CheatsAllowed()) {
+            ImGui::TextColored(kWarnColour, "%s", "Online: the host doesn't allow cheats in this session.");
+          } else {
+            ImGui::TextColored(kWarnColour, "%s",
+                               "Online: some cheats may not work reliably (other players' games may not see them).");
+          }
         }
       }
     }

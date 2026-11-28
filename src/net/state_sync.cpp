@@ -50,6 +50,9 @@
 #include "titan_sync.h"
 #include "../players/lost_controller.h"
 #include "aim_sync.h"
+#include "../achievements/achievements.h"
+#include "../overlay_banner.h"  // ShowNotice: "Player 2 joined the game" cards
+#include "../language/texts.h"
 
 REXCVAR_DEFINE_BOOL(online_host, false, "CrashMoM",
                     "Online co-op (state sync): host a LAN session on --online_port as Player 1");
@@ -60,6 +63,10 @@ REXCVAR_DEFINE_INT32(online_port, 37373, "CrashMoM", "Online co-op: UDP port (de
 REXCVAR_DEFINE_INT32(online_rate, 60, "CrashMoM",
                      "Online co-op: player snapshot send rate in Hz (default 60)")
     .range(10, 60);
+REXCVAR_DEFINE_BOOL(online_allow_cheats, false, "CrashMoM",
+                    "Online co-op: the HOST allows the F5 cheat menu in its sessions (off = refused on every PC)");
+REXCVAR_DEFINE_STRING(debug_online_version, "", "CrashMoM",
+                      "Online co-op TEST: pretend to be this port version in the version check (\"\" = the real one)");
 REXCVAR_DEFINE_BOOL(debug_online_trace, false, "CrashMoM",
                     "Online co-op: log spins, mask state changes, and sync events to the game log");
 
@@ -97,6 +104,10 @@ enum MsgType : uint8_t {
   kMsgSpin = 7,         // Owner -> H -> others (immediate unreliable): [1] slot
   kMsgPlayerHit = 9,    // Host -> all (reliable): [1] slot [2..5] f32 damage = an enemy's hit on that player
   kMsgPocket = 8,       // Owner -> H -> others (reliable): [1] slot [2] event = one accepted titan pocket press
+  // S1 (2026-11-28, notes/online-coop.md s.16): version check + session rules.
+  kMsgRefuse = 29,       // H -> C (reliable): [1] reason (RefuseReason) [2] len [3..] host's version
+  kMsgSessionInfo = 30,  // H -> C (reliable): [1] bit 0 cheats allowed, bit 1 cheats used
+  kMsgCheatsUsed = 31,   // C -> H (reliable): a cheat was used on that PC
 };
 
 // Wire layout for kMsgPlayerState (58 bytes):
@@ -131,6 +142,25 @@ constexpr uint8_t kFlagInMenu = 1u << 6;
 // Before, nobody else ever heard it: the attacker saw only a push, while the
 // victim lost health on their screen alone.
 constexpr uint8_t kFlagHasHealth = 1u << 7;
+
+// THE VERSION CHECK (S1, 2026-11-28). A guest's Hello carries:
+//   +0 u8  kMsgHello
+//   +1 u16 kProtocolVersion (LE): bump it whenever a message's layout changes
+//   +3 u32 code hash (LE): FNV-1a of the game's code in guest memory
+//          (0x820B0000-0x824D0000, the recompiled image's code: the SAME disc
+//          gives the same bytes; a different disc revision / region doesn't)
+//   +7 u8  length, then the port's version line (VERSION.txt)
+// The host compares all three and answers kMsgRefuse on any difference (an
+// old build's 1-byte Hello = "older version"). Two different builds of the
+// same version with the same protocol number play together (by design).
+constexpr uint16_t kProtocolVersion = 1;
+constexpr uint32_t kCodeStart = 0x820B0000, kCodeEnd = 0x824D0000;
+enum RefuseReason : uint8_t { kRefuseFull = 1, kRefuseVersion = 2, kRefuseProtocol = 3, kRefuseDisc = 4 };
+
+// HOST LINK timings (notes/online-coop.md s.16.6): the transport's own peer
+// timeout is 16 s (udp_transport.cpp), so the guest decides first.
+constexpr auto kHostSilentAfter = std::chrono::seconds(3);
+constexpr auto kHostGoneAfter = std::chrono::seconds(15);
 
 // Interpolation buffer tuning (cubic Hermite + adaptive smooth catch-up).
 constexpr double kInterpDelaySec = 0.025;        // ~25 ms (~1.5 snapshots at 60 Hz, crisp jumps/attacks)
@@ -198,6 +228,13 @@ struct SessionState {
   uint32_t local_seq = 0;
   uint32_t local_join_pulse_frames = 0;
 
+  // HOST LINK (guest only): when the host was last heard, and how it ended.
+  Clock::time_point last_host_heard{};
+  std::atomic<int> host_end{0};  // 0 = not ended, else HostLink (kGone / kEnded / kRefused)
+  std::u16string refused_reason;  // under `mutex`
+  // Session rules (kMsgSessionInfo): the host's values, guests' copy.
+  std::atomic<bool> cheats_allowed{false};
+  std::atomic<bool> cheats_used{false};
   Clock::time_point last_send_time{};
   Clock::time_point last_hello_time{};
   Clock::time_point last_ping_time{};
@@ -344,14 +381,89 @@ bool DeserializePlayerState(const uint8_t* data, size_t size, uint8_t& slot, Pla
 }
 
 // Recompute connected_mask on host and broadcast kMsgRoster to all clients.
-void HostBroadcastRosterLocked() {
+// kMsgRoster: [1] connected mask, then (S1) [2] the slot that just LEFT
+// (0xFF = none) and [3] how: 1 = said goodbye, 2 = lost connection. Guests
+// put up the matching card (an older build's 2-byte roster: no card).
+enum RosterHow : uint8_t { kRosterLeft = 1, kRosterLost = 2 };
+void HostBroadcastRosterLocked(int left_slot = -1, RosterHow how = kRosterLeft) {
   uint32_t mask = 1u;  // Host is always slot 0.
   for (int s = 1; s < kMaxPlayers; ++s) {
     if (g_net.slots[s].connected) mask |= (1u << s);
   }
   g_net.connected_mask = mask;
-  uint8_t msg[2] = {kMsgRoster, uint8_t(mask)};
+  uint8_t msg[4] = {kMsgRoster, uint8_t(mask), uint8_t(left_slot < 0 ? 0xFF : left_slot), uint8_t(how)};
   g_net.transport->Broadcast(msg, sizeof(msg), /*reliable=*/true);
+}
+
+// The message bar card (achievements.h ShowNotice: shown once a level is
+// played) for player `slot` (0-3): "Player 2" / "joined the game".
+void PlayerCard(int slot, const char16_t* what) {
+  achievements::ShowNotice(trf(tr(u"Player {0}"), {std::u16string(1, char16_t(u'1' + slot))}), tr(what));
+}
+
+// Someone in the session used a cheat (kMsgSessionInfo): achievements are
+// off on every PC for the rest of it (cheats.cpp AchievementsBlocked asks
+// SessionCheatsUsed); the bar says so once.
+void SessionCheatCard() {
+  achievements::ShowNotice(tr(u"Cheats Enabled"), tr(u"A player used a cheat: no achievements this session"));
+}
+
+// Log text of a UTF-16 line (the refusal texts: ASCII in English).
+std::string ToUtf8(const std::u16string& t) {
+  std::string out;
+  for (char16_t c : t) out += c < 0x80 ? char(c) : '?';
+  return out;
+}
+
+// FNV-1a of the game's code in guest memory (the version check above);
+// once, the first time it's asked (the image is loaded long before).
+uint32_t CodeHash() {
+  static uint32_t hash = 0;
+  if (hash) return hash;
+  uint8_t* base = rex::system::kernel_memory()->TranslateVirtual<uint8_t*>(0);
+  if (!guest_memory::Readable(kCodeStart, kCodeEnd - kCodeStart)) return 0;
+  uint32_t h = 2166136261u;
+  const uint8_t* p = GuestPtr(base, kCodeStart);
+  for (uint32_t i = 0; i < kCodeEnd - kCodeStart; ++i) h = (h ^ p[i]) * 16777619u;
+  hash = h ? h : 1;
+  return hash;
+}
+
+void HostSendSessionInfoLocked(PeerId to) {
+  const uint8_t flags = uint8_t((g_net.cheats_allowed ? 1 : 0) | (g_net.cheats_used ? 2 : 0));
+  uint8_t msg[2] = {kMsgSessionInfo, flags};
+  if (to == kInvalidPeer) {
+    g_net.transport->Broadcast(msg, sizeof(msg), /*reliable=*/true);
+  } else {
+    g_net.transport->Send(to, msg, sizeof(msg), /*reliable=*/true);
+  }
+}
+
+// The host's check of a Hello (VERSION CHECK above): 0 = welcome, else why not.
+uint8_t CheckHello(const uint8_t* d, size_t n) {
+  if (n < 8) return kRefuseVersion;  // an older build (1-byte Hello)
+  const uint16_t protocol = uint16_t(d[1] | d[2] << 8);
+  const uint32_t hash = uint32_t(d[3]) | uint32_t(d[4]) << 8 | uint32_t(d[5]) << 16 | uint32_t(d[6]) << 24;
+  const size_t len = d[7];
+  if (n < 8 + len) return kRefuseVersion;
+  const std::string version(reinterpret_cast<const char*>(d + 8), len);
+  if (version != PortVersion()) return kRefuseVersion;
+  if (protocol != kProtocolVersion) return kRefuseProtocol;
+  if (hash != CodeHash()) return kRefuseDisc;
+  return 0;
+}
+
+std::u16string RefuseText(uint8_t reason, const std::string& host_version) {
+  const std::u16string hv(host_version.begin(), host_version.end());  // (ASCII version line)
+  const std::u16string ours(PortVersion(), PortVersion() + std::strlen(PortVersion()));
+  switch (reason) {
+    case kRefuseFull: return tr(u"The session is full.");
+    case kRefuseVersion:
+      return trf(tr(u"The host plays version {0}, you have {1}. Both need the same version."), {hv, ours});
+    case kRefuseProtocol: return tr(u"The host's build talks differently. Update both games to the same build.");
+    case kRefuseDisc: return tr(u"The host's game disc is different from yours (another region or revision).");
+  }
+  return tr(u"The host turned the connection down.");
 }
 
 int HostFindSlotByPeerLocked(PeerId peer) {
@@ -366,30 +478,49 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
     if (g_net.is_host) {
       const int s = HostFindSlotByPeerLocked(ev.peer);
       if (s > 0) {
-        REXLOG_INFO("Online: Player {} (peer {}) disconnected", s + 1, ev.peer);
+        REXLOG_INFO("Online: Player {} (peer {}) {}", s + 1, ev.peer,
+                    ev.closed_by_peer ? "left the session" : "lost connection (timed out)");
         g_net.slots[s] = RemoteSlot{};
         mask_sync::Forget(s);  // their last "mask" no longer holds the copy
         titan_sync::Forget(s);
         lost_controller::NetworkLeft(s);  // their copy drops out (lost_controller.h ONLINE)
-        HostBroadcastRosterLocked();
+        HostBroadcastRosterLocked(s, ev.closed_by_peer ? kRosterLeft : kRosterLost);
+        PlayerCard(s, ev.closed_by_peer ? u"left the game" : u"lost connection");
       }
-    } else {
-      REXLOG_WARN("Online: disconnected from host");
-      g_net.local_slot = -1;
-      g_net.connected_mask = 0;
-      for (auto& sl : g_net.slots) sl = RemoteSlot{};
+    } else if (g_net.host_end.load() == 0) {
+      // HOST LINK: the host is gone. Our slot is KEPT (every system still asks
+      // "which player am I?" until we are back in the menus: net::Leave then);
+      // the other players' copies stay where they are meanwhile.
+      REXLOG_WARN("Online: {}", ev.closed_by_peer ? "the host ended the session" : "the host timed out");
+      g_net.host_end = int(ev.closed_by_peer ? HostLink::kEnded : HostLink::kGone);
     }
     return;
   }
 
   if (ev.type != PeerEvent::Type::kPacket || !ev.data || ev.size == 0) return;
   g_net.packets_recv++;
+  if (!g_net.is_host && ev.peer == g_net.host_peer) g_net.last_host_heard = now;  // HOST LINK
   const uint8_t msg_type = ev.data[0];
 
   switch (msg_type) {
     case kMsgHello: {
       if (!g_net.is_host) break;
       int slot = HostFindSlotByPeerLocked(ev.peer);
+      // VERSION CHECK (above): refused = no slot, the guest is told why.
+      if (const uint8_t why = slot < 0 ? CheckHello(ev.data, ev.size) : 0; why) {
+        const std::string v = PortVersion();
+        std::vector<uint8_t> msg = {kMsgRefuse, why, uint8_t(v.size())};
+        msg.insert(msg.end(), v.begin(), v.end());
+        g_net.transport->Send(ev.peer, msg.data(), msg.size(), /*reliable=*/true);
+        static Clock::time_point last_log{};
+        if (now - last_log > std::chrono::seconds(5)) {  // (the guest asks 4x a second)
+          last_log = now;
+          REXLOG_WARN("Online: refused peer {} ({})", ev.peer,
+                      why == kRefuseVersion ? "another version" : why == kRefuseProtocol ? "another protocol" : "another disc");
+        }
+        break;
+      }
+      const bool is_new = slot < 0;
       if (slot < 0) {
         for (int s = 1; s < kMaxPlayers; ++s) {
           if (!g_net.slots[s].connected) {
@@ -400,6 +531,8 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
       }
       if (slot < 0) {
         REXLOG_WARN("Online: rejected peer {} (session full)", ev.peer);
+        uint8_t msg[3] = {kMsgRefuse, kRefuseFull, 0};
+        g_net.transport->Send(ev.peer, msg, sizeof(msg), /*reliable=*/true);
         break;
       }
       g_net.slots[slot].connected = true;
@@ -408,8 +541,37 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
 
       uint8_t welcome[3] = {kMsgWelcome, uint8_t(slot), uint8_t(g_net.connected_mask)};
       g_net.transport->Send(ev.peer, welcome, sizeof(welcome), /*reliable=*/true);
+      HostSendSessionInfoLocked(ev.peer);
       REXLOG_INFO("Online: assigned Player {} to peer {} (roster=0x{:X})", slot + 1, ev.peer,
                   g_net.connected_mask.load());
+      if (is_new) PlayerCard(slot, u"joined the game");
+      break;
+    }
+
+    case kMsgRefuse: {
+      if (g_net.is_host || ev.size < 3 || g_net.local_slot >= 0 || g_net.host_end.load()) break;
+      const size_t len = std::min<size_t>(ev.data[2], ev.size - 3);
+      const std::string host_version(reinterpret_cast<const char*>(ev.data + 3), len);
+      g_net.refused_reason = RefuseText(ev.data[1], host_version);
+      g_net.host_end = int(HostLink::kRefused);
+      REXLOG_WARN("Online: the host refused us: {}", ToUtf8(g_net.refused_reason));
+      break;
+    }
+
+    case kMsgSessionInfo: {
+      if (g_net.is_host || ev.size < 2) break;
+      g_net.cheats_allowed = (ev.data[1] & 1) != 0;
+      const bool used = (ev.data[1] & 2) != 0;
+      if (used && !g_net.cheats_used.exchange(true)) SessionCheatCard();
+      break;
+    }
+
+    case kMsgCheatsUsed: {
+      if (!g_net.is_host || HostFindSlotByPeerLocked(ev.peer) < 0) break;
+      if (!g_net.cheats_used.exchange(true)) {
+        SessionCheatCard();
+        HostSendSessionInfoLocked(kInvalidPeer);
+      }
       break;
     }
 
@@ -429,7 +591,19 @@ void HandlePacketLocked(const PeerEvent& ev, Clock::time_point now) {
 
     case kMsgRoster: {
       if (g_net.is_host || ev.size < 2) break;
+      const uint32_t old_mask = g_net.connected_mask;
       g_net.connected_mask = ev.data[1];
+      // Cards (S1): a newcomer joined / someone left (how: the host says).
+      if (g_net.local_slot >= 0) {
+        for (int s = 0; s < kMaxPlayers; ++s) {
+          if (s == g_net.local_slot) continue;
+          const bool was = (old_mask >> s) & 1, is = (ev.data[1] >> s) & 1;
+          if (!was && is && old_mask) PlayerCard(s, u"joined the game");
+          if (was && !is && ev.size >= 4 && ev.data[2] == s) {
+            PlayerCard(s, ev.data[3] == kRosterLost ? u"lost connection" : u"left the game");
+          }
+        }
+      }
       for (int s = 0; s < kMaxPlayers; ++s) {
         const bool now_conn = (g_net.connected_mask & (1u << s)) != 0;
         if (!now_conn && g_net.slots[s].connected) {
@@ -825,11 +999,28 @@ void TickNetworkLocked(uint8_t* base) {
 
   g_net.transport->Poll([&](const PeerEvent& ev) { HandlePacketLocked(ev, now); });
 
+  // Refused by the host (version check / full): the session closes here, the
+  // player is told (a banner for now: the Join screen of stage S2 will say it
+  // in the game's look). Not inside Poll: Leave destroys the transport.
+  if (!g_net.is_host && g_net.host_end.load() == int(HostLink::kRefused) && g_net.local_slot < 0) {
+    overlay_banner::Show("Couldn't join", ToUtf8(g_net.refused_reason));
+    Leave();
+    return;
+  }
+
   // Client: send Hello periodically until welcomed with a slot.
+  // (Not once the host is gone / refused us: HOST LINK.)
+  if (!g_net.is_host && g_net.host_end.load()) return;
   if (!g_net.is_host && g_net.local_slot < 0) {
     if (now - g_net.last_hello_time >= std::chrono::milliseconds(250)) {
-      uint8_t hello[1] = {kMsgHello};
-      g_net.transport->Send(g_net.host_peer, hello, sizeof(hello), /*reliable=*/true);
+      // VERSION CHECK layout above.
+      const std::string v = PortVersion();
+      const uint32_t hash = CodeHash();
+      std::vector<uint8_t> hello = {kMsgHello, uint8_t(kProtocolVersion), uint8_t(kProtocolVersion >> 8),
+                                    uint8_t(hash), uint8_t(hash >> 8), uint8_t(hash >> 16), uint8_t(hash >> 24),
+                                    uint8_t(v.size())};
+      hello.insert(hello.end(), v.begin(), v.end());
+      g_net.transport->Send(g_net.host_peer, hello.data(), hello.size(), /*reliable=*/true);
       g_net.last_hello_time = now;
       g_net.packets_sent++;
     }
@@ -913,6 +1104,9 @@ bool StartHost(uint16_t port) {
     g_net.local_slot = 0;
     g_net.connected_mask = 1u;
     g_net.slots[0].connected = true;
+    g_net.host_end = 0;
+    g_net.cheats_allowed = REXCVAR_GET(online_allow_cheats);
+    g_net.cheats_used = false;
     g_net.rtt_ms = 0.0;
     g_net.packets_sent = 0;
     g_net.packets_recv = 0;
@@ -944,6 +1138,11 @@ bool StartJoin(std::string_view address, uint16_t port) {
     g_net.is_host = false;
     g_net.local_slot = -1;  // assigned upon kMsgWelcome
     g_net.connected_mask = 0;
+    g_net.host_end = 0;
+    g_net.refused_reason.clear();
+    g_net.last_host_heard = Clock::now();
+    g_net.cheats_allowed = false;  // until the host's kMsgSessionInfo
+    g_net.cheats_used = false;
     g_net.last_hello_time = {};
     g_net.rtt_ms = 0.0;
     g_net.packets_sent = 0;
@@ -984,6 +1183,61 @@ void Leave() {
 }
 
 bool Active() { return g_net.active.load(std::memory_order_relaxed); }
+
+const char* PortVersion() {
+  // (A test of the version check: two copies of one build, one pretending.)
+  static const std::string fake = REXCVAR_GET(debug_online_version);
+  if (!fake.empty()) return fake.c_str();
+#ifdef CRASHMOM_VERSION
+  return CRASHMOM_VERSION;
+#else
+  return "(unknown version)";
+#endif
+}
+
+HostLink GetHostLink(int* seconds_left) {
+  if (seconds_left) *seconds_left = 0;
+  if (!Active() || g_net.is_host.load()) return HostLink::kNone;
+  if (const int end = g_net.host_end.load()) return HostLink(end);
+  std::lock_guard lock(g_net.mutex);
+  if (g_net.local_slot < 0) return HostLink::kNone;  // still connecting (no level to protect yet)
+  const auto silent = Clock::now() - g_net.last_host_heard;
+  if (silent >= kHostGoneAfter) {
+    REXLOG_WARN("Online: the host has been silent for {} s: gone",
+                std::chrono::duration_cast<std::chrono::seconds>(kHostGoneAfter).count());
+    g_net.host_end = int(HostLink::kGone);
+    return HostLink::kGone;
+  }
+  if (silent < kHostSilentAfter) return HostLink::kFine;
+  if (seconds_left) {
+    *seconds_left = int(std::chrono::duration_cast<std::chrono::seconds>(kHostGoneAfter - silent).count()) + 1;
+  }
+  return HostLink::kSilent;
+}
+
+std::u16string RefusedReason() {
+  std::lock_guard lock(g_net.mutex);
+  return g_net.refused_reason;
+}
+
+bool CheatsAllowed() {
+  if (!Active()) return true;
+  return g_net.is_host.load() ? REXCVAR_GET(online_allow_cheats) : g_net.cheats_allowed.load();
+}
+
+bool SessionCheatsUsed() { return Active() && g_net.cheats_used.load(); }
+
+void NoteCheatsUsed() {
+  if (!Active() || g_net.cheats_used.exchange(true)) return;
+  std::lock_guard lock(g_net.mutex);
+  if (!g_net.transport) return;
+  if (g_net.is_host) {
+    HostSendSessionInfoLocked(kInvalidPeer);
+  } else {
+    uint8_t msg[1] = {kMsgCheatsUsed};
+    g_net.transport->Send(g_net.host_peer, msg, sizeof(msg), /*reliable=*/true);
+  }
+}
 
 bool IsHost() {
   return g_net.active.load(std::memory_order_relaxed) &&

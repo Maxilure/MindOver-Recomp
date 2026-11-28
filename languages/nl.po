@@ -49,17 +49,17 @@ msgctxt "fps counter"
 msgid "SWAP {0}"
 msgstr "WISSEL {0}"
 
-#: src/achievements/achievements.cpp:787
+#: src/achievements/achievements.cpp:796
 #, fuzzy
 msgid "Achievement Unlocked"
 msgstr "Prestatie ontgrendeld"
 
-#: src/achievements/achievements_screen.cpp:32 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1598
+#: src/achievements/achievements_screen.cpp:34 src/options/options_menu.cpp:1091 src/options/options_menu.cpp:2438 src/options/options_settings.cpp:1598
 #, fuzzy
 msgid "Achievements"
 msgstr "Prestaties"
 
-#: src/achievements/achievements_screen.cpp:43 launcher/settings_page.cpp:496
+#: src/achievements/achievements_screen.cpp:45 launcher/settings_page.cpp:496
 #, fuzzy
 msgid "Players"
 msgstr "Spelers"
@@ -81,30 +81,30 @@ msgstr "Druk op {0} om hem weer te tonen"
 msgid "Extras"
 msgstr "Extra's"
 
-#: src/ui/quit_game.cpp:55
+#: src/ui/quit_game.cpp:56
 #, fuzzy
 msgid "Quit Game"
 msgstr "Stoppen met spelen"
 
-#: src/ui/quit_game.cpp:56
+#: src/ui/quit_game.cpp:57
 #, fuzzy
 msgid "Are you sure you want to quit the game?"
 msgstr "Weet je zeker dat je het spel wilt verlaten?"
 
 #. a tutorial's extra line: {0} = the Spin key / LB button's picture.
-#: src/input/prompt_icons.cpp:2415
+#: src/input/prompt_icons.cpp:2416
 #, fuzzy
 msgid "Or press {0}"
 msgstr "Of druk op {0}"
 
 #. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the Spin key / LB button's picture.
-#: src/input/prompt_icons.cpp:2420
+#: src/input/prompt_icons.cpp:2421
 #, fuzzy
 msgid "OR Hold {0}"
 msgstr "OF houd {0} ingedrukt"
 
 #. a tutorial's 2nd line (capitals like the game's tutorials): {0} = the game's own line with the Spin key's picture.
-#: src/input/prompt_icons.cpp:2426
+#: src/input/prompt_icons.cpp:2427
 #, fuzzy
 msgid "OR {0}"
 msgstr "OF {0}"
@@ -146,7 +146,7 @@ msgstr "Hernoemen"
 msgid "Are you sure you wish to delete this save file? It will be moved to the Deleted saves folder."
 msgstr "Weet je zeker dat je dit opgeslagen spel wilt verwijderen? Het wordt verplaatst naar de map Deleted saves."
 
-#: src/saves/save_library.cpp:1932
+#: src/saves/save_library.cpp:1937
 #, fuzzy
 msgid "Backspace"
 msgstr "Wissen"
@@ -169,31 +169,59 @@ msgstr "Laden..."
 msgid "Saving..."
 msgstr "Opslaan..."
 
-#: src/net/session_sync.cpp:1095
+#: src/net/session_sync.cpp:1106
 msgid "Exit on Hold"
 msgstr ""
 
-#: src/cheats/cheats.cpp:252
+#: src/net/state_sync.cpp:401
+msgid "Player {0}"
+msgstr ""
+
+#: src/net/state_sync.cpp:408 src/cheats/cheats.cpp:255
 #, fuzzy
 msgid "Cheats Enabled"
 msgstr "Cheats aan"
 
-#: src/cheats/cheats.cpp:252
+#: src/net/state_sync.cpp:408
+msgid "A player used a cheat: no achievements this session"
+msgstr ""
+
+#: src/net/state_sync.cpp:460
+msgid "The session is full."
+msgstr ""
+
+#: src/net/state_sync.cpp:462
+msgid "The host plays version {0}, you have {1}. Both need the same version."
+msgstr ""
+
+#: src/net/state_sync.cpp:463
+msgid "The host's build talks differently. Update both games to the same build."
+msgstr ""
+
+#: src/net/state_sync.cpp:464
+msgid "The host's game disc is different from yours (another region or revision)."
+msgstr ""
+
+#: src/net/state_sync.cpp:466
+msgid "The host turned the connection down."
+msgstr ""
+
+#: src/cheats/cheats.cpp:255
 #, fuzzy
 msgid "No achievements until a save is loaded"
 msgstr "Geen prestaties tot je een opgeslagen spel laadt"
 
-#: src/cheats/cheats.cpp:854
+#: src/cheats/cheats.cpp:858
 #, fuzzy
 msgid "Save Made With Cheats"
 msgstr "Opgeslagen met cheats"
 
-#: src/cheats/cheats.cpp:854
+#: src/cheats/cheats.cpp:858
 #, fuzzy
 msgid "No achievements while playing this save"
 msgstr "Geen prestaties met dit opgeslagen spel"
 
-#: src/players/lost_controller.cpp:282
+#: src/players/lost_controller.cpp:286
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -208,7 +236,7 @@ msgstr ""
 "een toets voor het toetsenbord.\n"
 "Of {0} om speler 1 te laten stoppen."
 
-#: src/players/lost_controller.cpp:289
+#: src/players/lost_controller.cpp:293
 #, fuzzy
 msgid ""
 "Player 1's controller\n"
@@ -222,7 +250,7 @@ msgstr ""
 "een toets voor het toetsenbord."
 
 #. the question box (2 lines): {0} = the player's number (the last player on foot: no drop out).
-#: src/players/lost_controller.cpp:297
+#: src/players/lost_controller.cpp:301
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -232,7 +260,7 @@ msgstr ""
 "Sluit je controller weer aan om door te gaan."
 
 #. the question box (2 lines): {0} = the player whose controller went, {1} = the player who can take over, {2} = the START button's picture.
-#: src/players/lost_controller.cpp:303
+#: src/players/lost_controller.cpp:307
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -241,7 +269,7 @@ msgstr ""
 "De controller van speler {0} is losgekoppeld.\n"
 "Sluit hem weer aan, of speler {1}: druk op {2} om over te nemen."
 
-#: src/players/lost_controller.cpp:307
+#: src/players/lost_controller.cpp:311
 #, fuzzy
 msgid ""
 "Controller reconnected.\n"
@@ -250,7 +278,7 @@ msgstr ""
 "Controller weer aangesloten.\n"
 "Druk op een knop om verder te gaan."
 
-#: src/players/lost_controller.cpp:308
+#: src/players/lost_controller.cpp:312
 #, fuzzy
 msgid ""
 "Controller disconnected.\n"
@@ -260,7 +288,7 @@ msgstr ""
 "Sluit je controller weer aan om door te gaan."
 
 #. the question box (2 lines): {0} = the player's number.
-#: src/players/lost_controller.cpp:312
+#: src/players/lost_controller.cpp:316
 #, fuzzy
 msgid ""
 "Player {0}'s controller is back.\n"
@@ -270,7 +298,7 @@ msgstr ""
 "Speler {0}: druk op een knop om verder te gaan."
 
 #. the question box (2 lines): {0} = the player's number, {1} = the Y button's picture.
-#: src/players/lost_controller.cpp:319
+#: src/players/lost_controller.cpp:323
 #, fuzzy
 msgid ""
 "Player {0}'s controller disconnected.\n"
@@ -278,6 +306,44 @@ msgid ""
 msgstr ""
 "De controller van speler {0} is losgekoppeld.\n"
 "Sluit hem weer aan, of druk op {1} zodat speler {0} het spel verlaat."
+
+#: src/players/lost_controller.cpp:767
+msgid ""
+"Connection to the host was lost.\n"
+"Waiting for the host... {0}"
+msgstr ""
+
+#: src/players/lost_controller.cpp:769
+msgid ""
+"The host ended the session.\n"
+"Press any button to return to the main menu."
+msgstr ""
+
+#: src/players/lost_controller.cpp:771
+msgid "Press any button to return to the main menu."
+msgstr ""
+
+#: src/players/lost_controller.cpp:773
+msgid ""
+"The host isn't responding.\n"
+"Press any button to return to the main menu."
+msgstr ""
+
+#: src/players/lost_controller.cpp:823
+msgid "Controller reconnected"
+msgstr ""
+
+#: src/players/lost_controller.cpp:823
+msgid "Carry on playing"
+msgstr ""
+
+#: src/players/lost_controller.cpp:831
+msgid "Controller disconnected"
+msgstr ""
+
+#: src/players/lost_controller.cpp:831
+msgid "Reconnect it, or carry on with the keyboard"
+msgstr ""
 
 #: src/players/outfit_picker.cpp:515
 #, fuzzy

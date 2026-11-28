@@ -22,6 +22,8 @@
 #include "cheats.h"
 #include "free_camera.h"
 #include "spawn.h"
+#include "../net/state_sync.h"
+#include "../overlay_banner.h"
 
 namespace cheat_menu {
 namespace {
@@ -50,6 +52,12 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     // Right Shift + F5 = MangoHud's logging key, not ours.
     if (kbm::KeyboardMouseDriver* driver = kbm::KeyboardMouseDriver::Get();
         driver && driver->InputHeld(static_cast<kbm::Input>(rex::ui::VirtualKey::kRShift))) {
+      return;
+    }
+    // ONLINE: only where the host allows cheats (state_sync.h CheatsAllowed).
+    if (!is_open_.load() && !net::CheatsAllowed()) {
+      overlay_banner::Show("Cheats are off", "The host of this online session doesn't allow cheats.");
+      REXLOG_INFO("Cheats: menu refused (online, the host doesn't allow cheats)");
       return;
     }
     bool opened;
@@ -105,6 +113,11 @@ class CheatDialog : public rex::ui::ImGuiDialog {
     if (!snap.in_level) {
       ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.35f, 1.0f),
                          "Not in a level: character cheats wait until you're playing one.");
+    }
+    if (net::Active()) {
+      ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.35f, 1.0f),
+                         "Online: some cheats may not work reliably (the other players' games may not\n"
+                         "see what they change). Achievements are off for everyone in the session.");
     }
 
     DrawCharacter(snap);

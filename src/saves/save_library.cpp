@@ -1835,7 +1835,9 @@ extern "C" REX_FUNC(sub_824742F0) {
   if (g_block_game_input.load(std::memory_order_relaxed) && user == 0 && state) {
     std::memset(GuestPtr(base, state + 4), 0, 12);
   }
-  if (state && (!net::Active() || int(user) == net::LocalSlot())) {
+  // (Online: after the network's filter below, which is what puts THIS PC's
+  // controller on its player's socket: the host box's "press any button".)
+  if (state && !net::Active()) {
     lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
   }
   // The co-op outfit picker reads every controller itself (players/outfit_picker.h).
@@ -1860,6 +1862,9 @@ extern "C" REX_FUNC(sub_824742F0) {
     uint32_t res = ctx.r3.u32;
     net::FilterControllerState(user, GuestPtr(base, state + 4), res, base);
     ctx.r3.u64 = res;
+  }
+  if (state && net::Active() && int(user) == net::LocalSlot()) {
+    lost_controller::FilterPad(int(user), GuestPtr(base, state + 4), ctx.r3.u32 == 0);
   }
   // LAST: simple spinning takes LB, keep spinning adds Light attack presses
   // (gameplay/game_mods.h). After the prompts' SeePad (LB still counts as

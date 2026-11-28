@@ -15,6 +15,7 @@
 #include "main_menu_extras.h"
 #include "scrooby.h"
 #include "../language/texts.h"
+#include "../net/state_sync.h"
 
 extern "C" REX_FUNC(__imp__sub_8225F758);  // ShowConfirmMessage (front end, r4 text name, f1 timer)
 extern "C" REX_FUNC(__imp__sub_823574E8);  // make heap r3 current, returns the previous
@@ -126,6 +127,7 @@ void Follow(PPCContext& ctx, uint8_t* base, uint32_t fe) {
     if (*GuestPtr(base, fe + kBox + kBoxAnswer) & kBoxYes) {
       REXLOG_INFO("Quit: the player quit the game from the main menu");
       if (auto logger = rex::GetLogger()) logger->flush();
+      net::Shutdown();  // online: say goodbye first (crash_mom_app.h OnWindowCloseRequested)
       std::_Exit(0);  // as closing the window does (ReXApp::OnClosing)
     }
     // No: the list back, "Quit Game" still selected.

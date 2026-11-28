@@ -244,6 +244,9 @@ std::atomic<bool> g_hud_hidden{false};
 std::atomic<bool> g_cheated{false};
 std::atomic<bool> g_save_marked{false};
 void MarkCheated() {
+  // ONLINE (S1, notes/online-coop.md s.16.7): the host hears it and tells
+  // everyone: no achievements on ANY PC of the session after that.
+  net::NoteCheatsUsed();
   if (!g_cheated.exchange(true)) {
     REXLOG_INFO("Cheats: ENABLED: achievements are off until a save is loaded; a save made now "
                 "is marked as made with cheats");
@@ -818,8 +821,9 @@ void SetHudHidden(bool hidden) {
   REXLOG_INFO("Cheats: HUD {}", hidden ? "hidden" : "shown");
 }
 bool HudHidden() { return g_hud_hidden.load(); }
-bool AchievementsBlocked() { return g_cheated.load() || g_save_marked.load(); }
+bool AchievementsBlocked() { return g_cheated.load() || g_save_marked.load() || net::SessionCheatsUsed(); }
 const char* BlockReason() {
+  if (net::SessionCheatsUsed()) return "a player in this online session used a cheat";
   if (g_save_marked.load()) return "this game was saved with cheats on";
   if (g_cheated.load()) return "cheats were used (until a save is loaded)";
   return "";
@@ -898,6 +902,11 @@ bool Frozen() { return g_frozen.load(); }
 
 bool DebugCommand(std::string_view command) {
   const std::string_view original = command;
+  // ONLINE: cheats only where the HOST allows them (setting online_allow_cheats).
+  if (!net::CheatsAllowed() && command.substr(0, 4) != "info") {
+    REXLOG_WARN("Cheats: refused \"{}\": the host of this online session doesn't allow cheats", original);
+    return true;  // (known command, refused: no "unknown" line)
+  }
   // Words: verb, then up to two arguments.
   std::string_view words[3];
   int count = 0;

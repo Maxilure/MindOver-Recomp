@@ -121,6 +121,7 @@ set(CRASHMOM_SOURCES
     src/players/menu_input.cpp  # which player's controller a menu listens to (findings/26)
     src/net/udp_transport.cpp   # online co-op: pluggable IPv4 UDP transport with reliable ACKs
     src/net/state_sync.cpp      # online co-op: host-authoritative state synchronization (Phase 1)
+    src/net/leave_session.cpp   # online: a guest whose host is gone goes back to the main menu (S1)
     src/net/action_sync.cpp   # online players by actions (fight-tree states), not buttons
     src/net/aim_sync.cpp      # online mask aiming: the owner's world aim segment
     src/net/mask_sync.cpp     # online masks: the owner announces mask / on foot, copies follow
